@@ -8,6 +8,37 @@
 // goalie stands in front of it. A goal makes the mesh ripple.
 
 import { toScreen, GOAL_X, MOUTH, NET_DEPTH, CROSSBAR } from './rink.js';
+import { Assets } from './assets.js';
+
+// Sprite nets from the v3 arena pack: back and front layers around a pivot at the centre
+// of the goal mouth on the ice, mirrored for the left goal. A goal plays the bulge
+// sequence once; a puck into the mesh gives a small twitch.
+const NET_SCALE = 0.38; // the art's 200 px mouth spans our 76 px goal mouth
+const BIG = ['bulge_1', 'bulge_2', 'bulge_3', 'bulge_3', 'bulge_2', 'bulge_1'];
+const SMALL = ['bulge_1', 'bulge_1'];
+
+export class SpriteNets {
+  constructor(map) {
+    this.map = map;
+    this.anim = { '-1': null, '1': null };
+  }
+
+  ripple(side, y, power = 1) { this.anim[side] = { t: 0, seq: power >= 0.7 ? BIG : SMALL }; }
+
+  update(dt) {
+    for (const k of ['-1', '1']) {
+      const a = this.anim[k];
+      if (a && (a.t += dt) * 10 >= a.seq.length) this.anim[k] = null;
+    }
+  }
+
+  draw(ctx, side, layer) {
+    const a = this.anim[side];
+    const state = a ? a.seq[Math.floor(a.t * 10)] || 'neutral' : 'neutral';
+    const p = toScreen(side * GOAL_X, 0);
+    Assets.draw(ctx, this.map[state][layer], p.x, p.y, NET_SCALE, { flip: side < 0 });
+  }
+}
 
 const PX = 2; // backdrop pixels per net pixel
 const NAVY = [20, 35, 59, 255];

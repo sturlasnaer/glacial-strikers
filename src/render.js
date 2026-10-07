@@ -5,7 +5,7 @@ import { toScreen, persp, BACKDROP, GOAL_X, MOUTH, NET_DEPTH, RINK } from './rin
 import { clamp, lerp, makeRng } from './util.js';
 import { POWER_INFO, COMBOS, TEAMS, ARENAS } from './data.js';
 import { ELEMENT_COLORS } from './fx.js';
-import { NetRenderer } from './net.js';
+import { NetRenderer, SpriteNets } from './net.js';
 
 const SKATER_SCALE = 0.5; // world px per source px
 const GOALIE_SCALE = 0.43;
@@ -29,7 +29,8 @@ export class Renderer {
     this.tintCache = new Map();
     this.cracks = null;
     this.font = '"Jersey 10", "Pixelify Sans", ui-monospace, monospace';
-    this.nets = new NetRenderer();
+    const arenaArt = Assets.atlas && Assets.atlas.arena;
+    this.nets = arenaArt && arenaArt.nets ? new SpriteNets(arenaArt.nets) : new NetRenderer();
   }
 
   resize() {
@@ -114,6 +115,7 @@ export class Renderer {
     else Assets.draw(ctx, 'hud_elements/misc/home_crest', cc.x, cc.y + 2, 0.5, { alpha: 0.3, squash: 0.8 });
     this.drawLamps(ctx, fx);
     this.drawCrowd(ctx, fx, ui);
+    this.drawArenaProps(ctx, match, fx, ui, arena);
     this.drawGoalLights(ctx, match, fx);
     if (fx.marks) ctx.drawImage(fx.marks, 0, 0, BACKDROP.w, BACKDROP.h);
     this.drawTwists(ctx, match, fx);
@@ -145,6 +147,8 @@ export class Renderer {
     for (const pt of fx.parts) if (pt.kind === 'ghost') list.push({ y: pt.s.y - 1, f: () => this.drawGhost(ctx, pt, match) });
     list.sort((a, b) => a.y - b.y);
     for (const d of list) d.f();
+    // near glass over anyone skating along the bottom boards (Pine Pond has snowbanks)
+    if (Assets.glass && arena !== 'pine_pond') ctx.drawImage(Assets.glass, Assets.atlas.arena.glass.x, Assets.atlas.arena.glass.y);
 
     this.drawParticles(ctx, fx);
     this.drawAnims(ctx, fx);
@@ -244,6 +248,54 @@ export class Renderer {
         ctx.fillRect(x - 7 * s, y - 19 * s, 14 * s, 3 * s);
       }
     }
+  }
+
+  // Hanging team banners and the Snow Fox at home, and the scoreboard in the icy buildings.
+  drawArenaProps(ctx, match, fx, ui, arena) {
+    const A = Assets.atlas.arena;
+    if (!A) return;
+    const t = fx.time;
+    if (arena === 'home' && A.banners) {
+      const vis = TEAMS[ui.awayTeamId] && A.banners[TEAMS[ui.awayTeamId].art];
+      const spots = [[102, 36, 0], [1433, 36, 1], [120, 856, 1], [1417, 850, 0]];
+      spots.forEach(([x, y, theirs], i) => {
+        const id = theirs && vis ? vis : A.banners.glacial_strikers;
+        Assets.draw(ctx, id, x, y, 0.185, { rot: Math.sin(t * 1.3 + i * 1.7) * 0.025 });
+      });
+    }
+    if (arena === 'home' && A.mascot) {
+      const party = (fx.cheerTeam === 0 && fx.lamp > 0) || (fx.chant && fx.chant.team === 0);
+      let pose = 'idle';
+      if (party) pose = Math.floor(t * 4) % 2 ? 'cheer_a' : 'cheer_b';
+      else if (fx.excite > 0.55 || Math.floor(t / 3) % 4 === 0) pose = Math.floor(t * 2) % 2 ? 'wave' : 'idle';
+      Assets.draw(ctx, A.mascot[pose], 768, 950 - (party ? Math.abs(Math.sin(t * 8)) * 6 : 0), 0.125);
+    }
+    if (A.scoreboard && arena !== 'ember_dome') this.drawScoreboard(ctx, match, fx, A.scoreboard);
+  }
+
+  // Scoreboard hanging over the far stairs, with the live score drawn into its displays.
+  drawScoreboard(ctx, match, fx, sb) {
+    const S = 0.09, X = 768, Y = 0;
+    Assets.draw(ctx, sb.frame, X, Y, S);
+    const put = (f, text, color) => {
+      ctx.font = `${f.font_size * S}px ${this.font}`;
+      ctx.fillStyle = color || sb.color;
+      ctx.fillText(text, X + (f.x + f.w / 2 - sb.pivot[0]) * S, Y + (f.y + f.h / 2 - sb.pivot[1]) * S + 0.5);
+    };
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    put(sb.fields.home_score, String(match.score[0]));
+    put(sb.fields.away_score, String(match.score[1]));
+    const g = match.lastGoal;
+    if ((match.state === 'goal' || match.state === 'over') && g) {
+      if (!fx.flashes || Math.floor(fx.time * 4) % 2) put(sb.fields.clock, match.state === 'over' ? 'FINAL' : 'GOAL!', g.team === 0 ? '#71dce8' : '#ff6f7d');
+    } else {
+      const s = Math.floor(match.time || 0);
+      put(sb.fields.clock, `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`);
+    }
+    put(sb.fields.period, `FT${match.winScore || 5}`);
+    ctx.restore();
   }
 
   drawTwists(ctx, match, fx) {

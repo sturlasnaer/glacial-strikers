@@ -72,7 +72,8 @@ Hold shoot while a pass is on its way to fire a **one-timer**. Your skates plant
 - **Signature celebrations:** Nix plants an ice spike, Volta strikes a lightning pose, Bram hoists his stick.
 - **Hub:** the locker room fills the menus, with Coach Brekka (Training), Gearsmith Ottar (Shop) and announcer Kip Vance (League) chiming in.
 - **Animation:** 8-way skating, a 4-frame side stride with glide and hockey stop (with an ice spray), stagger and knockdown on big hits, and side-on goalie poses: shuffles, butterfly, glove and blocker saves, dives, covering the puck and getting up. A red goal light behind each net spins on goals.
-- **Nets** are drawn in code as pixel art to fit the side-on camera, with the puck sitting inside the mesh and a ripple on goals. [`reference/net-reference.png`](reference/net-reference.png) shows the exact shapes for a sprite version.
+- **Nets** are the v3 side-view sprites, back and front layers around the goal mouth, with the puck inside the mesh and a bulge on goals (code-drawn nets remain as a fallback).
+- **Arena dressing:** near glass drawn over skaters along the bottom boards, a hanging scoreboard with the live score and clock, team banners in the home rink's corners (Strikers plus the visitors), and the Snow Fox mascot dancing on the near stairs when the Strikers score.
 
 ## Project layout
 
@@ -107,9 +108,9 @@ tools/                asset builder, dev server, balance sim, control tests
 
 ```bash
 python3 -m venv ../.venv && ../.venv/bin/pip install pillow numpy   # once
-../.venv/bin/python tools/build_assets.py ../assets/Glacial-Strikers-Expansion-v2 assets/gfx
+../.venv/bin/python tools/build_assets.py ../assets/Glacial-Strikers-Expansion-v2 assets/gfx ../assets/Glacial-Strikers-v3-Arena-Add-On
 ```
-Rebuilds the atlases from the complete v2 sprite pack (v1, P1 gameplay and the rival/story/arena art in one atlas). Every character is rescaled to the v1 skaters' height, stray fragments from neighbouring cells are erased, and poses are mapped onto the game's names. Pages are split into `home`, `away` and one `rival_<team>` group per rival; rival pages, arenas, cut-in banners and the locker room load in the background after startup.
+Rebuilds the atlases from the complete v2 sprite pack (v1, P1 gameplay and the rival/story/arena art in one atlas) plus the v3 arena add-on (nets, near glass, scoreboard, banners, mascot). Every character is rescaled to the v1 skaters' height, stray fragments from neighbouring cells are erased, and poses are mapped onto the game's names. Pages are split into `home`, `away` and one `rival_<team>` group per rival; rival pages, arenas, cut-in banners and the locker room load in the background after startup.
 
 ```bash
 node tools/sim.mjs 20 0.6 0.6

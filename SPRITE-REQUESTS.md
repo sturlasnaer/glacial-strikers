@@ -1,6 +1,8 @@
 # Sprite requests
 
-What the game needs next, in priority order. Everything in the complete v2 pack is in the game, except the layered nets (see A1).
+What the game needs next, in priority order. Everything in the v2 pack and the v3 arena add-on is in the game.
+
+**Still open:** A2, A3, A4, B2, B4 (fans at the glass) and batch C.
 
 ## Format notes (same as the v2 pack)
 
@@ -17,6 +19,7 @@ What the game needs next, in priority order. Everything in the complete v2 pack 
 - **v1 pack:** the original cast, goalie, rink, props, HUD, power pucks and effects.
 - **P1 gameplay:** 8-way skating, 4-frame side stride with glide and hockey stop, hit reactions, Halla's side-on goalie set, ice spray, ice chips and the goal light.
 - **v2 pack:** 5 rival casts with goalies, portraits and 45 expressions, crests, 24 cut-in banners, signature celebrations, Ember Dome / Aurora Palace / Pine Pond, crowd fans, the locker room and the three hub characters.
+- **v3 arena add-on:** side-view nets with bulge frames (they fit the goal line exactly), the near-glass overlay, the scoreboard (live score and clock drawn in), six hanging team banners and the Snow Fox mascot.
 
 ---
 
@@ -24,14 +27,8 @@ What the game needs next, in priority order. Everything in the complete v2 pack 
 
 Our trio now animates much more than the rivals do, which shows when they share the ice.
 
-### A1. Side-view goal nets (redo)
-The layered net in P1 and v2 is drawn with the goal mouth turned about 45° toward the camera. In this camera the goal line runs **straight up and down the screen**: the far post stands directly above the near post, the crossbar runs vertically between their tops, and the mesh goes to the right. No warp fits the P1 art onto that, so the game still draws its own nets in code.
-
-**Reference: [`reference/net-reference.png`](reference/net-reference.png)** shows the in-game net at 4× with Halla for scale, and the back and front layers at 8×. Paint over those exact shapes:
-- Right-hand net only (mirrored for the left), mouth facing LEFT.
-- Two PNGs on one canvas: **back** (far post, far-side mesh, back mesh, base) and **front** (near post, crossbar, roof and near-side mesh).
-- In-game size is small (posts about 34 px tall, mouth 76 px top to bottom, about 40 px deep), so draw it at 2–4× and it gets scaled down.
-- Optional: 3 bulge frames for goals.
+### A1. Side-view goal nets ✓
+Delivered in v3.
 
 ### A2. Rival hit reactions
 Our skaters stagger, fall and get up on big hits; rivals only wobble.
@@ -53,8 +50,8 @@ Two rivals who talk in the story aren't captains, so they have no expressions ye
 
 ## Batch B: atmosphere
 
-### B1. Near-glass foreground layer
-One transparent PNG per arena (Frostline, Ember Dome, Aurora Palace, Pine Pond), each 1536×1024 and lined up with its backdrop. It contains **only the near (bottom) boards, glass panels, posts and top rail**, with everything else erased and the glass about 25% opaque. The game draws it over the players, so skaters along the bottom boards appear behind the glass. Pine Pond would be just the near snowbank lip.
+### B1. Near-glass foreground layer ✓
+Delivered in v3. One layer works for the Frostline rink, Ember Dome and Aurora Palace; Pine Pond goes without, since it has snowbanks.
 
 ### B2. Arenas for the Rams and the Ravens
 The other three rivals now host you in their own building; these two still play at the Frostline rink.
@@ -62,12 +59,12 @@ The other three rivals now host you in their own building; these two still play 
 - **Obsidian Ravens:** a dark aerie (black stone, violet lanterns, perched ravens).
 - Same rink geometry, line positions and lamp spots as `rink_backdrop.png`, 1536×1024.
 
-### B3. Scoreboard / jumbotron
-A hanging scoreboard above the centre stairs in the top stands (about 220×110 px) with a dark empty screen. The game draws the score and "GOAL!" onto it. One generic design is enough.
+### B3. Scoreboard ✓
+Delivered in v3. It hangs over the far stairs in the Frostline rink, Aurora Palace and Pine Pond. Optional: a volcanic-stone variant for the Ember Dome, which has no board yet because the icy one looks out of place there.
 
-### B4. Mascot and fans at the glass
-- A **mascot** (snow yeti or penguin in a Strikers jersey), 4-frame dance plus 1 cheer, about 60 px tall. It dances in the stands on home goals.
-- 3–4 **fans pressed against the glass** with a camera-flash frame, for goals scored near them.
+### B4. Fans at the glass (the mascot is done ✓)
+The Snow Fox from v3 stands on the near stairs at home, waves, and cheers on home goals. Still wanted:
+- 3–4 **fans pressed against the glass** with a camera-flash frame, for goals scored near them. Facing the camera, about 28 px tall, home and away colours (away in coral/violet).
 
 ---
 

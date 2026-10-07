@@ -27,13 +27,15 @@ export const Assets = {
     this.atlas = atlas;
     this.pages = new Array(atlas.pages.length);
     const core = atlas.pages.map((p, i) => i).filter((i) => atlas.pages[i].group === 'home' || atlas.pages[i].group === 'away');
-    const files = [...core.map((i) => atlas.pages[i].file), 'gfx/rink_backdrop.webp'];
+    const glass = atlas.arena && atlas.arena.glass && atlas.arena.glass.file;
+    const files = [...core.map((i) => atlas.pages[i].file), ...(glass ? [glass] : []), 'gfx/rink_backdrop.webp'];
     let done = 0;
     const imgs = await Promise.all(files.map((f) => this.image(f).then((img) => {
       done++; onProgress?.(done / files.length);
       return img;
     })));
     this.backdrop = imgs.pop();
+    if (glass) this.glass = imgs.pop();
     this.backdrops.set('home', this.backdrop);
     core.forEach((pi, k) => { this.pages[pi] = imgs[k]; });
   },

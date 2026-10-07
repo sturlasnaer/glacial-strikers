@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Slice the Glacial Strikers source sheets into compact WebP atlases for the game.
 
-Usage: python tools/build_assets.py [<sprite-pack> [<output-dir>]]
+Usage: python tools/build_assets.py [<sprite-pack> [<output-dir> [<arena-add-on>]]]
 
 The sprite pack is the complete v2 pack (v1 art, the P1 gameplay poses and the rival,
-story and arena art in one combined atlas.json).
+story and arena art in one combined atlas.json). The v3 arena add-on supplies the
+side-view nets, the near-glass overlay, the scoreboard, team banners and the mascot.
 
 - Crops every frame the game uses, downscales it per category (premultiplied alpha),
   trims empty margins, erases fragments from neighbouring cells, recomputes foot
@@ -27,6 +28,7 @@ from PIL import Image
 
 PACK = sys.argv[1] if len(sys.argv) > 1 else '../assets/Glacial-Strikers-Expansion-v2'
 OUT = sys.argv[2] if len(sys.argv) > 2 else 'assets/gfx'
+ADDON = sys.argv[3] if len(sys.argv) > 3 else '../assets/Glacial-Strikers-v3-Arena-Add-On'
 
 # Atlas pixels per source pixel for v1 sheets. Picked so each sprite is close to its
 # on-screen size on a 2x phone screen while keeping the download small.
@@ -237,6 +239,51 @@ for fid, f in frames.items():
         px, py = f['pivot_pixels']['x'] * k, f['pivot_pixels']['y'] * k
     add_item(fid, img, px, py, s, group_of(fid))
 
+# ---------------------------------------------------------------- v3 arena add-on
+# World scales: net 0.38 (mouth = 76 world px), scoreboard 0.09, banners 0.185,
+# mascot 0.125. Atlas copies are kept at 2x for sharp phone screens.
+arena = {}
+if os.path.exists(os.path.join(ADDON, 'atlas-v3.json')):
+    v3 = json.load(open(os.path.join(ADDON, 'atlas-v3.json')))
+
+    def v3img(path):
+        return Image.open(os.path.join(ADDON, path)).convert('RGBA')
+
+    def add_scaled(fid, img, px, py, k, s):
+        nw, nh = max(1, round(img.width * k)), max(1, round(img.height * k))
+        img = img.convert('RGBa').resize((nw, nh), Image.LANCZOS).convert('RGBA')
+        add_item(fid, img, px * k, py * k, s, 'home')
+
+    piv = v3['net_geometry']['shared_pivot_pixels']
+    arena['nets'] = {}
+    for state, layers in v3['net_layers'].items():
+        arena['nets'][state] = {}
+        for layer, nl in layers.items():
+            fid = f'net/{layer}/{state}'
+            add_scaled(fid, v3img(nl['image']), piv['x'], piv['y'], 0.76, 0.76)
+            arena['nets'][state][layer] = fid
+    sb = v3['arena_scoreboards']['main']
+    sbf = v3['frames'][sb['frame']]
+    add_scaled('arena/scoreboard', v3img(sb['image']), sbf['pivot_pixels']['x'], sbf['pivot_pixels']['y'], 0.2, 0.2)
+    arena['scoreboard'] = {'frame': 'arena/scoreboard', 'pivot': [sbf['pivot_pixels']['x'], sbf['pivot_pixels']['y']],
+                           'fields': sb['display_fields'], 'color': sb['text_color']}
+    arena['banners'] = {}
+    for team, b in v3['arena_banners'].items():
+        add_scaled(f'arena/banner/{team}', v3img(b['image']), b['pivot_pixels']['x'], b['pivot_pixels']['y'], 0.37, 0.37)
+        arena['banners'][team] = f'arena/banner/{team}'
+    fox = v3['mascots']['snow_fox']
+    arena['mascot'] = {}
+    for pose, im in fox['images'].items():
+        add_scaled(f'mascot/snow_fox/{pose}', v3img(im['image']), im['pivot_pixels']['x'], im['pivot_pixels']['y'], 0.25, 0.25)
+        arena['mascot'][pose] = f'mascot/snow_fox/{pose}'
+    # near glass: its own image, cropped to the rail band, drawn over the players
+    glass = v3img(v3['foreground_layers']['near_glass']['image'])
+    x0, y0, x1, y1 = glass.getbbox()
+    glass.crop((x0, y0, x1, y1)).save(os.path.join(OUT, 'near_glass.webp'), 'WEBP', quality=92, method=6, alpha_quality=100)
+    arena['glass'] = {'file': 'gfx/near_glass.webp', 'x': x0, 'y': y0}
+else:
+    print('no arena add-on at', ADDON)
+
 # ---------------------------------------------------------------- mappings
 skaters = json.loads(json.dumps(src['skaters']))
 for name, v1 in V1_SKATER.items():
@@ -337,6 +384,7 @@ atlas = {
     'arenas': arenas,
     'locker': 'gfx/locker_room.webp',
     'banners': banners,
+    'arena': arena,
 }
 with open(os.path.join(OUT, 'atlas.json'), 'w') as fh:
     json.dump(atlas, fh, separators=(',', ':'))
