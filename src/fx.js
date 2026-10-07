@@ -2,7 +2,7 @@
 // screen shake, hit-stop and slow motion. Listens to match events.
 
 import { toScreen, persp, GOAL_X, BACKDROP } from './rink.js';
-import { POWER_INFO, COMBOS } from './data.js';
+import { POWER_INFO, COMBOS, GEAR_LOOK } from './data.js';
 import { makeRng, clamp } from './util.js';
 
 const rnd = makeRng(1234);
@@ -60,7 +60,11 @@ export class FX {
       this.marksCtx.clearRect(0, 0, this.marks.width, this.marks.height);
     }
     const on = (t, f) => match.on(t, f);
-    on('stride', ({ s }) => this.scratch(s, 1));
+    on('stride', ({ s }) => {
+      const L = s.gear && GEAR_LOOK[s.gear.skates];
+      if (L && L.mark) this.scratch(s, L.wide ? 2 : 1, L.mark, L.long ? 1.6 : 1);
+      else this.scratch(s, 1);
+    });
     on('stop', ({ s, power }) => {
       this.scratch(s, 3);
       // spray fans out in the direction of travel
@@ -97,6 +101,25 @@ export class FX {
       if (a.bedrockT > 0) this.anim('ability_effects/stone_barrier/phase_', b.x, b.y + 4, 0.18, { fps: 20, frames: [1, 2, 5, 6] });
     });
     on('steal', ({ s }) => this.text(s.x, s.y - 92, 'STEAL!', '#71dce8', 0.9, 18));
+    // gear doing its job
+    const look = (s, slot) => s && s.gear && GEAR_LOOK[s.gear[slot]];
+    on('hit', ({ b, power }) => {
+      const L = look(b, 'armor');
+      if (!L) return;
+      if (L.show === 'shield') { this.ring(b.x, b.y, 30 + power / 20, L.color, 0.35); this.burst(b.x, b.y, 24, 6, ['#d8c39a', '#fff2cb'], 120, 0.3); }
+      if (L.show === 'puff') this.burst(b.x, b.y, 22, 8, ['#ffffff', '#e8f6ff'], 90, 0.35);
+    });
+    on('block', ({ s }) => { const L = look(s, 'armor'); if (L && L.show === 'guard') { this.ring(s.x, s.y, 36, L.color, 0.4); this.burst(s.x, s.y, 14, 10, ELEMENT_COLORS.ice, 160, 0.4); } });
+    on('receive', ({ s }) => { const L = look(s, 'armor'); if (L && L.show === 'grip') { const p = s.stickPoint(); this.burst(p.x, p.y, 6, 5, ['#ffd45e', '#fff2cb'], 70, 0.3); } });
+    on('shot', ({ s }) => {
+      const L = look(s, 'stick');
+      if (!L) return;
+      const p = s.stickPoint(18);
+      this.burst(p.x, p.y, 4, 8, [L.color, L.accent], 150, 0.35);
+      if (L.fx === 'swirl') this.ring(p.x, p.y, 26, L.color, 0.3);
+      if (L.fx === 'heat') this.shake(0.06);
+    });
+    on('stop', ({ s }) => { const L = look(s, 'skates'); if (L && L.trail === 'gouge') { this.anim(CHIPS, s.x, s.y + 2, 0.12, { fps: 18, frames: PHASES, flip: s.vx < 0 }); this.scratch(s, 3); } });
     // arena rules
     on('splash', ({ x, y, power }) => {
       const n = Math.min(14, 5 + power / 40);
@@ -210,10 +233,10 @@ export class FX {
   }
 
   // ---------------------------------------------------------------- spawners
-  part(x, y, z, vx, vy, vz, life, color, size, kind = 'dot') {
+  part(x, y, z, vx, vy, vz, life, color, size, kind = 'dot', extra = null) {
     if (this.parts.length > 600) return;
     if (this.particleMul < 1 && rnd() > this.particleMul) return;
-    this.parts.push({ x, y, z, vx, vy, vz, life, t: 0, color, size, kind, rot: rnd.range(0, 6.28) });
+    this.parts.push({ x, y, z, vx, vy, vz, life, t: 0, color, size, kind, rot: rnd.range(0, 6.28), ...extra });
   }
   burst(x, y, z, n, colors, speed, life) {
     for (let i = 0; i < n; i++) {
@@ -238,13 +261,13 @@ export class FX {
   shake(a) { this.shakeT = Math.min(1, this.shakeT + a * this.shakeMul); }
   flashScreen(color, life) { if (this.flashes) this.flash = { color, t: 0, life }; }
 
-  scratch(s, w) {
+  scratch(s, w, color, len = 1) {
     if (!this.marksCtx) return;
     const c = this.marksCtx;
     const p = toScreen(s.x, s.y);
     const a = Math.atan2(s.vy, s.vx);
-    const l = w > 1 ? 14 : 9;
-    c.strokeStyle = w > 1 ? 'rgba(255,255,255,0.55)' : 'rgba(170,205,230,0.32)';
+    const l = (w > 1 ? 14 : 9) * len;
+    c.strokeStyle = color || (w > 1 ? 'rgba(255,255,255,0.55)' : 'rgba(170,205,230,0.32)');
     c.lineWidth = w > 1 ? 2 : 1;
     c.beginPath();
     const side = (s.stride > 35 ? 1 : -1) * 3;
@@ -255,7 +278,49 @@ export class FX {
   }
 
   // ------------------------------------------------------------------ update
+  // Continuous gear looks: skate trails at speed, stick crackle while winding up.
+  gearTick(dt) {
+    const m = this.match;
+    if (!m || !dt) return;
+    for (const s of m.skaters) {
+      if (!s.gear || s.parked) continue;
+      const sk = GEAR_LOOK[s.gear.skates], st = GEAR_LOOK[s.gear.stick];
+      s.gearT = (s.gearT || 0) - dt;
+      const back = { x: s.x - Math.cos(s.face) * 8, y: s.y - Math.sin(s.face) * 6 + 2 };
+      if (sk && s.speed > 150 && s.gearT <= 0) {
+        s.gearT = 0.06;
+        const vx = -s.vx * 0.15, vy = -s.vy * 0.15;
+        if (sk.trail === 'sparks') this.part(back.x, back.y, 3, vx + rnd.range(-40, 40), vy + rnd.range(-30, 30), rnd.range(40, 120), rnd.range(0.15, 0.3), rnd.pick(['#ffe066', '#fffbd1', '#ffd23f']), rnd.range(1.5, 2.6));
+        if (sk.trail === 'frost') this.part(back.x, back.y, 2, vx * 0.5, vy * 0.5, rnd.range(20, 50), rnd.range(0.4, 0.7), rnd.pick(['#4fc6e8', '#7fe3ff', '#2a9fb0']), rnd.range(1.6, 2.6));
+        if (sk.trail === 'streak' && s.speed > 230) this.part(back.x, back.y, 4, 0, 0, 0, 0.25, 'rgba(90,150,230,0.75)', 1.6, 'line', { dx: -s.vx * 0.09, dy: -s.vy * 0.08 });
+        if (sk.trail === 'gouge' && rnd() < 0.3) this.part(back.x, back.y, 1, vx, vy, rnd.range(30, 80), 0.3, '#9aa3b5', 2, 'dot');
+      }
+      if (sk && sk.trail === 'carve') {
+        // bright carve spray on tight turns
+        const va = Math.atan2(s.vy, s.vx);
+        const turn = s.prevVA === undefined ? 0 : Math.abs(Math.atan2(Math.sin(va - s.prevVA), Math.cos(va - s.prevVA))) / dt;
+        s.prevVA = va;
+        if (turn > 2.6 && s.speed > 140 && s.gearT <= 0) {
+          s.gearT = 0.05;
+          const side = { x: s.x + Math.sin(va) * 6, y: s.y - Math.cos(va) * 5 };
+          for (let i = 0; i < 2; i++) this.part(side.x, side.y, 2, Math.sin(va) * rnd.range(40, 90), -Math.cos(va) * rnd.range(30, 70), rnd.range(40, 90), 0.3, rnd.pick(['#8fd0ff', '#5fb0f0']), rnd.range(1.5, 2.4));
+          this.scratch(s, 2, sk.mark);
+        }
+      }
+      const winding = s.charging || s.ultWindup > 0;
+      if (st && winding && rnd() < dt * 40) {
+        const p = s.stickPoint(18);
+        if (st.fx === 'sparks') this.part(p.x, p.y, rnd.range(4, 18), rnd.range(-90, 90), rnd.range(-60, 60), rnd.range(40, 140), 0.18, rnd.pick([st.color, st.accent]), rnd.range(1.4, 2.4));
+        else if (st.fx === 'frost') this.part(p.x, p.y, rnd.range(2, 10), rnd.range(-30, 30), rnd.range(-20, 20), rnd.range(10, 40), 0.5, rnd.pick(ELEMENT_COLORS.ice), rnd.range(1.2, 2.2));
+        else if (st.fx === 'heat') this.part(p.x, p.y, rnd.range(4, 10), rnd.range(-20, 20), rnd.range(-10, 10), rnd.range(30, 60), 0.4, rnd.pick(['#ffd27a', '#ff9a3d', 'rgba(120,120,120,0.6)']), rnd.range(1.6, 2.6));
+        else if (st.fx === 'swirl') { const a = rnd.range(0, 6.28); this.part(p.x + Math.cos(a) * 12, p.y + Math.sin(a) * 9, 6, -Math.sin(a) * 60, Math.cos(a) * 45, 0, 0.3, rnd.pick([st.color, st.accent]), 2); }
+        else if (st.fx === 'tape') this.part(p.x, p.y, 4, rnd.range(-20, 20), rnd.range(-15, 15), rnd.range(10, 30), 0.25, st.accent, 1.4);
+      }
+    }
+  }
+
   update(dt, realDt) {
+    this.gearTick(dt);
     this.time += realDt;
     this.shakeT = Math.max(0, this.shakeT - realDt * 1.6);
     this.hitstop = Math.max(0, this.hitstop - realDt);

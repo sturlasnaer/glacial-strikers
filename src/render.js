@@ -3,7 +3,7 @@
 import { Assets } from './assets.js';
 import { toScreen, persp, BACKDROP, GOAL_X, MOUTH, NET_DEPTH, RINK } from './rink.js';
 import { clamp, lerp, makeRng } from './util.js';
-import { POWER_INFO, COMBOS, TEAMS, ARENAS, PALETTES } from './data.js';
+import { POWER_INFO, COMBOS, TEAMS, ARENAS, PALETTES, GEAR_LOOK } from './data.js';
 import { ELEMENT_COLORS } from './fx.js';
 import { NetRenderer, SpriteNets } from './net.js';
 
@@ -623,12 +623,109 @@ export class Renderer {
     if (s.bedrockT > 0) this.aura(ctx, p.x, p.y - 30, 34, '#c9b79c', fx.time);
     if (s.boostT > 0 || s.trailT > 0) this.aura(ctx, p.x, p.y - 26, 28, '#71dce8', fx.time);
     if (s.empowered > 0) this.aura(ctx, p.x, p.y - 30, 30, '#ffe066', fx.time * 2);
-    Assets.draw(ctx, fr.id, p.x, y, k, { flip: fr.flip, rot, pages });
+    const geared = s.gear && this.gearFrame(fr.id, pages, s.gear);
+    if (geared) this.drawFrameCanvas(ctx, geared, Assets.frame(fr.id), p.x, y, k, fr.flip, rot);
+    else Assets.draw(ctx, fr.id, p.x, y, k, { flip: fr.flip, rot, pages });
     let tint = null;
     if (s.flash > 0) tint = ['#ffffff', 0.7 * (s.flash / 0.25)];
     else if (s.slowT > 0 && s.slowMul < 0.9) tint = ['#9fe8ff', 0.45];
     else if (s.bedrockT > 0) tint = ['#b8a58c', 0.22];
     if (tint) this.drawTinted(ctx, fr.id, pages, p.x, y, k, fr.flip, rot, tint[0], tint[1]);
+    if (s.gear) this.drawGearLook(ctx, s, fr, p, y, k, fx);
+  }
+
+  // Equipped gear on the ice: a glow at the blade for special sticks, a visor glint.
+  drawGearLook(ctx, s, fr, p, y, k, fx) {
+    const st = GEAR_LOOK[s.gear.stick];
+    if (st && fr.pose !== 'down' && fr.pose !== 'signature') {
+      const b = this.worldToBackdrop(s.stickPoint(18));
+      const hot = s.hasPuck || s.charging || s.ultWindup > 0;
+      const r = (hot ? 12 : 9) * (1 + Math.sin(fx.time * 6 + s.slot) * 0.12);
+      ctx.save();
+      // a coloured haze where the puck is handled (the sprite's painted stick keeps its
+      // look until gear-mask art lets us recolour it)
+      if (!hot) { ctx.restore(); return this.drawVisor(ctx, s, fr, p, y, k, fx); }
+      const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, r);
+      g.addColorStop(0, hexA(st.color, 0.5));
+      g.addColorStop(1, hexA(st.color, 0));
+      ctx.fillStyle = g;
+      ctx.fillRect(b.x - r, b.y - r, r * 2, r * 2);
+      ctx.translate(b.x, b.y);
+      if (st.fx === 'swirl') {
+        ctx.strokeStyle = hexA(st.color, hot ? 0.8 : 0.5); ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.ellipse(0, 0, r * 1.1, r * 0.75, 0, fx.time * 4, fx.time * 4 + 4); ctx.stroke();
+      }
+      ctx.restore();
+    }
+    this.drawVisor(ctx, s, fr, p, y, k, fx);
+  }
+
+  drawVisor(ctx, s, fr, p, y, k, fx) {
+    const ar = GEAR_LOOK[s.gear.armor];
+    if (ar && ar.show === 'glint') {
+      const ph = (fx.time * 0.3 + s.slot * 0.31) % 1;
+      if (ph < 0.06) {
+        const f = Assets.frame(fr.id);
+        const sc = k / f[7];
+        const hx = p.x + (fr.flip ? -1 : 1) * (f[3] * 0.5 - f[5]) * sc * 0.4, hy = y - f[6] * sc * 0.78;
+        const a = Math.sin((ph / 0.06) * Math.PI);
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.fillStyle = `rgba(255,255,255,${a})`;
+        ctx.beginPath(); ctx.moveTo(hx, hy - 6); ctx.lineTo(hx + 1.5, hy - 1.5); ctx.lineTo(hx + 6, hy); ctx.lineTo(hx + 1.5, hy + 1.5); ctx.lineTo(hx, hy + 6); ctx.lineTo(hx - 1.5, hy + 1.5); ctx.lineTo(hx - 6, hy); ctx.lineTo(hx - 1.5, hy - 1.5); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+    }
+  }
+
+  worldToBackdrop(pt) { return toScreen(pt.x, pt.y); }
+
+  // True gear recolours, when the sprite pack has gear masks for this frame: red mask
+  // pixels are the stick, green the boots, blue the blades. Each is reshaded in the
+  // gear's colour by the original pixel's brightness, keeping the dark outlines.
+  gearFrame(id, pages, gear) {
+    const st = GEAR_LOOK[gear.stick], sk = GEAR_LOOK[gear.skates];
+    if (!st && !sk) return null;
+    const mf = Assets.frame('gm:' + id);
+    const f = Assets.frame(id);
+    if (!mf || !f || !Assets.pages[mf[0]] || !pages[f[0]]) return null;
+    this.gearCache ||= new Map();
+    const key = `${id}|${pages === Assets.pages ? 'h' : pages === this.awayPages ? 'a' : 'k'}|${gear.stick}|${gear.skates}`;
+    let c = this.gearCache.get(key);
+    if (c) return c;
+    const [pi, fx, fy, fw, fh] = f;
+    c = document.createElement('canvas'); c.width = fw; c.height = fh;
+    const cx = c.getContext('2d', { willReadFrequently: true });
+    cx.drawImage(pages[pi], fx, fy, fw, fh, 0, 0, fw, fh);
+    const m = document.createElement('canvas'); m.width = fw; m.height = fh;
+    const mx = m.getContext('2d', { willReadFrequently: true });
+    mx.drawImage(Assets.pages[mf[0]], mf[1], mf[2], mf[3], mf[4], 0, 0, mf[3], mf[4]);
+    const img = cx.getImageData(0, 0, fw, fh), d = img.data, md = mx.getImageData(0, 0, fw, fh).data;
+    const rgb = (hex) => [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+    const stick = st && rgb(st.color), boot = sk && rgb(sk.color).map((v) => v * 0.55), blade = sk && rgb(sk.color);
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i + 3] < 10 || md[i + 3] < 128) continue;
+      const col = md[i] > 127 ? stick : md[i + 1] > 127 ? boot : md[i + 2] > 127 ? blade : null;
+      if (!col) continue;
+      const l = (d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11) / 255;
+      if (l < 0.2) continue; // outline
+      const k = 0.35 + l * 0.85;
+      d[i] = Math.min(255, col[0] * k); d[i + 1] = Math.min(255, col[1] * k); d[i + 2] = Math.min(255, col[2] * k);
+    }
+    cx.putImageData(img, 0, 0);
+    if (this.gearCache.size > 400) this.gearCache.delete(this.gearCache.keys().next().value);
+    this.gearCache.set(key, c);
+    return c;
+  }
+
+  drawFrameCanvas(ctx, c, f, x, y, k, flip, rot) {
+    const sc = k / f[7];
+    ctx.save();
+    ctx.translate(x, y);
+    if (rot) ctx.rotate(rot);
+    ctx.scale(flip ? -sc : sc, sc);
+    ctx.drawImage(c, -f[5], -f[6]);
+    ctx.restore();
   }
 
   drawGhost(ctx, g, match) {
@@ -744,7 +841,8 @@ export class Renderer {
     // trail
     if (p.trail.length > 1) {
       const cb = p.shot && p.shot.special && p.shot.special.combo;
-      const col = cb ? COMBOS[cb].colors[1] : p.shot && p.shot.power ? POWER_INFO[p.shot.power].color : p.power ? POWER_INFO[p.power].color : '#ffffff';
+      const stick = p.shot && p.shot.by && p.shot.by.gear && GEAR_LOOK[p.shot.by.gear.stick];
+      const col = cb ? COMBOS[cb].colors[1] : p.shot && p.shot.power ? POWER_INFO[p.shot.power].color : p.power ? POWER_INFO[p.power].color : stick && p.shot ? stick.color : '#ffffff';
       ctx.lineCap = 'round';
       for (let i = 1; i < p.trail.length; i++) {
         const a = toScreen(p.trail[i - 1].x, p.trail[i - 1].y, p.trail[i - 1].z);
@@ -796,6 +894,9 @@ export class Renderer {
       if (p.kind === 'confetti') {
         const w = p.size * 1.6, h = p.size * Math.abs(Math.cos(p.rot));
         ctx.fillRect(s.x - w / 2, s.y - h / 2, w, h + 0.5);
+      } else if (p.kind === 'line') {
+        ctx.strokeStyle = p.color; ctx.lineWidth = p.size;
+        ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x + p.dx, s.y + p.dy); ctx.stroke();
       } else ctx.fillRect(s.x - p.size / 2, s.y - p.size / 2, p.size, p.size);
     }
     ctx.globalAlpha = 1;

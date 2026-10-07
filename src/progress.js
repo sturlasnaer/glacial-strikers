@@ -177,7 +177,7 @@ export function matchConfig(save, teamId, stage, opts = {}) {
       const m = member(who);
       return {
         def: m.def, who, stats: effectiveStats(who, save.roster[who]), name: m.name, perks: perkNames(save.roster[who]),
-        sprite: m.recruit ? m.recruit.sprite : null, look: m.recruit ? 'homekit' : null,
+        sprite: m.recruit ? m.recruit.sprite : null, look: m.recruit ? 'homekit' : null, gear: { ...save.roster[who].gear },
       };
     }),
     goalie: { stats: goalieStats(save), name: GOALIE.name },

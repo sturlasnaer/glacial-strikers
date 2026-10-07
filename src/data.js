@@ -92,6 +92,28 @@ export const GEAR = [
 
 export const GEAR_BY_ID = Object.fromEntries(GEAR.map((g) => [g.id, g]));
 
+// How gear shows on the ice. Sticks glow at the blade (and colour shots), skates leave
+// a trail, protection shows when it does its job. Starter gear has no look.
+// color/accent also drive recolour masks for sticks and skates when that art exists.
+export const GEAR_LOOK = {
+  stick_pass: { color: '#5fd3e6', accent: '#e8fbff', fx: 'tape', desc: 'Tape-blue glow on the puck and shot trail' },
+  stick_slap: { color: '#c9752e', accent: '#ffd27a', fx: 'heat', desc: 'Heat haze on the windup' },
+  stick_frost: { color: '#9fe8ff', accent: '#ffffff', fx: 'frost', desc: 'Frost mist and an icy shot trail' },
+  stick_bolt: { color: '#ffd23f', accent: '#fffbd1', fx: 'sparks', desc: 'Sparks crackle on the windup' },
+  stick_grav: { color: '#8a55e0', accent: '#e3cfff', fx: 'swirl', desc: 'Purple swirl and a gravity ring on release' },
+  // mark: the colour each stride cuts into the ice
+  skate_agile: { color: '#8fd0ff', trail: 'carve', mark: 'rgba(120,190,255,0.6)', desc: 'Bright carve spray on tight turns' },
+  skate_race: { color: '#d8ecff', trail: 'streak', mark: 'rgba(110,170,240,0.55)', long: true, desc: 'Long blue speed lines' },
+  skate_tank: { color: '#6f7a8f', trail: 'gouge', mark: 'rgba(45,55,75,0.5)', wide: true, desc: 'Deep dark gouges in the ice' },
+  skate_frost: { color: '#7fe3ff', trail: 'frost', mark: 'rgba(60,200,235,0.65)', desc: 'Frost trail and cyan skate marks' },
+  skate_bolt: { color: '#ffd23f', trail: 'sparks', mark: 'rgba(255,190,30,0.65)', desc: 'Sparks and golden skate marks' },
+  arm_vest: { show: 'puff', desc: 'Soft puff when you take a hit' },
+  arm_should: { show: 'shield', color: '#d8c39a', desc: 'Stone shield flash when you\'re hit' },
+  arm_helm: { show: 'glint', desc: 'Visor glint' },
+  arm_glove: { show: 'grip', color: '#ffd45e', desc: 'Golden sparkle on clean catches' },
+  arm_legs: { show: 'guard', color: '#bff4ff', desc: 'Icy flash on blocked shots' },
+};
+
 // Rival teams use the away sprites. recolor shifts the coral/violet jersey hues.
 export const TEAMS = {
   home: {

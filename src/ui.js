@@ -4,7 +4,7 @@ import { Assets } from './assets.js';
 import {
   CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
-  RECRUITS, member, comboFor, recruitKey, pairKey,
+  RECRUITS, member, comboFor, recruitKey, pairKey, GEAR_LOOK,
 } from './data.js';
 import { standings } from './league.js';
 import { BUFF_TEXT } from './lockerroom.js';
@@ -83,6 +83,9 @@ function npc(key, text) {
   return `<div class="npc"><img src="${img}" alt=""><div class="say"><b>${NPC_NAMES[key]}</b>${esc(text)}</div></div>`;
 }
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+// How a piece of gear shows on the ice.
+const lookHtml = (id) => (GEAR_LOOK[id] && GEAR_LOOK[id].desc ? `<div class="look">On the ice: ${esc(GEAR_LOOK[id].desc)}</div>` : '');
 
 function modsHtml(mods) {
   const parts = Object.entries(mods).filter(([, v]) => v).map(([k, v]) =>
@@ -678,7 +681,7 @@ export class UI {
       <div class="choice">${items.map((g) => `
         <button class="btn ${g.id === cur ? 'cream' : 'ghost'}" data-eq="${g.id}" style="display:grid;grid-template-columns:52px 1fr;gap:10px;align-items:center">
           <img src="${ico(g.icon, 92)}" alt="" width="52" height="52">
-          <span><b>${esc(g.name)}${g.id === cur ? ' (equipped)' : ''}</b>${modsHtml(g.mods)}</span>
+          <span><b>${esc(g.name)}${g.id === cur ? ' (equipped)' : ''}</b>${modsHtml(g.mods)}${lookHtml(g.id)}</span>
         </button>`).join('')}</div>
       <p class="muted" style="margin:0;font-size:12.5px">Buy more gear in the shop. Owned gear can be shared by the whole team.</p>
       <button class="btn small ghost" data-close>Done</button>`, (m, close) => {
@@ -710,7 +713,7 @@ export class UI {
             <div class="label" style="font-size:13px">${SLOT_NAMES[g.slot]}</div>
             <h4>${esc(g.name)}</h4>
             <p>${esc(g.text)}</p>
-            ${modsHtml(g.mods)}
+            ${modsHtml(g.mods)}${lookHtml(g.id)}
             <div class="buy">${owned ? '<span class="good" style="font-family:var(--display);font-size:20px">OWNED</span>'
               : `<span class="price"><img src="${ico('equipment_items/reward/coins', 40)}" alt="">${price}${s.discount ? ` <s class="muted" style="font-size:14px">${g.price}</s>` : ''}</span>
                  <button class="btn small ${afford ? 'gold' : ''}" data-buy="${g.id}" ${afford ? '' : 'disabled'}>Buy</button>`}</div>

@@ -69,6 +69,7 @@ export class Skater {
     this.sprite = opts.sprite || def.sprite; // rivals have their own roster art
     this.who = opts.who || def.id; // roster member (recruits share a kit's def)
     this.look = opts.look || null; // palette for recruits in our colours
+    this.gear = opts.gear || null; // equipped gear ids, for how it shows on the ice
     this.id = `${team}-${def.id}`;
     this.stats = stats;
     this.d = derive(stats);

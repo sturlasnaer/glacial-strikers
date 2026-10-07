@@ -6,10 +6,11 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 **Next batches:**
 1. **G**: goalies (front, back, skating, puck handling, reactions).
-2. **B**: atmosphere (two more arenas, fans at the glass).
-3. **H**: locker-room life.
-4. **I**: arena-rule art.
-5. **C**: polish.
+2. **M**: gear masks, so equipped sticks and skates recolour on the players.
+3. **B**: atmosphere (two more arenas, fans at the glass).
+4. **H**: locker-room life.
+5. **I**: arena-rule art.
+6. **C**: polish.
 
 ## Format notes
 
@@ -69,6 +70,29 @@ For a pulled goalie skating to the bench and back, and for covering pucks wide o
 - Total: 5 × 7 = **35 frames**.
 
 **Batch G total:** about 168 frames. If that's too many at once, do G1 and G2 for Halla first (11 poses × 2 colours = 22 frames), then the rivals.
+
+---
+
+## Batch M: gear masks (sticks and skates)
+
+Equipped gear already shows on the ice through code effects: skate trails and coloured skate marks, stick glow, crackle and shot trails, and armour flashes. To also **recolour the stick and skates on the sprite itself** for every pose, the game needs one mask per skater sheet. The game's renderer and asset builder already support these, so they drop straight in.
+
+**What to make:** for each sheet below, `<sheet>_gearmask.png`.
+- Exactly the **same pixel size and layout** as the sheet, painted over the same poses.
+- **Pure red `#FF0000`:** the stick, meaning shaft, blade and tape.
+- **Pure green `#00FF00`:** the skate boots.
+- **Pure blue `#0000FF`:** the skate blades.
+- **Everything else transparent.**
+- Hard edges and only those three colours, no anti-aliasing. Cover the art's own pixels and don't paint past the outline.
+- The game shades each recoloured pixel by the original art's brightness and keeps the dark outlines, so the masks only say *which* pixels, not what colour.
+
+**Sheets (58)**, the ones our skaters and signings use:
+- v1: `frost_captain`, `thunder_winger`, `stone_defender`
+- P1: `nix_`, `volta_`, `bram_` × `diagonals`, `skating`, `hit_reactions` (9)
+- v2: `signature_celebrations`, plus the 15 rival sheets `<team>_<role>` (`aurora_royals_c` … `pinewood_lynx_d`)
+- v4: the 30 rival sheets `<team>_<role>_diagonals` and `<team>_<role>_hit_reactions`
+
+**Delivery:** a folder `Glacial-Strikers-Gear-Masks/sheets/` containing the 58 PNGs. No atlas is needed: the builder cuts masks with the existing frame rectangles. If that's too much at once, start with the three v1 sheets and the P1 sheets (13). Those cover Nix, Volta and Bram in every pose.
 
 ---
 

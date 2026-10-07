@@ -53,7 +53,7 @@ const skaterCfg = (save, who) => {
   const m = member(who);
   return {
     def: m.def, who, stats: effectiveStats(who, save.roster[who]), name: m.name, perks: perkNames(save.roster[who]),
-    sprite: m.recruit ? m.recruit.sprite : null, look: m.recruit ? 'homekit' : null,
+    sprite: m.recruit ? m.recruit.sprite : null, look: m.recruit ? 'homekit' : null, gear: { ...save.roster[who].gear },
   };
 };
 const homeChem = (save) => Object.fromEntries(Object.keys(save.chem || {}).map((k) => [k, chemLevel(save.chem[k] || 0)]));

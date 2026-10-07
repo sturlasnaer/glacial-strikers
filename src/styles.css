@@ -536,3 +536,5 @@ body.in-hub.hub-room #screen { background: linear-gradient(rgba(8, 14, 26, 0.82)
 @keyframes crew-bob { 0%, 100% { transform: translate(-50%, -100%); } 50% { transform: translate(-50%, calc(-100% - 3px)); } }
 .tab.room-tab { background: rgba(255, 242, 203, 0.12); }
 @media (prefers-reduced-motion: reduce) { .crew { animation: none; } }
+.look { margin-top: 3px; font-size: 12px; color: var(--ice); letter-spacing: 0.01em; }
+.look::before { content: "✦ "; color: var(--gold, #ffd45e); }

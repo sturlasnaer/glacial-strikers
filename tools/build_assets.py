@@ -30,6 +30,10 @@ PACK = sys.argv[1] if len(sys.argv) > 1 else '../assets/Glacial-Strikers-Expansi
 OUT = sys.argv[2] if len(sys.argv) > 2 else 'assets/gfx'
 ADDON = sys.argv[3] if len(sys.argv) > 3 else '../assets/Glacial-Strikers-v3-Arena-Add-On'
 BATCH_A = sys.argv[4] if len(sys.argv) > 4 else '../assets/Glacial-Strikers-v4-Batch-A'
+# Gear masks: <sheet>_gearmask.png beside each skater sheet's layout, painted pure red
+# (#ff0000) on the stick, green (#00ff00) on skate boots, blue (#0000ff) on blades.
+# The game recolours those pixels for the equipped gear.
+GEAR_MASKS = sys.argv[5] if len(sys.argv) > 5 else '../assets/Glacial-Strikers-Gear-Masks'
 
 # Atlas pixels per source pixel for v1 sheets. Picked so each sprite is close to its
 # on-screen size on a 2x phone screen while keeping the download small.
@@ -204,16 +208,43 @@ sig_ratio = {name: standing_ratio('signature_celebrations', v1_h[v1]) for name, 
 items = []
 
 
-def add_item(fid, img, px, py, s, group):
+def add_item(fid, img, px, py, s, group, mask=None):
     a = np.array(img)[..., 3]
     ys, xs = np.nonzero(a > 6)
     if len(xs):
         x0, y0 = max(0, xs.min() - 1), max(0, ys.min() - 1)
         x1, y1 = min(img.width, xs.max() + 2), min(img.height, ys.max() + 2)
         img = img.crop((x0, y0, x1, y1))
+        if mask is not None:
+            mask = mask.crop((x0, y0, x1, y1))
         px -= x0
         py -= y0
     items.append({'id': fid, 'img': img, 'px': round(px, 1), 'py': round(py, 1), 'scale': s, 'group': group})
+    if mask is not None and np.array(mask)[..., :3].any():
+        items.append({'id': 'gm:' + fid, 'img': mask, 'px': round(px, 1), 'py': round(py, 1), 'scale': s, 'group': 'gearmask'})
+
+
+mask_sheets = {}
+
+
+def gear_mask(fid, f, nw, nh):
+    """The frame's gear mask, cropped and scaled exactly like the frame (or None)."""
+    sh = f['sheet']
+    if sh not in mask_sheets:
+        path = os.path.join(GEAR_MASKS, 'sheets', sh + '_gearmask.png')
+        mask_sheets[sh] = Image.open(path).convert('RGB') if os.path.exists(path) else None
+    m = mask_sheets[sh]
+    if m is None:
+        return None
+    r = f['frame']
+    m = m.crop((r['x'], r['y'], r['x'] + r['w'], r['y'] + r['h'])).resize((nw, nh), Image.NEAREST)
+    a = np.array(m)
+    out = np.zeros((nh, nw, 4), np.uint8)
+    # snap to the three channels so resampling never invents mixed colours
+    for c in range(3):
+        out[..., c] = np.where(a[..., c] > 127, 255, 0)
+    out[..., 3] = np.where(out[..., :3].any(-1), 255, 0)
+    return Image.fromarray(out)
 
 
 for fid, f in frames.items():
@@ -249,7 +280,10 @@ for fid, f in frames.items():
         px, py = foot_pivot(img)
     else:
         px, py = f['pivot_pixels']['x'] * k, f['pivot_pixels']['y'] * k
-    add_item(fid, img, px, py, s, group_of(fid))
+    mask = gear_mask(fid, f, nw, nh) if foot else None
+    if mask is not None:
+        mask = Image.fromarray(np.where(np.array(img)[..., 3:4] > 6, np.array(mask), 0).astype(np.uint8))
+    add_item(fid, img, px, py, s, group_of(fid), mask)
 
 # ---------------------------------------------------------------- v3 arena add-on
 # World scales: net 0.38 (mouth = 76 world px), scoreboard 0.09, banners 0.185,
@@ -335,7 +369,7 @@ crowd = {team: {pose: [f'crowd_fans/{team}/{pose}/fan_{i}' for i in range(1, 9)]
 # ---------------------------------------------------------------- packing
 out_frames = {}
 pages = []
-groups = ['home', 'away'] + ['rival_' + t for t in RIVALS]
+groups = ['home', 'away'] + ['rival_' + t for t in RIVALS] + ['gearmask']
 for group in groups:
     group_items = sorted([i for i in items if i['group'] == group], key=lambda i: -i['img'].height)
     page_imgs = []
@@ -361,7 +395,10 @@ for group in groups:
         rows = np.nonzero(a.any(axis=1))[0]
         p = p.crop((0, 0, PAGE, int(rows.max()) + PAD + 1))
         name = f'{group}_{idx}.webp'
-        p.save(os.path.join(OUT, name), 'WEBP', quality=90, method=6, alpha_quality=100)
+        if group == 'gearmask':
+            p.save(os.path.join(OUT, name), 'WEBP', lossless=True, method=6)  # exact channels
+        else:
+            p.save(os.path.join(OUT, name), 'WEBP', quality=90, method=6, alpha_quality=100)
         pages.append({'file': 'gfx/' + name, 'group': group, 'w': p.width, 'h': p.height})
     for it in group_items:
         pi, fx, fy, fw, fh = it['rect']
