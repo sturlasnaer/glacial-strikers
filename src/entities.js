@@ -1,11 +1,12 @@
 // Skaters, goalies, the puck and stone barriers. Pure simulation, no DOM.
 
 import { clamp, norm, angDiff, segDist } from './util.js';
-import { constrainToRink, collideNets, GOAL_X, MOUTH, NET_DEPTH, POST_R, CROSSBAR, persp } from './rink.js';
+import { constrainToRink, collideNets, RINK, GOAL_X, MOUTH, NET_DEPTH, POST_R, CROSSBAR, persp } from './rink.js';
 
 export const SKATER_R = 15;
 export const PUCK_R = 6;
 export const GOALIE_R = 21;
+const POKE_REACH = 16; // how far past touching a goalie's poke check reaches
 
 // Convert 1-10 stats into physics numbers.
 export function derive(stats) {
@@ -364,6 +365,9 @@ export class Goalie {
     this.flash = 0;
     this.saves = 0;
     this.shotsFaced = 0;
+    this.pokeCd = 0;
+    this.stopPose = false; // smothered a loose puck with the stick (pose only)
+    this.leaving = false; this.leaveX = 0; this.leaveY = 0; // skating to the bench when pulled (visual)
     this.id = `${team}-goalie`;
   }
   get lat() { return (120 + this.stats.rfx * 11) * (this.slowT > 0 ? 0.45 : 1); }
@@ -390,7 +394,8 @@ export class Goalie {
   update(dt) {
     const m = this.match, p = m.puck;
     this.stateT += dt;
-    if (this.disabled) return;
+    if (this.disabled) { if (this.leaving) this.skateOff(dt); return; }
+    if (this.state === 'skate_in') { this.skateIn(dt); return; }
     this.slowT = Math.max(0, this.slowT - dt);
     if (this.flash > 0) this.flash -= dt;
     const gx = this.goalSide * GOAL_X;
@@ -428,6 +433,11 @@ export class Goalie {
       this.shuffle = Math.abs(this.vy) > 40 ? Math.sign(this.vy) : 0;
       return;
     }
+
+    // caught out of position on the way back from the bench: hurry to the crease
+    if (Math.abs(this.x - this.goalSide * (GOAL_X - 28)) > 80) { this.setState('skate_in'); return; }
+    this.pokeCd = Math.max(0, this.pokeCd - dt);
+    if (this.state === 'ready' && this.pokeCd <= 0 && m.state === 'play') this.tryPoke();
 
     // target position: stay on the line between puck and goal centre
     const px = p.x, py = p.y;
@@ -487,6 +497,36 @@ export class Goalie {
     this.x += clamp((tx - this.x) * 6, -120, 120) * dt;
     if (!this.track && this.state !== 'ready' && this.stateT > 0.45) this.setState('ready');
     if (!this.track && Math.abs(this.vy) > 40) this.shuffle = Math.sign(this.vy); else this.shuffle = 0;
+  }
+
+  // Poke check: a carrier cutting in close in front of the crease.
+  tryPoke() {
+    const m = this.match, c = m.puck.owner;
+    if (!c || !c.isSkater || c.team === this.team || this.slowT > 0) return;
+    const ahead = (c.x - this.x) * -this.goalSide;
+    if (ahead < 4 || Math.hypot(c.x - this.x, c.y - this.y) > this.r + c.r + POKE_REACH) return;
+    this.pokeCd = 1.5;
+    this.setState('poke');
+    if (m.rng() < 0.22 + this.stats.rfx * 0.02) m.goaliePoke(this, c);
+  }
+
+  // Pulled: skate off to the bench. Only for show; the goalie is already out of play.
+  skateOff(dt) {
+    const bx = this.team === 0 ? -20 : 20, by = RINK.minY + 8;
+    const dx = bx - this.leaveX, dy = by - this.leaveY, d = Math.hypot(dx, dy);
+    const step = 420 * dt;
+    if (d <= step) { this.leaving = false; return; }
+    this.leaveX += (dx / d) * step; this.leaveY += (dy / d) * step;
+  }
+
+  // Back from the bench: skate to the crease, blocking anything on the way.
+  skateIn(dt) {
+    const tx = this.goalSide * (GOAL_X - 28);
+    const dx = tx - this.x, dy = -this.y, d = Math.hypot(dx, dy);
+    const sp = 540;
+    if (d <= sp * dt) { this.x = tx; this.y = 0; this.vx = 0; this.vy = 0; this.setState('ready'); return; }
+    this.vx = (dx / d) * sp; this.vy = (dy / d) * sp;
+    this.x += this.vx * dt; this.y += this.vy * dt;
   }
 
   predictY() {

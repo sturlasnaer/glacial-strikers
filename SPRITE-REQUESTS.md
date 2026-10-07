@@ -1,23 +1,22 @@
 # Sprite requests
 
-What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on and v4 Batch A.
+What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A and the v5 goalies.
 
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **G**: goalies (front, back, skating, puck handling, reactions).
-2. **M**: gear masks, so equipped sticks and skates recolour on the players.
-3. **B**: atmosphere (two more arenas, fans at the glass).
-4. **H**: locker-room life.
-5. **I**: arena-rule art.
-6. **C**: polish.
+1. **M**: gear masks, so equipped sticks and skates recolour on the players.
+2. **B**: atmosphere (two more arenas, fans at the glass).
+3. **H**: locker-room life.
+4. **I**: arena-rule art.
+5. **C**: polish.
 
 ## Format notes
 
 - Transparent PNG sheets plus an add-on `atlas.json` in the v2 format. Batch A's layout worked perfectly: add-on atlas, `<team>_<role>_<kind>.png` sheets, wide gutters, tight frame rectangles, and a builder patch. Please keep that.
 - Same camera (45° overhead), chibi proportions, navy outlines and palette.
 - Skaters about 152 px standing (`recommended_standing_height`), skates on a consistent baseline.
-- Goalies match `halla_side_goalies` scale (the ready pose is about 205 px tall in that sheet).
+- Goalies match `halla_side_goalies` scale (the ready pose is about 205 px tall in that sheet). The v5 goalie sheets got this right.
 - Side-view poses face **right**. The game mirrors them for the other side.
 - Home colours teal/cream/navy. Every rival is drawn in **coral + violet** and recoloured at runtime, so keep coral and violet off skin and hair.
 
@@ -30,50 +29,11 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - **v2:** five rival casts, goalies, portraits and expressions, crests, cut-in banners, signature celebrations, three arenas, crowd fans, the locker room and the hub characters.
 - **v3:** side-view nets, near glass, scoreboard, team banners and the Snow Fox.
 - **v4 Batch A:** rival diagonals (240), rival hit reactions (90), and Blaze and Horn expressions (10).
+- **v5 goalies (Batch G):** front, back, skating and puck handling for Halla (home and away) and the five rival goalies (168 frames). In the game: wave, pad taps, celebrations and dejection facing the camera; fishing the puck out after goals; looking back when the puck goes behind the net; skating to and from the bench; pass wind-ups, stick stops and poke checks; Halla's front view in the locker room.
 
 ---
 
-## Batch G: goalies (next)
-
-The goalies only have side-on poses facing the play. In the game they now stand **inside** the net when they're in the goal mouth: the net's front layer (near post, roof, near-side mesh) is drawn over the parts of them behind the goal line. So new poses can sit in the crease or the net and still layer correctly.
-
-Make every set below for **Halla** (home and away colours) and the **five rival goalies** (away colours: Royals, Comets, Rams, Ravens, Lynx), keeping each goalie's mask and helmet.
-
-### G1. Front view (facing the camera)
-For the locker room, menus, results ("player of the match"), the shootout intro and anywhere a goalie faces the viewer. v1 has an old front view of Halla only; this replaces it and adds the rivals.
-- **Idle ready** ×2 (a breathing loop)
-- **Wave**
-- **Celebrate** (arms and stick up)
-- **Dejected** (head down)
-- **Tap pads** (between-whistle fidget)
-- Total: 6 poses × 7 goalie variants = **42 frames**.
-
-### G2. Back view (facing their own net)
-Used when the puck goes behind the goal line, after a goal against, and when a goalie returns to the crease.
-- **Ready, facing the net**
-- **Look back over the shoulder**
-- **Fishing the puck out of the net** ×2 (bent over, inside the mouth)
-- **Dejected, facing the net**
-- Total: 5 poses × 7 = **35 frames**. These are seen from behind at the same 45° overhead angle, with the goalie's back toward the camera's right.
-
-### G3. Skating
-For a pulled goalie skating to the bench and back, and for covering pucks wide of the net.
-- **4-frame skate cycle, facing right**
-- **Skating away from the camera** ×2
-- **Skating toward the camera** ×2
-- Total: 8 × 7 = **56 frames**.
-
-### G4. Puck handling
-- **Stick pass:** wind-up and release (the goalie already clears pucks to teammates).
-- **Poke check** ×2.
-- **Stopping the puck behind the net** ×1.
-- Total: 5 × 7 = **35 frames**.
-
-**Batch G total:** about 168 frames. If that's too many at once, do G1 and G2 for Halla first (11 poses × 2 colours = 22 frames), then the rivals.
-
----
-
-## Batch M: gear masks (sticks and skates)
+## Batch M: gear masks (sticks and skates) (next)
 
 Equipped gear already shows on the ice through code effects: skate trails and coloured skate marks, stick glow, crackle and shot trails, and armour flashes. To also **recolour the stick and skates on the sprite itself** for every pose, the game needs one mask per skater sheet. The game's renderer and asset builder already support these, so they drop straight in.
 
@@ -148,4 +108,3 @@ The arena rules are drawn in code today. Sprites would look richer:
 ## Later
 
 - **Left-facing goalie sets.** Mirroring swaps the catching hand.
-- **Gear overlays** for sticks and skates, once animations are final.

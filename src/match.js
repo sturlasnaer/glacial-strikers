@@ -674,6 +674,16 @@ export class Match {
     this.emit('goalie_pass', { g });
   }
 
+  // The goalie pokes the puck off a carrier's stick, out to the side of the crease.
+  goaliePoke(g, s) {
+    const p = this.puck;
+    this.loosePuck(s);
+    const d = norm(-g.goalSide * 0.45, Math.sign(p.y - g.y) || (this.rng() < 0.5 ? -1 : 1));
+    p.vx = d.x * 320; p.vy = d.y * 320;
+    p.noPickup.set(s, 0.35); p.noPickup.set(g, 0.6);
+    this.emit('poke_check', { g, s });
+  }
+
   updatePuck(dt) {
     const p = this.puck;
     for (const [k, v] of p.noPickup) { if (v - dt <= 0) p.noPickup.delete(k); else p.noPickup.set(k, v - dt); }
@@ -896,7 +906,7 @@ export class Match {
     p.noPickup.set(g, 0.4);
     p.rolled.clear();
     g.saveHi = p.z > 14 || p.y < g.y;
-    g.setState(Math.abs(off) > 10 ? 'glove' : 'butterfly');
+    if (g.state !== 'skate_in') g.setState(Math.abs(off) > 10 ? 'glove' : 'butterfly');
     this.emit('save', { g, caught: false, speed, x: p.x, y: p.y });
     return false;
   }
@@ -908,6 +918,7 @@ export class Match {
     p.vx = 0; p.vy = 0; p.vz = 0; p.z = 0;
     g.setState('hold');
     g.holdT = 0.9;
+    g.stopPose = !fromShot;
     g.track = null; g.react = null;
     if (p.power === 'ice') { /* ice power survives */ }
     this.emit('save', { g, caught: true, x: p.x, y: p.y, fromShot });
@@ -1255,6 +1266,7 @@ export class Match {
   pullGoalie(team) {
     const g = this.goalies.find((k) => k.team === team);
     if (this.puck.owner === g) return;
+    g.leaving = true; g.leaveX = g.x; g.leaveY = g.y;
     g.disabled = true; g.x = g.goalSide * 900; g.y = 900;
     const c = this.extraCfg[team];
     const x = new Skater(this, team, c.def, c.stats, 3, { name: c.name, perks: [], sprite: c.sprite, look: c.look, who: 'extra' });
@@ -1274,8 +1286,12 @@ export class Match {
     this.skaters.splice(this.skaters.indexOf(x), 1);
     this.extra[team] = null;
     const g = this.goalies.find((k) => k.team === team);
-    g.disabled = false; g.x = g.goalSide * (GOAL_X - 28); g.y = 0; g.setState('ready'); g.react = null; g.track = null;
-    if (!silent) this.emit('goalie_returned', { team });
+    g.disabled = false; g.leaving = false; g.react = null; g.track = null;
+    if (silent) { g.x = g.goalSide * (GOAL_X - 28); g.y = 0; g.setState('ready'); return; }
+    // mid-play: skate back from the bench gate, leaving the net open for a moment
+    g.x = team === 0 ? -20 : 20; g.y = RINK.minY + 24;
+    g.setState('skate_in');
+    this.emit('goalie_returned', { team });
   }
 
   // AI coaches pull their goalie when they're running out of time.

@@ -143,10 +143,14 @@ export class Renderer {
     // A goalie standing in the goal mouth draws inside the net: back layer, puck, goalie,
     // then the front layer (near post, roof, near-side mesh) over them. Out of the crease
     // they draw in front of it.
+    this.goaliePoses = new Map();
     for (const g of match.goalies) {
-      if (g.disabled) continue;
-      const inMouth = this.goalieInMouth(g);
-      list.push({ y: inMouth ? NET_KEY - 0.2 : Math.max(g.y + 1, NET_KEY + 0.5), f: () => this.drawGoalie(ctx, g, match) });
+      if (g.disabled && !g.leaving) continue;
+      const pose = this.goaliePose(g, match, ui.replay);
+      this.goaliePoses.set(g, pose);
+      if (g.disabled) { list.push({ y: g.leaveY, f: () => this.drawGoalie(ctx, g, match, pose) }); continue; } // skating off to the bench
+      const inMouth = this.goalieInMouth(g) && !(pose && pose.front); // facing the camera: step out in front of the net
+      list.push({ y: inMouth ? NET_KEY - 0.2 : Math.max(g.y + 1, NET_KEY + 0.5), f: () => this.drawGoalie(ctx, g, match, pose) });
     }
     if (match.drill && match.drill.sprites) for (const sp of match.drill.sprites(match, this, Assets)) list.push({ y: sp.y, f: () => sp.f(ctx) });
     list.push({ y: inNet ? NET_KEY - 0.25 : p.owner ? p.y + 0.5 : p.y, f: () => this.drawPuck(ctx, p, fx, match) });
@@ -463,8 +467,8 @@ export class Renderer {
       ctx.beginPath(); ctx.ellipse(p.x, p.y, 21 * k, 7 * k, 0, 0, Math.PI * 2); ctx.fill();
     }
     for (const g of match.goalies) {
-      if (g.disabled) continue;
-      const p = toScreen(g.x, g.y);
+      if (g.disabled && !g.leaving) continue;
+      const p = g.disabled ? toScreen(g.leaveX, g.leaveY) : toScreen(g.x, g.y);
       ctx.beginPath(); ctx.ellipse(p.x, p.y, 28, 9, 0, 0, Math.PI * 2); ctx.fill();
     }
     const pk = match.puck;
@@ -795,37 +799,94 @@ export class Renderer {
     return set[pose] || set.ready;
   }
 
-  drawGoalie(ctx, g, match) {
+  // A goalie's art sets: their own rival art once it's loaded, otherwise home or away.
+  goalieSets(g) {
+    const A = Assets.atlas, key = g.team === 0 ? 'home' : 'away';
+    const pick = (all, probe) => {
+      const own = all && g.art && all[g.art];
+      const f = own && Assets.frame(probe(own));
+      return f && Assets.pages[f[0]] ? own : all && all[key];
+    };
+    return {
+      side: pick(A.goalies_side, (s) => s.ready),
+      front: pick(A.goalies_front, (s) => s.idle_a),
+      back: pick(A.goalies_back, (s) => s.ready),
+      skate: pick(A.goalies_skating, (s) => s.east.frames[0]),
+      puck: pick(A.goalies_puck_handling, (s) => s.pass_windup),
+    };
+  }
+
+  // Which pose a goalie shows: { id, flip, hidePuck }. Side, back and puck-handling art
+  // faces right (toward the play from the left net) and is mirrored at the right net.
+  // The front view faces the camera and is never mirrored.
+  goaliePose(g, match, replay) {
+    const S = this.goalieSets(g);
+    if (!S.side) return null;
+    const flip = g.goalSide > 0;
+    const ms = match.state, mt = match.stateT;
+    const beat = (t, n, rate) => Math.floor(t * rate) % n;
+    // skating to the bench when pulled, or back to the crease
+    if (S.skate && ((g.disabled && g.leaving) || g.state === 'skate_in')) {
+      const vx = g.disabled ? (g.team === 0 ? -20 : 20) - g.leaveX : g.vx;
+      const vy = g.disabled ? RINK.minY - g.leaveY : g.vy;
+      const dir = Math.abs(vx) > Math.abs(vy) * 0.8 ? (vx > 0 ? 'east' : 'west') : vy < 0 ? 'north' : 'south';
+      const set = S.skate[dir];
+      return { id: set.frames[beat(g.stateT, set.frames.length, 7)], flip: !!set.flip_x };
+    }
+    // whistles: face the camera; after a goal against, turn and fish the puck out
+    if (!replay && S.front && S.back) {
+      const F = S.front, B = S.back;
+      if (ms === 'intro') return { id: F.wave, flip: false, front: true };
+      if (ms === 'faceoff' && mt < 0.75) return { id: beat(mt, 2, 5) ? F.tap_pads : F.idle_a, flip: false, front: true };
+      if (ms === 'penalty') return { id: beat(mt, 2, 1.6) ? F.idle_b : F.idle_a, flip: false, front: true };
+      if (ms === 'over') return { id: match.winner === g.team ? (beat(mt, 2, 2.5) ? F.wave : F.celebrate) : F.dejected, flip: false, front: true };
+      if (ms === 'goal' && match.lastGoal) {
+        if (match.lastGoal.team === g.team) return { id: mt < 0.25 ? F.idle_a : F.celebrate, flip: false, front: true };
+        if (mt < 0.7) return { id: B.look_back, flip };
+        if (mt < 2.4) return { id: beat(mt, 2, 3.5) ? B.fish_puck_b : B.fish_puck_a, flip };
+        return { id: B.dejected, flip };
+      }
+    }
+    const P = S.puck;
+    if (P) {
+      if (g.state === 'poke') return { id: g.stateT < 0.12 ? P.poke_a : P.poke_b, flip };
+      if (g.state === 'hold' && g.holdT < 0.3) return { id: P.pass_windup, flip, hidePuck: true };
+      if (g.state === 'hold' && g.stopPose && g.stateT < 0.4) return { id: P.stop_behind_net, flip, hidePuck: true };
+      if (g.state === 'ready' && g.prevState === 'hold' && g.stateT < 0.22) return { id: P.pass_release, flip };
+    }
+    // the puck's behind the goal line: look back over the shoulder
+    const p = match.puck;
+    if (S.back && g.state === 'ready' && !g.shuffle && !p.inNet && (p.x - g.goalSide * GOAL_X) * g.goalSide > 8) return { id: S.back.look_back, flip };
+    return { id: this.goalieSideFrame(g, S.side), flip };
+  }
+
+  drawGoalie(ctx, g, match, pose) {
     const key = g.team === 0 ? 'home' : 'away';
-    const gs = Assets.atlas.goalies_side || {};
-    let side = g.art && gs[g.art];
-    const sf = side && Assets.frame(side.ready);
-    if (!sf || !Assets.pages[sf[0]]) side = gs[key];
-    if (side) {
-      const id = this.goalieSideFrame(g, side);
-      const p = toScreen(g.x, g.y);
+    if (pose) {
+      const { id, flip } = pose;
+      const wx = g.disabled ? g.leaveX : g.x, wy = g.disabled ? g.leaveY : g.y;
+      const p = toScreen(wx, wy);
       const pages = g.team === 0 ? Assets.clubPages() : this.awayPages;
-      const flip = g.goalSide > 0; // the art faces right, toward the play from the left net
-      const k = GOALIE_SCALE * persp(g.y) * (match.mods && match.mods.has('giant') ? 1.25 : 1);
+      const k = GOALIE_SCALE * persp(wy) * (match.mods && match.mods.has('giant') ? 1.25 : 1);
       Assets.draw(ctx, id, p.x, p.y, k, { pages, flip });
       if (g.slowT > 0) this.drawTinted(ctx, id, pages, p.x, p.y, k, flip, 0, '#9fe8ff', 0.4);
       if (g.flash > 0) this.drawTinted(ctx, id, pages, p.x, p.y, k, flip, 0, '#ffffff', g.flash * 2.5);
       return;
     }
-    let pose = 'ready', rot = 0;
+    let old = 'ready', rot = 0;
     switch (g.state) {
-      case 'butterfly': pose = 'butterfly'; break;
-      case 'glove': case 'hold': pose = 'glove_save'; break;
-      case 'dive': case 'down': pose = 'dive'; rot = g.diveDir * Math.PI * 0.42 * (g.goalSide < 0 ? -1 : 1); break;
+      case 'butterfly': old = 'butterfly'; break;
+      case 'glove': case 'hold': old = 'glove_save'; break;
+      case 'dive': case 'down': old = 'dive'; rot = g.diveDir * Math.PI * 0.42 * (g.goalSide < 0 ? -1 : 1); break;
       default:
-        if (g.shuffle) pose = g.shuffle < 0 ? 'shuffle_left' : 'shuffle_right';
+        if (g.shuffle) old = g.shuffle < 0 ? 'shuffle_left' : 'shuffle_right';
     }
-    const id = `goalies/${key}_south/${pose}`;
+    const id = `goalies/${key}_south/${old}`;
     const p = toScreen(g.x, g.y);
     const pages = g.team === 0 ? Assets.clubPages() : this.awayPages;
     const flip = g.goalSide > 0;
     const k = GOALIE_SCALE * persp(g.y) * (match.mods && match.mods.has('giant') ? 1.25 : 1);
-    const yOff = pose === 'dive' ? -20 : 0;
+    const yOff = old === 'dive' ? -20 : 0;
     Assets.draw(ctx, id, p.x, p.y + yOff, k, { pages, flip, rot });
     if (g.slowT > 0) this.drawTinted(ctx, id, pages, p.x, p.y + yOff, k, flip, rot, '#9fe8ff', 0.4);
     if (g.flash > 0) this.drawTinted(ctx, id, pages, p.x, p.y + yOff, k, flip, rot, '#ffffff', g.flash * 2.5);
@@ -841,6 +902,7 @@ export class Renderer {
   }
 
   drawPuck(ctx, p, fx, match) {
+    if (p.owner && p.owner.isGoalie && this.goaliePoses && this.goaliePoses.get(p.owner)?.hidePuck) return;
     // trail
     if (p.trail.length > 1) {
       const cb = p.shot && p.shot.special && p.shot.special.combo;

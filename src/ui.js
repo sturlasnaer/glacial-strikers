@@ -294,7 +294,7 @@ export class UI {
     const crew = [...line, 'goalie'].map((id, i) => {
       const [x, y] = CREW_SPOTS[i];
       let src;
-      if (id === 'goalie') src = Assets.icon(Assets.atlas.goalies_side.home.ready, 160, CLUB_PAGES(), { flip: true });
+      if (id === 'goalie') src = Assets.icon((Assets.atlas.goalies_front || {}).home?.idle_a || Assets.atlas.goalies_side.home.ready, 160, CLUB_PAGES());
       else {
         const m = member(id);
         const set = m.recruit ? Assets.atlas.skaters[m.recruit.sprite] : Assets.atlas.skaters[m.def.sprite];

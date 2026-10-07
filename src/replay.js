@@ -2,7 +2,7 @@
 // slow motion by writing recorded positions into the live entities.
 
 const SK = ['x', 'y', 'vx', 'vy', 'face', 'state', 'stateT', 'animT', 'charging', 'chargeT', 'ultWindup', 'dashT', 'stun', 'celebrate', 'flash', 'slowT', 'slowMul', 'bedrockT', 'boostT', 'trailT', 'empowered', 'controlled', 'stopping', 'gliding'];
-const GK = ['x', 'y', 'vy', 'state', 'stateT', 'prevState', 'saveHi', 'diveDir', 'shuffle', 'slowT', 'flash'];
+const GK = ['x', 'y', 'vy', 'state', 'stateT', 'prevState', 'saveHi', 'diveDir', 'shuffle', 'slowT', 'flash', 'holdT', 'stopPose', 'disabled', 'leaving', 'leaveX', 'leaveY'];
 const LERP = new Set(['x', 'y', 'face']);
 const SECONDS = 4.2;
 const RATE = 60;
@@ -59,6 +59,7 @@ export class Replay {
     const i = Math.floor(this.t), f = this.t - i;
     const a = this.frames[i], b = this.frames[Math.min(i + 1, this.frames.length - 1)];
     m.skaters.forEach((s, k) => {
+      if (!a.s[k] || !b.s[k]) return; // an extra attacker who jumped on mid-replay
       SK.forEach((key, j) => {
         const va = a.s[k][j], vb = b.s[k][j];
         s[key] = LERP.has(key) && typeof va === 'number' ? lerpVal(key, va, vb, f) : va;

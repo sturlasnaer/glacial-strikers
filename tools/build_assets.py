@@ -34,6 +34,7 @@ BATCH_A = sys.argv[4] if len(sys.argv) > 4 else '../assets/Glacial-Strikers-v4-B
 # (#ff0000) on the stick, green (#00ff00) on skate boots, blue (#0000ff) on blades.
 # The game recolours those pixels for the equipped gear.
 GEAR_MASKS = sys.argv[5] if len(sys.argv) > 5 else '../assets/Glacial-Strikers-Gear-Masks'
+BATCH_G = sys.argv[6] if len(sys.argv) > 6 else '../assets/Glacial-Strikers-v5-Goalies'
 
 # Atlas pixels per source pixel for v1 sheets. Picked so each sprite is close to its
 # on-screen size on a 2x phone screen while keeping the download small.
@@ -68,6 +69,12 @@ if BATCH_A and os.path.exists(os.path.join(BATCH_A, 'atlas.json')):
     batch = json.load(open(os.path.join(BATCH_A, 'atlas.json')))
     src = merge(src, batch)
     batch_sheets = set(batch['sheets'])
+goalie_batch_sheets = set()
+if BATCH_G and os.path.exists(os.path.join(BATCH_G, 'atlas.json')):
+    from merge_goalies import merge_goalies
+    goalie_batch = json.load(open(os.path.join(BATCH_G, 'atlas.json')))
+    src = merge_goalies(src, goalie_batch)
+    goalie_batch_sheets = set(goalie_batch['sheets'])
 frames = src['frames']
 info = src['sheets']
 os.makedirs(os.path.join(OUT, 'cutins'), exist_ok=True)
@@ -84,7 +91,7 @@ sheets = {}
 
 def sheet(name):
     if name not in sheets:
-        root = BATCH_A if name in batch_sheets else PACK
+        root = BATCH_G if name in goalie_batch_sheets else (BATCH_A if name in batch_sheets else PACK)
         sheets[name] = Image.open(os.path.join(root, info[name]['image'])).convert('RGBA')
     return sheets[name]
 
@@ -201,6 +208,7 @@ for key, g in src['goalies'].items():
     if team != 'halla':
         goalie_ready[team] = g['east']['frames']['ready']
 goalie_ratio = {t: v1_goalie_h / visible_height(fid) for t, fid in goalie_ready.items()}
+goalie_batch_ratio = {sh: standing_ratio(sh, v1_goalie_h) for sh in goalie_batch_sheets}
 # signature celebrations: per character, matched like the strides
 sig_ratio = {name: standing_ratio('signature_celebrations', v1_h[v1]) for name, v1 in V1_SKATER.items()}
 
@@ -264,6 +272,8 @@ for fid, f in frames.items():
         s, k, cleanup, foot = SKATER_S, SKATER_S * ratio[sh], True, True
     elif sh == 'signature_celebrations':
         s, k, cleanup, foot = SKATER_S, SKATER_S * sig_ratio[fid.split('/')[1]], True, True
+    elif sh in goalie_batch_ratio:
+        s, k, cleanup, foot = GOALIE_S, GOALIE_S * goalie_batch_ratio[sh], True, True
     elif sh in ('halla_side_goalies', 'rival_goalies_a', 'rival_goalies_b', 'pinewood_lynx_goalie'):
         team = 'halla' if sh == 'halla_side_goalies' else rival_of(fid)
         s, k, cleanup, foot = GOALIE_S, GOALIE_S * goalie_ratio[team], True, True
@@ -359,6 +369,18 @@ for key, g in src['goalies'].items():
     team, colour = key.split('/')
     goalies_side[colour if team == 'halla' else team] = g['east']['frames']
 
+goalies_front, goalies_back, goalies_skating, goalies_puck_handling = {}, {}, {}, {}
+for key, g in src['goalies'].items():
+    if 'front' not in g:
+        continue
+    team, colour = key.split('/')
+    name = colour if team == 'halla' else team
+    goalies_front[name] = g['front']['frames']
+    goalies_back[name] = g['back']['frames']
+    goalies_skating[name] = {d: {'frames': [g[d]['frames']['skate_' + phase] for phase in ('abcd' if d in ('east', 'west') else 'ab')], 'flip_x': d == 'west'} for d in ('east', 'west', 'north', 'south')}
+    goalies_puck_handling[name] = {pose: g['east']['frames'][pose] for pose in ('pass_windup', 'pass_release', 'poke_a', 'poke_b', 'stop_behind_net')}
+goalie_animations = {key: value for key, value in src['animations'].items() if '/g/' in key and any(fid in frames and frames[fid]['sheet'] in goalie_batch_sheets for fid in value['frames'])}
+
 portraits = {}
 for key, p in src['portraits'].items():
     portraits[key.split('/')[0]] = p
@@ -429,6 +451,11 @@ atlas = {
     'frames': out_frames,
     'skaters': skaters,
     'goalies_side': goalies_side,
+    'goalies_front': goalies_front,
+    'goalies_back': goalies_back,
+    'goalies_skating': goalies_skating,
+    'goalies_puck_handling': goalies_puck_handling,
+    'goalie_animations': goalie_animations,
     'portraits': portraits,
     'crests': crests,
     'npcs': {k: f'hub_npcs/portrait/{k}' for k in ('coach', 'shopkeeper', 'announcer')},

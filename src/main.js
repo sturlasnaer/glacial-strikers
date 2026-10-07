@@ -970,7 +970,7 @@ class App {
       }
       const t = TEAMS[this.awayTeamId];
       this.renderer.updateCamera(m, this.fx, realDt, { attract: this.attract, zoom: this.attract ? 0.9 : this.replay.active ? 1.15 : 1 });
-      this.renderer.render(m, this.fx, { awayTeamId: this.awayTeamId, awayColor: t.color, awayColor2: t.color2, arena: this.arena });
+      this.renderer.render(m, this.fx, { awayTeamId: this.awayTeamId, awayColor: t.color, awayColor2: t.color2, arena: this.arena, replay: this.replay.active });
       this.clips.frame();
       this.hud.update(realDt);
       this.crowdT = (this.crowdT || 0) - realDt;

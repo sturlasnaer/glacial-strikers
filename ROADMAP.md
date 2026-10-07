@@ -23,12 +23,11 @@ Ideas for later:
 
 ## Next, with art
 
-Done: recruitment (sign rival skaters, pick a line-up), arena rules (meltwater, aurora lanes, pond cracks), the clickable locker room, visible gear on the ice, season awards, the daily challenge and custom club name and colours. Done from the v2 pack: rival casts, portraits and expressions, crests, banner cut-ins, signature celebrations, three arenas, sprite crowd, locker-room hub and hub characters.
+Done: recruitment (sign rival skaters, pick a line-up), arena rules (meltwater, aurora lanes, pond cracks), the clickable locker room, visible gear on the ice, season awards, the daily challenge and custom club name and colours, and goalie life from the v5 goalies (front and back views, skating to and from the bench, pass wind-ups and poke checks). Done from the v2 pack: rival casts, portraits and expressions, crests, banner cut-ins, signature celebrations, three arenas, sprite crowd, locker-room hub and hub characters.
 
 1. **Gear recolours on the sprites** once the gear masks (Batch M) arrive; the pipeline is ready.
-
-2. **Goalie life** once Batch G lands: face the net when the puck goes behind it, fish the puck out after goals, skate to the bench when pulled, front-view goalies in the locker room and menus.
-3. **Locker-room characters** standing at their stations (Batch H).
+2. **Locker-room characters** standing at their stations (Batch H).
+3. **Goalies who leave the crease** to play rimmed pucks behind the net, now that there's skating and puck-handling art (needs pathing around the net).
 
 ## Balance knobs
 
