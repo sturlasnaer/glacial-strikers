@@ -4,8 +4,8 @@
 // physics but hands the rules to the controller: init(m), update(m, dt), onGoal(m, info),
 // hud(m) and optional draw hooks. No browser APIs here so drills run headless too.
 
-import { CHARACTERS, GOALIE, TEAMS, ROLE } from './data.js';
-import { effectiveStats, perkNames, goalieStats, chemLevel } from './progress.js';
+import { CHARACTERS, GOALIE, TEAMS, ROLE, member, recruitKey } from './data.js';
+import { effectiveStats, perkNames, goalieStats, chemLevel, lineupIds, isSigned } from './progress.js';
 import { toScreen, GOAL_X, MOUTH } from './rink.js';
 import { norm, clamp, makeRng } from './util.js';
 import { Skater } from './entities.js';
@@ -49,26 +49,35 @@ export function formatScore(def, score) {
   return `${score} pts`;
 }
 
-const skaterCfg = (save, id) => ({ def: CHARACTERS[id], stats: effectiveStats(id, save.roster[id]), name: CHARACTERS[id].name, perks: perkNames(save.roster[id]) });
+const skaterCfg = (save, who) => {
+  const m = member(who);
+  return {
+    def: m.def, who, stats: effectiveStats(who, save.roster[who]), name: m.name, perks: perkNames(save.roster[who]),
+    sprite: m.recruit ? m.recruit.sprite : null, look: m.recruit ? 'homekit' : null,
+  };
+};
 const homeChem = (save) => Object.fromEntries(Object.keys(save.chem || {}).map((k) => [k, chemLevel(save.chem[k] || 0)]));
 
 // Build the match config for a drill. charId is the skater the player controls.
 export function createDrill(id, save, charId, opts = {}) {
-  const ids = ['frost', 'thunder', 'stone'];
-  const mates = ids.filter((k) => k !== charId);
+  const ids = ['frost', 'thunder', 'stone']; // rival slots
+  // your line-up, with the skater you bring in their position's slot
+  const line = lineupIds(save).map((w) => (member(w).role === member(charId).role ? charId : w));
+  const mates = line.filter((k) => k !== charId);
   let home = [charId], away = [], ctrl, awayTeam = 'lynx';
   switch (id) {
     case 'cones': ctrl = new ConeDrill(); break;
     case 'sniper': home = [charId, opts.feeder || mates[0]]; ctrl = new SniperDrill(); break;
     case 'rondo': home = [charId, ...mates]; away = ['frost', 'stone']; ctrl = new RondoDrill(); break;
     case 'breakaway': ctrl = new BreakawayDrill(); break;
-    case 'shootout': home = ids; awayTeam = opts.teamId || 'comets'; away = ids; ctrl = new ShootoutDrill(opts.teamId); break;
+    case 'shootout': home = line; awayTeam = opts.teamId || 'comets'; away = ids; ctrl = new ShootoutDrill(opts.teamId); break;
     default: throw new Error('Unknown drill ' + id);
   }
   const t = TEAMS[awayTeam];
   const awaySkater = (k) => {
     const stats = { ...CHARACTERS[k].base };
     for (const [s, v] of Object.entries(t.bonus || {})) stats[s] = Math.max(1, stats[s] + v);
+    if (isSigned(save, recruitKey(awayTeam, k))) return { def: CHARACTERS[k], who: 'sub_' + k, stats, name: t.subs[k], perks: [] };
     return { def: CHARACTERS[k], stats, name: t.names[k], perks: [], sprite: t.art ? `${t.art}_${ROLE[k]}` : null };
   };
   const cfg = {

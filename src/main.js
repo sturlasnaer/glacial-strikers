@@ -6,7 +6,7 @@ import { Renderer } from './render.js';
 import { FX } from './fx.js';
 import { Input, TouchControls, mergeInputs } from './input.js';
 import { audio } from './audio.js';
-import { UI, controlsHtml } from './ui.js';
+import { UI, controlsHtml, crest } from './ui.js';
 import { HUD } from './hud.js';
 import { toScreen } from './rink.js';
 import { Replay } from './replay.js';
@@ -18,9 +18,10 @@ import { recordRivalResult, rivalLines, rivalAfterLine } from './rivals.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan } from './league.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE } from './data.js';
+import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey } from './data.js';
 import {
   loadSave, newSave, writeSave, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards,
+  lineupIds, homeKitGroups,
 } from './progress.js';
 
 const STEP = 1 / 60;
@@ -63,6 +64,9 @@ class App {
       ]);
     }
     this.save = loadSave() || newSave();
+    // signings wear home colours, recoloured from their old team's pages
+    const kit = homeKitGroups(this.save);
+    if (kit.length) await Promise.race([Assets.ensureKit(kit), new Promise((r) => setTimeout(r, 2500))]);
     this.ach = new AchievementTracker(this.save, (a) => this.toastAchievement(a));
     audio.setMusic(this.save.settings.music);
     audio.setSfx(this.save.settings.sfx);
@@ -96,14 +100,20 @@ class App {
 
   // "Achievement unlocked" toast; shows anywhere (menus or matches).
   toastAchievement(a) {
+    this.toast(Assets.icon(a.icon, 72), 'Achievement unlocked', a.name, `+${a.coins} coins`);
+    audio.jingle('level');
+  }
+
+  toast(img, small, title, line) {
     let box = document.getElementById('toasts');
     if (!box) { box = document.createElement('div'); box.id = 'toasts'; document.getElementById('app').appendChild(box); }
     const el = document.createElement('div');
     el.className = 'toast';
-    el.innerHTML = `<img src="${Assets.icon(a.icon, 72)}" alt=""><div><small>Achievement unlocked</small><b></b><span>+${a.coins} coins</span></div>`;
-    el.querySelector('b').textContent = a.name;
+    el.innerHTML = `<img src="${img}" alt=""><div><small></small><b></b><span></span></div>`;
+    el.querySelector('small').textContent = small;
+    el.querySelector('b').textContent = title;
+    el.querySelector('span').textContent = line;
     box.appendChild(el);
-    audio.jingle('level');
     setTimeout(() => el.remove(), 4200);
   }
 
@@ -240,6 +250,9 @@ class App {
     if (f.kind === 'regular') lines = [...rivalLines(this.save, t.id), ...DIALOGUE[t.id].pre];
     else if (f.kind === 'final' && DIALOGUE[t.id].final) lines = [...rivalLines(this.save, t.id).slice(0, 1), ...DIALOGUE[t.id].final];
     else lines = [...rivalLines(this.save, t.id).slice(0, 1), ...PLAYOFF_LINES[f.kind].pre];
+    // skip our lines that talk to a skater who has since signed with us
+    const gone = ['frost', 'thunder', 'stone'].filter((k) => this.save.roster[recruitKey(t.id, k)]).map((k) => t.names[k]);
+    if (gone.length) lines = lines.filter((l) => l[0] !== 'us' || !gone.some((n) => l[2].includes(n)));
     this.ui.dialogue(lines, t.id, { sub }, () => {
       const theirPlan = rivalPlan(this.save, t.id, GAME_PLANS);
       this.scene = 'results';
@@ -274,7 +287,7 @@ class App {
     this.checkRotate();
   }
 
-  startShootout(teamId) { Assets.ensureTeam(teamId).then(() => this.startDrill('shootout', 'frost', { teamId })); }
+  startShootout(teamId) { Assets.ensureTeam(teamId).then(() => this.startDrill('shootout', lineupIds(this.save)[0], { teamId })); }
 
   // Local versus: player 1 is the Strikers, player 2 picks a rival. Both use base stats.
   startVersus(teamId) {
@@ -399,7 +412,7 @@ class App {
     const coins = (won ? 60 : 20) + res.goals[0] * 10;
     s.coins += coins;
     const ups = [];
-    for (const id of ['frost', 'thunder', 'stone']) ups.push(...applyExp(s, id, won ? 20 : 10));
+    for (const id of lineupIds(s)) ups.push(...applyExp(s, id, won ? 20 : 10));
     applyGoalieExp(s, won ? 20 : 10);
     this.recordRival(c.teamId, res.goals[0], res.goals[1], won, true);
     if (won) this.ach.unlock('shootout');
@@ -588,7 +601,11 @@ class App {
     s.record.played++;
     s.record.goals += summary.score[0];
     const scorers = (team) => Object.fromEntries(summary.skaters.filter((k) => k.team === team && k.goals).map((k) => [k.id, k.goals]));
+    const firstWin = rewards.won && !((s.rivals && s.rivals[c.teamId] && s.rivals[c.teamId].wins) > 0);
     recordRivalResult(s, c.teamId, summary.score[0], summary.score[1], rewards.won, { ourScorers: scorers(0), theirScorers: scorers(1) });
+    if (firstWin && TEAMS[c.teamId] && TEAMS[c.teamId].art) {
+      setTimeout(() => this.toast(crest(c.teamId, 72), 'Scouting', `${TEAMS[c.teamId].name} will take your call`, 'Sign their skaters in Team › Scouting'), 1600);
+    }
     let becameChampion = false, leagueOut = null;
     if (rewards.won) s.record.wins++;
     if (!c.exhibition && s.league) {

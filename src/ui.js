@@ -4,25 +4,34 @@ import { Assets } from './assets.js';
 import {
   CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
+  RECRUITS, member, comboFor, recruitKey, pairKey,
 } from './data.js';
 import { standings } from './league.js';
 import { BUFF_TEXT } from './lockerroom.js';
 import { ACHIEVEMENTS } from './achievements.js';
 import {
   expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave,
-  chemLevel, chemProgress,
+  chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups,
 } from './progress.js';
 import { audio } from './audio.js';
 import { DRILLS, MEDAL_NAMES, MEDAL_COLORS, formatScore } from './drills.js';
 
 const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
-const ROSTER = ['frost', 'thunder', 'stone'];
+const ROLE_NAME = { C: 'Centre', W: 'Winger', D: 'Defender' };
 const SLOT_NAMES = { stick: 'Stick', skates: 'Skates', armor: 'Protection', goalie: 'Goalie gear' };
 
 // Portrait of a roster slot. Our cast has five expressions for dialogue; each rival has
 // its own cast (the captain with expressions), shown in that team's colours.
 export const portrait = (id, team, teamId, size = 160, expr = null) => {
   const P = Assets.atlas.portraits || {};
+  if (team === 0 && RECRUITS[id]) {
+    // a signing: their own portrait, in our colours
+    const r = RECRUITS[id];
+    const p = P[`${TEAMS[r.team].art}_${ROLE[r.kit]}`];
+    const fid = p && ((expr && p[expr]) || p.neutral_roster || p.neutral);
+    return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT[r.kit]}`, size);
+  }
+  if (team !== 0 && id.startsWith('sub_')) return Assets.icon(`character_portraits/away/${PORTRAIT[id.slice(4)]}`, size, teamId);
   if (team === 0) {
     const p = P[ART_NAME[id]];
     if (expr && p && p[expr]) return Assets.icon(p[expr], size);
@@ -187,7 +196,7 @@ export class UI {
     const s = this.app.save;
     const next = this.app.nextStage();
     const nt = next ? TEAMS[next.team] : null;
-    const anyPoints = ROSTER.some((id) => s.roster[id].points > 0 || s.roster[id].pendingPerk !== null);
+    const anyPoints = rosterIds(s).some((id) => s.roster[id].points > 0 || s.roster[id].pendingPerk !== null);
     const r = this.set(`
       <div class="dim"></div>
       <div class="hub">
@@ -305,6 +314,7 @@ export class UI {
       <div class="scout"><img src="${crest(teamId, 64)}" alt="" width="40" height="40"><div><div class="label" style="font-size:13px">Scouting report · ${esc(fixture.label)}</div>
         ${esc(t.name)} will most likely play <b class="gold-t">${esc(their.name)}</b>.${t.plan === 'counter' ? ' They adapt to what you used against them last time.' : ''}</div></div>
       ${s.buffs && s.buffs.length ? `<div class="buffs">${s.buffs.map((b) => `<span class="buff">${esc(BUFF_TEXT(b))}</span>`).join('')}</div>` : ''}
+      ${rosterIds(s).length > 3 ? `<div class="line-row" id="line-row">${lineupIds(s).map((id) => `<span><img src="${portrait(id, 0, null, 64)}" width="26" height="26" alt="">${esc(member(id).name)}</span>`).join('')}<button class="btn small ghost" id="line-change">Change line-up</button></div>` : ''}
       <div class="plans">${Object.values(GAME_PLANS).map((p) => `
         <button class="plan ${p.id === cur ? 'sel' : ''}" data-plan="${p.id}">
           <b>${esc(p.name)}</b>
@@ -322,6 +332,10 @@ export class UI {
         audio.sfx('click');
       }, m);
       this.click('#plan-go', () => { close(); audio.sfx('confirm'); onPick(pick); }, m);
+      this.click('#line-change', () => this.lineupPicker(() => {
+        const row = m.querySelector('#line-row');
+        if (row) row.querySelectorAll('span').forEach((el, i) => { const id = lineupIds(s)[i]; el.innerHTML = `<img src="${portrait(id, 0, null, 64)}" width="26" height="26" alt="">${esc(member(id).name)}`; });
+      }), m);
     }, false);
   }
 
@@ -373,13 +387,16 @@ export class UI {
 
   tabTeam(body) {
     const s = this.app.save;
-    const cards = ROSTER.map((id) => {
-      const c = CHARACTERS[id];
+    const line = lineupIds(s);
+    const bench = rosterIds(s).filter((id) => !line.includes(id)).sort((x, y) => 'CWD'.indexOf(member(x).role) - 'CWD'.indexOf(member(y).role));
+    const card = (id, dressed) => {
+      const m = member(id);
+      const c = m.def;
       const r = s.roster[id];
       const eff = effectiveStats(id, r);
       const gm = gearMods(r);
       const stats = STAT_KEYS.map((k) => {
-        const base = c.base[k], al = r.alloc[k], g = gm[k];
+        const base = m.base[k], al = r.alloc[k], g = gm[k];
         const pips = [];
         for (let i = 1; i <= 12; i++) {
           let cls = '';
@@ -393,15 +410,17 @@ export class UI {
           <button class="plus" data-raise="${id}:${k}" ${canRaise(r, id, k) ? '' : 'disabled'} aria-label="Raise ${STAT_NAMES[k]}">+</button></div>`;
       }).join('');
       const pct = r.level >= MAX_LEVEL ? 100 : Math.round((r.exp / expToNext(r.level)) * 100);
-      return `<div class="card">
+      const starter = s.roster[s.lineup[m.role]] && member(s.lineup[m.role]);
+      return `<div class="card ${dressed ? '' : 'benched'}">
         <div class="card-head">
           <img src="${portrait(id, 0, null, 152)}" alt="">
           <div style="min-width:0">
-            <h3>${esc(c.name)}</h3>
-            <div class="sub">${esc(c.title)}</div>
+            <h3>${esc(m.name)}</h3>
+            <div class="sub">${esc(m.title)}${m.recruit ? ' · signed' : ''}</div>
             <div class="lvl">LV ${r.level}${r.points ? ` <span style="font-size:15px">· ${r.points} point${r.points > 1 ? 's' : ''} to spend</span>` : ''}</div>
           </div>
         </div>
+        ${dressed ? `<div class="dress on">${ROLE_NAME[m.role]} · dressed</div>` : `<button class="btn small dress" data-dress="${id}">Dress at ${ROLE_NAME[m.role].toLowerCase()} (for ${esc(starter.name)})</button>`}
         <div class="xpbar" title="${r.exp}/${expToNext(r.level)} EXP"><i style="width:${pct}%"></i></div>
         ${r.pendingPerk !== null ? `<div class="pending" data-perk="${id}">New perk unlocked: choose one</div>` : ''}
         <div class="stats">${stats}</div>
@@ -413,12 +432,12 @@ export class UI {
         <div class="abil"><img src="${ico('hud_elements/misc/level_star', 68)}" alt=""><div><b>${esc(c.ult.name)}</b>${esc(c.ult.text)}</div></div>
         ${r.perks.length ? `<div class="perks">${r.perks.map((p) => `<span class="perk" title="${esc(p)}">${esc(p.split(':')[0])}</span>`).join('')}</div>` : ''}
       </div>`;
-    });
+    };
     const g = s.goalie;
     const gs = goalieStats(s);
     const gg = GEAR_BY_ID[g.gear];
     const gpct = g.level >= MAX_LEVEL ? 100 : Math.round((g.exp / expToNext(g.level)) * 100);
-    cards.push(`<div class="card">
+    const goalieCard = `<div class="card">
       <div class="card-head"><img src="${portrait('goalie', 0, null, 152)}" alt="">
         <div><h3>${esc(GOALIE.name)}</h3><div class="sub">Goaltender (AI)</div><div class="lvl">LV ${g.level}</div></div></div>
       <div class="xpbar"><i style="width:${gpct}%"></i></div>
@@ -428,11 +447,20 @@ export class UI {
       </div>
       <p class="muted" style="margin:0;font-size:12.5px">Halla levels up from saves. Reflex rises every two levels.</p>
       <div class="gear-row" style="grid-template-columns:1fr"><button class="slot" data-gear="goalie:goalie"><img src="${ico(gg.icon, 92)}" alt=""><span>${esc(gg.name)}</span></button></div>
-    </div>`);
-    body.innerHTML = `<div class="roster">${cards.join('')}</div>
+    </div>`;
+    const pairs = [];
+    for (let i = 0; i < 3; i++) for (let j = i + 1; j < 3; j++) pairs.push(pairKey(line[i], line[j]));
+    body.innerHTML = `
+      <div class="label" style="margin-bottom:4px">Line-up</div>
+      <p class="muted" style="margin:0 0 10px;font-size:13px">A centre, a winger and a defender dress for every match. Each position brings its kit: centres play Nix's frost kit, wingers Volta's thunder kit, defenders Bram's stone kit.</p>
+      <div class="roster">${line.map((id) => card(id, true)).join('')}${goalieCard}</div>
+      ${bench.length ? `<div class="label" style="margin:16px 0 4px">Bench</div>
+      <p class="muted" style="margin:0 0 10px;font-size:13px">Benched skaters don't earn match EXP, but you can bring them to training.</p>
+      <div class="roster">${bench.map((id) => card(id, false)).join('')}</div>` : ''}
       <div class="label" style="margin:16px 0 4px">Chemistry</div>
-      <p class="muted" style="margin:0 0 10px;font-size:13px">Pairs bond through passes, assists and combo goals. From level 1, pass between the pair and shoot right away (a one-timer works) to fire their combo.</p>
-      <div class="chem-grid">${Object.keys(COMBOS).map((k) => chemCard(k, s.chem[k] || 0)).join('')}</div>`;
+      <p class="muted" style="margin:0 0 10px;font-size:13px">Bonds grow between the people in your line through passes, assists and combo goals. The combo a pair fires depends on their positions. From level 1, pass between the pair and shoot right away (a one-timer works) to fire it. A new signing starts with no chemistry.</p>
+      <div class="chem-grid">${pairs.map((k) => chemCard(k, s.chem[k] || 0)).join('')}</div>
+      ${this.scoutingHtml(s)}`;
     this.click('[data-raise]', (el) => {
       const [id, k] = el.dataset.raise.split(':');
       const r = s.roster[id];
@@ -444,12 +472,102 @@ export class UI {
     }, body);
     this.click('[data-perk]', (el) => this.perkChoice(el.dataset.perk, () => this.hub('team')), body);
     this.click('[data-gear]', (el) => { const [id, slot] = el.dataset.gear.split(':'); this.gearPicker(id, slot); }, body);
+    this.click('[data-dress]', (el) => { setLineup(s, el.dataset.dress); writeSave(s); audio.sfx('confirm'); this.hub('team'); }, body);
+    this.click('[data-sign]', (el) => this.signOffer(el.dataset.sign), body);
+  }
+
+  // Rival skaters you can sign: every team you've beaten.
+  scoutingHtml(s) {
+    const teams = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
+    const rows = teams.map((tid) => {
+      const t = TEAMS[tid];
+      const keys = ['frost', 'thunder', 'stone'].map((kit) => recruitKey(tid, kit));
+      const open = recruitStatus(s, keys[0]) !== 'locked' || keys.some((k) => isSigned(s, k));
+      const players = keys.map((k) => {
+        const r = RECRUITS[k];
+        const st = recruitStatus(s, k);
+        const top = Object.entries(r.base).sort((x, y) => y[1] - x[1]).slice(0, 2).map(([sk, v]) => `${STAT_NAMES[sk]} ${v}`).join(' · ');
+        const face = st === 'signed' ? portrait(k, 0, null, 96) : portrait(r.kit, 1, tid, 96);
+        return `<div class="recruit ${st}">
+          <img src="${face}" alt="">
+          <div style="min-width:0"><b>${esc(r.name)}</b><span class="muted">${ROLE_NAME[r.role]} · ${esc(top)}</span></div>
+          ${st === 'signed' ? '<span class="tag good">Signed</span>' : st === 'open' ? `<button class="btn small ${s.coins >= r.price ? 'gold' : 'ghost'}" data-sign="${k}"><img src="${ico('equipment_items/reward/coins', 40)}" alt="" width="16" height="16"> ${r.price}</button>` : '<span class="tag">Locked</span>'}
+        </div>`;
+      }).join('');
+      return `<div class="scout-team ${open ? '' : 'locked'}">
+        <div class="scout-head"><img src="${crest(tid, 48)}" alt="" width="28" height="28"><b>${esc(t.name)}</b>${open ? '' : '<span class="muted"> · beat them to open talks</span>'}</div>
+        <div class="recruits">${players}</div>
+      </div>`;
+    }).join('');
+    return `<div class="label" style="margin:16px 0 4px">Scouting</div>
+      <p class="muted" style="margin:0 0 10px;font-size:13px">Beat a rival and their skaters will take your call. Signings join a level below your line-up's average with points to spend and the perks they already had.</p>
+      <div class="scouting">${rows}</div>`;
+  }
+
+  signOffer(key) {
+    const s = this.app.save;
+    const r = RECRUITS[key];
+    const m = member(key);
+    const lv = joinLevel(s);
+    const starter = member(s.lineup[r.role]);
+    const perks = CHARACTERS[r.kit].perks.filter((_, i) => lv >= [3, 5, 7][i]).map((opts, i) => opts[r.perks[i]].split(':')[0]);
+    audio.sfx('click');
+    this.modal(`
+      <h2>Sign ${esc(r.name)}?</h2>
+      <div class="card-head" style="margin:0"><img src="${portrait(r.kit, 1, r.team, 152)}" alt="" style="width:76px;height:76px">
+        <div><div class="sub">${esc(TEAMS[r.team].name)} · ${ROLE_NAME[r.role]}</div><p style="margin:4px 0 0">${esc(r.blurb)}</p></div></div>
+      <div class="stats">${STAT_KEYS.map((k) => {
+        const diff = r.base[k] - starter.base[k];
+        return `<div class="stat"><span>${STAT_NAMES[k]}</span><span class="pips">${Array.from({ length: 12 }, (_, i) => `<i class="${i < r.base[k] ? 'b' : ''}"></i>`).join('')}</span><span class="v">${r.base[k]}</span><span class="${diff > 0 ? 'good' : diff < 0 ? 'bad' : 'muted'}" style="font-size:12px">${diff > 0 ? '+' : ''}${diff || '='}</span></div>`;
+      }).join('')}</div>
+      <p class="muted" style="margin:0;font-size:13px">Base stats, compared with ${esc(starter.name)}. Plays the ${ROLE_NAME[r.role].toLowerCase()} kit (${esc(m.def.skill.name)}, ${esc(m.def.ult.name)}). Joins at level ${lv} with ${lv - 1} point${lv === 2 ? '' : 's'} to spend${perks.length ? ` and ${perks.join(', ')}` : ''}. No chemistry with your line yet.</p>
+      <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>Not now</button>
+        <button class="btn gold" id="sign-go" ${s.coins >= r.price ? '' : 'disabled'}>Sign for ${r.price}</button></div>`, (mm, close) => {
+      this.click('#sign-go', () => {
+        if (!signRecruit(s, key)) return;
+        this.app.ach.unlock('signing');
+        this.app.ach.checkMeta();
+        writeSave(s);
+        audio.jingle('level');
+        close();
+        Assets.ensureKit(homeKitGroups(s)).then(() => this.hub('team'));
+        this.modal(`<h2>${esc(r.name)} signs!</h2>
+          <p>${esc(r.name)} joins the Strikers on your bench. Dress ${esc(r.name)} at ${ROLE_NAME[r.role].toLowerCase()} from the Team tab, or before a match.</p>
+          <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>Later</button><button class="btn gold" id="dress-now">Dress now</button></div>`, (m2, close2) => {
+          this.click('#dress-now', () => { setLineup(s, key); writeSave(s); audio.sfx('confirm'); close2(); this.hub('team'); }, m2);
+        });
+      }, mm);
+    });
+  }
+
+  // Quick line-up change, one row per position.
+  lineupPicker(done) {
+    const s = this.app.save;
+    const ids = rosterIds(s);
+    audio.sfx('click');
+    const render = () => ['C', 'W', 'D'].map((role) => `
+      <div class="label" style="font-size:14px;margin:8px 0 4px">${ROLE_NAME[role]}</div>
+      <div class="filters" style="margin:0">${ids.filter((id) => member(id).role === role).map((id) => `
+        <button class="chip" data-line="${id}" aria-pressed="${s.lineup[role] === id}" style="display:inline-flex;gap:6px;align-items:center">
+          <img src="${portrait(id, 0, null, 64)}" width="24" height="24" alt="">${esc(member(id).name)} <span class="muted">LV ${s.roster[id].level}</span></button>`).join('')}</div>`).join('');
+    this.modal(`<h2>Line-up</h2><div id="lp">${render()}</div>
+      <div class="row" style="justify-content:flex-end"><button class="btn gold" data-close>Done</button></div>`, (m) => {
+      m.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-line]');
+        if (!b) return;
+        setLineup(s, b.dataset.line);
+        writeSave(s);
+        audio.sfx('click');
+        m.querySelector('#lp').innerHTML = render();
+      });
+    }, true, () => done && done());
   }
 
   perkChoice(id, done) {
     const s = this.app.save;
     const r = s.roster[id];
-    const c = CHARACTERS[id];
+    const m = member(id);
+    const c = { ...m.def, name: m.name };
     if (r.pendingPerk === null) return done?.();
     const opts = c.perks[r.pendingPerk];
     audio.sfx('click');
@@ -473,7 +591,7 @@ export class UI {
     const s = this.app.save;
     const items = GEAR.filter((g) => g.slot === slot && s.owned.includes(g.id));
     const cur = id === 'goalie' ? s.goalie.gear : s.roster[id].gear[slot];
-    const who = id === 'goalie' ? GOALIE.name : CHARACTERS[id].name;
+    const who = id === 'goalie' ? GOALIE.name : member(id).name;
     audio.sfx('click');
     this.modal(`
       <h2>${esc(who)} · ${SLOT_NAMES[slot]}</h2>
@@ -536,7 +654,7 @@ export class UI {
         <h2>${esc(g.name)} unlocked</h2>
         ${modsHtml(g.mods)}
         <p class="muted">Equip it on someone now?</p>
-        <div class="row">${ROSTER.map((id) => `<button class="btn ghost small" data-who="${id}" style="display:flex;gap:6px;align-items:center"><img src="${portrait(id, 0, null, 64)}" width="32" height="32" alt="">${CHARACTERS[id].name}</button>`).join('')}</div>
+        <div class="row">${rosterIds(s).map((id) => `<button class="btn ghost small" data-who="${id}" style="display:flex;gap:6px;align-items:center"><img src="${portrait(id, 0, null, 64)}" width="32" height="32" alt="">${esc(member(id).name)}</button>`).join('')}</div>
         <button class="btn small ghost" data-close>Later</button>`, (m, close) => {
         this.click('[data-who]', (b) => { s.roster[b.dataset.who].gear[g.slot] = g.id; writeSave(s); audio.sfx('confirm'); close(); this.hub('shop'); }, m);
       }, true, () => this.hub('shop'));
@@ -557,7 +675,7 @@ export class UI {
       </div>
       <div class="row" style="margin:10px 0">
         <span class="label" style="font-size:15px">Skater:</span>
-        ${ROSTER.map((id) => `<button class="btn small ${this.drillChar === id ? 'cream' : 'ghost'}" data-char="${id}" style="display:flex;gap:6px;align-items:center"><img src="${portrait(id, 0, null, 64)}" width="28" height="28" alt="">${CHARACTERS[id].name}</button>`).join('')}
+        ${rosterIds(s).map((id) => `<button class="btn small ${this.drillChar === id ? 'cream' : 'ghost'}" data-char="${id}" style="display:flex;gap:6px;align-items:center"><img src="${portrait(id, 0, null, 64)}" width="28" height="28" alt="">${esc(member(id).name)}</button>`).join('')}
       </div>
       <div class="drills">${Object.values(DRILLS).map((d) => {
         const best = tr.best[d.id];
@@ -580,7 +698,7 @@ export class UI {
 
   // Result card after a drill: score, medal, rewards; Retry or Done.
   drillResult(d, score, rw, charId, onRetry, onDone) {
-    const name = CHARACTERS[charId].name;
+    const name = member(charId).name;
     const medal = rw.medal;
     const lines = [];
     if (rw.exp) lines.push([`${name} +${rw.exp} EXP`, '']);
@@ -677,7 +795,8 @@ export class UI {
     const t = TEAMS[teamId];
     let i = 0, typing = null, shown = 0;
     const ours = (l) => portrait(l[1], 0, null, 420, expression('us', l[2], mood));
-    const theirs = (l) => portrait(l[1], 1, teamId, 420, expression('them', l[2], mood));
+    const gone = (id) => isSigned(this.app.save, recruitKey(teamId, id));
+    const theirs = (l) => portrait(gone(l[1]) ? 'sub_' + l[1] : l[1], 1, teamId, 420, expression('them', l[2], mood));
     const r = this.set(`
       <div class="dim"></div>
       <div class="dlg" id="dlg">
@@ -695,7 +814,7 @@ export class UI {
       pl.src = ours(lastUs || ['us', 'frost', '']);
       if (lastThem) { pr.src = theirs(lastThem); pr.hidden = false; } else pr.hidden = true;
       pl.classList.toggle('on', us); pr.classList.toggle('on', !us);
-      dn.textContent = us ? CHARACTERS[id]?.name || GOALIE.name : t.names[id];
+      dn.textContent = us ? member(id)?.name || GOALIE.name : gone(id) ? t.subs[id] : t.names[id];
       dn.className = 'dlg-name' + (us ? '' : ' them');
       shown = 0; dt.textContent = '';
       clearInterval(typing);
@@ -763,9 +882,10 @@ export class UI {
               ${data.rewards.chem ? `<div class="label" style="margin-top:6px">Chemistry</div>
               ${Object.entries(data.rewards.chem).map(([k, g]) => {
                 const [a, b] = k.split('+');
+                const cb = comboFor(k);
                 const up = (data.chemUps || []).find((u) => u.key === k);
                 return `<div class="xp-row"><span class="duo small"><img src="${portrait(a, 0, null, 64)}" alt=""><img src="${portrait(b, 0, null, 64)}" alt=""></span>
-                  <div><div>${esc(COMBOS[k].name)} <span class="muted">+${g.xp} · ${g.passes} passes${g.comboGoals ? ` · ${g.comboGoals} combo goal${g.comboGoals > 1 ? 's' : ''}` : ''}</span> ${up ? `<span class="lvlup">LEVEL ${up.level}!</span>` : ''}</div>
+                  <div><div>${esc(cb ? cb.name : 'Chemistry')} <span class="muted">+${g.xp} · ${g.passes} passes${g.comboGoals ? ` · ${g.comboGoals} combo goal${g.comboGoals > 1 ? 's' : ''}` : ''}</span> ${up ? `<span class="lvlup">LEVEL ${up.level}!</span>` : ''}</div>
                   <div class="xpbar"><i data-w="${Math.round(chemProgress(s.chem[k]) * 100)}"></i></div></div><span class="lvl">${chemPips(chemLevel(s.chem[k]))}</span></div>`;
               }).join('')}` : ''}
               <div class="xp-row"><img src="${portrait('goalie', 0, null, 88)}" alt=""><div><div>${GOALIE.name} <span class="muted">+${rewards.gExp} EXP · ${summary.saves[0]} saves</span>${data.gUp ? ' <span class="lvlup">LEVEL UP!</span>' : ''}</div></div><span class="lvl">LV ${s.goalie.level}</span></div>
@@ -797,12 +917,13 @@ export class UI {
     this.modal(`
       <h2>Chemistry level up!</h2>
       ${ups.map((u) => {
-        const c = COMBOS[u.key];
+        const c = comboFor(u.key);
         const [a, b] = u.key.split('+');
+        const na = member(a).name, nb = member(b).name;
         return `<div class="card chem" style="gap:6px">
           <div class="chem-head"><span class="duo"><img src="${portrait(a, 0, null, 96)}" alt=""><img src="${portrait(b, 0, null, 96)}" alt=""></span>
-          <div><h3>${esc(c.name)}</h3><div class="sub">${esc(CHARACTERS[a].name)} + ${esc(CHARACTERS[b].name)} · level ${u.level}</div></div></div>
-          <p style="margin:0">${u.level === 1 ? `${esc(c.text)}<br><b class="gold-t">How:</b> pass from ${esc(CHARACTERS[a].name)} to ${esc(CHARACTERS[b].name)} (or back), then shoot right away. Holding shoot as the pass arrives fires it as a one-timer.` : esc(c.levels[u.level - 1])}</p>
+          <div><h3>${esc(c.name)}</h3><div class="sub">${esc(na)} + ${esc(nb)} · level ${u.level}</div></div></div>
+          <p style="margin:0">${u.level === 1 ? `${esc(c.text)}<br><b class="gold-t">How:</b> pass from ${esc(na)} to ${esc(nb)} (or back), then shoot right away. Holding shoot as the pass arrives fires it as a one-timer.` : esc(c.levels[u.level - 1])}</p>
         </div>`;
       }).join('')}
       <button class="btn gold" data-close>Got it</button>`, null, false, done);
@@ -837,14 +958,14 @@ function installHelp(app) {
 const chemPips = (lvl) => `<span class="pips3">${[1, 2, 3].map((i) => `<i class="${i <= lvl ? 'on' : ''}"></i>`).join('')}</span>`;
 
 function chemCard(k, xp) {
-  const c = COMBOS[k];
+  const c = comboFor(k);
   const [a, b] = k.split('+');
   const lvl = chemLevel(xp);
   const next = lvl < CHEM_LEVELS.length ? CHEM_LEVELS[lvl] : null;
   return `<div class="card chem ${lvl ? '' : 'locked'}">
     <div class="chem-head">
       <span class="duo"><img src="${portrait(a, 0, null, 96)}" alt=""><img src="${portrait(b, 0, null, 96)}" alt=""></span>
-      <div style="min-width:0"><h3>${esc(c.name)}</h3><div class="sub">${esc(CHARACTERS[a].name)} + ${esc(CHARACTERS[b].name)}</div></div>
+      <div style="min-width:0"><h3>${esc(c.name)}</h3><div class="sub">${esc(member(a).name)} + ${esc(member(b).name)}</div></div>
       ${chemPips(lvl)}
     </div>
     <div class="xpbar" title="${xp} chemistry${next ? ` / ${next}` : ''}"><i style="width:${Math.round(chemProgress(xp) * 100)}%"></i></div>

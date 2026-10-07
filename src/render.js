@@ -3,7 +3,7 @@
 import { Assets } from './assets.js';
 import { toScreen, persp, BACKDROP, GOAL_X, MOUTH, NET_DEPTH, RINK } from './rink.js';
 import { clamp, lerp, makeRng } from './util.js';
-import { POWER_INFO, COMBOS, TEAMS, ARENAS } from './data.js';
+import { POWER_INFO, COMBOS, TEAMS, ARENAS, PALETTES } from './data.js';
 import { ELEMENT_COLORS } from './fx.js';
 import { NetRenderer, SpriteNets } from './net.js';
 
@@ -98,6 +98,7 @@ export class Renderer {
     ctx.fillRect(0, 0, this.c.width, this.c.height);
     ctx.setTransform(dpr * z, 0, 0, dpr * z, dpr * (this.w / 2 - this.cam.x * z + sh.x), dpr * (this.h / 2 - this.cam.y * z + sh.y));
     if (ui.awayTeamId && TEAMS[ui.awayTeamId]) Assets.prepareTeam(TEAMS[ui.awayTeamId]); // picks up pages loaded mid-match
+    Assets.prepareTeam(PALETTES.homekit); // our recruits in home colours
     this.awayPages = Assets.pagesFor(ui.awayTeamId);
     const arena = ARENAS[ui.arena] ? ui.arena : 'home';
     this.arena = ARENAS[arena];
@@ -547,7 +548,7 @@ export class Renderer {
     if (fr.pose === 'celebrate') y -= Math.abs(Math.sin(s.animT * 7 + s.slot)) * 12;
     if (fr.pose === 'check' && s.stun > 0) rot = Math.sin(s.animT * 30) * 0.12 + (fr.flip ? 0.25 : -0.25);
     else if (fr.pose === 'stagger') rot = Math.sin(s.animT * 30) * 0.05;
-    const pages = s.team === 0 ? Assets.pages : this.awayPages;
+    const pages = s.team === 0 ? (s.look ? Assets.pagesFor(s.look) : Assets.pages) : this.awayPages;
     // aura for active abilities
     if (s.bedrockT > 0) this.aura(ctx, p.x, p.y - 30, 34, '#c9b79c', fx.time);
     if (s.boostT > 0 || s.trailT > 0) this.aura(ctx, p.x, p.y - 26, 28, '#71dce8', fx.time);
@@ -565,7 +566,7 @@ export class Renderer {
     const s = g.s;
     const fr = this.skaterFrame(s, match);
     const p = toScreen(g.x, g.y);
-    const pages = s.team === 0 ? Assets.pages : this.awayPages;
+    const pages = s.team === 0 ? (s.look ? Assets.pagesFor(s.look) : Assets.pages) : this.awayPages;
     this.drawTinted(ctx, fr.id, pages, p.x, p.y, SKATER_SCALE * persp(g.y), fr.flip, 0, '#ffe066', 0.55 * (1 - g.t / g.life), true);
   }
 
@@ -581,7 +582,7 @@ export class Renderer {
   }
 
   drawTinted(ctx, id, pages, x, y, k, flip, rot, color, alpha, only) {
-    const key = id + color + (pages === Assets.pages ? 'h' : 'a');
+    const key = id + color + (pages === Assets.pages ? 'h' : pages === this.awayPages ? 'a' : 'k');
     let c = this.tintCache.get(key);
     const f = Assets.atlas.frames[id];
     if (!f) return;

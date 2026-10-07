@@ -1,7 +1,7 @@
 // In-match HUD (scoreboard, player card, power puck chip, banners) and touch button state.
 
 import { Assets } from './assets.js';
-import { POWER_INFO, TEAMS, ART_NAME } from './data.js';
+import { POWER_INFO, TEAMS, ART_NAME, RECRUITS } from './data.js';
 import { portrait, crest } from './ui.js';
 
 const digit = (n) => Assets.icon(`hud_elements/score/${Math.min(5, n)}`, 96);
@@ -84,11 +84,11 @@ export class HUD {
     const color = us ? '#2a9fb0' : TEAMS[this.teamId].color;
     const el = document.createElement('div');
     el.className = 'cutin ' + (us ? 'us' : 'them');
-    const id = (k) => (k.isGoalie ? 'goalie' : k.def.id);
+    const id = (k) => (k.isGoalie ? 'goalie' : k.who);
     const img = (k) => `<img src="${portrait(id(k), k.team, this.teamId, 320)}" alt="">`;
     const who = partner ? `${partner.name} + ${s.name}` : s.name;
     const name = title || s.def.ult.name;
-    const art = Assets.banner(this.bannerKey(s), us ? null : this.teamId);
+    const art = Assets.banner(this.bannerKey(s), us ? (RECRUITS[s.who] ? 'homekit' : null) : this.teamId);
     if (partner) el.classList.add('combo');
     if (art) {
       el.classList.add('art');
@@ -102,6 +102,7 @@ export class HUD {
 
   // Banner key in the sprite pack: our cast by name, rivals by roster slot.
   bannerKey(k) {
+    if (k.team === 0 && !k.isGoalie && RECRUITS[k.who]) return k.sprite; // a signing's own banner
     if (k.team === 0) return ART_NAME[k.isGoalie ? 'goalie' : k.def.id];
     if (k.isGoalie) return k.art ? `${k.art}_g` : null;
     return k.sprite !== k.def.sprite ? k.sprite : null;
@@ -138,7 +139,7 @@ export class HUD {
     let sub = '';
     if (s) {
       const assist = info.assists.length ? ` <span style="font-size:.7em;color:#c3d3ea">from ${info.assists.map((a) => a.name).join(' & ')}</span>` : '';
-      sub = `<div class="sub"><img src="${portrait(s.def.id, s.team, this.teamId, 96)}" alt="">${s.name}${assist}</div>`;
+      sub = `<div class="sub"><img src="${portrait(s.who, s.team, this.teamId, 96)}" alt="">${s.name}${assist}</div>`;
     }
     const kind = info.kind === 'onetimer' ? 'ONE-TIMER!' : info.kind === 'zero' ? 'ABSOLUTE ZERO!' : info.kind === 'thunderclap' ? 'THUNDERCLAP!' : info.power ? POWER_INFO[info.power].name.toUpperCase() + '!' : '';
     this.banner(`<div class="big" style="color:${color}">GOAL!</div>${kind ? `<div class="small">${kind}</div>` : ''}${sub}`, 3);
@@ -170,7 +171,7 @@ export class HUD {
     if (c) {
       if (this.last.ctrl !== c) {
         this.last.ctrl = c;
-        this.el.querySelector('#pc-img').src = portrait(c.def.id, 0, null, 88);
+        this.el.querySelector('#pc-img').src = portrait(c.who, 0, null, 88);
         this.el.querySelector('#pc-name').textContent = (this.versus ? 'P1 · ' : '') + c.name;
         this.updateTouchIcons(c);
       }
@@ -188,7 +189,7 @@ export class HUD {
       if (c2) {
         if (this.last.ctrl2 !== c2) {
           this.last.ctrl2 = c2;
-          this.el.querySelector('#pc2-img').src = portrait(c2.def.id, 1, this.teamId, 88);
+          this.el.querySelector('#pc2-img').src = portrait(c2.who, 1, this.teamId, 88);
           this.el.querySelector('#pc2-name').textContent = 'P2 · ' + c2.name;
         }
         this.el.querySelector('#pc2-sta').firstChild.style.transform = `scaleX(${c2.stamina / c2.d.staminaMax})`;

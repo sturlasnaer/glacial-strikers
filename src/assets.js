@@ -4,7 +4,7 @@
 // the arenas, locker room and cut-in banners are separate images; those load in the
 // background after startup, and ensureTeam() waits for whatever a match needs.
 
-import { TEAMS } from './data.js';
+import { TEAMS, PALETTES } from './data.js';
 
 const BASE = new URL('assets/', document.baseURI).href;
 const INLINE = typeof window !== 'undefined' && window.__INLINE; // single-file offline build
@@ -95,10 +95,19 @@ export const Assets = {
     return r ? r.pages : this.pages;
   },
 
-  // Recolour the away pages and this rival's roster pages into the team's colours.
+  // Our recruits: load their teams' roster pages and recolour them into home colours.
+  async ensureKit(groups) {
+    const kit = PALETTES.homekit;
+    kit.groups = groups;
+    await Promise.all(groups.map((g) => this.loadGroup(g))).catch(() => {});
+    this.prepareTeam(kit);
+  },
+
+  // Recolour the away pages and this rival's roster pages into the team's colours
+  // (or, for a palette with groups, just those pages).
   prepareTeam(team) {
-    const own = (g) => g === 'away' || (team.art && g === 'rival_' + team.art);
-    const loaded = this.pages.filter((img, i) => img && own(this.atlas.pages[i].group)).length;
+    const own = (g) => (team.groups ? team.groups.includes(g) : g === 'away' || (team.art && g === 'rival_' + team.art));
+    const loaded = this.pages.filter((img, i) => img && own(this.atlas.pages[i].group)).length + '|' + (team.groups || []).join(',');
     const r = this.recolored.get(team.id);
     if (r && r.loaded === loaded) return;
     if (!team.recolor) { this.recolored.delete(team.id); return; }
@@ -120,7 +129,7 @@ export const Assets = {
     if (this.bannerCache.has(ck)) return this.bannerCache.get(ck);
     const img = this.images.get(file);
     if (!img) { this.image(file).catch(() => {}); return null; }
-    const t = teamId && TEAMS[teamId];
+    const t = teamId && (TEAMS[teamId] || PALETTES[teamId]);
     let url = this.url(file);
     if (t && t.recolor) url = recolorPage(img, t.recolor).toDataURL('image/jpeg', 0.88);
     this.bannerCache.set(ck, url);

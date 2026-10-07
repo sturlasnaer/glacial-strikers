@@ -104,6 +104,7 @@ export const TEAMS = {
     color: '#7fd16b', color2: '#2f6b3a', recolor: { h1: 118, h2: 95, sat: 0.9, val: 0.92, sat2: 0.8, val2: 0.55 },
     diff: 0.12, bonus: { spd: -1, chk: -1 }, goalie: { rfx: 4, pos: 4 },
     names: { frost: 'Fern', thunder: 'Pip', stone: 'Oakley', goalie: 'Moss' },
+    subs: { frost: 'Birch', thunder: 'Skip', stone: 'Stump' }, // who plays the slot after you sign its skater
     style: 'Young and eager. They chase the puck in a pack.',
   },
   comets: {
@@ -112,6 +113,7 @@ export const TEAMS = {
     color: '#ff6f7d', color2: '#8261bd',
     diff: 0.35, bonus: {}, goalie: { rfx: 5, pos: 5 },
     names: { frost: 'Cinder', thunder: 'Blaze', stone: 'Ash', goalie: 'Smolder' },
+    subs: { frost: 'Flint', thunder: 'Spark', stone: 'Coal' }, // who plays the slot after you sign its skater
     style: 'Hot-headed scorers who shoot from everywhere.',
   },
   rams: {
@@ -120,6 +122,7 @@ export const TEAMS = {
     color: '#ffd45e', color2: '#a86b1d', recolor: { h1: 44, h2: 22, sat: 1.0, val: 1.05, sat2: 0.9, val2: 0.65 },
     diff: 0.55, bonus: { sht: 1, chk: 1 }, goalie: { rfx: 6, pos: 6 },
     names: { frost: 'Aurum', thunder: 'Gilda', stone: 'Horn', goalie: 'Bulwark' },
+    subs: { frost: 'Bullion', thunder: 'Brass', stone: 'Crag' }, // who plays the slot after you sign its skater
     style: 'Heavy hitters with heavier slapshots.',
   },
   ravens: {
@@ -128,6 +131,7 @@ export const TEAMS = {
     color: '#9aa3b5', color2: '#2a2f3d', recolor: { h1: 220, h2: 220, sat: 0.12, val: 0.66, sat2: 0.15, val2: 0.4 },
     diff: 0.72, bonus: { agi: 1, pas: 1, chk: 1 }, goalie: { rfx: 7, pos: 7 },
     names: { frost: 'Corvin', thunder: 'Nyx', stone: 'Basalt', goalie: 'Grim' },
+    subs: { frost: 'Rook', thunder: 'Shade', stone: 'Onyx' }, // who plays the slot after you sign its skater
     style: 'Disciplined, fast passing, punishing on the forecheck.',
   },
   royals: {
@@ -136,6 +140,7 @@ export const TEAMS = {
     color: '#c58cff', color2: '#43207a', recolor: { h1: 284, h2: 46, sat: 0.95, val: 0.92, sat2: 1.0, val2: 1.0 },
     diff: 0.9, bonus: { spd: 1, sht: 1, pas: 1, chk: 1 }, goalie: { rfx: 8, pos: 8 },
     names: { frost: 'Solenne', thunder: 'Aurelio', stone: 'Regalia', goalie: 'Crown' },
+    subs: { frost: 'Regent', thunder: 'Herald', stone: 'Bastion' }, // who plays the slot after you sign its skater
     style: 'Defending champions. No weaknesses, plenty of swagger.',
   },
 };
@@ -149,6 +154,58 @@ export const ARENAS = {
   ember_dome: { name: 'Ember Dome', lamps: '#ff7a2e', flicker: 2.2, ice: 'rgba(255,140,60,0.06)' },
   aurora_palace: { name: 'Aurora Palace', lamps: '#ffd27a' },
   pine_pond: { name: 'Pine Pond', lamps: null },
+};
+
+// ---------------------------------------------------------------- recruitment
+// Beat a rival and their skaters will take your calls. A signing plays their position's
+// kit (C: Nix's frost kit, W: Volta's thunder kit, D: Bram's stone kit) with their own
+// stats, a few perks they arrive with, and no chemistry with your line yet.
+// perks: which option they took at each perk level (levels 3, 5, 7) before joining.
+const recruit = (team, kit, base, perks, price, blurb) => ({ team, kit, base, perks, price, blurb });
+export const RECRUITS = {
+  lynx_c: recruit('lynx', 'frost', { spd: 7, agi: 8, sht: 6, pas: 8, chk: 4, sta: 6 }, [1, 1, 1], 180, 'Pinewood\'s eager captain. Quick feet, quicker hands, never stops smiling.'),
+  lynx_w: recruit('lynx', 'thunder', { spd: 9, agi: 9, sht: 5, pas: 5, chk: 2, sta: 7 }, [0, 0, 1], 180, 'Tiny, tireless and somehow everywhere at once.'),
+  lynx_d: recruit('lynx', 'stone', { spd: 5, agi: 5, sht: 6, pas: 6, chk: 8, sta: 9 }, [0, 1, 0], 180, 'Plays like a pine in a blizzard: bends, never breaks.'),
+  comets_c: recruit('comets', 'frost', { spd: 6, agi: 6, sht: 9, pas: 7, chk: 5, sta: 6 }, [1, 0, 0], 260, 'Shoot-first centre with a temper to match.'),
+  comets_w: recruit('comets', 'thunder', { spd: 8, agi: 7, sht: 9, pas: 4, chk: 4, sta: 5 }, [1, 1, 0], 260, 'Fire-starter. Never met a shot worth passing up.'),
+  comets_d: recruit('comets', 'stone', { spd: 5, agi: 5, sht: 9, pas: 4, chk: 8, sta: 8 }, [1, 0, 1], 260, 'Booming point shot. Defends when the mood strikes.'),
+  rams_c: recruit('rams', 'frost', { spd: 5, agi: 6, sht: 8, pas: 8, chk: 7, sta: 6 }, [1, 0, 1], 340, 'Big-bodied centre who wins every battle along the boards.'),
+  rams_w: recruit('rams', 'thunder', { spd: 8, agi: 7, sht: 8, pas: 5, chk: 5, sta: 5 }, [0, 1, 0], 340, 'Power winger with a wrist shot like a falling anvil.'),
+  rams_d: recruit('rams', 'stone', { spd: 4, agi: 4, sht: 8, pas: 4, chk: 10, sta: 10 }, [1, 0, 0], 340, 'The hardest hitter in the Frostline. Ask anyone. Carefully.'),
+  ravens_c: recruit('ravens', 'frost', { spd: 7, agi: 8, sht: 6, pas: 9, chk: 5, sta: 5 }, [0, 1, 1], 420, 'Reads the play two passes ahead and never wastes a touch.'),
+  ravens_w: recruit('ravens', 'thunder', { spd: 9, agi: 9, sht: 7, pas: 6, chk: 3, sta: 4 }, [1, 0, 0], 420, 'Silent, slippery, gone before you turn around.'),
+  ravens_d: recruit('ravens', 'stone', { spd: 5, agi: 6, sht: 6, pas: 7, chk: 9, sta: 7 }, [0, 1, 0], 420, 'Positionally perfect. Never out of place, never rattled.'),
+  royals_c: recruit('royals', 'frost', { spd: 7, agi: 8, sht: 8, pas: 8, chk: 4, sta: 6 }, [1, 0, 0], 520, 'Royals captain. Elegant, precise and very aware of it.'),
+  royals_w: recruit('royals', 'thunder', { spd: 9, agi: 8, sht: 8, pas: 5, chk: 3, sta: 6 }, [0, 1, 0], 520, 'Flashy finisher with a release the crowd waits for.'),
+  royals_d: recruit('royals', 'stone', { spd: 5, agi: 5, sht: 8, pas: 6, chk: 9, sta: 8 }, [1, 0, 0], 520, 'The old monarch of the blue line. Still has it.'),
+};
+const ROLE_TITLE = { C: 'Centre', W: 'Winger', D: 'Defender' };
+for (const [key, r] of Object.entries(RECRUITS)) {
+  const t = TEAMS[r.team];
+  const c = CHARACTERS[r.kit];
+  Object.assign(r, { key, name: t.names[r.kit], role: c.role, title: `${t.name.split(' ').slice(-1)[0].replace(/s$/, '')} ${ROLE_TITLE[c.role]}`, sprite: `${t.art}_${ROLE[r.kit]}` });
+}
+export const recruitKey = (teamId, kit) => `${teamId}_${ROLE[kit]}`;
+export const KIT_OF_ROLE = { C: 'frost', W: 'thunder', D: 'stone' };
+
+// Everything about a member of our roster ('frost', 'thunder', 'stone' or a recruit key).
+export function member(who) {
+  const r = RECRUITS[who];
+  const c = CHARACTERS[r ? r.kit : who];
+  if (!c) return null;
+  if (!r) return { who, kit: who, def: c, name: c.name, title: c.title, base: c.base, role: c.role, blurb: c.blurb, recruit: null };
+  return { who, kit: r.kit, def: c, name: r.name, title: r.title, base: r.base, role: c.role, blurb: r.blurb, recruit: r };
+}
+
+// The combo two members fire comes from their kits; the bond itself is between them.
+export function comboFor(pair) {
+  const [a, b] = pair.split('+').map(member);
+  return a && b ? COMBOS[pairKey(a.kit, b.kit)] : null;
+}
+
+// Recruits on our side wear home colours: coral becomes cream, violet becomes teal.
+export const PALETTES = {
+  homekit: { id: 'homekit', recolor: { h1: 46, h2: 188, sat: 0.32, val: 1.08, sat2: 0.9, val2: 1.3 }, groups: [] },
 };
 
 // Twists: 'none' | 'speed_lanes' | 'cracked_ice' | 'both'

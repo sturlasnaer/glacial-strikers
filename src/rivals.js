@@ -1,6 +1,6 @@
 // Rivalries that remember: head-to-head records and dialogue that references them.
 
-import { CHARACTERS, TEAMS } from './data.js';
+import { TEAMS, RECRUITS, member, recruitKey } from './data.js';
 
 const pick = (arr, seed) => arr[Math.abs(seed) % arr.length];
 
@@ -34,8 +34,8 @@ export function rivalLines(save, teamId) {
   if (!r || !r.last || !t) return [];
   const L = r.last;
   const seed = r.played * 7 + r.gf * 3 + r.ga;
-  const ours = (id) => CHARACTERS[id].name;
-  const theirs = (id) => t.names[id];
+  const ours = (id) => (member(id) ? member(id).name : 'Somebody');
+  const theirs = (id) => (id.startsWith('sub_') ? t.subs[id.slice(4)] : t.names[id]) || 'Somebody';
   const lines = [];
   if (L.won) {
     const margin = L.gf - L.ga;
@@ -52,7 +52,21 @@ export function rivalLines(save, teamId) {
     if (r.streak <= -2) lines.push(['us', 'thunder', `${-r.streak} losses in a row to these guys. That ends today.`]);
   }
   if (save.season > 1 && L.season < save.season && seed % 2 === 0) lines.push(['them', 'frost', `New season, same Strikers? We'll see.`]);
+  const poached = poachedLine(save, teamId);
+  if (poached) lines.unshift(poached);
   return lines.slice(0, 3);
+}
+
+// When you've signed one of their skaters, they bring it up.
+export function poachedLine(save, teamId) {
+  const t = TEAMS[teamId];
+  const gone = ['frost', 'thunder', 'stone'].filter((k) => save.roster[recruitKey(teamId, k)]);
+  if (!t || !gone.length) return null;
+  const speaker = ['frost', 'thunder', 'stone'].find((k) => !gone.includes(k)) || 'frost';
+  const names = gone.map((k) => RECRUITS[recruitKey(teamId, k)].name);
+  const who = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
+  const seed = (save.rivals && save.rivals[teamId] && save.rivals[teamId].played) || 0;
+  return ['them', speaker, pick([`You took ${who} from us. Let's see who regrets it.`, `Nice jersey, ${names[0]}. It'll look even better after we beat you.`, `Signing ${who} won't save you, Strikers.`], seed)];
 }
 
 // One extra line after the match, from the rival captain.

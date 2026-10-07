@@ -502,11 +502,11 @@ export class Match {
     let combo = null;
     if (s.comboT > 0 && s.comboFrom && !special.zero && !special.thunder) {
       const level = this.chemLevel(s.comboFrom, s);
-      if (level > 0) combo = { key: pairKey(s.comboFrom.def.id, s.def.id), level, from: s.comboFrom };
+      if (level > 0) combo = { key: pairKey(s.comboFrom.def.id, s.def.id), pair: pairKey(s.comboFrom.who, s.who), level, from: s.comboFrom };
     }
     s.comboT = 0; s.comboFrom = null;
     if (combo) {
-      special.combo = combo.key; special.comboLevel = combo.level;
+      special.combo = combo.key; special.comboLevel = combo.level; special.comboPair = combo.pair;
       if (combo.key === 'frost+thunder') speed *= 1.1 + combo.level * 0.03;
       if (combo.key === 'frost+stone') speed *= 1.06;
       if (combo.key === 'stone+thunder') speed *= 1.12 + (combo.level >= 3 ? 0.06 : 0);
@@ -1021,7 +1021,7 @@ export class Match {
       this.addUlt(scorer, 15);
       if (sh && sh.power) scorer.stats_.powerGoals++;
       for (const a of assists) { a.stats_.assists++; this.addUlt(a, 8); this.chemStat(team, a, scorer).assists++; }
-      if (sh && sh.special && sh.special.combo) this.chemStats[team][sh.special.combo].comboGoals++;
+      if (sh && sh.special && sh.special.combo) this.chemStat(team, null, null, sh.special.comboPair).comboGoals++;
     }
     const info = {
       team, scorer, assists, kind: sh ? sh.kind : 'scramble', power: sh ? sh.power : null,
@@ -1193,7 +1193,7 @@ export class Match {
     if (this.puck.owner === g) return;
     g.disabled = true; g.x = g.goalSide * 900; g.y = 900;
     const c = this.extraCfg[team];
-    const x = new Skater(this, team, c.def, c.stats, 3, { name: c.name, perks: [], sprite: c.sprite });
+    const x = new Skater(this, team, c.def, c.stats, 3, { name: c.name, perks: [], sprite: c.sprite, look: c.look, who: 'extra' });
     x.extraAttacker = true;
     x.x = team === 0 ? -20 : 20; x.y = RINK.minY + 30; x.vy = 260; x.vx = (team === 0 ? 1 : -1) * 120;
     x.face = Math.PI / 2;
@@ -1245,11 +1245,12 @@ export class Match {
   // ------------------------------------------------------------ chemistry
   chemLevel(a, b) {
     if (!a || !b || !a.isSkater || !b.isSkater || a.team !== b.team) return 0;
-    return this.chem[a.team][pairKey(a.def.id, b.def.id)] || 0;
+    return this.chem[a.team][pairKey(a.who, b.who)] || 0;
   }
 
-  chemStat(team, a, b) {
-    const k = pairKey(a.def.id, b.def.id);
+  // Bonds are between people (a.who), combos between kits (def.id).
+  chemStat(team, a, b, key) {
+    const k = key || pairKey(a.who, b.who);
     return (this.chemStats[team][k] ||= { passes: 0, assists: 0, comboGoals: 0 });
   }
 
@@ -1278,7 +1279,7 @@ export class Match {
       winner: this.winner,
       goals: this.goalLog,
       shots: [...this.shotsOnGoal],
-      skaters: this.skaters.map((s) => ({ id: s.def.id, team: s.team, name: s.name, ...s.stats_ })),
+      skaters: this.skaters.filter((s) => !s.extraAttacker).map((s) => ({ id: s.who, kit: s.def.id, team: s.team, name: s.name, ...s.stats_ })),
       saves: this.goalies.map((g) => g.saves),
       time: this.time,
     };

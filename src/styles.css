@@ -491,3 +491,27 @@ body.in-hub #screen {
 .cutin.art .txt b { text-shadow: 0 4px 0 var(--navy), 0 0 18px rgba(0, 0, 0, 0.6); }
 .cutin.art .txt small { text-shadow: 0 2px 0 var(--navy); }
 body.in-hub .hub-body { background: linear-gradient(180deg, rgba(20, 35, 59, 0.82), rgba(13, 24, 42, 0.86)); backdrop-filter: blur(1.5px); -webkit-backdrop-filter: blur(1.5px); }
+
+/* ---- recruitment: line-up, bench, scouting ---- */
+.card.benched { opacity: 0.92; border-style: dashed; }
+.dress { display: block; width: 100%; margin: 2px 0 0; text-align: center; font-size: 13px; }
+.dress.on { padding: 4px 8px; border-radius: 6px; background: rgba(113, 220, 232, 0.14); color: var(--ice); font-family: var(--display); font-size: 16px; letter-spacing: 0.04em; }
+.scouting { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+.scout-team { padding: 10px; border-radius: 8px; background: rgba(13, 24, 42, 0.55); border: 2px solid var(--navy-3); }
+.scout-team.locked { opacity: 0.6; }
+.scout-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 15px; }
+.recruits { display: grid; gap: 6px; }
+.recruit { display: grid; grid-template-columns: 44px 1fr auto; gap: 8px; align-items: center; }
+.recruit img { width: 44px; height: 44px; border-radius: 8px; background: rgba(20, 35, 59, 0.7); }
+.recruit.locked img { filter: grayscale(0.8) brightness(0.7); }
+.recruit b { display: block; font-size: 15px; }
+.recruit .muted { display: block; font-size: 12px; }
+.recruit .btn { display: inline-flex; gap: 4px; align-items: center; }
+.recruit .tag { font-size: 12px; padding: 3px 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); color: var(--ice-2, #c3d3ea); }
+.recruit .tag.good { background: rgba(127, 224, 138, 0.16); color: #7fe08a; }
+.line-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 10px; border-radius: 8px; background: rgba(13, 24, 42, 0.5); font-size: 14px; }
+.line-row span { display: inline-flex; align-items: center; gap: 6px; }
+.line-row img { border-radius: 6px; }
+.line-row .btn { margin-left: auto; }
+.recruit .btn img { width: 16px !important; height: 16px !important; border-radius: 0; background: none; }
+.scout-head .muted { font-size: 12px; }

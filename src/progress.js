@@ -1,6 +1,9 @@
 // Save data, stats, levelling, rewards and match setup.
 
-import { CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE } from './data.js';
+import {
+  CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE,
+  RECRUITS, member, pairKey, recruitKey,
+} from './data.js';
 import { newLeague, migrateLeague } from './league.js';
 
 const KEY = 'glacial-strikers-save-v1';
@@ -10,17 +13,12 @@ export const STAT_CAP_BONUS = 3; // points you can add to a stat above its base
 
 export function newSave() {
   const roster = {};
-  for (const id of Object.keys(CHARACTERS)) {
-    roster[id] = {
-      level: 1, exp: 0, points: 0, alloc: Object.fromEntries(STAT_KEYS.map((k) => [k, 0])),
-      perks: [], pendingPerk: null,
-      gear: { stick: 'stick_wood', skates: 'skate_start', armor: 'arm_none' },
-    };
-  }
+  for (const id of Object.keys(CHARACTERS)) roster[id] = newMember();
   return {
     v: 1,
     coins: 150,
-    roster,
+    roster, // every signed skater, keyed by member id
+    lineup: { C: 'frost', W: 'thunder', D: 'stone' }, // who dresses for matches
     goalie: { level: 1, exp: 0, gear: 'g_start' },
     owned: ['stick_wood', 'skate_start', 'arm_none', 'g_start'],
     chem: Object.fromEntries(Object.keys(COMBOS).map((k) => [k, 0])), // chemistry XP per pair
@@ -57,6 +55,10 @@ export function loadSave() {
     for (const k of Object.keys(base)) if (s[k] === undefined) s[k] = base[k];
     for (const k of Object.keys(base.settings)) if (s.settings[k] === undefined) s.settings[k] = base.settings[k];
     for (const id of Object.keys(CHARACTERS)) if (!s.roster[id]) s.roster[id] = base.roster[id];
+    for (const [role, who] of Object.entries(s.lineup)) {
+      const m = member(who);
+      if (!s.roster[who] || !m || m.role !== role) s.lineup[role] = base.lineup[role];
+    }
     for (const k of Object.keys(COMBOS)) if (typeof s.chem[k] !== 'number') s.chem[k] = 0;
     if (!s.league || !s.league.schedule) s.league = migrateLeague(s);
     return s;
@@ -93,8 +95,61 @@ export function gearMods(r) {
   return out;
 }
 
+function newMember() {
+  return {
+    level: 1, exp: 0, points: 0, alloc: Object.fromEntries(STAT_KEYS.map((k) => [k, 0])),
+    perks: [], pendingPerk: null,
+    gear: { stick: 'stick_wood', skates: 'skate_start', armor: 'arm_none' },
+  };
+}
+
+// ---------------------------------------------------------------- roster and recruitment
+export const lineupIds = (save) => [save.lineup.C, save.lineup.W, save.lineup.D];
+export const rosterIds = (save) => Object.keys(save.roster).filter((id) => member(id));
+export const isSigned = (save, key) => !!save.roster[key];
+
+// A rival's skaters can be signed once you've beaten that team.
+export function recruitStatus(save, key) {
+  if (save.roster[key]) return 'signed';
+  const r = RECRUITS[key];
+  const rec = save.rivals && save.rivals[r.team];
+  return rec && rec.wins > 0 ? 'open' : 'locked';
+}
+
+// New signings join a level below your line-up's average.
+export function joinLevel(save) {
+  const ids = lineupIds(save);
+  const avg = ids.reduce((a, id) => a + save.roster[id].level, 0) / ids.length;
+  return Math.max(1, Math.min(MAX_LEVEL - 1, Math.round(avg) - 1));
+}
+
+export function signRecruit(save, key) {
+  const r = RECRUITS[key];
+  if (!r || recruitStatus(save, key) !== 'open' || save.coins < r.price) return null;
+  save.coins -= r.price;
+  const m = newMember();
+  const level = joinLevel(save);
+  m.level = level;
+  m.points = level - 1; // yours to spend
+  const opts = CHARACTERS[r.kit].perks;
+  PERK_LEVELS.forEach((lv, i) => { if (level >= lv) m.perks.push(opts[i][r.perks[i]]); });
+  save.roster[key] = m;
+  return m;
+}
+
+// Put a member into their position's line-up slot.
+export function setLineup(save, who) {
+  const m = member(who);
+  if (!m || !save.roster[who]) return false;
+  save.lineup[m.role] = who;
+  return true;
+}
+
+// Rival roster pages to show our recruits in home colours.
+export const homeKitGroups = (save) => [...new Set(rosterIds(save).filter((id) => RECRUITS[id]).map((id) => 'rival_' + TEAMS[RECRUITS[id].team].art))];
+
 export function effectiveStats(id, r) {
-  const base = CHARACTERS[id].base;
+  const base = member(id).base;
   const gm = gearMods(r);
   const out = {};
   for (const k of STAT_KEYS) out[k] = Math.max(1, Math.min(13, base[k] + r.alloc[k] + gm[k]));
@@ -115,19 +170,26 @@ const DIFF_OFFSET = { easy: -0.15, normal: 0, hard: 0.12 };
 // Build the Match config for a game against `teamId`.
 export function matchConfig(save, teamId, stage, opts = {}) {
   const t = TEAMS[teamId];
-  const ids = ['frost', 'thunder', 'stone'];
+  const ids = ['frost', 'thunder', 'stone']; // rival slots (and kits)
+  const line = lineupIds(save);
   const home = {
-    skaters: ids.map((id) => ({
-      def: CHARACTERS[id], stats: effectiveStats(id, save.roster[id]), name: CHARACTERS[id].name, perks: perkNames(save.roster[id]),
-    })),
+    skaters: line.map((who) => {
+      const m = member(who);
+      return {
+        def: m.def, who, stats: effectiveStats(who, save.roster[who]), name: m.name, perks: perkNames(save.roster[who]),
+        sprite: m.recruit ? m.recruit.sprite : null, look: m.recruit ? 'homekit' : null,
+      };
+    }),
     goalie: { stats: goalieStats(save), name: GOALIE.name },
-    chem: Object.fromEntries(Object.keys(COMBOS).map((k) => [k, chemLevel(save.chem[k] || 0)])),
+    chem: lineChem(save, line),
   };
   const seasonBoost = (save.season - 1) * 0.08;
   const away = {
     skaters: ids.map((id) => {
       const stats = { ...CHARACTERS[id].base };
       for (const [k, v] of Object.entries(t.bonus || {})) stats[k] = Math.max(1, stats[k] + v);
+      // a slot whose skater you signed is filled by a newcomer in their colours
+      if (isSigned(save, recruitKey(teamId, id))) return { def: CHARACTERS[id], who: 'sub_' + id, stats, name: t.subs[id], perks: [] };
       return { def: CHARACTERS[id], stats, name: t.names[id], perks: [], sprite: t.art ? `${t.art}_${ROLE[id]}` : null };
     }),
     goalie: { stats: { ...t.goalie }, name: t.names.goalie, art: t.art || null },
@@ -137,7 +199,7 @@ export function matchConfig(save, teamId, stage, opts = {}) {
   // locker-room buffs: stat bumps and goalie reflex land here, the rest goes to the match
   const fx = opts.buffs;
   if (fx) {
-    for (const b of fx.stats) for (const sk of home.skaters) if (b.who === 'all' || b.who === sk.def.id) sk.stats[b.stat] = Math.min(13, sk.stats[b.stat] + b.v);
+    for (const b of fx.stats) for (const sk of home.skaters) if (b.who === 'all' || b.who === sk.who) sk.stats[b.stat] = Math.min(13, sk.stats[b.stat] + b.v);
     home.goalie.stats.rfx += fx.goalieRfx;
   }
   return {
@@ -188,9 +250,12 @@ export function computeRewards(save, summary, stage, exhibition) {
     if (exhibition) e = Math.round(e * 0.6);
     exp[s.id] = Math.min(220, Math.round(e));
   }
-  // chemistry: passes, assists and combo goals between each pair
+  // chemistry: passes, assists and combo goals between each pair that dressed
   const chem = {};
-  for (const k of Object.keys(COMBOS)) {
+  const ids = [...new Set(mine.map((s) => s.id))];
+  const pairs = [];
+  for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) pairs.push(pairKey(ids[i], ids[j]));
+  for (const k of pairs) {
     const c = (summary.chem && summary.chem[k]) || { passes: 0, assists: 0, comboGoals: 0 };
     let x = c.passes + c.assists * 6 + c.comboGoals * 10 + (won ? 3 : 1);
     if (exhibition) x = Math.round(x * 0.6);
@@ -258,7 +323,17 @@ export function applyGoalieExp(save, amount) {
 }
 
 export function canRaise(r, id, k) {
-  return r.points > 0 && r.alloc[k] < STAT_CAP_BONUS && CHARACTERS[id].base[k] + r.alloc[k] < 12;
+  return r.points > 0 && r.alloc[k] < STAT_CAP_BONUS && member(id).base[k] + r.alloc[k] < 12;
+}
+
+// Chemistry levels for every pair in a line, keyed by member pair.
+export function lineChem(save, line) {
+  const out = {};
+  for (let i = 0; i < line.length; i++) for (let j = i + 1; j < line.length; j++) {
+    const k = pairKey(line[i], line[j]);
+    out[k] = chemLevel(save.chem[k] || 0);
+  }
+  return out;
 }
 
 export function currentStage(save) {

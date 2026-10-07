@@ -11,7 +11,8 @@ const OUR_ORDER = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
 // Rough team strength for simulated games (home strength follows the player's levels).
 export function strength(teamId, save) {
   if (teamId === 'home') {
-    const lv = Object.values(save.roster).reduce((a, r) => a + r.level, 0) / 3;
+    const line = save.lineup ? [save.lineup.C, save.lineup.W, save.lineup.D] : ['frost', 'thunder', 'stone'];
+    const lv = line.reduce((a, id) => a + ((save.roster[id] && save.roster[id].level) || 1), 0) / 3;
     return 0.45 + lv * 0.06;
   }
   const t = TEAMS[teamId];

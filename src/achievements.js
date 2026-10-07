@@ -1,6 +1,6 @@
 // Achievements: tracked from match events and save progress, shown in the Trophies tab.
 
-import { TEAMS, GEAR, CHEM_LEVELS } from './data.js';
+import { TEAMS, GEAR, CHEM_LEVELS, RECRUITS } from './data.js';
 
 const TROPHY = 'equipment_items/reward/trophy', MEDAL = 'equipment_items/reward/medal', STAR = 'hud_elements/misc/level_star';
 
@@ -32,6 +32,8 @@ export const ACHIEVEMENTS = [
   { id: 'gold-drills', name: 'Gold Standard', text: 'Win gold in all four training drills.', icon: MEDAL, coins: 150 },
   { id: 'shootout', name: 'Shootout Hero', text: 'Win a shootout.', icon: 'equipment_items/armor/goalie_gloves', coins: 50 },
   { id: 'kitted', name: 'Fully Kitted', text: 'Own every piece of gear in the shop.', icon: 'equipment_items/hub/shop', coins: 150 },
+  { id: 'signing', name: 'Free Agent', text: 'Sign a skater from a rival.', icon: 'equipment_items/hub/shop', coins: 40 },
+  { id: 'scout', name: 'Talent Scout', text: 'Sign a skater from every rival.', icon: 'equipment_items/hub/target', coins: 150 },
   { id: 'versus', name: 'Couch Champion', text: 'Win a local versus match.', icon: 'hud_elements/misc/home_crest', coins: 30 },
 ];
 const BY_ID = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a]));
@@ -118,5 +120,8 @@ export class AchievementTracker {
     if (Object.values(s.chem || {}).some((x) => x >= CHEM_LEVELS[2])) this.unlock('in-sync');
     if (s.training && ['cones', 'sniper', 'rondo', 'breakaway'].every((d) => (s.training.medals[d] || 0) >= 3)) this.unlock('gold-drills');
     if (GEAR.every((g) => s.owned.includes(g.id))) this.unlock('kitted');
+    const signed = Object.keys(RECRUITS).filter((k) => s.roster[k]);
+    if (signed.length) this.unlock('signing');
+    if (new Set(signed.map((k) => RECRUITS[k].team)).size >= 5) this.unlock('scout');
   }
 }

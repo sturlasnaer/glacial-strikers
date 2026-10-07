@@ -26,12 +26,11 @@ Ideas for later:
 
 ## Next, with art
 
-Done from the v2 pack: rival casts, portraits and expressions, crests, banner cut-ins, signature celebrations, three arenas, sprite crowd, locker-room hub and hub characters.
+Done: recruitment (sign rival skaters, pick a line-up). Done from the v2 pack: rival casts, portraits and expressions, crests, banner cut-ins, signature celebrations, three arenas, sprite crowd, locker-room hub and hub characters.
 
-1. **Recruitment.** Beating a rival lets you sign their star (their art is in now). You pick a 3-skater line-up before matches.
-2. **Arena twists.** Give each building a rule that fits it: warm soft ice in the Ember Dome, aurora speed lanes in the Palace, pond cracks on Pine Pond.
-3. **Clickable locker room.** Stations in the room (stick rack, shop counter, coach's board) instead of tabs.
-4. **Visible gear** overlays for sticks and skates, once animations are final.
+1. **Arena twists.** Give each building a rule that fits it: warm soft ice in the Ember Dome, aurora speed lanes in the Palace, pond cracks on Pine Pond.
+2. **Clickable locker room.** Stations in the room (stick rack, shop counter, coach's board) instead of tabs.
+3. **Visible gear** overlays for sticks and skates, once animations are final.
 
 ## Balance knobs
 

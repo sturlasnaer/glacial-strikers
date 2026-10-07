@@ -542,6 +542,30 @@ body.in-hub #screen {
 .cutin.art .txt small { text-shadow: 0 2px 0 var(--navy); }
 body.in-hub .hub-body { background: linear-gradient(180deg, rgba(20, 35, 59, 0.82), rgba(13, 24, 42, 0.86)); backdrop-filter: blur(1.5px); -webkit-backdrop-filter: blur(1.5px); }
 
+/* ---- recruitment: line-up, bench, scouting ---- */
+.card.benched { opacity: 0.92; border-style: dashed; }
+.dress { display: block; width: 100%; margin: 2px 0 0; text-align: center; font-size: 13px; }
+.dress.on { padding: 4px 8px; border-radius: 6px; background: rgba(113, 220, 232, 0.14); color: var(--ice); font-family: var(--display); font-size: 16px; letter-spacing: 0.04em; }
+.scouting { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+.scout-team { padding: 10px; border-radius: 8px; background: rgba(13, 24, 42, 0.55); border: 2px solid var(--navy-3); }
+.scout-team.locked { opacity: 0.6; }
+.scout-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 15px; }
+.recruits { display: grid; gap: 6px; }
+.recruit { display: grid; grid-template-columns: 44px 1fr auto; gap: 8px; align-items: center; }
+.recruit img { width: 44px; height: 44px; border-radius: 8px; background: rgba(20, 35, 59, 0.7); }
+.recruit.locked img { filter: grayscale(0.8) brightness(0.7); }
+.recruit b { display: block; font-size: 15px; }
+.recruit .muted { display: block; font-size: 12px; }
+.recruit .btn { display: inline-flex; gap: 4px; align-items: center; }
+.recruit .tag { font-size: 12px; padding: 3px 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); color: var(--ice-2, #c3d3ea); }
+.recruit .tag.good { background: rgba(127, 224, 138, 0.16); color: #7fe08a; }
+.line-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 10px; border-radius: 8px; background: rgba(13, 24, 42, 0.5); font-size: 14px; }
+.line-row span { display: inline-flex; align-items: center; gap: 6px; }
+.line-row img { border-radius: 6px; }
+.line-row .btn { margin-left: auto; }
+.recruit .btn img { width: 16px !important; height: 16px !important; border-radius: 0; background: none; }
+.scout-head .muted { font-size: 12px; }
+
 </style>
 </head>
 <body>
@@ -677,6 +701,7 @@ const TEAMS = {
     color: '#7fd16b', color2: '#2f6b3a', recolor: { h1: 118, h2: 95, sat: 0.9, val: 0.92, sat2: 0.8, val2: 0.55 },
     diff: 0.12, bonus: { spd: -1, chk: -1 }, goalie: { rfx: 4, pos: 4 },
     names: { frost: 'Fern', thunder: 'Pip', stone: 'Oakley', goalie: 'Moss' },
+    subs: { frost: 'Birch', thunder: 'Skip', stone: 'Stump' }, // who plays the slot after you sign its skater
     style: 'Young and eager. They chase the puck in a pack.',
   },
   comets: {
@@ -685,6 +710,7 @@ const TEAMS = {
     color: '#ff6f7d', color2: '#8261bd',
     diff: 0.35, bonus: {}, goalie: { rfx: 5, pos: 5 },
     names: { frost: 'Cinder', thunder: 'Blaze', stone: 'Ash', goalie: 'Smolder' },
+    subs: { frost: 'Flint', thunder: 'Spark', stone: 'Coal' }, // who plays the slot after you sign its skater
     style: 'Hot-headed scorers who shoot from everywhere.',
   },
   rams: {
@@ -693,6 +719,7 @@ const TEAMS = {
     color: '#ffd45e', color2: '#a86b1d', recolor: { h1: 44, h2: 22, sat: 1.0, val: 1.05, sat2: 0.9, val2: 0.65 },
     diff: 0.55, bonus: { sht: 1, chk: 1 }, goalie: { rfx: 6, pos: 6 },
     names: { frost: 'Aurum', thunder: 'Gilda', stone: 'Horn', goalie: 'Bulwark' },
+    subs: { frost: 'Bullion', thunder: 'Brass', stone: 'Crag' }, // who plays the slot after you sign its skater
     style: 'Heavy hitters with heavier slapshots.',
   },
   ravens: {
@@ -701,6 +728,7 @@ const TEAMS = {
     color: '#9aa3b5', color2: '#2a2f3d', recolor: { h1: 220, h2: 220, sat: 0.12, val: 0.66, sat2: 0.15, val2: 0.4 },
     diff: 0.72, bonus: { agi: 1, pas: 1, chk: 1 }, goalie: { rfx: 7, pos: 7 },
     names: { frost: 'Corvin', thunder: 'Nyx', stone: 'Basalt', goalie: 'Grim' },
+    subs: { frost: 'Rook', thunder: 'Shade', stone: 'Onyx' }, // who plays the slot after you sign its skater
     style: 'Disciplined, fast passing, punishing on the forecheck.',
   },
   royals: {
@@ -709,6 +737,7 @@ const TEAMS = {
     color: '#c58cff', color2: '#43207a', recolor: { h1: 284, h2: 46, sat: 0.95, val: 0.92, sat2: 1.0, val2: 1.0 },
     diff: 0.9, bonus: { spd: 1, sht: 1, pas: 1, chk: 1 }, goalie: { rfx: 8, pos: 8 },
     names: { frost: 'Solenne', thunder: 'Aurelio', stone: 'Regalia', goalie: 'Crown' },
+    subs: { frost: 'Regent', thunder: 'Herald', stone: 'Bastion' }, // who plays the slot after you sign its skater
     style: 'Defending champions. No weaknesses, plenty of swagger.',
   },
 };
@@ -722,6 +751,58 @@ const ARENAS = {
   ember_dome: { name: 'Ember Dome', lamps: '#ff7a2e', flicker: 2.2, ice: 'rgba(255,140,60,0.06)' },
   aurora_palace: { name: 'Aurora Palace', lamps: '#ffd27a' },
   pine_pond: { name: 'Pine Pond', lamps: null },
+};
+
+// ---------------------------------------------------------------- recruitment
+// Beat a rival and their skaters will take your calls. A signing plays their position's
+// kit (C: Nix's frost kit, W: Volta's thunder kit, D: Bram's stone kit) with their own
+// stats, a few perks they arrive with, and no chemistry with your line yet.
+// perks: which option they took at each perk level (levels 3, 5, 7) before joining.
+const recruit = (team, kit, base, perks, price, blurb) => ({ team, kit, base, perks, price, blurb });
+const RECRUITS = {
+  lynx_c: recruit('lynx', 'frost', { spd: 7, agi: 8, sht: 6, pas: 8, chk: 4, sta: 6 }, [1, 1, 1], 180, 'Pinewood\'s eager captain. Quick feet, quicker hands, never stops smiling.'),
+  lynx_w: recruit('lynx', 'thunder', { spd: 9, agi: 9, sht: 5, pas: 5, chk: 2, sta: 7 }, [0, 0, 1], 180, 'Tiny, tireless and somehow everywhere at once.'),
+  lynx_d: recruit('lynx', 'stone', { spd: 5, agi: 5, sht: 6, pas: 6, chk: 8, sta: 9 }, [0, 1, 0], 180, 'Plays like a pine in a blizzard: bends, never breaks.'),
+  comets_c: recruit('comets', 'frost', { spd: 6, agi: 6, sht: 9, pas: 7, chk: 5, sta: 6 }, [1, 0, 0], 260, 'Shoot-first centre with a temper to match.'),
+  comets_w: recruit('comets', 'thunder', { spd: 8, agi: 7, sht: 9, pas: 4, chk: 4, sta: 5 }, [1, 1, 0], 260, 'Fire-starter. Never met a shot worth passing up.'),
+  comets_d: recruit('comets', 'stone', { spd: 5, agi: 5, sht: 9, pas: 4, chk: 8, sta: 8 }, [1, 0, 1], 260, 'Booming point shot. Defends when the mood strikes.'),
+  rams_c: recruit('rams', 'frost', { spd: 5, agi: 6, sht: 8, pas: 8, chk: 7, sta: 6 }, [1, 0, 1], 340, 'Big-bodied centre who wins every battle along the boards.'),
+  rams_w: recruit('rams', 'thunder', { spd: 8, agi: 7, sht: 8, pas: 5, chk: 5, sta: 5 }, [0, 1, 0], 340, 'Power winger with a wrist shot like a falling anvil.'),
+  rams_d: recruit('rams', 'stone', { spd: 4, agi: 4, sht: 8, pas: 4, chk: 10, sta: 10 }, [1, 0, 0], 340, 'The hardest hitter in the Frostline. Ask anyone. Carefully.'),
+  ravens_c: recruit('ravens', 'frost', { spd: 7, agi: 8, sht: 6, pas: 9, chk: 5, sta: 5 }, [0, 1, 1], 420, 'Reads the play two passes ahead and never wastes a touch.'),
+  ravens_w: recruit('ravens', 'thunder', { spd: 9, agi: 9, sht: 7, pas: 6, chk: 3, sta: 4 }, [1, 0, 0], 420, 'Silent, slippery, gone before you turn around.'),
+  ravens_d: recruit('ravens', 'stone', { spd: 5, agi: 6, sht: 6, pas: 7, chk: 9, sta: 7 }, [0, 1, 0], 420, 'Positionally perfect. Never out of place, never rattled.'),
+  royals_c: recruit('royals', 'frost', { spd: 7, agi: 8, sht: 8, pas: 8, chk: 4, sta: 6 }, [1, 0, 0], 520, 'Royals captain. Elegant, precise and very aware of it.'),
+  royals_w: recruit('royals', 'thunder', { spd: 9, agi: 8, sht: 8, pas: 5, chk: 3, sta: 6 }, [0, 1, 0], 520, 'Flashy finisher with a release the crowd waits for.'),
+  royals_d: recruit('royals', 'stone', { spd: 5, agi: 5, sht: 8, pas: 6, chk: 9, sta: 8 }, [1, 0, 0], 520, 'The old monarch of the blue line. Still has it.'),
+};
+const ROLE_TITLE = { C: 'Centre', W: 'Winger', D: 'Defender' };
+for (const [key, r] of Object.entries(RECRUITS)) {
+  const t = TEAMS[r.team];
+  const c = CHARACTERS[r.kit];
+  Object.assign(r, { key, name: t.names[r.kit], role: c.role, title: `${t.name.split(' ').slice(-1)[0].replace(/s$/, '')} ${ROLE_TITLE[c.role]}`, sprite: `${t.art}_${ROLE[r.kit]}` });
+}
+const recruitKey = (teamId, kit) => `${teamId}_${ROLE[kit]}`;
+const KIT_OF_ROLE = { C: 'frost', W: 'thunder', D: 'stone' };
+
+// Everything about a member of our roster ('frost', 'thunder', 'stone' or a recruit key).
+function member(who) {
+  const r = RECRUITS[who];
+  const c = CHARACTERS[r ? r.kit : who];
+  if (!c) return null;
+  if (!r) return { who, kit: who, def: c, name: c.name, title: c.title, base: c.base, role: c.role, blurb: c.blurb, recruit: null };
+  return { who, kit: r.kit, def: c, name: r.name, title: r.title, base: r.base, role: c.role, blurb: r.blurb, recruit: r };
+}
+
+// The combo two members fire comes from their kits; the bond itself is between them.
+function comboFor(pair) {
+  const [a, b] = pair.split('+').map(member);
+  return a && b ? COMBOS[pairKey(a.kit, b.kit)] : null;
+}
+
+// Recruits on our side wear home colours: coral becomes cream, violet becomes teal.
+const PALETTES = {
+  homekit: { id: 'homekit', recolor: { h1: 46, h2: 188, sat: 0.32, val: 1.08, sat2: 0.9, val2: 1.3 }, groups: [] },
 };
 
 // Twists: 'none' | 'speed_lanes' | 'cracked_ice' | 'both'
@@ -883,11 +964,11 @@ const TUTORIAL_TIPS = [
   'Skate the puck through a glowing orb to power it up.',
 ];
 
-return { STAT_KEYS, STAT_NAMES, STAT_HINT, CHARACTERS, GOALIE, GEAR, GEAR_BY_ID, TEAMS, ROLE, ART_NAME, ARENAS, TOURNAMENT, CHEM_LEVELS, pairKey, COMBOS, GAME_PLANS, CHALLENGES, POWER_INFO, TWIST_INFO, DIALOGUE, PLAYOFF_LINES, TUTORIAL_TIPS };
+return { STAT_KEYS, STAT_NAMES, STAT_HINT, CHARACTERS, GOALIE, GEAR, GEAR_BY_ID, TEAMS, ROLE, ART_NAME, ARENAS, RECRUITS, recruitKey, KIT_OF_ROLE, member, comboFor, PALETTES, TOURNAMENT, CHEM_LEVELS, pairKey, COMBOS, GAME_PLANS, CHALLENGES, POWER_INFO, TWIST_INFO, DIALOGUE, PLAYOFF_LINES, TUTORIAL_TIPS };
 })();
 // ---- src/assets.js
 __m["src/assets.js"] = (() => {
-const { TEAMS } = __m["src/data.js"];
+const { TEAMS, PALETTES } = __m["src/data.js"];
 // Loads the atlas pages, draws frames, recolours rival jerseys, makes UI icons.
 //
 // The 'home' and 'away' pages load at startup. Each rival roster has its own pages, and
@@ -985,10 +1066,19 @@ const Assets = {
     return r ? r.pages : this.pages;
   },
 
-  // Recolour the away pages and this rival's roster pages into the team's colours.
+  // Our recruits: load their teams' roster pages and recolour them into home colours.
+  async ensureKit(groups) {
+    const kit = PALETTES.homekit;
+    kit.groups = groups;
+    await Promise.all(groups.map((g) => this.loadGroup(g))).catch(() => {});
+    this.prepareTeam(kit);
+  },
+
+  // Recolour the away pages and this rival's roster pages into the team's colours
+  // (or, for a palette with groups, just those pages).
   prepareTeam(team) {
-    const own = (g) => g === 'away' || (team.art && g === 'rival_' + team.art);
-    const loaded = this.pages.filter((img, i) => img && own(this.atlas.pages[i].group)).length;
+    const own = (g) => (team.groups ? team.groups.includes(g) : g === 'away' || (team.art && g === 'rival_' + team.art));
+    const loaded = this.pages.filter((img, i) => img && own(this.atlas.pages[i].group)).length + '|' + (team.groups || []).join(',');
     const r = this.recolored.get(team.id);
     if (r && r.loaded === loaded) return;
     if (!team.recolor) { this.recolored.delete(team.id); return; }
@@ -1010,7 +1100,7 @@ const Assets = {
     if (this.bannerCache.has(ck)) return this.bannerCache.get(ck);
     const img = this.images.get(file);
     if (!img) { this.image(file).catch(() => {}); return null; }
-    const t = teamId && TEAMS[teamId];
+    const t = teamId && (TEAMS[teamId] || PALETTES[teamId]);
     let url = this.url(file);
     if (t && t.recolor) url = recolorPage(img, t.recolor).toDataURL('image/jpeg', 0.88);
     this.bannerCache.set(ck, url);
@@ -1416,6 +1506,8 @@ class Skater {
     this.name = opts.name || def.name;
     this.perks = opts.perks || [];
     this.sprite = opts.sprite || def.sprite; // rivals have their own roster art
+    this.who = opts.who || def.id; // roster member (recruits share a kit's def)
+    this.look = opts.look || null; // palette for recruits in our colours
     this.id = `${team}-${def.id}`;
     this.stats = stats;
     this.d = derive(stats);
@@ -2959,11 +3051,11 @@ class Match {
     let combo = null;
     if (s.comboT > 0 && s.comboFrom && !special.zero && !special.thunder) {
       const level = this.chemLevel(s.comboFrom, s);
-      if (level > 0) combo = { key: pairKey(s.comboFrom.def.id, s.def.id), level, from: s.comboFrom };
+      if (level > 0) combo = { key: pairKey(s.comboFrom.def.id, s.def.id), pair: pairKey(s.comboFrom.who, s.who), level, from: s.comboFrom };
     }
     s.comboT = 0; s.comboFrom = null;
     if (combo) {
-      special.combo = combo.key; special.comboLevel = combo.level;
+      special.combo = combo.key; special.comboLevel = combo.level; special.comboPair = combo.pair;
       if (combo.key === 'frost+thunder') speed *= 1.1 + combo.level * 0.03;
       if (combo.key === 'frost+stone') speed *= 1.06;
       if (combo.key === 'stone+thunder') speed *= 1.12 + (combo.level >= 3 ? 0.06 : 0);
@@ -3478,7 +3570,7 @@ class Match {
       this.addUlt(scorer, 15);
       if (sh && sh.power) scorer.stats_.powerGoals++;
       for (const a of assists) { a.stats_.assists++; this.addUlt(a, 8); this.chemStat(team, a, scorer).assists++; }
-      if (sh && sh.special && sh.special.combo) this.chemStats[team][sh.special.combo].comboGoals++;
+      if (sh && sh.special && sh.special.combo) this.chemStat(team, null, null, sh.special.comboPair).comboGoals++;
     }
     const info = {
       team, scorer, assists, kind: sh ? sh.kind : 'scramble', power: sh ? sh.power : null,
@@ -3650,7 +3742,7 @@ class Match {
     if (this.puck.owner === g) return;
     g.disabled = true; g.x = g.goalSide * 900; g.y = 900;
     const c = this.extraCfg[team];
-    const x = new Skater(this, team, c.def, c.stats, 3, { name: c.name, perks: [], sprite: c.sprite });
+    const x = new Skater(this, team, c.def, c.stats, 3, { name: c.name, perks: [], sprite: c.sprite, look: c.look, who: 'extra' });
     x.extraAttacker = true;
     x.x = team === 0 ? -20 : 20; x.y = RINK.minY + 30; x.vy = 260; x.vx = (team === 0 ? 1 : -1) * 120;
     x.face = Math.PI / 2;
@@ -3702,11 +3794,12 @@ class Match {
   // ------------------------------------------------------------ chemistry
   chemLevel(a, b) {
     if (!a || !b || !a.isSkater || !b.isSkater || a.team !== b.team) return 0;
-    return this.chem[a.team][pairKey(a.def.id, b.def.id)] || 0;
+    return this.chem[a.team][pairKey(a.who, b.who)] || 0;
   }
 
-  chemStat(team, a, b) {
-    const k = pairKey(a.def.id, b.def.id);
+  // Bonds are between people (a.who), combos between kits (def.id).
+  chemStat(team, a, b, key) {
+    const k = key || pairKey(a.who, b.who);
     return (this.chemStats[team][k] ||= { passes: 0, assists: 0, comboGoals: 0 });
   }
 
@@ -3735,7 +3828,7 @@ class Match {
       winner: this.winner,
       goals: this.goalLog,
       shots: [...this.shotsOnGoal],
-      skaters: this.skaters.map((s) => ({ id: s.def.id, team: s.team, name: s.name, ...s.stats_ })),
+      skaters: this.skaters.filter((s) => !s.extraAttacker).map((s) => ({ id: s.who, kit: s.def.id, team: s.team, name: s.name, ...s.stats_ })),
       saves: this.goalies.map((g) => g.saves),
       time: this.time,
     };
@@ -4335,7 +4428,7 @@ __m["src/render.js"] = (() => {
 const { Assets } = __m["src/assets.js"];
 const { toScreen, persp, BACKDROP, GOAL_X, MOUTH, NET_DEPTH, RINK } = __m["src/rink.js"];
 const { clamp, lerp, makeRng } = __m["src/util.js"];
-const { POWER_INFO, COMBOS, TEAMS, ARENAS } = __m["src/data.js"];
+const { POWER_INFO, COMBOS, TEAMS, ARENAS, PALETTES } = __m["src/data.js"];
 const { ELEMENT_COLORS } = __m["src/fx.js"];
 const { NetRenderer, SpriteNets } = __m["src/net.js"];
 // Canvas renderer for matches: rink, crowd, skaters, goalies, puck, effects, camera.
@@ -4438,6 +4531,7 @@ class Renderer {
     ctx.fillRect(0, 0, this.c.width, this.c.height);
     ctx.setTransform(dpr * z, 0, 0, dpr * z, dpr * (this.w / 2 - this.cam.x * z + sh.x), dpr * (this.h / 2 - this.cam.y * z + sh.y));
     if (ui.awayTeamId && TEAMS[ui.awayTeamId]) Assets.prepareTeam(TEAMS[ui.awayTeamId]); // picks up pages loaded mid-match
+    Assets.prepareTeam(PALETTES.homekit); // our recruits in home colours
     this.awayPages = Assets.pagesFor(ui.awayTeamId);
     const arena = ARENAS[ui.arena] ? ui.arena : 'home';
     this.arena = ARENAS[arena];
@@ -4887,7 +4981,7 @@ class Renderer {
     if (fr.pose === 'celebrate') y -= Math.abs(Math.sin(s.animT * 7 + s.slot)) * 12;
     if (fr.pose === 'check' && s.stun > 0) rot = Math.sin(s.animT * 30) * 0.12 + (fr.flip ? 0.25 : -0.25);
     else if (fr.pose === 'stagger') rot = Math.sin(s.animT * 30) * 0.05;
-    const pages = s.team === 0 ? Assets.pages : this.awayPages;
+    const pages = s.team === 0 ? (s.look ? Assets.pagesFor(s.look) : Assets.pages) : this.awayPages;
     // aura for active abilities
     if (s.bedrockT > 0) this.aura(ctx, p.x, p.y - 30, 34, '#c9b79c', fx.time);
     if (s.boostT > 0 || s.trailT > 0) this.aura(ctx, p.x, p.y - 26, 28, '#71dce8', fx.time);
@@ -4905,7 +4999,7 @@ class Renderer {
     const s = g.s;
     const fr = this.skaterFrame(s, match);
     const p = toScreen(g.x, g.y);
-    const pages = s.team === 0 ? Assets.pages : this.awayPages;
+    const pages = s.team === 0 ? (s.look ? Assets.pagesFor(s.look) : Assets.pages) : this.awayPages;
     this.drawTinted(ctx, fr.id, pages, p.x, p.y, SKATER_SCALE * persp(g.y), fr.flip, 0, '#ffe066', 0.55 * (1 - g.t / g.life), true);
   }
 
@@ -4921,7 +5015,7 @@ class Renderer {
   }
 
   drawTinted(ctx, id, pages, x, y, k, flip, rot, color, alpha, only) {
-    const key = id + color + (pages === Assets.pages ? 'h' : 'a');
+    const key = id + color + (pages === Assets.pages ? 'h' : pages === this.awayPages ? 'a' : 'k');
     let c = this.tintCache.get(key);
     const f = Assets.atlas.frames[id];
     if (!f) return;
@@ -5890,7 +5984,8 @@ const OUR_ORDER = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
 // Rough team strength for simulated games (home strength follows the player's levels).
 function strength(teamId, save) {
   if (teamId === 'home') {
-    const lv = Object.values(save.roster).reduce((a, r) => a + r.level, 0) / 3;
+    const line = save.lineup ? [save.lineup.C, save.lineup.W, save.lineup.D] : ['frost', 'thunder', 'stone'];
+    const lv = line.reduce((a, id) => a + ((save.roster[id] && save.roster[id].level) || 1), 0) / 3;
     return 0.45 + lv * 0.06;
   }
   const t = TEAMS[teamId];
@@ -6083,7 +6178,7 @@ return { LEAGUE_TEAMS, strength, newLeague, simGame, standings, nextFixture, rec
 })();
 // ---- src/progress.js
 __m["src/progress.js"] = (() => {
-const { CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE } = __m["src/data.js"];
+const { CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE, RECRUITS, member, pairKey, recruitKey } = __m["src/data.js"];
 const { newLeague, migrateLeague } = __m["src/league.js"];
 // Save data, stats, levelling, rewards and match setup.
 
@@ -6097,17 +6192,12 @@ const STAT_CAP_BONUS = 3; // points you can add to a stat above its base
 
 function newSave() {
   const roster = {};
-  for (const id of Object.keys(CHARACTERS)) {
-    roster[id] = {
-      level: 1, exp: 0, points: 0, alloc: Object.fromEntries(STAT_KEYS.map((k) => [k, 0])),
-      perks: [], pendingPerk: null,
-      gear: { stick: 'stick_wood', skates: 'skate_start', armor: 'arm_none' },
-    };
-  }
+  for (const id of Object.keys(CHARACTERS)) roster[id] = newMember();
   return {
     v: 1,
     coins: 150,
-    roster,
+    roster, // every signed skater, keyed by member id
+    lineup: { C: 'frost', W: 'thunder', D: 'stone' }, // who dresses for matches
     goalie: { level: 1, exp: 0, gear: 'g_start' },
     owned: ['stick_wood', 'skate_start', 'arm_none', 'g_start'],
     chem: Object.fromEntries(Object.keys(COMBOS).map((k) => [k, 0])), // chemistry XP per pair
@@ -6144,6 +6234,10 @@ function loadSave() {
     for (const k of Object.keys(base)) if (s[k] === undefined) s[k] = base[k];
     for (const k of Object.keys(base.settings)) if (s.settings[k] === undefined) s.settings[k] = base.settings[k];
     for (const id of Object.keys(CHARACTERS)) if (!s.roster[id]) s.roster[id] = base.roster[id];
+    for (const [role, who] of Object.entries(s.lineup)) {
+      const m = member(who);
+      if (!s.roster[who] || !m || m.role !== role) s.lineup[role] = base.lineup[role];
+    }
     for (const k of Object.keys(COMBOS)) if (typeof s.chem[k] !== 'number') s.chem[k] = 0;
     if (!s.league || !s.league.schedule) s.league = migrateLeague(s);
     return s;
@@ -6180,8 +6274,61 @@ function gearMods(r) {
   return out;
 }
 
+function newMember() {
+  return {
+    level: 1, exp: 0, points: 0, alloc: Object.fromEntries(STAT_KEYS.map((k) => [k, 0])),
+    perks: [], pendingPerk: null,
+    gear: { stick: 'stick_wood', skates: 'skate_start', armor: 'arm_none' },
+  };
+}
+
+// ---------------------------------------------------------------- roster and recruitment
+const lineupIds = (save) => [save.lineup.C, save.lineup.W, save.lineup.D];
+const rosterIds = (save) => Object.keys(save.roster).filter((id) => member(id));
+const isSigned = (save, key) => !!save.roster[key];
+
+// A rival's skaters can be signed once you've beaten that team.
+function recruitStatus(save, key) {
+  if (save.roster[key]) return 'signed';
+  const r = RECRUITS[key];
+  const rec = save.rivals && save.rivals[r.team];
+  return rec && rec.wins > 0 ? 'open' : 'locked';
+}
+
+// New signings join a level below your line-up's average.
+function joinLevel(save) {
+  const ids = lineupIds(save);
+  const avg = ids.reduce((a, id) => a + save.roster[id].level, 0) / ids.length;
+  return Math.max(1, Math.min(MAX_LEVEL - 1, Math.round(avg) - 1));
+}
+
+function signRecruit(save, key) {
+  const r = RECRUITS[key];
+  if (!r || recruitStatus(save, key) !== 'open' || save.coins < r.price) return null;
+  save.coins -= r.price;
+  const m = newMember();
+  const level = joinLevel(save);
+  m.level = level;
+  m.points = level - 1; // yours to spend
+  const opts = CHARACTERS[r.kit].perks;
+  PERK_LEVELS.forEach((lv, i) => { if (level >= lv) m.perks.push(opts[i][r.perks[i]]); });
+  save.roster[key] = m;
+  return m;
+}
+
+// Put a member into their position's line-up slot.
+function setLineup(save, who) {
+  const m = member(who);
+  if (!m || !save.roster[who]) return false;
+  save.lineup[m.role] = who;
+  return true;
+}
+
+// Rival roster pages to show our recruits in home colours.
+const homeKitGroups = (save) => [...new Set(rosterIds(save).filter((id) => RECRUITS[id]).map((id) => 'rival_' + TEAMS[RECRUITS[id].team].art))];
+
 function effectiveStats(id, r) {
-  const base = CHARACTERS[id].base;
+  const base = member(id).base;
   const gm = gearMods(r);
   const out = {};
   for (const k of STAT_KEYS) out[k] = Math.max(1, Math.min(13, base[k] + r.alloc[k] + gm[k]));
@@ -6202,19 +6349,26 @@ const DIFF_OFFSET = { easy: -0.15, normal: 0, hard: 0.12 };
 // Build the Match config for a game against `teamId`.
 function matchConfig(save, teamId, stage, opts = {}) {
   const t = TEAMS[teamId];
-  const ids = ['frost', 'thunder', 'stone'];
+  const ids = ['frost', 'thunder', 'stone']; // rival slots (and kits)
+  const line = lineupIds(save);
   const home = {
-    skaters: ids.map((id) => ({
-      def: CHARACTERS[id], stats: effectiveStats(id, save.roster[id]), name: CHARACTERS[id].name, perks: perkNames(save.roster[id]),
-    })),
+    skaters: line.map((who) => {
+      const m = member(who);
+      return {
+        def: m.def, who, stats: effectiveStats(who, save.roster[who]), name: m.name, perks: perkNames(save.roster[who]),
+        sprite: m.recruit ? m.recruit.sprite : null, look: m.recruit ? 'homekit' : null,
+      };
+    }),
     goalie: { stats: goalieStats(save), name: GOALIE.name },
-    chem: Object.fromEntries(Object.keys(COMBOS).map((k) => [k, chemLevel(save.chem[k] || 0)])),
+    chem: lineChem(save, line),
   };
   const seasonBoost = (save.season - 1) * 0.08;
   const away = {
     skaters: ids.map((id) => {
       const stats = { ...CHARACTERS[id].base };
       for (const [k, v] of Object.entries(t.bonus || {})) stats[k] = Math.max(1, stats[k] + v);
+      // a slot whose skater you signed is filled by a newcomer in their colours
+      if (isSigned(save, recruitKey(teamId, id))) return { def: CHARACTERS[id], who: 'sub_' + id, stats, name: t.subs[id], perks: [] };
       return { def: CHARACTERS[id], stats, name: t.names[id], perks: [], sprite: t.art ? `${t.art}_${ROLE[id]}` : null };
     }),
     goalie: { stats: { ...t.goalie }, name: t.names.goalie, art: t.art || null },
@@ -6224,7 +6378,7 @@ function matchConfig(save, teamId, stage, opts = {}) {
   // locker-room buffs: stat bumps and goalie reflex land here, the rest goes to the match
   const fx = opts.buffs;
   if (fx) {
-    for (const b of fx.stats) for (const sk of home.skaters) if (b.who === 'all' || b.who === sk.def.id) sk.stats[b.stat] = Math.min(13, sk.stats[b.stat] + b.v);
+    for (const b of fx.stats) for (const sk of home.skaters) if (b.who === 'all' || b.who === sk.who) sk.stats[b.stat] = Math.min(13, sk.stats[b.stat] + b.v);
     home.goalie.stats.rfx += fx.goalieRfx;
   }
   return {
@@ -6275,9 +6429,12 @@ function computeRewards(save, summary, stage, exhibition) {
     if (exhibition) e = Math.round(e * 0.6);
     exp[s.id] = Math.min(220, Math.round(e));
   }
-  // chemistry: passes, assists and combo goals between each pair
+  // chemistry: passes, assists and combo goals between each pair that dressed
   const chem = {};
-  for (const k of Object.keys(COMBOS)) {
+  const ids = [...new Set(mine.map((s) => s.id))];
+  const pairs = [];
+  for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) pairs.push(pairKey(ids[i], ids[j]));
+  for (const k of pairs) {
     const c = (summary.chem && summary.chem[k]) || { passes: 0, assists: 0, comboGoals: 0 };
     let x = c.passes + c.assists * 6 + c.comboGoals * 10 + (won ? 3 : 1);
     if (exhibition) x = Math.round(x * 0.6);
@@ -6345,14 +6502,24 @@ function applyGoalieExp(save, amount) {
 }
 
 function canRaise(r, id, k) {
-  return r.points > 0 && r.alloc[k] < STAT_CAP_BONUS && CHARACTERS[id].base[k] + r.alloc[k] < 12;
+  return r.points > 0 && r.alloc[k] < STAT_CAP_BONUS && member(id).base[k] + r.alloc[k] < 12;
+}
+
+// Chemistry levels for every pair in a line, keyed by member pair.
+function lineChem(save, line) {
+  const out = {};
+  for (let i = 0; i < line.length; i++) for (let j = i + 1; j < line.length; j++) {
+    const k = pairKey(line[i], line[j]);
+    out[k] = chemLevel(save.chem[k] || 0);
+  }
+  return out;
 }
 
 function currentStage(save) {
   return TOURNAMENT.stages[Math.min(save.stage, TOURNAMENT.stages.length - 1)];
 }
 
-return { MAX_LEVEL, PERK_LEVELS, STAT_CAP_BONUS, newSave, loadSave, writeSave, clearSave, expToNext, chemLevel, chemProgress, gearMods, effectiveStats, perkNames, goalieStats, matchConfig, computeRewards, applyExp, applyChem, drillRewards, applyGoalieExp, canRaise, currentStage };
+return { MAX_LEVEL, PERK_LEVELS, STAT_CAP_BONUS, newSave, loadSave, writeSave, clearSave, expToNext, chemLevel, chemProgress, gearMods, lineupIds, rosterIds, isSigned, recruitStatus, joinLevel, signRecruit, setLineup, homeKitGroups, effectiveStats, perkNames, goalieStats, matchConfig, computeRewards, applyExp, applyChem, drillRewards, applyGoalieExp, canRaise, lineChem, currentStage };
 })();
 // ---- src/lockerroom.js
 __m["src/lockerroom.js"] = (() => {
@@ -6567,7 +6734,7 @@ return { BUFF_TEXT, MOMENTS, pickMoment, markSeen, buffEffects };
 })();
 // ---- src/achievements.js
 __m["src/achievements.js"] = (() => {
-const { TEAMS, GEAR, CHEM_LEVELS } = __m["src/data.js"];
+const { TEAMS, GEAR, CHEM_LEVELS, RECRUITS } = __m["src/data.js"];
 // Achievements: tracked from match events and save progress, shown in the Trophies tab.
 
 
@@ -6602,6 +6769,8 @@ const ACHIEVEMENTS = [
   { id: 'gold-drills', name: 'Gold Standard', text: 'Win gold in all four training drills.', icon: MEDAL, coins: 150 },
   { id: 'shootout', name: 'Shootout Hero', text: 'Win a shootout.', icon: 'equipment_items/armor/goalie_gloves', coins: 50 },
   { id: 'kitted', name: 'Fully Kitted', text: 'Own every piece of gear in the shop.', icon: 'equipment_items/hub/shop', coins: 150 },
+  { id: 'signing', name: 'Free Agent', text: 'Sign a skater from a rival.', icon: 'equipment_items/hub/shop', coins: 40 },
+  { id: 'scout', name: 'Talent Scout', text: 'Sign a skater from every rival.', icon: 'equipment_items/hub/target', coins: 150 },
   { id: 'versus', name: 'Couch Champion', text: 'Win a local versus match.', icon: 'hud_elements/misc/home_crest', coins: 30 },
 ];
 const BY_ID = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a]));
@@ -6688,6 +6857,9 @@ class AchievementTracker {
     if (Object.values(s.chem || {}).some((x) => x >= CHEM_LEVELS[2])) this.unlock('in-sync');
     if (s.training && ['cones', 'sniper', 'rondo', 'breakaway'].every((d) => (s.training.medals[d] || 0) >= 3)) this.unlock('gold-drills');
     if (GEAR.every((g) => s.owned.includes(g.id))) this.unlock('kitted');
+    const signed = Object.keys(RECRUITS).filter((k) => s.roster[k]);
+    if (signed.length) this.unlock('signing');
+    if (new Set(signed.map((k) => RECRUITS[k].team)).size >= 5) this.unlock('scout');
   }
 }
 
@@ -6695,8 +6867,8 @@ return { ACHIEVEMENTS, AchievementTracker };
 })();
 // ---- src/drills.js
 __m["src/drills.js"] = (() => {
-const { CHARACTERS, GOALIE, TEAMS, ROLE } = __m["src/data.js"];
-const { effectiveStats, perkNames, goalieStats, chemLevel } = __m["src/progress.js"];
+const { CHARACTERS, GOALIE, TEAMS, ROLE, member, recruitKey } = __m["src/data.js"];
+const { effectiveStats, perkNames, goalieStats, chemLevel, lineupIds, isSigned } = __m["src/progress.js"];
 const { toScreen, GOAL_X, MOUTH } = __m["src/rink.js"];
 const { norm, clamp, makeRng } = __m["src/util.js"];
 const { Skater } = __m["src/entities.js"];
@@ -6751,26 +6923,35 @@ function formatScore(def, score) {
   return `${score} pts`;
 }
 
-const skaterCfg = (save, id) => ({ def: CHARACTERS[id], stats: effectiveStats(id, save.roster[id]), name: CHARACTERS[id].name, perks: perkNames(save.roster[id]) });
+const skaterCfg = (save, who) => {
+  const m = member(who);
+  return {
+    def: m.def, who, stats: effectiveStats(who, save.roster[who]), name: m.name, perks: perkNames(save.roster[who]),
+    sprite: m.recruit ? m.recruit.sprite : null, look: m.recruit ? 'homekit' : null,
+  };
+};
 const homeChem = (save) => Object.fromEntries(Object.keys(save.chem || {}).map((k) => [k, chemLevel(save.chem[k] || 0)]));
 
 // Build the match config for a drill. charId is the skater the player controls.
 function createDrill(id, save, charId, opts = {}) {
-  const ids = ['frost', 'thunder', 'stone'];
-  const mates = ids.filter((k) => k !== charId);
+  const ids = ['frost', 'thunder', 'stone']; // rival slots
+  // your line-up, with the skater you bring in their position's slot
+  const line = lineupIds(save).map((w) => (member(w).role === member(charId).role ? charId : w));
+  const mates = line.filter((k) => k !== charId);
   let home = [charId], away = [], ctrl, awayTeam = 'lynx';
   switch (id) {
     case 'cones': ctrl = new ConeDrill(); break;
     case 'sniper': home = [charId, opts.feeder || mates[0]]; ctrl = new SniperDrill(); break;
     case 'rondo': home = [charId, ...mates]; away = ['frost', 'stone']; ctrl = new RondoDrill(); break;
     case 'breakaway': ctrl = new BreakawayDrill(); break;
-    case 'shootout': home = ids; awayTeam = opts.teamId || 'comets'; away = ids; ctrl = new ShootoutDrill(opts.teamId); break;
+    case 'shootout': home = line; awayTeam = opts.teamId || 'comets'; away = ids; ctrl = new ShootoutDrill(opts.teamId); break;
     default: throw new Error('Unknown drill ' + id);
   }
   const t = TEAMS[awayTeam];
   const awaySkater = (k) => {
     const stats = { ...CHARACTERS[k].base };
     for (const [s, v] of Object.entries(t.bonus || {})) stats[s] = Math.max(1, stats[s] + v);
+    if (isSigned(save, recruitKey(awayTeam, k))) return { def: CHARACTERS[k], who: 'sub_' + k, stats, name: t.subs[k], perks: [] };
     return { def: CHARACTERS[k], stats, name: t.names[k], perks: [], sprite: t.art ? `${t.art}_${ROLE[k]}` : null };
   };
   const cfg = {
@@ -7213,11 +7394,11 @@ return { DRILLS, MEDAL_NAMES, MEDAL_COLORS, DRILL_REWARDS, medalFor, formatScore
 // ---- src/ui.js
 __m["src/ui.js"] = (() => {
 const { Assets } = __m["src/assets.js"];
-const { CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, STAT_HINT, POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS } = __m["src/data.js"];
+const { CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, STAT_HINT, POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS, RECRUITS, member, comboFor, recruitKey, pairKey } = __m["src/data.js"];
 const { standings } = __m["src/league.js"];
 const { BUFF_TEXT } = __m["src/lockerroom.js"];
 const { ACHIEVEMENTS } = __m["src/achievements.js"];
-const { expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave, chemLevel, chemProgress } = __m["src/progress.js"];
+const { expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave, chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups } = __m["src/progress.js"];
 const { audio } = __m["src/audio.js"];
 const { DRILLS, MEDAL_NAMES, MEDAL_COLORS, formatScore } = __m["src/drills.js"];
 // Menu screens: title, hub (tournament / team / shop / training), dialogue, results.
@@ -7232,13 +7413,21 @@ const { DRILLS, MEDAL_NAMES, MEDAL_COLORS, formatScore } = __m["src/drills.js"];
 
 
 const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
-const ROSTER = ['frost', 'thunder', 'stone'];
+const ROLE_NAME = { C: 'Centre', W: 'Winger', D: 'Defender' };
 const SLOT_NAMES = { stick: 'Stick', skates: 'Skates', armor: 'Protection', goalie: 'Goalie gear' };
 
 // Portrait of a roster slot. Our cast has five expressions for dialogue; each rival has
 // its own cast (the captain with expressions), shown in that team's colours.
 const portrait = (id, team, teamId, size = 160, expr = null) => {
   const P = Assets.atlas.portraits || {};
+  if (team === 0 && RECRUITS[id]) {
+    // a signing: their own portrait, in our colours
+    const r = RECRUITS[id];
+    const p = P[`${TEAMS[r.team].art}_${ROLE[r.kit]}`];
+    const fid = p && ((expr && p[expr]) || p.neutral_roster || p.neutral);
+    return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT[r.kit]}`, size);
+  }
+  if (team !== 0 && id.startsWith('sub_')) return Assets.icon(`character_portraits/away/${PORTRAIT[id.slice(4)]}`, size, teamId);
   if (team === 0) {
     const p = P[ART_NAME[id]];
     if (expr && p && p[expr]) return Assets.icon(p[expr], size);
@@ -7403,7 +7592,7 @@ class UI {
     const s = this.app.save;
     const next = this.app.nextStage();
     const nt = next ? TEAMS[next.team] : null;
-    const anyPoints = ROSTER.some((id) => s.roster[id].points > 0 || s.roster[id].pendingPerk !== null);
+    const anyPoints = rosterIds(s).some((id) => s.roster[id].points > 0 || s.roster[id].pendingPerk !== null);
     const r = this.set(`
       <div class="dim"></div>
       <div class="hub">
@@ -7521,6 +7710,7 @@ class UI {
       <div class="scout"><img src="${crest(teamId, 64)}" alt="" width="40" height="40"><div><div class="label" style="font-size:13px">Scouting report · ${esc(fixture.label)}</div>
         ${esc(t.name)} will most likely play <b class="gold-t">${esc(their.name)}</b>.${t.plan === 'counter' ? ' They adapt to what you used against them last time.' : ''}</div></div>
       ${s.buffs && s.buffs.length ? `<div class="buffs">${s.buffs.map((b) => `<span class="buff">${esc(BUFF_TEXT(b))}</span>`).join('')}</div>` : ''}
+      ${rosterIds(s).length > 3 ? `<div class="line-row" id="line-row">${lineupIds(s).map((id) => `<span><img src="${portrait(id, 0, null, 64)}" width="26" height="26" alt="">${esc(member(id).name)}</span>`).join('')}<button class="btn small ghost" id="line-change">Change line-up</button></div>` : ''}
       <div class="plans">${Object.values(GAME_PLANS).map((p) => `
         <button class="plan ${p.id === cur ? 'sel' : ''}" data-plan="${p.id}">
           <b>${esc(p.name)}</b>
@@ -7538,6 +7728,10 @@ class UI {
         audio.sfx('click');
       }, m);
       this.click('#plan-go', () => { close(); audio.sfx('confirm'); onPick(pick); }, m);
+      this.click('#line-change', () => this.lineupPicker(() => {
+        const row = m.querySelector('#line-row');
+        if (row) row.querySelectorAll('span').forEach((el, i) => { const id = lineupIds(s)[i]; el.innerHTML = `<img src="${portrait(id, 0, null, 64)}" width="26" height="26" alt="">${esc(member(id).name)}`; });
+      }), m);
     }, false);
   }
 
@@ -7589,13 +7783,16 @@ class UI {
 
   tabTeam(body) {
     const s = this.app.save;
-    const cards = ROSTER.map((id) => {
-      const c = CHARACTERS[id];
+    const line = lineupIds(s);
+    const bench = rosterIds(s).filter((id) => !line.includes(id)).sort((x, y) => 'CWD'.indexOf(member(x).role) - 'CWD'.indexOf(member(y).role));
+    const card = (id, dressed) => {
+      const m = member(id);
+      const c = m.def;
       const r = s.roster[id];
       const eff = effectiveStats(id, r);
       const gm = gearMods(r);
       const stats = STAT_KEYS.map((k) => {
-        const base = c.base[k], al = r.alloc[k], g = gm[k];
+        const base = m.base[k], al = r.alloc[k], g = gm[k];
         const pips = [];
         for (let i = 1; i <= 12; i++) {
           let cls = '';
@@ -7609,15 +7806,17 @@ class UI {
           <button class="plus" data-raise="${id}:${k}" ${canRaise(r, id, k) ? '' : 'disabled'} aria-label="Raise ${STAT_NAMES[k]}">+</button></div>`;
       }).join('');
       const pct = r.level >= MAX_LEVEL ? 100 : Math.round((r.exp / expToNext(r.level)) * 100);
-      return `<div class="card">
+      const starter = s.roster[s.lineup[m.role]] && member(s.lineup[m.role]);
+      return `<div class="card ${dressed ? '' : 'benched'}">
         <div class="card-head">
           <img src="${portrait(id, 0, null, 152)}" alt="">
           <div style="min-width:0">
-            <h3>${esc(c.name)}</h3>
-            <div class="sub">${esc(c.title)}</div>
+            <h3>${esc(m.name)}</h3>
+            <div class="sub">${esc(m.title)}${m.recruit ? ' · signed' : ''}</div>
             <div class="lvl">LV ${r.level}${r.points ? ` <span style="font-size:15px">· ${r.points} point${r.points > 1 ? 's' : ''} to spend</span>` : ''}</div>
           </div>
         </div>
+        ${dressed ? `<div class="dress on">${ROLE_NAME[m.role]} · dressed</div>` : `<button class="btn small dress" data-dress="${id}">Dress at ${ROLE_NAME[m.role].toLowerCase()} (for ${esc(starter.name)})</button>`}
         <div class="xpbar" title="${r.exp}/${expToNext(r.level)} EXP"><i style="width:${pct}%"></i></div>
         ${r.pendingPerk !== null ? `<div class="pending" data-perk="${id}">New perk unlocked: choose one</div>` : ''}
         <div class="stats">${stats}</div>
@@ -7629,12 +7828,12 @@ class UI {
         <div class="abil"><img src="${ico('hud_elements/misc/level_star', 68)}" alt=""><div><b>${esc(c.ult.name)}</b>${esc(c.ult.text)}</div></div>
         ${r.perks.length ? `<div class="perks">${r.perks.map((p) => `<span class="perk" title="${esc(p)}">${esc(p.split(':')[0])}</span>`).join('')}</div>` : ''}
       </div>`;
-    });
+    };
     const g = s.goalie;
     const gs = goalieStats(s);
     const gg = GEAR_BY_ID[g.gear];
     const gpct = g.level >= MAX_LEVEL ? 100 : Math.round((g.exp / expToNext(g.level)) * 100);
-    cards.push(`<div class="card">
+    const goalieCard = `<div class="card">
       <div class="card-head"><img src="${portrait('goalie', 0, null, 152)}" alt="">
         <div><h3>${esc(GOALIE.name)}</h3><div class="sub">Goaltender (AI)</div><div class="lvl">LV ${g.level}</div></div></div>
       <div class="xpbar"><i style="width:${gpct}%"></i></div>
@@ -7644,11 +7843,20 @@ class UI {
       </div>
       <p class="muted" style="margin:0;font-size:12.5px">Halla levels up from saves. Reflex rises every two levels.</p>
       <div class="gear-row" style="grid-template-columns:1fr"><button class="slot" data-gear="goalie:goalie"><img src="${ico(gg.icon, 92)}" alt=""><span>${esc(gg.name)}</span></button></div>
-    </div>`);
-    body.innerHTML = `<div class="roster">${cards.join('')}</div>
+    </div>`;
+    const pairs = [];
+    for (let i = 0; i < 3; i++) for (let j = i + 1; j < 3; j++) pairs.push(pairKey(line[i], line[j]));
+    body.innerHTML = `
+      <div class="label" style="margin-bottom:4px">Line-up</div>
+      <p class="muted" style="margin:0 0 10px;font-size:13px">A centre, a winger and a defender dress for every match. Each position brings its kit: centres play Nix's frost kit, wingers Volta's thunder kit, defenders Bram's stone kit.</p>
+      <div class="roster">${line.map((id) => card(id, true)).join('')}${goalieCard}</div>
+      ${bench.length ? `<div class="label" style="margin:16px 0 4px">Bench</div>
+      <p class="muted" style="margin:0 0 10px;font-size:13px">Benched skaters don't earn match EXP, but you can bring them to training.</p>
+      <div class="roster">${bench.map((id) => card(id, false)).join('')}</div>` : ''}
       <div class="label" style="margin:16px 0 4px">Chemistry</div>
-      <p class="muted" style="margin:0 0 10px;font-size:13px">Pairs bond through passes, assists and combo goals. From level 1, pass between the pair and shoot right away (a one-timer works) to fire their combo.</p>
-      <div class="chem-grid">${Object.keys(COMBOS).map((k) => chemCard(k, s.chem[k] || 0)).join('')}</div>`;
+      <p class="muted" style="margin:0 0 10px;font-size:13px">Bonds grow between the people in your line through passes, assists and combo goals. The combo a pair fires depends on their positions. From level 1, pass between the pair and shoot right away (a one-timer works) to fire it. A new signing starts with no chemistry.</p>
+      <div class="chem-grid">${pairs.map((k) => chemCard(k, s.chem[k] || 0)).join('')}</div>
+      ${this.scoutingHtml(s)}`;
     this.click('[data-raise]', (el) => {
       const [id, k] = el.dataset.raise.split(':');
       const r = s.roster[id];
@@ -7660,12 +7868,102 @@ class UI {
     }, body);
     this.click('[data-perk]', (el) => this.perkChoice(el.dataset.perk, () => this.hub('team')), body);
     this.click('[data-gear]', (el) => { const [id, slot] = el.dataset.gear.split(':'); this.gearPicker(id, slot); }, body);
+    this.click('[data-dress]', (el) => { setLineup(s, el.dataset.dress); writeSave(s); audio.sfx('confirm'); this.hub('team'); }, body);
+    this.click('[data-sign]', (el) => this.signOffer(el.dataset.sign), body);
+  }
+
+  // Rival skaters you can sign: every team you've beaten.
+  scoutingHtml(s) {
+    const teams = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
+    const rows = teams.map((tid) => {
+      const t = TEAMS[tid];
+      const keys = ['frost', 'thunder', 'stone'].map((kit) => recruitKey(tid, kit));
+      const open = recruitStatus(s, keys[0]) !== 'locked' || keys.some((k) => isSigned(s, k));
+      const players = keys.map((k) => {
+        const r = RECRUITS[k];
+        const st = recruitStatus(s, k);
+        const top = Object.entries(r.base).sort((x, y) => y[1] - x[1]).slice(0, 2).map(([sk, v]) => `${STAT_NAMES[sk]} ${v}`).join(' · ');
+        const face = st === 'signed' ? portrait(k, 0, null, 96) : portrait(r.kit, 1, tid, 96);
+        return `<div class="recruit ${st}">
+          <img src="${face}" alt="">
+          <div style="min-width:0"><b>${esc(r.name)}</b><span class="muted">${ROLE_NAME[r.role]} · ${esc(top)}</span></div>
+          ${st === 'signed' ? '<span class="tag good">Signed</span>' : st === 'open' ? `<button class="btn small ${s.coins >= r.price ? 'gold' : 'ghost'}" data-sign="${k}"><img src="${ico('equipment_items/reward/coins', 40)}" alt="" width="16" height="16"> ${r.price}</button>` : '<span class="tag">Locked</span>'}
+        </div>`;
+      }).join('');
+      return `<div class="scout-team ${open ? '' : 'locked'}">
+        <div class="scout-head"><img src="${crest(tid, 48)}" alt="" width="28" height="28"><b>${esc(t.name)}</b>${open ? '' : '<span class="muted"> · beat them to open talks</span>'}</div>
+        <div class="recruits">${players}</div>
+      </div>`;
+    }).join('');
+    return `<div class="label" style="margin:16px 0 4px">Scouting</div>
+      <p class="muted" style="margin:0 0 10px;font-size:13px">Beat a rival and their skaters will take your call. Signings join a level below your line-up's average with points to spend and the perks they already had.</p>
+      <div class="scouting">${rows}</div>`;
+  }
+
+  signOffer(key) {
+    const s = this.app.save;
+    const r = RECRUITS[key];
+    const m = member(key);
+    const lv = joinLevel(s);
+    const starter = member(s.lineup[r.role]);
+    const perks = CHARACTERS[r.kit].perks.filter((_, i) => lv >= [3, 5, 7][i]).map((opts, i) => opts[r.perks[i]].split(':')[0]);
+    audio.sfx('click');
+    this.modal(`
+      <h2>Sign ${esc(r.name)}?</h2>
+      <div class="card-head" style="margin:0"><img src="${portrait(r.kit, 1, r.team, 152)}" alt="" style="width:76px;height:76px">
+        <div><div class="sub">${esc(TEAMS[r.team].name)} · ${ROLE_NAME[r.role]}</div><p style="margin:4px 0 0">${esc(r.blurb)}</p></div></div>
+      <div class="stats">${STAT_KEYS.map((k) => {
+        const diff = r.base[k] - starter.base[k];
+        return `<div class="stat"><span>${STAT_NAMES[k]}</span><span class="pips">${Array.from({ length: 12 }, (_, i) => `<i class="${i < r.base[k] ? 'b' : ''}"></i>`).join('')}</span><span class="v">${r.base[k]}</span><span class="${diff > 0 ? 'good' : diff < 0 ? 'bad' : 'muted'}" style="font-size:12px">${diff > 0 ? '+' : ''}${diff || '='}</span></div>`;
+      }).join('')}</div>
+      <p class="muted" style="margin:0;font-size:13px">Base stats, compared with ${esc(starter.name)}. Plays the ${ROLE_NAME[r.role].toLowerCase()} kit (${esc(m.def.skill.name)}, ${esc(m.def.ult.name)}). Joins at level ${lv} with ${lv - 1} point${lv === 2 ? '' : 's'} to spend${perks.length ? ` and ${perks.join(', ')}` : ''}. No chemistry with your line yet.</p>
+      <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>Not now</button>
+        <button class="btn gold" id="sign-go" ${s.coins >= r.price ? '' : 'disabled'}>Sign for ${r.price}</button></div>`, (mm, close) => {
+      this.click('#sign-go', () => {
+        if (!signRecruit(s, key)) return;
+        this.app.ach.unlock('signing');
+        this.app.ach.checkMeta();
+        writeSave(s);
+        audio.jingle('level');
+        close();
+        Assets.ensureKit(homeKitGroups(s)).then(() => this.hub('team'));
+        this.modal(`<h2>${esc(r.name)} signs!</h2>
+          <p>${esc(r.name)} joins the Strikers on your bench. Dress ${esc(r.name)} at ${ROLE_NAME[r.role].toLowerCase()} from the Team tab, or before a match.</p>
+          <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>Later</button><button class="btn gold" id="dress-now">Dress now</button></div>`, (m2, close2) => {
+          this.click('#dress-now', () => { setLineup(s, key); writeSave(s); audio.sfx('confirm'); close2(); this.hub('team'); }, m2);
+        });
+      }, mm);
+    });
+  }
+
+  // Quick line-up change, one row per position.
+  lineupPicker(done) {
+    const s = this.app.save;
+    const ids = rosterIds(s);
+    audio.sfx('click');
+    const render = () => ['C', 'W', 'D'].map((role) => `
+      <div class="label" style="font-size:14px;margin:8px 0 4px">${ROLE_NAME[role]}</div>
+      <div class="filters" style="margin:0">${ids.filter((id) => member(id).role === role).map((id) => `
+        <button class="chip" data-line="${id}" aria-pressed="${s.lineup[role] === id}" style="display:inline-flex;gap:6px;align-items:center">
+          <img src="${portrait(id, 0, null, 64)}" width="24" height="24" alt="">${esc(member(id).name)} <span class="muted">LV ${s.roster[id].level}</span></button>`).join('')}</div>`).join('');
+    this.modal(`<h2>Line-up</h2><div id="lp">${render()}</div>
+      <div class="row" style="justify-content:flex-end"><button class="btn gold" data-close>Done</button></div>`, (m) => {
+      m.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-line]');
+        if (!b) return;
+        setLineup(s, b.dataset.line);
+        writeSave(s);
+        audio.sfx('click');
+        m.querySelector('#lp').innerHTML = render();
+      });
+    }, true, () => done && done());
   }
 
   perkChoice(id, done) {
     const s = this.app.save;
     const r = s.roster[id];
-    const c = CHARACTERS[id];
+    const m = member(id);
+    const c = { ...m.def, name: m.name };
     if (r.pendingPerk === null) return done?.();
     const opts = c.perks[r.pendingPerk];
     audio.sfx('click');
@@ -7689,7 +7987,7 @@ class UI {
     const s = this.app.save;
     const items = GEAR.filter((g) => g.slot === slot && s.owned.includes(g.id));
     const cur = id === 'goalie' ? s.goalie.gear : s.roster[id].gear[slot];
-    const who = id === 'goalie' ? GOALIE.name : CHARACTERS[id].name;
+    const who = id === 'goalie' ? GOALIE.name : member(id).name;
     audio.sfx('click');
     this.modal(`
       <h2>${esc(who)} · ${SLOT_NAMES[slot]}</h2>
@@ -7752,7 +8050,7 @@ class UI {
         <h2>${esc(g.name)} unlocked</h2>
         ${modsHtml(g.mods)}
         <p class="muted">Equip it on someone now?</p>
-        <div class="row">${ROSTER.map((id) => `<button class="btn ghost small" data-who="${id}" style="display:flex;gap:6px;align-items:center"><img src="${portrait(id, 0, null, 64)}" width="32" height="32" alt="">${CHARACTERS[id].name}</button>`).join('')}</div>
+        <div class="row">${rosterIds(s).map((id) => `<button class="btn ghost small" data-who="${id}" style="display:flex;gap:6px;align-items:center"><img src="${portrait(id, 0, null, 64)}" width="32" height="32" alt="">${esc(member(id).name)}</button>`).join('')}</div>
         <button class="btn small ghost" data-close>Later</button>`, (m, close) => {
         this.click('[data-who]', (b) => { s.roster[b.dataset.who].gear[g.slot] = g.id; writeSave(s); audio.sfx('confirm'); close(); this.hub('shop'); }, m);
       }, true, () => this.hub('shop'));
@@ -7773,7 +8071,7 @@ class UI {
       </div>
       <div class="row" style="margin:10px 0">
         <span class="label" style="font-size:15px">Skater:</span>
-        ${ROSTER.map((id) => `<button class="btn small ${this.drillChar === id ? 'cream' : 'ghost'}" data-char="${id}" style="display:flex;gap:6px;align-items:center"><img src="${portrait(id, 0, null, 64)}" width="28" height="28" alt="">${CHARACTERS[id].name}</button>`).join('')}
+        ${rosterIds(s).map((id) => `<button class="btn small ${this.drillChar === id ? 'cream' : 'ghost'}" data-char="${id}" style="display:flex;gap:6px;align-items:center"><img src="${portrait(id, 0, null, 64)}" width="28" height="28" alt="">${esc(member(id).name)}</button>`).join('')}
       </div>
       <div class="drills">${Object.values(DRILLS).map((d) => {
         const best = tr.best[d.id];
@@ -7796,7 +8094,7 @@ class UI {
 
   // Result card after a drill: score, medal, rewards; Retry or Done.
   drillResult(d, score, rw, charId, onRetry, onDone) {
-    const name = CHARACTERS[charId].name;
+    const name = member(charId).name;
     const medal = rw.medal;
     const lines = [];
     if (rw.exp) lines.push([`${name} +${rw.exp} EXP`, '']);
@@ -7893,7 +8191,8 @@ class UI {
     const t = TEAMS[teamId];
     let i = 0, typing = null, shown = 0;
     const ours = (l) => portrait(l[1], 0, null, 420, expression('us', l[2], mood));
-    const theirs = (l) => portrait(l[1], 1, teamId, 420, expression('them', l[2], mood));
+    const gone = (id) => isSigned(this.app.save, recruitKey(teamId, id));
+    const theirs = (l) => portrait(gone(l[1]) ? 'sub_' + l[1] : l[1], 1, teamId, 420, expression('them', l[2], mood));
     const r = this.set(`
       <div class="dim"></div>
       <div class="dlg" id="dlg">
@@ -7911,7 +8210,7 @@ class UI {
       pl.src = ours(lastUs || ['us', 'frost', '']);
       if (lastThem) { pr.src = theirs(lastThem); pr.hidden = false; } else pr.hidden = true;
       pl.classList.toggle('on', us); pr.classList.toggle('on', !us);
-      dn.textContent = us ? CHARACTERS[id]?.name || GOALIE.name : t.names[id];
+      dn.textContent = us ? member(id)?.name || GOALIE.name : gone(id) ? t.subs[id] : t.names[id];
       dn.className = 'dlg-name' + (us ? '' : ' them');
       shown = 0; dt.textContent = '';
       clearInterval(typing);
@@ -7979,9 +8278,10 @@ class UI {
               ${data.rewards.chem ? `<div class="label" style="margin-top:6px">Chemistry</div>
               ${Object.entries(data.rewards.chem).map(([k, g]) => {
                 const [a, b] = k.split('+');
+                const cb = comboFor(k);
                 const up = (data.chemUps || []).find((u) => u.key === k);
                 return `<div class="xp-row"><span class="duo small"><img src="${portrait(a, 0, null, 64)}" alt=""><img src="${portrait(b, 0, null, 64)}" alt=""></span>
-                  <div><div>${esc(COMBOS[k].name)} <span class="muted">+${g.xp} · ${g.passes} passes${g.comboGoals ? ` · ${g.comboGoals} combo goal${g.comboGoals > 1 ? 's' : ''}` : ''}</span> ${up ? `<span class="lvlup">LEVEL ${up.level}!</span>` : ''}</div>
+                  <div><div>${esc(cb ? cb.name : 'Chemistry')} <span class="muted">+${g.xp} · ${g.passes} passes${g.comboGoals ? ` · ${g.comboGoals} combo goal${g.comboGoals > 1 ? 's' : ''}` : ''}</span> ${up ? `<span class="lvlup">LEVEL ${up.level}!</span>` : ''}</div>
                   <div class="xpbar"><i data-w="${Math.round(chemProgress(s.chem[k]) * 100)}"></i></div></div><span class="lvl">${chemPips(chemLevel(s.chem[k]))}</span></div>`;
               }).join('')}` : ''}
               <div class="xp-row"><img src="${portrait('goalie', 0, null, 88)}" alt=""><div><div>${GOALIE.name} <span class="muted">+${rewards.gExp} EXP · ${summary.saves[0]} saves</span>${data.gUp ? ' <span class="lvlup">LEVEL UP!</span>' : ''}</div></div><span class="lvl">LV ${s.goalie.level}</span></div>
@@ -8013,12 +8313,13 @@ class UI {
     this.modal(`
       <h2>Chemistry level up!</h2>
       ${ups.map((u) => {
-        const c = COMBOS[u.key];
+        const c = comboFor(u.key);
         const [a, b] = u.key.split('+');
+        const na = member(a).name, nb = member(b).name;
         return `<div class="card chem" style="gap:6px">
           <div class="chem-head"><span class="duo"><img src="${portrait(a, 0, null, 96)}" alt=""><img src="${portrait(b, 0, null, 96)}" alt=""></span>
-          <div><h3>${esc(c.name)}</h3><div class="sub">${esc(CHARACTERS[a].name)} + ${esc(CHARACTERS[b].name)} · level ${u.level}</div></div></div>
-          <p style="margin:0">${u.level === 1 ? `${esc(c.text)}<br><b class="gold-t">How:</b> pass from ${esc(CHARACTERS[a].name)} to ${esc(CHARACTERS[b].name)} (or back), then shoot right away. Holding shoot as the pass arrives fires it as a one-timer.` : esc(c.levels[u.level - 1])}</p>
+          <div><h3>${esc(c.name)}</h3><div class="sub">${esc(na)} + ${esc(nb)} · level ${u.level}</div></div></div>
+          <p style="margin:0">${u.level === 1 ? `${esc(c.text)}<br><b class="gold-t">How:</b> pass from ${esc(na)} to ${esc(nb)} (or back), then shoot right away. Holding shoot as the pass arrives fires it as a one-timer.` : esc(c.levels[u.level - 1])}</p>
         </div>`;
       }).join('')}
       <button class="btn gold" data-close>Got it</button>`, null, false, done);
@@ -8053,14 +8354,14 @@ function installHelp(app) {
 const chemPips = (lvl) => `<span class="pips3">${[1, 2, 3].map((i) => `<i class="${i <= lvl ? 'on' : ''}"></i>`).join('')}</span>`;
 
 function chemCard(k, xp) {
-  const c = COMBOS[k];
+  const c = comboFor(k);
   const [a, b] = k.split('+');
   const lvl = chemLevel(xp);
   const next = lvl < CHEM_LEVELS.length ? CHEM_LEVELS[lvl] : null;
   return `<div class="card chem ${lvl ? '' : 'locked'}">
     <div class="chem-head">
       <span class="duo"><img src="${portrait(a, 0, null, 96)}" alt=""><img src="${portrait(b, 0, null, 96)}" alt=""></span>
-      <div style="min-width:0"><h3>${esc(c.name)}</h3><div class="sub">${esc(CHARACTERS[a].name)} + ${esc(CHARACTERS[b].name)}</div></div>
+      <div style="min-width:0"><h3>${esc(c.name)}</h3><div class="sub">${esc(member(a).name)} + ${esc(member(b).name)}</div></div>
       ${chemPips(lvl)}
     </div>
     <div class="xpbar" title="${xp} chemistry${next ? ` / ${next}` : ''}"><i style="width:${Math.round(chemProgress(xp) * 100)}%"></i></div>
@@ -8101,7 +8402,7 @@ return { portrait, crest, UI, controlsHtml };
 // ---- src/hud.js
 __m["src/hud.js"] = (() => {
 const { Assets } = __m["src/assets.js"];
-const { POWER_INFO, TEAMS, ART_NAME } = __m["src/data.js"];
+const { POWER_INFO, TEAMS, ART_NAME, RECRUITS } = __m["src/data.js"];
 const { portrait, crest } = __m["src/ui.js"];
 // In-match HUD (scoreboard, player card, power puck chip, banners) and touch button state.
 
@@ -8189,11 +8490,11 @@ class HUD {
     const color = us ? '#2a9fb0' : TEAMS[this.teamId].color;
     const el = document.createElement('div');
     el.className = 'cutin ' + (us ? 'us' : 'them');
-    const id = (k) => (k.isGoalie ? 'goalie' : k.def.id);
+    const id = (k) => (k.isGoalie ? 'goalie' : k.who);
     const img = (k) => `<img src="${portrait(id(k), k.team, this.teamId, 320)}" alt="">`;
     const who = partner ? `${partner.name} + ${s.name}` : s.name;
     const name = title || s.def.ult.name;
-    const art = Assets.banner(this.bannerKey(s), us ? null : this.teamId);
+    const art = Assets.banner(this.bannerKey(s), us ? (RECRUITS[s.who] ? 'homekit' : null) : this.teamId);
     if (partner) el.classList.add('combo');
     if (art) {
       el.classList.add('art');
@@ -8207,6 +8508,7 @@ class HUD {
 
   // Banner key in the sprite pack: our cast by name, rivals by roster slot.
   bannerKey(k) {
+    if (k.team === 0 && !k.isGoalie && RECRUITS[k.who]) return k.sprite; // a signing's own banner
     if (k.team === 0) return ART_NAME[k.isGoalie ? 'goalie' : k.def.id];
     if (k.isGoalie) return k.art ? `${k.art}_g` : null;
     return k.sprite !== k.def.sprite ? k.sprite : null;
@@ -8243,7 +8545,7 @@ class HUD {
     let sub = '';
     if (s) {
       const assist = info.assists.length ? ` <span style="font-size:.7em;color:#c3d3ea">from ${info.assists.map((a) => a.name).join(' & ')}</span>` : '';
-      sub = `<div class="sub"><img src="${portrait(s.def.id, s.team, this.teamId, 96)}" alt="">${s.name}${assist}</div>`;
+      sub = `<div class="sub"><img src="${portrait(s.who, s.team, this.teamId, 96)}" alt="">${s.name}${assist}</div>`;
     }
     const kind = info.kind === 'onetimer' ? 'ONE-TIMER!' : info.kind === 'zero' ? 'ABSOLUTE ZERO!' : info.kind === 'thunderclap' ? 'THUNDERCLAP!' : info.power ? POWER_INFO[info.power].name.toUpperCase() + '!' : '';
     this.banner(`<div class="big" style="color:${color}">GOAL!</div>${kind ? `<div class="small">${kind}</div>` : ''}${sub}`, 3);
@@ -8275,7 +8577,7 @@ class HUD {
     if (c) {
       if (this.last.ctrl !== c) {
         this.last.ctrl = c;
-        this.el.querySelector('#pc-img').src = portrait(c.def.id, 0, null, 88);
+        this.el.querySelector('#pc-img').src = portrait(c.who, 0, null, 88);
         this.el.querySelector('#pc-name').textContent = (this.versus ? 'P1 · ' : '') + c.name;
         this.updateTouchIcons(c);
       }
@@ -8293,7 +8595,7 @@ class HUD {
       if (c2) {
         if (this.last.ctrl2 !== c2) {
           this.last.ctrl2 = c2;
-          this.el.querySelector('#pc2-img').src = portrait(c2.def.id, 1, this.teamId, 88);
+          this.el.querySelector('#pc2-img').src = portrait(c2.who, 1, this.teamId, 88);
           this.el.querySelector('#pc2-name').textContent = 'P2 · ' + c2.name;
         }
         this.el.querySelector('#pc2-sta').firstChild.style.transform = `scaleX(${c2.stamina / c2.d.staminaMax})`;
@@ -8663,7 +8965,7 @@ return { ClipRecorder };
 })();
 // ---- src/rivals.js
 __m["src/rivals.js"] = (() => {
-const { CHARACTERS, TEAMS } = __m["src/data.js"];
+const { TEAMS, RECRUITS, member, recruitKey } = __m["src/data.js"];
 // Rivalries that remember: head-to-head records and dialogue that references them.
 
 
@@ -8700,8 +9002,8 @@ function rivalLines(save, teamId) {
   if (!r || !r.last || !t) return [];
   const L = r.last;
   const seed = r.played * 7 + r.gf * 3 + r.ga;
-  const ours = (id) => CHARACTERS[id].name;
-  const theirs = (id) => t.names[id];
+  const ours = (id) => (member(id) ? member(id).name : 'Somebody');
+  const theirs = (id) => (id.startsWith('sub_') ? t.subs[id.slice(4)] : t.names[id]) || 'Somebody';
   const lines = [];
   if (L.won) {
     const margin = L.gf - L.ga;
@@ -8718,7 +9020,21 @@ function rivalLines(save, teamId) {
     if (r.streak <= -2) lines.push(['us', 'thunder', `${-r.streak} losses in a row to these guys. That ends today.`]);
   }
   if (save.season > 1 && L.season < save.season && seed % 2 === 0) lines.push(['them', 'frost', `New season, same Strikers? We'll see.`]);
+  const poached = poachedLine(save, teamId);
+  if (poached) lines.unshift(poached);
   return lines.slice(0, 3);
+}
+
+// When you've signed one of their skaters, they bring it up.
+function poachedLine(save, teamId) {
+  const t = TEAMS[teamId];
+  const gone = ['frost', 'thunder', 'stone'].filter((k) => save.roster[recruitKey(teamId, k)]);
+  if (!t || !gone.length) return null;
+  const speaker = ['frost', 'thunder', 'stone'].find((k) => !gone.includes(k)) || 'frost';
+  const names = gone.map((k) => RECRUITS[recruitKey(teamId, k)].name);
+  const who = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
+  const seed = (save.rivals && save.rivals[teamId] && save.rivals[teamId].played) || 0;
+  return ['them', speaker, pick([`You took ${who} from us. Let's see who regrets it.`, `Nice jersey, ${names[0]}. It'll look even better after we beat you.`, `Signing ${who} won't save you, Strikers.`], seed)];
 }
 
 // One extra line after the match, from the rival captain.
@@ -8731,7 +9047,7 @@ function rivalAfterLine(save, teamId, won, gf, ga) {
   return null;
 }
 
-return { rivalRecord, recordRivalResult, rivalLines, rivalAfterLine };
+return { rivalRecord, recordRivalResult, rivalLines, poachedLine, rivalAfterLine };
 })();
 // ---- src/main.js
 __m["src/main.js"] = (() => {
@@ -8741,7 +9057,7 @@ const { Renderer } = __m["src/render.js"];
 const { FX } = __m["src/fx.js"];
 const { Input, TouchControls, mergeInputs } = __m["src/input.js"];
 const { audio } = __m["src/audio.js"];
-const { UI, controlsHtml } = __m["src/ui.js"];
+const { UI, controlsHtml, crest } = __m["src/ui.js"];
 const { HUD } = __m["src/hud.js"];
 const { toScreen } = __m["src/rink.js"];
 const { Replay } = __m["src/replay.js"];
@@ -8753,8 +9069,8 @@ const { recordRivalResult, rivalLines, rivalAfterLine } = __m["src/rivals.js"];
 const { nextFixture, recordOurGame, newLeague, rivalPlan } = __m["src/league.js"];
 const { pickMoment, markSeen, buffEffects } = __m["src/lockerroom.js"];
 const { GOAL_X } = __m["src/rink.js"];
-const { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE } = __m["src/data.js"];
-const { loadSave, newSave, writeSave, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards } = __m["src/progress.js"];
+const { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey } = __m["src/data.js"];
+const { loadSave, newSave, writeSave, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards, lineupIds, homeKitGroups } = __m["src/progress.js"];
 // Glacial Strikers — boot, game loop and scene flow.
 
 
@@ -8818,6 +9134,9 @@ class App {
       ]);
     }
     this.save = loadSave() || newSave();
+    // signings wear home colours, recoloured from their old team's pages
+    const kit = homeKitGroups(this.save);
+    if (kit.length) await Promise.race([Assets.ensureKit(kit), new Promise((r) => setTimeout(r, 2500))]);
     this.ach = new AchievementTracker(this.save, (a) => this.toastAchievement(a));
     audio.setMusic(this.save.settings.music);
     audio.setSfx(this.save.settings.sfx);
@@ -8851,14 +9170,20 @@ class App {
 
   // "Achievement unlocked" toast; shows anywhere (menus or matches).
   toastAchievement(a) {
+    this.toast(Assets.icon(a.icon, 72), 'Achievement unlocked', a.name, `+${a.coins} coins`);
+    audio.jingle('level');
+  }
+
+  toast(img, small, title, line) {
     let box = document.getElementById('toasts');
     if (!box) { box = document.createElement('div'); box.id = 'toasts'; document.getElementById('app').appendChild(box); }
     const el = document.createElement('div');
     el.className = 'toast';
-    el.innerHTML = `<img src="${Assets.icon(a.icon, 72)}" alt=""><div><small>Achievement unlocked</small><b></b><span>+${a.coins} coins</span></div>`;
-    el.querySelector('b').textContent = a.name;
+    el.innerHTML = `<img src="${img}" alt=""><div><small></small><b></b><span></span></div>`;
+    el.querySelector('small').textContent = small;
+    el.querySelector('b').textContent = title;
+    el.querySelector('span').textContent = line;
     box.appendChild(el);
-    audio.jingle('level');
     setTimeout(() => el.remove(), 4200);
   }
 
@@ -8995,6 +9320,9 @@ class App {
     if (f.kind === 'regular') lines = [...rivalLines(this.save, t.id), ...DIALOGUE[t.id].pre];
     else if (f.kind === 'final' && DIALOGUE[t.id].final) lines = [...rivalLines(this.save, t.id).slice(0, 1), ...DIALOGUE[t.id].final];
     else lines = [...rivalLines(this.save, t.id).slice(0, 1), ...PLAYOFF_LINES[f.kind].pre];
+    // skip our lines that talk to a skater who has since signed with us
+    const gone = ['frost', 'thunder', 'stone'].filter((k) => this.save.roster[recruitKey(t.id, k)]).map((k) => t.names[k]);
+    if (gone.length) lines = lines.filter((l) => l[0] !== 'us' || !gone.some((n) => l[2].includes(n)));
     this.ui.dialogue(lines, t.id, { sub }, () => {
       const theirPlan = rivalPlan(this.save, t.id, GAME_PLANS);
       this.scene = 'results';
@@ -9029,7 +9357,7 @@ class App {
     this.checkRotate();
   }
 
-  startShootout(teamId) { Assets.ensureTeam(teamId).then(() => this.startDrill('shootout', 'frost', { teamId })); }
+  startShootout(teamId) { Assets.ensureTeam(teamId).then(() => this.startDrill('shootout', lineupIds(this.save)[0], { teamId })); }
 
   // Local versus: player 1 is the Strikers, player 2 picks a rival. Both use base stats.
   startVersus(teamId) {
@@ -9154,7 +9482,7 @@ class App {
     const coins = (won ? 60 : 20) + res.goals[0] * 10;
     s.coins += coins;
     const ups = [];
-    for (const id of ['frost', 'thunder', 'stone']) ups.push(...applyExp(s, id, won ? 20 : 10));
+    for (const id of lineupIds(s)) ups.push(...applyExp(s, id, won ? 20 : 10));
     applyGoalieExp(s, won ? 20 : 10);
     this.recordRival(c.teamId, res.goals[0], res.goals[1], won, true);
     if (won) this.ach.unlock('shootout');
@@ -9343,7 +9671,11 @@ class App {
     s.record.played++;
     s.record.goals += summary.score[0];
     const scorers = (team) => Object.fromEntries(summary.skaters.filter((k) => k.team === team && k.goals).map((k) => [k.id, k.goals]));
+    const firstWin = rewards.won && !((s.rivals && s.rivals[c.teamId] && s.rivals[c.teamId].wins) > 0);
     recordRivalResult(s, c.teamId, summary.score[0], summary.score[1], rewards.won, { ourScorers: scorers(0), theirScorers: scorers(1) });
+    if (firstWin && TEAMS[c.teamId] && TEAMS[c.teamId].art) {
+      setTimeout(() => this.toast(crest(c.teamId, 72), 'Scouting', `${TEAMS[c.teamId].name} will take your call`, 'Sign their skaters in Team › Scouting'), 1600);
+    }
     let becameChampion = false, leagueOut = null;
     if (rewards.won) s.record.wins++;
     if (!c.exhibition && s.league) {
