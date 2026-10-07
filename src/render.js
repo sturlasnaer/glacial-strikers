@@ -3,7 +3,7 @@
 import { Assets } from './assets.js';
 import { toScreen, persp, BACKDROP, GOAL_X, MOUTH, NET_DEPTH, RINK } from './rink.js';
 import { clamp, lerp, makeRng } from './util.js';
-import { POWER_INFO, COMBOS } from './data.js';
+import { POWER_INFO, COMBOS, TEAMS, ARENAS } from './data.js';
 import { ELEMENT_COLORS } from './fx.js';
 import { NetRenderer } from './net.js';
 
@@ -96,16 +96,22 @@ export class Renderer {
     ctx.fillStyle = '#0b1424';
     ctx.fillRect(0, 0, this.c.width, this.c.height);
     ctx.setTransform(dpr * z, 0, 0, dpr * z, dpr * (this.w / 2 - this.cam.x * z + sh.x), dpr * (this.h / 2 - this.cam.y * z + sh.y));
+    if (ui.awayTeamId && TEAMS[ui.awayTeamId]) Assets.prepareTeam(TEAMS[ui.awayTeamId]); // picks up pages loaded mid-match
     this.awayPages = Assets.pagesFor(ui.awayTeamId);
+    const arena = ARENAS[ui.arena] ? ui.arena : 'home';
+    this.arena = ARENAS[arena];
 
     // backdrop
     ctx.imageSmoothingEnabled = z * dpr < 1.3;
     ctx.imageSmoothingQuality = 'medium';
-    ctx.drawImage(Assets.backdrop, 0, 0);
+    ctx.drawImage(Assets.backdropFor(arena), 0, 0);
     ctx.imageSmoothingEnabled = true;
     // team logo painted under the ice at centre
     const cc = toScreen(0, 0);
-    Assets.draw(ctx, 'hud_elements/misc/home_crest', cc.x, cc.y + 2, 0.5, { alpha: 0.3, squash: 0.8 });
+    const host = arena !== 'home' && TEAMS[ui.awayTeamId] && TEAMS[ui.awayTeamId].arena === arena ? TEAMS[ui.awayTeamId] : null;
+    const hostCrest = host && Assets.atlas.crests && Assets.atlas.crests[host.art];
+    if (hostCrest) Assets.draw(ctx, hostCrest, cc.x, cc.y + 4, 0.26, { alpha: 0.3, squash: 0.8 });
+    else Assets.draw(ctx, 'hud_elements/misc/home_crest', cc.x, cc.y + 2, 0.5, { alpha: 0.3, squash: 0.8 });
     this.drawLamps(ctx, fx);
     this.drawCrowd(ctx, fx, ui);
     this.drawGoalLights(ctx, match, fx);
@@ -165,15 +171,18 @@ export class Renderer {
   // ------------------------------------------------------------ environment
   drawLamps(ctx, fx) {
     const t = fx.time;
+    const ar = this.arena || ARENAS.home;
+    if (!ar.lamps) return; // outdoor rink
+    const fl = ar.flicker || 1;
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     for (let i = 0; i < LAMPS.length; i++) {
       const [x, y] = LAMPS[i];
-      const flick = 0.75 + Math.sin(t * 7 + i * 1.7) * 0.08 + Math.sin(t * 13 + i) * 0.05;
+      const flick = 0.75 + (Math.sin(t * 7 * fl + i * 1.7) * 0.08 + Math.sin(t * 13 * fl + i) * 0.05) * fl;
       const goal = fx.lamp > 0 ? (fx.flashes ? (Math.sin(fx.lamp * 14) > 0 ? 1 : 0.4) : 0.6) : 0;
       const r = 34 + goal * 18;
       const g = ctx.createRadialGradient(x, y + 6, 0, x, y + 6, r);
-      const col = goal ? fx.lampColor : '#ffb84d';
+      const col = goal ? fx.lampColor : ar.lamps;
       g.addColorStop(0, hexA(col, 0.45 * flick + goal * 0.3));
       g.addColorStop(1, hexA(col, 0));
       ctx.fillStyle = g;
@@ -191,7 +200,11 @@ export class Renderer {
     const beatPos = ch ? (ch.t / 0.25) % 16 : 0;
     const onClap = ch && [8, 10, 12, 13, 14].some((b) => beatPos >= b && beatPos < b + 0.6);
     const onWord = ch && [0, 2, 4, 5].some((b) => beatPos >= b && beatPos < b + 0.8);
-    for (const f of fx.crowd) {
+    const sprites = Assets.atlas.crowd;
+    // in a rival's building most of the crowd wears their colours
+    const swap = !!(this.arena && this.arena !== ARENAS.home);
+    for (const f0 of fx.crowd) {
+      const f = swap ? { ...f0, team: 1 - f0.team } : f0;
       const chanting = ch && ch.team === f.team;
       const cheer = fx.cheerTeam === f.team || (chanting && (onClap || onWord));
       const amp = cheer ? 7 : 1 + ex * 3;
@@ -199,6 +212,13 @@ export class Renderer {
       const bob = chanting ? (onClap || onWord ? 6 : 0) : Math.max(0, Math.sin(t * sp + f.phase)) * amp;
       const s = f.s;
       const x = f.x, y = f.y - bob;
+      if (sprites && !f.back) {
+        // far stands: sprite fans facing the ice (and the camera)
+        const up = cheer || (ex > 0.6 && Math.sin(t * 5 + f.phase) > 0.3);
+        const list = sprites[f.team ? 'away' : 'home'][up ? 'cheering' : 'sitting'];
+        Assets.draw(ctx, list[f.fan], x, y - 3 * s, 0.125 * s, { pages: f.team ? this.awayPages : Assets.pages, flip: f.phase > 3.14 });
+        continue;
+      }
       const body = f.team === 0 ? (f.phase > 3 ? '#71dce8' : '#fff2cb') : (f.phase > 3 ? awayColor : awayColor2);
       // body
       ctx.fillStyle = '#14233b';
@@ -391,8 +411,9 @@ export class Renderer {
 
   // ------------------------------------------------------------- characters
   skaterFrame(s, match) {
-    const set = Assets.atlas.skaters[s.def.sprite][s.team === 0 ? 'home' : 'away'];
-    const dir = this.skaterDir(s, !!set.northeast, match.time || 0);
+    const set = Assets.atlas.skaters[this.spriteOf(s)][s.team === 0 ? 'home' : 'away'];
+    // real time, so the hold also runs during replays (match time stands still then)
+    const dir = this.skaterDir(s, !!set.northeast, performance.now() / 1000);
     const map = set[dir];
     const side = dir.endsWith('east') ? 'east' : dir.endsWith('west') ? 'west' : null;
     const sp = s.speed;
@@ -409,6 +430,10 @@ export class Renderer {
       return { id: seq[i], flip: side === 'west', pose: i === 1 ? 'down' : 'stagger' };
     }
     let pose = 'idle';
+    if (s.celebrate > 0 && (match.state === 'goal' || match.state === 'over') && set.signature && match.lastGoal && match.lastGoal.scorer === s) {
+      const i = Math.min(3, Math.floor((3 - s.celebrate) * 6));
+      return { id: set.signature[i], flip: Math.cos(s.face) < -0.3, pose: 'signature' };
+    }
     if (s.celebrate > 0 && (match.state === 'goal' || match.state === 'over')) pose = 'celebrate';
     else if (s.stun > 0) pose = 'check';
     else if (s.ultWindup > 0 || (s.charging && s.chargeT > 0.08)) pose = 'shot_windup';
@@ -429,6 +454,14 @@ export class Renderer {
       else pose = Math.floor(s.animT * (3 + sp / 70)) % 2 ? 'skate_a' : 'skate_b';
     }
     return { id: map.frames[pose], flip: map.flip_x, pose };
+  }
+
+  // A rival's own roster art once its page has loaded, else our art in their colours.
+  spriteOf(s) {
+    if (s.sprite === s.def.sprite) return s.sprite;
+    const set = Assets.atlas.skaters[s.sprite];
+    const f = set && Assets.frame(set.away.south.frames.idle);
+    return f && Assets.pages[f[0]] ? s.sprite : s.def.sprite;
   }
 
   // 8-way facing (4-way with v1 art only). Hysteresis plus a short hold keeps a skater
@@ -537,7 +570,10 @@ export class Renderer {
 
   drawGoalie(ctx, g, match) {
     const key = g.team === 0 ? 'home' : 'away';
-    const side = Assets.atlas.goalies_side && Assets.atlas.goalies_side[key];
+    const gs = Assets.atlas.goalies_side || {};
+    let side = g.art && gs[g.art];
+    const sf = side && Assets.frame(side.ready);
+    if (!sf || !Assets.pages[sf[0]]) side = gs[key];
     if (side) {
       const id = this.goalieSideFrame(g, side);
       const p = toScreen(g.x, g.y);

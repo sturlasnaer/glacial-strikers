@@ -100,6 +100,7 @@ export const TEAMS = {
   },
   lynx: {
     id: 'lynx', plan: 'forecheck', chem: 0, name: 'Pinewood Lynx', short: 'PIN', crest: 'hud_elements/misc/away_crest',
+    art: 'pinewood_lynx', arena: 'pine_pond',
     color: '#7fd16b', color2: '#2f6b3a', recolor: { h1: 118, h2: 95, sat: 0.9, val: 0.92, sat2: 0.8, val2: 0.55 },
     diff: 0.12, bonus: { spd: -1, chk: -1 }, goalie: { rfx: 4, pos: 4 },
     names: { frost: 'Fern', thunder: 'Pip', stone: 'Oakley', goalie: 'Moss' },
@@ -107,6 +108,7 @@ export const TEAMS = {
   },
   comets: {
     id: 'comets', plan: 'rungun', chem: 1, name: 'Ember Comets', short: 'EMB', crest: 'hud_elements/misc/away_crest',
+    art: 'ember_comets', arena: 'ember_dome',
     color: '#ff6f7d', color2: '#8261bd',
     diff: 0.35, bonus: {}, goalie: { rfx: 5, pos: 5 },
     names: { frost: 'Cinder', thunder: 'Blaze', stone: 'Ash', goalie: 'Smolder' },
@@ -114,6 +116,7 @@ export const TEAMS = {
   },
   rams: {
     id: 'rams', plan: 'forecheck', chem: 1, name: 'Gilded Rams', short: 'RAM', crest: 'hud_elements/misc/away_crest',
+    art: 'gilded_rams',
     color: '#ffd45e', color2: '#a86b1d', recolor: { h1: 44, h2: 22, sat: 1.0, val: 1.05, sat2: 0.9, val2: 0.65 },
     diff: 0.55, bonus: { sht: 1, chk: 1 }, goalie: { rfx: 6, pos: 6 },
     names: { frost: 'Aurum', thunder: 'Gilda', stone: 'Horn', goalie: 'Bulwark' },
@@ -121,6 +124,7 @@ export const TEAMS = {
   },
   ravens: {
     id: 'ravens', plan: 'trap', chem: 2, name: 'Obsidian Ravens', short: 'RAV', crest: 'hud_elements/misc/away_crest',
+    art: 'obsidian_ravens',
     color: '#9aa3b5', color2: '#2a2f3d', recolor: { h1: 220, h2: 220, sat: 0.12, val: 0.66, sat2: 0.15, val2: 0.4 },
     diff: 0.72, bonus: { agi: 1, pas: 1, chk: 1 }, goalie: { rfx: 7, pos: 7 },
     names: { frost: 'Corvin', thunder: 'Nyx', stone: 'Basalt', goalie: 'Grim' },
@@ -128,11 +132,23 @@ export const TEAMS = {
   },
   royals: {
     id: 'royals', plan: 'counter', chem: 3, name: 'Aurora Royals', short: 'AUR', crest: 'hud_elements/misc/away_crest',
+    art: 'aurora_royals', arena: 'aurora_palace',
     color: '#c58cff', color2: '#43207a', recolor: { h1: 284, h2: 46, sat: 0.95, val: 0.92, sat2: 1.0, val2: 1.0 },
     diff: 0.9, bonus: { spd: 1, sht: 1, pas: 1, chk: 1 }, goalie: { rfx: 8, pos: 8 },
     names: { frost: 'Solenne', thunder: 'Aurelio', stone: 'Regalia', goalie: 'Crown' },
     style: 'Defending champions. No weaknesses, plenty of swagger.',
   },
+};
+
+// Sprite-pack names: each roster slot's role letter, and our cast's names in the art.
+export const ROLE = { frost: 'c', thunder: 'w', stone: 'd', goalie: 'g' };
+export const ART_NAME = { frost: 'nix', thunder: 'volta', stone: 'bram', goalie: 'halla' };
+// Arenas: rivals with their own building host you there.
+export const ARENAS = {
+  home: { name: 'Frostline Rink', lamps: '#ffb84d' },
+  ember_dome: { name: 'Ember Dome', lamps: '#ff7a2e', flicker: 2.2, ice: 'rgba(255,140,60,0.06)' },
+  aurora_palace: { name: 'Aurora Palace', lamps: '#ffd27a' },
+  pine_pond: { name: 'Pine Pond', lamps: null },
 };
 
 // Twists: 'none' | 'speed_lanes' | 'cracked_ice' | 'both'

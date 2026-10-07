@@ -1,117 +1,91 @@
 # Sprite requests
 
-What the game needs next, in priority order. Everything in pack v1 and the P1 gameplay pack is in use, apart from the layered nets (see the redo below).
+What the game needs next, in priority order. Everything in the complete v2 pack is in the game, except the layered nets (see A1).
 
-**Suggested next batch:** the net redo (small), then S1 near-glass layer, S3 scoreboard, S4 crowd and mascot, then P2 item 5 (rival rosters), which does the most for making each opponent feel different.
+## Format notes (same as the v2 pack)
 
-## Format notes (same as pack v1)
-
-- Transparent PNG sheets plus an atlas or a uniform grid. Uneven gutters are fine: `tools/build_assets.py` reads the rectangles from `atlas.json`.
+- Transparent PNG sheets plus an `atlas.json` in the v2 format. Uneven gutters are fine: `tools/build_assets.py` reads the rectangles from the atlas.
+- **Use the v2 naming scheme** so new art drops straight in: frame IDs like `<sheet>/<team>/<role>/<direction>/<pose>`, rivals as `aurora_royals_c` / `_w` / `_d` / `_g`, and the same named mappings (`rivals`, `goalies`, `animations`, `portraits`, `ultimate_banners`, `backgrounds`).
 - Keep the v1 camera (45° overhead), chibi proportions, navy outlines and palette.
-- Skaters: same scale as v1 (about 145–160 px tall in a 1254 px sheet) with the skates on a consistent baseline.
-- Two team colours per character: home teal/cream/navy, away coral/violet/navy. The game recolours the away coral and violet into each rival's colours, so **keep away jerseys coral + violet** and keep coral off skin and hair.
-
-Shared style line for the prompts (from your v1 prompts):
-
-> Original Glacial Strikers game assets. Authentic colorful 16-bit SNES JRPG pixel art, chunky deliberate square pixel clusters, crisp hard edges, dark navy outlines, 3-4 shade ramps per material, no smoothing, no text, no watermarks, no grid lines. Angled overhead game camera, characters seen from above at a 45 degree elevation, chibi proportions. Cohesive colors: navy #14233b, ice cyan #71dce8, cream #fff2cb, violet #8261bd, gold #ffd45e. Home jerseys teal/cream/navy, away jerseys coral/violet/navy. Each sprite isolated on true transparent background with generous empty padding. Never draw checkerboard.
+- Skaters: same scale as v1 (about 145–160 px standing) with skates on a consistent baseline. Generous gaps between cells, because sticks that touch the next cell get clipped.
+- Two team colours: home teal/cream/navy, away coral/violet/navy. Every rival is drawn in away colours and recoloured into its team colours at runtime, so **keep rival jerseys coral + violet** and keep coral and violet off skin and hair.
 
 ---
 
-## Delivered: P1 gameplay pack ✓
+## Delivered ✓
 
-All in the game now: 8-way skating (the new up-right/down-right poses), the 4-frame side stride with glide and hockey stop, stagger/knockdown/getting-up on big hits, Halla's side-on goalie poses (glove vs blocker side, dives, smothering the puck, getting up), the ice spray on hockey stops, ice chips on hits and dives, and the red goal light behind each net. Thank you, it looks great.
-
-### Redo: side-view goal nets (the one P1 item that couldn't be used)
-
-The layered net in the P1 pack is drawn with the goal mouth turned about 45° toward the camera, so its two posts sit side by side with the mesh behind them. In this game's camera the goal line runs **straight up and down the screen**: the far post stands directly *above* the near post (76 px apart on screen), the crossbar runs vertically between their tops, and the mesh extends to the right. No warp of the P1 art can put both posts on that line without crushing the mesh, so the game is still drawing its own nets in code.
-
-**Reference: [`reference/net-reference.png`](reference/net-reference.png).** It shows the in-game net at 4× with Halla for scale, and the back and front layers on their own at 8×. Please paint over those exact shapes:
-- Right-hand net only (the game mirrors it), mouth facing LEFT.
-- Two PNGs on the same canvas: **back** (far post, far-side mesh, back mesh, base) and **front** (near post, crossbar, roof and near-side mesh).
-- Final size in the game is small (posts about 34 px tall, mouth 76 px top to bottom, about 40 px deep), so it can be drawn at 2–4× that and scaled down.
-- Optional: 3 bulge frames for goals, same as before.
+- **v1 pack:** the original cast, goalie, rink, props, HUD, power pucks and effects.
+- **P1 gameplay:** 8-way skating, 4-frame side stride with glide and hockey stop, hit reactions, Halla's side-on goalie set, ice spray, ice chips and the goal light.
+- **v2 pack:** 5 rival casts with goalies, portraits and 45 expressions, crests, 24 cut-in banners, signature celebrations, Ember Dome / Aurora Palace / Pine Pond, crowd fans, the locker room and the three hub characters.
 
 ---
 
-## Stadium and atmosphere (after the P1 items above)
+## Batch A: consistency (biggest payoff)
 
-The arena is where most of the immersion comes from. In order of payoff:
+Our trio now animates much more than the rivals do, which shows when they share the ice.
 
-### S1. Near-glass foreground layer
-A transparent PNG at the exact size and position of `rink_backdrop.png` (1536×1024) containing **only the near (bottom) boards, glass panels, posts and top rail**, with everything else erased. The game draws it over the players, so skaters along the bottom boards appear behind the glass. This is mostly an edit of the existing backdrop: keep the glass frame and make the glass itself about 25% opaque.
+### A1. Side-view goal nets (redo)
+The layered net in P1 and v2 is drawn with the goal mouth turned about 45° toward the camera. In this camera the goal line runs **straight up and down the screen**: the far post stands directly above the near post, the crossbar runs vertically between their tops, and the mesh goes to the right. No warp fits the P1 art onto that, so the game still draws its own nets in code.
 
-### S2. Goal lights ✓
-Delivered in the P1 pack (the small red light on a post).
+**Reference: [`reference/net-reference.png`](reference/net-reference.png)** shows the in-game net at 4× with Halla for scale, and the back and front layers at 8×. Paint over those exact shapes:
+- Right-hand net only (mirrored for the left), mouth facing LEFT.
+- Two PNGs on one canvas: **back** (far post, far-side mesh, back mesh, base) and **front** (near post, crossbar, roof and near-side mesh).
+- In-game size is small (posts about 34 px tall, mouth 76 px top to bottom, about 40 px deep), so draw it at 2–4× and it gets scaled down.
+- Optional: 3 bulge frames for goals.
 
-### S3. Scoreboard / jumbotron
-A hanging or tower scoreboard that sits in the top stands above the centre stairs (about 220×110 px), with a dark empty screen area. The game draws the live score and "GOAL!" onto the screen.
+### A2. Rival hit reactions
+Our skaters stagger, fall and get up on big hits; rivals only wobble.
+- Per rival skater (15), away colours, facing right and facing down: **stagger, knocked down, getting up**.
+- 15 × 2 directions × 3 = **90 frames**. Same poses as `nix_hit_reactions`.
 
-### S4. Crowd and mascot
-- 6–8 tiny fans (about 24 px tall), 2 frames each (sitting, arms-up cheering), in home and away colours, a few holding signs. This expands item 11 below; it replaces the procedural pixel fans.
+### A3. Rival diagonals
+Rivals turn in 4 directions while our team uses 8.
+- Per rival skater (15): **up-right and down-right** (the game mirrors the left ones).
+- Full set is the 8 v1 poses (idle, stride A, stride B, pass, windup, release, check, celebrate): 15 × 2 × 8 = 240 frames.
+- **Minimum useful set:** idle, stride A, stride B = **90 frames**.
+
+### A4. Two more expression sets
+Two rivals who talk in the story aren't captains, so they have no expressions yet:
+- **Blaze** (Ember Comets winger) and **Horn** (Gilded Rams defender).
+- Neutral, grin, determined, shocked, defeated: 2 × 5 = **10 portraits**, same framing as `expressions_core`.
+
+---
+
+## Batch B: atmosphere
+
+### B1. Near-glass foreground layer
+One transparent PNG per arena (Frostline, Ember Dome, Aurora Palace, Pine Pond), each 1536×1024 and lined up with its backdrop. It contains **only the near (bottom) boards, glass panels, posts and top rail**, with everything else erased and the glass about 25% opaque. The game draws it over the players, so skaters along the bottom boards appear behind the glass. Pine Pond would be just the near snowbank lip.
+
+### B2. Arenas for the Rams and the Ravens
+The other three rivals now host you in their own building; these two still play at the Frostline rink.
+- **Gilded Rams:** a golden mountain hall (carved stone, gold banners, braziers).
+- **Obsidian Ravens:** a dark aerie (black stone, violet lanterns, perched ravens).
+- Same rink geometry, line positions and lamp spots as `rink_backdrop.png`, 1536×1024.
+
+### B3. Scoreboard / jumbotron
+A hanging scoreboard above the centre stairs in the top stands (about 220×110 px) with a dark empty screen. The game draws the score and "GOAL!" onto it. One generic design is enough.
+
+### B4. Mascot and fans at the glass
 - A **mascot** (snow yeti or penguin in a Strikers jersey), 4-frame dance plus 1 cheer, about 60 px tall. It dances in the stands on home goals.
 - 3–4 **fans pressed against the glass** with a camera-flash frame, for goals scored near them.
 
-### S5. Rival banners
-One hanging banner per rival (lynx, comet, ram, raven, aurora crown), 2 frames waving, sized to cover the snowflake banners in the four corners of the backdrop. Each away match then feels like their building.
+---
 
-### S6. Arena variants
-Item 10 below (Ember Dome, Aurora Palace, Pine Pond). Keep the same rink geometry and the near-glass layer per arena.
+## Batch C: polish
 
-### S7. Fun extras
-- An ice resurfacer driving laps on the title screen.
+### C1. Rival signature celebrations
+A 4-phase celebration for each rival captain (5 × 4 = 20 frames), like `signature_celebrations`. Ideas: Lynx howl, Comets fire burst, Rams headbutt the glass, Ravens wing spread, Royals crown tip.
+
+### C2. Rival side strides
+4-frame stride, hockey stop and glide facing right for each rival skater: 15 × 6 = 90 frames. Lower priority than A2/A3.
+
+### C3. Title logo
+A "Glacial Strikers" pixel logo (about 900×300, transparent) for the title screen, which is plain text now.
+
+### C4. Fun extras
 - Fireworks/pyro bursts (6 frames) above the stands for the championship win.
+- An ice resurfacer driving laps on the title screen.
 
----
-
-## P2: identity and story
-
-### 5. Rival rosters
-Every rival is currently our own three skaters in recoloured jerseys. One new trio (C / W / D) plus a goalie per team turns the tournament into a cast:
-1. **Aurora Royals** (final boss): elegant, crowned helmets, cape-like jersey trim.
-2. **Ember Comets**: hot-headed, flame trim, spiky hair.
-3. **Gilded Rams**: big, horned helmets.
-4. **Obsidian Ravens**: sleek, feathered visors, disciplined.
-5. **Pinewood Lynx**: young, fuzzy ear-flap toques.
-
-The full v1 skater sheet set (8 poses × 4 directions × away colours only) plus goalie and portrait. Away colours only are fine, since rivals never wear our home jerseys.
-
-### 6. Portrait expressions
-For dialogue scenes: **neutral, grin, determined, shocked, defeated** for Nix, Volta, Bram and Halla, plus each rival captain.
-
-### 7. Rival crests
-One crest each: lynx, comet (v1 has it), ram, raven, aurora crown. Same shield style as v1.
-
-### 8. Ultimate cut-ins
-A wide banner (about 1600×500) per character: dramatic close-up, speed lines, element colour. It slides across the screen for half a second when an ultimate fires. This is the single biggest "anime JRPG" moment.
-
----
-
-## P3: juice and environment
-
-### 9. Signature goal celebrations
-3–4 frames each: Nix plants an ice spike, Volta strikes a lightning pose, Bram flexes and hoists his stick.
-
-### 10. More arenas
-Same composition and rink geometry as `rink_backdrop.png` (1536×1024, boards and lines in the same places) so collisions still line up. Only the surroundings, lighting and ice tint change:
-- **Ember Dome**: indoor, volcanic rock stands, warm lighting.
-- **Aurora Palace**: night, northern lights overhead, crystal stands.
-- **Pine Pond**: outdoor frozen lake, snowbanks for boards, pine trees.
-
-### 11. Crowd fans
-6–8 tiny fans (about 24 px tall) in 2 frames each (sitting, cheering arms-up), some holding signs, in home and away colours. These would replace the procedural pixel fans drawn now.
-
-### 12. Hub background
-Locker room interior (1536×864): benches, lockers, the stick rack and shop stall from v1 placed in the room. It would replace the dimmed rink behind the menus.
-
-### 13. Hub NPCs
-Portraits for a **coach** (training), a **shopkeeper** (gear) and a **tournament announcer**.
-
-### 14. Gear on the body (later)
-Overlay sprites so equipped sticks and skates show on the characters. These need to match every pose, so leave them until the animations are final.
-
----
-
-## Small fixes in v1 (optional)
-
-- Facing left uses mirrored facing-right frames, so the stick hand flips. A dedicated left-facing row fixes that.
-- Halla's side poses are drawn facing right only, so the right-hand goalie is mirrored and catches with the other hand. A dedicated facing-left set would fix that (low priority).
+### C5. Later
+- A facing-left set for Halla and the rival goalies (mirroring swaps the catching hand).
+- Gear overlays for sticks and skates, once animations are final.

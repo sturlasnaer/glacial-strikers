@@ -61,7 +61,11 @@ const styles = read('src/styles.css');
 // ---- art
 const atlas = JSON.parse(read('assets/gfx/atlas.json'));
 const inline = { 'gfx/atlas.json': atlas };
-for (const f of [...atlas.pages.map((p) => p.file), 'gfx/rink_backdrop.webp']) inline[f] = `data:image/webp;base64,${b64('assets/' + f)}`;
+const images = [
+  ...atlas.pages.map((p) => p.file), 'gfx/rink_backdrop.webp', atlas.locker,
+  ...Object.values(atlas.arenas || {}), ...Object.values(atlas.banners || {}),
+].filter(Boolean);
+for (const f of images) inline[f] = `data:image/webp;base64,${b64('assets/' + f)}`;
 
 // ---- page
 let html = read('index.html');

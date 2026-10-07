@@ -1,7 +1,7 @@
 // In-match HUD (scoreboard, player card, power puck chip, banners) and touch button state.
 
 import { Assets } from './assets.js';
-import { POWER_INFO, TEAMS } from './data.js';
+import { POWER_INFO, TEAMS, ART_NAME } from './data.js';
 import { portrait, crest } from './ui.js';
 
 const digit = (n) => Assets.icon(`hud_elements/score/${Math.min(5, n)}`, 96);
@@ -76,7 +76,7 @@ export class HUD {
     this.tickerT = 3.2;
   }
 
-  // Ultimate cut-in: portrait band sliding across the screen.
+  // Ultimate cut-in: the character's banner art (or a portrait band) sliding across.
   cutin(s, partner, title) {
     const box = this.el.querySelector('#cutins');
     if (!box) return;
@@ -84,12 +84,27 @@ export class HUD {
     const color = us ? '#2a9fb0' : TEAMS[this.teamId].color;
     const el = document.createElement('div');
     el.className = 'cutin ' + (us ? 'us' : 'them');
-    const img = (k) => `<img src="${portrait(k.def.id, k.team, this.teamId, 320)}" alt="">`;
+    const id = (k) => (k.isGoalie ? 'goalie' : k.def.id);
+    const img = (k) => `<img src="${portrait(id(k), k.team, this.teamId, 320)}" alt="">`;
     const who = partner ? `${partner.name} + ${s.name}` : s.name;
+    const name = title || s.def.ult.name;
+    const art = Assets.banner(this.bannerKey(s), us ? null : this.teamId);
     if (partner) el.classList.add('combo');
-    el.innerHTML = `<div class="band" style="--c:${color}">${partner ? `<span class="pair">${img(partner)}${img(s)}</span>` : img(s)}<div class="txt"><small>${who}</small><b>${title || s.def.ult.name}</b></div></div>`;
+    if (art) {
+      el.classList.add('art');
+      el.innerHTML = `<div class="band" style="--c:${color}"><img class="bn" src="${art}" alt="">${partner ? `<span class="pair">${img(partner)}</span>` : ''}<div class="txt"><small>${who}</small><b>${name}</b></div></div>`;
+    } else {
+      el.innerHTML = `<div class="band" style="--c:${color}">${partner ? `<span class="pair">${img(partner)}${img(s)}</span>` : img(s)}<div class="txt"><small>${who}</small><b>${name}</b></div></div>`;
+    }
     box.appendChild(el);
     setTimeout(() => el.remove(), 1300);
+  }
+
+  // Banner key in the sprite pack: our cast by name, rivals by roster slot.
+  bannerKey(k) {
+    if (k.team === 0) return ART_NAME[k.isGoalie ? 'goalie' : k.def.id];
+    if (k.isGoalie) return k.art ? `${k.art}_g` : null;
+    return k.sprite !== k.def.sprite ? k.sprite : null;
   }
 
   replayMode(on) {

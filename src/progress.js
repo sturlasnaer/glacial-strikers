@@ -1,6 +1,6 @@
 // Save data, stats, levelling, rewards and match setup.
 
-import { CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES } from './data.js';
+import { CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE } from './data.js';
 import { newLeague, migrateLeague } from './league.js';
 
 const KEY = 'glacial-strikers-save-v1';
@@ -128,9 +128,9 @@ export function matchConfig(save, teamId, stage, opts = {}) {
     skaters: ids.map((id) => {
       const stats = { ...CHARACTERS[id].base };
       for (const [k, v] of Object.entries(t.bonus || {})) stats[k] = Math.max(1, stats[k] + v);
-      return { def: CHARACTERS[id], stats, name: t.names[id], perks: [] };
+      return { def: CHARACTERS[id], stats, name: t.names[id], perks: [], sprite: t.art ? `${t.art}_${ROLE[id]}` : null };
     }),
-    goalie: { stats: { ...t.goalie }, name: t.names.goalie },
+    goalie: { stats: { ...t.goalie }, name: t.names.goalie, art: t.art || null },
     chem: Object.fromEntries(Object.keys(COMBOS).map((k) => [k, Math.min(3, (t.chem || 0) + (save.season > 1 ? 1 : 0))])),
   };
   const diff = Math.min(1, Math.max(0, t.diff + (DIFF_OFFSET[save.settings.difficulty] || 0) + seasonBoost));

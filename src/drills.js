@@ -4,7 +4,7 @@
 // physics but hands the rules to the controller: init(m), update(m, dt), onGoal(m, info),
 // hud(m) and optional draw hooks. No browser APIs here so drills run headless too.
 
-import { CHARACTERS, GOALIE, TEAMS } from './data.js';
+import { CHARACTERS, GOALIE, TEAMS, ROLE } from './data.js';
 import { effectiveStats, perkNames, goalieStats, chemLevel } from './progress.js';
 import { toScreen, GOAL_X, MOUTH } from './rink.js';
 import { norm, clamp, makeRng } from './util.js';
@@ -69,12 +69,12 @@ export function createDrill(id, save, charId, opts = {}) {
   const awaySkater = (k) => {
     const stats = { ...CHARACTERS[k].base };
     for (const [s, v] of Object.entries(t.bonus || {})) stats[s] = Math.max(1, stats[s] + v);
-    return { def: CHARACTERS[k], stats, name: t.names[k], perks: [] };
+    return { def: CHARACTERS[k], stats, name: t.names[k], perks: [], sprite: t.art ? `${t.art}_${ROLE[k]}` : null };
   };
   const cfg = {
     teams: [
       { skaters: home.map((k) => skaterCfg(save, k)), goalie: { stats: goalieStats(save), name: GOALIE.name }, chem: homeChem(save) },
-      { skaters: away.map(awaySkater), goalie: { stats: id === 'shootout' ? { ...t.goalie } : opts.goalie || { rfx: 4, pos: 5 }, name: id === 'shootout' ? t.names.goalie : 'Coach Brekka' }, chem: {} },
+      { skaters: away.map(awaySkater), goalie: { stats: id === 'shootout' ? { ...t.goalie } : opts.goalie || { rfx: 4, pos: 5 }, name: id === 'shootout' ? t.names.goalie : 'Coach Brekka', art: id === 'shootout' ? t.art : null }, chem: {} },
     ],
     humanTeam: 0,
     powers: [],

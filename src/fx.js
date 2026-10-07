@@ -315,7 +315,7 @@ function makeCrowd() {
       fans.push({
         x, y: row.y + r.range(-2, 2), back: row.back, s: row.scale * r.range(0.9, 1.1),
         team: r() < 0.6 ? 0 : 1, skin: r.pick(skins), hat: r.pick(hats), phase: r.range(0, 6.28),
-        sign: r() < 0.06,
+        sign: r() < 0.06, fan: Math.floor(r() * 8),
       });
     }
   }

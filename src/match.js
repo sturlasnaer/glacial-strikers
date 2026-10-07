@@ -864,6 +864,7 @@ export class Match {
     p.x = g.x - gs * 4; p.y = g.y + off;
     g.saves++;
     g.flash = 0.2;
+    if (sh && (sh.kind === 'zero' || sh.kind === 'thunderclap' || (sh.special && sh.special.combo))) this.emit('big_save', { g, kind: sh.kind });
     for (const s of this.teamSkaters(g.team)) this.addUlt(s, 2);
     if (sh && sh.power === 'ice') { g.slowT = 1.3; this.emit('frozen', { g }); }
     if (this.rng() < catchP && (!sh || sh.power !== 'ice')) {
@@ -1192,7 +1193,7 @@ export class Match {
     if (this.puck.owner === g) return;
     g.disabled = true; g.x = g.goalSide * 900; g.y = 900;
     const c = this.extraCfg[team];
-    const x = new Skater(this, team, c.def, c.stats, 3, { name: c.name, perks: [] });
+    const x = new Skater(this, team, c.def, c.stats, 3, { name: c.name, perks: [], sprite: c.sprite });
     x.extraAttacker = true;
     x.x = team === 0 ? -20 : 20; x.y = RINK.minY + 30; x.vy = 260; x.vx = (team === 0 ? 1 : -1) * 120;
     x.face = Math.PI / 2;

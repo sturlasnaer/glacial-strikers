@@ -473,3 +473,21 @@ body.large-text .hub, body.large-text .modal, body.large-text .results, body.lar
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
+
+/* ---- v2 art: locker-room hub, hub characters, banner cut-ins ---- */
+body.in-hub #screen {
+  background: linear-gradient(180deg, rgba(8, 14, 26, 0.6), rgba(8, 14, 26, 0.25) 35%, rgba(8, 14, 26, 0.7)), var(--locker) center / cover no-repeat, #0b1424;
+}
+.npc { display: flex; align-items: flex-end; gap: 10px; margin: 0 0 12px; }
+.npc img { width: 72px; height: 72px; flex: none; border-radius: 10px; background: rgba(20, 35, 59, 0.6); border: 2px solid var(--navy-2, #24385a); image-rendering: auto; }
+.npc .say { position: relative; flex: 1; min-width: 0; padding: 8px 12px; border-radius: 12px; background: rgba(255, 242, 203, 0.95); color: var(--navy, #14233b); font-size: 14px; line-height: 1.3; }
+.npc .say::before { content: ""; position: absolute; left: -8px; bottom: 12px; border: 8px solid transparent; border-right-color: rgba(255, 242, 203, 0.95); border-left: 0; }
+.npc .say b { display: block; font-family: var(--display); font-weight: normal; font-size: 18px; line-height: 1; color: #2a6f86; margin-bottom: 2px; }
+.cutin.art { top: 24%; height: clamp(120px, 34vh, 300px); }
+.cutin.art .band { align-items: flex-end; padding: 0 12% clamp(8px, 2vh, 18px); border-width: 4px; }
+.cutin.art .bn { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; margin: 0; filter: none; transform: none; align-self: auto; }
+.cutin.them.art .bn { transform: none; }
+.cutin.art .pair { height: 70%; margin-bottom: 0; }
+.cutin.art .txt b { text-shadow: 0 4px 0 var(--navy), 0 0 18px rgba(0, 0, 0, 0.6); }
+.cutin.art .txt small { text-shadow: 0 2px 0 var(--navy); }
+body.in-hub .hub-body { background: linear-gradient(180deg, rgba(20, 35, 59, 0.82), rgba(13, 24, 42, 0.86)); backdrop-filter: blur(1.5px); -webkit-backdrop-filter: blur(1.5px); }

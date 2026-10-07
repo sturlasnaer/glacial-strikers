@@ -18,7 +18,7 @@ import { recordRivalResult, rivalLines, rivalAfterLine } from './rivals.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan } from './league.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES } from './data.js';
+import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE } from './data.js';
 import {
   loadSave, newSave, writeSave, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards,
 } from './progress.js';
@@ -51,6 +51,7 @@ class App {
     const bar = this.loadingEl.querySelector('.bar i');
     try {
       await Assets.load((f) => { bar.style.width = Math.round(f * 100) + '%'; });
+      setTimeout(() => Assets.prefetch(), 1200);
     } catch (e) {
       this.loadingEl.querySelector('.err').textContent = 'The game art did not load. Check your connection and reload the page.';
       throw e;
@@ -170,9 +171,10 @@ class App {
   }
 
   // ------------------------------------------------------------- matches
-  makeMatch(cfg, teamId) {
+  makeMatch(cfg, teamId, arena = 'home') {
     Assets.prepareTeam(TEAMS[teamId]);
     this.awayTeamId = teamId;
+    this.arena = arena;
     const m = new Match(cfg);
     this.match = m;
     this.acc = 0;
@@ -186,7 +188,8 @@ class App {
     const cfg = matchConfig(this.save, teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none' }, { attract: true });
     cfg.diff = [0.7, 0.7];
     this.attract = true;
-    this.makeMatch(cfg, teamId);
+    const arena = TEAMS[teamId].arena;
+    this.makeMatch(cfg, teamId, arena && Assets.backdrops.has(arena) ? arena : 'home');
     this.match.state = 'faceoff';
   }
 
@@ -222,6 +225,17 @@ class App {
     const powers = stage.powers.length ? 'Power pucks: ' + stage.powers.map((p) => POWER_INFO[p].name).join(', ') + '.' : 'No power pucks this match.';
     const sub = `${stage.round} · ${powers} ${TWIST_INFO[stage.twist]}`;
     this.scene = 'dialogue';
+    Assets.ensureTeam(t.id, this.arenaFor(t.id)).then(() => this.showStageDialogue(f, t, sub));
+  }
+
+  // Rivals with their own building host you there.
+  arenaFor(teamId, pick) {
+    if (pick && pick !== 'auto') return pick;
+    return (TEAMS[teamId] && TEAMS[teamId].arena) || 'home';
+  }
+
+  showStageDialogue(f, t, sub) {
+    const stage = f.stage;
     let lines;
     if (f.kind === 'regular') lines = [...rivalLines(this.save, t.id), ...DIALOGUE[t.id].pre];
     else if (f.kind === 'final' && DIALOGUE[t.id].final) lines = [...rivalLines(this.save, t.id).slice(0, 1), ...DIALOGUE[t.id].final];
@@ -233,8 +247,10 @@ class App {
     });
   }
 
-  startExhibition(teamId, mods = []) {
-    this.beginMatch(teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 120, round: 'Exhibition' }, true, mods);
+  startExhibition(teamId, mods = [], arena = 'auto') {
+    const where = this.arenaFor(teamId, arena);
+    Assets.ensureTeam(teamId, where).then(() =>
+      this.beginMatch(teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 120, round: 'Exhibition' }, true, mods, { arena: where }));
   }
 
   // Training drills and the shootout run on the match engine with a drill controller.
@@ -258,18 +274,23 @@ class App {
     this.checkRotate();
   }
 
-  startShootout(teamId) { this.startDrill('shootout', 'frost', { teamId }); }
+  startShootout(teamId) { Assets.ensureTeam(teamId).then(() => this.startDrill('shootout', 'frost', { teamId })); }
 
   // Local versus: player 1 is the Strikers, player 2 picks a rival. Both use base stats.
   startVersus(teamId) {
     audio.unlock();
+    const arena = this.arenaFor(teamId);
+    Assets.ensureTeam(teamId, arena).then(() => this.beginVersus(teamId, arena));
+  }
+
+  beginVersus(teamId, arena) {
     const t = TEAMS[teamId];
     const ids = ['frost', 'thunder', 'stone'];
     const chem = { 'frost+thunder': 1, 'frost+stone': 1, 'stone+thunder': 1 };
     const cfg = {
       teams: [
         { skaters: ids.map((id) => ({ def: CHARACTERS[id], stats: { ...CHARACTERS[id].base }, name: CHARACTERS[id].name, perks: [] })), goalie: { stats: { rfx: 6, pos: 6 }, name: GOALIE.name }, chem },
-        { skaters: ids.map((id) => ({ def: CHARACTERS[id], stats: { ...CHARACTERS[id].base }, name: t.names[id], perks: [] })), goalie: { stats: { rfx: 6, pos: 6 }, name: t.names.goalie }, chem },
+        { skaters: ids.map((id) => ({ def: CHARACTERS[id], stats: { ...CHARACTERS[id].base }, name: t.names[id], perks: [], sprite: t.art ? `${t.art}_${ROLE[id]}` : null })), goalie: { stats: { rfx: 6, pos: 6 }, name: t.names.goalie, art: t.art }, chem },
       ],
       humanTeam: 0, humans: [0, 1],
       powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none',
@@ -277,7 +298,7 @@ class App {
     };
     this.cur = { versus: true, teamId, stage: { round: 'Versus' }, exhibition: true, mods: [] };
     this.attract = false;
-    const m = this.makeMatch(cfg, teamId);
+    const m = this.makeMatch(cfg, teamId, arena);
     this.hookMatch(m);
     this.replay.clear();
     this.replayPending = false;
@@ -416,7 +437,7 @@ class App {
     const cfg = matchConfig(s, teamId, stage, { plans: [plan, theirPlan], buffs });
     cfg.mods = mods;
     this.attract = false;
-    const m = this.makeMatch(cfg, teamId);
+    const m = this.makeMatch(cfg, teamId, extra.arena || this.arenaFor(teamId));
     this.hookMatch(m);
     this.replay.clear();
     this.clips.clear();
@@ -501,6 +522,7 @@ class App {
         m.on('goalie_returned', (e) => { if (e.team === 0) this.hud.ticker('Halla is back in net.'); });
     m.on('no_goal', (e) => { this.hud.banner(`<div class="small" style="color:#ff6f7d">NO GOAL</div><div class="sub">${e.reason}</div>`, 1.6); audio.sfx('whistle'); audio.crowdOoh(0.8); });
     m.on('save', (e) => { audio.sfx('save', { vol: 0.8 }); if (!e.caught) audio.crowdOoh(0.6); });
+    m.on('big_save', (e) => { if (!this.attract && !(this.cur && this.cur.drill)) { this.hud.cutin(e.g, null, 'DENIED!'); audio.crowdOoh(1); } });
     m.on('block', () => audio.sfx('save', { vol: 0.6 }));
     m.on('goal', (e) => {
       this.rumble(0.9, 0.6, 400);
@@ -597,7 +619,7 @@ class App {
       let lines = !c.exhibition && script ? [...(script[rewards.won ? 'win' : 'loss'] || [])] : null;
       const extra = rivalAfterLine(s, c.teamId, rewards.won, summary.score[0], summary.score[1]);
       if (extra) lines = [...(lines || []), extra];
-      if (lines) { this.scene = 'dialogue'; this.ui.dialogue(lines, c.teamId, null, after); } else after();
+      if (lines) { this.scene = 'dialogue'; this.ui.dialogue(lines, c.teamId, null, after, rewards.won ? 'won' : 'lost'); } else after();
     });
   }
 
@@ -754,7 +776,21 @@ class App {
     this.rotateEl.hidden = true;
     if (!this.attract) this.startAttract();
     this.ui.hub(tab);
+    this.setHubBackground();
     audio.play('hub');
+  }
+
+  // The locker room fills the hub once its image is in; until then the rink shows through.
+  setHubBackground() {
+    const file = Assets.atlas.locker;
+    if (!file) return;
+    Assets.image(file).then(() => {
+      if (this.scene !== 'hub') return;
+      document.body.style.setProperty('--locker', `url("${Assets.url(file)}")`);
+      document.body.classList.add('in-hub');
+      this.hubBg = true;
+      audio.setCrowd(0);
+    }).catch(() => {});
   }
 
   // ----------------------------------------------------------------- loop
@@ -773,7 +809,8 @@ class App {
     }
     this.prevPause = raw.pause;
 
-    const m = this.match;
+    if (this.hubBg && this.scene !== 'hub') { this.hubBg = false; document.body.classList.remove('in-hub'); }
+    const m = this.hubBg ? null : this.match; // nothing to draw behind the locker room
     // catch size changes that don't fire resize events (browser UI, emulation)
     if (this.canvas.clientWidth !== Math.round(this.renderer.w) || this.canvas.clientHeight !== Math.round(this.renderer.h)) this.onResize();
     if (m) {
@@ -826,7 +863,7 @@ class App {
       }
       const t = TEAMS[this.awayTeamId];
       this.renderer.updateCamera(m, this.fx, realDt, { attract: this.attract, zoom: this.attract ? 0.9 : this.replay.active ? 1.15 : 1 });
-      this.renderer.render(m, this.fx, { awayTeamId: this.awayTeamId, awayColor: t.color, awayColor2: t.color2 });
+      this.renderer.render(m, this.fx, { awayTeamId: this.awayTeamId, awayColor: t.color, awayColor2: t.color2, arena: this.arena });
       this.clips.frame();
       this.hud.update(realDt);
       this.crowdT = (this.crowdT || 0) - realDt;

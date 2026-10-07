@@ -3,7 +3,7 @@
 import { Assets } from './assets.js';
 import {
   CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, STAT_HINT,
-  POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS,
+  POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
 } from './data.js';
 import { standings } from './league.js';
 import { BUFF_TEXT } from './lockerroom.js';
@@ -19,13 +19,50 @@ const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'st
 const ROSTER = ['frost', 'thunder', 'stone'];
 const SLOT_NAMES = { stick: 'Stick', skates: 'Skates', armor: 'Protection', goalie: 'Goalie gear' };
 
-export const portrait = (id, team, teamId, size = 160) =>
-  Assets.icon(`character_portraits/${team === 0 ? 'home' : 'away'}/${PORTRAIT[id]}`, size, team === 0 ? null : teamId);
-export const crest = (teamId, size = 96) =>
-  teamId === 'home' ? Assets.icon('hud_elements/misc/home_crest', size) : Assets.icon('hud_elements/misc/away_crest', size, teamId);
+// Portrait of a roster slot. Our cast has five expressions for dialogue; each rival has
+// its own cast (the captain with expressions), shown in that team's colours.
+export const portrait = (id, team, teamId, size = 160, expr = null) => {
+  const P = Assets.atlas.portraits || {};
+  if (team === 0) {
+    const p = P[ART_NAME[id]];
+    if (expr && p && p[expr]) return Assets.icon(p[expr], size);
+    return Assets.icon(`character_portraits/home/${PORTRAIT[id]}`, size);
+  }
+  const t = TEAMS[teamId];
+  const p = t && t.art && P[`${t.art}_${ROLE[id]}`];
+  const fid = p && ((expr && p[expr]) || p.neutral_roster || p.neutral);
+  const url = fid && Assets.icon(fid, size, teamId);
+  return url || Assets.icon(`character_portraits/away/${PORTRAIT[id]}`, size, teamId);
+};
+export const crest = (teamId, size = 96) => {
+  if (teamId === 'home') return Assets.icon('hud_elements/misc/home_crest', size);
+  const t = TEAMS[teamId];
+  const c = t && t.art && Assets.atlas.crests && Assets.atlas.crests[t.art];
+  return c ? Assets.icon(c, size) : Assets.icon('hud_elements/misc/away_crest', size, teamId);
+};
+// Expression for a dialogue line, from its punctuation and how the match went.
+function expression(side, text, mood) {
+  if (/\?!|!\?/.test(text)) return 'shocked';
+  const us = side === 'us';
+  if (mood === 'won') return us ? 'grin' : /\.\.\./.test(text) ? 'shocked' : 'defeated';
+  if (mood === 'lost') return us ? 'defeated' : 'grin';
+  if (/^\.\.\./.test(text)) return 'neutral';
+  if (us) return /!/.test(text) ? 'grin' : 'determined';
+  return /!|\?$/.test(text) ? 'grin' : 'determined';
+}
 const ico = (id, size = 64) => Assets.icon(id, size);
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// Hub characters: a portrait and a line of chatter at the top of their tab.
+const NPC_NAMES = { coach: 'Coach Brekka', shopkeeper: 'Gearsmith Ottar', announcer: 'Kip Vance, PA' };
+function npc(key, text) {
+  const id = Assets.atlas.npcs && Assets.atlas.npcs[key];
+  const img = id && Assets.icon(id, 128);
+  if (!img) return '';
+  return `<div class="npc"><img src="${img}" alt=""><div class="say"><b>${NPC_NAMES[key]}</b>${esc(text)}</div></div>`;
+}
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 function modsHtml(mods) {
   const parts = Object.entries(mods).filter(([, v]) => v).map(([k, v]) =>
@@ -91,6 +128,10 @@ export class UI {
         <div class="label" style="font-size:15px">Match challenges <span class="muted" id="ch-mult" style="font-family:var(--body);font-size:12px;letter-spacing:0;text-transform:none"></span></div>
         <div class="filters" style="margin:6px 0 0">${CHALLENGES.map((c) => `<button class="chip" data-ch="${c.id}" aria-pressed="${this.challenges.has(c.id)}" title="${esc(c.text)}">${esc(c.name)}</button>`).join('')}</div>
       </div>
+      <div>
+        <div class="label" style="font-size:15px">Arena</div>
+        <div class="filters" style="margin:6px 0 0">${['auto', ...Object.keys(ARENAS)].map((k) => `<button class="chip" data-arena="${k}" aria-pressed="${(this.arenaPick || 'auto') === k}">${k === 'auto' ? 'Their building' : esc(ARENAS[k].name)}</button>`).join('')}</div>
+      </div>
       <div class="choice">${opts.map((t) => `
         <div class="qp-row">
           <img src="${crest(t.id, 64)}" alt="" width="44" height="44">
@@ -107,7 +148,12 @@ export class UI {
         el.setAttribute('aria-pressed', this.challenges.has(id));
         audio.sfx('click'); upd();
       }, m);
-      this.click('[data-team]', (el) => { close(); this.app.startExhibition(el.dataset.team, [...this.challenges]); }, m);
+      this.click('[data-arena]', (el) => {
+        this.arenaPick = el.dataset.arena;
+        m.querySelectorAll('[data-arena]').forEach((b) => b.setAttribute('aria-pressed', b === el));
+        audio.sfx('click');
+      }, m);
+      this.click('[data-team]', (el) => { close(); this.app.startExhibition(el.dataset.team, [...this.challenges], this.arenaPick || 'auto'); }, m);
       this.click('[data-so]', (el) => { close(); this.app.startShootout(el.dataset.so); }, m);
     });
   }
@@ -206,7 +252,14 @@ export class UI {
         ${L.champion ? `<p class="gold-t" style="font-family:var(--display);font-size:26px;text-align:center;margin:10px 0 0">${L.champion === 'home' ? 'The Frostline Cup is yours!' : `${esc(name(L.champion))} win the Frostline Cup.`}</p>` : ''}`;
     }
     const last = L.results.length ? L.results[L.results.length - 1].slice(1) : [];
+    const next = this.app.fixture && this.app.fixture();
+    const nt = next && TEAMS[next.opponent];
+    const venue = nt && nt.arena ? ARENAS[nt.arena].name : 'Frostline Rink';
+    const call = L.champion ? (L.champion === 'home' ? 'Champions! Ladies and gentlemen, your Glacial Strikers!' : 'What a season. The ice goes quiet until next year.')
+      : nt ? pick([`Next up: the ${nt.name} at ${venue}! Get loud!`, `${nt.name} at ${venue}. ${nt.style}`, `Tonight at ${venue}: Strikers versus ${nt.name}. You won't want to miss it.`])
+        : 'Welcome to the Frostline league!';
     body.innerHTML = `
+      ${npc('announcer', call)}
       <div class="label" style="margin-bottom:6px">${esc(TOURNAMENT.name)} · Season ${s.season}</div>
       <div class="league-grid">
         <div style="min-width:0">${table}
@@ -447,6 +500,7 @@ export class UI {
     const items = GEAR.filter((g) => g.price > 0 && (filter === 'all' || g.slot === filter));
     body.innerHTML = `
       <div class="filters">${['all', 'stick', 'skates', 'armor', 'goalie'].map((f) => `<button class="chip" data-f="${f}" aria-pressed="${filter === f}">${f === 'all' ? 'All' : SLOT_NAMES[f]}</button>`).join('')}</div>
+      ${npc('shopkeeper', s.coins < 150 ? pick(['Short on coins? Win a few and come back. I\'ll keep it polished.', 'Browsing is free. Buying is not.']) : pick(['Every piece trades something away. Ask what it costs you, not just the coins.', 'Forged it myself. Well, most of it.', 'That stick? Lightning in a bottle. Mind the recoil.']))}
       <p class="muted" style="margin:0 0 10px;font-size:13px">Every item trades something away. Bought gear unlocks for the whole team; equip it from the Team tab.</p>
       <div class="shop">${items.map((g) => {
         const owned = s.owned.includes(g.id);
@@ -495,6 +549,7 @@ export class UI {
     this.drillChar = this.drillChar || 'thunder';
     const pips = (n) => Array.from({ length: 2 }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('');
     body.innerHTML = `
+      ${npc('coach', tr.sessions ? pick(['Cone Weave builds legs, Sniper builds hands. Pick one and sweat.', 'Gold medals don\'t come from watching. Lace up.', 'Keep-Away is where chemistry starts. Move the puck!']) : 'No rewarded sessions left. Play a match, then come back and work.')}
       <div class="train-top">
         <div><div class="label">Training rink</div>
           <p style="margin:2px 0 0;font-size:13px">Play drills to earn EXP for the skater you bring. Rewarded sessions refill after every match; practice is always free.</p></div>
@@ -618,11 +673,11 @@ export class UI {
 
   // -------------------------------------------------------------- dialogue
   // lines: [side ('us'|'them'), charId, text]
-  dialogue(lines, teamId, header, onDone) {
+  dialogue(lines, teamId, header, onDone, mood = null) {
     const t = TEAMS[teamId];
     let i = 0, typing = null, shown = 0;
-    const ours = (id) => portrait(id, 0, null, 420);
-    const theirs = (id) => portrait(id, 1, teamId, 420);
+    const ours = (l) => portrait(l[1], 0, null, 420, expression('us', l[2], mood));
+    const theirs = (l) => portrait(l[1], 1, teamId, 420, expression('them', l[2], mood));
     const r = this.set(`
       <div class="dim"></div>
       <div class="dlg" id="dlg">
@@ -637,8 +692,8 @@ export class UI {
       const us = side === 'us';
       const lastUs = [...lines.slice(0, i + 1)].reverse().find((l) => l[0] === 'us');
       const lastThem = [...lines.slice(0, i + 1)].reverse().find((l) => l[0] === 'them') || lines.find((l) => l[0] === 'them');
-      pl.src = ours(lastUs ? lastUs[1] : 'frost');
-      if (lastThem) { pr.src = theirs(lastThem[1]); pr.hidden = false; } else pr.hidden = true;
+      pl.src = ours(lastUs || ['us', 'frost', '']);
+      if (lastThem) { pr.src = theirs(lastThem); pr.hidden = false; } else pr.hidden = true;
       pl.classList.toggle('on', us); pr.classList.toggle('on', !us);
       dn.textContent = us ? CHARACTERS[id]?.name || GOALIE.name : t.names[id];
       dn.className = 'dlg-name' + (us ? '' : ' them');

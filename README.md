@@ -65,6 +65,12 @@ Hold shoot while a pass is on its way to fire a **one-timer**. Your skates plant
 - **Goal clips:** every instant replay is recorded as a short video with game sound and a caption. The results screen lists the match's highlights with Share (phones) and Save.
 - **Achievements:** 28 trophies (hat tricks, comebacks, every combo and power puck, empty-netters, shorthanded goals, the cup, a perfect season, gold in every drill and more), each paying coins, shown in the Trophies tab.
 - **Broadcast:** instant goal replays (skippable, toggle in Settings), play-by-play commentary ticker, ultimate cut-ins, crowd chants that speed up the cheered team's ultimates, a team logo at centre ice.
+- **Rivals with their own cast:** each of the five rivals has its own three skaters and goalie (on-ice sprites, portraits, cut-in banners), drawn in coral/violet and recoloured into the team's colours at runtime, plus its own crest. Captains change expression through the pre- and post-match talk, and so do Nix, Volta, Bram and Halla.
+- **Arenas:** the Ember Comets host you in the Ember Dome, the Aurora Royals in the Aurora Palace and the Pinewood Lynx on Pine Pond (outdoors, no lamps), each with the host crest at centre ice and a crowd mostly in their colours. Quick play lets you pick the arena.
+- **Crowd:** sprite fans in the far stands sit and cheer with the action (the near stands keep the back-of-head fans).
+- **Cut-ins:** ultimates and combos slide in the shooter's banner art; a goalie who stops an ultimate or combo gets a "DENIED!" banner.
+- **Signature celebrations:** Nix plants an ice spike, Volta strikes a lightning pose, Bram hoists his stick.
+- **Hub:** the locker room fills the menus, with Coach Brekka (Training), Gearsmith Ottar (Shop) and announcer Kip Vance (League) chiming in.
 - **Animation:** 8-way skating, a 4-frame side stride with glide and hockey stop (with an ice spray), stagger and knockdown on big hits, and side-on goalie poses: shuffles, butterfly, glove and blocker saves, dives, covering the puck and getting up. A red goal light behind each net spins on goals.
 - **Nets** are drawn in code as pixel art to fit the side-on camera, with the puck sitting inside the mesh and a ripple on goals. [`reference/net-reference.png`](reference/net-reference.png) shows the exact shapes for a sprite version.
 
@@ -101,9 +107,9 @@ tools/                asset builder, dev server, balance sim, control tests
 
 ```bash
 python3 -m venv ../.venv && ../.venv/bin/pip install pillow numpy   # once
-../.venv/bin/python tools/build_assets.py ../assets/Glacial-Strikers-Sprite-Pack assets/gfx ../assets/Glacial-Strikers-P1-Gameplay
+../.venv/bin/python tools/build_assets.py ../assets/Glacial-Strikers-Expansion-v2 assets/gfx
 ```
-Rebuilds the atlases from the v1 sprite pack plus any expansion packs (P1 gameplay is the default). Expansion characters are rescaled to the v1 skaters' height, stray fragments from neighbouring cells are erased, and their poses are mapped onto the game's names. New v1-style sheets get added to the `SCALE` table.
+Rebuilds the atlases from the complete v2 sprite pack (v1, P1 gameplay and the rival/story/arena art in one atlas). Every character is rescaled to the v1 skaters' height, stray fragments from neighbouring cells are erased, and poses are mapped onto the game's names. Pages are split into `home`, `away` and one `rival_<team>` group per rival; rival pages, arenas, cut-in banners and the locker room load in the background after startup.
 
 ```bash
 node tools/sim.mjs 20 0.6 0.6

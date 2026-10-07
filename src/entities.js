@@ -66,6 +66,7 @@ export class Skater {
     this.slot = slot;
     this.name = opts.name || def.name;
     this.perks = opts.perks || [];
+    this.sprite = opts.sprite || def.sprite; // rivals have their own roster art
     this.id = `${team}-${def.id}`;
     this.stats = stats;
     this.d = derive(stats);
@@ -345,6 +346,7 @@ export class Goalie {
     this.team = team;
     this.goalSide = team === 0 ? -1 : 1; // which net we defend
     this.name = opts.name || 'Goalie';
+    this.art = opts.art || null;
     this.stats = stats; // { rfx, pos }
     this.r = GOALIE_R;
     this.x = this.goalSide * (GOAL_X - 28);

@@ -1,27 +1,87 @@
 // Loads the atlas pages, draws frames, recolours rival jerseys, makes UI icons.
+//
+// The 'home' and 'away' pages load at startup. Each rival roster has its own pages, and
+// the arenas, locker room and cut-in banners are separate images; those load in the
+// background after startup, and ensureTeam() waits for whatever a match needs.
+
+import { TEAMS } from './data.js';
 
 const BASE = new URL('assets/', document.baseURI).href;
+const INLINE = typeof window !== 'undefined' && window.__INLINE; // single-file offline build
 
 export const Assets = {
   atlas: null,
-  pages: [], // HTMLImageElement | HTMLCanvasElement per page
+  pages: [], // HTMLImageElement | HTMLCanvasElement per page (undefined until loaded)
   backdrop: null,
-  recolored: new Map(), // teamId -> array of page canvases (away pages swapped)
+  backdrops: new Map(), // arena key -> image
+  recolored: new Map(), // teamId -> { pages, loaded } with the away and rival pages swapped
   iconCache: new Map(),
+  bannerCache: new Map(),
+  loading: new Map(), // file -> Promise<image>
+  images: new Map(), // file -> image
+
+  url(file) { return INLINE ? INLINE[file] : BASE + file; },
 
   async load(onProgress) {
-    // the single-file offline build embeds everything in window.__INLINE
-    const INLINE = typeof window !== 'undefined' && window.__INLINE;
     const atlas = INLINE ? INLINE['gfx/atlas.json'] : await (await fetch(BASE + 'gfx/atlas.json')).json();
     this.atlas = atlas;
-    const files = [...atlas.pages.map((p) => p.file), 'gfx/rink_backdrop.webp'];
+    this.pages = new Array(atlas.pages.length);
+    const core = atlas.pages.map((p, i) => i).filter((i) => atlas.pages[i].group === 'home' || atlas.pages[i].group === 'away');
+    const files = [...core.map((i) => atlas.pages[i].file), 'gfx/rink_backdrop.webp'];
     let done = 0;
-    const imgs = await Promise.all(files.map((f) => loadImage(INLINE ? INLINE[f] : BASE + f).then((img) => {
+    const imgs = await Promise.all(files.map((f) => this.image(f).then((img) => {
       done++; onProgress?.(done / files.length);
       return img;
     })));
     this.backdrop = imgs.pop();
-    this.pages = imgs;
+    this.backdrops.set('home', this.backdrop);
+    core.forEach((pi, k) => { this.pages[pi] = imgs[k]; });
+  },
+
+  image(file) {
+    if (!this.loading.has(file)) {
+      this.loading.set(file, loadImage(this.url(file)).then((img) => { this.images.set(file, img); return img; }));
+    }
+    return this.loading.get(file);
+  },
+
+  async loadGroup(group) {
+    await Promise.all(this.atlas.pages.map((p, i) => (p.group !== group || this.pages[i] ? null
+      : this.image(p.file).then((img) => { this.pages[i] = img; }))));
+  },
+
+  // Everything a match or scene with this rival needs: roster pages, arena, banners.
+  async ensureTeam(teamId, arena) {
+    const t = TEAMS[teamId];
+    const jobs = [];
+    if (t && t.art) jobs.push(this.loadGroup('rival_' + t.art));
+    if (arena && arena !== 'home') jobs.push(this.ensureArena(arena));
+    await Promise.all(jobs).catch(() => {});
+    if (t) this.prepareTeam(t);
+  },
+
+  async ensureArena(key) {
+    const file = this.atlas.arenas && this.atlas.arenas[key];
+    if (!file || this.backdrops.has(key)) return;
+    this.backdrops.set(key, await this.image(file));
+  },
+
+  backdropFor(key) { return this.backdrops.get(key) || this.backdrop; },
+
+  // Fetch the rest in the background, one file at a time, so play isn't slowed.
+  async prefetch() {
+    const a = this.atlas;
+    const files = [
+      ...a.pages.filter((p, i) => !this.pages[i]).map((p) => p.file),
+      a.locker, ...Object.values(a.arenas || {}), ...Object.values(a.banners || {}),
+    ].filter(Boolean);
+    for (const f of files) {
+      try {
+        const img = await this.image(f);
+        a.pages.forEach((p, i) => { if (p.file === f) this.pages[i] = img; });
+        for (const [k, v] of Object.entries(a.arenas || {})) if (v === f) this.backdrops.set(k, img);
+      } catch { /* offline and not cached: fine, it loads when needed */ }
+    }
   },
 
   frame(id) { return this.atlas.frames[id]; },
@@ -29,17 +89,43 @@ export const Assets = {
   // pages to use for a given team palette (null = original art)
   pagesFor(teamId) {
     if (!teamId) return this.pages;
-    return this.recolored.get(teamId) || this.pages;
+    const r = this.recolored.get(teamId);
+    return r ? r.pages : this.pages;
   },
 
+  // Recolour the away pages and this rival's roster pages into the team's colours.
   prepareTeam(team) {
-    if (!team.recolor || this.recolored.has(team.id)) return;
+    const own = (g) => g === 'away' || (team.art && g === 'rival_' + team.art);
+    const loaded = this.pages.filter((img, i) => img && own(this.atlas.pages[i].group)).length;
+    const r = this.recolored.get(team.id);
+    if (r && r.loaded === loaded) return;
+    if (!team.recolor) { this.recolored.delete(team.id); return; }
     const pages = this.pages.map((img, i) => {
-      if (this.atlas.pages[i].group !== 'away') return img;
-      return recolorPage(img, team.recolor);
+      if (!img || !own(this.atlas.pages[i].group)) return img;
+      const prev = r && r.pages[i];
+      return prev && prev !== img ? prev : recolorPage(img, team.recolor);
     });
-    this.recolored.set(team.id, pages);
+    this.recolored.set(team.id, { pages, loaded });
+    for (const k of [...this.iconCache.keys()]) if (k.includes(`|${team.id}|`)) this.iconCache.delete(k);
   },
+
+  // Cut-in banner image URL for a character key ('nix', 'ember_comets_c', ...), in the
+  // team's colours. Returns null until the image has loaded.
+  banner(key, teamId) {
+    const file = this.atlas.banners && this.atlas.banners[key];
+    if (!file) return null;
+    const ck = key + '|' + (teamId || '');
+    if (this.bannerCache.has(ck)) return this.bannerCache.get(ck);
+    const img = this.images.get(file);
+    if (!img) { this.image(file).catch(() => {}); return null; }
+    const t = teamId && TEAMS[teamId];
+    let url = this.url(file);
+    if (t && t.recolor) url = recolorPage(img, t.recolor).toDataURL('image/jpeg', 0.88);
+    this.bannerCache.set(ck, url);
+    return url;
+  },
+
+  async ensureBanners(keys) { await Promise.all(keys.map((k) => this.atlas.banners && this.atlas.banners[k] && this.image(this.atlas.banners[k]).catch(() => {}))); },
 
   // Draw a frame with its pivot at (x, y). scale = world px per *source* px.
   draw(ctx, id, x, y, scale, opts = {}) {
@@ -47,6 +133,7 @@ export const Assets = {
     if (!f) return;
     const [pi, fx, fy, fw, fh, px, py, s] = f;
     const pages = opts.pages || this.pages;
+    if (!pages[pi]) return;
     const k = scale / s;
     ctx.save();
     ctx.translate(x, y);
@@ -61,7 +148,7 @@ export const Assets = {
   // Draw a frame centred and fitted inside a box (UI use).
   drawFit(ctx, id, cx, cy, size, pages) {
     const f = this.atlas.frames[id];
-    if (!f) return;
+    if (!f || !(pages || this.pages)[f[0]]) return;
     const [pi, fx, fy, fw, fh] = f;
     const k = size / Math.max(fw, fh);
     ctx.drawImage((pages || this.pages)[pi], fx, fy, fw, fh, cx - (fw * k) / 2, cy - (fh * k) / 2, fw * k, fh * k);
@@ -74,6 +161,8 @@ export const Assets = {
     const f = this.atlas.frames[id];
     if (!f) return '';
     const [pi, fx, fy, fw, fh] = f;
+    const page = this.pagesFor(teamId)[pi];
+    if (!page) return '';
     const c = document.createElement('canvas');
     c.width = size; c.height = size;
     const ctx = c.getContext('2d');
@@ -82,7 +171,7 @@ export const Assets = {
     if (opts.crop === 'head') { sh = Math.round(fh * 0.55); }
     const k = size / Math.max(sw, sh);
     if (opts.flip) { ctx.translate(size, 0); ctx.scale(-1, 1); }
-    ctx.drawImage(this.pagesFor(teamId)[pi], sx, sy, sw, sh, (size - sw * k) / 2, (size - sh * k) / 2, sw * k, sh * k);
+    ctx.drawImage(page, sx, sy, sw, sh, (size - sw * k) / 2, (size - sh * k) / 2, sw * k, sh * k);
     const url = c.toDataURL('image/png');
     this.iconCache.set(key, url);
     return url;
