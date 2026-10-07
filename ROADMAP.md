@@ -1,0 +1,36 @@
+# Roadmap: more immersive, more fun
+
+Ideas beyond the blueprint, roughly in the order they'd pay off. "Art" marks items that need new sprites (see SPRITE-REQUESTS.md); everything else can be built with the current pack.
+
+## Already added on top of the blueprint
+
+- **One-timers.** Hold shoot as a pass arrives. This makes passing the best way to beat a goalie, which keeps the game team-first.
+- **Readable goalie.** The goalie reads shots imperfectly, dives on wide shots, leaves rebounds and smothers loose pucks. Thunderclap's wind-up shows a target reticle and the goalie squares up, so ultimates create chances without guaranteeing goals.
+- **Arena that reacts.** Fans in team colours bounce harder as the game heats up and hold up signs, arena lamps flicker, and on goals the lamp flashes in the scoring team's colour with the horn, crowd roar, slow-mo, camera punch and confetti.
+- **The ice remembers.** Skate scratches build up over the match. Hard stops throw snow, and snow falls over the arena.
+- **Rivals have identity.** Each team gets its own jersey colours, names, pre- and post-match banter, play style and a twist arena.
+- **A living league.** Six-team standings, simulated rival games, playoffs, scouting reports, game plans with counter-picks, and locker-room scenes that give the cast personality between matches.
+- **Chemistry combos.** Pairs build chemistry over the season. A pass into a quick shot between bonded teammates fires Frostbolt, Avalanche or Thunderquake, and pass chains add power. This rewards the passing game and gives the RPG side a team-building layer.
+- **Broadcast feel.** Instant goal replays, a play-by-play ticker, ultimate cut-ins and crowd chants (the cheered team's ultimates charge faster while the chant lasts).
+- **Earned juice.** Hit-stop and shake scale with hit power. Posts ping with a crowd "ooh", and pop-up text calls out one-timers, steals, blocks and power pucks.
+
+## Next, without new art
+
+Done so far: chemistry, rivalries, training mini-games, shootouts, local versus, gamepad rumble, challenges, the league with playoffs, game plans, locker-room moments, penalties and power plays, pulling the goalie, and installing as an offline app. Still open:
+
+1. **Accessibility and comfort.** Toggles for screen shake, flashes, auto-sprint and aim assist strength, colourblind-safe team markers, and bigger touch buttons.
+2. **Goal clips.** Record the instant replay to a short video you can save and share.
+3. **Achievements and trophy case.** Hat tricks, shutouts, every combo, all-gold training, beating the Royals with Bram's Monolith, shown in the hub with the trophy and medal sprites.
+
+## Next, with art
+
+1. **Ultimate cut-in art.** Cut-ins already use the portraits; dedicated wide banners would make them hit harder.
+2. **Recruitment.** Beating a rival lets you sign their star. You pick a 3-skater line-up before matches, which adds team-building depth.
+3. **Arena tour.** Each rival plays in its own arena (Ember Dome, Aurora Palace, Pine Pond) with a twist that fits it: lava-warm soft ice, aurora speed lanes, pond cracks.
+4. **Signature celebrations** for each character after goals.
+5. **Locker-room hub** with clickable stations (stick rack, shop, coach) instead of tabs.
+6. **Visible gear** overlays for sticks and skates.
+
+## Balance knobs
+
+`node tools/sim.mjs` reports goals, save percentage, match length and ability use for AI vs AI. Current targets are about 92% save rate, 4–6 minute matches and 1–2 ultimates per skater per match. Change one number at a time in `src/match.js` (shots, saves), `src/entities.js` (skating, goalie reach) or `src/ai.js` (decisions), then re-run the sim.

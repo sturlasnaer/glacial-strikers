@@ -1,0 +1,295 @@
+// Game content: characters, gear, rival teams, tournament, dialogue.
+
+export const STAT_KEYS = ['spd', 'agi', 'sht', 'pas', 'chk', 'sta'];
+export const STAT_NAMES = {
+  spd: 'Speed', agi: 'Agility', sht: 'Shooting', pas: 'Passing', chk: 'Checking', sta: 'Stamina',
+};
+export const STAT_HINT = {
+  spd: 'Top skating speed',
+  agi: 'Acceleration and turning',
+  sht: 'Shot power and accuracy',
+  pas: 'Pass speed, accuracy and puck control',
+  chk: 'Hit power and knockback resistance',
+  sta: 'Sprint and check energy',
+};
+
+// Sprite ids match the atlas skater keys.
+export const CHARACTERS = {
+  frost: {
+    id: 'frost', sprite: 'frost_captain', name: 'Nix', title: 'Frost Captain', role: 'C',
+    blurb: 'Calm playmaker. Lays down ice trails that speed up the whole line.',
+    base: { spd: 6, agi: 7, sht: 7, pas: 8, chk: 4, sta: 6 },
+    skill: { id: 'glide', name: 'Glacier Glide', icon: 'hud_elements/ability/frost', cd: 12,
+      text: 'Leave an ice trail for 3s. Teammates on it skate 30% faster.' },
+    ult: { id: 'zero', name: 'Absolute Zero', icon: 'hud_elements/ability/frost', needsPuck: true,
+      text: 'A freezing shot that slows every defender it passes.' },
+    perks: [
+      ['Long Glide: trail lasts 1.5s longer', 'Cold Snap: opponents on your trail are slowed'],
+      ['Quick Release: wrist shots 10% faster', 'Vision: passes travel 12% faster'],
+      ['Deep Freeze: Absolute Zero slows for longer', 'Captain: ultimate meter fills 15% faster'],
+    ],
+  },
+  thunder: {
+    id: 'thunder', sprite: 'thunder_winger', name: 'Volta', title: 'Thunder Winger', role: 'W',
+    blurb: 'Fastest skater on the ice. Blinks through gaps with a lightning dash.',
+    base: { spd: 9, agi: 8, sht: 6, pas: 5, chk: 3, sta: 5 },
+    skill: { id: 'dash', name: 'Bolt Dash', icon: 'hud_elements/ability/lightning', cd: 7,
+      text: 'Dash through open ice. You can\'t be checked mid-dash.' },
+    ult: { id: 'thunderclap', name: 'Thunderclap', icon: 'hud_elements/ability/lightning', needsPuck: true,
+      text: 'Wind up for 0.6s, then fire the fastest shot in the game.' },
+    perks: [
+      ['Afterimage: dash 25% farther', 'Static: dash cooldown 2s shorter'],
+      ['Breakaway: sprint costs 20% less stamina', 'Sniper: shots 15% more accurate'],
+      ['Overcharge: Thunderclap winds up faster', 'Storm Rider: ultimate meter fills 15% faster'],
+    ],
+  },
+  stone: {
+    id: 'stone', sprite: 'stone_defender', name: 'Bram', title: 'Stone Defender', role: 'D',
+    blurb: 'Immovable blueliner with a cannon slapshot and bone-rattling checks.',
+    base: { spd: 4, agi: 4, sht: 8, pas: 5, chk: 9, sta: 8 },
+    skill: { id: 'bedrock', name: 'Bedrock', icon: 'hud_elements/ability/stone', cd: 13,
+      text: 'For 4s you can\'t be knocked back and your checks always strip the puck.' },
+    ult: { id: 'monolith', name: 'Monolith', icon: 'hud_elements/ability/stone', needsPuck: false,
+      text: 'Raise a stone wall that blocks one shot or passing lane.' },
+    perks: [
+      ['Landslide: Bedrock lasts 2s longer', 'Aftershock: checks knock opponents farther'],
+      ['Cannon: slapshots charge 25% faster', 'Outlet: passes travel 12% faster'],
+      ['Fortress: Monolith lasts twice as long', 'Bulwark: ultimate meter fills 15% faster'],
+    ],
+  },
+};
+
+export const GOALIE = {
+  id: 'goalie', name: 'Halla', title: 'Goaltender', base: { rfx: 6, pos: 6 },
+};
+
+export const GEAR = [
+  // sticks
+  { id: 'stick_wood', slot: 'stick', name: 'Birch Twig', icon: 'equipment_items/stick/wood', price: 0, mods: {}, text: 'Reliable starter stick.' },
+  { id: 'stick_pass', slot: 'stick', name: 'Tape-to-Tape', icon: 'equipment_items/stick/passing', price: 120, mods: { pas: 2, sht: -1 }, text: 'Soft flex for crisp passes.' },
+  { id: 'stick_slap', slot: 'stick', name: 'Cannon Shaft', icon: 'equipment_items/stick/slapshot', price: 160, mods: { sht: 2, agi: -1 }, text: 'Heavy and stiff. Big shot, slower hands.' },
+  { id: 'stick_frost', slot: 'stick', name: 'Rimefang', icon: 'equipment_items/stick/frost', price: 320, mods: { sht: 1, pas: 2 }, text: 'Carved from glacier ice.' },
+  { id: 'stick_bolt', slot: 'stick', name: 'Stormcaller', icon: 'equipment_items/stick/lightning', price: 360, mods: { sht: 2, spd: 1, pas: -1 }, text: 'Crackles when you wind up.' },
+  { id: 'stick_grav', slot: 'stick', name: 'Event Horizon', icon: 'equipment_items/stick/gravity', price: 480, mods: { sht: 3, agi: -1, pas: -1 }, text: 'Shots feel heavier than they should.' },
+  // skates
+  { id: 'skate_start', slot: 'skates', name: 'Rental Blades', icon: 'equipment_items/skates/starter', price: 0, mods: {}, text: 'They fit. Mostly.' },
+  { id: 'skate_agile', slot: 'skates', name: 'Pivot Pros', icon: 'equipment_items/skates/agile', price: 140, mods: { agi: 2, spd: -1 }, text: 'Short blades for tight turns.' },
+  { id: 'skate_race', slot: 'skates', name: 'Long Track', icon: 'equipment_items/skates/racing', price: 150, mods: { spd: 2, agi: -1 }, text: 'Built for straight lines.' },
+  { id: 'skate_tank', slot: 'skates', name: 'Iron Boots', icon: 'equipment_items/skates/reinforced', price: 170, mods: { chk: 1, sta: 1, spd: -1 }, text: 'Plant your feet and hit.' },
+  { id: 'skate_frost', slot: 'skates', name: 'Hoarfrost Edges', icon: 'equipment_items/skates/frost', price: 340, mods: { spd: 1, agi: 2 }, text: 'Never lose an edge.' },
+  { id: 'skate_bolt', slot: 'skates', name: 'Bolt Runners', icon: 'equipment_items/skates/lightning', price: 420, mods: { spd: 3, sta: -1, agi: -1 }, text: 'Blinding speed, tiring stride.' },
+  // protection
+  { id: 'arm_none', slot: 'armor', name: 'Practice Jersey', icon: 'equipment_items/armor/chest', price: 0, mods: {}, text: 'Light and breezy.' },
+  { id: 'arm_vest', slot: 'armor', name: 'Padded Vest', icon: 'equipment_items/armor/chest', price: 110, mods: { sta: 2, spd: -1 }, text: 'Extra stamina for long shifts.' },
+  { id: 'arm_should', slot: 'armor', name: 'Rampart Pads', icon: 'equipment_items/armor/shoulders', price: 180, mods: { chk: 2, agi: -1 }, text: 'Bounce checks right back.' },
+  { id: 'arm_helm', slot: 'armor', name: 'Visor Helm', icon: 'equipment_items/armor/helmet', price: 150, mods: { pas: 1, sta: 1 }, text: 'Clear view of the ice.' },
+  { id: 'arm_glove', slot: 'armor', name: 'Grip Gloves', icon: 'equipment_items/armor/gloves', price: 200, mods: { sht: 1, pas: 1, chk: -1 }, text: 'Soft hands, thin padding.' },
+  { id: 'arm_legs', slot: 'armor', name: 'Glacier Guards', icon: 'equipment_items/armor/leg_guards', price: 260, mods: { chk: 2, sta: 2, spd: -1 }, text: 'Shot-blocking armour.' },
+  // goalie
+  { id: 'g_start', slot: 'goalie', name: 'Old Mitts', icon: 'equipment_items/armor/goalie_gloves', price: 0, mods: {}, text: 'Patched more than once.' },
+  { id: 'g_pro', slot: 'goalie', name: 'Halla\'s Pro Set', icon: 'equipment_items/armor/goalie_gloves', price: 380, mods: { rfx: 2 }, text: 'Faster glove, quicker pads.' },
+];
+
+export const GEAR_BY_ID = Object.fromEntries(GEAR.map((g) => [g.id, g]));
+
+// Rival teams use the away sprites. recolor shifts the coral/violet jersey hues.
+export const TEAMS = {
+  home: {
+    id: 'home', name: 'Glacial Strikers', short: 'GLA', crest: 'hud_elements/misc/home_crest',
+    color: '#71dce8', color2: '#fff2cb',
+  },
+  lynx: {
+    id: 'lynx', plan: 'forecheck', chem: 0, name: 'Pinewood Lynx', short: 'PIN', crest: 'hud_elements/misc/away_crest',
+    color: '#7fd16b', color2: '#2f6b3a', recolor: { h1: 118, h2: 95, sat: 0.9, val: 0.92, sat2: 0.8, val2: 0.55 },
+    diff: 0.12, bonus: { spd: -1, chk: -1 }, goalie: { rfx: 4, pos: 4 },
+    names: { frost: 'Fern', thunder: 'Pip', stone: 'Oakley', goalie: 'Moss' },
+    style: 'Young and eager. They chase the puck in a pack.',
+  },
+  comets: {
+    id: 'comets', plan: 'rungun', chem: 1, name: 'Ember Comets', short: 'EMB', crest: 'hud_elements/misc/away_crest',
+    color: '#ff6f7d', color2: '#8261bd',
+    diff: 0.35, bonus: {}, goalie: { rfx: 5, pos: 5 },
+    names: { frost: 'Cinder', thunder: 'Blaze', stone: 'Ash', goalie: 'Smolder' },
+    style: 'Hot-headed scorers who shoot from everywhere.',
+  },
+  rams: {
+    id: 'rams', plan: 'forecheck', chem: 1, name: 'Gilded Rams', short: 'RAM', crest: 'hud_elements/misc/away_crest',
+    color: '#ffd45e', color2: '#a86b1d', recolor: { h1: 44, h2: 22, sat: 1.0, val: 1.05, sat2: 0.9, val2: 0.65 },
+    diff: 0.55, bonus: { sht: 1, chk: 1 }, goalie: { rfx: 6, pos: 6 },
+    names: { frost: 'Aurum', thunder: 'Gilda', stone: 'Horn', goalie: 'Bulwark' },
+    style: 'Heavy hitters with heavier slapshots.',
+  },
+  ravens: {
+    id: 'ravens', plan: 'trap', chem: 2, name: 'Obsidian Ravens', short: 'RAV', crest: 'hud_elements/misc/away_crest',
+    color: '#9aa3b5', color2: '#2a2f3d', recolor: { h1: 220, h2: 220, sat: 0.12, val: 0.66, sat2: 0.15, val2: 0.4 },
+    diff: 0.72, bonus: { agi: 1, pas: 1, chk: 1 }, goalie: { rfx: 7, pos: 7 },
+    names: { frost: 'Corvin', thunder: 'Nyx', stone: 'Basalt', goalie: 'Grim' },
+    style: 'Disciplined, fast passing, punishing on the forecheck.',
+  },
+  royals: {
+    id: 'royals', plan: 'counter', chem: 3, name: 'Aurora Royals', short: 'AUR', crest: 'hud_elements/misc/away_crest',
+    color: '#c58cff', color2: '#43207a', recolor: { h1: 284, h2: 46, sat: 0.95, val: 0.92, sat2: 1.0, val2: 1.0 },
+    diff: 0.9, bonus: { spd: 1, sht: 1, pas: 1, chk: 1 }, goalie: { rfx: 8, pos: 8 },
+    names: { frost: 'Solenne', thunder: 'Aurelio', stone: 'Regalia', goalie: 'Crown' },
+    style: 'Defending champions. No weaknesses, plenty of swagger.',
+  },
+};
+
+// Twists: 'none' | 'speed_lanes' | 'cracked_ice' | 'both'
+export const TOURNAMENT = {
+  name: 'Frostline Regional Cup',
+  stages: [
+    { team: 'lynx', round: 'Group Stage', powers: [], twist: 'none', reward: 120 },
+    { team: 'comets', round: 'Group Stage', powers: ['fire', 'ice'], twist: 'none', reward: 160 },
+    { team: 'rams', round: 'Quarterfinal', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 210 },
+    { team: 'ravens', round: 'Semifinal', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'speed_lanes', reward: 270 },
+    { team: 'royals', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'cracked_ice', reward: 400 },
+  ],
+};
+
+// Chemistry: pairs who pass to each other build a bond over the season. From level 1, a
+// pass between the pair followed by a quick shot (or one-timer) fires their combo shot.
+export const CHEM_LEVELS = [12, 50, 120]; // total chemistry XP needed for levels 1, 2, 3
+export const pairKey = (a, b) => [a, b].sort().join('+');
+export const COMBOS = {
+  'frost+thunder': {
+    name: 'Frostbolt', colors: ['#bff4ff', '#ffe066'], icon: 'hud_elements/ability/lightning',
+    text: 'A crackling ice shot that slows every defender it passes and is hard to hold.',
+    levels: ['Unlocks Frostbolt', 'Slows defenders longer', 'Goalies can\'t catch it'],
+  },
+  'frost+stone': {
+    name: 'Avalanche', colors: ['#bff4ff', '#c9b79c'], icon: 'hud_elements/ability/stone',
+    text: 'A heavy shot that bulldozes through the first blocker. Goalies can\'t catch it.',
+    levels: ['Unlocks Avalanche', 'Plows through two blockers', 'Big rebound into the slot'],
+  },
+  'stone+thunder': {
+    name: 'Thunderquake', colors: ['#ffe066', '#c9b79c'], icon: 'hud_elements/ability/stone',
+    text: 'The release sends a shockwave that knocks nearby defenders off their feet.',
+    levels: ['Unlocks Thunderquake', 'Wider shockwave', 'Even faster shot'],
+  },
+};
+
+// Game plans picked before league matches. Each one beats one other plan.
+export const GAME_PLANS = {
+  balanced: { id: 'balanced', name: 'Balanced', beats: null, text: 'Read and react. No edge, no weakness.', pros: 'Safe against anything', cons: 'Never has the edge' },
+  forecheck: { id: 'forecheck', name: 'Forecheck', beats: 'rungun', text: 'Two skaters hunt the puck in their end and finish every check.', pros: 'More hits and steals', cons: 'Stamina recovers slower; can get caught up ice' },
+  trap: { id: 'trap', name: 'Trap', beats: 'forecheck', text: 'Clog the lanes at your blue line and sit goal-side of everyone.', pros: 'Fewer chances against, stronger goalie', cons: 'Fewer chances for' },
+  rungun: { id: 'rungun', name: 'Run-and-gun', beats: 'trap', text: 'Wingers cheat up ice, the defender joins the rush, shoot from anywhere.', pros: 'More and harder shots', cons: 'Your goalie sees more odd-man rushes' },
+};
+
+// Challenge modifiers for exhibitions. mult scales the coin reward.
+export const CHALLENGES = [
+  { id: 'onetimers', name: 'One-timers only', text: 'Only one-timer goals count, for both teams.', mult: 1.5 },
+  { id: 'giant', name: 'Giant goalies', text: 'Both goalies cover 40% more net.', mult: 1.4 },
+  { id: 'iceage', name: 'Ice age', text: 'Ice power orbs appear every few seconds.', mult: 1.1 },
+  { id: 'speed', name: 'Lightning round', text: 'Everyone skates 20% faster and the puck glides further.', mult: 1.2 },
+  { id: 'heavy', name: 'Heavy hitters', text: 'Checks hit 50% harder and cost half the stamina.', mult: 1.1 },
+  { id: 'sudden', name: 'Next goal wins', text: 'One goal decides it.', mult: 0.5 },
+];
+
+export const POWER_INFO = {
+  fire: { name: 'Fire Puck', icon: 'hud_elements/ability/fire', color: '#ff7a3d', text: 'Next shot flies faster and burns past the goalie.' },
+  ice: { name: 'Ice Puck', icon: 'hud_elements/ability/frost', color: '#7fe3ff', text: 'Next shot freezes the first skater or goalie it hits.' },
+  lightning: { name: 'Lightning Puck', icon: 'hud_elements/ability/lightning', color: '#ffe066', text: 'Next pass is instant and charges the receiver\'s shot.' },
+  gravity: { name: 'Gravity Puck', icon: 'hud_elements/ability/gravity', color: '#b07cff', text: 'Next shot curves toward your aim.' },
+};
+
+export const TWIST_INFO = {
+  none: '',
+  speed_lanes: 'Speed lanes: glowing strips along the boards boost anyone skating with the arrows.',
+  cracked_ice: 'Cracked ice: rough patches slow skaters down. Keep the puck moving.',
+  both: 'Speed lanes and cracked ice.',
+};
+
+// Pre- and post-match scenes. speaker: 'us' (our captain), 'them' (their captain),
+// or a character id from our roster.
+export const DIALOGUE = {
+  lynx: {
+    pre: [
+      ['them', 'frost', 'Are you the Glacial Strikers? Coach says you\'re the team to watch this year!'],
+      ['us', 'frost', 'We\'re just getting started. Good luck out there, Fern.'],
+      ['us', 'thunder', 'Nix, they\'re practically puppies. Can I go full speed?'],
+      ['us', 'stone', 'Pass the puck, Volta. That\'s how we win this cup.'],
+    ],
+    win: [['them', 'frost', 'Wow... we didn\'t even see that last goal. See you at the next tournament!']],
+    loss: [['them', 'frost', 'We won?! Pinewood never wins!']],
+  },
+  comets: {
+    pre: [
+      ['them', 'thunder', 'Glacial Strikers. Cute name. Ever played against fire?'],
+      ['us', 'thunder', 'Ever tried to catch lightning, Blaze?'],
+      ['them', 'stone', 'Watch for the power orbs. Grab one and that puck burns hot.'],
+      ['us', 'frost', 'Stay calm and move the puck. Their tempers are their weakness.'],
+    ],
+    win: [['them', 'thunder', 'Tch. This isn\'t over. The Comets always come back around.']],
+    loss: [['them', 'thunder', 'Told you. Nothing beats fire.']],
+  },
+  rams: {
+    pre: [
+      ['them', 'stone', 'In Gilded Rams country, we settle things shoulder to shoulder.'],
+      ['us', 'stone', 'Finally, someone who speaks my language.'],
+      ['us', 'frost', 'Their checks are heavy but slow. Quick passes will beat them.'],
+      ['them', 'thunder', 'And if you get past Horn, Gilda will bury the rebound!'],
+    ],
+    win: [['them', 'stone', 'Hah! You hit like a mountain, Bram. Win the whole thing, all right?']],
+    loss: [['them', 'stone', 'Good fight. Come back heavier.']],
+  },
+  ravens: {
+    pre: [
+      ['them', 'frost', 'The Strikers. You play with your hearts. We play with structure.'],
+      ['us', 'frost', 'Structure breaks, Corvin. Ice cracks.'],
+      ['them', 'thunder', 'Ride the speed lanes if you can keep up. We practise on them every day.'],
+      ['us', 'thunder', 'Arrows on the ice? Sounds like a fast track to your net.'],
+    ],
+    win: [['them', 'frost', '...Unexpected. The Royals won\'t make the mistakes we did.']],
+    loss: [['them', 'frost', 'As calculated.']],
+  },
+  royals: {
+    pre: [
+      ['them', 'frost', 'The Strikers. Cute little team. See you in the playoffs... if you make it.'],
+      ['us', 'frost', 'We\'ll be there, Solenne. Count on it.'],
+      ['them', 'thunder', 'Mind the cracks in the ice. They\'ve swallowed bigger dreams than yours.'],
+      ['us', 'stone', 'Everybody, together. Show them who we are.'],
+    ],
+    win: [['them', 'frost', 'A regular-season win. Don\'t get used to it.']],
+    loss: [['them', 'frost', 'Long live the Royals. Try again, little Strikers.']],
+    final: [
+      ['them', 'frost', 'So the frozen underdogs reached the final. How charming.'],
+      ['us', 'frost', 'We didn\'t come here for charm, Solenne. We came for the cup.'],
+      ['them', 'thunder', 'Mind the cracks in the ice. They\'ve swallowed bigger dreams than yours.'],
+      ['us', 'stone', 'Everybody, together. One more win.'],
+    ],
+    finalWin: [['them', 'frost', 'The cup is yours, Strikers. Enjoy it while it lasts.']],
+    finalLoss: [['them', 'frost', 'Champions again. Come back when you\'re ready, Strikers.']],
+  },
+};
+
+// Generic playoff scripts (the Royals have their own final, above).
+export const PLAYOFF_LINES = {
+  semi: {
+    pre: [
+      ['them', 'frost', 'Semifinal. Win or go home, Strikers.'],
+      ['us', 'frost', 'Then we\'re not going home.'],
+      ['us', 'thunder', 'Fast and loud, everybody. Let\'s go.'],
+    ],
+    win: [['them', 'frost', 'Go win the whole thing. Don\'t make us look bad.']],
+    loss: [['them', 'frost', 'Good season, Strikers. Not good enough.']],
+  },
+  final: {
+    pre: [
+      ['them', 'frost', 'The Cup Final. Everything comes down to tonight.'],
+      ['us', 'thunder', 'Then let\'s make it a good story.'],
+      ['us', 'stone', 'Everybody, together. One more win.'],
+    ],
+    win: [['them', 'frost', 'The cup is yours. You earned every inch of it.']],
+    loss: [['them', 'frost', 'Champions. Come back next season and try again.']],
+  },
+};
+
+export const TUTORIAL_TIPS = [
+  'Move with the left stick or WASD. Hold sprint to burn stamina for speed.',
+  'With the puck: tap SHOOT for a quick wrist shot, hold it to charge a slapshot.',
+  'Hold SHOOT while a pass is coming to fire a one-timer. Goalies hate those.',
+  'Without the puck: SHOOT becomes CHECK, PASS becomes SWITCH player.',
+  'Skate the puck through a glowing orb to power it up.',
+];

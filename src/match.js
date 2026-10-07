@@ -1,0 +1,1282 @@
+// Match simulation: rules, puck physics, possession, shots, saves, goals, power pucks.
+// Runs headless (see tools/sim.mjs) or driven by the game loop in main.js.
+
+import { clamp, norm, dist, segDist, makeRng, Emitter, angDiff } from './util.js';
+import {
+  RINK, GOAL_X, MOUTH, NET_DEPTH, POST_R, CROSSBAR, DOTS,
+  constrainToRink, netBox, makeTwists, clampInside, insideDepth,
+} from './rink.js';
+import { Puck, Skater, Goalie, Barrier, collideBarrier, PUCK_R } from './entities.js';
+import { Abilities } from './abilities.js';
+import { TeamAI } from './ai.js';
+import { pairKey, GAME_PLANS } from './data.js';
+
+export const WIN_SCORE = 5;
+export const PENALTY_SECONDS = 15;
+
+export class Match {
+  // cfg: { teams: [teamCfg, teamCfg], humanTeam: 0|null, seed, powers: [], twist, diff: [d0, d1] }
+  // teamCfg: { skaters: [{ def, stats, name, perks }], goalie: { stats, name } }
+  constructor(cfg) {
+    this.cfg = cfg;
+    this.rng = makeRng(cfg.seed ?? (Math.random() * 1e9) >>> 0);
+    this.events = new Emitter();
+    this.time = 0;
+    this.state = 'intro';
+    this.stateT = 0;
+    this.score = [0, 0];
+    this.puck = new Puck();
+    this.skaters = [];
+    this.goalies = [];
+    this.barriers = [];
+    this.trails = [];
+    this.pickups = [];
+    this.mods = new Set(cfg.mods || []); // challenge modifiers, see CHALLENGES in data.js
+    this.plans = cfg.plans || ['balanced', 'balanced']; // game plans, see GAME_PLANS in data.js
+    this.buffs = cfg.buffs || {}; // locker-room buffs for the home team
+    this.winScore = this.mods.has('sudden') ? 1 : WIN_SCORE;
+    this.powers = this.mods.has('iceage') ? ['ice'] : cfg.powers || [];
+    this.twists = makeTwists(cfg.twist || 'none');
+    this.pickupT = 9;
+    this.humanTeam = cfg.humanTeam ?? null; // player 1's team
+    // every team with a human player (two in local versus)
+    this.humans = cfg.humans ?? (this.humanTeam !== null ? [this.humanTeam] : []);
+    this.humanInputs = {};
+    this.abilities = new Abilities(this);
+    this.winner = null;
+    this.lastGoal = null;
+    this.goalLog = [];
+    this.shotsOnGoal = [0, 0];
+    this.possessionT = [0, 0];
+    cfg.teams.forEach((t, team) => {
+      t.skaters.forEach((sk, slot) => {
+        this.skaters.push(new Skater(this, team, sk.def, sk.stats, slot, sk));
+      });
+      this.goalies.push(new Goalie(this, team, t.goalie.stats, t.goalie));
+    });
+    this.ai = [0, 1].map((team) => new TeamAI(this, team, (cfg.diff || [0.5, 0.5])[team]));
+    for (const s of this.skaters) if (this.plans[s.team] === 'forecheck') s.d.regen *= 0.88;
+    for (const s of this.teamSkaters(0)) {
+      if (this.buffs.ultStart) s.ult = this.buffs.ultStart;
+      if (this.buffs.staminaMul) { s.d.staminaMax *= this.buffs.staminaMul; s.stamina = s.d.staminaMax; }
+    }
+    this.faceoffWinnerHint = null;
+    this.drill = cfg.drill || null;
+    this.hype = { team: 0, t: 0 }; // crowd chant: that team's ultimates charge faster
+    this.chem = cfg.teams.map((t) => t.chem || {}); // pairKey -> chemistry level 0..3
+    this.chemStats = [{}, {}]; // pairKey -> { passes, assists, comboGoals }
+    this.chain = [0, 0]; // consecutive completed passes per team
+    this.penaltiesOn = cfg.penalties !== false && !cfg.drill;
+    this.pendingPenalty = null;
+    this.penStats = [{ pims: 0, ppGoals: 0, kills: 0 }, { pims: 0, ppGoals: 0, kills: 0 }];
+    this.extra = [null, null]; // extra attacker when a goalie is pulled
+    this.prevPull = {};
+    this.extraCfg = cfg.teams.map((t) => t.extra || (t.skaters[0] ? { ...t.skaters[0], name: 'Extra attacker' } : null));
+    this.holdGoal = false; // set while a replay is showing
+    this.setupFaceoff();
+    this.state = 'intro';
+    this.stateT = 0;
+    if (this.drill) this.drill.init(this);
+  }
+
+  emit(type, data) { this.events.emit(type, data); }
+  on(type, fn) { return this.events.on(type, fn); }
+
+  teamSkaters(team) { return this.skaters.filter((s) => s.team === team); }
+  opponents(s) { return this.skaters.filter((o) => o.team !== s.team); }
+  // the goalie defending the net on `side`
+  goalieAt(side) { return this.goalies.find((g) => g.goalSide === side); }
+  controlled(team = this.humanTeam) { return this.skaters.find((s) => s.controlled && s.team === team); }
+
+  // ------------------------------------------------------------------ flow
+  // The skater who takes the draw: lowest slot not sitting in the box.
+  faceoffCenter(team) {
+    return this.teamSkaters(team).filter((s) => !s.parked).sort((a, b) => a.slot - b.slot)[0];
+  }
+
+  setupFaceoff(dotX = 0) {
+    for (const t of [0, 1]) if (this.extra[t]) this.returnGoalie(t, true);
+    const P = [
+      [{ x: -30, y: 0 }, { x: -120, y: -125 }, { x: -230, y: 110 }, { x: -160, y: 0 }],
+      [{ x: 30, y: 0 }, { x: 120, y: 125 }, { x: 230, y: -110 }, { x: 160, y: 0 }],
+    ];
+    const order = [0, 1].map((t) => this.teamSkaters(t).filter((s) => !s.parked).sort((a, b) => a.slot - b.slot));
+    for (const s of this.skaters) {
+      if (s.parked) continue;
+      const i = order[s.team].indexOf(s);
+      const pos = P[s.team][i] || { x: s.team ? 200 : -200, y: 0 };
+      s.x = pos.x + dotX; s.y = pos.y; s.vx = 0; s.vy = 0;
+      s.face = s.team === 0 ? 0 : Math.PI;
+      s.stun = 0; s.charging = false; s.ultWindup = 0; s.dashT = 0; s.state = 'skate'; s.celebrate = 0;
+      s.trailT = 0;
+    }
+    for (const g of this.goalies) {
+      g.x = g.goalSide * (GOAL_X - 28); g.y = 0; g.setState('ready'); g.react = null; g.track = null; g.holdT = 0;
+    }
+    const p = this.puck;
+    p.owner = null; p.x = dotX; p.y = 0; p.z = 46; p.vx = 0; p.vy = 0; p.vz = 0;
+    p.shot = null; p.pass = null; p.curve = null; p.touches = []; p.lastTouch = null;
+    p.noPickup.clear(); p.rolled.clear(); p.trail.length = 0; p.inNet = null; p.power = null; p.powerT = 0;
+    this.barriers.length = 0;
+    this.trails.length = 0;
+    this.chain = [0, 0];
+    for (const s of this.skaters) { s.comboT = 0; s.comboFrom = null; }
+    this.state = 'faceoff';
+    this.stateT = 0;
+    this.dropped = false;
+    this.faceoffRt = [0, 1].map((t) => this.ai[t].faceoffReaction());
+    if (this.humans.length) {
+      for (const s of this.skaters) s.controlled = this.humans.includes(s.team) && s === this.faceoffCenter(s.team);
+    }
+    this.emit('faceoff', {});
+  }
+
+  // Raw buttons from the player: { mx, my, sprint, a, b, skill, ult }
+  setHumanInput(raw, team = this.humanTeam) {
+    this.humanInputs[team] = raw;
+    if (team === this.humanTeam) this.humanInput = raw;
+  }
+
+  mapHuman(c, raw) {
+    const p = this.puck;
+    const inp = Skater.blankInput();
+    inp.mx = raw.mx; inp.my = raw.my; inp.sprint = raw.sprint;
+    inp.skill = raw.skill; inp.ult = raw.ult; inp.a = raw.a; inp.b = raw.b;
+    if (p.owner === c) {
+      // a button still held from a check shouldn't start a shot
+      if (raw.a && (c.prevIn.check || c.aLatch)) c.aLatch = true;
+      if (!raw.a) c.aLatch = false;
+      inp.shoot = raw.a && !c.aLatch;
+      inp.pass = raw.b;
+    }
+    else {
+      const incoming = !p.owner && p.pass && p.pass.to === c;
+      if (incoming || (c.prevIn.shoot && raw.a)) inp.shoot = raw.a;
+      else inp.check = raw.a;
+      inp.switch = raw.b;
+    }
+    return inp;
+  }
+
+  applyHuman() {
+    for (const team of this.humans) {
+      const raw = this.humanInputs[team];
+      const c = this.controlled(team);
+      if (!raw || !c) continue;
+      if (this.drill && this.state !== 'play') { c.in = Skater.blankInput(); continue; }
+      c.in = this.mapHuman(c, raw);
+      if (this.state === 'play' && c.in.switch && !c.prevIn.switch && !c.prevIn.b && !(this.drill && this.drill.noSwitch)) this.switchControl(null, team);
+      if (raw.pull && !this.prevPull[team]) this.togglePull(team);
+      this.prevPull[team] = !!raw.pull;
+    }
+  }
+
+  // Hand control to the best-placed teammate (closest to the puck).
+  switchControl(to, team) {
+    const t = to ? to.team : team ?? this.humanTeam;
+    const cur = this.controlled(t);
+    if (!cur) return;
+    let next = to;
+    if (!next) {
+      const p = this.puck;
+      const mates = this.teamSkaters(cur.team).filter((s) => s !== cur && !s.parked);
+      mates.sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y));
+      next = mates[0];
+    }
+    if (!next || next === cur) return;
+    cur.controlled = false;
+    cur.in = Skater.blankInput();
+    next.controlled = true;
+    next.oneTimerArmed = 0; // only the player's own button arms a one-timer
+    // carry the held buttons over so the new skater doesn't see a fresh press
+    next.in = this.mapHuman(next, this.humanInputs[t] || {});
+    next.prevIn = { ...next.in, a: true, b: true, shoot: next.in.shoot, pass: true, check: true, switch: true };
+    this.emit('switch', { s: next });
+  }
+
+  update(dt) {
+    this.time += dt;
+    this.stateT += dt;
+    this.applyHuman();
+    if (this.drill) {
+      this.drill.update(this, dt);
+      if (this.state === 'play' || this.state === 'drill_over') this.tickEntities(dt, false);
+      else for (const s of this.skaters) { s.animT += dt; s.prevIn = { ...s.in }; }
+      return;
+    }
+    const st = this.state;
+    if (st === 'intro') {
+      if (this.stateT > 1.2) { this.state = 'faceoff'; this.stateT = 0; this.emit('faceoff', {}); }
+      this.tickEntities(dt, true);
+      return;
+    }
+    if (st === 'faceoff') return this.updateFaceoff(dt);
+    if (st === 'goal') {
+      this.tickEntities(dt, false);
+      if (this.stateT > 3.4 && !this.holdGoal) {
+        if (this.winner !== null) { this.state = 'over'; this.stateT = 0; this.emit('final', { winner: this.winner }); }
+        else this.setupFaceoff();
+      }
+      return;
+    }
+    if (st === 'over') { this.tickEntities(dt, false); return; }
+    if (st === 'penalty') {
+      this.tickEntities(dt, false);
+      if (this.stateT > 2) this.setupFaceoff(this.penaltyDot || 0);
+      return;
+    }
+    // play
+    if (this.hype.t > 0) this.hype.t -= dt;
+    this.updateBox(dt);
+    this.aiGoaliePull(dt);
+    this.possessionT[this.puck.owner ? this.puck.owner.team : 0] += this.puck.owner ? dt : 0;
+    this.tickEntities(dt, false);
+    this.updatePickups(dt);
+    if (this.pendingPenalty) this.whistlePenalty();
+  }
+
+  updateFaceoff(dt) {
+    const p = this.puck;
+    // everyone holds position; animate the drop
+    for (const s of this.skaters) if (!(s.controlled && this.humans.includes(s.team))) s.in = Skater.blankInput();
+    const DROP = 1.1;
+    if (this.stateT > DROP - 0.35) {
+      p.z = Math.max(0, 46 * (1 - (this.stateT - (DROP - 0.35)) / 0.35));
+    }
+    if (!this.dropped && this.stateT >= DROP) { this.dropped = true; p.z = 0; this.emit('drop', {}); }
+    if (this.dropped) {
+      const t = this.stateT - DROP;
+      const centers = [this.faceoffCenter(0), this.faceoffCenter(1)].filter(Boolean);
+      let winner = null;
+      for (const c of centers) {
+        const human = c.controlled && this.humans.includes(c.team);
+        if (human) {
+          if (c.pressed('a') || c.pressed('b')) winner = winner || c;
+        } else if (t >= this.faceoffRt[c.team]) winner = winner || c;
+      }
+      if (winner) {
+        this.takePossession(winner, 'faceoff');
+        this.emit('faceoff_win', { s: winner });
+        this.state = 'play'; this.stateT = 0;
+      } else if (t > 0.9) { this.state = 'play'; this.stateT = 0; }
+    }
+    for (const s of this.skaters) { s.animT += dt; s.prevIn = { ...s.in }; }
+  }
+
+  tickEntities(dt, frozen) {
+    if (frozen) return;
+    const live = this.state === 'play';
+    // controllers
+    for (const a of this.ai) a.update(dt);
+    for (const s of this.skaters) s.update(dt);
+    for (const g of this.goalies) g.update(dt);
+    this.collideSkaters();
+    if (live) this.stickChecks(dt);
+    this.updatePuck(dt);
+    this.updateTrails(dt);
+    this.updateBarriers(dt);
+    for (const s of this.skaters) s.prevIn = { ...s.in };
+  }
+
+  // ------------------------------------------------------------- skaters
+  collideSkaters() {
+    const S = this.skaters;
+    for (let i = 0; i < S.length; i++) {
+      const a = S[i];
+      if (a.parked) continue;
+      for (let j = i + 1; j < S.length; j++) {
+        const b = S[j];
+        if (b.parked) continue;
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const rr = a.r + b.r + (a.bedrockT > 0 ? 4 : 0) + (b.bedrockT > 0 ? 4 : 0);
+        const d2 = dx * dx + dy * dy;
+        if (d2 >= (rr + 6) * (rr + 6)) continue;
+        const d = Math.sqrt(d2) || 0.01;
+        if (this.state === 'play' && a.team !== b.team) {
+          if (a.state === 'check' && a.stateT < 0.32 && a.hitThisCheck !== b) this.hit(a, b);
+          else if (b.state === 'check' && b.stateT < 0.32 && b.hitThisCheck !== a) this.hit(b, a);
+        }
+        if (d2 >= rr * rr) continue;
+        const nx = dx / d, ny = dy / d;
+        const pen = rr - d;
+        const ma = a.bedrockT > 0 ? 4 : 1, mb = b.bedrockT > 0 ? 4 : 1;
+        a.x -= nx * pen * (mb / (ma + mb)); a.y -= ny * pen * (mb / (ma + mb));
+        b.x += nx * pen * (ma / (ma + mb)); b.y += ny * pen * (ma / (ma + mb));
+        const rv = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+        if (rv < 0) {
+          const j2 = -rv * 0.6;
+          a.vx -= nx * j2 * (mb / (ma + mb)); a.vy -= ny * j2 * (mb / (ma + mb));
+          b.vx += nx * j2 * (ma / (ma + mb)); b.vy += ny * j2 * (ma / (ma + mb));
+        }
+      }
+      // goalies are immovable
+      for (const g of this.goalies) {
+        if (g.disabled) continue;
+        const dx = a.x - g.x, dy = a.y - g.y;
+        const rr = a.r + g.r;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < rr * rr) {
+          const d = Math.sqrt(d2) || 0.01;
+          const nx = dx / d, ny = dy / d;
+          a.x = g.x + nx * rr; a.y = g.y + ny * rr;
+          const vn = a.vx * nx + a.vy * ny;
+          if (vn < 0) { a.vx -= 1.3 * vn * nx; a.vy -= 1.3 * vn * ny; }
+        }
+      }
+    }
+  }
+
+  hit(a, b) {
+    a.hitThisCheck = b;
+    if (b.dashT > 0) return;
+    const hadPuck = this.puck.owner === b || this.time - (b.lastPuckT ?? -9) < 0.5;
+    const puckDist = Math.hypot(this.puck.x - b.x, this.puck.y - b.y);
+    const dir = norm(b.x - a.x, b.y - a.y);
+    const rel = Math.max(0, (a.vx - b.vx) * dir.x + (a.vy - b.vy) * dir.y);
+    let power = a.d.checkPower * clamp(0.55 + rel / 480, 0.6, 1.45) * (this.mods.has('heavy') ? 1.5 : 1);
+    if (a.bedrockT > 0) power *= 1.7;
+    if (a.hasPerk('Aftershock')) power *= 1.2;
+    const res = b.bedrockT > 0 ? 0.9 : b.d.resist;
+    const kb = power * (1 - res);
+    b.vx += dir.x * kb; b.vy += dir.y * kb;
+    b.stun = b.bedrockT > 0 ? 0 : clamp(0.18 + kb / 1000, 0.2, 0.65);
+    b.charging = false; b.ultWindup = 0;
+    b.flash = 0.25;
+    a.vx *= 0.45; a.vy *= 0.45;
+    a.stats_.hits++;
+    this.addUlt(a, 5);
+    const p = this.puck;
+    let stripped = false;
+    if (p.owner === b && (a.bedrockT > 0 || kb > 150 || this.rng() < 0.75)) {
+      stripped = true;
+      this.loosePuck(b);
+      const perp = this.rng.range(-1, 1);
+      p.vx = b.vx * 0.4 + dir.x * 90 - dir.y * perp * 120;
+      p.vy = b.vy * 0.4 + dir.y * 90 + dir.x * perp * 120;
+      p.noPickup.set(b, 0.7);
+      this.pendingSteal = { by: a.team, from: b, t: this.time };
+    }
+    if (b.ultWindup > 0 && b.def.ult.id === 'thunderclap') b.ult = 50;
+    this.emit('hit', { a, b, power: kb, stripped });
+    this.judgeHit(a, b, kb, hadPuck, puckDist);
+  }
+
+  // Defender's stick on the puck has a chance to poke it free.
+  stickChecks(dt) {
+    const p = this.puck;
+    const c = p.owner;
+    if (!c || !c.isSkater) return;
+    for (const d of this.opponents(c)) {
+      if (d.stun > 0 || d.parked) continue;
+      const sp = d.stickPoint();
+      if (Math.hypot(sp.x - p.x, sp.y - p.y) > 20) continue;
+      const rate = 0.8 * (1 + (d.stats.chk - c.stats.pas) * 0.06) * this.ai[d.team].stealMul();
+      if (this.rng() < rate * dt) {
+        this.takePossession(d, 'steal');
+        c.stun = 0.12;
+        p.noPickup.set(c, 0.5);
+        return;
+      }
+    }
+  }
+
+  addUlt(s, amt) {
+    if (!s || !s.isSkater) return;
+    let mult = (s.hasPerk('Captain') || s.hasPerk('Storm Rider') || s.hasPerk('Bulwark')) ? 1.15 : 1;
+    if (this.hype.t > 0 && this.hype.team === s.team) mult *= 1.25;
+    const before = s.ult;
+    s.ult = Math.min(100, s.ult + amt * mult);
+    if (before < 100 && s.ult >= 100) this.emit('ult_ready', { s });
+  }
+
+  // --------------------------------------------------------------- puck
+  takePossession(s, how) {
+    const p = this.puck;
+    const prev = p.owner;
+    const prevTeam = prev ? prev.team : p.lastTouch ? p.lastTouch.team : null;
+    if (prev && prev.isSkater) prev.lastPuckT = this.time;
+    p.owner = s;
+    p.vz = 0; p.z = 0;
+    p.curve = null;
+    const passInfo = p.pass;
+    p.shot = null; p.pass = null;
+    p.rolled.clear();
+    if (s.isSkater) {
+      const cp = s.carryPoint();
+      p.x = cp.x; p.y = cp.y;
+      // pass completed?
+      if (prevTeam !== null && prevTeam !== s.team) this.chain[prevTeam] = 0;
+      if (passInfo && passInfo.from.isSkater && passInfo.from.team === s.team && passInfo.from !== s) {
+        passInfo.from.stats_.passes++;
+        this.addUlt(passInfo.from, 4);
+        this.emit('receive', { s, from: passInfo.from });
+        this.chemStat(s.team, passInfo.from, s).passes++;
+        this.chain[s.team]++;
+        if (this.chain[s.team] >= 3) this.emit('chain', { team: s.team, n: this.chain[s.team], s });
+        const lvl = this.chemLevel(passInfo.from, s);
+        if (lvl > 0) {
+          s.comboFrom = passInfo.from;
+          s.comboT = 0.75;
+          this.emit('combo_ready', { s, from: passInfo.from, level: lvl });
+        }
+      }
+      // takeaway
+      const stole = how === 'steal' || (prevTeam !== null && prevTeam !== s.team && (prev?.isSkater || (this.pendingSteal && this.pendingSteal.by === s.team && this.time - this.pendingSteal.t < 1.5)));
+      if (stole && how !== 'faceoff' && !(prev && prev.isGoalie)) {
+        s.stats_.steals++;
+        this.addUlt(s, 8);
+        this.emit('steal', { s, from: prev });
+      }
+      this.pendingSteal = null;
+      p.setTouch(s);
+      if (this.humans.includes(s.team) && !s.controlled && !s.scripted && this.controlled(s.team)) this.switchControl(s);
+      // one-timer
+      if (how === 'catch' && passInfo && passInfo.from.team === s.team && (s.oneTimerArmed > 0 || s.in.shoot) && this.inShootingRange(s)) {
+        s.charging = false;
+        this.shoot(s, { kind: 'onetimer' });
+        return;
+      }
+      if (s.charging) s.charging = false;
+    }
+    this.emit('possession', { s, how });
+  }
+
+  loosePuck(from) {
+    const p = this.puck;
+    if (p.owner !== from) return;
+    p.owner = null;
+    if (from.isSkater) { from.charging = false; p.setTouch(from); }
+  }
+
+  inShootingRange(s) {
+    const gx = s.side * GOAL_X;
+    const dx = (gx - s.x) * s.side;
+    return dx > 20 && dx < 560;
+  }
+
+  aimFor(s, explicit) {
+    const g = this.goalieAt(s.side);
+    const iy = explicit ?? (Math.abs(s.in.aimY) > 0.35 ? s.in.aimY : Math.abs(s.in.my) > 0.45 && s.controlled ? s.in.my : 0);
+    if (typeof iy === 'number' && Math.abs(iy) > 0.35 && explicit === undefined) return Math.sign(iy) * MOUTH * 0.66;
+    if (explicit !== undefined && explicit !== null) return explicit;
+    if (this.drill && this.drill.neutralAim !== undefined) return this.drill.neutralAim;
+    // smart aim: the side the goalie is leaving open
+    const side = g.y > 3 ? -1 : g.y < -3 ? 1 : (this.rng() < 0.5 ? -1 : 1);
+    return side * MOUTH * 0.62;
+  }
+
+  shoot(s, opts) {
+    const p = this.puck;
+    if (p.owner !== s) return;
+    const kind = opts.kind;
+    const gx = s.side * GOAL_X;
+    let aimY = this.aimFor(s, opts.aimY);
+    const charge = opts.charge ?? 0.6;
+    let speed;
+    switch (kind) {
+      case 'wrist': speed = s.d.wrist * (s.hasPerk('Quick Release') ? 1.1 : 1); break;
+      case 'slap': speed = s.d.slapBase + s.d.slapGain * charge; break;
+      case 'onetimer': speed = (s.d.slapBase + s.d.slapGain * 0.55) * 1.05; break;
+      case 'zero': speed = 1120; break;
+      case 'thunderclap': speed = 1750; break;
+      default: speed = s.d.wrist;
+    }
+    const distG = Math.hypot(gx - p.x, aimY - p.y);
+    let err = s.d.aimErr * (0.45 + distG / 520);
+    if (kind === 'slap') err *= 0.75 + 0.6 * charge;
+    if (kind === 'onetimer') err *= 0.85;
+    if (kind === 'zero' || kind === 'thunderclap') err *= 0.7;
+    if (s.hasPerk('Sniper')) err *= 0.85;
+    err *= this.ai[s.team].aimMul(s);
+    aimY += this.rng.normal() * err;
+
+    speed *= this.planShotMul(s.team);
+    const special = { zero: kind === 'zero', thunder: kind === 'thunderclap' };
+    // pass chain: each completed pass in a row adds a little power
+    const chain = this.chain[s.team];
+    if (chain >= 2) { speed *= 1 + Math.min(4, chain) * 0.03; special.chain = chain; }
+    this.chain[s.team] = 0;
+    // chemistry combo: quick shot right after a pass from a bonded teammate
+    let combo = null;
+    if (s.comboT > 0 && s.comboFrom && !special.zero && !special.thunder) {
+      const level = this.chemLevel(s.comboFrom, s);
+      if (level > 0) combo = { key: pairKey(s.comboFrom.def.id, s.def.id), level, from: s.comboFrom };
+    }
+    s.comboT = 0; s.comboFrom = null;
+    if (combo) {
+      special.combo = combo.key; special.comboLevel = combo.level;
+      if (combo.key === 'frost+thunder') speed *= 1.1 + combo.level * 0.03;
+      if (combo.key === 'frost+stone') speed *= 1.06;
+      if (combo.key === 'stone+thunder') speed *= 1.12 + (combo.level >= 3 ? 0.06 : 0);
+      aimY = this.aimFor(s, opts.aimY);
+      aimY += this.rng.normal() * s.d.aimErr * 0.85;
+    }
+    let power = null;
+    if (p.power) {
+      power = p.power;
+      if (power === 'fire') speed *= 1.3;
+      if (power === 'lightning') speed *= 1.1;
+      p.power = null; p.powerT = 0;
+      this.emit('power_use', { s, type: power, action: 'shot' });
+    }
+    if (s.empowered > 0) { speed *= 1.25; special.charged = true; s.empowered = 0; }
+
+    let dir;
+    // behind the goal line: just throw it at the net front
+    if ((p.x - gx) * s.side > -8) dir = norm(gx - s.side * 40 - p.x, -p.y);
+    else dir = norm(gx - p.x, aimY - p.y);
+
+    if (power === 'gravity') {
+      // launch off-line toward the goalie side, then curve onto the aim point
+      const g = this.goalieAt(s.side);
+      const decoy = Math.sign(g.y - aimY || 1) * 0.42;
+      const c = Math.cos(decoy), sn = Math.sin(decoy);
+      dir = { x: dir.x * c - dir.y * sn, y: dir.x * sn + dir.y * c };
+      p.curve = { tx: gx, ty: aimY, rate: 3.6, t: 0 };
+    }
+    this.loosePuck(s);
+    p.vx = dir.x * speed; p.vy = dir.y * speed;
+    p.vz = kind === 'slap' ? 40 + 120 * charge : kind === 'wrist' ? 70 : 30;
+    p.shot = { by: s, team: s.team, kind, t: this.time, speed, power, special, frozen: new Set(), onNet: false,
+      plow: combo && combo.key === 'frost+stone' ? (combo.level >= 2 ? 2 : 1) : 0 };
+    p.pass = null;
+    p.noPickup.set(s, 0.35);
+    p.rolled.clear();
+    s.setState('shoot', 0.24);
+    s.charging = false;
+    s.stats_.shots++;
+    if (kind === 'onetimer') s.stats_.oneTimers++;
+    const g = this.goalieAt(s.side);
+    g.onShot(p.shot);
+    this.emit('shot', { s, kind, speed, power, special });
+    if (combo) {
+      this.emit('combo', { s, from: combo.from, key: combo.key, level: combo.level });
+      if (combo.key === 'stone+thunder') this.quake(s, combo.level);
+    }
+  }
+
+  choosePassTarget(s) {
+    const mates = this.skaters.filter((o) => o.team === s.team && o !== s && !o.parked);
+    const aim = norm(s.in.mx, s.in.my);
+    const ax = aim.l > 0.3 ? aim.x : Math.cos(s.face), ay = aim.l > 0.3 ? aim.y : Math.sin(s.face);
+    let best = null, bestScore = -1e9;
+    for (const m of mates) {
+      const v = norm(m.x - s.x, m.y - s.y);
+      const ang = ax * v.x + ay * v.y;
+      const open = Math.min(1.5, this.nearestOpp(m) / 110);
+      const lane = this.laneClear(s.x, s.y, m.x, m.y, s.team);
+      const score = ang * 2.2 + open * 0.6 + lane * 0.8 - v.l / 1400 + (m.x - s.x) * s.side / 900;
+      if (score > bestScore) { bestScore = score; best = m; }
+    }
+    return best;
+  }
+
+  nearestOpp(m) {
+    let best = 1e9;
+    for (const o of this.skaters) if (o.team !== m.team) best = Math.min(best, Math.hypot(o.x - m.x, o.y - m.y));
+    return best;
+  }
+
+  // 0..1: how clear a passing lane is of opponents
+  laneClear(ax, ay, bx, by, team) {
+    let worst = 1;
+    for (const o of this.skaters) {
+      if (o.team === team) continue;
+      const sd = segDist(o.x, o.y, ax, ay, bx, by);
+      if (sd.t < 0.05 || sd.t > 0.97) continue;
+      worst = Math.min(worst, clamp((sd.d - 14) / 40, 0, 1));
+    }
+    for (const b of this.barriers) {
+      if (!b.alive) continue;
+      const sd = segDist(b.x, b.y, ax, ay, bx, by);
+      if (sd.d < b.len / 2) worst = Math.min(worst, 0.1);
+    }
+    return worst;
+  }
+
+  pass(s, toHint) {
+    const p = this.puck;
+    if (p.owner !== s) return;
+    const target = toHint || this.choosePassTarget(s);
+    const speed = s.d.passSpeed * ((s.hasPerk('Vision') || s.hasPerk('Outlet')) ? 1.12 : 1);
+    s.setState('pass', 0.2);
+    if (!target) return;
+    if (p.power === 'lightning') {
+      p.power = null; p.powerT = 0;
+      this.loosePuck(s);
+      p.shot = null;
+      this.emit('lightning_pass', { from: s, to: target, x0: p.x, y0: p.y });
+      this.emit('power_use', { s, type: 'lightning', action: 'pass' });
+      p.pass = { from: s, to: target, t: this.time };
+      this.takePossession(target, 'catch');
+      target.empowered = 5;
+      return;
+    }
+    let tx = target.x, ty = target.y;
+    for (let i = 0; i < 3; i++) {
+      const t = Math.hypot(tx - p.x, ty - p.y) / speed;
+      tx = target.x + target.vx * t * 0.85;
+      ty = target.y + target.vy * t * 0.85;
+    }
+    const c = clampInside(tx, ty, 34);
+    const dir0 = norm(c.x - p.x, c.y - p.y);
+    const e = this.rng.normal() * s.d.passErr * (0.4 + dir0.l / 600);
+    const dir = norm(c.x - p.x - dir0.y * e, c.y - p.y + dir0.x * e);
+    this.loosePuck(s);
+    p.vx = dir.x * speed; p.vy = dir.y * speed; p.vz = 0;
+    p.pass = { from: s, to: target, t: this.time };
+    p.shot = null;
+    p.noPickup.set(s, 0.3);
+    p.rolled.clear();
+    this.emit('pass', { s, to: target });
+  }
+
+  goalieDistribute(g) {
+    const p = this.puck;
+    const mates = this.teamSkaters(g.team);
+    let best = null, bestScore = -1e9;
+    for (const m of mates) {
+      const lane = this.laneClear(g.x, g.y, m.x, m.y, g.team);
+      const open = this.nearestOpp(m);
+      const score = lane * 2 + Math.min(open, 200) / 100 - Math.hypot(m.x - g.x, m.y - g.y) / 900;
+      if (score > bestScore) { bestScore = score; best = m; }
+    }
+    g.setState('ready');
+    p.owner = null;
+    const hp = g.holdPoint();
+    p.x = hp.x; p.y = hp.y;
+    if (best && bestScore > 1.2) {
+      const d = norm(best.x - p.x, best.y - p.y);
+      p.vx = d.x * 620; p.vy = d.y * 620;
+      p.pass = { from: g, to: best, t: this.time };
+    } else {
+      // rim it around the boards
+      const ty = this.rng() < 0.5 ? -1 : 1;
+      const d = norm(-g.goalSide * 0.5, ty);
+      p.vx = d.x * 700; p.vy = d.y * 700;
+      p.pass = null;
+    }
+    p.shot = null;
+    p.noPickup.set(g, 1);
+    this.emit('goalie_pass', { g });
+  }
+
+  updatePuck(dt) {
+    const p = this.puck;
+    for (const [k, v] of p.noPickup) { if (v - dt <= 0) p.noPickup.delete(k); else p.noPickup.set(k, v - dt); }
+    if (p.power) {
+      p.powerT -= dt;
+      if (p.powerT <= 0) { this.emit('power_expire', { type: p.power }); p.power = null; }
+    }
+    if (p.owner) {
+      const o = p.owner;
+      const cp = o.isSkater ? o.carryPoint() : o.holdPoint();
+      p.px = p.x; p.py = p.y;
+      p.x = cp.x; p.y = cp.y; p.z = 0;
+      p.vx = o.vx || 0; p.vy = o.vy || 0;
+      // carried puck can still touch pickups
+      this.checkPickupTouch();
+      return;
+    }
+
+    // substeps for fast pucks
+    const sp = p.speed;
+    const steps = Math.max(1, Math.ceil((sp * dt) / 10));
+    const h = dt / steps;
+    for (let i = 0; i < steps; i++) {
+      if (this.puckStep(h)) break;
+    }
+    // record trail for fast pucks
+    if (sp > 500 || p.power) { p.trail.unshift({ x: p.x, y: p.y, z: p.z, t: this.time }); if (p.trail.length > 14) p.trail.length = 14; }
+    else if (p.trail.length) p.trail.pop();
+    this.checkPickupTouch();
+    if (p.shot && p.speed < 250) p.shot = null;
+    if (p.pass && this.time - p.pass.t > 2.2) p.pass = null;
+  }
+
+  // One integration substep for a loose puck. Returns true if the puck was claimed.
+  puckStep(h) {
+    const p = this.puck;
+    p.px = p.x; p.py = p.y;
+    // gravity curve
+    if (p.curve) {
+      p.curve.t += h;
+      const want = Math.atan2(p.curve.ty - p.y, p.curve.tx - p.x);
+      const cur = Math.atan2(p.vy, p.vx);
+      const d = angDiff(cur, want);
+      const turn = clamp(d, -p.curve.rate * h, p.curve.rate * h);
+      const sp = p.speed, na = cur + turn;
+      p.vx = Math.cos(na) * sp; p.vy = Math.sin(na) * sp;
+      if (p.curve.t > 0.9 || Math.abs(p.x - p.curve.tx) < 40) p.curve = null;
+    }
+    p.x += p.vx * h; p.y += p.vy * h;
+    // height
+    if (p.z > 0 || p.vz !== 0) {
+      p.vz -= 900 * h;
+      p.z += p.vz * h;
+      if (p.z <= 0) { p.z = 0; p.vz = p.vz < -60 ? -p.vz * 0.3 : 0; }
+    }
+    // friction
+    const f = Math.exp(-(this.mods.has('speed') ? 0.3 : 0.42) * h);
+    p.vx *= f; p.vy *= f;
+    const lane = this.laneAt(p.x, p.y);
+    if (lane) p.vx += lane.dir * 140 * h;
+    if (this.inCrack(p.x, p.y)) { const f2 = Math.exp(-1.6 * h); p.vx *= f2; p.vy *= f2; }
+    if (p.speed < 4) { p.vx = 0; p.vy = 0; }
+
+    // boards
+    const n = constrainToRink(p, PUCK_R);
+    if (n) {
+      const vn = p.vx * n.nx + p.vy * n.ny;
+      if (vn > 0) {
+        const tx = -n.ny, ty = n.nx;
+        const vt = p.vx * tx + p.vy * ty;
+        p.vx = tx * vt * 0.92 - n.nx * vn * 0.7;
+        p.vy = ty * vt * 0.92 - n.ny * vn * 0.7;
+        if (vn > 120) this.emit('puck_boards', { x: p.x, y: p.y, power: vn });
+        if (p.shot) { p.shot.wide = true; }
+      }
+    }
+    // barriers
+    for (const b of this.barriers) {
+      const hit = collideBarrier(p, PUCK_R, b, 0.6);
+      if (hit) {
+        this.emit('barrier_hit', { b, power: -hit.vn });
+        if (-hit.vn > 300 && (p.shot || p.pass) && (p.shot ? p.shot.team : p.pass.from.team) !== b.team) {
+          b.breaking = 0.6;
+          this.emit('barrier_block', { b });
+          if (p.shot) { p.shot = null; }
+          p.pass = null;
+        }
+      }
+    }
+    // goals, posts, nets, goalies
+    if (this.puckNets()) return true;
+    if (this.state !== 'play') return false;
+    // skaters: catches and blocks
+    return this.puckSkaters();
+  }
+
+  puckNets() {
+    const p = this.puck;
+    for (const side of [-1, 1]) {
+      const gx = side * GOAL_X;
+      // posts
+      for (const py of [-MOUTH, MOUTH]) {
+        const dx = p.x - gx, dy = p.y - py;
+        const rr = POST_R + PUCK_R;
+        if (dx * dx + dy * dy < rr * rr && p.z < CROSSBAR) {
+          const d = Math.hypot(dx, dy) || 1;
+          const nx = dx / d, ny = dy / d;
+          p.x = gx + nx * rr; p.y = py + ny * rr;
+          const vn = p.vx * nx + p.vy * ny;
+          if (vn < 0) { p.vx -= 1.8 * vn * nx; p.vy -= 1.8 * vn * ny; }
+          if (-vn > 150) this.emit('post', { x: p.x, y: p.y, power: -vn });
+          if (p.shot) p.shot.post = true;
+        }
+      }
+      // goalie save plane
+      if (this.state === 'play') {
+        const g = this.goalieAt(side);
+        if (!g.disabled && g.state !== 'hold' && this.goalieSave(g)) return true;
+      }
+      // goal line crossing
+      const b = netBox(side);
+      const prevIn = (p.px - gx) * side;
+      const nowIn = (p.x - gx) * side;
+      if (prevIn < 0 && nowIn >= 0) {
+        const t = prevIn / (prevIn - nowIn);
+        const yc = p.py + (p.y - p.py) * t;
+        if (Math.abs(yc) < MOUTH - 1 && p.z < CROSSBAR) {
+          if (this.state === 'play') {
+            this.goal(side, yc);
+          }
+          // settle in the net
+          p.x = gx + side * 8; p.y = yc;
+          p.vx *= 0.15; p.vy *= 0.15; p.vz = 0; p.z = 0;
+          p.inNet = side;
+          return true;
+        }
+      }
+      // inside the net: keep it there
+      if (p.inNet === side) {
+        p.x = clamp(p.x, b.x0 + 4, b.x1 - 4); p.y = clamp(p.y, -MOUTH + 4, MOUTH - 4);
+        p.vx *= 0.8; p.vy *= 0.8;
+        continue;
+      }
+      // net body from outside
+      if (p.x > b.x0 - PUCK_R && p.x < b.x1 + PUCK_R && p.y > b.y0 - PUCK_R && p.y < b.y1 + PUCK_R && nowIn > 0) {
+        const opts = [
+          { n: [side, 0], pen: (b.x1 + PUCK_R - p.x) * (side > 0 ? 1 : 0) + (p.x - (b.x0 - PUCK_R)) * (side < 0 ? 1 : 0) },
+          { n: [0, -1], pen: p.y - (b.y0 - PUCK_R) },
+          { n: [0, 1], pen: b.y1 + PUCK_R - p.y },
+        ].sort((a, c) => a.pen - c.pen)[0];
+        const [nx, ny] = opts.n;
+        p.x += nx * opts.pen; p.y += ny * opts.pen;
+        const vn = p.vx * nx + p.vy * ny;
+        if (vn < 0) { p.vx -= 1.5 * vn * nx; p.vy -= 1.5 * vn * ny; }
+        if (-vn > 150) this.emit('net_hit', { side });
+        if (p.shot) p.shot.wide = true;
+      }
+    }
+    return false;
+  }
+
+  goalieSave(g) {
+    const p = this.puck;
+    const gs = g.goalSide;
+    // only pucks travelling into the net side
+    const prevRel = (p.px - g.x) * gs, nowRel = (p.x - g.x) * gs;
+    const slow = p.speed < 260;
+    if (slow) {
+      // smother slow pucks in the crease
+      const d = Math.hypot(p.x - g.x, p.y - g.y);
+      if (d < g.r + 12 && Math.abs(p.y) < MOUTH + 20 && p.owner === null && !p.noPickup.has(g)) {
+        this.goalieCatch(g, false);
+        return true;
+      }
+      return false;
+    }
+    if (!(prevRel < 0 && nowRel >= 0)) return false;
+    const t = prevRel / (prevRel - nowRel);
+    const yc = p.py + (p.y - p.py) * t;
+    if (Math.abs(yc) > MOUTH + 22) return false;
+    let reach = g.reach() * this.planGoalieMul(g.team) * (g.team === 1 ? this.buffs.oppGoalieMul || 1 : 1);
+    const off = yc - g.y;
+    if (g.state === 'dive' && Math.sign(off) === g.diveDir) reach += 34;
+    if (g.state === 'dive' && Math.sign(off) !== g.diveDir) reach *= 0.6;
+    const sh = p.shot;
+    if (sh && sh.power === 'fire') reach *= 0.8;
+    if (sh && sh.special && sh.special.combo === 'frost+thunder') reach *= 0.97;
+    if (sh && sh.special && sh.special.thunder) reach *= 0.9;
+    if (Math.abs(off) > reach + PUCK_R) return false;
+    // saved
+    if (sh) this.shotOnGoal(sh);
+    const speed = p.speed;
+    let catchP = clamp(0.5 - (speed - 500) / 1500, 0.06, 0.5) * (0.8 + g.stats.rfx * 0.04);
+    if (sh && (sh.power === 'fire' || sh.special?.charged || sh.special?.thunder)) catchP *= 0.3;
+    const cb = sh && sh.special && sh.special.combo;
+    if (cb === 'frost+thunder') catchP *= sh.special.comboLevel >= 3 ? 0 : 0.5;
+    if (cb === 'frost+stone') catchP = 0;
+    if (g.state === 'dive') catchP *= 0.4;
+    p.x = g.x - gs * 4; p.y = g.y + off;
+    g.saves++;
+    g.flash = 0.2;
+    for (const s of this.teamSkaters(g.team)) this.addUlt(s, 2);
+    if (sh && sh.power === 'ice') { g.slowT = 1.3; this.emit('frozen', { g }); }
+    if (this.rng() < catchP && (!sh || sh.power !== 'ice')) {
+      this.goalieCatch(g, true);
+      return true;
+    }
+    // rebound
+    const out = -gs;
+    p.vx = out * Math.abs(p.vx) * this.rng.range(0.18, 0.34);
+    p.vy = p.vy * 0.25 + this.rng.range(-1, 1) * 230;
+    if (cb === 'frost+stone' && sh.special.comboLevel >= 3) {
+      // heavy rebound straight back into the slot
+      p.vx = out * Math.abs(speed) * 0.42; p.vy = -p.y * 2 + this.rng.range(-60, 60);
+    }
+    p.vz = this.rng.range(0, 80);
+    p.shot = null; p.pass = null; p.curve = null;
+    p.noPickup.set(g, 0.4);
+    p.rolled.clear();
+    g.setState(Math.abs(off) > 10 ? 'glove' : 'butterfly');
+    this.emit('save', { g, caught: false, speed, x: p.x, y: p.y });
+    return false;
+  }
+
+  goalieCatch(g, fromShot) {
+    const p = this.puck;
+    p.owner = g;
+    p.shot = null; p.pass = null; p.curve = null;
+    p.vx = 0; p.vy = 0; p.vz = 0; p.z = 0;
+    g.setState('hold');
+    g.holdT = 0.9;
+    g.track = null; g.react = null;
+    if (p.power === 'ice') { /* ice power survives */ }
+    this.emit('save', { g, caught: true, x: p.x, y: p.y, fromShot });
+  }
+
+  shotOnGoal(sh) {
+    if (sh.onNet) return;
+    sh.onNet = true;
+    this.shotsOnGoal[sh.team]++;
+    this.addUlt(sh.by, 5);
+  }
+
+  puckSkaters() {
+    const p = this.puck;
+    if (p.z > 18) return false;
+    const sp = p.speed;
+    // A slow loose puck always goes to the closest stick in reach (no catch roll).
+    if (sp < 260) {
+      let best = null, bd = 1e9;
+      for (const s of this.skaters) {
+        if (s.stun > 0 || p.noPickup.has(s) || s.dashT > 0 || s.parked) continue;
+        const st = s.stickPoint();
+        const d = Math.min(Math.hypot(st.x - p.x, st.y - p.y), Math.hypot(s.x - p.x, s.y - p.y) - s.r + 8);
+        if (d < 24 && d < bd) { bd = d; best = s; }
+      }
+      if (best) { this.takePossession(best, 'catch'); return true; }
+      p.rolled.clear();
+      return false;
+    }
+    for (const s of this.skaters) {
+      if (s.stun > 0 || p.noPickup.has(s) || s.dashT > 0 || s.parked) { p.rolled.delete(s); continue; }
+      // a pass sails past teammates it wasn't meant for
+      if (p.pass && p.pass.from.team === s.team && p.pass.to !== s && p.pass.to) { p.rolled.delete(s); continue; }
+      const st = s.stickPoint();
+      const ds = Math.hypot(st.x - p.x, st.y - p.y);
+      const db = Math.hypot(s.x - p.x, s.y - p.y);
+      const intended = p.pass && p.pass.to === s;
+      const reach = intended ? 30 : 22;
+      if (p.shot && p.shot.plow > 0 && p.shot.team !== s.team && db < s.r + PUCK_R + 10) {
+        // Avalanche bulldozes through the blocker
+        p.shot.plow--;
+        const n = norm(s.x - p.x, s.y - p.y);
+        const dir = norm(p.vx, p.vy);
+        s.vx += (dir.x * 0.7 + n.x * 0.5) * 300; s.vy += (dir.y * 0.7 + n.y * 0.5) * 300;
+        s.stun = Math.max(s.stun, 0.35); s.flash = 0.25;
+        this.emit('plow', { s, x: p.x, y: p.y });
+        continue;
+      }
+      if (ds < reach || db < s.r + PUCK_R) {
+        if (p.rolled.has(s)) continue;
+        p.rolled.add(s);
+        let chance;
+        if (intended) chance = sp < 1500 ? 1 : 0.6;
+        else if (p.shot && p.shot.team === s.team) chance = sp < 300 ? 1 : 0; // let teammates' shots through
+        else chance = sp < 260 ? 1 : sp < 600 ? 0.8 : sp < 1000 ? 0.45 : 0.2;
+        chance *= this.ai[s.team].catchMul(s);
+        if (this.rng() < chance) {
+          this.takePossession(s, 'catch');
+          return true;
+        }
+        // body block / deflection
+        if (db < s.r + PUCK_R + 2 && sp > 300) {
+          const n = norm(p.x - s.x, p.y - s.y);
+          const vn = p.vx * n.x + p.vy * n.y;
+          if (vn < 0) { p.vx -= 1.5 * vn * n.x; p.vy -= 1.5 * vn * n.y; }
+          p.vx *= 0.55; p.vy *= 0.55;
+          if (p.shot && p.shot.team !== s.team) {
+            s.stats_.blocks++;
+            this.addUlt(s, 6);
+            if (p.shot.power === 'ice' || p.shot.special?.zero) { s.slowT = 1.2; s.slowMul = 0.5; this.emit('frozen', { s }); }
+            this.emit('block', { s });
+            p.shot = null;
+          }
+          p.setTouch(s);
+          p.pass = null;
+        }
+      } else p.rolled.delete(s);
+    }
+    // Absolute Zero: slow defenders the shot passes
+    const sh = p.shot;
+    const bolt = sh && sh.special && sh.special.combo === 'frost+thunder';
+    if (sh && sh.special && (sh.special.zero || bolt)) {
+      for (const s of this.skaters) {
+        if (s.team === sh.team || sh.frozen.has(s)) continue;
+        if (Math.hypot(s.x - p.x, s.y - p.y) < (bolt ? 58 : 70)) {
+          sh.frozen.add(s);
+          s.slowT = bolt ? 0.9 + sh.special.comboLevel * 0.35 : sh.by.hasPerk('Deep Freeze') ? 2.4 : 1.6;
+          s.slowMul = 0.5;
+          this.emit('frozen', { s });
+        }
+      }
+    }
+    return false;
+  }
+
+  goal(side, yc) {
+    const p = this.puck;
+    const team = side === 1 ? 0 : 1; // team attacking that net
+    const sh = p.shot;
+    if (this.mods.has('onetimers') && !this.drill && !(sh && sh.kind === 'onetimer' && sh.team === team)) {
+      // challenge: only one-timers count
+      this.emit('no_goal', { team, reason: 'One-timers only!' });
+      this.state = 'goal'; this.stateT = 2.0; this.lastGoal = null;
+      p.shot = null; p.pass = null; p.curve = null;
+      return;
+    }
+    if (this.drill) {
+      this.emit('drill_goal', { side, y: yc });
+      this.drill.onGoal(this, { team, side, y: yc, kind: sh ? sh.kind : 'scramble', special: sh ? sh.special : null, power: sh ? sh.power : null, scorer: p.lastTouch });
+      return;
+    }
+    if (sh && sh.team === team) this.shotOnGoal(sh);
+    this.score[team]++;
+    let scorer = p.lastTouch && p.lastTouch.team === team ? p.lastTouch : null;
+    const assists = [];
+    if (scorer) {
+      for (const t of p.touches.slice(1)) {
+        if (t.team !== team) break;
+        if (t !== scorer && !assists.includes(t)) assists.push(t);
+        if (assists.length >= 2) break;
+      }
+      scorer.stats_.goals++;
+      this.addUlt(scorer, 15);
+      if (sh && sh.power) scorer.stats_.powerGoals++;
+      for (const a of assists) { a.stats_.assists++; this.addUlt(a, 8); this.chemStat(team, a, scorer).assists++; }
+      if (sh && sh.special && sh.special.combo) this.chemStats[team][sh.special.combo].comboGoals++;
+    }
+    const info = {
+      team, scorer, assists, kind: sh ? sh.kind : 'scramble', power: sh ? sh.power : null,
+      special: sh ? sh.special : null, time: this.time, y: yc, side,
+    };
+    this.lastGoal = info;
+    this.goalLog.push(info);
+    if (this.score[team] >= this.winScore) this.winner = team;
+    // a power-play goal ends the minor penalty
+    const boxed = this.teamSkaters(1 - team).find((k) => k.boxT > 0);
+    if (boxed) { info.powerPlay = true; this.penStats[team].ppGoals++; this.releaseFromBox(boxed, true); }
+    this.state = 'goal';
+    this.stateT = 0;
+    p.shot = null; p.pass = null; p.curve = null; p.power = null;
+    for (const s of this.skaters) {
+      s.charging = false; s.ultWindup = 0;
+      if (s.team === team) s.celebrate = 3;
+    }
+    this.emit('goal', info);
+  }
+
+  // -------------------------------------------------------- power pucks
+  updatePickups(dt) {
+    const p = this.puck;
+    for (const k of this.pickups) k.t += dt;
+    for (let i = this.pickups.length - 1; i >= 0; i--) {
+      if (this.pickups[i].t > this.pickups[i].life) { this.emit('pickup_fade', { k: this.pickups[i] }); this.pickups.splice(i, 1); }
+    }
+    if (!this.powers.length) return;
+    if (this.pickups.length === 0 && !p.power) {
+      this.pickupT -= dt;
+      if (this.pickupT <= 0) {
+        this.pickupT = this.mods.has('iceage') ? this.rng.range(5, 8) : this.rng.range(11, 17);
+        const spots = [...DOTS, { x: 0, y: -150 }, { x: 0, y: 160 }, { x: -330, y: 0 }, { x: 330, y: 0 }]
+          .filter((d) => Math.hypot(d.x - p.x, d.y - p.y) > 170);
+        const s = this.rng.pick(spots);
+        const k = { x: s.x + this.rng.range(-20, 20), y: s.y + this.rng.range(-15, 15), type: this.rng.pick(this.powers), t: 0, life: 12 };
+        this.pickups.push(k);
+        this.emit('pickup_spawn', { k });
+      }
+    }
+  }
+
+  checkPickupTouch() {
+    const p = this.puck;
+    if (this.state !== 'play' || p.z > 20) return;
+    for (let i = this.pickups.length - 1; i >= 0; i--) {
+      const k = this.pickups[i];
+      if (k.t < 0.6) continue;
+      if (Math.hypot(k.x - p.x, k.y - p.y) < 28) {
+        this.pickups.splice(i, 1);
+        p.power = k.type;
+        p.powerT = 10;
+        const by = p.owner && p.owner.isSkater ? p.owner : p.lastTouch;
+        this.emit('power_get', { type: k.type, by, k });
+      }
+    }
+  }
+
+  // ------------------------------------------------------ arena twists
+  laneAt(x, y) {
+    for (const l of this.twists.lanes) {
+      if (x > l.x0 && x < l.x1 && Math.abs(y - l.y) < l.h / 2) return l;
+    }
+    return null;
+  }
+  inCrack(x, y) {
+    for (const c of this.twists.cracks) if (Math.hypot(x - c.x, (y - c.y) * 1.25) < c.r) return true;
+    return false;
+  }
+  surfaceSpeed(s) {
+    if (this.inCrack(s.x, s.y)) return 0.7;
+    return 1;
+  }
+
+  // -------------------------------------------------------- ability bits
+  addTrail(s) {
+    this.trails.push({ x: s.x, y: s.y, t: 0, life: s.hasPerk('Long Glide') ? 5.5 : 4, team: s.team, owner: s, ang: Math.atan2(s.vy, s.vx) });
+    if (this.trails.length > 120) this.trails.shift();
+  }
+
+  updateTrails(dt) {
+    for (const tr of this.trails) tr.t += dt;
+    while (this.trails.length && this.trails[0].t > this.trails[0].life) this.trails.shift();
+    if (!this.trails.length) return;
+    for (const s of this.skaters) {
+      for (const tr of this.trails) {
+        if (Math.abs(tr.x - s.x) > 26 || Math.abs(tr.y - s.y) > 26) continue;
+        if (tr.team === s.team) { s.boostT = Math.max(s.boostT, 0.3); break; }
+        if (tr.owner.hasPerk('Cold Snap')) { s.slowT = Math.max(s.slowT, 0.3); s.slowMul = 0.75; break; }
+      }
+    }
+  }
+
+  updateBarriers(dt) {
+    for (const b of this.barriers) {
+      b.t += dt;
+      if (b.breaking > 0) { b.breaking -= dt; if (b.breaking <= 0) b.alive = false; }
+      else if (b.t > b.life) { b.breaking = 0.6; this.emit('barrier_fade', { b }); }
+    }
+    this.barriers = this.barriers.filter((b) => b.alive);
+  }
+
+  collideBarriers(e, rad, bounce) {
+    for (const b of this.barriers) collideBarrier(e, rad, b, bounce);
+  }
+
+  // ------------------------------------------------------------ penalties
+  // Decide whether the ref calls this hit. Hits on the puck carrier are clean unless
+  // they're brutal; hitting someone away from the puck is interference.
+  judgeHit(a, b, power, hadPuck, puckDist) {
+    if (!this.penaltiesOn || this.state !== 'play' || this.pendingPenalty) return;
+    if (this.teamSkaters(a.team).some((k) => k.boxT > 0)) return; // one in the box at a time
+    let reason = null;
+    const looseNear = !this.puck.owner && puckDist < 80;
+    if (!hadPuck && !looseNear && puckDist > 110) { if (this.rng() < 0.3) reason = 'Interference'; }
+    else if (power > 330 && this.rng() < 0.12) reason = 'Charging';
+    else if (insideDepth(b.x, b.y) < 34 && power > 260 && this.rng() < 0.1) reason = 'Boarding';
+    if (reason) this.pendingPenalty = { s: a, reason };
+  }
+
+  whistlePenalty() {
+    const { s, reason } = this.pendingPenalty;
+    this.pendingPenalty = null;
+    if (s.controlled) this.switchControl(null, s.team);
+    s.parked = true; s.boxT = PENALTY_SECONDS; s.boxReason = reason;
+    s.controlled = false; s.charging = false; s.ultWindup = 0; s.dashT = 0; s.stun = 0;
+    s.x = s.team === 0 ? -70 : 70; s.y = RINK.minY + 16; s.vx = 0; s.vy = 0; s.face = Math.PI / 2;
+    if (this.puck.owner === s) this.loosePuck(s);
+    this.penStats[s.team].pims++;
+    this.state = 'penalty'; this.stateT = 0;
+    this.penaltyDot = s.team === 0 ? -180 : 180; // faceoff in the offender's end
+    this.emit('penalty', { s, reason, team: s.team });
+  }
+
+  updateBox(dt) {
+    for (const s of this.skaters) {
+      if (!(s.boxT > 0)) continue;
+      s.boxT -= dt;
+      if (s.boxT <= 0) { this.penStats[s.team].kills++; this.releaseFromBox(s, false); }
+    }
+  }
+
+  releaseFromBox(s, byGoal) {
+    s.boxT = 0; s.parked = false;
+    s.y = RINK.minY + 40; s.vy = 220; s.vx = s.side * 120;
+    this.emit('penalty_over', { s, byGoal });
+  }
+
+  powerPlay(team) { // +1 if this team has the extra skater
+    const a = this.teamSkaters(team).some((k) => k.boxT > 0), b = this.teamSkaters(1 - team).some((k) => k.boxT > 0);
+    return a === b ? 0 : b ? 1 : -1;
+  }
+
+  // ------------------------------------------------------------ pulled goalie
+  canPullGoalie(team) {
+    if (this.drill || this.state !== 'play' || this.extra[team]) return false;
+    const us = this.score[team], them = this.score[1 - team];
+    return us < them && them >= this.winScore - 1 && this.winScore > 1 && !!this.extraCfg[team];
+  }
+
+  togglePull(team) {
+    if (this.extra[team]) this.returnGoalie(team);
+    else if (this.canPullGoalie(team)) this.pullGoalie(team);
+  }
+
+  pullGoalie(team) {
+    const g = this.goalies.find((k) => k.team === team);
+    if (this.puck.owner === g) return;
+    g.disabled = true; g.x = g.goalSide * 900; g.y = 900;
+    const c = this.extraCfg[team];
+    const x = new Skater(this, team, c.def, c.stats, 3, { name: c.name, perks: [] });
+    x.extraAttacker = true;
+    x.x = team === 0 ? -20 : 20; x.y = RINK.minY + 30; x.vy = 260; x.vx = (team === 0 ? 1 : -1) * 120;
+    x.face = Math.PI / 2;
+    this.skaters.push(x);
+    this.extra[team] = x;
+    this.emit('goalie_pulled', { team, s: x });
+  }
+
+  returnGoalie(team, silent = false) {
+    const x = this.extra[team];
+    if (!x) return;
+    if (this.puck.owner === x) this.loosePuck(x);
+    if (x.controlled) { this.switchControl(null, team); x.controlled = false; }
+    this.skaters.splice(this.skaters.indexOf(x), 1);
+    this.extra[team] = null;
+    const g = this.goalies.find((k) => k.team === team);
+    g.disabled = false; g.x = g.goalSide * (GOAL_X - 28); g.y = 0; g.setState('ready'); g.react = null; g.track = null;
+    if (!silent) this.emit('goalie_returned', { team });
+  }
+
+  // AI coaches pull their goalie when they're running out of time.
+  aiGoaliePull(dt) {
+    for (const t of [0, 1]) {
+      if (this.humans.includes(t) || this.extra[t] || !this.canPullGoalie(t)) continue;
+      const p = this.puck;
+      const attacking = p.owner && p.owner.team === t && (p.x * (t === 0 ? 1 : -1)) > 0;
+      if (attacking && this.score[1 - t] - this.score[t] <= 2 && this.rng() < 0.25 * dt) this.pullGoalie(t);
+    }
+  }
+
+  // ------------------------------------------------------------ game plans
+  // +1 when this team's plan beats the opponent's, -1 when it's beaten.
+  planEdge(team) {
+    const mine = GAME_PLANS[this.plans[team]], theirs = this.plans[1 - team];
+    if (mine && mine.beats === theirs) return 1;
+    const t = GAME_PLANS[theirs];
+    if (t && t.beats === this.plans[team]) return -1;
+    return 0;
+  }
+  planShotMul(team) {
+    return (this.plans[team] === 'rungun' ? 1.02 : 1) * (this.planEdge(team) > 0 ? 1.07 : 1);
+  }
+  planGoalieMul(team) {
+    const p = this.plans[team];
+    // the goalie whose team got out-planned faces better looks
+    return (p === 'trap' ? 1.08 : p === 'rungun' ? 0.98 : 1) * (this.planEdge(team) < 0 ? 0.95 : 1);
+  }
+
+  // ------------------------------------------------------------ chemistry
+  chemLevel(a, b) {
+    if (!a || !b || !a.isSkater || !b.isSkater || a.team !== b.team) return 0;
+    return this.chem[a.team][pairKey(a.def.id, b.def.id)] || 0;
+  }
+
+  chemStat(team, a, b) {
+    const k = pairKey(a.def.id, b.def.id);
+    return (this.chemStats[team][k] ||= { passes: 0, assists: 0, comboGoals: 0 });
+  }
+
+  // Thunderquake shockwave around the shooter.
+  quake(s, level) {
+    const radius = 72 + (level - 1) * 16;
+    for (const o of this.opponents(s)) {
+      const d = Math.hypot(o.x - s.x, o.y - s.y);
+      if (d > radius || o.dashT > 0) continue;
+      const n = norm(o.x - s.x, o.y - s.y);
+      const k = o.bedrockT > 0 ? 0.2 : 1;
+      o.vx += n.x * 280 * k; o.vy += n.y * 280 * k;
+      o.stun = Math.max(o.stun, 0.28 * k);
+      o.flash = 0.25;
+    }
+    this.emit('quake', { s, radius });
+  }
+
+  // --------------------------------------------------------- summaries
+  summary() {
+    return {
+      pen: this.penStats,
+      mods: [...this.mods],
+      chem: this.chemStats[0],
+      score: [...this.score],
+      winner: this.winner,
+      goals: this.goalLog,
+      shots: [...this.shotsOnGoal],
+      skaters: this.skaters.map((s) => ({ id: s.def.id, team: s.team, name: s.name, ...s.stats_ })),
+      saves: this.goalies.map((g) => g.saves),
+      time: this.time,
+    };
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "glacial-strikers",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sim": "node tools/sim.mjs",
+    "serve": "python3 -m http.server 8080"
+  }
+}

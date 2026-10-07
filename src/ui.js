@@ -1,0 +1,764 @@
+// Menu screens: title, hub (tournament / team / shop / training), dialogue, results.
+
+import { Assets } from './assets.js';
+import {
+  CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, STAT_HINT,
+  POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS,
+} from './data.js';
+import { standings } from './league.js';
+import { BUFF_TEXT } from './lockerroom.js';
+import {
+  expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave,
+  chemLevel, chemProgress,
+} from './progress.js';
+import { audio } from './audio.js';
+import { DRILLS, MEDAL_NAMES, MEDAL_COLORS, formatScore } from './drills.js';
+
+const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
+const ROSTER = ['frost', 'thunder', 'stone'];
+const SLOT_NAMES = { stick: 'Stick', skates: 'Skates', armor: 'Protection', goalie: 'Goalie gear' };
+
+export const portrait = (id, team, teamId, size = 160) =>
+  Assets.icon(`character_portraits/${team === 0 ? 'home' : 'away'}/${PORTRAIT[id]}`, size, team === 0 ? null : teamId);
+export const crest = (teamId, size = 96) =>
+  teamId === 'home' ? Assets.icon('hud_elements/misc/home_crest', size) : Assets.icon('hud_elements/misc/away_crest', size, teamId);
+const ico = (id, size = 64) => Assets.icon(id, size);
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function modsHtml(mods) {
+  const parts = Object.entries(mods).filter(([, v]) => v).map(([k, v]) =>
+    `<span class="mod ${v > 0 ? 'up' : 'down'}">${v > 0 ? '+' : ''}${v} ${k === 'rfx' ? 'Reflex' : STAT_NAMES[k]}</span>`);
+  return parts.length ? `<div class="mods">${parts.join('')}</div>` : '<div class="mods"><span class="mod">No modifiers</span></div>';
+}
+
+export class UI {
+  constructor(app) {
+    this.app = app;
+    this.root = document.getElementById('screen');
+    this.tab = 'tournament';
+  }
+
+  clear() { this.root.innerHTML = ''; this.root.onclick = null; }
+
+  set(html) {
+    this.root.innerHTML = html;
+    return this.root;
+  }
+
+  click(sel, fn, scope = this.root) {
+    scope.querySelectorAll(sel).forEach((el) => el.addEventListener('click', (e) => { e.stopPropagation(); fn(el, e); }));
+  }
+
+  // ------------------------------------------------------------------ title
+  title() {
+    const s = this.app.save;
+    const hasSave = s && s.record.played > 0;
+    const r = this.set(`
+      <div class="dim"></div>
+      <div class="title-wrap">
+        <div class="title-crests"><img src="${crest('home', 128)}" alt=""></div>
+        <div class="title-logo">Glacial<span>Strikers</span></div>
+        <div class="title-sub">3-on-3 arcade hockey RPG</div>
+        <div class="title-buttons">
+          <button class="btn gold" id="t-start">${hasSave ? 'Continue' : 'New Season'}</button>
+          <button class="btn" id="t-quick">Quick Match</button>
+          <button class="btn" id="t-versus">2 Players</button>
+          <button class="btn ghost" id="t-settings">Settings</button>
+          ${this.app.installPrompt && !this.app.standalone ? '<button class="btn cream" id="t-install">Install app</button>' : ''}
+        </div>
+        ${this.app.isTouch ? '' : '<div class="press" id="t-press">Press Enter to start</div>'}
+      </div>
+      <div class="title-foot">Best in landscape on phones · Keyboard, gamepad and touch</div>`);
+    this.click('#t-start', () => { audio.sfx('confirm'); this.app.startCampaign(); });
+    this.click('#t-quick', () => { audio.sfx('confirm'); this.quickMatchPicker(); });
+    this.click('#t-versus', () => { audio.sfx('confirm'); this.versusPicker(); });
+    this.click('#t-settings', () => { audio.sfx('click'); this.settings(); });
+    this.click('#t-install', async () => { audio.sfx('confirm'); await this.app.install(); this.title(); });
+    return r;
+  }
+
+  quickMatchPicker() {
+    const opts = Object.values(TEAMS).filter((t) => t.id !== 'home');
+    const rec = (id) => { const r = this.app.save.rivals && this.app.save.rivals[id]; return r && r.played ? ` · record ${r.wins}–${r.losses}` : ''; };
+    this.challenges ||= new Set();
+    const mult = () => [...this.challenges].reduce((m, id) => m * CHALLENGES.find((c) => c.id === id).mult, 1);
+    this.modal(`
+      <h2>Quick play</h2>
+      <p class="muted" style="margin:0">Exhibitions use your current team and pay half rewards. A shootout is five penalty shots each way: you shoot, then you play goalie.</p>
+      <div>
+        <div class="label" style="font-size:15px">Match challenges <span class="muted" id="ch-mult" style="font-family:var(--body);font-size:12px;letter-spacing:0;text-transform:none"></span></div>
+        <div class="filters" style="margin:6px 0 0">${CHALLENGES.map((c) => `<button class="chip" data-ch="${c.id}" aria-pressed="${this.challenges.has(c.id)}" title="${esc(c.text)}">${esc(c.name)}</button>`).join('')}</div>
+      </div>
+      <div class="choice">${opts.map((t) => `
+        <div class="qp-row">
+          <img src="${crest(t.id, 64)}" alt="" width="44" height="44">
+          <span style="min-width:0"><b>${esc(t.name)}</b><span class="muted" style="font-size:12px">${esc(t.style)}${rec(t.id)}</span></span>
+          <span class="row" style="gap:6px"><button class="btn small" data-team="${t.id}">Match</button><button class="btn small ghost" data-so="${t.id}">Shootout</button></span>
+        </div>`).join('')}
+      </div>
+      <button class="btn small ghost" data-close>Back</button>`, (m, close) => {
+      const upd = () => { const x = mult(); m.querySelector('#ch-mult').textContent = this.challenges.size ? `coins x${+x.toFixed(2)}` : ''; };
+      upd();
+      this.click('[data-ch]', (el) => {
+        const id = el.dataset.ch;
+        if (this.challenges.has(id)) this.challenges.delete(id); else this.challenges.add(id);
+        el.setAttribute('aria-pressed', this.challenges.has(id));
+        audio.sfx('click'); upd();
+      }, m);
+      this.click('[data-team]', (el) => { close(); this.app.startExhibition(el.dataset.team, [...this.challenges]); }, m);
+      this.click('[data-so]', (el) => { close(); this.app.startShootout(el.dataset.so); }, m);
+    });
+  }
+
+  versusPicker() {
+    const opts = Object.values(TEAMS).filter((t) => t.id !== 'home');
+    this.vsTeam ||= 'comets';
+    this.modal(`
+      <h2>Local versus</h2>
+      <p class="muted" style="margin:0">Two players on one screen: Strikers against a rival, same stats on both sides, first to 5. Needs a keyboard or gamepads.</p>
+      <div class="keys">
+        <kbd style="color:var(--ice)">Player 1</kbd><span>WASD skate · F shoot/check · G pass/switch · Left Shift sprint · R skill · T ultimate</span>
+        <kbd style="color:var(--coral)">Player 2</kbd><span>Arrows skate · K shoot/check · L pass/switch · Right Shift sprint · O skill · P ultimate</span>
+        <kbd>Gamepads</kbd><span>With two pads each player gets one. With one pad, it goes to player 2.</span>
+      </div>
+      <div class="label" style="font-size:15px">Player 2 plays as</div>
+      <div class="filters" style="margin:0">${opts.map((t) => `<button class="chip" data-vs="${t.id}" aria-pressed="${this.vsTeam === t.id}" style="display:inline-flex;gap:6px;align-items:center"><img src="${crest(t.id, 40)}" width="20" height="20" alt="">${esc(t.name)}</button>`).join('')}</div>
+      <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>Back</button><button class="btn gold" id="vs-go">Start</button></div>`, (m, close) => {
+      this.click('[data-vs]', (el) => {
+        this.vsTeam = el.dataset.vs;
+        m.querySelectorAll('[data-vs]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.vs === this.vsTeam));
+        audio.sfx('click');
+      }, m);
+      this.click('#vs-go', () => { close(); this.app.startVersus(this.vsTeam); }, m);
+    });
+  }
+
+  // ------------------------------------------------------------------- hub
+  hub(tab) {
+    if (tab) this.tab = tab;
+    const s = this.app.save;
+    const next = this.app.nextStage();
+    const nt = next ? TEAMS[next.team] : null;
+    const anyPoints = ROSTER.some((id) => s.roster[id].points > 0 || s.roster[id].pendingPerk !== null);
+    const r = this.set(`
+      <div class="dim"></div>
+      <div class="hub">
+        <div class="hub-top">
+          <img class="crest" src="${crest('home', 96)}" alt="">
+          <div class="hub-title">Glacial Strikers<small>${esc(TOURNAMENT.name)}${s.season > 1 ? ' · Season ' + s.season : ''}</small></div>
+          <div class="coins"><img src="${ico('equipment_items/reward/coins', 64)}" alt="">${s.coins}</div>
+          <button class="icon-btn" id="h-settings" aria-label="Settings">☰</button>
+        </div>
+        <div class="tabs" role="tablist">
+          ${['tournament', 'team', 'shop', 'training'].map((t) => `<button class="tab" role="tab" data-tab="${t}" aria-selected="${this.tab === t}">${t[0].toUpperCase() + t.slice(1)}${t === 'team' && anyPoints ? '<span class="dot"></span>' : ''}</button>`).join('')}
+        </div>
+        <div class="hub-body panel" id="hub-body"></div>
+        <div class="hub-cta">
+          ${nt ? `<div class="next">${esc(next.round)}<br><b>vs ${esc(nt.name)}</b>${s.buffs && s.buffs.length ? `<span class="buffs">${s.buffs.map((b) => `<span class="buff">${esc(BUFF_TEXT(b))}</span>`).join('')}</span>` : ''}</div>
+          <button class="btn gold" id="h-play">Play match</button>` : `<div class="next"><b>${s.league && s.league.champion && s.league.champion !== 'home' ? `${esc(TEAMS[s.league.champion].name)} won the cup` : 'Champions!'}</b><br>Start a new season or play exhibitions.</div>
+          <button class="btn gold" id="h-season">New season</button>`}
+          <button class="btn ghost" id="h-title">Title</button>
+        </div>
+      </div>`);
+    this.click('[data-tab]', (el) => { audio.sfx('click'); this.hub(el.dataset.tab); });
+    this.click('#h-play', () => { audio.sfx('confirm'); this.app.startStage(); });
+    this.click('#h-season', () => { audio.sfx('confirm'); this.app.newSeason(); });
+    this.click('#h-title', () => { audio.sfx('back'); this.app.goTitle(); });
+    this.click('#h-settings', () => { audio.sfx('click'); this.settings(); });
+    const body = r.querySelector('#hub-body');
+    ({ tournament: () => this.tabTournament(body), team: () => this.tabTeam(body), shop: () => this.tabShop(body), training: () => this.tabTraining(body) })[this.tab]();
+    return r;
+  }
+
+  tabTournament(body) {
+    const s = this.app.save;
+    const L = s.league;
+    const name = (id) => (id === 'home' ? 'Glacial Strikers' : TEAMS[id].name);
+    const short = (id) => (id === 'home' ? 'Strikers' : TEAMS[id].name.split(' ').slice(-1)[0]);
+    const rows = standings(L);
+    const record = (id) => { const r = s.rivals && s.rivals[id]; return r && r.played ? `${r.wins}–${r.losses}` : ''; };
+    const table = `<table class="league-table">
+      <thead><tr><th>#</th><th style="text-align:left">Team</th><th>GP</th><th>W</th><th>L</th><th>GF</th><th>GA</th><th>+/-</th><th>PTS</th></tr></thead>
+      <tbody>${rows.map((r, i) => `<tr class="${r.id === 'home' ? 'us' : ''} ${i === 3 ? 'cut' : ''}">
+        <td>${i + 1}</td><td class="tm"><img src="${crest(r.id, 40)}" alt="" width="22" height="22">${esc(name(r.id))}</td>
+        <td>${r.gp}</td><td>${r.w}</td><td>${r.l}</td><td>${r.gf}</td><td>${r.ga}</td><td>${r.diff > 0 ? '+' : ''}${r.diff}</td><td class="pts">${r.pts}</td></tr>`).join('')}</tbody>
+    </table>
+    <div class="muted" style="font-size:12px;margin-top:4px">Top 4 make the playoffs: 1 plays 4, 2 plays 3, winners meet in the Cup Final.</div>`;
+    const schedule = L.schedule.map((rd, i) => {
+      const opp = rd.games[0].b;
+      const res = L.results[i] && L.results[i][0];
+      const t = TEAMS[opp];
+      const status = res ? (res.ga > res.gb ? `<span class="good">W ${res.ga}–${res.gb}</span>` : `<span class="bad">L ${res.ga}–${res.gb}</span>`) : i === L.round && L.phase === 'regular' ? '<span class="gold-t">NEXT</span>' : '<span class="muted">—</span>';
+      return `<div class="fixture ${i === L.round && L.phase === 'regular' ? 'next' : ''}">
+        <span class="muted">R${i + 1}</span><img src="${crest(opp, 48)}" alt="" width="26" height="26">
+        <span class="fx-name"><b>${esc(t.name)}</b><span class="muted">${esc(GAME_PLANS[t.plan === 'counter' ? 'balanced' : t.plan].name)}${t.plan === 'counter' ? ' (adapts)' : ''}${record(opp) ? ` · record ${record(opp)}` : ''}</span></span>
+        <span class="fx-res">${status}</span></div>`;
+    }).join('');
+    let bracket = '';
+    if (L.playoffs) {
+      const po = L.playoffs;
+      const game = (g, label) => g ? `<div class="po-game"><div class="label" style="font-size:12px">${label}</div>
+        ${[['a', 'ga'], ['b', 'gb']].map(([k, sc]) => `<div class="po-team ${g.winner === g[k] ? 'win' : g.winner ? 'lose' : ''} ${g[k] === 'home' ? 'us' : ''}"><img src="${crest(g[k], 40)}" alt="" width="22" height="22">${esc(short(g[k]))}<b>${g[sc] ?? ''}</b></div>`).join('')}</div>` : `<div class="po-game"><div class="label" style="font-size:12px">${label}</div><div class="muted" style="font-size:13px">Waiting for the semifinals</div></div>`;
+      bracket = `<div class="label" style="margin:14px 0 6px">Playoffs</div>
+        <div class="bracket-po">${game(po.semis[0], 'Semifinal · 1 v 4')}${game(po.semis[1], 'Semifinal · 2 v 3')}${game(po.final, 'Cup Final')}</div>
+        ${L.champion ? `<p class="gold-t" style="font-family:var(--display);font-size:26px;text-align:center;margin:10px 0 0">${L.champion === 'home' ? 'The Frostline Cup is yours!' : `${esc(name(L.champion))} win the Frostline Cup.`}</p>` : ''}`;
+    }
+    const last = L.results.length ? L.results[L.results.length - 1].slice(1) : [];
+    body.innerHTML = `
+      <div class="label" style="margin-bottom:6px">${esc(TOURNAMENT.name)} · Season ${s.season}</div>
+      <div class="league-grid">
+        <div style="min-width:0">${table}
+          ${last.length ? `<div class="label" style="margin:12px 0 4px;font-size:14px">Around the league · round ${L.results.length}</div>
+          <div class="around">${last.map((g) => `<div>${esc(short(g.a))} <b>${g.ga}–${g.gb}</b> ${esc(short(g.b))}</div>`).join('')}</div>` : ''}
+          ${bracket}
+        </div>
+        <div style="min-width:0"><div class="label" style="margin-bottom:6px;font-size:14px">Your schedule</div><div class="schedule">${schedule}</div></div>
+      </div>`;
+  }
+
+  // Before a league match: pick a game plan, with a scouting report on theirs.
+  planPicker(teamId, fixture, theirPlan, onPick) {
+    const s = this.app.save;
+    const t = TEAMS[teamId];
+    const their = GAME_PLANS[theirPlan];
+    const cur = s.lastPlan || 'balanced';
+    const counters = (id) => GAME_PLANS[id].beats === theirPlan;
+    const countered = (id) => their.beats === id;
+    this.set('<div class="dim"></div>');
+    this.modal(`
+      <h2>Game plan</h2>
+      <div class="scout"><img src="${crest(teamId, 64)}" alt="" width="40" height="40"><div><div class="label" style="font-size:13px">Scouting report · ${esc(fixture.label)}</div>
+        ${esc(t.name)} will most likely play <b class="gold-t">${esc(their.name)}</b>.${t.plan === 'counter' ? ' They adapt to what you used against them last time.' : ''}</div></div>
+      ${s.buffs && s.buffs.length ? `<div class="buffs">${s.buffs.map((b) => `<span class="buff">${esc(BUFF_TEXT(b))}</span>`).join('')}</div>` : ''}
+      <div class="plans">${Object.values(GAME_PLANS).map((p) => `
+        <button class="plan ${p.id === cur ? 'sel' : ''}" data-plan="${p.id}">
+          <b>${esc(p.name)}</b>
+          <span>${esc(p.text)}</span>
+          <span class="good">+ ${esc(p.pros)}</span>
+          <span class="bad">− ${esc(p.cons)}</span>
+          ${p.beats ? `<span class="muted">Beats ${esc(GAME_PLANS[p.beats].name)}</span>` : ''}
+          ${counters(p.id) ? '<span class="edge good">Counters their plan</span>' : countered(p.id) ? '<span class="edge bad">Countered by their plan</span>' : ''}
+        </button>`).join('')}</div>
+      <div class="row" style="justify-content:flex-end"><button class="btn gold" id="plan-go">Drop the puck</button></div>`, (m, close) => {
+      let pick = cur;
+      this.click('[data-plan]', (el) => {
+        pick = el.dataset.plan;
+        m.querySelectorAll('[data-plan]').forEach((b) => b.classList.toggle('sel', b.dataset.plan === pick));
+        audio.sfx('click');
+      }, m);
+      this.click('#plan-go', () => { close(); audio.sfx('confirm'); onPick(pick); }, m);
+    }, false);
+  }
+
+  // After a league match: the rest of the round, standings moves, playoff news.
+  leagueUpdate(out, L, done) {
+    const short = (id) => (id === 'home' ? 'Strikers' : TEAMS[id].name.split(' ').slice(-1)[0]);
+    const rows = standings(L);
+    const pos = rows.findIndex((r) => r.id === 'home') + 1;
+    let headline = '';
+    if (out.champion === 'home') headline = 'Frostline Cup champions!';
+    else if (out.eliminated && out.kind === 'regular') headline = 'Missed the playoffs';
+    else if (out.eliminated) headline = 'Knocked out';
+    else if (out.phaseChange === 'playoffs') headline = `Playoffs! You're the #${L.playoffs.seeds.indexOf('home') + 1} seed`;
+    else if (out.kind === 'semi' && out.won) headline = 'On to the Cup Final!';
+    else if (L.phase === 'regular') headline = `${pos}${['st', 'nd', 'rd'][pos - 1] || 'th'} place after round ${L.round}`;
+    const games = out.simulated.map((g) => `<div>${g.stage ? `<span class="muted">${esc(g.stage)}:</span> ` : ''}${esc(short(g.a))} <b>${g.ga}–${g.gb}</b> ${esc(short(g.b))}</div>`).join('');
+    const top = rows.slice(0, 6).map((r, i) => `<div class="mini-row ${r.id === 'home' ? 'us' : ''}"><span>${i + 1}. ${esc(short(r.id))}</span><span>${r.w}–${r.l}</span><b>${r.pts}</b></div>`).join('');
+    this.modal(`
+      <h2>${esc(headline || 'League update')}</h2>
+      ${games ? `<div class="label" style="font-size:13px">Around the league</div><div class="around">${games}</div>` : ''}
+      ${L.phase === 'regular' || out.phaseChange ? `<div class="label" style="font-size:13px">Standings</div><div class="mini-table">${top}</div>` : ''}
+      ${out.eliminated && L.champion ? `<p>${esc(TEAMS[L.champion] ? TEAMS[L.champion].name : 'The Strikers')} win the Frostline Cup. Start a new season from the hub when you\'re ready.</p>` : ''}
+      <div class="row" style="justify-content:flex-end"><button class="btn gold" data-close>Continue</button></div>`, null, false, done);
+  }
+
+  // A locker-room scene with two choices. choose(i) applies it and returns the reply text.
+  lockerMoment(m, ctx, choose, done) {
+    const who = m.whoFn ? m.whoFn(ctx) : m.who;
+    audio.sfx('blip');
+    this.modal(`
+      <div class="label">Locker room</div>
+      <div class="locker">
+        <div class="locker-faces">${who.map((id) => `<img src="${portrait(id, 0, null, 152)}" alt="">`).join('') || `<img src="${portrait('goalie', 0, null, 152)}" alt="">`}</div>
+        <div><h2>${esc(m.title)}</h2><p style="margin:6px 0 0">${esc(m.text(ctx))}</p></div>
+      </div>
+      <div class="choice" id="lm-choices">${m.choices.map((c, i) => `<button class="btn ghost" data-lm="${i}"><b>${esc(c.label)}</b>${esc(c.fx)}</button>`).join('')}</div>
+      <div id="lm-reply" hidden></div>`, (el, close) => {
+      this.click('[data-lm]', (b) => {
+        const reply = choose(+b.dataset.lm);
+        audio.sfx('confirm');
+        el.querySelector('#lm-choices').hidden = true;
+        const r = el.querySelector('#lm-reply');
+        r.hidden = false;
+        r.innerHTML = `<p class="gold-t" style="margin:0">${esc(m.choices[+b.dataset.lm].fx)}</p><p style="margin:6px 0 10px">${esc(reply || '')}</p><div class="row" style="justify-content:flex-end"><button class="btn gold" id="lm-go">Continue</button></div>`;
+        r.querySelector('#lm-go').addEventListener('click', () => { close(); done(); });
+      }, el);
+    }, false);
+  }
+
+  tabTeam(body) {
+    const s = this.app.save;
+    const cards = ROSTER.map((id) => {
+      const c = CHARACTERS[id];
+      const r = s.roster[id];
+      const eff = effectiveStats(id, r);
+      const gm = gearMods(r);
+      const stats = STAT_KEYS.map((k) => {
+        const base = c.base[k], al = r.alloc[k], g = gm[k];
+        const pips = [];
+        for (let i = 1; i <= 12; i++) {
+          let cls = '';
+          if (i <= Math.min(base, base + g)) cls = 'b';
+          if (i > base && i <= base + al) cls = 'a';
+          if (g > 0 && i > base + al && i <= base + al + g) cls = 'g';
+          if (g < 0 && i > base + al + g && i <= base + al) cls = 'n';
+          pips.push(`<i class="${cls}"></i>`);
+        }
+        return `<div class="stat" title="${esc(STAT_HINT[k])}"><span>${STAT_NAMES[k]}</span><span class="pips">${pips.join('')}</span><span class="v">${eff[k]}</span>
+          <button class="plus" data-raise="${id}:${k}" ${canRaise(r, id, k) ? '' : 'disabled'} aria-label="Raise ${STAT_NAMES[k]}">+</button></div>`;
+      }).join('');
+      const pct = r.level >= MAX_LEVEL ? 100 : Math.round((r.exp / expToNext(r.level)) * 100);
+      return `<div class="card">
+        <div class="card-head">
+          <img src="${portrait(id, 0, null, 152)}" alt="">
+          <div style="min-width:0">
+            <h3>${esc(c.name)}</h3>
+            <div class="sub">${esc(c.title)}</div>
+            <div class="lvl">LV ${r.level}${r.points ? ` <span style="font-size:15px">· ${r.points} point${r.points > 1 ? 's' : ''} to spend</span>` : ''}</div>
+          </div>
+        </div>
+        <div class="xpbar" title="${r.exp}/${expToNext(r.level)} EXP"><i style="width:${pct}%"></i></div>
+        ${r.pendingPerk !== null ? `<div class="pending" data-perk="${id}">New perk unlocked: choose one</div>` : ''}
+        <div class="stats">${stats}</div>
+        <div class="gear-row">${['stick', 'skates', 'armor'].map((slot) => {
+          const g = GEAR_BY_ID[r.gear[slot]];
+          return `<button class="slot" data-gear="${id}:${slot}"><img src="${ico(g.icon, 92)}" alt=""><span>${esc(g.name)}</span></button>`;
+        }).join('')}</div>
+        <div class="abil"><img src="${ico(c.skill.icon, 68)}" alt=""><div><b>${esc(c.skill.name)}</b>${esc(c.skill.text)} <span class="muted">(${c.skill.cd}s)</span></div></div>
+        <div class="abil"><img src="${ico('hud_elements/misc/level_star', 68)}" alt=""><div><b>${esc(c.ult.name)}</b>${esc(c.ult.text)}</div></div>
+        ${r.perks.length ? `<div class="perks">${r.perks.map((p) => `<span class="perk" title="${esc(p)}">${esc(p.split(':')[0])}</span>`).join('')}</div>` : ''}
+      </div>`;
+    });
+    const g = s.goalie;
+    const gs = goalieStats(s);
+    const gg = GEAR_BY_ID[g.gear];
+    const gpct = g.level >= MAX_LEVEL ? 100 : Math.round((g.exp / expToNext(g.level)) * 100);
+    cards.push(`<div class="card">
+      <div class="card-head"><img src="${portrait('goalie', 0, null, 152)}" alt="">
+        <div><h3>${esc(GOALIE.name)}</h3><div class="sub">Goaltender (AI)</div><div class="lvl">LV ${g.level}</div></div></div>
+      <div class="xpbar"><i style="width:${gpct}%"></i></div>
+      <div class="stats">
+        <div class="stat"><span>Reflex</span><span class="pips">${Array.from({ length: 12 }, (_, i) => `<i class="${i < gs.rfx ? 'b' : ''}"></i>`).join('')}</span><span class="v">${gs.rfx}</span><span></span></div>
+        <div class="stat"><span>Angles</span><span class="pips">${Array.from({ length: 12 }, (_, i) => `<i class="${i < gs.pos ? 'b' : ''}"></i>`).join('')}</span><span class="v">${gs.pos}</span><span></span></div>
+      </div>
+      <p class="muted" style="margin:0;font-size:12.5px">Halla levels up from saves. Reflex rises every two levels.</p>
+      <div class="gear-row" style="grid-template-columns:1fr"><button class="slot" data-gear="goalie:goalie"><img src="${ico(gg.icon, 92)}" alt=""><span>${esc(gg.name)}</span></button></div>
+    </div>`);
+    body.innerHTML = `<div class="roster">${cards.join('')}</div>
+      <div class="label" style="margin:16px 0 4px">Chemistry</div>
+      <p class="muted" style="margin:0 0 10px;font-size:13px">Pairs bond through passes, assists and combo goals. From level 1, pass between the pair and shoot right away (a one-timer works) to fire their combo.</p>
+      <div class="chem-grid">${Object.keys(COMBOS).map((k) => chemCard(k, s.chem[k] || 0)).join('')}</div>`;
+    this.click('[data-raise]', (el) => {
+      const [id, k] = el.dataset.raise.split(':');
+      const r = s.roster[id];
+      if (!canRaise(r, id, k)) return;
+      r.points--; r.alloc[k]++;
+      audio.sfx('confirm');
+      writeSave(s);
+      this.hub('team');
+    }, body);
+    this.click('[data-perk]', (el) => this.perkChoice(el.dataset.perk, () => this.hub('team')), body);
+    this.click('[data-gear]', (el) => { const [id, slot] = el.dataset.gear.split(':'); this.gearPicker(id, slot); }, body);
+  }
+
+  perkChoice(id, done) {
+    const s = this.app.save;
+    const r = s.roster[id];
+    const c = CHARACTERS[id];
+    if (r.pendingPerk === null) return done?.();
+    const opts = c.perks[r.pendingPerk];
+    audio.sfx('click');
+    this.modal(`
+      <h2>${esc(c.name)}: choose a perk</h2>
+      <p class="muted">Level ${PERK_LEVEL_LABEL(r.pendingPerk)} perk. You keep this choice for good.</p>
+      <div class="choice">${opts.map((p, i) => `<button class="btn ghost" data-pick="${i}"><b>${esc(p.split(':')[0])}</b>${esc(cap((p.split(':')[1] || '').trim()))}</button>`).join('')}</div>`,
+    (m, close) => {
+      this.click('[data-pick]', (el) => {
+        r.perks.push(opts[+el.dataset.pick]);
+        r.pendingPerk = null;
+        writeSave(s);
+        audio.sfx('confirm');
+        close();
+        done?.();
+      }, m);
+    }, false);
+  }
+
+  gearPicker(id, slot) {
+    const s = this.app.save;
+    const items = GEAR.filter((g) => g.slot === slot && s.owned.includes(g.id));
+    const cur = id === 'goalie' ? s.goalie.gear : s.roster[id].gear[slot];
+    const who = id === 'goalie' ? GOALIE.name : CHARACTERS[id].name;
+    audio.sfx('click');
+    this.modal(`
+      <h2>${esc(who)} · ${SLOT_NAMES[slot]}</h2>
+      <div class="choice">${items.map((g) => `
+        <button class="btn ${g.id === cur ? 'cream' : 'ghost'}" data-eq="${g.id}" style="display:grid;grid-template-columns:52px 1fr;gap:10px;align-items:center">
+          <img src="${ico(g.icon, 92)}" alt="" width="52" height="52">
+          <span><b>${esc(g.name)}${g.id === cur ? ' (equipped)' : ''}</b>${modsHtml(g.mods)}</span>
+        </button>`).join('')}</div>
+      <p class="muted" style="margin:0;font-size:12.5px">Buy more gear in the shop. Owned gear can be shared by the whole team.</p>
+      <button class="btn small ghost" data-close>Done</button>`, (m, close) => {
+      this.click('[data-eq]', (el) => {
+        if (id === 'goalie') s.goalie.gear = el.dataset.eq; else s.roster[id].gear[slot] = el.dataset.eq;
+        writeSave(s);
+        audio.sfx('confirm');
+        close();
+        this.hub(this.tab);
+      }, m);
+    });
+  }
+
+  tabShop(body) {
+    const s = this.app.save;
+    const filter = this.shopFilter || 'all';
+    const items = GEAR.filter((g) => g.price > 0 && (filter === 'all' || g.slot === filter));
+    body.innerHTML = `
+      <div class="filters">${['all', 'stick', 'skates', 'armor', 'goalie'].map((f) => `<button class="chip" data-f="${f}" aria-pressed="${filter === f}">${f === 'all' ? 'All' : SLOT_NAMES[f]}</button>`).join('')}</div>
+      <p class="muted" style="margin:0 0 10px;font-size:13px">Every item trades something away. Bought gear unlocks for the whole team; equip it from the Team tab.</p>
+      <div class="shop">${items.map((g) => {
+        const owned = s.owned.includes(g.id);
+        const price = Math.round(g.price * (1 - (s.discount || 0)));
+        const afford = s.coins >= price;
+        return `<div class="item">
+          <img src="${ico(g.icon, 128)}" alt="">
+          <div style="min-width:0">
+            <div class="label" style="font-size:13px">${SLOT_NAMES[g.slot]}</div>
+            <h4>${esc(g.name)}</h4>
+            <p>${esc(g.text)}</p>
+            ${modsHtml(g.mods)}
+            <div class="buy">${owned ? '<span class="good" style="font-family:var(--display);font-size:20px">OWNED</span>'
+              : `<span class="price"><img src="${ico('equipment_items/reward/coins', 40)}" alt="">${price}${s.discount ? ` <s class="muted" style="font-size:14px">${g.price}</s>` : ''}</span>
+                 <button class="btn small ${afford ? 'gold' : ''}" data-buy="${g.id}" ${afford ? '' : 'disabled'}>Buy</button>`}</div>
+          </div>
+        </div>`;
+      }).join('')}</div>`;
+    this.click('[data-f]', (el) => { this.shopFilter = el.dataset.f; audio.sfx('click'); this.tabShop(body); }, body);
+    this.click('[data-buy]', (el) => {
+      const g = GEAR_BY_ID[el.dataset.buy];
+      const price = Math.round(g.price * (1 - (s.discount || 0)));
+      if (s.coins < price || s.owned.includes(g.id)) return;
+      s.coins -= price;
+      s.discount = 0;
+      s.owned.push(g.id);
+      writeSave(s);
+      audio.sfx('coin');
+      // offer to equip right away
+      if (g.slot === 'goalie') { s.goalie.gear = g.id; writeSave(s); this.hub('shop'); return; }
+      this.modal(`
+        <h2>${esc(g.name)} unlocked</h2>
+        ${modsHtml(g.mods)}
+        <p class="muted">Equip it on someone now?</p>
+        <div class="row">${ROSTER.map((id) => `<button class="btn ghost small" data-who="${id}" style="display:flex;gap:6px;align-items:center"><img src="${portrait(id, 0, null, 64)}" width="32" height="32" alt="">${CHARACTERS[id].name}</button>`).join('')}</div>
+        <button class="btn small ghost" data-close>Later</button>`, (m, close) => {
+        this.click('[data-who]', (b) => { s.roster[b.dataset.who].gear[g.slot] = g.id; writeSave(s); audio.sfx('confirm'); close(); this.hub('shop'); }, m);
+      }, true, () => this.hub('shop'));
+    }, body);
+  }
+
+  tabTraining(body) {
+    const s = this.app.save;
+    const tr = s.training;
+    this.drillChar = this.drillChar || 'thunder';
+    const pips = (n) => Array.from({ length: 2 }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('');
+    body.innerHTML = `
+      <div class="train-top">
+        <div><div class="label">Training rink</div>
+          <p style="margin:2px 0 0;font-size:13px">Play drills to earn EXP for the skater you bring. Rewarded sessions refill after every match; practice is always free.</p></div>
+        <div class="sessions"><span class="pips3">${pips(tr.sessions)}</span> ${tr.sessions} rewarded session${tr.sessions === 1 ? '' : 's'} left</div>
+      </div>
+      <div class="row" style="margin:10px 0">
+        <span class="label" style="font-size:15px">Skater:</span>
+        ${ROSTER.map((id) => `<button class="btn small ${this.drillChar === id ? 'cream' : 'ghost'}" data-char="${id}" style="display:flex;gap:6px;align-items:center"><img src="${portrait(id, 0, null, 64)}" width="28" height="28" alt="">${CHARACTERS[id].name}</button>`).join('')}
+      </div>
+      <div class="drills">${Object.values(DRILLS).map((d) => {
+        const best = tr.best[d.id];
+        const medal = tr.medals[d.id] || 0;
+        return `<div class="card drill">
+          <div class="card-head"><img src="${ico(d.icon, 128)}" alt="" style="border:0;background:none">
+            <div style="min-width:0"><h3>${esc(d.name)}</h3><div class="sub">Trains ${esc(d.trains)}</div>
+              <div class="medal-row">${[1, 2, 3].map((t) => `<span class="medal ${t <= medal ? 'got' : ''}" style="--m:${MEDAL_COLORS[t]}" title="${MEDAL_NAMES[t]}: ${formatScore(d, d.medals[t - 1])}">${formatScore(d, d.medals[t - 1])}</span>`).join('')}</div>
+            </div></div>
+          <p class="muted" style="margin:0;font-size:13px">${esc(d.text)}</p>
+          <div class="row" style="justify-content:space-between">
+            <span style="font-size:13px">Best: <b class="gold-t">${best === undefined || best === null ? '–' : formatScore(d, best)}</b></span>
+            <button class="btn small ${tr.sessions > 0 ? 'gold' : ''}" data-play="${d.id}">${tr.sessions > 0 ? 'Train' : 'Practice'}</button>
+          </div>
+        </div>`;
+      }).join('')}</div>`;
+    this.click('[data-char]', (el) => { this.drillChar = el.dataset.char; audio.sfx('click'); this.tabTraining(body); }, body);
+    this.click('[data-play]', (el) => { audio.sfx('confirm'); this.app.startDrill(el.dataset.play, this.drillChar); }, body);
+  }
+
+  // Result card after a drill: score, medal, rewards; Retry or Done.
+  drillResult(d, score, rw, charId, onRetry, onDone) {
+    const name = CHARACTERS[charId].name;
+    const medal = rw.medal;
+    const lines = [];
+    if (rw.exp) lines.push([`${name} +${rw.exp} EXP`, '']);
+    if (rw.coins - rw.bonus > 0) lines.push(['Session coins', `+${rw.coins - rw.bonus}`]);
+    if (rw.bonus) lines.push([`First ${MEDAL_NAMES[medal].toLowerCase()} medal`, `+${rw.bonus}`]);
+    if (!rw.rewarded) lines.push(['Practice run (no sessions left)', '']);
+    const ups = rw.ups.length ? `<div class="lvlup">${name} reached level ${rw.ups[rw.ups.length - 1].level}!</div>` : '';
+    this.modal(`
+      <div style="text-align:center">
+        <div class="label">${esc(d.name)}</div>
+        <div class="drill-score">${formatScore(d, score)}</div>
+        <div class="medal-big" style="--m:${MEDAL_COLORS[medal]}">${MEDAL_NAMES[medal]}${rw.newBest && rw.prevBest !== undefined && rw.prevBest !== null ? ' · new best!' : ''}</div>
+        <div class="muted" style="font-size:13px">Bronze ${formatScore(d, d.medals[0])} · Silver ${formatScore(d, d.medals[1])} · Gold ${formatScore(d, d.medals[2])}</div>
+      </div>
+      ${lines.length ? `<div class="reward-lines">${lines.map(([a, b]) => `<div><span>${esc(a)}</span><span class="gold-t">${b}</span></div>`).join('')}</div>` : ''}
+      ${ups}
+      <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="d-retry">Retry</button><button class="btn gold" id="d-done">Done</button></div>`, (m, close) => {
+      m.querySelector('#d-retry').addEventListener('click', () => { close(); audio.sfx('confirm'); onRetry(); });
+      m.querySelector('#d-done').addEventListener('click', () => { close(); audio.sfx('click'); onDone(); });
+    }, false);
+    audio.jingle(medal >= 2 ? 'win' : medal === 1 ? 'level' : 'lose');
+  }
+
+  // --------------------------------------------------------------- modals
+  modal(html, bind, dismissable = true, onClose) {
+    const bg = document.createElement('div');
+    bg.className = 'modal-bg';
+    bg.innerHTML = `<div class="modal panel" role="dialog" aria-modal="true">${html}</div>`;
+    document.getElementById('app').appendChild(bg);
+    const close = () => { bg.remove(); onClose?.(); };
+    bg.addEventListener('click', (e) => { if (e.target === bg && dismissable) close(); });
+    bg.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => { audio.sfx('back'); close(); }));
+    bind?.(bg.querySelector('.modal'), () => { bg.remove(); });
+    return bg;
+  }
+
+  settings() {
+    const s = this.app.save;
+    const st = s.settings;
+    this.modal(`
+      <h2>Settings</h2>
+      <div class="toggle"><span>Music</span><button class="btn small ${st.music ? 'cream' : 'ghost'}" id="s-music">${st.music ? 'On' : 'Off'}</button></div>
+      <div class="toggle"><span>Sound effects</span><button class="btn small ${st.sfx ? 'cream' : 'ghost'}" id="s-sfx">${st.sfx ? 'On' : 'Off'}</button></div>
+      <div class="toggle"><span>Goal replays</span><button class="btn small ${st.replays !== false ? 'cream' : 'ghost'}" id="s-replays">${st.replays !== false ? 'On' : 'Off'}</button></div>
+      <div class="toggle"><span>Rival difficulty</span><span class="row">${['easy', 'normal', 'hard'].map((d) => `<button class="btn small ${st.difficulty === d ? 'cream' : 'ghost'}" data-diff="${d}">${d}</button>`).join('')}</span></div>
+      <div class="toggle"><span>Play offline</span><span style="font-size:13px;text-align:right;max-width:30ch">${installHelp(this.app)}</span></div>
+      <div class="label">Controls</div>
+      ${controlsHtml(this.app.isTouch)}
+      <div class="toggle"><span class="muted">Erase the save and start over</span><button class="btn small ghost" id="s-reset">Reset save</button></div>
+      <button class="btn small" data-close>Close</button>`, (m, close) => {
+      this.click('#s-music', () => { st.music = !st.music; audio.setMusic(st.music); writeSave(s); close(); this.settings(); }, m);
+      this.click('#s-sfx', () => { st.sfx = !st.sfx; audio.setSfx(st.sfx); writeSave(s); close(); this.settings(); }, m);
+      this.click('#s-install', async () => { await this.app.install(); close(); this.settings(); }, m);
+      this.click('#s-replays', () => { st.replays = st.replays === false; writeSave(s); close(); this.settings(); }, m);
+      this.click('[data-diff]', (el) => { st.difficulty = el.dataset.diff; writeSave(s); audio.sfx('click'); close(); this.settings(); }, m);
+      this.click('#s-reset', (el) => {
+        if (el.dataset.armed) { clearSave(); close(); this.app.resetSave(); return; }
+        el.dataset.armed = '1'; el.textContent = 'Tap again to erase'; el.classList.add('gold');
+      }, m);
+    });
+  }
+
+  // -------------------------------------------------------------- dialogue
+  // lines: [side ('us'|'them'), charId, text]
+  dialogue(lines, teamId, header, onDone) {
+    const t = TEAMS[teamId];
+    let i = 0, typing = null, shown = 0;
+    const ours = (id) => portrait(id, 0, null, 420);
+    const theirs = (id) => portrait(id, 1, teamId, 420);
+    const r = this.set(`
+      <div class="dim"></div>
+      <div class="dlg" id="dlg">
+        <button class="btn small ghost dlg-skip" id="dlg-skip">Skip</button>
+        ${header ? `<div class="dlg-head"><div class="vs">Strikers<em>vs</em>${esc(t.name.split(' ').slice(-1)[0])}</div>${header.sub ? `<div class="twist">${esc(header.sub)}</div>` : ''}</div>` : ''}
+        <div class="portraits"><img id="pl" alt=""><img id="pr" class="them" alt=""></div>
+        <div class="dlg-box panel"><div class="dlg-name" id="dn"></div><div class="dlg-text" id="dt"></div><div class="dlg-more">▼</div></div>
+      </div>`);
+    const pl = r.querySelector('#pl'), pr = r.querySelector('#pr'), dn = r.querySelector('#dn'), dt = r.querySelector('#dt');
+    const show = () => {
+      const [side, id, text] = lines[i];
+      const us = side === 'us';
+      const lastUs = [...lines.slice(0, i + 1)].reverse().find((l) => l[0] === 'us');
+      const lastThem = [...lines.slice(0, i + 1)].reverse().find((l) => l[0] === 'them') || lines.find((l) => l[0] === 'them');
+      pl.src = ours(lastUs ? lastUs[1] : 'frost');
+      if (lastThem) { pr.src = theirs(lastThem[1]); pr.hidden = false; } else pr.hidden = true;
+      pl.classList.toggle('on', us); pr.classList.toggle('on', !us);
+      dn.textContent = us ? CHARACTERS[id]?.name || GOALIE.name : t.names[id];
+      dn.className = 'dlg-name' + (us ? '' : ' them');
+      shown = 0; dt.textContent = '';
+      clearInterval(typing);
+      typing = setInterval(() => {
+        shown += 2;
+        dt.textContent = text.slice(0, shown);
+        if (shown % 4 === 0) audio.sfx('blip');
+        if (shown >= text.length) { clearInterval(typing); typing = null; }
+      }, 22);
+    };
+    const openedAt = performance.now();
+    const advance = () => {
+      if (performance.now() - openedAt < 350) return; // ignore the tap that opened the scene
+      if (typing) { clearInterval(typing); typing = null; dt.textContent = lines[i][2]; return; }
+      i++;
+      if (i >= lines.length) { this.dialogueAdvance = null; this.set('<div class="dim"></div>'); onDone(); return; }
+      audio.sfx('click');
+      show();
+    };
+    this.dialogueAdvance = advance;
+    r.querySelector('#dlg').addEventListener('click', advance);
+    this.click('#dlg-skip', () => { clearInterval(typing); this.dialogueAdvance = null; this.set('<div class="dim"></div>'); onDone(); });
+    show();
+  }
+
+  // --------------------------------------------------------------- results
+  results(data, onContinue) {
+    const { summary, rewards, ups, teamId, exhibition } = data;
+    const t = TEAMS[teamId];
+    const won = summary.winner === 0;
+    const mine = summary.skaters.filter((s) => s.team === 0);
+    const score = (s) => s.goals * 3 + s.assists * 2 + s.steals + s.blocks + s.hits * 0.5;
+    const mvp = [...summary.skaters].sort((a, b) => score(b) - score(a))[0];
+    const s = this.app.save;
+    const r = this.set(`
+      <div class="dim"></div>
+      <div class="results panel">
+        <div class="res-head">
+          <h1 class="${won ? 'gold-t' : ''}">${won ? 'Victory!' : 'Defeat'}</h1>
+          <div class="score">Strikers ${summary.score[0]} – ${summary.score[1]} ${esc(t.name.split(' ').slice(-1)[0])}</div>
+          <div class="muted">${exhibition ? 'Exhibition' : esc(data.round || '')} · Shots on goal ${summary.shots[0]}–${summary.shots[1]}</div>
+        </div>
+        <div class="res-grid">
+          <div>
+            <div class="label">Box score</div>
+            <table class="res-table"><thead><tr><th>Player</th><th>G</th><th>A</th><th>SOG</th><th>STL</th><th>HIT</th></tr></thead><tbody>
+              ${summary.skaters.map((k) => `<tr style="color:${k.team === 0 ? 'var(--cream)' : '#f5b3bb'}"><td>${esc(k.name)}</td><td>${k.goals}</td><td>${k.assists}</td><td>${k.shots}</td><td>${k.steals}</td><td>${k.hits}</td></tr>`).join('')}
+            </tbody></table>
+            <div class="mvp" style="margin-top:10px"><img src="${portrait(mvp.id, mvp.team, teamId, 128)}" alt=""><div><div class="label">Player of the match</div><div style="font-family:var(--display);font-size:28px">${esc(mvp.name)}</div></div></div>
+          </div>
+          <div>
+            <div class="label">Rewards</div>
+            <div class="reward-lines">${rewards.lines.map(([a, b]) => `<div><span>${esc(a)}</span><span class="gold-t">${b ? '+' + b : ''}</span></div>`).join('')}</div>
+            <div class="reward-total"><span>Coins</span><span>+${rewards.coins}</span></div>
+            <div class="label" style="margin-top:10px">Experience</div>
+            <div style="display:grid;gap:6px">
+              ${mine.map((k) => {
+                const rr = s.roster[k.id];
+                const lu = ups.filter((u) => u.id === k.id);
+                const pct = rr.level >= MAX_LEVEL ? 100 : Math.round((rr.exp / expToNext(rr.level)) * 100);
+                return `<div class="xp-row"><img src="${portrait(k.id, 0, null, 88)}" alt="">
+                  <div><div>${esc(k.name)} <span class="muted">+${rewards.exp[k.id]} EXP</span> ${lu.length ? `<span class="lvlup">LEVEL ${rr.level}!</span>` : ''}</div>
+                  <div class="xpbar"><i data-w="${pct}"></i></div></div><span class="lvl">LV ${rr.level}</span></div>`;
+              }).join('')}
+              ${data.rewards.chem ? `<div class="label" style="margin-top:6px">Chemistry</div>
+              ${Object.entries(data.rewards.chem).map(([k, g]) => {
+                const [a, b] = k.split('+');
+                const up = (data.chemUps || []).find((u) => u.key === k);
+                return `<div class="xp-row"><span class="duo small"><img src="${portrait(a, 0, null, 64)}" alt=""><img src="${portrait(b, 0, null, 64)}" alt=""></span>
+                  <div><div>${esc(COMBOS[k].name)} <span class="muted">+${g.xp} · ${g.passes} passes${g.comboGoals ? ` · ${g.comboGoals} combo goal${g.comboGoals > 1 ? 's' : ''}` : ''}</span> ${up ? `<span class="lvlup">LEVEL ${up.level}!</span>` : ''}</div>
+                  <div class="xpbar"><i data-w="${Math.round(chemProgress(s.chem[k]) * 100)}"></i></div></div><span class="lvl">${chemPips(chemLevel(s.chem[k]))}</span></div>`;
+              }).join('')}` : ''}
+              <div class="xp-row"><img src="${portrait('goalie', 0, null, 88)}" alt=""><div><div>${GOALIE.name} <span class="muted">+${rewards.gExp} EXP · ${summary.saves[0]} saves</span>${data.gUp ? ' <span class="lvlup">LEVEL UP!</span>' : ''}</div></div><span class="lvl">LV ${s.goalie.level}</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="row" style="justify-content:flex-end"><button class="btn gold" id="r-go">Continue</button></div>
+      </div>`);
+    requestAnimationFrame(() => r.querySelectorAll('[data-w]').forEach((el) => { el.style.width = el.dataset.w + '%'; }));
+    if (won) audio.jingle('win'); else audio.jingle('lose');
+    this.click('#r-go', () => { audio.sfx('confirm'); onContinue(); });
+  }
+
+  chemUnlocked(ups, done) {
+    if (!ups.length) return done();
+    audio.jingle('level');
+    this.modal(`
+      <h2>Chemistry level up!</h2>
+      ${ups.map((u) => {
+        const c = COMBOS[u.key];
+        const [a, b] = u.key.split('+');
+        return `<div class="card chem" style="gap:6px">
+          <div class="chem-head"><span class="duo"><img src="${portrait(a, 0, null, 96)}" alt=""><img src="${portrait(b, 0, null, 96)}" alt=""></span>
+          <div><h3>${esc(c.name)}</h3><div class="sub">${esc(CHARACTERS[a].name)} + ${esc(CHARACTERS[b].name)} · level ${u.level}</div></div></div>
+          <p style="margin:0">${u.level === 1 ? `${esc(c.text)}<br><b class="gold-t">How:</b> pass from ${esc(CHARACTERS[a].name)} to ${esc(CHARACTERS[b].name)} (or back), then shoot right away. Holding shoot as the pass arrives fires it as a one-timer.` : esc(c.levels[u.level - 1])}</p>
+        </div>`;
+      }).join('')}
+      <button class="btn gold" data-close>Got it</button>`, null, false, done);
+  }
+
+  champion(onDone) {
+    const s = this.app.save;
+    this.set(`
+      <div class="dim"></div>
+      <div class="results panel" style="text-align:center;align-items:center">
+        <img src="${ico('equipment_items/reward/trophy', 256)}" alt="" width="150" height="150">
+        <h1 class="gold-t" style="font-family:var(--display);font-weight:normal;font-size:clamp(44px,9vw,80px);line-height:.85;margin:0">Champions!</h1>
+        <p style="max-width:46ch">The Glacial Strikers win the ${esc(TOURNAMENT.name)}${s.season > 1 ? ` (season ${s.season})` : ''}. Nix lifts the cup while Volta does laps and Bram carries Halla around on his shoulders.</p>
+        <p class="muted" style="max-width:46ch">Start a new season to face every rival again with sharper AI, keeping your levels and gear.</p>
+        <div class="row" style="justify-content:center"><button class="btn gold" id="c-go">Back to the hub</button></div>
+      </div>`);
+    audio.jingle('win');
+    this.click('#c-go', () => { audio.sfx('confirm'); onDone(); });
+  }
+}
+
+const PERK_LEVEL_LABEL = (i) => [3, 5, 7][i];
+
+function installHelp(app) {
+  if (app.standalone) return '<span class="good">Installed. Plays offline.</span>';
+  if (!app.canOffline) return 'Open the game from its https address to install it and play offline.';
+  if (app.installPrompt) return '<button class="btn small cream" id="s-install">Install app</button>';
+  if (app.isIOS) return 'In Safari tap Share, then Add to Home Screen.';
+  return 'Use your browser menu: Install app / Add to Home screen.';
+}
+
+const chemPips = (lvl) => `<span class="pips3">${[1, 2, 3].map((i) => `<i class="${i <= lvl ? 'on' : ''}"></i>`).join('')}</span>`;
+
+function chemCard(k, xp) {
+  const c = COMBOS[k];
+  const [a, b] = k.split('+');
+  const lvl = chemLevel(xp);
+  const next = lvl < CHEM_LEVELS.length ? CHEM_LEVELS[lvl] : null;
+  return `<div class="card chem ${lvl ? '' : 'locked'}">
+    <div class="chem-head">
+      <span class="duo"><img src="${portrait(a, 0, null, 96)}" alt=""><img src="${portrait(b, 0, null, 96)}" alt=""></span>
+      <div style="min-width:0"><h3>${esc(c.name)}</h3><div class="sub">${esc(CHARACTERS[a].name)} + ${esc(CHARACTERS[b].name)}</div></div>
+      ${chemPips(lvl)}
+    </div>
+    <div class="xpbar" title="${xp} chemistry${next ? ` / ${next}` : ''}"><i style="width:${Math.round(chemProgress(xp) * 100)}%"></i></div>
+    <p style="margin:0;font-size:13px">${esc(c.text)}</p>
+    <div class="chem-levels">${c.levels.map((t, i) => `<span class="${i < lvl ? 'got' : ''}">Lv${i + 1} · ${esc(t)}</span>`).join('')}</div>
+  </div>`;
+}
+
+export function controlsHtml(touch) {
+  if (touch) {
+    return `<div class="keys">
+    <kbd>Left thumb</kbd><span>Touch anywhere on the left half and drag to skate</span>
+    <kbd>SHOOT</kbd><span>Tap for a wrist shot, hold for a slapshot. Hold it as a pass arrives for a one-timer</span>
+    <kbd>CHECK</kbd><span>Same button without the puck: shoulder check</span>
+    <kbd>PASS</kbd><span>Passes toward the teammate you're steering at. Without the puck it switches player</span>
+    <kbd>SPRINT</kbd><span>Hold for speed (uses stamina)</span>
+    <kbd>Snowflake</kbd><span>Signature ability (swaps per character)</span>
+    <kbd>Star</kbd><span>Ultimate, when it glows gold</span>
+    <kbd>Pull goalie</kbd><span>Appears when you're behind and they need one more goal</span>
+  </div>`;
+  }
+  return `<div class="keys">
+    <kbd>WASD / Arrows</kbd><span>Skate</span>
+    <kbd>Shift</kbd><span>Sprint (uses stamina)</span>
+    <kbd>J / Space</kbd><span>Shoot: tap for a wrist shot, hold for a slapshot. Without the puck: check</span>
+    <kbd>K / Enter</kbd><span>Pass (aim with movement). Without the puck: switch player</span>
+    <kbd>U / Q</kbd><span>Signature ability</span>
+    <kbd>I / E</kbd><span>Ultimate (when the gold meter is full)</span>
+    <kbd>H</kbd><span>Pull the goalie for an extra attacker (when trailing and they need one more goal)</span>
+    <kbd>Esc / P</kbd><span>Pause</span>
+    <kbd>Gamepad</kbd><span>Stick to skate · X/RT shoot-check · A pass-switch · RB sprint · B skill · Y ultimate</span>
+    <kbd>Touch</kbd><span>Left thumb anywhere to skate · right-side buttons for actions</span>
+  </div>`;
+}
