@@ -72,9 +72,9 @@ Hold shoot while a pass is on its way to fire a **one-timer**. Your skates plant
 - **Crowd:** sprite fans in the far stands sit and cheer with the action (the near stands keep the back-of-head fans).
 - **Cut-ins:** ultimates and combos slide in the shooter's banner art; a goalie who stops an ultimate or combo gets a "DENIED!" banner.
 - **Signature celebrations:** Nix plants an ice spike, Volta strikes a lightning pose, Bram hoists his stick.
-- **Hub:** the locker room fills the menus, with Coach Brekka (Training), Gearsmith Ottar (Shop) and announcer Kip Vance (League) chiming in.
+- **Locker room hub:** the hub opens in the locker room. Click the lockers (Team), the shop counter (Shop), the stick rack (Training), the crystal chest (Trophies) or the benches (League); stations show what needs attention (points to spend, scouts calling, sessions left, the next opponent). The dressed line-up and Halla stand on the floor. Coach Brekka, Gearsmith Ottar and announcer Kip Vance chime in on their panels, which keep tabs and a back-to-the-room button.
 - **Animation:** 8-way skating, a 4-frame side stride with glide and hockey stop (with an ice spray), stagger and knockdown on big hits, and side-on goalie poses: shuffles, butterfly, glove and blocker saves, dives, covering the puck and getting up. A red goal light behind each net spins on goals.
-- **Nets** are the v3 side-view sprites, back and front layers around the goal mouth, with the puck inside the mesh and a bulge on goals (code-drawn nets remain as a fallback).
+- **Nets** are the v3 side-view sprites, back and front layers around the goal mouth, with the puck inside the mesh and a bulge on goals (code-drawn nets remain as a fallback). A goalie in the goal mouth stands inside the net, behind the near post and side mesh; out of the crease they draw in front of it.
 - **Arena dressing:** near glass drawn over skaters along the bottom boards, a hanging scoreboard with the live score and clock, team banners in the home rink's corners (Strikers plus the visitors), and the Snow Fox mascot dancing on the near stairs when the Strikers score.
 
 ## Project layout
@@ -110,9 +110,9 @@ tools/                asset builder, dev server, balance sim, control tests
 
 ```bash
 python3 -m venv ../.venv && ../.venv/bin/pip install pillow numpy   # once
-../.venv/bin/python tools/build_assets.py ../assets/Glacial-Strikers-Expansion-v2 assets/gfx ../assets/Glacial-Strikers-v3-Arena-Add-On
+../.venv/bin/python tools/build_assets.py ../assets/Glacial-Strikers-Expansion-v2 assets/gfx ../assets/Glacial-Strikers-v3-Arena-Add-On ../assets/Glacial-Strikers-v4-Batch-A
 ```
-Rebuilds the atlases from the complete v2 sprite pack (v1, P1 gameplay and the rival/story/arena art in one atlas) plus the v3 arena add-on (nets, near glass, scoreboard, banners, mascot). Every character is rescaled to the v1 skaters' height, stray fragments from neighbouring cells are erased, and poses are mapped onto the game's names. Pages are split into `home`, `away` and one `rival_<team>` group per rival; rival pages, arenas, cut-in banners and the locker room load in the background after startup.
+Rebuilds the atlases from the complete v2 sprite pack (v1, P1 gameplay and the rival/story/arena art in one atlas) plus the v3 arena add-on (nets, near glass, scoreboard, banners, mascot) and v4 Batch A (rival diagonals and hit reactions, Blaze and Horn expressions; merged by `tools/merge_batch_a.py`). Every character is rescaled to the v1 skaters' height, stray fragments from neighbouring cells are erased, and poses are mapped onto the game's names. Pages are split into `home`, `away` and one `rival_<team>` group per rival; rival pages, arenas, cut-in banners and the locker room load in the background after startup.
 
 ```bash
 node tools/sim.mjs 20 0.6 0.6

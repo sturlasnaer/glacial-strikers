@@ -26,10 +26,12 @@ Ideas for later:
 
 ## Next, with art
 
-Done: recruitment (sign rival skaters, pick a line-up) and arena rules (meltwater, aurora lanes, pond cracks). Done from the v2 pack: rival casts, portraits and expressions, crests, banner cut-ins, signature celebrations, three arenas, sprite crowd, locker-room hub and hub characters.
+Done: recruitment (sign rival skaters, pick a line-up), arena rules (meltwater, aurora lanes, pond cracks) and the clickable locker room. Done from the v2 pack: rival casts, portraits and expressions, crests, banner cut-ins, signature celebrations, three arenas, sprite crowd, locker-room hub and hub characters.
 
-1. **Clickable locker room.** Stations in the room (stick rack, shop counter, coach's board) instead of tabs.
-2. **Visible gear** overlays for sticks and skates, once animations are final.
+1. **Visible gear** overlays for sticks and skates, once animations are final.
+
+2. **Goalie life** once Batch G lands: face the net when the puck goes behind it, fish the puck out after goals, skate to the bench when pulled, front-view goalies in the locker room and menus.
+3. **Locker-room characters** standing at their stations (Batch H).
 
 ## Balance knobs
 

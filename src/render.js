@@ -140,9 +140,16 @@ export class Renderer {
       list.push({ y: NET_KEY - 0.3, f: () => this.nets.draw(ctx, side, 'back') });
       list.push({ y: NET_KEY, f: () => this.nets.draw(ctx, side, 'front') });
     }
-    for (const g of match.goalies) if (!g.disabled) list.push({ y: Math.max(g.y + 1, NET_KEY + 0.5), f: () => this.drawGoalie(ctx, g, match) });
+    // A goalie standing in the goal mouth draws inside the net: back layer, puck, goalie,
+    // then the front layer (near post, roof, near-side mesh) over them. Out of the crease
+    // they draw in front of it.
+    for (const g of match.goalies) {
+      if (g.disabled) continue;
+      const inMouth = this.goalieInMouth(g);
+      list.push({ y: inMouth ? NET_KEY - 0.2 : Math.max(g.y + 1, NET_KEY + 0.5), f: () => this.drawGoalie(ctx, g, match) });
+    }
     if (match.drill && match.drill.sprites) for (const sp of match.drill.sprites(match, this, Assets)) list.push({ y: sp.y, f: () => sp.f(ctx) });
-    list.push({ y: inNet ? NET_KEY - 0.1 : p.owner ? p.y + 0.5 : p.y, f: () => this.drawPuck(ctx, p, fx, match) });
+    list.push({ y: inNet ? NET_KEY - 0.25 : p.owner ? p.y + 0.5 : p.y, f: () => this.drawPuck(ctx, p, fx, match) });
     for (const b of match.barriers) list.push({ y: b.y, f: () => this.drawBarrier(ctx, b) });
     for (const k of match.pickups) list.push({ y: k.y, f: () => this.drawPickupOrb(ctx, k, fx) });
     for (const pt of fx.parts) if (pt.kind === 'ghost') list.push({ y: pt.s.y - 1, f: () => this.drawGhost(ctx, pt, match) });
@@ -668,6 +675,10 @@ export class Renderer {
     ctx.globalAlpha = alpha;
     ctx.drawImage(c, -px, -py);
     ctx.restore();
+  }
+
+  goalieInMouth(g) {
+    return Math.abs(g.x - g.goalSide * GOAL_X) < 36 && Math.abs(g.y) < MOUTH + 8 && g.state !== 'dive';
   }
 
   goalieSideFrame(g, set) {

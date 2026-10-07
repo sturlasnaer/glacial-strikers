@@ -63,6 +63,17 @@ const ico = (id, size = 64) => Assets.icon(id, size);
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+// The locker room hub: stations in the painting, in % of the 16:9 image.
+const STATIONS = [
+  { tab: 'team', label: 'Team', icon: 'equipment_items/hub/locker', rect: [19, 2, 47, 27], at: [42, 15], tip: 'Lockers: line-up, stats, gear and scouting' },
+  { tab: 'shop', label: 'Shop', npc: 'shopkeeper', rect: [69, 11, 30, 58], at: [84, 38], tip: 'Gearsmith Ottar\'s counter' },
+  { tab: 'training', label: 'Training', npc: 'coach', rect: [0.5, 15, 13.5, 40], at: [11, 31], tip: 'Grab a stick and hit the practice rink' },
+  { tab: 'trophies', label: 'Trophies', icon: 'equipment_items/reward/trophy', rect: [14.5, 23, 8.5, 17], at: [21, 44], tip: 'The trophy chest' },
+  { tab: 'tournament', label: 'League', npc: 'announcer', rect: [10, 77, 58, 18], at: [37, 86], tip: 'Benches: schedule, standings and playoffs' },
+];
+// Where the dressed skaters and Halla stand on the floor (feet, % of the room).
+const CREW_SPOTS = [[29, 71], [41, 67], [53, 64], [64, 70]];
+
 // Hub characters: a portrait and a line of chatter at the top of their tab.
 const NPC_NAMES = { coach: 'Coach Brekka', shopkeeper: 'Gearsmith Ottar', announcer: 'Kip Vance, PA' };
 function npc(key, text) {
@@ -83,7 +94,7 @@ export class UI {
   constructor(app) {
     this.app = app;
     this.root = document.getElementById('screen');
-    this.tab = 'tournament';
+    this.tab = 'room';
   }
 
   clear() { this.root.innerHTML = ''; this.root.onclick = null; }
@@ -204,6 +215,9 @@ export class UI {
     const next = this.app.nextStage();
     const nt = next ? TEAMS[next.team] : null;
     const anyPoints = rosterIds(s).some((id) => s.roster[id].points > 0 || s.roster[id].pendingPerk !== null);
+    const room = this.tab === 'room' && !!(Assets.atlas && Assets.atlas.locker);
+    if (this.tab === 'room' && !room) this.tab = 'tournament';
+    document.body.classList.toggle('hub-room', room);
     const r = this.set(`
       <div class="dim"></div>
       <div class="hub">
@@ -213,10 +227,12 @@ export class UI {
           <div class="coins"><img src="${ico('equipment_items/reward/coins', 64)}" alt="">${s.coins}</div>
           <button class="icon-btn" id="h-settings" aria-label="Settings">☰</button>
         </div>
+        ${room ? `<div class="room-wrap" id="room-wrap"><div class="room" id="room">${this.roomHtml(s, anyPoints)}</div></div>` : `
         <div class="tabs" role="tablist">
+          <button class="tab room-tab" data-tab="room" aria-label="Back to the locker room">◂ Locker room</button>
           ${[['tournament', 'League'], ['team', 'Team'], ['shop', 'Shop'], ['training', 'Training'], ['trophies', 'Trophies']].map(([t, label]) => `<button class="tab" role="tab" data-tab="${t}" aria-selected="${this.tab === t}">${label}${t === 'team' && anyPoints ? '<span class="dot"></span>' : ''}</button>`).join('')}
         </div>
-        <div class="hub-body panel" id="hub-body"></div>
+        <div class="hub-body panel" id="hub-body"></div>`}
         <div class="hub-cta">
           ${nt ? `<div class="next">${esc(next.round)}<br><b>vs ${esc(nt.name)}</b>${s.buffs && s.buffs.length ? `<span class="buffs">${s.buffs.map((b) => `<span class="buff">${esc(BUFF_TEXT(b))}</span>`).join('')}</span>` : ''}</div>
           <button class="btn gold" id="h-play">Play match</button>` : `<div class="next"><b>${s.league && s.league.champion && s.league.champion !== 'home' ? `${esc(TEAMS[s.league.champion].name)} won the cup` : 'Champions!'}</b><br>Start a new season or play exhibitions.</div>
@@ -229,9 +245,66 @@ export class UI {
     this.click('#h-season', () => { audio.sfx('confirm'); this.app.newSeason(); });
     this.click('#h-title', () => { audio.sfx('back'); this.app.goTitle(); });
     this.click('#h-settings', () => { audio.sfx('click'); this.settings(); });
+    this.roomFit?.disconnect();
+    if (room) {
+      this.bindRoom(r);
+      return r;
+    }
     const body = r.querySelector('#hub-body');
     ({ tournament: () => this.tabTournament(body), team: () => this.tabTeam(body), shop: () => this.tabShop(body), training: () => this.tabTraining(body), trophies: () => this.tabTrophies(body) })[this.tab]();
     return r;
+  }
+
+  roomHtml(s, anyPoints) {
+    const next = this.app.fixture && this.app.fixture();
+    const scoutOpen = Object.keys(RECRUITS).some((k) => recruitStatus(s, k) === 'open' && s.coins >= RECRUITS[k].price);
+    const shopNew = GEAR.some((g) => g.price > 0 && !s.owned.includes(g.id) && Math.round(g.price * (1 - (s.discount || 0))) <= s.coins);
+    const got = Object.keys((s.achievements && s.achievements.unlocked) || {}).length;
+    const badge = {
+      team: anyPoints ? 'Points to spend' : scoutOpen ? 'Scouts calling' : '',
+      shop: shopNew ? 'New gear in reach' : '',
+      training: s.training.sessions ? `${s.training.sessions} session${s.training.sessions > 1 ? 's' : ''}` : '',
+      trophies: `${got}/${ACHIEVEMENTS.length}`,
+      tournament: next ? `Next: ${TEAMS[next.opponent].name.split(' ').slice(-1)[0]}` : '',
+    };
+    const npcs = Assets.atlas.npcs || {};
+    const spots = STATIONS.map((st) => {
+      const [x, y, w, h] = st.rect;
+      const img = st.npc && npcs[st.npc] ? Assets.icon(npcs[st.npc], 72) : st.icon ? ico(st.icon, 64) : '';
+      const b = badge[st.tab];
+      const [ax, ay] = st.at;
+      return `<button class="spot" data-tab="${st.tab}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%" title="${esc(st.tip)}" aria-label="${esc(st.label)}: ${esc(st.tip)}">
+        <span class="spot-label" style="left:${((ax - x) / w) * 100}%;top:${((ay - y) / h) * 100}%">${img ? `<img src="${img}" alt="">` : ''}<b>${esc(st.label)}</b>${b ? `<small class="${st.tab === 'trophies' ? '' : 'hot'}">${esc(b)}</small>` : ''}</span></button>`;
+    }).join('');
+    const line = lineupIds(s);
+    const crew = [...line, 'goalie'].map((id, i) => {
+      const [x, y] = CREW_SPOTS[i];
+      let src;
+      if (id === 'goalie') src = Assets.icon(Assets.atlas.goalies_side.home.ready, 160, null, { flip: true });
+      else {
+        const m = member(id);
+        const set = m.recruit ? Assets.atlas.skaters[m.recruit.sprite] : Assets.atlas.skaters[m.def.sprite];
+        src = m.recruit ? Assets.icon(set.home.south.frames.idle, 160, 'homekit') : Assets.icon(set.home.south.frames.idle, 160);
+        if (!src) src = Assets.icon(Assets.atlas.skaters[m.def.sprite].home.south.frames.idle, 160);
+      }
+      const name = id === 'goalie' ? GOALIE.name : member(id).name;
+      return `<button class="crew" data-crew="${id}" style="left:${x}%;top:${y}%;animation-delay:${-i * 0.7}s" aria-label="${esc(name)}"><img src="${src}" alt=""><span>${esc(name)}</span></button>`;
+    }).join('');
+    return `<img class="room-bg" src="${Assets.url(Assets.atlas.locker)}" alt="">${spots}${crew}`;
+  }
+
+  bindRoom(r) {
+    const wrap = r.querySelector('#room-wrap'), room = r.querySelector('#room');
+    // keep the painting at 16:9 inside whatever space the hub leaves
+    const fit = () => {
+      const k = Math.min(wrap.clientWidth / 16, wrap.clientHeight / 9);
+      room.style.width = `${Math.floor(16 * k)}px`;
+      room.style.height = `${Math.floor(9 * k)}px`;
+      room.style.setProperty('--u', `${(16 * k) / 100}px`);
+    };
+    fit();
+    if (typeof ResizeObserver !== 'undefined') { this.roomFit = new ResizeObserver(fit); this.roomFit.observe(wrap); }
+    this.click('[data-crew]', (el) => { audio.sfx('click'); this.hub(el.dataset.crew === 'goalie' ? 'team' : 'team'); }, room);
   }
 
   tabTournament(body) {

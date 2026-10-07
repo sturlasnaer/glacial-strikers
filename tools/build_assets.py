@@ -29,6 +29,7 @@ from PIL import Image
 PACK = sys.argv[1] if len(sys.argv) > 1 else '../assets/Glacial-Strikers-Expansion-v2'
 OUT = sys.argv[2] if len(sys.argv) > 2 else 'assets/gfx'
 ADDON = sys.argv[3] if len(sys.argv) > 3 else '../assets/Glacial-Strikers-v3-Arena-Add-On'
+BATCH_A = sys.argv[4] if len(sys.argv) > 4 else '../assets/Glacial-Strikers-v4-Batch-A'
 
 # Atlas pixels per source pixel for v1 sheets. Picked so each sprite is close to its
 # on-screen size on a 2x phone screen while keeping the download small.
@@ -43,7 +44,7 @@ GOALIE_S = SCALE['goalies']
 FLAT = {
     'ice_spray_goal_lights': 0.3, 'expressions_core': 0.8, 'expressions_halla_royals_comets': 0.8,
     'expressions_rams_ravens_lynx': 0.8, 'rival_portraits': 0.95, 'rival_crests': 0.4,
-    'hub_npcs': 0.33, 'crowd_fans': 0.3,
+    'hub_npcs': 0.33, 'crowd_fans': 0.3, 'expressions_blaze_horn': 0.8,
 }
 SKIP = {'rink_backdrop', 'side_net_layers', 'frost_captain_variant', 'goalies',
         'arena_ember_dome', 'arena_aurora_palace', 'arena_pine_pond', 'locker_room'}
@@ -57,6 +58,12 @@ PAGE = 2048
 PAD = 2
 
 src = json.load(open(os.path.join(PACK, 'atlas.json')))
+batch_sheets = set()
+if BATCH_A and os.path.exists(os.path.join(BATCH_A, 'atlas.json')):
+    from merge_batch_a import merge
+    batch = json.load(open(os.path.join(BATCH_A, 'atlas.json')))
+    src = merge(src, batch)
+    batch_sheets = set(batch['sheets'])
 frames = src['frames']
 info = src['sheets']
 os.makedirs(os.path.join(OUT, 'cutins'), exist_ok=True)
@@ -73,7 +80,8 @@ sheets = {}
 
 def sheet(name):
     if name not in sheets:
-        sheets[name] = Image.open(os.path.join(PACK, 'sheets', name + '.png')).convert('RGBA')
+        root = BATCH_A if name in batch_sheets else PACK
+        sheets[name] = Image.open(os.path.join(root, info[name]['image'])).convert('RGBA')
     return sheets[name]
 
 
@@ -178,6 +186,10 @@ for name, v1 in V1_SKATER.items():
 for t in RIVALS:
     for role, v1 in ROLE_V1.items():
         ratio[f'{t}_{role}'] = standing_ratio(f'{t}_{role}', v1_h[v1])
+        for kind in ('diagonals', 'hit_reactions'):
+            name = f'{t}_{role}_{kind}'
+            if name in info:
+                ratio[name] = standing_ratio(name, v1_h[v1])
 # goalies: match each team's ready pose to the v1 goalie's ready pose
 goalie_ready = {'halla': 'halla_side_goalies/halla/home/east/set_a/pose_1'}
 for key, g in src['goalies'].items():
@@ -299,10 +311,13 @@ for name, v1 in V1_SKATER.items():
         }
         t['hit'] = {d: an[f'{name}/{team}/{d}/hit_recovery']['frames'] for d in ('east', 'south')}
         t['signature'] = an[f'{name}/{team}/signature_celebration']['frames']
-# rival rosters: four cardinal directions (west mirrors east), away colours only
+# rival rosters: cardinal and any added diagonal directions; away colours only
 for key, r in src['rivals'].items():
     dirs = {d: {'flip_x': m['flip_x'], 'frames': {POSES[p]: v for p, v in m['frames'].items()}}
             for d, m in r['away'].items()}
+    hit_keys = {d: f'{key}/away/{d}/hit_recovery' for d in ('east', 'south')}
+    if all(k in src['animations'] for k in hit_keys.values()):
+        dirs['hit'] = {d: src['animations'][k]['frames'] for d, k in hit_keys.items()}
     skaters[key] = {'home': dirs, 'away': dirs}
 
 goalies_side = {}
