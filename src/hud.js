@@ -27,7 +27,7 @@ export class HUD {
       ${drill ? '<div class="drillbar"><div class="t"></div><div class="m"></div><div class="s"></div><div class="n"></div></div>' : ''}
       <div class="scoreboard" ${drill ? 'hidden' : ''}>
         <img class="crest" src="${crest('home', 72)}" alt="">
-        <span class="abbr">GLA</span>
+        <span class="abbr" style="color:${TEAMS.home.color}">${TEAMS.home.short}</span>
         <img class="digit" id="d0" src="${digit(0)}" alt="0">
         <div class="mid">FIRST<br>TO 5</div>
         <img class="digit" id="d1" src="${digit(0)}" alt="0">

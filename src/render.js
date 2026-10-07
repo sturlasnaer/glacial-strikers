@@ -113,7 +113,7 @@ export class Renderer {
     const host = arena !== 'home' && TEAMS[ui.awayTeamId] && TEAMS[ui.awayTeamId].arena === arena ? TEAMS[ui.awayTeamId] : null;
     const hostCrest = host && Assets.atlas.crests && Assets.atlas.crests[host.art];
     if (hostCrest) Assets.draw(ctx, hostCrest, cc.x, cc.y + 4, 0.26, { alpha: 0.3, squash: 0.8 });
-    else Assets.draw(ctx, 'hud_elements/misc/home_crest', cc.x, cc.y + 2, 0.5, { alpha: 0.3, squash: 0.8 });
+    else Assets.draw(ctx, 'hud_elements/misc/home_crest', cc.x, cc.y + 2, 0.5, { alpha: 0.3, squash: 0.8, pages: Assets.clubPages() });
     this.drawLamps(ctx, fx);
     this.drawCrowd(ctx, fx, ui);
     this.drawArenaProps(ctx, match, fx, ui, arena);
@@ -228,7 +228,7 @@ export class Renderer {
         // far stands: sprite fans facing the ice (and the camera)
         const up = cheer || (ex > 0.6 && Math.sin(t * 5 + f.phase) > 0.3);
         const list = sprites[f.team ? 'away' : 'home'][up ? 'cheering' : 'sitting'];
-        Assets.draw(ctx, list[f.fan], x, y - 3 * s, 0.125 * s, { pages: f.team ? this.awayPages : Assets.pages, flip: f.phase > 3.14 });
+        Assets.draw(ctx, list[f.fan], x, y - 3 * s, 0.125 * s, { pages: f.team ? this.awayPages : Assets.clubPages(), flip: f.phase > 3.14 });
         continue;
       }
       const body = f.team === 0 ? (f.phase > 3 ? '#71dce8' : '#fff2cb') : (f.phase > 3 ? awayColor : awayColor2);
@@ -268,7 +268,7 @@ export class Renderer {
       const spots = [[102, 36, 0], [1433, 36, 1], [120, 856, 1], [1417, 850, 0]];
       spots.forEach(([x, y, theirs], i) => {
         const id = theirs && vis ? vis : A.banners.glacial_strikers;
-        Assets.draw(ctx, id, x, y, 0.185, { rot: Math.sin(t * 1.3 + i * 1.7) * 0.025 });
+        Assets.draw(ctx, id, x, y, 0.185, { rot: Math.sin(t * 1.3 + i * 1.7) * 0.025, pages: Assets.clubPages() });
       });
     }
     if (arena === 'home' && A.mascot) {
@@ -276,7 +276,7 @@ export class Renderer {
       let pose = 'idle';
       if (party) pose = Math.floor(t * 4) % 2 ? 'cheer_a' : 'cheer_b';
       else if (fx.excite > 0.55 || Math.floor(t / 3) % 4 === 0) pose = Math.floor(t * 2) % 2 ? 'wave' : 'idle';
-      Assets.draw(ctx, A.mascot[pose], 768, 950 - (party ? Math.abs(Math.sin(t * 8)) * 6 : 0), 0.125);
+      Assets.draw(ctx, A.mascot[pose], 768, 950 - (party ? Math.abs(Math.sin(t * 8)) * 6 : 0), 0.125, { pages: Assets.clubPages() });
     }
     if (A.scoreboard && arena !== 'ember_dome') this.drawScoreboard(ctx, match, fx, A.scoreboard);
   }
@@ -618,7 +618,7 @@ export class Renderer {
     if (fr.pose === 'celebrate') y -= Math.abs(Math.sin(s.animT * 7 + s.slot)) * 12;
     if (fr.pose === 'check' && s.stun > 0) rot = Math.sin(s.animT * 30) * 0.12 + (fr.flip ? 0.25 : -0.25);
     else if (fr.pose === 'stagger') rot = Math.sin(s.animT * 30) * 0.05;
-    const pages = s.team === 0 ? (s.look ? Assets.pagesFor(s.look) : Assets.pages) : this.awayPages;
+    const pages = s.team === 0 ? (s.look ? Assets.pagesFor(s.look) : Assets.clubPages()) : this.awayPages;
     // aura for active abilities
     if (s.bedrockT > 0) this.aura(ctx, p.x, p.y - 30, 34, '#c9b79c', fx.time);
     if (s.boostT > 0 || s.trailT > 0) this.aura(ctx, p.x, p.y - 26, 28, '#71dce8', fx.time);
@@ -680,6 +680,9 @@ export class Renderer {
 
   worldToBackdrop(pt) { return toScreen(pt.x, pt.y); }
 
+  // After the club's colours change.
+  clearCaches() { this.tintCache.clear(); this.gearCache?.clear(); }
+
   // True gear recolours, when the sprite pack has gear masks for this frame: red mask
   // pixels are the stick, green the boots, blue the blades. Each is reshaded in the
   // gear's colour by the original pixel's brightness, keeping the dark outlines.
@@ -733,7 +736,7 @@ export class Renderer {
     const s = g.s;
     const fr = this.skaterFrame(s, match);
     const p = toScreen(g.x, g.y);
-    const pages = s.team === 0 ? (s.look ? Assets.pagesFor(s.look) : Assets.pages) : this.awayPages;
+    const pages = s.team === 0 ? (s.look ? Assets.pagesFor(s.look) : Assets.clubPages()) : this.awayPages;
     this.drawTinted(ctx, fr.id, pages, p.x, p.y, SKATER_SCALE * persp(g.y), fr.flip, 0, '#ffe066', 0.55 * (1 - g.t / g.life), true);
   }
 
@@ -801,7 +804,7 @@ export class Renderer {
     if (side) {
       const id = this.goalieSideFrame(g, side);
       const p = toScreen(g.x, g.y);
-      const pages = g.team === 0 ? Assets.pages : this.awayPages;
+      const pages = g.team === 0 ? Assets.clubPages() : this.awayPages;
       const flip = g.goalSide > 0; // the art faces right, toward the play from the left net
       const k = GOALIE_SCALE * persp(g.y) * (match.mods && match.mods.has('giant') ? 1.25 : 1);
       Assets.draw(ctx, id, p.x, p.y, k, { pages, flip });
@@ -819,7 +822,7 @@ export class Renderer {
     }
     const id = `goalies/${key}_south/${pose}`;
     const p = toScreen(g.x, g.y);
-    const pages = g.team === 0 ? Assets.pages : this.awayPages;
+    const pages = g.team === 0 ? Assets.clubPages() : this.awayPages;
     const flip = g.goalSide > 0;
     const k = GOALIE_SCALE * persp(g.y) * (match.mods && match.mods.has('giant') ? 1.25 : 1);
     const yOff = pose === 'dive' ? -20 : 0;

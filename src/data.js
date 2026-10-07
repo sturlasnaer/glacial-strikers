@@ -226,9 +226,58 @@ export function comboFor(pair) {
 }
 
 // Recruits on our side wear home colours: coral becomes cream, violet becomes teal.
+// 'club' recolours our own art (teal trim, cream jersey) when the club has custom colours.
 export const PALETTES = {
   homekit: { id: 'homekit', recolor: { h1: 46, h2: 188, sat: 0.32, val: 1.08, sat2: 0.9, val2: 1.3 }, groups: [] },
+  club: { id: 'club', recolor: null },
 };
+
+// ---------------------------------------------------------------- your club
+// Name, nickname, short code and colours (trim, jersey). Defaults are the Glacial Strikers.
+export const CLUB_DEFAULT = { name: 'Glacial Strikers', nick: 'Strikers', short: 'GLA', trim: '#71dce8', jersey: '#fff2cb' };
+export const CLUB = { ...CLUB_DEFAULT, custom: false };
+export const CLUB_PRESETS = [
+  { id: 'glacial', name: 'Glacial', trim: '#71dce8', jersey: '#fff2cb' },
+  { id: 'crimson', name: 'Crimson', trim: '#e0303c', jersey: '#f6f1e9' },
+  { id: 'forest', name: 'Forest', trim: '#2fae5a', jersey: '#f3efe0' },
+  { id: 'royal', name: 'Royal', trim: '#3d6bff', jersey: '#e9eef8' },
+  { id: 'inferno', name: 'Inferno', trim: '#ff8a1f', jersey: '#2b2b33' },
+  { id: 'goldrush', name: 'Gold rush', trim: '#ffc21a', jersey: '#24315e' },
+  { id: 'bubblegum', name: 'Bubblegum', trim: '#ff6fb5', jersey: '#fff0f7' },
+  { id: 'midnight', name: 'Midnight', trim: '#a07bff', jersey: '#2a2440' },
+];
+
+export function hexToHsv(hex) {
+  const r = parseInt(hex.slice(1, 3), 16) / 255, g = parseInt(hex.slice(3, 5), 16) / 255, b = parseInt(hex.slice(5, 7), 16) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  let h = 0;
+  if (d) h = mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return { h: h * 60, s: mx ? d / mx : 0, v: mx };
+}
+
+// Make the club's settings live: names everywhere, colours for our art and signings.
+export function applyClub(club) {
+  const c = { ...CLUB_DEFAULT, ...(club || {}) };
+  Object.assign(CLUB, c, { custom: !!club && (c.name !== CLUB_DEFAULT.name || c.trim !== CLUB_DEFAULT.trim || c.jersey !== CLUB_DEFAULT.jersey || c.short !== CLUB_DEFAULT.short || c.nick !== CLUB_DEFAULT.nick) });
+  const home = TEAMS.home;
+  home.name = c.name; home.short = c.short; home.color = c.trim; home.color2 = c.jersey;
+  const t = hexToHsv(c.trim), j = hexToHsv(c.jersey);
+  const recoloured = c.trim !== CLUB_DEFAULT.trim || c.jersey !== CLUB_DEFAULT.jersey;
+  // our own art: teal trim (h 187 s .51 v .91) and cream jersey (h 45 s .2 v 1)
+  PALETTES.club.recolor = recoloured ? { mode: 'home', trim: t, jersey: j } : null;
+  // signings: coral (s ~.6, v ~1) becomes the jersey, violet (s ~.5, v ~.75) the trim
+  Object.assign(PALETTES.homekit.recolor, {
+    h1: j.h, sat: Math.max(0.05, j.s / 0.6), val: Math.max(0.2, j.v * 1.06),
+    h2: t.h, sat2: Math.max(0.05, t.s / 0.55), val2: Math.max(0.2, t.v / 0.72),
+  });
+  return CLUB;
+}
+
+// Swap the default club name into a line of text.
+export function clubText(str) {
+  if (!CLUB.custom || !str) return str;
+  return String(str).replace(/Glacial Strikers/g, CLUB.name).replace(/\bStrikers\b/g, CLUB.nick);
+}
 
 // Twists: 'none' | 'speed_lanes' | 'cracked_ice' | 'both'
 export const TOURNAMENT = {

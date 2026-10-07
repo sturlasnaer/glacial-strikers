@@ -19,6 +19,7 @@ export function newSave() {
     coins: 150,
     roster, // every signed skater, keyed by member id
     lineup: { C: 'frost', W: 'thunder', D: 'stone' }, // who dresses for matches
+    club: null, // custom name and colours, see applyClub in data.js
     goalie: { level: 1, exp: 0, gear: 'g_start' },
     owned: ['stick_wood', 'skate_start', 'arm_none', 'g_start'],
     chem: Object.fromEntries(Object.keys(COMBOS).map((k) => [k, 0])), // chemistry XP per pair

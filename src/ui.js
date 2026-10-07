@@ -4,7 +4,7 @@ import { Assets } from './assets.js';
 import {
   CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
-  RECRUITS, member, comboFor, recruitKey, pairKey, GEAR_LOOK,
+  RECRUITS, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, PALETTES, clubText, applyClub, hexToHsv,
 } from './data.js';
 import { standings } from './league.js';
 import { BUFF_TEXT } from './lockerroom.js';
@@ -24,6 +24,10 @@ const SLOT_NAMES = { stick: 'Stick', skates: 'Skates', armor: 'Protection', goal
 
 // Portrait of a roster slot. Our cast has five expressions for dialogue; each rival has
 // its own cast (the captain with expressions), shown in that team's colours.
+// Icons of our own art use the club colours when the club has custom ones.
+const CLUB_PAGES = () => (PALETTES.club.recolor ? 'club' : null);
+const hexToHsvUI = (hex) => hexToHsv(hex);
+
 export const portrait = (id, team, teamId, size = 160, expr = null) => {
   const P = Assets.atlas.portraits || {};
   if (team === 0 && RECRUITS[id]) {
@@ -36,8 +40,8 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
   if (team !== 0 && id.startsWith('sub_')) return Assets.icon(`character_portraits/away/${PORTRAIT[id.slice(4)]}`, size, teamId);
   if (team === 0) {
     const p = P[ART_NAME[id]];
-    if (expr && p && p[expr]) return Assets.icon(p[expr], size);
-    return Assets.icon(`character_portraits/home/${PORTRAIT[id]}`, size);
+    if (expr && p && p[expr]) return Assets.icon(p[expr], size, CLUB_PAGES());
+    return Assets.icon(`character_portraits/home/${PORTRAIT[id]}`, size, CLUB_PAGES());
   }
   const t = TEAMS[teamId];
   const p = t && t.art && P[`${t.art}_${ROLE[id]}`];
@@ -46,7 +50,7 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
   return url || Assets.icon(`character_portraits/away/${PORTRAIT[id]}`, size, teamId);
 };
 export const crest = (teamId, size = 96) => {
-  if (teamId === 'home') return Assets.icon('hud_elements/misc/home_crest', size);
+  if (teamId === 'home') return Assets.icon('hud_elements/misc/home_crest', size, CLUB_PAGES());
   const t = TEAMS[teamId];
   const c = t && t.art && Assets.atlas.crests && Assets.atlas.crests[t.art];
   return c ? Assets.icon(c, size) : Assets.icon('hud_elements/misc/away_crest', size, teamId);
@@ -198,7 +202,7 @@ export class UI {
     this.vsTeam ||= 'comets';
     this.modal(`
       <h2>Local versus</h2>
-      <p class="muted" style="margin:0">Two players on one screen: Strikers against a rival, same stats on both sides, first to 5. Needs a keyboard or gamepads.</p>
+      <p class="muted" style="margin:0">Two players on one screen: ${esc(CLUB.nick)} against a rival, same stats on both sides, first to 5. Needs a keyboard or gamepads.</p>
       <div class="keys">
         <kbd style="color:var(--ice)">Player 1</kbd><span>WASD skate · F shoot/check · G pass/switch · Left Shift sprint · R skill · T ultimate</span>
         <kbd style="color:var(--coral)">Player 2</kbd><span>Arrows skate · K shoot/check · L pass/switch · Right Shift sprint · O skill · P ultimate</span>
@@ -231,7 +235,7 @@ export class UI {
       <div class="hub">
         <div class="hub-top">
           <img class="crest" src="${crest('home', 96)}" alt="">
-          <div class="hub-title">Glacial Strikers<small>${esc(TOURNAMENT.name)}${s.season > 1 ? ' · Season ' + s.season : ''}</small></div>
+          <div class="hub-title">${esc(CLUB.name)}<small>${esc(TOURNAMENT.name)}${s.season > 1 ? ' · Season ' + s.season : ''}</small></div>
           <div class="coins"><img src="${ico('equipment_items/reward/coins', 64)}" alt="">${s.coins}</div>
           <button class="icon-btn" id="h-settings" aria-label="Settings">☰</button>
         </div>
@@ -290,12 +294,12 @@ export class UI {
     const crew = [...line, 'goalie'].map((id, i) => {
       const [x, y] = CREW_SPOTS[i];
       let src;
-      if (id === 'goalie') src = Assets.icon(Assets.atlas.goalies_side.home.ready, 160, null, { flip: true });
+      if (id === 'goalie') src = Assets.icon(Assets.atlas.goalies_side.home.ready, 160, CLUB_PAGES(), { flip: true });
       else {
         const m = member(id);
         const set = m.recruit ? Assets.atlas.skaters[m.recruit.sprite] : Assets.atlas.skaters[m.def.sprite];
-        src = m.recruit ? Assets.icon(set.home.south.frames.idle, 160, 'homekit') : Assets.icon(set.home.south.frames.idle, 160);
-        if (!src) src = Assets.icon(Assets.atlas.skaters[m.def.sprite].home.south.frames.idle, 160);
+        src = m.recruit ? Assets.icon(set.home.south.frames.idle, 160, 'homekit') : Assets.icon(set.home.south.frames.idle, 160, CLUB_PAGES());
+        if (!src) src = Assets.icon(Assets.atlas.skaters[m.def.sprite].home.south.frames.idle, 160, CLUB_PAGES());
       }
       const name = id === 'goalie' ? GOALIE.name : member(id).name;
       return `<button class="crew" data-crew="${id}" style="left:${x}%;top:${y}%;animation-delay:${-i * 0.7}s" aria-label="${esc(name)}"><img src="${src}" alt=""><span>${esc(name)}</span></button>`;
@@ -320,8 +324,8 @@ export class UI {
   tabTournament(body) {
     const s = this.app.save;
     const L = s.league;
-    const name = (id) => (id === 'home' ? 'Glacial Strikers' : TEAMS[id].name);
-    const short = (id) => (id === 'home' ? 'Strikers' : TEAMS[id].name.split(' ').slice(-1)[0]);
+    const name = (id) => TEAMS[id].name;
+    const short = (id) => (id === 'home' ? CLUB.nick : TEAMS[id].name.split(' ').slice(-1)[0]);
     const rows = standings(L);
     const record = (id) => { const r = s.rivals && s.rivals[id]; return r && r.played ? `${r.wins}–${r.losses}` : ''; };
     const table = `<table class="league-table">
@@ -354,8 +358,8 @@ export class UI {
     const next = this.app.fixture && this.app.fixture();
     const nt = next && TEAMS[next.opponent];
     const venue = nt && nt.arena ? ARENAS[nt.arena].name : 'Frostline Rink';
-    const call = L.champion ? (L.champion === 'home' ? 'Champions! Ladies and gentlemen, your Glacial Strikers!' : 'What a season. The ice goes quiet until next year.')
-      : nt ? pick([`Next up: the ${nt.name} at ${venue}! Get loud!`, `${nt.name} at ${venue}. ${nt.style}`, `Tonight at ${venue}: Strikers versus ${nt.name}. You won't want to miss it.`])
+    const call = L.champion ? (L.champion === 'home' ? `Champions! Ladies and gentlemen, your ${CLUB.name}!` : 'What a season. The ice goes quiet until next year.')
+      : nt ? pick([`Next up: the ${nt.name} at ${venue}! Get loud!`, `${nt.name} at ${venue}. ${nt.style}`, `Tonight at ${venue}: ${CLUB.nick} versus ${nt.name}. You won't want to miss it.`])
         : 'Welcome to the Frostline league!';
     body.innerHTML = `
       ${npc('announcer', call)}
@@ -405,7 +409,7 @@ export class UI {
         const pr = !done && tr.progress(a);
         return `<div class="trophy ${done ? 'got' : ''}">
           <img src="${ico(a.icon, 96)}" alt="">
-          <div style="min-width:0"><b>${esc(a.name)}</b><span>${esc(a.text)}</span>
+          <div style="min-width:0"><b>${esc(a.name)}</b><span>${esc(clubText(a.text))}</span>
             ${pr ? `<div class="xpbar" style="margin-top:4px"><i style="width:${Math.round((pr[0] / pr[1]) * 100)}%"></i></div><span class="muted">${pr[0]} / ${pr[1]}</span>` : ''}</div>
           <span class="tcoins">${done ? '✓' : `+${a.coins}`}</span>
         </div>`;
@@ -447,7 +451,7 @@ export class UI {
         audio.sfx('whoosh');
       } else {
         const ours = w.team === 'home';
-        say.textContent = ours ? `${w.name} of the Glacial Strikers! What a season!` : `${w.name} of the ${TEAMS[w.team].name}. Tip of the cap.`;
+        say.textContent = ours ? `${w.name} of the ${CLUB.name}! What a season!` : `${w.name} of the ${TEAMS[w.team].name}. Tip of the cap.`;
         next.textContent = i < list.length - 1 ? 'Next award' : 'That\'s the show';
         if (ours) { audio.jingle('level'); audio.crowdCheer(0.8); } else audio.crowdOoh(0.5);
       }
@@ -537,7 +541,7 @@ export class UI {
 
   // After a league match: the rest of the round, standings moves, playoff news.
   leagueUpdate(out, L, done) {
-    const short = (id) => (id === 'home' ? 'Strikers' : TEAMS[id].name.split(' ').slice(-1)[0]);
+    const short = (id) => (id === 'home' ? CLUB.nick : TEAMS[id].name.split(' ').slice(-1)[0]);
     const rows = standings(L);
     const pos = rows.findIndex((r) => r.id === 'home') + 1;
     let headline = '';
@@ -553,7 +557,7 @@ export class UI {
       <h2>${esc(headline || 'League update')}</h2>
       ${games ? `<div class="label" style="font-size:13px">Around the league</div><div class="around">${games}</div>` : ''}
       ${L.phase === 'regular' || out.phaseChange ? `<div class="label" style="font-size:13px">Standings</div><div class="mini-table">${top}</div>` : ''}
-      ${out.eliminated && L.champion ? `<p>${esc(TEAMS[L.champion] ? TEAMS[L.champion].name : 'The Strikers')} win the Frostline Cup. Start a new season from the hub when you\'re ready.</p>` : ''}
+      ${out.eliminated && L.champion ? `<p>${esc(TEAMS[L.champion] ? TEAMS[L.champion].name : 'The ' + CLUB.nick)} win the Frostline Cup. Start a new season from the hub when you\'re ready.</p>` : ''}
       <div class="row" style="justify-content:flex-end"><button class="btn gold" data-close>Continue</button></div>`, null, false, done);
   }
 
@@ -565,7 +569,7 @@ export class UI {
       <div class="label">Locker room</div>
       <div class="locker">
         <div class="locker-faces">${who.map((id) => `<img src="${portrait(id, 0, null, 152)}" alt="">`).join('') || `<img src="${portrait('goalie', 0, null, 152)}" alt="">`}</div>
-        <div><h2>${esc(m.title)}</h2><p style="margin:6px 0 0">${esc(m.text(ctx))}</p></div>
+        <div><h2>${esc(m.title)}</h2><p style="margin:6px 0 0">${esc(clubText(m.text(ctx)))}</p></div>
       </div>
       <div class="choice" id="lm-choices">${m.choices.map((c, i) => `<button class="btn ghost" data-lm="${i}"><b>${esc(c.label)}</b>${esc(c.fx)}</button>`).join('')}</div>
       <div id="lm-reply" hidden></div>`, (el, close) => {
@@ -647,6 +651,8 @@ export class UI {
     const pairs = [];
     for (let i = 0; i < 3; i++) for (let j = i + 1; j < 3; j++) pairs.push(pairKey(line[i], line[j]));
     body.innerHTML = `
+      <div class="club-bar"><img src="${crest('home', 96)}" alt="" width="40" height="40"><div style="min-width:0"><b>${esc(CLUB.name)}</b><span class="muted">${esc(CLUB.short)} · the ${esc(CLUB.nick)}</span></div>
+        <span class="club-sw" style="--a:${CLUB.trim};--b:${CLUB.jersey}"></span><button class="btn small ghost" id="club-edit">Customise club</button></div>
       <div class="label" style="margin-bottom:4px">Line-up</div>
       <p class="muted" style="margin:0 0 10px;font-size:13px">A centre, a winger and a defender dress for every match. Each position brings its kit: centres play Nix's frost kit, wingers Volta's thunder kit, defenders Bram's stone kit.</p>
       <div class="roster">${line.map((id) => card(id, true)).join('')}${goalieCard}</div>
@@ -670,6 +676,78 @@ export class UI {
     this.click('[data-gear]', (el) => { const [id, slot] = el.dataset.gear.split(':'); this.gearPicker(id, slot); }, body);
     this.click('[data-dress]', (el) => { setLineup(s, el.dataset.dress); writeSave(s); audio.sfx('confirm'); this.hub('team'); }, body);
     this.click('[data-sign]', (el) => this.signOffer(el.dataset.sign), body);
+    this.click('#club-edit', () => this.clubEditor(), body);
+  }
+
+  // Club name, nickname, short code and colours, with a live preview.
+  clubEditor() {
+    const s = this.app.save;
+    const cur = { ...CLUB_DEFAULT, ...(s.club || {}) };
+    const draft = { ...cur };
+    let nickTouched = !!(s.club && s.club.nick), shortTouched = !!(s.club && s.club.short);
+    audio.sfx('click');
+    const previewIds = () => {
+      const sk = Assets.atlas.skaters;
+      return ['hud_elements/misc/home_crest', sk.frost_captain.home.south.frames.idle, sk.thunder_winger.home.south.frames.celebrate, sk.stone_defender.home.east.frames.idle];
+    };
+    const rc = () => {
+      const p = { trim: hexToHsvUI(draft.trim), jersey: hexToHsvUI(draft.jersey), mode: 'home' };
+      return draft.trim === CLUB_DEFAULT.trim && draft.jersey === CLUB_DEFAULT.jersey ? null : p;
+    };
+    this.modal(`
+      <h2>Your club</h2>
+      <div class="club-preview" id="club-preview"></div>
+      <div class="club-form">
+        <label>Club name<input id="club-name" maxlength="26" value="${esc(draft.name)}" autocomplete="off"></label>
+        <label>Nickname <small class="muted">chants, commentary and dialogue</small><input id="club-nick" maxlength="16" value="${esc(draft.nick)}" autocomplete="off"></label>
+        <label>Short code<input id="club-short" maxlength="3" value="${esc(draft.short)}" autocomplete="off" style="text-transform:uppercase;width:5.5em"></label>
+      </div>
+      <div class="label" style="font-size:15px;margin:4px 0 0">Colours</div>
+      <div class="filters" style="margin:6px 0 0">${CLUB_PRESETS.map((p) => `<button class="chip preset" data-preset="${p.id}" aria-pressed="${p.trim === draft.trim && p.jersey === draft.jersey}"><span class="club-sw" style="--a:${p.trim};--b:${p.jersey}"></span>${esc(p.name)}</button>`).join('')}</div>
+      <div class="row" style="gap:16px;margin-top:4px">
+        <label class="color-pick">Trim <input type="color" id="club-trim" value="${draft.trim}"></label>
+        <label class="color-pick">Jersey <input type="color" id="club-jersey" value="${draft.jersey}"></label>
+      </div>
+      <div class="row" style="justify-content:space-between">
+        <button class="btn small ghost" id="club-reset">Reset to Glacial Strikers</button>
+        <span class="row" style="gap:8px"><button class="btn small ghost" data-close>Cancel</button><button class="btn gold" id="club-save">Save club</button></span>
+      </div>`, (m, close) => {
+      const $ = (sel) => m.querySelector(sel);
+      const paint = () => {
+        const r = rc();
+        $('#club-preview').innerHTML = previewIds().map((id, i) => `<img src="${Assets.previewIcon(id, i ? 132 : 96, r)}" alt="">`).join('')
+          + `<div class="club-name-preview"><b>${esc(draft.name)}</b><span>${esc(draft.short)} · ${esc(draft.nick)}</span></div>`;
+        m.querySelectorAll('[data-preset]').forEach((b) => { const p = CLUB_PRESETS.find((x) => x.id === b.dataset.preset); b.setAttribute('aria-pressed', p.trim === draft.trim && p.jersey === draft.jersey); });
+        $('#club-trim').value = draft.trim; $('#club-jersey').value = draft.jersey;
+      };
+      paint();
+      $('#club-name').addEventListener('input', (e) => {
+        draft.name = e.target.value.trim() || CLUB_DEFAULT.name;
+        const words = draft.name.split(/\s+/);
+        if (!nickTouched) { draft.nick = words[words.length - 1]; $('#club-nick').value = draft.nick; }
+        if (!shortTouched) { draft.short = words[0].replace(/[^\p{L}\p{N}]/gu, '').slice(0, 3).toUpperCase() || 'GLA'; $('#club-short').value = draft.short; }
+        paint();
+      });
+      $('#club-nick').addEventListener('input', (e) => { nickTouched = true; draft.nick = e.target.value.trim() || draft.name.split(/\s+/).pop(); paint(); });
+      $('#club-short').addEventListener('input', (e) => { shortTouched = true; draft.short = (e.target.value.trim().toUpperCase() || 'GLA').slice(0, 3); paint(); });
+      $('#club-trim').addEventListener('input', (e) => { draft.trim = e.target.value; paint(); });
+      $('#club-jersey').addEventListener('input', (e) => { draft.jersey = e.target.value; paint(); });
+      this.click('[data-preset]', (el) => { const p = CLUB_PRESETS.find((x) => x.id === el.dataset.preset); draft.trim = p.trim; draft.jersey = p.jersey; audio.sfx('click'); paint(); }, m);
+      this.click('#club-reset', () => {
+        Object.assign(draft, CLUB_DEFAULT); nickTouched = shortTouched = false;
+        $('#club-name').value = draft.name; $('#club-nick').value = draft.nick; $('#club-short').value = draft.short;
+        audio.sfx('click'); paint();
+      }, m);
+      this.click('#club-save', () => {
+        const same = Object.keys(CLUB_DEFAULT).every((k) => draft[k] === CLUB_DEFAULT[k]);
+        s.club = same ? null : { ...draft };
+        this.app.applyClubLook();
+        writeSave(s);
+        audio.jingle('level');
+        close();
+        this.hub(this.tab);
+      }, m);
+    });
   }
 
   // Rival skaters you can sign: every team you've beaten.
@@ -728,7 +806,7 @@ export class UI {
         close();
         Assets.ensureKit(homeKitGroups(s)).then(() => this.hub('team'));
         this.modal(`<h2>${esc(r.name)} signs!</h2>
-          <p>${esc(r.name)} joins the Strikers on your bench. Dress ${esc(r.name)} at ${ROLE_NAME[r.role].toLowerCase()} from the Team tab, or before a match.</p>
+          <p>${esc(r.name)} joins the ${esc(CLUB.nick)} on your bench. Dress ${esc(r.name)} at ${ROLE_NAME[r.role].toLowerCase()} from the Team tab, or before a match.</p>
           <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>Later</button><button class="btn gold" id="dress-now">Dress now</button></div>`, (m2, close2) => {
           this.click('#dress-now', () => { setLineup(s, key); writeSave(s); audio.sfx('confirm'); close2(); this.hub('team'); }, m2);
         });
@@ -988,6 +1066,7 @@ export class UI {
   // -------------------------------------------------------------- dialogue
   // lines: [side ('us'|'them'), charId, text]
   dialogue(lines, teamId, header, onDone, mood = null) {
+    lines = lines.map((l) => [l[0], l[1], clubText(l[2])]);
     const t = TEAMS[teamId];
     let i = 0, typing = null, shown = 0;
     const ours = (l) => portrait(l[1], 0, null, 420, expression('us', l[2], mood));
@@ -997,7 +1076,7 @@ export class UI {
       <div class="dim"></div>
       <div class="dlg" id="dlg">
         <button class="btn small ghost dlg-skip" id="dlg-skip">Skip</button>
-        ${header ? `<div class="dlg-head"><div class="vs">Strikers<em>vs</em>${esc(t.name.split(' ').slice(-1)[0])}</div>${header.sub ? `<div class="twist">${esc(header.sub)}</div>` : ''}</div>` : ''}
+        ${header ? `<div class="dlg-head"><div class="vs">${esc(CLUB.nick)}<em>vs</em>${esc(t.name.split(' ').slice(-1)[0])}</div>${header.sub ? `<div class="twist">${esc(header.sub)}</div>` : ''}</div>` : ''}
         <div class="portraits"><img id="pl" alt=""><img id="pr" class="them" alt=""></div>
         <div class="dlg-box panel"><div class="dlg-name" id="dn"></div><div class="dlg-text" id="dt"></div><div class="dlg-more">▼</div></div>
       </div>`);
@@ -1050,7 +1129,7 @@ export class UI {
       <div class="results panel">
         <div class="res-head">
           <h1 class="${won ? 'gold-t' : ''}">${won ? 'Victory!' : 'Defeat'}</h1>
-          <div class="score">Strikers ${summary.score[0]} – ${summary.score[1]} ${esc(t.name.split(' ').slice(-1)[0])}</div>
+          <div class="score">${esc(CLUB.nick)} ${summary.score[0]} – ${summary.score[1]} ${esc(t.name.split(' ').slice(-1)[0])}</div>
           <div class="muted">${exhibition ? 'Exhibition' : esc(data.round || '')} · Shots on goal ${summary.shots[0]}–${summary.shots[1]}</div>
         </div>
         <div class="res-grid">
@@ -1132,7 +1211,7 @@ export class UI {
       <div class="results panel" style="text-align:center;align-items:center">
         <img src="${ico('equipment_items/reward/trophy', 256)}" alt="" width="150" height="150">
         <h1 class="gold-t" style="font-family:var(--display);font-weight:normal;font-size:clamp(44px,9vw,80px);line-height:.85;margin:0">Champions!</h1>
-        <p style="max-width:46ch">The Glacial Strikers win the ${esc(TOURNAMENT.name)}${s.season > 1 ? ` (season ${s.season})` : ''}. Nix lifts the cup while Volta does laps and Bram carries Halla around on his shoulders.</p>
+        <p style="max-width:46ch">The ${esc(CLUB.name)} win the ${esc(TOURNAMENT.name)}${s.season > 1 ? ` (season ${s.season})` : ''}. Nix lifts the cup while Volta does laps and Bram carries Halla around on his shoulders.</p>
         <p class="muted" style="max-width:46ch">Start a new season to face every rival again with sharper AI, keeping your levels and gear.</p>
         <div class="row" style="justify-content:center"><button class="btn gold" id="c-go">Back to the hub</button></div>
       </div>`);

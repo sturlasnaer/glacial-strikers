@@ -21,7 +21,7 @@ import { standings } from './league.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan } from './league.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS } from './data.js';
+import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub } from './data.js';
 import {
   loadSave, newSave, writeSave, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards,
   lineupIds, homeKitGroups,
@@ -67,6 +67,8 @@ class App {
       ]);
     }
     this.save = loadSave() || newSave();
+    applyClub(this.save.club);
+    Assets.prepareClub();
     // signings wear home colours, recoloured from their old team's pages
     const kit = homeKitGroups(this.save);
     if (kit.length) await Promise.race([Assets.ensureKit(kit), new Promise((r) => setTimeout(r, 2500))]);
@@ -191,7 +193,7 @@ class App {
     const m = new Match(cfg);
     this.match = m;
     this.acc = 0;
-    this.fx.attach(m, '#71dce8', TEAMS[teamId].color);
+    this.fx.attach(m, TEAMS.home.color, TEAMS[teamId].color);
     this.renderer.snapCamera(m);
     return m;
   }
@@ -354,7 +356,7 @@ class App {
       <div style="text-align:center">
         <div class="label">Local versus</div>
         <div class="drill-score" style="color:${p1 ? 'var(--ice)' : 'var(--coral)'}">Player ${p1 ? 1 : 2} wins!</div>
-        <div class="medal-big" style="--m:var(--cream)">Strikers ${summary.score[0]} – ${summary.score[1]} ${t.name.split(' ').slice(-1)[0]}</div>
+        <div class="medal-big" style="--m:var(--cream)">${CLUB.nick} ${summary.score[0]} – ${summary.score[1]} ${t.name.split(' ').slice(-1)[0]}</div>
       </div>
       <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="vs-title">Title</button><button class="btn gold" id="vs-again">Rematch</button></div>`, (m, close) => {
       m.querySelector('#vs-again').addEventListener('click', () => { close(); this.startVersus(this.cur.teamId); });
@@ -701,7 +703,7 @@ class App {
     const scorer = g.scorer ? g.scorer.name : 'Goal';
     const assist = g.assists && g.assists.length ? ` from ${g.assists.map((a) => a.name).join(' & ')}` : '';
     const kind = g.kind === 'onetimer' ? ' · one-timer' : g.special && g.special.combo ? ` · ${COMBOS[g.special.combo].name}` : g.powerPlay ? ' · power play' : '';
-    const score = `GLA ${m.score[0]} – ${m.score[1]} ${t.short}`;
+    const score = `${TEAMS.home.short} ${m.score[0]} – ${m.score[1]} ${t.short}`;
     this.renderer.clipOverlay = { title: `${scorer.toUpperCase()}${assist}${kind}`, score };
     this.clips.start({ scorer, line: `${scorer}${assist}${kind}. ${score}`, team: g.team, score });
   }
@@ -731,7 +733,7 @@ class App {
     const name = team === 0 ? 'STRIKERS' : t.name.split(' ').slice(-1)[0].toUpperCase();
     audio.chant(team === 0 ? 0.9 : 0.6);
     this.fx.text(0, -420, `LET'S GO ${name}!`, team === 0 ? '#71dce8' : t.color, 4, 24);
-    this.hud.ticker(team === 0 ? 'The crowd is on its feet! Strikers ultimates charge faster.' : `${t.name.split(' ').slice(-1)[0]} fans are loud. Their ultimates charge faster.`);
+    this.hud.ticker(team === 0 ? `The crowd is on its feet! ${CLUB.nick} ultimates charge faster.` : `${t.name.split(' ').slice(-1)[0]} fans are loud. Their ultimates charge faster.`);
   }
 
   // After a league match: other results, standings moves and playoff news.
@@ -837,6 +839,15 @@ class App {
     this.ui.hub(tab);
     this.setHubBackground();
     audio.play('hub');
+  }
+
+  // New club colours or name: recolour our art and the signings, clear cached frames.
+  applyClubLook() {
+    applyClub(this.save.club);
+    Assets.prepareClub();
+    this.renderer.clearCaches();
+    const kit = homeKitGroups(this.save);
+    if (kit.length) Assets.ensureKit(kit);
   }
 
   // Once a season is over: hand out the awards (once) and hold the ceremony.

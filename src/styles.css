@@ -577,3 +577,22 @@ body.in-hub.hub-room #screen { background: linear-gradient(rgba(8, 14, 26, 0.82)
 .daily-goal { padding: 10px 12px; border-radius: 10px; background: rgba(255, 212, 94, 0.12); border: 2px solid var(--gold, #ffd45e); }
 .daily-goal small { display: block; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold, #ffd45e); }
 .daily-goal b { font-family: var(--display); font-weight: normal; font-size: clamp(20px, 3.6vw, 26px); }
+
+/* ---- your club ---- */
+.club-bar { display: grid; grid-template-columns: 40px 1fr auto auto; gap: 10px; align-items: center; padding: 8px 10px; margin-bottom: 12px; border-radius: 8px; background: rgba(13, 24, 42, 0.55); border: 2px solid var(--navy-3); }
+.club-bar b { display: block; font-family: var(--display); font-weight: normal; font-size: 22px; line-height: 1; }
+.club-bar .muted { font-size: 12px; }
+.club-sw { display: inline-block; width: 26px; height: 18px; border-radius: 4px; border: 2px solid var(--navy); background: linear-gradient(135deg, var(--b) 0 55%, var(--a) 55% 100%); vertical-align: middle; flex: none; }
+.chip.preset { display: inline-flex; gap: 6px; align-items: center; }
+.club-preview { display: flex; align-items: flex-end; gap: 4px; padding: 8px 10px; border-radius: 10px; background: radial-gradient(ellipse at 50% 120%, #dff3ff, #a9d3ec 60%, #7fb3d6); min-height: 140px; }
+.club-preview img { width: 96px; height: 96px; image-rendering: auto; }
+.club-preview img:first-child { width: 64px; height: 64px; align-self: center; }
+.club-name-preview { margin-left: auto; text-align: right; color: var(--navy); align-self: center; }
+.club-name-preview b { display: block; font-family: var(--display); font-weight: normal; font-size: clamp(22px, 4vw, 30px); line-height: 1; }
+.club-name-preview span { font-size: 13px; }
+.club-form { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 88px; gap: 10px; }
+.club-form label, .color-pick { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.club-form input { font: inherit; font-size: 16px; padding: 7px 9px; border-radius: 6px; border: 2px solid var(--navy-3); background: rgba(255, 242, 203, 0.95); color: var(--navy); min-width: 0; }
+.color-pick { flex-direction: row; align-items: center; gap: 8px; }
+.color-pick input { width: 44px; height: 32px; padding: 0; border: 2px solid var(--navy); border-radius: 6px; background: none; }
+@media (max-width: 560px) { .club-form { grid-template-columns: 1fr 1fr; } .club-preview img { width: 70px; height: 70px; } }

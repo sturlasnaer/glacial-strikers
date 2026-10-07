@@ -95,6 +95,44 @@ export const Assets = {
     return r ? r.pages : this.pages;
   },
 
+  // Club colours: recolour our team's frames on the home pages ('club' palette).
+  prepareClub() {
+    const rc = PALETTES.club.recolor;
+    this.recolored.delete('club');
+    for (const k of [...this.iconCache.keys()]) if (k.includes('|club|')) this.iconCache.delete(k);
+    for (const k of [...this.bannerCache.keys()]) if (k.endsWith('|club')) this.bannerCache.delete(k);
+    this.recolored.delete('homekit'); // signings follow the club colours too
+    if (!rc) return;
+    const ours = (id) => (/\/home[_/]/.test(id) && !id.startsWith('hud_elements/')) || id.startsWith('expressions_core/')
+      || id.startsWith('expressions_halla_royals_comets/halla/') || id === 'hud_elements/misc/home_crest'
+      || id === 'arena/banner/glacial_strikers' || id.startsWith('mascot/');
+    const rects = new Map();
+    for (const [id, f] of Object.entries(this.atlas.frames)) {
+      if (!ours(id) || this.atlas.pages[f[0]].group !== 'home') continue;
+      if (!rects.has(f[0])) rects.set(f[0], []);
+      rects.get(f[0]).push([f[1], f[2], f[3], f[4]]);
+    }
+    const pages = this.pages.map((img, i) => (img && rects.has(i) ? recolorHome(img, rc, rects.get(i)) : img));
+    this.recolored.set('club', { pages, loaded: 'club' });
+  },
+
+  // A frame of our art in trial club colours, for the club editor's preview.
+  previewIcon(id, size, rc) {
+    const f = this.atlas.frames[id];
+    if (!f || !this.pages[f[0]]) return '';
+    const [pi, fx, fy, fw, fh] = f;
+    const src = document.createElement('canvas'); src.width = fw; src.height = fh;
+    src.getContext('2d').drawImage(this.pages[pi], fx, fy, fw, fh, 0, 0, fw, fh);
+    const img = rc ? recolorHome(src, rc, [[0, 0, fw, fh]]) : src;
+    const c = document.createElement('canvas'); c.width = size; c.height = size;
+    const k = size / Math.max(fw, fh);
+    c.getContext('2d').drawImage(img, (size - fw * k) / 2, (size - fh * k) / 2, fw * k, fh * k);
+    return c.toDataURL('image/png');
+  },
+
+  // Pages for our own team: club colours when set, else the original art.
+  clubPages() { return this.recolored.has('club') ? this.recolored.get('club').pages : this.pages; },
+
   // Our recruits: load their teams' roster pages and recolour them into home colours.
   async ensureKit(groups) {
     const kit = PALETTES.homekit;
@@ -199,9 +237,44 @@ function loadImage(src) {
   });
 }
 
+// Club colours on our own art: the teal trim and cream jersey take the club's colours,
+// shaded by the original pixel. Only inside `rects` (our team's frames) so effects and
+// UI icons on the same page keep their colours.
+function recolorHome(img, rc, rects) {
+  const c = document.createElement('canvas');
+  c.width = img.width; c.height = img.height;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0);
+  const T = rc.trim, J = rc.jersey;
+  for (const [x, y, w, h] of rects) {
+    const data = ctx.getImageData(x, y, w, h);
+    const d = data.data;
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i + 3] < 8) continue;
+      const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
+      const mx = Math.max(r, g, b), mn = Math.min(r, g, b), dl = mx - mn;
+      if (dl < 0.03 || mx < 0.3) continue;
+      const s = dl / mx;
+      let hh;
+      if (mx === r) hh = ((g - b) / dl + 6) % 6; else if (mx === g) hh = (b - r) / dl + 2; else hh = (r - g) / dl + 4;
+      hh *= 60;
+      let out;
+      if (hh >= 165 && hh <= 205 && s > 0.28) out = hsv2rgb(T.h / 360, Math.min(1, s * (T.s / 0.51)), Math.min(1, mx * (T.v / 0.91)));
+      // jersey cream: hue 37-62, plus its saturated shading at 28-37 (pale skin sits at
+      // 28-37 too, but less saturated and at full brightness, so it's left alone)
+      else if ((hh >= 37 && hh <= 62 && s >= 0.06 && s <= 0.46 && mx > 0.74) || (hh >= 28 && hh < 37 && s >= 0.37 && s <= 0.5 && mx > 0.74 && mx < 0.95)) out = hsv2rgb(J.h / 360, Math.min(1, s * (J.s / 0.2) * 0.6 + J.s * 0.55), Math.min(1, J.v * (0.55 + mx * 0.45)));
+      else continue;
+      d[i] = out[0]; d[i + 1] = out[1]; d[i + 2] = out[2];
+    }
+    ctx.putImageData(data, x, y);
+  }
+  return c;
+}
+
 // Shift the coral (primary) and violet (secondary) jersey colours of the away art.
 // recolor: { h1, h2, sat, val } — target hues in degrees, saturation/value multipliers.
 function recolorPage(img, rc) {
+  if (rc.mode === 'home') return recolorHome(img, rc, [[0, 0, img.width, img.height]]);
   const c = document.createElement('canvas');
   c.width = img.width; c.height = img.height;
   const ctx = c.getContext('2d', { willReadFrequently: true });
