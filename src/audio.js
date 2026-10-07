@@ -258,6 +258,16 @@ export class Audio {
         break;
       }
       case 'stop': this.noiseBurst(t, 0.28, 0.32 * v, 'bandpass', 4200, 0.9, null, 0.01); break;
+      case 'splash':
+        this.noiseBurst(t, 0.32, 0.3 * v, 'bandpass', 1300, 0.7, null, 0.01);
+        this.noiseBurst(t + 0.05, 0.22, 0.15 * v, 'highpass', 3200, 0.8);
+        break;
+      case 'crack':
+        this.noiseBurst(t, 0.05, 0.5 * v, 'highpass', 2600, 1.2);
+        this.tone(420, t, 0.18, 'square25', 0.08 * v, null, { slide: 160 });
+        this.noiseBurst(t + 0.04, 0.35, 0.18 * v, 'lowpass', 700, 0.8);
+        break;
+      case 'shimmer': ['E6', 'B6', 'D#7', 'G#7'].forEach((n, i) => this.tone(freq(midi(n)), t + i * 0.07, 0.5, 'sine', 0.045 * v)); break;
       case 'pickup': ['C6', 'E6', 'G6', 'C7'].forEach((n, i) => this.tone(freq(midi(n)), t + i * 0.045, 0.08, 'square25', 0.08 * v)); break;
       case 'power': {
         const set = { fire: ['D5', 'A5', 'D6'], ice: ['E6', 'B6', 'E7'], lightning: ['F5', 'C6', 'F6'], gravity: ['C4', 'G4', 'C5'] }[opt.type] || ['C5', 'G5', 'C6'];

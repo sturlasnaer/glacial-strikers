@@ -303,70 +303,133 @@ export class Renderer {
     const tw = match.twists;
     if (!tw || tw.kind === 'none') return;
     const t = fx.time;
-    for (const l of tw.lanes) {
-      const a = toScreen(l.x0, l.y - l.h / 2), b = toScreen(l.x1, l.y + l.h / 2);
-      const g = ctx.createLinearGradient(0, a.y, 0, b.y);
+    const aurora = tw.kind === 'aurora_lanes';
+    for (const l of tw.lanes) this.drawLane(ctx, l, t, aurora, 1);
+    if (aurora && tw.next) {
+      // the next lanes flicker in before the lights shift
+      const blink = 0.35 + Math.max(0, Math.sin(t * 12)) * 0.4;
+      for (const l of tw.next) this.drawLane(ctx, l, t, true, blink, true);
+    }
+    for (const p of tw.pools) this.drawPool(ctx, p, t);
+    for (const c of tw.cracks) this.drawCrack(ctx, c, tw);
+  }
+
+  drawLane(ctx, l, t, aurora, alpha, ghost) {
+    const a = toScreen(l.x0, l.y - l.h / 2), b = toScreen(l.x1, l.y + l.h / 2);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    const g = ctx.createLinearGradient(0, a.y, 0, b.y);
+    if (aurora) {
+      // green to violet, drifting along the lane like the lights overhead
+      const hue = 140 + Math.sin(t * 0.7 + l.y * 0.01) * 50;
+      g.addColorStop(0, `hsla(${hue},90%,60%,0)`);
+      g.addColorStop(0.5, `hsla(${hue},90%,62%,${ghost ? 0.25 : 0.55})`);
+      g.addColorStop(1, `hsla(${hue + 90},85%,60%,0)`);
+    } else {
       g.addColorStop(0, 'rgba(113,220,232,0)');
       g.addColorStop(0.5, 'rgba(113,220,232,0.5)');
       g.addColorStop(1, 'rgba(113,220,232,0)');
-      ctx.fillStyle = g;
-      ctx.fillRect(a.x, a.y, b.x - a.x, b.y - a.y);
-      // chevrons
-      ctx.strokeStyle = 'rgba(255,255,255,0.95)';
-      ctx.lineWidth = 4;
-      const step = 60, off = ((t * 120) % step) * l.dir;
-      for (let x = l.x0 + 20; x < l.x1 - 10; x += step) {
-        const cx = x + off;
-        if (cx < l.x0 + 10 || cx > l.x1 - 10) continue;
-        const c = toScreen(cx, l.y);
+    }
+    ctx.fillStyle = g;
+    ctx.fillRect(a.x, a.y, b.x - a.x, b.y - a.y);
+    if (ghost) {
+      ctx.setLineDash([10, 8]);
+      ctx.strokeStyle = 'rgba(220,255,240,0.8)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(a.x, a.y + 4, b.x - a.x, b.y - a.y - 8);
+      ctx.setLineDash([]);
+    }
+    // chevrons
+    ctx.strokeStyle = aurora ? 'rgba(235,255,245,0.95)' : 'rgba(255,255,255,0.95)';
+    ctx.lineWidth = 4;
+    const step = 60, off = ((t * 120) % step) * l.dir;
+    for (let x = l.x0 + 20; x < l.x1 - 10; x += step) {
+      const cx = x + off;
+      if (cx < l.x0 + 10 || cx > l.x1 - 10) continue;
+      const c = toScreen(cx, l.y);
+      ctx.beginPath();
+      ctx.moveTo(c.x - 8 * l.dir, c.y - 9);
+      ctx.lineTo(c.x + 4 * l.dir, c.y);
+      ctx.lineTo(c.x - 8 * l.dir, c.y + 9);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // Meltwater: a slushy pool with a warm sheen, slow ripples and a little steam.
+  drawPool(ctx, p, t) {
+    const s = toScreen(p.x, p.y);
+    const rx = p.rx * persp(p.y), ry = p.ry;
+    ctx.save();
+    const g = ctx.createRadialGradient(s.x - rx * 0.2, s.y - ry * 0.2, 0, s.x, s.y, rx);
+    g.addColorStop(0, 'rgba(255,170,90,0.5)');
+    g.addColorStop(0.5, 'rgba(70,120,170,0.55)');
+    g.addColorStop(0.92, 'rgba(70,115,160,0.4)');
+    g.addColorStop(1, 'rgba(70,115,160,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.ellipse(s.x, s.y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+    // wet rim catching the torchlight
+    ctx.strokeStyle = 'rgba(255,225,190,0.5)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(s.x, s.y, rx * 0.9, ry * 0.9, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
+    ctx.strokeStyle = 'rgba(40,70,110,0.35)';
+    ctx.beginPath(); ctx.ellipse(s.x, s.y, rx * 0.9, ry * 0.9, 0, 0.1, Math.PI - 0.1); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,230,200,0.45)';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 2; i++) {
+      const k = ((t * 0.35 + i * 0.5 + p.ph) % 1);
+      ctx.globalAlpha = 1 - k;
+      ctx.beginPath(); ctx.ellipse(s.x, s.y, rx * (0.3 + k * 0.6), ry * (0.3 + k * 0.6), 0, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = '#fff2e0';
+    for (let i = 0; i < 3; i++) {
+      const k = (t * 0.4 + i / 3 + p.ph) % 1;
+      const wx = s.x + Math.sin(t * 1.3 + i * 2 + p.ph) * rx * 0.4;
+      ctx.globalAlpha = 0.3 * (1 - k);
+      ctx.beginPath(); ctx.arc(wx, s.y - k * 34, 4 + k * 6, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // Cracks keep their shape as they grow: lines are made once per crack, in units of r.
+  drawCrack(ctx, c, tw) {
+    this.crackLines ||= new WeakMap();
+    let lines = this.crackLines.get(c);
+    if (!lines) {
+      const r = makeRng(Math.round(c.x * 13 + c.y * 7) | 0);
+      lines = [];
+      for (let i = 0; i < 7; i++) {
+        let a = r.range(0, Math.PI * 2), x = 0, y = 0;
+        const pts = [[x, y]];
+        for (let j = 0; j < 5; j++) {
+          a += r.range(-0.6, 0.6);
+          const l = r.range(0.14, 0.31);
+          x += Math.cos(a) * l; y += Math.sin(a) * l * 0.8;
+          pts.push([x, y]);
+        }
+        lines.push(pts);
+      }
+      this.crackLines.set(c, lines);
+    }
+    const fresh = tw.t - (c.born || -9) < 0.5 ? 1 - (tw.t - c.born) / 0.5 : 0;
+    const s = toScreen(c.x, c.y);
+    const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, c.r);
+    g.addColorStop(0, 'rgba(60,110,150,0.32)');
+    g.addColorStop(1, 'rgba(60,110,150,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.ellipse(s.x, s.y, c.r, c.r * 0.8, 0, 0, Math.PI * 2); ctx.fill();
+    const draw = (dx, dy) => {
+      for (const pts of lines) {
         ctx.beginPath();
-        ctx.moveTo(c.x - 8 * l.dir, c.y - 9);
-        ctx.lineTo(c.x + 4 * l.dir, c.y);
-        ctx.lineTo(c.x - 8 * l.dir, c.y + 9);
+        pts.forEach(([x, y], i) => { const q = toScreen(c.x + x * c.r, c.y + y * c.r); i ? ctx.lineTo(q.x + dx, q.y + dy) : ctx.moveTo(q.x + dx, q.y + dy); });
         ctx.stroke();
       }
-    }
-    if (tw.cracks.length) {
-      if (!this.cracks || this.cracksFor !== tw) {
-        this.cracksFor = tw;
-        const r = makeRng(7);
-        this.cracks = tw.cracks.map((c) => {
-          const lines = [];
-          for (let i = 0; i < 7; i++) {
-            let a = r.range(0, Math.PI * 2), x = c.x, y = c.y;
-            const pts = [[x, y]];
-            for (let j = 0; j < 5; j++) {
-              a += r.range(-0.6, 0.6);
-              const l = r.range(10, c.r / 3.2);
-              x += Math.cos(a) * l; y += Math.sin(a) * l * 0.8;
-              pts.push([x, y]);
-            }
-            lines.push(pts);
-          }
-          return { c, lines };
-        });
-      }
-      for (const { c, lines } of this.cracks) {
-        const s = toScreen(c.x, c.y);
-        const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, c.r);
-        g.addColorStop(0, 'rgba(60,110,150,0.32)');
-        g.addColorStop(1, 'rgba(60,110,150,0)');
-        ctx.fillStyle = g;
-        ctx.beginPath(); ctx.ellipse(s.x, s.y, c.r, c.r * 0.8, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(30,70,110,0.7)';
-        for (const pts of lines) {
-          ctx.beginPath();
-          pts.forEach(([x, y], i) => { const q = toScreen(x, y); i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); });
-          ctx.stroke();
-        }
-        ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-        for (const pts of lines) {
-          ctx.beginPath();
-          pts.forEach(([x, y], i) => { const q = toScreen(x, y); i ? ctx.lineTo(q.x + 1, q.y - 1) : ctx.moveTo(q.x + 1, q.y - 1); });
-          ctx.stroke();
-        }
-      }
-    }
+    };
+    ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(30,70,110,0.7)';
+    draw(0, 0);
+    ctx.lineWidth = 1; ctx.strokeStyle = `rgba(255,255,255,${0.6 + fresh * 0.4})`;
+    draw(1, -1);
   }
 
   drawTrails(ctx, match) {

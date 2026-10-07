@@ -150,10 +150,10 @@ export const ROLE = { frost: 'c', thunder: 'w', stone: 'd', goalie: 'g' };
 export const ART_NAME = { frost: 'nix', thunder: 'volta', stone: 'bram', goalie: 'halla' };
 // Arenas: rivals with their own building host you there.
 export const ARENAS = {
-  home: { name: 'Frostline Rink', lamps: '#ffb84d' },
-  ember_dome: { name: 'Ember Dome', lamps: '#ff7a2e', flicker: 2.2, ice: 'rgba(255,140,60,0.06)' },
-  aurora_palace: { name: 'Aurora Palace', lamps: '#ffd27a' },
-  pine_pond: { name: 'Pine Pond', lamps: null },
+  home: { name: 'Frostline Rink', lamps: '#ffb84d', twist: null },
+  ember_dome: { name: 'Ember Dome', lamps: '#ff7a2e', flicker: 2.2, ice: 'rgba(255,140,60,0.06)', twist: 'meltwater', rule: 'Meltwater' },
+  aurora_palace: { name: 'Aurora Palace', lamps: '#ffd27a', twist: 'aurora_lanes', rule: 'Aurora lanes' },
+  pine_pond: { name: 'Pine Pond', lamps: null, twist: 'pond_cracks', rule: 'Pond cracks' },
 };
 
 // ---------------------------------------------------------------- recruitment
@@ -272,6 +272,9 @@ export const TWIST_INFO = {
   speed_lanes: 'Speed lanes: glowing strips along the boards boost anyone skating with the arrows.',
   cracked_ice: 'Cracked ice: rough patches slow skaters down. Keep the puck moving.',
   both: 'Speed lanes and cracked ice.',
+  meltwater: 'Ember Dome rules: meltwater pools drift across the warm ice. Skaters and the puck bog down in them.',
+  aurora_lanes: 'Aurora Palace rules: aurora lanes push skaters and the puck along the arrows, and shift every few seconds with the lights.',
+  pond_cracks: 'Pine Pond rules: big hits and hard shots crack the pond. Cracks slow skaters, grab the puck and spread as the game goes on.',
 };
 
 // Pre- and post-match scenes. speaker: 'us' (our captain), 'them' (their captain),
@@ -321,7 +324,7 @@ export const DIALOGUE = {
     pre: [
       ['them', 'frost', 'The Strikers. Cute little team. See you in the playoffs... if you make it.'],
       ['us', 'frost', 'We\'ll be there, Solenne. Count on it.'],
-      ['them', 'thunder', 'Mind the cracks in the ice. They\'ve swallowed bigger dreams than yours.'],
+      ['them', 'thunder', 'Watch the lights. When the aurora shifts, so does the ice under you.'],
       ['us', 'stone', 'Everybody, together. Show them who we are.'],
     ],
     win: [['them', 'frost', 'A regular-season win. Don\'t get used to it.']],
@@ -329,7 +332,7 @@ export const DIALOGUE = {
     final: [
       ['them', 'frost', 'So the frozen underdogs reached the final. How charming.'],
       ['us', 'frost', 'We didn\'t come here for charm, Solenne. We came for the cup.'],
-      ['them', 'thunder', 'Mind the cracks in the ice. They\'ve swallowed bigger dreams than yours.'],
+      ['them', 'thunder', 'Watch the lights. When the aurora shifts, so does the ice under you.'],
       ['us', 'stone', 'Everybody, together. One more win.'],
     ],
     finalWin: [['them', 'frost', 'The cup is yours, Strikers. Enjoy it while it lasts.']],

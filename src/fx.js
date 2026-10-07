@@ -97,6 +97,19 @@ export class FX {
       if (a.bedrockT > 0) this.anim('ability_effects/stone_barrier/phase_', b.x, b.y + 4, 0.18, { fps: 20, frames: [1, 2, 5, 6] });
     });
     on('steal', ({ s }) => this.text(s.x, s.y - 92, 'STEAL!', '#71dce8', 0.9, 18));
+    // arena rules
+    on('splash', ({ x, y, power }) => {
+      const n = Math.min(14, 5 + power / 40);
+      for (let i = 0; i < n; i++) {
+        const a = rnd.range(0, Math.PI * 2), sp = rnd.range(40, 150);
+        this.part(x, y, 2, Math.cos(a) * sp, Math.sin(a) * sp * 0.7, rnd.range(90, 200), rnd.range(0.3, 0.6), rnd.pick(['#cfe9f7', '#ffd8b0', '#9fc3e0']), rnd.range(1.6, 3));
+      }
+    });
+    on('ice_crack', ({ x, y, k }) => {
+      this.anim(CHIPS, x, y + 2, 0.1 + k * 0.03, { fps: 18, frames: PHASES });
+      this.shake(0.12 * k);
+      this.text(x, y - 40, 'CRACK!', '#cfe9f7', 0.6, 14);
+    });
     on('block', ({ s }) => { this.text(s.x, s.y - 92, 'BLOCKED!', '#fff2cb', 0.9, 18); this.shake(0.15); });
     on('save', ({ g, caught, speed }) => {
       if (caught === false || (speed && speed > 700)) {

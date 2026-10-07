@@ -747,10 +747,10 @@ const ROLE = { frost: 'c', thunder: 'w', stone: 'd', goalie: 'g' };
 const ART_NAME = { frost: 'nix', thunder: 'volta', stone: 'bram', goalie: 'halla' };
 // Arenas: rivals with their own building host you there.
 const ARENAS = {
-  home: { name: 'Frostline Rink', lamps: '#ffb84d' },
-  ember_dome: { name: 'Ember Dome', lamps: '#ff7a2e', flicker: 2.2, ice: 'rgba(255,140,60,0.06)' },
-  aurora_palace: { name: 'Aurora Palace', lamps: '#ffd27a' },
-  pine_pond: { name: 'Pine Pond', lamps: null },
+  home: { name: 'Frostline Rink', lamps: '#ffb84d', twist: null },
+  ember_dome: { name: 'Ember Dome', lamps: '#ff7a2e', flicker: 2.2, ice: 'rgba(255,140,60,0.06)', twist: 'meltwater', rule: 'Meltwater' },
+  aurora_palace: { name: 'Aurora Palace', lamps: '#ffd27a', twist: 'aurora_lanes', rule: 'Aurora lanes' },
+  pine_pond: { name: 'Pine Pond', lamps: null, twist: 'pond_cracks', rule: 'Pond cracks' },
 };
 
 // ---------------------------------------------------------------- recruitment
@@ -869,6 +869,9 @@ const TWIST_INFO = {
   speed_lanes: 'Speed lanes: glowing strips along the boards boost anyone skating with the arrows.',
   cracked_ice: 'Cracked ice: rough patches slow skaters down. Keep the puck moving.',
   both: 'Speed lanes and cracked ice.',
+  meltwater: 'Ember Dome rules: meltwater pools drift across the warm ice. Skaters and the puck bog down in them.',
+  aurora_lanes: 'Aurora Palace rules: aurora lanes push skaters and the puck along the arrows, and shift every few seconds with the lights.',
+  pond_cracks: 'Pine Pond rules: big hits and hard shots crack the pond. Cracks slow skaters, grab the puck and spread as the game goes on.',
 };
 
 // Pre- and post-match scenes. speaker: 'us' (our captain), 'them' (their captain),
@@ -918,7 +921,7 @@ const DIALOGUE = {
     pre: [
       ['them', 'frost', 'The Strikers. Cute little team. See you in the playoffs... if you make it.'],
       ['us', 'frost', 'We\'ll be there, Solenne. Count on it.'],
-      ['them', 'thunder', 'Mind the cracks in the ice. They\'ve swallowed bigger dreams than yours.'],
+      ['them', 'thunder', 'Watch the lights. When the aurora shifts, so does the ice under you.'],
       ['us', 'stone', 'Everybody, together. Show them who we are.'],
     ],
     win: [['them', 'frost', 'A regular-season win. Don\'t get used to it.']],
@@ -926,7 +929,7 @@ const DIALOGUE = {
     final: [
       ['them', 'frost', 'So the frozen underdogs reached the final. How charming.'],
       ['us', 'frost', 'We didn\'t come here for charm, Solenne. We came for the cup.'],
-      ['them', 'thunder', 'Mind the cracks in the ice. They\'ve swallowed bigger dreams than yours.'],
+      ['them', 'thunder', 'Watch the lights. When the aurora shifts, so does the ice under you.'],
       ['us', 'stone', 'Everybody, together. One more win.'],
     ],
     finalWin: [['them', 'frost', 'The cup is yours, Strikers. Enjoy it while it lasts.']],
@@ -1402,36 +1405,52 @@ function collideNets(p, rad) {
   return hit;
 }
 
-// Twists: arena modifiers that some tournament stages enable.
-function makeTwists(kind) {
-  if (kind === 'speed_lanes') {
-    return {
-      kind,
-      lanes: [
-        { x0: -420, x1: 420, y: -205, h: 34, dir: 1 },
-        { x0: -420, x1: 420, y: 250, h: 34, dir: -1 },
-      ],
-      cracks: [],
-    };
-  }
+// Twists: arena rules. Rivals' buildings have their own (meltwater, aurora lanes, pond
+// cracks); the old stage twists (speed lanes, cracked ice) remain for the Frostline rink.
+// Dynamic twists are updated by Match.updateTwists.
+const AURORA_ROWS = [-215, -120, 125, 245];
+const lane = (y, dir) => ({ x0: -440, x1: 440, y, h: 34, dir });
+
+function makeTwists(kind, rng = Math.random) {
+  const pick = (n) => Math.floor(rng() * n);
+  const base = { kind, lanes: [], cracks: [], pools: [], t: 0 };
+  if (kind === 'speed_lanes') return { ...base, lanes: [lane(-205, 1), lane(250, -1)] };
   if (kind === 'cracked_ice') {
-    return {
-      kind,
-      lanes: [],
-      cracks: [
-        { x: -340, y: -70, r: 70 }, { x: 340, y: 90, r: 70 },
-        { x: 0, y: 215, r: 60 }, { x: 0, y: -190, r: 60 },
-      ],
-    };
+    return { ...base, cracks: [{ x: -340, y: -70, r: 70 }, { x: 340, y: 90, r: 70 }, { x: 0, y: 215, r: 60 }, { x: 0, y: -190, r: 60 }] };
   }
   if (kind === 'both') {
     const a = makeTwists('speed_lanes'), b = makeTwists('cracked_ice');
-    return { kind, lanes: a.lanes, cracks: b.cracks.slice(0, 2) };
+    return { ...base, lanes: a.lanes, cracks: b.cracks.slice(0, 2) };
   }
-  return { kind: 'none', lanes: [], cracks: [] };
+  if (kind === 'meltwater') {
+    // slush pools drifting around anchors away from the creases
+    const anchors = [[-390, -110], [-130, 175], [170, -165], [410, 110]];
+    return {
+      ...base,
+      pools: anchors.map(([ax, ay], i) => ({ ax, ay, x: ax, y: ay, rx: 74, ry: 54, orbit: 55 + pick(40), w: (0.12 + rng() * 0.08) * (i % 2 ? 1 : -1), ph: rng() * 6.28 })),
+    };
+  }
+  if (kind === 'aurora_lanes') {
+    const rows = auroraRows(rng);
+    return { ...base, lanes: rows, next: null, period: 14, phaseT: 0 };
+  }
+  if (kind === 'pond_cracks') {
+    // two hairline cracks to start; hits, hard shots and quakes add more
+    const cracks = [];
+    for (let i = 0; i < 2; i++) cracks.push({ x: (rng() - 0.5) * 700, y: (rng() - 0.5) * 380, r: 30, born: 0 });
+    return { ...base, cracks };
+  }
+  return { ...base, kind: 'none' };
 }
 
-return { BACKDROP, RINK, GOAL_X, MOUTH, NET_DEPTH, POST_R, CROSSBAR, BLUE_X, CREASE, DOTS, persp, toScreen, fromScreen, constrainToRink, insideDepth, clampInside, netBox, collideNets, makeTwists };
+function auroraRows(rng = Math.random) {
+  const rows = [...AURORA_ROWS];
+  const a = rows.splice(Math.floor(rng() * rows.length), 1)[0];
+  const b = rows[Math.floor(rng() * rows.length)];
+  return [lane(a, rng() < 0.5 ? 1 : -1), lane(b, rng() < 0.5 ? 1 : -1)];
+}
+
+return { BACKDROP, RINK, GOAL_X, MOUTH, NET_DEPTH, POST_R, CROSSBAR, BLUE_X, CREASE, DOTS, persp, toScreen, fromScreen, constrainToRink, insideDepth, clampInside, netBox, collideNets, AURORA_ROWS, makeTwists, auroraRows };
 })();
 // ---- src/entities.js
 __m["src/entities.js"] = (() => {
@@ -2337,6 +2356,16 @@ class TeamAI {
       const ox = s.x - o.x, oy = s.y - o.y, od = Math.hypot(ox, oy);
       if (od < 70 && od > 0.1) { dx += (ox / od) * (70 - od) * 1.2; dy += (oy / od) * (70 - od) * 1.2; }
     }
+    // arena rules: skirt slush pools and cracks unless the target is inside one
+    const tw = this.m.twists;
+    if (tw.pools.length || tw.cracks.length) {
+      for (const z of tw.pools.length ? tw.pools : tw.cracks) {
+        const zr = z.rx || z.r;
+        if (Math.hypot(c.x - z.x, c.y - z.y) < zr) continue;
+        const ox = s.x - z.x, oy = s.y - z.y, od = Math.hypot(ox, oy);
+        if (od < zr + 35 && od > 0.1) { const k = (zr + 35 - od) * (0.5 + this.diff * 0.7); dx += (ox / od) * k; dy += (oy / od) * k; }
+      }
+    }
     const n = norm(dx, dy);
     const mag = clamp(d / slowR, 0, 1);
     s.in.mx = n.x * mag; s.in.my = n.y * mag;
@@ -2545,7 +2574,7 @@ return { TeamAI };
 // ---- src/match.js
 __m["src/match.js"] = (() => {
 const { clamp, norm, dist, segDist, makeRng, Emitter, angDiff } = __m["src/util.js"];
-const { RINK, GOAL_X, MOUTH, NET_DEPTH, POST_R, CROSSBAR, DOTS, constrainToRink, netBox, makeTwists, clampInside, insideDepth } = __m["src/rink.js"];
+const { RINK, GOAL_X, MOUTH, NET_DEPTH, POST_R, CROSSBAR, DOTS, constrainToRink, netBox, makeTwists, auroraRows, clampInside, insideDepth } = __m["src/rink.js"];
 const { Puck, Skater, Goalie, Barrier, collideBarrier, PUCK_R } = __m["src/entities.js"];
 const { Abilities } = __m["src/abilities.js"];
 const { TeamAI } = __m["src/ai.js"];
@@ -2559,6 +2588,8 @@ const { pairKey, GAME_PLANS } = __m["src/data.js"];
 
 
 
+
+const CRACK_MAX = 72; // pond cracks stop spreading at this radius
 
 const WIN_SCORE = 5;
 const PENALTY_SECONDS = 15;
@@ -2586,7 +2617,15 @@ class Match {
     this.buffs = cfg.buffs || {}; // locker-room buffs for the home team
     this.winScore = this.mods.has('sudden') ? 1 : WIN_SCORE;
     this.powers = this.mods.has('iceage') ? ['ice'] : cfg.powers || [];
-    this.twists = makeTwists(cfg.twist || 'none');
+    this.twists = makeTwists(cfg.twist || 'none', this.rng);
+    if (this.twists.kind === 'pond_cracks') {
+      // the pond cracks under big hits, hard shots and shockwaves
+      this.on('hit', (e) => { if (e.power > 240) this.crackAt(e.b.x, e.b.y, Math.min(1.4, e.power / 400)); });
+      this.on('shot', (e) => {
+        if (['slap', 'onetimer', 'zero', 'thunderclap'].includes(e.kind)) this.crackAt(e.s.x + Math.cos(e.s.face) * 16, e.s.y + Math.sin(e.s.face) * 10, e.kind === 'slap' ? 0.7 : 1);
+      });
+      this.on('quake', (e) => this.crackAt(e.s.x, e.s.y, 1.5));
+    }
     this.pickupT = 9;
     this.humanTeam = cfg.humanTeam ?? null; // player 1's team
     // every team with a human player (two in local versus)
@@ -2748,6 +2787,7 @@ class Match {
     this.time += dt;
     this.stateT += dt;
     this.applyHuman();
+    if (!this.drill && this.twists.kind !== 'none') this.updateTwists(dt);
     if (this.drill) {
       this.drill.update(this, dt);
       if (this.state === 'play' || this.state === 'drill_over') this.tickEntities(dt, false);
@@ -3273,6 +3313,7 @@ class Match {
     const lane = this.laneAt(p.x, p.y);
     if (lane) p.vx += lane.dir * 140 * h;
     if (this.inCrack(p.x, p.y)) { const f2 = Math.exp(-1.6 * h); p.vx *= f2; p.vy *= f2; }
+    else if (this.twists.pools.length && p.z <= 0 && this.inPool(p.x, p.y)) { const f2 = Math.exp(-1.25 * h); p.vx *= f2; p.vy *= f2; }
     if (p.speed < 4) { p.vx = 0; p.vy = 0; }
 
     // boards
@@ -3641,9 +3682,61 @@ class Match {
     for (const c of this.twists.cracks) if (Math.hypot(x - c.x, (y - c.y) * 1.25) < c.r) return true;
     return false;
   }
+  inPool(x, y) {
+    for (const p of this.twists.pools) {
+      const dx = (x - p.x) / p.rx, dy = (y - p.y) / p.ry;
+      if (dx * dx + dy * dy < 1) return p;
+    }
+    return null;
+  }
   surfaceSpeed(s) {
     if (this.inCrack(s.x, s.y)) return 0.7;
+    if (this.twists.pools.length && this.inPool(s.x, s.y)) return 0.78;
     return 1;
+  }
+
+  // Moving parts of the arena rules: drifting meltwater, shifting aurora lanes,
+  // spreading pond cracks.
+  updateTwists(dt) {
+    const tw = this.twists;
+    tw.t += dt;
+    if (tw.kind === 'meltwater') {
+      for (const p of tw.pools) {
+        const a = p.ph + tw.t * p.w;
+        p.x = p.ax + Math.cos(a) * p.orbit;
+        p.y = p.ay + Math.sin(a) * p.orbit * 0.55;
+      }
+      if (this.state === 'play') {
+        for (const s of this.skaters) {
+          const inside = !!this.inPool(s.x, s.y);
+          s.splashCd = Math.max(0, (s.splashCd || 0) - dt);
+          if (inside && !s.inPool && s.speed > 230 && !s.splashCd) { this.emit('splash', { x: s.x, y: s.y, power: s.speed, s }); s.splashCd = 4; }
+          s.inPool = inside;
+        }
+      }
+    } else if (tw.kind === 'aurora_lanes') {
+      tw.phaseT += dt;
+      // the next lanes show up a moment before the lights shift
+      if (!tw.next && tw.phaseT > tw.period - 2.5) tw.next = auroraRows(this.rng);
+      if (tw.phaseT >= tw.period) {
+        tw.lanes = tw.next || auroraRows(this.rng);
+        tw.next = null;
+        tw.phaseT = 0;
+        this.emit('aurora_shift', {});
+      }
+    } else if (tw.kind === 'pond_cracks' && this.state === 'play') {
+      for (const c of tw.cracks) c.r = Math.min(CRACK_MAX, c.r + dt * 0.3); // cracks creep outward
+    }
+  }
+
+  crackAt(x, y, k = 1) {
+    const tw = this.twists;
+    if (Math.hypot(Math.abs(x) - GOAL_X, y) < 120 || insideDepth(x, y) < 40) return; // creases and boards hold
+    const near = tw.cracks.find((c) => Math.hypot(x - c.x, (y - c.y) * 1.25) < c.r + 24);
+    if (near) near.r = Math.min(CRACK_MAX, near.r + 7 * k);
+    else if (tw.cracks.length < 6) tw.cracks.push({ x, y, r: 24 + 10 * k, born: tw.t });
+    else return;
+    this.emit('ice_crack', { x, y, grow: !!near, k });
   }
 
   // -------------------------------------------------------- ability bits
@@ -3941,6 +4034,19 @@ class FX {
       if (a.bedrockT > 0) this.anim('ability_effects/stone_barrier/phase_', b.x, b.y + 4, 0.18, { fps: 20, frames: [1, 2, 5, 6] });
     });
     on('steal', ({ s }) => this.text(s.x, s.y - 92, 'STEAL!', '#71dce8', 0.9, 18));
+    // arena rules
+    on('splash', ({ x, y, power }) => {
+      const n = Math.min(14, 5 + power / 40);
+      for (let i = 0; i < n; i++) {
+        const a = rnd.range(0, Math.PI * 2), sp = rnd.range(40, 150);
+        this.part(x, y, 2, Math.cos(a) * sp, Math.sin(a) * sp * 0.7, rnd.range(90, 200), rnd.range(0.3, 0.6), rnd.pick(['#cfe9f7', '#ffd8b0', '#9fc3e0']), rnd.range(1.6, 3));
+      }
+    });
+    on('ice_crack', ({ x, y, k }) => {
+      this.anim(CHIPS, x, y + 2, 0.1 + k * 0.03, { fps: 18, frames: PHASES });
+      this.shake(0.12 * k);
+      this.text(x, y - 40, 'CRACK!', '#cfe9f7', 0.6, 14);
+    });
     on('block', ({ s }) => { this.text(s.x, s.y - 92, 'BLOCKED!', '#fff2cb', 0.9, 18); this.shake(0.15); });
     on('save', ({ g, caught, speed }) => {
       if (caught === false || (speed && speed > 700)) {
@@ -4736,70 +4842,133 @@ class Renderer {
     const tw = match.twists;
     if (!tw || tw.kind === 'none') return;
     const t = fx.time;
-    for (const l of tw.lanes) {
-      const a = toScreen(l.x0, l.y - l.h / 2), b = toScreen(l.x1, l.y + l.h / 2);
-      const g = ctx.createLinearGradient(0, a.y, 0, b.y);
+    const aurora = tw.kind === 'aurora_lanes';
+    for (const l of tw.lanes) this.drawLane(ctx, l, t, aurora, 1);
+    if (aurora && tw.next) {
+      // the next lanes flicker in before the lights shift
+      const blink = 0.35 + Math.max(0, Math.sin(t * 12)) * 0.4;
+      for (const l of tw.next) this.drawLane(ctx, l, t, true, blink, true);
+    }
+    for (const p of tw.pools) this.drawPool(ctx, p, t);
+    for (const c of tw.cracks) this.drawCrack(ctx, c, tw);
+  }
+
+  drawLane(ctx, l, t, aurora, alpha, ghost) {
+    const a = toScreen(l.x0, l.y - l.h / 2), b = toScreen(l.x1, l.y + l.h / 2);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    const g = ctx.createLinearGradient(0, a.y, 0, b.y);
+    if (aurora) {
+      // green to violet, drifting along the lane like the lights overhead
+      const hue = 140 + Math.sin(t * 0.7 + l.y * 0.01) * 50;
+      g.addColorStop(0, `hsla(${hue},90%,60%,0)`);
+      g.addColorStop(0.5, `hsla(${hue},90%,62%,${ghost ? 0.25 : 0.55})`);
+      g.addColorStop(1, `hsla(${hue + 90},85%,60%,0)`);
+    } else {
       g.addColorStop(0, 'rgba(113,220,232,0)');
       g.addColorStop(0.5, 'rgba(113,220,232,0.5)');
       g.addColorStop(1, 'rgba(113,220,232,0)');
-      ctx.fillStyle = g;
-      ctx.fillRect(a.x, a.y, b.x - a.x, b.y - a.y);
-      // chevrons
-      ctx.strokeStyle = 'rgba(255,255,255,0.95)';
-      ctx.lineWidth = 4;
-      const step = 60, off = ((t * 120) % step) * l.dir;
-      for (let x = l.x0 + 20; x < l.x1 - 10; x += step) {
-        const cx = x + off;
-        if (cx < l.x0 + 10 || cx > l.x1 - 10) continue;
-        const c = toScreen(cx, l.y);
+    }
+    ctx.fillStyle = g;
+    ctx.fillRect(a.x, a.y, b.x - a.x, b.y - a.y);
+    if (ghost) {
+      ctx.setLineDash([10, 8]);
+      ctx.strokeStyle = 'rgba(220,255,240,0.8)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(a.x, a.y + 4, b.x - a.x, b.y - a.y - 8);
+      ctx.setLineDash([]);
+    }
+    // chevrons
+    ctx.strokeStyle = aurora ? 'rgba(235,255,245,0.95)' : 'rgba(255,255,255,0.95)';
+    ctx.lineWidth = 4;
+    const step = 60, off = ((t * 120) % step) * l.dir;
+    for (let x = l.x0 + 20; x < l.x1 - 10; x += step) {
+      const cx = x + off;
+      if (cx < l.x0 + 10 || cx > l.x1 - 10) continue;
+      const c = toScreen(cx, l.y);
+      ctx.beginPath();
+      ctx.moveTo(c.x - 8 * l.dir, c.y - 9);
+      ctx.lineTo(c.x + 4 * l.dir, c.y);
+      ctx.lineTo(c.x - 8 * l.dir, c.y + 9);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // Meltwater: a slushy pool with a warm sheen, slow ripples and a little steam.
+  drawPool(ctx, p, t) {
+    const s = toScreen(p.x, p.y);
+    const rx = p.rx * persp(p.y), ry = p.ry;
+    ctx.save();
+    const g = ctx.createRadialGradient(s.x - rx * 0.2, s.y - ry * 0.2, 0, s.x, s.y, rx);
+    g.addColorStop(0, 'rgba(255,170,90,0.5)');
+    g.addColorStop(0.5, 'rgba(70,120,170,0.55)');
+    g.addColorStop(0.92, 'rgba(70,115,160,0.4)');
+    g.addColorStop(1, 'rgba(70,115,160,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.ellipse(s.x, s.y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+    // wet rim catching the torchlight
+    ctx.strokeStyle = 'rgba(255,225,190,0.5)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(s.x, s.y, rx * 0.9, ry * 0.9, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
+    ctx.strokeStyle = 'rgba(40,70,110,0.35)';
+    ctx.beginPath(); ctx.ellipse(s.x, s.y, rx * 0.9, ry * 0.9, 0, 0.1, Math.PI - 0.1); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,230,200,0.45)';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 2; i++) {
+      const k = ((t * 0.35 + i * 0.5 + p.ph) % 1);
+      ctx.globalAlpha = 1 - k;
+      ctx.beginPath(); ctx.ellipse(s.x, s.y, rx * (0.3 + k * 0.6), ry * (0.3 + k * 0.6), 0, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = '#fff2e0';
+    for (let i = 0; i < 3; i++) {
+      const k = (t * 0.4 + i / 3 + p.ph) % 1;
+      const wx = s.x + Math.sin(t * 1.3 + i * 2 + p.ph) * rx * 0.4;
+      ctx.globalAlpha = 0.3 * (1 - k);
+      ctx.beginPath(); ctx.arc(wx, s.y - k * 34, 4 + k * 6, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // Cracks keep their shape as they grow: lines are made once per crack, in units of r.
+  drawCrack(ctx, c, tw) {
+    this.crackLines ||= new WeakMap();
+    let lines = this.crackLines.get(c);
+    if (!lines) {
+      const r = makeRng(Math.round(c.x * 13 + c.y * 7) | 0);
+      lines = [];
+      for (let i = 0; i < 7; i++) {
+        let a = r.range(0, Math.PI * 2), x = 0, y = 0;
+        const pts = [[x, y]];
+        for (let j = 0; j < 5; j++) {
+          a += r.range(-0.6, 0.6);
+          const l = r.range(0.14, 0.31);
+          x += Math.cos(a) * l; y += Math.sin(a) * l * 0.8;
+          pts.push([x, y]);
+        }
+        lines.push(pts);
+      }
+      this.crackLines.set(c, lines);
+    }
+    const fresh = tw.t - (c.born || -9) < 0.5 ? 1 - (tw.t - c.born) / 0.5 : 0;
+    const s = toScreen(c.x, c.y);
+    const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, c.r);
+    g.addColorStop(0, 'rgba(60,110,150,0.32)');
+    g.addColorStop(1, 'rgba(60,110,150,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.ellipse(s.x, s.y, c.r, c.r * 0.8, 0, 0, Math.PI * 2); ctx.fill();
+    const draw = (dx, dy) => {
+      for (const pts of lines) {
         ctx.beginPath();
-        ctx.moveTo(c.x - 8 * l.dir, c.y - 9);
-        ctx.lineTo(c.x + 4 * l.dir, c.y);
-        ctx.lineTo(c.x - 8 * l.dir, c.y + 9);
+        pts.forEach(([x, y], i) => { const q = toScreen(c.x + x * c.r, c.y + y * c.r); i ? ctx.lineTo(q.x + dx, q.y + dy) : ctx.moveTo(q.x + dx, q.y + dy); });
         ctx.stroke();
       }
-    }
-    if (tw.cracks.length) {
-      if (!this.cracks || this.cracksFor !== tw) {
-        this.cracksFor = tw;
-        const r = makeRng(7);
-        this.cracks = tw.cracks.map((c) => {
-          const lines = [];
-          for (let i = 0; i < 7; i++) {
-            let a = r.range(0, Math.PI * 2), x = c.x, y = c.y;
-            const pts = [[x, y]];
-            for (let j = 0; j < 5; j++) {
-              a += r.range(-0.6, 0.6);
-              const l = r.range(10, c.r / 3.2);
-              x += Math.cos(a) * l; y += Math.sin(a) * l * 0.8;
-              pts.push([x, y]);
-            }
-            lines.push(pts);
-          }
-          return { c, lines };
-        });
-      }
-      for (const { c, lines } of this.cracks) {
-        const s = toScreen(c.x, c.y);
-        const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, c.r);
-        g.addColorStop(0, 'rgba(60,110,150,0.32)');
-        g.addColorStop(1, 'rgba(60,110,150,0)');
-        ctx.fillStyle = g;
-        ctx.beginPath(); ctx.ellipse(s.x, s.y, c.r, c.r * 0.8, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(30,70,110,0.7)';
-        for (const pts of lines) {
-          ctx.beginPath();
-          pts.forEach(([x, y], i) => { const q = toScreen(x, y); i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); });
-          ctx.stroke();
-        }
-        ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-        for (const pts of lines) {
-          ctx.beginPath();
-          pts.forEach(([x, y], i) => { const q = toScreen(x, y); i ? ctx.lineTo(q.x + 1, q.y - 1) : ctx.moveTo(q.x + 1, q.y - 1); });
-          ctx.stroke();
-        }
-      }
-    }
+    };
+    ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(30,70,110,0.7)';
+    draw(0, 0);
+    ctx.lineWidth = 1; ctx.strokeStyle = `rgba(255,255,255,${0.6 + fresh * 0.4})`;
+    draw(1, -1);
   }
 
   drawTrails(ctx, match) {
@@ -5843,6 +6012,16 @@ class Audio {
         break;
       }
       case 'stop': this.noiseBurst(t, 0.28, 0.32 * v, 'bandpass', 4200, 0.9, null, 0.01); break;
+      case 'splash':
+        this.noiseBurst(t, 0.32, 0.3 * v, 'bandpass', 1300, 0.7, null, 0.01);
+        this.noiseBurst(t + 0.05, 0.22, 0.15 * v, 'highpass', 3200, 0.8);
+        break;
+      case 'crack':
+        this.noiseBurst(t, 0.05, 0.5 * v, 'highpass', 2600, 1.2);
+        this.tone(420, t, 0.18, 'square25', 0.08 * v, null, { slide: 160 });
+        this.noiseBurst(t + 0.04, 0.35, 0.18 * v, 'lowpass', 700, 0.8);
+        break;
+      case 'shimmer': ['E6', 'B6', 'D#7', 'G#7'].forEach((n, i) => this.tone(freq(midi(n)), t + i * 0.07, 0.5, 'sine', 0.045 * v)); break;
       case 'pickup': ['C6', 'E6', 'G6', 'C7'].forEach((n, i) => this.tone(freq(midi(n)), t + i * 0.045, 0.08, 'square25', 0.08 * v)); break;
       case 'power': {
         const set = { fire: ['D5', 'A5', 'D6'], ice: ['E6', 'B6', 'E7'], lightning: ['F5', 'C6', 'F6'], gravity: ['C4', 'G4', 'C5'] }[opt.type] || ['C5', 'G5', 'C6'];
@@ -7535,7 +7714,8 @@ class UI {
       </div>
       <div>
         <div class="label" style="font-size:15px">Arena</div>
-        <div class="filters" style="margin:6px 0 0">${['auto', ...Object.keys(ARENAS)].map((k) => `<button class="chip" data-arena="${k}" aria-pressed="${(this.arenaPick || 'auto') === k}">${k === 'auto' ? 'Their building' : esc(ARENAS[k].name)}</button>`).join('')}</div>
+        <div class="filters" style="margin:6px 0 0">${['auto', ...Object.keys(ARENAS)].map((k) => `<button class="chip" data-arena="${k}" aria-pressed="${(this.arenaPick || 'auto') === k}">${k === 'auto' ? 'Their building' : esc(ARENAS[k].name)}${ARENAS[k] && ARENAS[k].rule ? ` <span class="muted">· ${esc(ARENAS[k].rule)}</span>` : ''}</button>`).join('')}
+          <button class="chip" id="arena-rules" aria-pressed="${this.arenaRules !== false}" title="Meltwater in the Ember Dome, aurora lanes in the Aurora Palace, pond cracks on Pine Pond">Arena rules ${this.arenaRules !== false ? 'on' : 'off'}</button></div>
       </div>
       <div class="choice">${opts.map((t) => `
         <div class="qp-row">
@@ -7558,7 +7738,13 @@ class UI {
         m.querySelectorAll('[data-arena]').forEach((b) => b.setAttribute('aria-pressed', b === el));
         audio.sfx('click');
       }, m);
-      this.click('[data-team]', (el) => { close(); this.app.startExhibition(el.dataset.team, [...this.challenges], this.arenaPick || 'auto'); }, m);
+      this.click('#arena-rules', (el) => {
+        this.arenaRules = this.arenaRules === false;
+        el.setAttribute('aria-pressed', this.arenaRules);
+        el.textContent = `Arena rules ${this.arenaRules ? 'on' : 'off'}`;
+        audio.sfx('click');
+      }, m);
+      this.click('[data-team]', (el) => { close(); this.app.startExhibition(el.dataset.team, [...this.challenges], this.arenaPick || 'auto', this.arenaRules !== false); }, m);
       this.click('[data-so]', (el) => { close(); this.app.startShootout(el.dataset.so); }, m);
     });
   }
@@ -9069,7 +9255,7 @@ const { recordRivalResult, rivalLines, rivalAfterLine } = __m["src/rivals.js"];
 const { nextFixture, recordOurGame, newLeague, rivalPlan } = __m["src/league.js"];
 const { pickMoment, markSeen, buffEffects } = __m["src/lockerroom.js"];
 const { GOAL_X } = __m["src/rink.js"];
-const { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey } = __m["src/data.js"];
+const { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS } = __m["src/data.js"];
 const { loadSave, newSave, writeSave, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards, lineupIds, homeKitGroups } = __m["src/progress.js"];
 // Glacial Strikers — boot, game loop and scene flow.
 
@@ -9269,7 +9455,9 @@ class App {
     cfg.diff = [0.7, 0.7];
     this.attract = true;
     const arena = TEAMS[teamId].arena;
-    this.makeMatch(cfg, teamId, arena && Assets.backdrops.has(arena) ? arena : 'home');
+    const where = arena && Assets.backdrops.has(arena) ? arena : 'home';
+    cfg.twist = this.twistFor(where, { twist: 'none' });
+    this.makeMatch(cfg, teamId, where);
     this.match.state = 'faceoff';
   }
 
@@ -9303,7 +9491,7 @@ class App {
     const stage = f.stage;
     const t = TEAMS[f.opponent];
     const powers = stage.powers.length ? 'Power pucks: ' + stage.powers.map((p) => POWER_INFO[p].name).join(', ') + '.' : 'No power pucks this match.';
-    const sub = `${stage.round} · ${powers} ${TWIST_INFO[stage.twist]}`;
+    const sub = `${stage.round} · ${powers} ${TWIST_INFO[this.twistFor(this.arenaFor(t.id), stage)]}`;
     this.scene = 'dialogue';
     Assets.ensureTeam(t.id, this.arenaFor(t.id)).then(() => this.showStageDialogue(f, t, sub));
   }
@@ -9312,6 +9500,17 @@ class App {
   arenaFor(teamId, pick) {
     if (pick && pick !== 'auto') return pick;
     return (TEAMS[teamId] && TEAMS[teamId].arena) || 'home';
+  }
+
+  announceRule(twist, arena) {
+    if (!twist || twist === 'none' || !TWIST_INFO[twist]) return;
+    setTimeout(() => { if (this.scene === 'match') this.hud.ticker(TWIST_INFO[twist]); }, 1400);
+  }
+
+  // A rival's building brings its own rule; the Frostline rink keeps the stage's twist.
+  twistFor(arena, stage, rules = true) {
+    if (!rules) return 'none';
+    return (ARENAS[arena] && ARENAS[arena].twist) || (stage && stage.twist) || 'none';
   }
 
   showStageDialogue(f, t, sub) {
@@ -9330,10 +9529,10 @@ class App {
     });
   }
 
-  startExhibition(teamId, mods = [], arena = 'auto') {
+  startExhibition(teamId, mods = [], arena = 'auto', rules = true) {
     const where = this.arenaFor(teamId, arena);
     Assets.ensureTeam(teamId, where).then(() =>
-      this.beginMatch(teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 120, round: 'Exhibition' }, true, mods, { arena: where }));
+      this.beginMatch(teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 120, round: 'Exhibition' }, true, mods, { arena: where, rules }));
   }
 
   // Training drills and the shootout run on the match engine with a drill controller.
@@ -9377,7 +9576,7 @@ class App {
       ],
       humanTeam: 0, humans: [0, 1],
       powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none',
-      diff: [0.6, 0.6], seed: (Math.random() * 1e9) >>> 0,
+      diff: [0.6, 0.6], seed: (Math.random() * 1e9) >>> 0, twist: this.twistFor(arena, { twist: 'none' }),
     };
     this.cur = { versus: true, teamId, stage: { round: 'Versus' }, exhibition: true, mods: [] };
     this.attract = false;
@@ -9394,6 +9593,7 @@ class App {
     this.tutorial = -1;
     audio.play('match');
     this.hud.banner('<div class="small">Local versus</div><div class="big" style="font-size:clamp(48px,10vw,110px)">FACEOFF</div>', 1.6);
+    this.announceRule(cfg.twist, arena);
   }
 
   endVersus(summary) {
@@ -9519,8 +9719,10 @@ class App {
     this.cur = { teamId, stage, exhibition, stageIndex: exhibition ? -1 : s.stage, mods, plan, theirPlan, fixture: extra.fixture };
     const cfg = matchConfig(s, teamId, stage, { plans: [plan, theirPlan], buffs });
     cfg.mods = mods;
+    const arena = extra.arena || this.arenaFor(teamId);
+    cfg.twist = this.twistFor(arena, stage, extra.rules !== false);
     this.attract = false;
-    const m = this.makeMatch(cfg, teamId, extra.arena || this.arenaFor(teamId));
+    const m = this.makeMatch(cfg, teamId, arena);
     this.hookMatch(m);
     this.replay.clear();
     this.clips.clear();
@@ -9531,6 +9733,7 @@ class App {
     this.ui.clear();
     this.scene = 'match';
     this.hud.show(m, teamId);
+    this.announceRule(cfg.twist, arena);
     this.touch.reset();
     audio.play('match');
     const edge = m.planEdge(0);
@@ -9620,6 +9823,14 @@ class App {
     m.on('faceoff', () => audio.sfx('whistle', { vol: 0.55 }));
     m.on('drop', () => audio.sfx('drop'));
     m.on('stop', (e) => audio.sfx('stop', { vol: 0.8 * vol(e.s.x, e.s.y) }));
+    m.on('splash', (e) => {
+      const now = performance.now();
+      if (now - (this.lastSplash || 0) < 700) return; // one splash at a time
+      this.lastSplash = now;
+      audio.sfx('splash', { vol: Math.min(1, e.power / 300) * vol(e.x, e.y) });
+    });
+    m.on('ice_crack', (e) => { audio.sfx('crack', { vol: 0.5 + e.k * 0.3 }); if (!e.grow) this.rumble(0.1, 0.3, 80); });
+    m.on('aurora_shift', () => audio.sfx('shimmer', { vol: 0.8 }));
     m.on('stride', (e) => { if (e.s.controlled) audio.sfx('stride'); });
     m.on('pickup_spawn', () => {
       audio.sfx('pickup', { vol: 0.7 });

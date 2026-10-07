@@ -105,31 +105,47 @@ export function collideNets(p, rad) {
   return hit;
 }
 
-// Twists: arena modifiers that some tournament stages enable.
-export function makeTwists(kind) {
-  if (kind === 'speed_lanes') {
-    return {
-      kind,
-      lanes: [
-        { x0: -420, x1: 420, y: -205, h: 34, dir: 1 },
-        { x0: -420, x1: 420, y: 250, h: 34, dir: -1 },
-      ],
-      cracks: [],
-    };
-  }
+// Twists: arena rules. Rivals' buildings have their own (meltwater, aurora lanes, pond
+// cracks); the old stage twists (speed lanes, cracked ice) remain for the Frostline rink.
+// Dynamic twists are updated by Match.updateTwists.
+export const AURORA_ROWS = [-215, -120, 125, 245];
+const lane = (y, dir) => ({ x0: -440, x1: 440, y, h: 34, dir });
+
+export function makeTwists(kind, rng = Math.random) {
+  const pick = (n) => Math.floor(rng() * n);
+  const base = { kind, lanes: [], cracks: [], pools: [], t: 0 };
+  if (kind === 'speed_lanes') return { ...base, lanes: [lane(-205, 1), lane(250, -1)] };
   if (kind === 'cracked_ice') {
-    return {
-      kind,
-      lanes: [],
-      cracks: [
-        { x: -340, y: -70, r: 70 }, { x: 340, y: 90, r: 70 },
-        { x: 0, y: 215, r: 60 }, { x: 0, y: -190, r: 60 },
-      ],
-    };
+    return { ...base, cracks: [{ x: -340, y: -70, r: 70 }, { x: 340, y: 90, r: 70 }, { x: 0, y: 215, r: 60 }, { x: 0, y: -190, r: 60 }] };
   }
   if (kind === 'both') {
     const a = makeTwists('speed_lanes'), b = makeTwists('cracked_ice');
-    return { kind, lanes: a.lanes, cracks: b.cracks.slice(0, 2) };
+    return { ...base, lanes: a.lanes, cracks: b.cracks.slice(0, 2) };
   }
-  return { kind: 'none', lanes: [], cracks: [] };
+  if (kind === 'meltwater') {
+    // slush pools drifting around anchors away from the creases
+    const anchors = [[-390, -110], [-130, 175], [170, -165], [410, 110]];
+    return {
+      ...base,
+      pools: anchors.map(([ax, ay], i) => ({ ax, ay, x: ax, y: ay, rx: 74, ry: 54, orbit: 55 + pick(40), w: (0.12 + rng() * 0.08) * (i % 2 ? 1 : -1), ph: rng() * 6.28 })),
+    };
+  }
+  if (kind === 'aurora_lanes') {
+    const rows = auroraRows(rng);
+    return { ...base, lanes: rows, next: null, period: 14, phaseT: 0 };
+  }
+  if (kind === 'pond_cracks') {
+    // two hairline cracks to start; hits, hard shots and quakes add more
+    const cracks = [];
+    for (let i = 0; i < 2; i++) cracks.push({ x: (rng() - 0.5) * 700, y: (rng() - 0.5) * 380, r: 30, born: 0 });
+    return { ...base, cracks };
+  }
+  return { ...base, kind: 'none' };
+}
+
+export function auroraRows(rng = Math.random) {
+  const rows = [...AURORA_ROWS];
+  const a = rows.splice(Math.floor(rng() * rows.length), 1)[0];
+  const b = rows[Math.floor(rng() * rows.length)];
+  return [lane(a, rng() < 0.5 ? 1 : -1), lane(b, rng() < 0.5 ? 1 : -1)];
 }

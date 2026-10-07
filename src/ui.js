@@ -139,7 +139,8 @@ export class UI {
       </div>
       <div>
         <div class="label" style="font-size:15px">Arena</div>
-        <div class="filters" style="margin:6px 0 0">${['auto', ...Object.keys(ARENAS)].map((k) => `<button class="chip" data-arena="${k}" aria-pressed="${(this.arenaPick || 'auto') === k}">${k === 'auto' ? 'Their building' : esc(ARENAS[k].name)}</button>`).join('')}</div>
+        <div class="filters" style="margin:6px 0 0">${['auto', ...Object.keys(ARENAS)].map((k) => `<button class="chip" data-arena="${k}" aria-pressed="${(this.arenaPick || 'auto') === k}">${k === 'auto' ? 'Their building' : esc(ARENAS[k].name)}${ARENAS[k] && ARENAS[k].rule ? ` <span class="muted">· ${esc(ARENAS[k].rule)}</span>` : ''}</button>`).join('')}
+          <button class="chip" id="arena-rules" aria-pressed="${this.arenaRules !== false}" title="Meltwater in the Ember Dome, aurora lanes in the Aurora Palace, pond cracks on Pine Pond">Arena rules ${this.arenaRules !== false ? 'on' : 'off'}</button></div>
       </div>
       <div class="choice">${opts.map((t) => `
         <div class="qp-row">
@@ -162,7 +163,13 @@ export class UI {
         m.querySelectorAll('[data-arena]').forEach((b) => b.setAttribute('aria-pressed', b === el));
         audio.sfx('click');
       }, m);
-      this.click('[data-team]', (el) => { close(); this.app.startExhibition(el.dataset.team, [...this.challenges], this.arenaPick || 'auto'); }, m);
+      this.click('#arena-rules', (el) => {
+        this.arenaRules = this.arenaRules === false;
+        el.setAttribute('aria-pressed', this.arenaRules);
+        el.textContent = `Arena rules ${this.arenaRules ? 'on' : 'off'}`;
+        audio.sfx('click');
+      }, m);
+      this.click('[data-team]', (el) => { close(); this.app.startExhibition(el.dataset.team, [...this.challenges], this.arenaPick || 'auto', this.arenaRules !== false); }, m);
       this.click('[data-so]', (el) => { close(); this.app.startShootout(el.dataset.so); }, m);
     });
   }

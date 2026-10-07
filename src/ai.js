@@ -262,6 +262,16 @@ export class TeamAI {
       const ox = s.x - o.x, oy = s.y - o.y, od = Math.hypot(ox, oy);
       if (od < 70 && od > 0.1) { dx += (ox / od) * (70 - od) * 1.2; dy += (oy / od) * (70 - od) * 1.2; }
     }
+    // arena rules: skirt slush pools and cracks unless the target is inside one
+    const tw = this.m.twists;
+    if (tw.pools.length || tw.cracks.length) {
+      for (const z of tw.pools.length ? tw.pools : tw.cracks) {
+        const zr = z.rx || z.r;
+        if (Math.hypot(c.x - z.x, c.y - z.y) < zr) continue;
+        const ox = s.x - z.x, oy = s.y - z.y, od = Math.hypot(ox, oy);
+        if (od < zr + 35 && od > 0.1) { const k = (zr + 35 - od) * (0.5 + this.diff * 0.7); dx += (ox / od) * k; dy += (oy / od) * k; }
+      }
+    }
     const n = norm(dx, dy);
     const mag = clamp(d / slowR, 0, 1);
     s.in.mx = n.x * mag; s.in.my = n.y * mag;

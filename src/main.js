@@ -18,7 +18,7 @@ import { recordRivalResult, rivalLines, rivalAfterLine } from './rivals.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan } from './league.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey } from './data.js';
+import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS } from './data.js';
 import {
   loadSave, newSave, writeSave, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards,
   lineupIds, homeKitGroups,
@@ -199,7 +199,9 @@ class App {
     cfg.diff = [0.7, 0.7];
     this.attract = true;
     const arena = TEAMS[teamId].arena;
-    this.makeMatch(cfg, teamId, arena && Assets.backdrops.has(arena) ? arena : 'home');
+    const where = arena && Assets.backdrops.has(arena) ? arena : 'home';
+    cfg.twist = this.twistFor(where, { twist: 'none' });
+    this.makeMatch(cfg, teamId, where);
     this.match.state = 'faceoff';
   }
 
@@ -233,7 +235,7 @@ class App {
     const stage = f.stage;
     const t = TEAMS[f.opponent];
     const powers = stage.powers.length ? 'Power pucks: ' + stage.powers.map((p) => POWER_INFO[p].name).join(', ') + '.' : 'No power pucks this match.';
-    const sub = `${stage.round} · ${powers} ${TWIST_INFO[stage.twist]}`;
+    const sub = `${stage.round} · ${powers} ${TWIST_INFO[this.twistFor(this.arenaFor(t.id), stage)]}`;
     this.scene = 'dialogue';
     Assets.ensureTeam(t.id, this.arenaFor(t.id)).then(() => this.showStageDialogue(f, t, sub));
   }
@@ -242,6 +244,17 @@ class App {
   arenaFor(teamId, pick) {
     if (pick && pick !== 'auto') return pick;
     return (TEAMS[teamId] && TEAMS[teamId].arena) || 'home';
+  }
+
+  announceRule(twist, arena) {
+    if (!twist || twist === 'none' || !TWIST_INFO[twist]) return;
+    setTimeout(() => { if (this.scene === 'match') this.hud.ticker(TWIST_INFO[twist]); }, 1400);
+  }
+
+  // A rival's building brings its own rule; the Frostline rink keeps the stage's twist.
+  twistFor(arena, stage, rules = true) {
+    if (!rules) return 'none';
+    return (ARENAS[arena] && ARENAS[arena].twist) || (stage && stage.twist) || 'none';
   }
 
   showStageDialogue(f, t, sub) {
@@ -260,10 +273,10 @@ class App {
     });
   }
 
-  startExhibition(teamId, mods = [], arena = 'auto') {
+  startExhibition(teamId, mods = [], arena = 'auto', rules = true) {
     const where = this.arenaFor(teamId, arena);
     Assets.ensureTeam(teamId, where).then(() =>
-      this.beginMatch(teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 120, round: 'Exhibition' }, true, mods, { arena: where }));
+      this.beginMatch(teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 120, round: 'Exhibition' }, true, mods, { arena: where, rules }));
   }
 
   // Training drills and the shootout run on the match engine with a drill controller.
@@ -307,7 +320,7 @@ class App {
       ],
       humanTeam: 0, humans: [0, 1],
       powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none',
-      diff: [0.6, 0.6], seed: (Math.random() * 1e9) >>> 0,
+      diff: [0.6, 0.6], seed: (Math.random() * 1e9) >>> 0, twist: this.twistFor(arena, { twist: 'none' }),
     };
     this.cur = { versus: true, teamId, stage: { round: 'Versus' }, exhibition: true, mods: [] };
     this.attract = false;
@@ -324,6 +337,7 @@ class App {
     this.tutorial = -1;
     audio.play('match');
     this.hud.banner('<div class="small">Local versus</div><div class="big" style="font-size:clamp(48px,10vw,110px)">FACEOFF</div>', 1.6);
+    this.announceRule(cfg.twist, arena);
   }
 
   endVersus(summary) {
@@ -449,8 +463,10 @@ class App {
     this.cur = { teamId, stage, exhibition, stageIndex: exhibition ? -1 : s.stage, mods, plan, theirPlan, fixture: extra.fixture };
     const cfg = matchConfig(s, teamId, stage, { plans: [plan, theirPlan], buffs });
     cfg.mods = mods;
+    const arena = extra.arena || this.arenaFor(teamId);
+    cfg.twist = this.twistFor(arena, stage, extra.rules !== false);
     this.attract = false;
-    const m = this.makeMatch(cfg, teamId, extra.arena || this.arenaFor(teamId));
+    const m = this.makeMatch(cfg, teamId, arena);
     this.hookMatch(m);
     this.replay.clear();
     this.clips.clear();
@@ -461,6 +477,7 @@ class App {
     this.ui.clear();
     this.scene = 'match';
     this.hud.show(m, teamId);
+    this.announceRule(cfg.twist, arena);
     this.touch.reset();
     audio.play('match');
     const edge = m.planEdge(0);
@@ -550,6 +567,14 @@ class App {
     m.on('faceoff', () => audio.sfx('whistle', { vol: 0.55 }));
     m.on('drop', () => audio.sfx('drop'));
     m.on('stop', (e) => audio.sfx('stop', { vol: 0.8 * vol(e.s.x, e.s.y) }));
+    m.on('splash', (e) => {
+      const now = performance.now();
+      if (now - (this.lastSplash || 0) < 700) return; // one splash at a time
+      this.lastSplash = now;
+      audio.sfx('splash', { vol: Math.min(1, e.power / 300) * vol(e.x, e.y) });
+    });
+    m.on('ice_crack', (e) => { audio.sfx('crack', { vol: 0.5 + e.k * 0.3 }); if (!e.grow) this.rumble(0.1, 0.3, 80); });
+    m.on('aurora_shift', () => audio.sfx('shimmer', { vol: 0.8 }));
     m.on('stride', (e) => { if (e.s.controlled) audio.sfx('stride'); });
     m.on('pickup_spawn', () => {
       audio.sfx('pickup', { vol: 0.7 });

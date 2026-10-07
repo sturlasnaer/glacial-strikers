@@ -4,12 +4,14 @@
 import { clamp, norm, dist, segDist, makeRng, Emitter, angDiff } from './util.js';
 import {
   RINK, GOAL_X, MOUTH, NET_DEPTH, POST_R, CROSSBAR, DOTS,
-  constrainToRink, netBox, makeTwists, clampInside, insideDepth,
+  constrainToRink, netBox, makeTwists, auroraRows, clampInside, insideDepth,
 } from './rink.js';
 import { Puck, Skater, Goalie, Barrier, collideBarrier, PUCK_R } from './entities.js';
 import { Abilities } from './abilities.js';
 import { TeamAI } from './ai.js';
 import { pairKey, GAME_PLANS } from './data.js';
+
+const CRACK_MAX = 72; // pond cracks stop spreading at this radius
 
 export const WIN_SCORE = 5;
 export const PENALTY_SECONDS = 15;
@@ -37,7 +39,15 @@ export class Match {
     this.buffs = cfg.buffs || {}; // locker-room buffs for the home team
     this.winScore = this.mods.has('sudden') ? 1 : WIN_SCORE;
     this.powers = this.mods.has('iceage') ? ['ice'] : cfg.powers || [];
-    this.twists = makeTwists(cfg.twist || 'none');
+    this.twists = makeTwists(cfg.twist || 'none', this.rng);
+    if (this.twists.kind === 'pond_cracks') {
+      // the pond cracks under big hits, hard shots and shockwaves
+      this.on('hit', (e) => { if (e.power > 240) this.crackAt(e.b.x, e.b.y, Math.min(1.4, e.power / 400)); });
+      this.on('shot', (e) => {
+        if (['slap', 'onetimer', 'zero', 'thunderclap'].includes(e.kind)) this.crackAt(e.s.x + Math.cos(e.s.face) * 16, e.s.y + Math.sin(e.s.face) * 10, e.kind === 'slap' ? 0.7 : 1);
+      });
+      this.on('quake', (e) => this.crackAt(e.s.x, e.s.y, 1.5));
+    }
     this.pickupT = 9;
     this.humanTeam = cfg.humanTeam ?? null; // player 1's team
     // every team with a human player (two in local versus)
@@ -199,6 +209,7 @@ export class Match {
     this.time += dt;
     this.stateT += dt;
     this.applyHuman();
+    if (!this.drill && this.twists.kind !== 'none') this.updateTwists(dt);
     if (this.drill) {
       this.drill.update(this, dt);
       if (this.state === 'play' || this.state === 'drill_over') this.tickEntities(dt, false);
@@ -724,6 +735,7 @@ export class Match {
     const lane = this.laneAt(p.x, p.y);
     if (lane) p.vx += lane.dir * 140 * h;
     if (this.inCrack(p.x, p.y)) { const f2 = Math.exp(-1.6 * h); p.vx *= f2; p.vy *= f2; }
+    else if (this.twists.pools.length && p.z <= 0 && this.inPool(p.x, p.y)) { const f2 = Math.exp(-1.25 * h); p.vx *= f2; p.vy *= f2; }
     if (p.speed < 4) { p.vx = 0; p.vy = 0; }
 
     // boards
@@ -1092,9 +1104,61 @@ export class Match {
     for (const c of this.twists.cracks) if (Math.hypot(x - c.x, (y - c.y) * 1.25) < c.r) return true;
     return false;
   }
+  inPool(x, y) {
+    for (const p of this.twists.pools) {
+      const dx = (x - p.x) / p.rx, dy = (y - p.y) / p.ry;
+      if (dx * dx + dy * dy < 1) return p;
+    }
+    return null;
+  }
   surfaceSpeed(s) {
     if (this.inCrack(s.x, s.y)) return 0.7;
+    if (this.twists.pools.length && this.inPool(s.x, s.y)) return 0.78;
     return 1;
+  }
+
+  // Moving parts of the arena rules: drifting meltwater, shifting aurora lanes,
+  // spreading pond cracks.
+  updateTwists(dt) {
+    const tw = this.twists;
+    tw.t += dt;
+    if (tw.kind === 'meltwater') {
+      for (const p of tw.pools) {
+        const a = p.ph + tw.t * p.w;
+        p.x = p.ax + Math.cos(a) * p.orbit;
+        p.y = p.ay + Math.sin(a) * p.orbit * 0.55;
+      }
+      if (this.state === 'play') {
+        for (const s of this.skaters) {
+          const inside = !!this.inPool(s.x, s.y);
+          s.splashCd = Math.max(0, (s.splashCd || 0) - dt);
+          if (inside && !s.inPool && s.speed > 230 && !s.splashCd) { this.emit('splash', { x: s.x, y: s.y, power: s.speed, s }); s.splashCd = 4; }
+          s.inPool = inside;
+        }
+      }
+    } else if (tw.kind === 'aurora_lanes') {
+      tw.phaseT += dt;
+      // the next lanes show up a moment before the lights shift
+      if (!tw.next && tw.phaseT > tw.period - 2.5) tw.next = auroraRows(this.rng);
+      if (tw.phaseT >= tw.period) {
+        tw.lanes = tw.next || auroraRows(this.rng);
+        tw.next = null;
+        tw.phaseT = 0;
+        this.emit('aurora_shift', {});
+      }
+    } else if (tw.kind === 'pond_cracks' && this.state === 'play') {
+      for (const c of tw.cracks) c.r = Math.min(CRACK_MAX, c.r + dt * 0.3); // cracks creep outward
+    }
+  }
+
+  crackAt(x, y, k = 1) {
+    const tw = this.twists;
+    if (Math.hypot(Math.abs(x) - GOAL_X, y) < 120 || insideDepth(x, y) < 40) return; // creases and boards hold
+    const near = tw.cracks.find((c) => Math.hypot(x - c.x, (y - c.y) * 1.25) < c.r + 24);
+    if (near) near.r = Math.min(CRACK_MAX, near.r + 7 * k);
+    else if (tw.cracks.length < 6) tw.cracks.push({ x, y, r: 24 + 10 * k, born: tw.t });
+    else return;
+    this.emit('ice_crack', { x, y, grow: !!near, k });
   }
 
   // -------------------------------------------------------- ability bits
