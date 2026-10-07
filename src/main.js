@@ -827,6 +827,7 @@ class App {
       const t = TEAMS[this.awayTeamId];
       this.renderer.updateCamera(m, this.fx, realDt, { attract: this.attract, zoom: this.attract ? 0.9 : this.replay.active ? 1.15 : 1 });
       this.renderer.render(m, this.fx, { awayTeamId: this.awayTeamId, awayColor: t.color, awayColor2: t.color2 });
+      this.clips.frame();
       this.hud.update(realDt);
       this.crowdT = (this.crowdT || 0) - realDt;
       if (this.crowdT <= 0) { this.crowdT = 0.25; audio.setCrowd(this.attract ? 0.15 : this.fx.excite); }

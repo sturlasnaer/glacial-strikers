@@ -1,6 +1,7 @@
 // Goal clips: records the instant replay (canvas + game audio) into a short video.
 
 const TYPES = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+const MAX_W = 1280; // phones render at 2-3x pixel density; clips don't need that
 
 export class ClipRecorder {
   constructor(canvas, audio) {
@@ -16,7 +17,14 @@ export class ClipRecorder {
   start(meta) {
     if (!this.supported || this.rec) return false;
     try {
-      const stream = this.canvas.captureStream(30);
+      // Record from a downscaled copy so phones aren't encoding 4K-ish frames.
+      const k = Math.min(1, MAX_W / this.canvas.width);
+      const out = (this.out ||= document.createElement('canvas'));
+      out.width = Math.round(this.canvas.width * k) & ~1;
+      out.height = Math.round(this.canvas.height * k) & ~1;
+      this.octx = out.getContext('2d');
+      this.frame();
+      const stream = out.captureStream(30);
       const dest = this.audio.recordStream && this.audio.recordStream();
       if (dest) for (const t of dest.stream.getAudioTracks()) stream.addTrack(t);
       const chunks = [];
@@ -39,9 +47,17 @@ export class ClipRecorder {
     }
   }
 
+  // Called after each rendered frame while recording.
+  frame() {
+    if (!this.octx) return;
+    this.octx.imageSmoothingEnabled = true;
+    this.octx.drawImage(this.canvas, 0, 0, this.out.width, this.out.height);
+  }
+
   stop() {
     if (this.rec && this.rec.state !== 'inactive') this.rec.stop();
     this.rec = null;
+    this.octx = null;
   }
 
   clear() {
