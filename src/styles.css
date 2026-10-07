@@ -538,3 +538,42 @@ body.in-hub.hub-room #screen { background: linear-gradient(rgba(8, 14, 26, 0.82)
 @media (prefers-reduced-motion: reduce) { .crew { animation: none; } }
 .look { margin-top: 3px; font-size: 12px; color: var(--ice); letter-spacing: 0.01em; }
 .look::before { content: "✦ "; color: var(--gold, #ffd45e); }
+
+/* ---- season awards ---- */
+.awards { position: relative; width: min(760px, calc(100% - 24px)); max-height: calc(100% - 24px); margin: auto; display: flex; flex-direction: column; gap: 12px; padding: 16px; overflow-y: auto; }
+.aw-head { display: flex; gap: 12px; align-items: center; }
+.aw-head img { width: 64px; height: 64px; border-radius: 10px; background: rgba(255, 242, 203, 0.1); flex: none; }
+.aw-say { font-family: var(--display); font-size: clamp(20px, 3.4vw, 28px); line-height: 1.05; }
+.aw-stage { min-height: 230px; display: grid; place-items: center; perspective: 900px; }
+.aw-card { position: relative; width: min(520px, 100%); height: 220px; transform-style: preserve-3d; transition: transform 0.7s cubic-bezier(.3, 1.4, .5, 1); }
+.aw-card.open { transform: rotateY(180deg); }
+.aw-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 12px; border: 3px solid var(--gold, #ffd45e); box-shadow: 0 0 0 3px var(--navy), 0 10px 0 rgba(0, 0, 0, 0.35); display: flex; align-items: center; gap: 14px; padding: 14px 18px; }
+.aw-back { flex-direction: column; justify-content: center; text-align: center; background: radial-gradient(circle at 50% 30%, #2a4570, #14233b); }
+.aw-back img { width: 96px; height: 96px; }
+.aw-back b { font-family: var(--display); font-weight: normal; font-size: 30px; color: var(--gold, #ffd45e); }
+.aw-front { transform: rotateY(180deg); background: linear-gradient(135deg, #1d3253, #14233b); }
+.aw-card.us .aw-front { background: linear-gradient(135deg, #1e5a66, #14233b); border-color: var(--ice); }
+.aw-portrait { width: 150px; height: 150px; flex: none; border-radius: 12px; background: rgba(255, 242, 203, 0.08); }
+.aw-front small { display: block; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold, #ffd45e); }
+.aw-front b { display: block; font-family: var(--display); font-weight: normal; font-size: clamp(30px, 6vw, 44px); line-height: 0.95; }
+.aw-front span { display: block; margin-top: 4px; font-size: 14px; }
+.aw-team { display: inline-flex !important; gap: 6px; align-items: center; }
+.aw-list { display: grid; gap: 6px; width: 100%; }
+.aw-row { display: grid; grid-template-columns: 44px 1fr 28px; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 8px; background: rgba(13, 24, 42, 0.55); border: 2px solid var(--navy-3); }
+.aw-row.us { border-color: var(--ice); background: rgba(30, 90, 102, 0.35); }
+.aw-row img { width: 44px; height: 44px; border-radius: 8px; }
+.aw-row img.cr { width: 28px; height: 28px; border-radius: 0; }
+.aw-row small { display: block; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold, #ffd45e); }
+.aw-row b { display: block; font-size: 15px; }
+.aw-row .muted { display: block; font-size: 12px; }
+.leaders td.tm { display: flex; gap: 6px; align-items: center; }
+@media (max-width: 520px) { .aw-portrait { width: 96px; height: 96px; } .aw-card { height: 200px; } }
+
+/* ---- daily challenge ---- */
+.daily-btn .streak { font-size: 0.85em; color: var(--gold, #ffd45e); }
+.daily { display: grid; grid-template-columns: 64px 1fr; gap: 12px; align-items: center; padding: 10px; border-radius: 10px; background: rgba(13, 24, 42, 0.55); border: 2px solid var(--navy-3); }
+.daily b { display: block; font-size: 18px; }
+.daily .muted { display: block; font-size: 13px; margin-bottom: 4px; }
+.daily-goal { padding: 10px 12px; border-radius: 10px; background: rgba(255, 212, 94, 0.12); border: 2px solid var(--gold, #ffd45e); }
+.daily-goal small { display: block; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold, #ffd45e); }
+.daily-goal b { font-family: var(--display); font-weight: normal; font-size: clamp(20px, 3.6vw, 26px); }

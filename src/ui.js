@@ -9,6 +9,8 @@ import {
 import { standings } from './league.js';
 import { BUFF_TEXT } from './lockerroom.js';
 import { ACHIEVEMENTS } from './achievements.js';
+import { AWARDS, AWARD_BY_ID, seasonStats } from './awards.js';
+import { dailyFor, dailyGoal, dayKey, currentStreak, doneToday, dailyReward, dailyState } from './daily.js';
 import {
   expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave,
   chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups,
@@ -73,6 +75,9 @@ const STATIONS = [
 ];
 // Where the dressed skaters and Halla stand on the floor (feet, % of the room).
 const CREW_SPOTS = [[29, 71], [41, 67], [53, 64], [64, 70]];
+
+// Portrait for a league stat row or award winner (ours or a rival's).
+const rowFace = (r, size) => (r.team === 'home' ? portrait(r.face, 0, null, size) : portrait(r.face, 1, r.team, size));
 
 // Hub characters: a portrait and a line of chatter at the top of their tab.
 const NPC_NAMES = { coach: 'Coach Brekka', shopkeeper: 'Gearsmith Ottar', announcer: 'Kip Vance, PA' };
@@ -240,6 +245,7 @@ export class UI {
           ${nt ? `<div class="next">${esc(next.round)}<br><b>vs ${esc(nt.name)}</b>${s.buffs && s.buffs.length ? `<span class="buffs">${s.buffs.map((b) => `<span class="buff">${esc(BUFF_TEXT(b))}</span>`).join('')}</span>` : ''}</div>
           <button class="btn gold" id="h-play">Play match</button>` : `<div class="next"><b>${s.league && s.league.champion && s.league.champion !== 'home' ? `${esc(TEAMS[s.league.champion].name)} won the cup` : 'Champions!'}</b><br>Start a new season or play exhibitions.</div>
           <button class="btn gold" id="h-season">New season</button>`}
+          <button class="btn ghost daily-btn" id="h-daily" title="Today's daily challenge">${doneToday(s) ? '✓' : '★'} Daily${currentStreak(s) ? ` <span class="streak">${currentStreak(s)}🔥</span>` : ''}</button>
           <button class="btn ghost" id="h-title">Title</button>
         </div>
       </div>`);
@@ -247,6 +253,7 @@ export class UI {
     this.click('#h-play', () => { audio.sfx('confirm'); this.app.startStage(); });
     this.click('#h-season', () => { audio.sfx('confirm'); this.app.newSeason(); });
     this.click('#h-title', () => { audio.sfx('back'); this.app.goTitle(); });
+    this.click('#h-daily', () => this.dailyCard());
     this.click('#h-settings', () => { audio.sfx('click'); this.settings(); });
     this.roomFit?.disconnect();
     if (room) {
@@ -359,8 +366,26 @@ export class UI {
           <div class="around">${last.map((g) => `<div>${esc(short(g.a))} <b>${g.ga}–${g.gb}</b> ${esc(short(g.b))}</div>`).join('')}</div>` : ''}
           ${bracket}
         </div>
-        <div style="min-width:0"><div class="label" style="margin-bottom:6px;font-size:14px">Your schedule</div><div class="schedule">${schedule}</div></div>
+        <div style="min-width:0"><div class="label" style="margin-bottom:6px;font-size:14px">Your schedule</div><div class="schedule">${schedule}</div>
+          ${this.leadersHtml(L)}</div>
       </div>`;
+  }
+
+  // Scoring leaders this season, and the award winners once it's over.
+  leadersHtml(L) {
+    const st = L.stats && seasonStats(L);
+    let html = '';
+    if (L.awards && L.awards.length) {
+      html += `<div class="label" style="margin:14px 0 6px;font-size:14px">Season ${L.season} awards</div><div class="aw-list">${L.awards.map((w) => `
+        <div class="aw-row ${w.team === 'home' ? 'us' : ''}"><img src="${rowFace(w, 64)}" alt=""><div style="min-width:0"><small>${esc(AWARD_BY_ID[w.id].name)}</small><b>${esc(w.name)}</b><span class="muted">${esc(w.line)}</span></div><img class="cr" src="${crest(w.team, 40)}" alt=""></div>`).join('')}</div>`;
+    }
+    const rows = st ? Object.values(st.skaters).sort((x, y) => (y.g + y.a) - (x.g + x.a) || y.g - x.g).slice(0, 6) : [];
+    if (rows.length) {
+      html += `<div class="label" style="margin:14px 0 6px;font-size:14px">Scoring leaders</div>
+        <table class="league-table leaders"><thead><tr><th style="text-align:left">Player</th><th>GP</th><th>G</th><th>A</th><th>PTS</th></tr></thead><tbody>${rows.map((r) => `
+          <tr class="${r.team === 'home' ? 'us' : ''}"><td class="tm"><img src="${crest(r.team, 40)}" alt="" width="20" height="20">${esc(r.name)}</td><td>${r.gp}</td><td>${r.g}</td><td>${r.a}</td><td class="pts">${r.g + r.a}</td></tr>`).join('')}</tbody></table>`;
+    }
+    return html;
   }
 
   tabTrophies(body) {
@@ -371,6 +396,10 @@ export class UI {
     body.innerHTML = `
       <div class="train-top"><div><div class="label">Trophy case</div>
         <p style="margin:2px 0 0;font-size:13px">${got.length} of ${ACHIEVEMENTS.length} unlocked · ${earned} coins earned${s.cups ? ` · ${s.cups} cup${s.cups > 1 ? 's' : ''} won` : ''}</p></div></div>
+      ${s.awards && s.awards.length ? `<div class="label" style="margin:4px 0 6px">Award cabinet</div>
+      <div class="aw-list cabinet">${s.awards.slice().reverse().map((w) => `
+        <div class="aw-row us"><img src="${rowFace({ ...w, team: 'home' }, 64)}" alt=""><div style="min-width:0"><small>Season ${w.season} · ${esc(AWARD_BY_ID[w.id].name)}</small><b>${esc(w.name)}</b><span class="muted">${esc(w.line)}</span></div><img class="cr" src="${ico(AWARD_BY_ID[w.id].icon, 64)}" alt=""></div>`).join('')}</div>
+      <div class="label" style="margin:14px 0 6px">Achievements</div>` : ''}
       <div class="trophies">${ACHIEVEMENTS.map((a) => {
         const done = tr.has(a.id);
         const pr = !done && tr.progress(a);
@@ -381,6 +410,90 @@ export class UI {
           <span class="tcoins">${done ? '✓' : `+${a.coins}`}</span>
         </div>`;
       }).join('')}</div>`;
+  }
+
+  // The season's awards night, hosted by Kip Vance: one envelope at a time.
+  awardsNight(list, season, onDone) {
+    const npc = Assets.atlas.npcs && Assets.atlas.npcs.announcer;
+    const host = npc ? Assets.icon(npc, 128) : '';
+    let i = -1, opened = false;
+    const r = this.set(`
+      <div class="dim"></div>
+      <div class="awards panel">
+        <div class="aw-head">${host ? `<img src="${host}" alt="">` : ''}<div><div class="label">Frostline Awards · Season ${season}</div><div class="aw-say" id="aw-say">Welcome, everyone, to the Frostline Awards! ${['', 'One honour', 'Two honours', 'Three honours', 'Four honours', 'Five honours', 'Six honours'][list.length] || list.length + ' honours'}, one envelope each. Let's get to it.</div></div></div>
+        <div class="aw-stage" id="aw-stage"></div>
+        <div class="row" style="justify-content:flex-end"><button class="btn small ghost" id="aw-skip">Skip</button><button class="btn gold" id="aw-next">First award</button></div>
+      </div>`);
+    const stage = r.querySelector('#aw-stage'), say = r.querySelector('#aw-say'), next = r.querySelector('#aw-next');
+    const card = (w) => {
+      const a = AWARD_BY_ID[w.id];
+      const t = w.team === 'home' ? TEAMS.home : TEAMS[w.team];
+      return `<div class="aw-card ${opened ? 'open' : ''} ${w.team === 'home' ? 'us' : ''}">
+        <div class="aw-face aw-back"><img src="${ico(a.icon, 160)}" alt=""><b>${esc(a.name)}</b><span>${esc(a.blurb)}</span></div>
+        <div class="aw-face aw-front">
+          <img class="aw-portrait" src="${rowFace(w, 220)}" alt="">
+          <div style="min-width:0"><small>${esc(a.name)}</small><b>${esc(w.name)}</b>
+            <span class="aw-team"><img src="${crest(w.team, 40)}" alt="" width="20" height="20">${esc(t.name)}</span>
+            <span class="muted">${esc(w.line)}</span>
+            ${w.reward ? `<span class="gold-t">+${w.reward.coins} coins · +${w.reward.exp} EXP</span>` : ''}</div>
+        </div></div>`;
+    };
+    const show = () => {
+      const w = list[i];
+      stage.innerHTML = card(w);
+      if (!opened) {
+        say.textContent = `And the ${AWARD_BY_ID[w.id].name} goes to...`;
+        next.textContent = 'Open the envelope';
+        audio.sfx('whoosh');
+      } else {
+        const ours = w.team === 'home';
+        say.textContent = ours ? `${w.name} of the Glacial Strikers! What a season!` : `${w.name} of the ${TEAMS[w.team].name}. Tip of the cap.`;
+        next.textContent = i < list.length - 1 ? 'Next award' : 'That\'s the show';
+        if (ours) { audio.jingle('level'); audio.crowdCheer(0.8); } else audio.crowdOoh(0.5);
+      }
+    };
+    const summary = () => {
+      say.textContent = 'That\'s a wrap on the season. See you on the ice!';
+      stage.innerHTML = `<div class="aw-list">${list.map((w) => `<div class="aw-row ${w.team === 'home' ? 'us' : ''}"><img src="${rowFace(w, 64)}" alt=""><div style="min-width:0"><small>${esc(AWARD_BY_ID[w.id].name)}</small><b>${esc(w.name)}</b><span class="muted">${esc(w.line)}</span></div><img class="cr" src="${crest(w.team, 40)}" alt=""></div>`).join('')}</div>`;
+      next.textContent = 'Back to the locker room';
+    };
+    this.click('#aw-next', () => {
+      if (i >= list.length) { audio.sfx('confirm'); return onDone(); }
+      if (i < 0 || opened) { i++; opened = false; if (i >= list.length) return summary(); }
+      else opened = true;
+      show();
+    }, r);
+    this.click('#aw-skip', () => { i = list.length; summary(); }, r);
+  }
+
+  // Today's daily challenge card.
+  dailyCard() {
+    const s = this.app.save;
+    const d = dailyFor(dayKey());
+    const t = TEAMS[d.teamId];
+    const ar = ARENAS[d.arena];
+    const streak = currentStreak(s), done = doneToday(s);
+    const st = dailyState(s);
+    const tries = (st.attempts && st.attempts[d.date]) || 0;
+    audio.sfx('click');
+    this.modal(`
+      <h2>Daily challenge</h2>
+      <p class="muted" style="margin:0">${esc(d.date)} · the same challenge for everyone today. Beat the goal on consecutive days to build a streak.</p>
+      <div class="daily">
+        <img src="${crest(d.teamId, 96)}" alt="" width="64" height="64">
+        <div style="min-width:0"><b>vs ${esc(t.name)}</b><span class="muted">${esc(ar.name)}${ar.rule ? ` · ${esc(ar.rule)}` : ''}</span>
+          <span>${d.mods.map((id) => `<span class="chip" aria-pressed="true" style="pointer-events:none">${esc(CHALLENGES.find((c) => c.id === id).name)}</span>`).join(' ')}</span></div>
+      </div>
+      <div class="daily-goal"><small>Goal</small><b>${esc(dailyGoal(d.goal).text)}</b></div>
+      <div class="row" style="gap:14px;flex-wrap:wrap">
+        <span>Streak <b class="gold-t">${streak}</b>${st.best ? ` <span class="muted">(best ${st.best})</span>` : ''}</span>
+        <span>Reward <b class="gold-t">${done ? 'claimed' : dailyReward(streak + 1) + ' coins'}</b></span>
+        ${tries ? `<span class="muted">${tries} attempt${tries > 1 ? 's' : ''} today</span>` : ''}
+      </div>
+      ${done ? '<p class="good" style="margin:0">Done for today. Come back tomorrow to keep the streak going.</p>' : ''}
+      <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>Back</button><button class="btn gold" id="daily-go">${done ? 'Play again' : 'Play'}</button></div>`, (m, close) => {
+      this.click('#daily-go', () => { close(); audio.sfx('confirm'); this.app.startDaily(); }, m);
+    });
   }
 
   // Before a league match: pick a game plan, with a scouting report on theirs.

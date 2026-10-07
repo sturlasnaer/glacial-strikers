@@ -4,6 +4,7 @@
 
 import { TEAMS, TOURNAMENT } from './data.js';
 import { makeRng } from './util.js';
+import { recordSimGame } from './awards.js';
 
 export const LEAGUE_TEAMS = ['home', 'lynx', 'comets', 'rams', 'ravens', 'royals'];
 const OUR_ORDER = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
@@ -120,6 +121,7 @@ export function recordOurGame(L, save, gf, ga) {
       const [x, y] = simGame(strength(g.a, save), strength(g.b, save), rng);
       const r = { a: g.a, b: g.b, ga: x, gb: y };
       addResult(L, r); round.push(r); out.simulated.push(r);
+      recordSimGame(save, L, r, rng);
     }
     L.results.push(round);
     L.round++;
@@ -141,7 +143,7 @@ export function recordOurGame(L, save, gf, ga) {
     if (ourSemi) {
       setResult(ourSemi, ourSemi.a === 'home' ? gf : ga, ourSemi.a === 'home' ? ga : gf);
       const other = po.semis.find((g) => g !== ourSemi);
-      if (!other.winner) { const [x, y] = simGame(strength(other.a, save), strength(other.b, save), rng); setResult(other, x, y); out.simulated.push({ ...other, stage: 'Semifinal' }); }
+      if (!other.winner) { const [x, y] = simGame(strength(other.a, save), strength(other.b, save), rng); setResult(other, x, y); out.simulated.push({ ...other, stage: 'Semifinal' }); recordSimGame(save, L, other, rng); }
       po.final = { a: po.semis[0].winner, b: po.semis[1].winner };
       if (ourSemi.winner !== 'home') { out.eliminated = true; finishPlayoffs(L, save, rng, out); }
       return out;
@@ -170,9 +172,9 @@ function setResult(g, x, y) { g.ga = x; g.gb = y; g.winner = x > y ? g.a : g.b; 
 // Simulate whatever playoff games remain (after the player is out).
 function finishPlayoffs(L, save, rng, out) {
   const po = L.playoffs;
-  for (const g of po.semis) if (!g.winner) { const [x, y] = simGame(strength(g.a, save), strength(g.b, save), rng); setResult(g, x, y); out.simulated.push({ ...g, stage: 'Semifinal' }); }
+  for (const g of po.semis) if (!g.winner) { const [x, y] = simGame(strength(g.a, save), strength(g.b, save), rng); setResult(g, x, y); out.simulated.push({ ...g, stage: 'Semifinal' }); recordSimGame(save, L, g, rng); }
   po.final = po.final || { a: po.semis[0].winner, b: po.semis[1].winner };
-  if (!po.final.winner) { const [x, y] = simGame(strength(po.final.a, save), strength(po.final.b, save), rng); setResult(po.final, x, y); out.simulated.push({ ...po.final, stage: 'Final' }); }
+  if (!po.final.winner) { const [x, y] = simGame(strength(po.final.a, save), strength(po.final.b, save), rng); setResult(po.final, x, y); out.simulated.push({ ...po.final, stage: 'Final' }); recordSimGame(save, L, po.final, rng); }
   L.champion = po.final.winner;
   L.phase = 'done';
   out.champion = L.champion;

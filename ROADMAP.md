@@ -20,13 +20,11 @@ Everything on the original list is done: chemistry, rivalries, training mini-gam
 
 Ideas for later:
 1. **Online leaderboards** for training drills and shootouts (needs a small backend).
-2. **Season awards** at the end of each season: MVP, top scorer, best goalie, each with a portrait card.
-3. **Custom team name and colours** for your club.
-4. **Daily challenge:** a seeded match with fixed modifiers and a streak counter.
+2. **Custom team name and colours** for your club.
 
 ## Next, with art
 
-Done: recruitment (sign rival skaters, pick a line-up), arena rules (meltwater, aurora lanes, pond cracks), the clickable locker room and visible gear on the ice. Done from the v2 pack: rival casts, portraits and expressions, crests, banner cut-ins, signature celebrations, three arenas, sprite crowd, locker-room hub and hub characters.
+Done: recruitment (sign rival skaters, pick a line-up), arena rules (meltwater, aurora lanes, pond cracks), the clickable locker room, visible gear on the ice, season awards and the daily challenge. Done from the v2 pack: rival casts, portraits and expressions, crests, banner cut-ins, signature celebrations, three arenas, sprite crowd, locker-room hub and hub characters.
 
 1. **Gear recolours on the sprites** once the gear masks (Batch M) arrive; the pipeline is ready.
 

@@ -15,6 +15,9 @@ import { ClipRecorder } from './clips.js';
 import { AchievementTracker } from './achievements.js';
 import { createDrill, medalFor, DRILL_REWARDS } from './drills.js';
 import { recordRivalResult, rivalLines, rivalAfterLine } from './rivals.js';
+import { recordRealGame, computeAwards, AWARD_BY_ID } from './awards.js';
+import { dailyFor, dailyGoal, completeDaily, noteAttempt, dayKey } from './daily.js';
+import { standings } from './league.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan } from './league.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
@@ -460,7 +463,7 @@ class App {
       s.lastPlan = plan;
       writeSave(s);
     }
-    this.cur = { teamId, stage, exhibition, stageIndex: exhibition ? -1 : s.stage, mods, plan, theirPlan, fixture: extra.fixture };
+    this.cur = { teamId, stage, exhibition, stageIndex: exhibition ? -1 : s.stage, mods, plan, theirPlan, fixture: extra.fixture, daily: extra.daily || null };
     const cfg = matchConfig(s, teamId, stage, { plans: [plan, theirPlan], buffs });
     cfg.mods = mods;
     const arena = extra.arena || this.arenaFor(teamId);
@@ -478,6 +481,7 @@ class App {
     this.scene = 'match';
     this.hud.show(m, teamId);
     this.announceRule(cfg.twist, arena);
+    if (this.cur.daily) setTimeout(() => { if (this.scene === 'match') this.hud.banner(`<div class="small">Daily challenge</div><div class="sub" style="font-size:clamp(16px,3vw,24px)">${dailyGoal(this.cur.daily.goal).text}</div>`, 3); }, 300);
     this.touch.reset();
     audio.play('match');
     const edge = m.planEdge(0);
@@ -634,11 +638,23 @@ class App {
     let becameChampion = false, leagueOut = null;
     if (rewards.won) s.record.wins++;
     if (!c.exhibition && s.league) {
+      recordRealGame(s, s.league, summary, c.teamId);
       leagueOut = recordOurGame(s.league, s, summary.score[0], summary.score[1]);
       leagueOut.kind = c.fixture ? c.fixture.kind : 'regular';
       leagueOut.won = rewards.won;
       if (leagueOut.champion === 'home') { s.champion = true; becameChampion = true; s.cups = (s.cups || 0) + 1; }
       s.stage = s.league.round;
+    }
+    if (c.daily) {
+      const goal = dailyGoal(c.daily.goal);
+      const met = goal.check(summary);
+      const done = met ? completeDaily(s, c.daily.date) : null;
+      if (done) {
+        rewards.lines.push([`Daily challenge · ${done.streak}-day streak`, done.coins]);
+        rewards.coins += done.coins;
+        this.ach.unlock('daily');
+        if (done.streak >= 7) this.ach.unlock('daily-streak');
+      } else rewards.lines.push([met ? 'Daily challenge (already done today)' : `Daily goal missed: ${goal.text}`, 0]);
     }
     this.ach.endMatch(summary, { league: !c.exhibition, exhibition: c.exhibition, mods: c.mods });
     this.ach.checkMeta();
@@ -817,9 +833,47 @@ class App {
     this.hud.hide();
     this.rotateEl.hidden = true;
     if (!this.attract) this.startAttract();
+    if (this.awardsNight()) return;
     this.ui.hub(tab);
     this.setHubBackground();
     audio.play('hub');
+  }
+
+  // Once a season is over: hand out the awards (once) and hold the ceremony.
+  awardsNight() {
+    const s = this.save, L = s.league;
+    if (!L || L.phase !== 'done' || L.awards) return false;
+    const order = standings(L).map((r) => r.id);
+    const list = computeAwards(s, L, order);
+    L.awards = list;
+    if (!list.length) { writeSave(s); return false; }
+    s.awards ||= [];
+    let ours = 0;
+    for (const w of list) {
+      if (w.team !== 'home') continue;
+      ours++;
+      const a = AWARD_BY_ID[w.id];
+      s.coins += a.coins;
+      w.reward = { coins: a.coins, exp: a.exp };
+      if (w.face === 'goalie') applyGoalieExp(s, a.exp); else if (s.roster[w.face]) applyExp(s, w.face, a.exp);
+      s.awards.push({ season: L.season, id: w.id, name: w.name, face: w.face, line: w.line });
+      if (w.id === 'mvp') this.ach.unlock('mvp');
+    }
+    if (ours >= 3) this.ach.unlock('sweep');
+    writeSave(s);
+    this.scene = 'results';
+    this.ui.awardsNight(list, L.season, () => this.resolvePerks(() => this.goHub('tournament')));
+    return true;
+  }
+
+  // Today's daily challenge: fixed rival, arena, modifiers and goal.
+  startDaily() {
+    const d = dailyFor(dayKey());
+    noteAttempt(this.save, d.date);
+    writeSave(this.save);
+    Assets.ensureTeam(d.teamId, d.arena).then(() => {
+      this.beginMatch(d.teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 120, round: 'Daily challenge' }, true, d.mods, { arena: d.arena, daily: d });
+    });
   }
 
   // The locker room fills the hub once its image is in; until then the rink shows through.

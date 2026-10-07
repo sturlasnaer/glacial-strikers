@@ -589,6 +589,45 @@ body.in-hub.hub-room #screen { background: linear-gradient(rgba(8, 14, 26, 0.82)
 .look { margin-top: 3px; font-size: 12px; color: var(--ice); letter-spacing: 0.01em; }
 .look::before { content: "✦ "; color: var(--gold, #ffd45e); }
 
+/* ---- season awards ---- */
+.awards { position: relative; width: min(760px, calc(100% - 24px)); max-height: calc(100% - 24px); margin: auto; display: flex; flex-direction: column; gap: 12px; padding: 16px; overflow-y: auto; }
+.aw-head { display: flex; gap: 12px; align-items: center; }
+.aw-head img { width: 64px; height: 64px; border-radius: 10px; background: rgba(255, 242, 203, 0.1); flex: none; }
+.aw-say { font-family: var(--display); font-size: clamp(20px, 3.4vw, 28px); line-height: 1.05; }
+.aw-stage { min-height: 230px; display: grid; place-items: center; perspective: 900px; }
+.aw-card { position: relative; width: min(520px, 100%); height: 220px; transform-style: preserve-3d; transition: transform 0.7s cubic-bezier(.3, 1.4, .5, 1); }
+.aw-card.open { transform: rotateY(180deg); }
+.aw-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 12px; border: 3px solid var(--gold, #ffd45e); box-shadow: 0 0 0 3px var(--navy), 0 10px 0 rgba(0, 0, 0, 0.35); display: flex; align-items: center; gap: 14px; padding: 14px 18px; }
+.aw-back { flex-direction: column; justify-content: center; text-align: center; background: radial-gradient(circle at 50% 30%, #2a4570, #14233b); }
+.aw-back img { width: 96px; height: 96px; }
+.aw-back b { font-family: var(--display); font-weight: normal; font-size: 30px; color: var(--gold, #ffd45e); }
+.aw-front { transform: rotateY(180deg); background: linear-gradient(135deg, #1d3253, #14233b); }
+.aw-card.us .aw-front { background: linear-gradient(135deg, #1e5a66, #14233b); border-color: var(--ice); }
+.aw-portrait { width: 150px; height: 150px; flex: none; border-radius: 12px; background: rgba(255, 242, 203, 0.08); }
+.aw-front small { display: block; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold, #ffd45e); }
+.aw-front b { display: block; font-family: var(--display); font-weight: normal; font-size: clamp(30px, 6vw, 44px); line-height: 0.95; }
+.aw-front span { display: block; margin-top: 4px; font-size: 14px; }
+.aw-team { display: inline-flex !important; gap: 6px; align-items: center; }
+.aw-list { display: grid; gap: 6px; width: 100%; }
+.aw-row { display: grid; grid-template-columns: 44px 1fr 28px; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 8px; background: rgba(13, 24, 42, 0.55); border: 2px solid var(--navy-3); }
+.aw-row.us { border-color: var(--ice); background: rgba(30, 90, 102, 0.35); }
+.aw-row img { width: 44px; height: 44px; border-radius: 8px; }
+.aw-row img.cr { width: 28px; height: 28px; border-radius: 0; }
+.aw-row small { display: block; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold, #ffd45e); }
+.aw-row b { display: block; font-size: 15px; }
+.aw-row .muted { display: block; font-size: 12px; }
+.leaders td.tm { display: flex; gap: 6px; align-items: center; }
+@media (max-width: 520px) { .aw-portrait { width: 96px; height: 96px; } .aw-card { height: 200px; } }
+
+/* ---- daily challenge ---- */
+.daily-btn .streak { font-size: 0.85em; color: var(--gold, #ffd45e); }
+.daily { display: grid; grid-template-columns: 64px 1fr; gap: 12px; align-items: center; padding: 10px; border-radius: 10px; background: rgba(13, 24, 42, 0.55); border: 2px solid var(--navy-3); }
+.daily b { display: block; font-size: 18px; }
+.daily .muted { display: block; font-size: 13px; margin-bottom: 4px; }
+.daily-goal { padding: 10px 12px; border-radius: 10px; background: rgba(255, 212, 94, 0.12); border: 2px solid var(--gold, #ffd45e); }
+.daily-goal small { display: block; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold, #ffd45e); }
+.daily-goal b { font-family: var(--display); font-weight: normal; font-size: clamp(20px, 3.6vw, 26px); }
+
 </style>
 </head>
 <body>
@@ -6369,13 +6408,133 @@ const audio = new Audio();
 
 return { Audio, audio };
 })();
+// ---- src/awards.js
+__m["src/awards.js"] = (() => {
+const { TEAMS, RECRUITS, GOALIE, recruitKey } = __m["src/data.js"];
+// Season awards: a stat sheet for every skater and goalie in the league, built from our
+// real matches and filled in for the simulated ones, and an awards night when the
+// season ends.
+
+
+
+const TROPHY = 'equipment_items/reward/trophy', MEDAL = 'equipment_items/reward/medal';
+const KITS = ['frost', 'thunder', 'stone'];
+
+const AWARDS = [
+  { id: 'mvp', name: 'League MVP', blurb: 'The most valuable skater in the Frostline.', icon: TROPHY, coins: 200, exp: 80 },
+  { id: 'golden_stick', name: 'Golden Stick', blurb: 'Most goals this season.', icon: 'equipment_items/stick/slapshot', coins: 120, exp: 50 },
+  { id: 'playmaker', name: 'Playmaker', blurb: 'Most assists this season.', icon: 'equipment_items/stick/passing', coins: 120, exp: 50 },
+  { id: 'iron_wall', name: 'Iron Wall', blurb: 'Best save percentage (60+ shots faced).', icon: 'equipment_items/armor/goalie_gloves', coins: 120, exp: 60, goalie: true },
+  { id: 'enforcer', name: 'Enforcer', blurb: 'Most hits this season.', icon: 'equipment_items/armor/shoulders', coins: 100, exp: 40 },
+  { id: 'signing', name: 'Signing of the Year', blurb: 'The best season by a Strikers signing.', icon: MEDAL, coins: 100, exp: 50, ours: true },
+];
+const AWARD_BY_ID = Object.fromEntries(AWARDS.map((a) => [a.id, a]));
+
+function seasonStats(L) { return (L.stats ||= { skaters: {}, goalies: {} }); }
+
+function skaterRow(st, key, info) {
+  return (st.skaters[key] ||= { key, ...info, gp: 0, g: 0, a: 0, hits: 0, steals: 0, blocks: 0, shots: 0 });
+}
+function goalieRow(st, team, name) {
+  return (st.goalies[team] ||= { team, name, gp: 0, sa: 0, sv: 0, so: 0 });
+}
+
+// Who plays a rival slot right now: the original, or a newcomer if we signed them.
+function rivalSlot(save, teamId, kit) {
+  const t = TEAMS[teamId];
+  if (save.roster[recruitKey(teamId, kit)]) return { key: `${teamId}:sub_${kit}`, name: t.subs[kit], team: teamId, face: 'sub_' + kit, kit };
+  return { key: `${teamId}:${kit}`, name: t.names[kit], team: teamId, face: kit, kit };
+}
+
+// One of our league or playoff matches, from the match summary.
+function recordRealGame(save, L, summary, teamId) {
+  const st = seasonStats(L);
+  for (const k of summary.skaters) {
+    const home = k.team === 0;
+    const key = home ? `home:${k.id}` : `${teamId}:${k.id}`;
+    const r = skaterRow(st, key, { name: k.name, team: home ? 'home' : teamId, face: k.id, kit: k.kit });
+    r.name = k.name;
+    r.gp++; r.g += k.goals; r.a += k.assists; r.hits += k.hits; r.steals += k.steals; r.blocks += k.blocks || 0; r.shots += k.shots || 0;
+  }
+  const ours = goalieRow(st, 'home', GOALIE.name), theirs = goalieRow(st, teamId, TEAMS[teamId].names.goalie);
+  ours.gp++; theirs.gp++;
+  ours.sa += summary.shots[1]; ours.sv += summary.saves[0];
+  theirs.sa += summary.shots[0]; theirs.sv += summary.saves[1];
+  if (summary.score[1] === 0) ours.so++;
+  if (summary.score[0] === 0) theirs.so++;
+}
+
+// A simulated game between two rivals: hand out believable stats to their players.
+const SCORE_W = { frost: 0.4, thunder: 0.42, stone: 0.18 };
+function recordSimGame(save, L, g, rng) {
+  const st = seasonStats(L);
+  const side = (team, gf, ga) => {
+    if (team === 'home') return;
+    const slots = KITS.map((kit) => rivalSlot(save, team, kit));
+    const rows = slots.map((sl) => skaterRow(st, sl.key, sl));
+    rows.forEach((r) => { r.gp++; });
+    const pickBy = (w, not) => {
+      const opts = rows.filter((r) => r !== not);
+      let x = rng() * opts.reduce((s, r) => s + w[r.kit], 0);
+      for (const r of opts) { x -= w[r.kit]; if (x <= 0) return r; }
+      return opts[opts.length - 1];
+    };
+    for (let i = 0; i < gf; i++) {
+      const sc = pickBy(SCORE_W);
+      sc.g++; sc.shots++;
+      if (rng() < 0.75) { const a1 = pickBy({ frost: 0.45, thunder: 0.3, stone: 0.25 }, sc); a1.a++; if (rng() < 0.35) rows.find((r) => r !== sc && r !== a1).a++; }
+    }
+    for (const r of rows) {
+      r.hits += Math.floor(rng() * (r.kit === 'stone' ? 7 : 4)) + (r.kit === 'stone' ? 2 : 0);
+      r.steals += Math.floor(rng() * 4);
+      r.shots += Math.floor(rng() * 6) + 2;
+    }
+    const gk = goalieRow(st, team, TEAMS[team].names.goalie);
+    const sa = ga + 24 + Math.floor(rng() * 12);
+    gk.gp++; gk.sa += sa; gk.sv += sa - ga;
+    if (ga === 0) gk.so++;
+  };
+  side(g.a, g.ga, g.gb);
+  side(g.b, g.gb, g.ga);
+}
+
+const line = (r) => `${r.g} G · ${r.a} A · ${r.g + r.a} PTS${r.hits ? ` · ${r.hits} hits` : ''}`;
+
+// Decide the season's awards. order: final standings (team ids, best first).
+function computeAwards(save, L, order) {
+  const st = seasonStats(L);
+  const rows = Object.values(st.skaters).filter((r) => r.gp >= 2);
+  if (!rows.length) return [];
+  const place = (team) => { const i = order.indexOf(team); return i < 0 ? 0 : (order.length - i) * 1.2 + (L.champion === team ? 4 : 0); };
+  const best = (list, f) => [...list].sort((x, y) => f(y) - f(x) || (y.g + y.a) - (x.g + x.a) || y.hits - x.hits)[0];
+  const out = [];
+  const add = (id, r, text) => { if (r) out.push({ id, key: r.key, name: r.name, team: r.team, face: r.face, line: text || line(r) }); };
+  add('mvp', best(rows, (r) => r.g * 3 + r.a * 2 + (r.hits + r.steals) * 0.25 + place(r.team)));
+  add('golden_stick', best(rows, (r) => r.g));
+  add('playmaker', best(rows, (r) => r.a));
+  const gks = Object.values(st.goalies).filter((g) => g.sa >= 60);
+  if (gks.length) {
+    const g = [...gks].sort((x, y) => y.sv / y.sa - x.sv / x.sa)[0];
+    out.push({ id: 'iron_wall', key: 'goalie:' + g.team, name: g.name, team: g.team, face: 'goalie', line: `${(g.sv / g.sa).toFixed(3).replace(/^0/, '')} save % · ${g.sv} saves${g.so ? ` · ${g.so} shutout${g.so > 1 ? 's' : ''}` : ''}` });
+  }
+  const enf = best(rows, (r) => r.hits);
+  add('enforcer', enf, `${enf.hits} hits · ${enf.steals} steals`);
+  const signings = rows.filter((r) => r.team === 'home' && RECRUITS[r.face]);
+  if (signings.length) add('signing', best(signings, (r) => r.g * 3 + r.a * 2 + r.hits * 0.3));
+  return out;
+}
+
+return { AWARDS, AWARD_BY_ID, seasonStats, recordRealGame, recordSimGame, computeAwards };
+})();
 // ---- src/league.js
 __m["src/league.js"] = (() => {
 const { TEAMS, TOURNAMENT } = __m["src/data.js"];
 const { makeRng } = __m["src/util.js"];
+const { recordSimGame } = __m["src/awards.js"];
 // The Frostline league: a 6-team round robin (5 rounds), then a top-4 playoff.
 // The player's games are real matches; every other game is simulated with a quick
 // strength model so standings move each round.
+
 
 
 
@@ -6495,6 +6654,7 @@ function recordOurGame(L, save, gf, ga) {
       const [x, y] = simGame(strength(g.a, save), strength(g.b, save), rng);
       const r = { a: g.a, b: g.b, ga: x, gb: y };
       addResult(L, r); round.push(r); out.simulated.push(r);
+      recordSimGame(save, L, r, rng);
     }
     L.results.push(round);
     L.round++;
@@ -6516,7 +6676,7 @@ function recordOurGame(L, save, gf, ga) {
     if (ourSemi) {
       setResult(ourSemi, ourSemi.a === 'home' ? gf : ga, ourSemi.a === 'home' ? ga : gf);
       const other = po.semis.find((g) => g !== ourSemi);
-      if (!other.winner) { const [x, y] = simGame(strength(other.a, save), strength(other.b, save), rng); setResult(other, x, y); out.simulated.push({ ...other, stage: 'Semifinal' }); }
+      if (!other.winner) { const [x, y] = simGame(strength(other.a, save), strength(other.b, save), rng); setResult(other, x, y); out.simulated.push({ ...other, stage: 'Semifinal' }); recordSimGame(save, L, other, rng); }
       po.final = { a: po.semis[0].winner, b: po.semis[1].winner };
       if (ourSemi.winner !== 'home') { out.eliminated = true; finishPlayoffs(L, save, rng, out); }
       return out;
@@ -6545,9 +6705,9 @@ function setResult(g, x, y) { g.ga = x; g.gb = y; g.winner = x > y ? g.a : g.b; 
 // Simulate whatever playoff games remain (after the player is out).
 function finishPlayoffs(L, save, rng, out) {
   const po = L.playoffs;
-  for (const g of po.semis) if (!g.winner) { const [x, y] = simGame(strength(g.a, save), strength(g.b, save), rng); setResult(g, x, y); out.simulated.push({ ...g, stage: 'Semifinal' }); }
+  for (const g of po.semis) if (!g.winner) { const [x, y] = simGame(strength(g.a, save), strength(g.b, save), rng); setResult(g, x, y); out.simulated.push({ ...g, stage: 'Semifinal' }); recordSimGame(save, L, g, rng); }
   po.final = po.final || { a: po.semis[0].winner, b: po.semis[1].winner };
-  if (!po.final.winner) { const [x, y] = simGame(strength(po.final.a, save), strength(po.final.b, save), rng); setResult(po.final, x, y); out.simulated.push({ ...po.final, stage: 'Final' }); }
+  if (!po.final.winner) { const [x, y] = simGame(strength(po.final.a, save), strength(po.final.b, save), rng); setResult(po.final, x, y); out.simulated.push({ ...po.final, stage: 'Final' }); recordSimGame(save, L, po.final, rng); }
   L.champion = po.final.winner;
   L.phase = 'done';
   out.champion = L.champion;
@@ -7173,6 +7333,10 @@ const ACHIEVEMENTS = [
   { id: 'kitted', name: 'Fully Kitted', text: 'Own every piece of gear in the shop.', icon: 'equipment_items/hub/shop', coins: 150 },
   { id: 'signing', name: 'Free Agent', text: 'Sign a skater from a rival.', icon: 'equipment_items/hub/shop', coins: 40 },
   { id: 'scout', name: 'Talent Scout', text: 'Sign a skater from every rival.', icon: 'equipment_items/hub/target', coins: 150 },
+  { id: 'mvp', name: 'Most Valuable', text: 'A Strikers skater wins League MVP.', icon: TROPHY, coins: 150 },
+  { id: 'sweep', name: 'Awards Sweep', text: 'Win three or more season awards in one season.', icon: TROPHY, coins: 200 },
+  { id: 'daily', name: 'Daily Grind', text: 'Beat a daily challenge.', icon: 'hud_elements/misc/level_star', coins: 40 },
+  { id: 'daily-streak', name: 'On a Roll', text: 'Beat the daily challenge seven days in a row.', icon: MEDAL, coins: 200 },
   { id: 'versus', name: 'Couch Champion', text: 'Win a local versus match.', icon: 'hud_elements/misc/home_crest', coins: 30 },
 ];
 const BY_ID = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a]));
@@ -7266,6 +7430,94 @@ class AchievementTracker {
 }
 
 return { ACHIEVEMENTS, AchievementTracker };
+})();
+// ---- src/daily.js
+__m["src/daily.js"] = (() => {
+const { TEAMS, ARENAS, CHALLENGES } = __m["src/data.js"];
+const { makeRng } = __m["src/util.js"];
+// Daily challenge: one match a day, the same for everyone (seeded by the date): a rival,
+// an arena, a couple of modifiers and a goal. Beat the goal on consecutive days to build
+// a streak; the reward grows with it.
+
+
+
+
+const DAILY_GOALS = [
+  { id: 'win', text: 'Win the match.', check: (s) => s.winner === 0 },
+  { id: 'by2', text: 'Win by 2 goals or more.', check: (s) => s.winner === 0 && s.score[0] - s.score[1] >= 2 },
+  { id: 'onetimer', text: 'Win and score a one-timer.', check: (s) => s.winner === 0 && s.goals.some((g) => g.team === 0 && g.kind === 'onetimer') },
+  { id: 'fast', text: 'Win in under 3 minutes.', check: (s) => s.winner === 0 && s.time < 180 },
+  { id: 'clean', text: 'Win without taking a penalty.', check: (s) => s.winner === 0 && s.pen && s.pen[0].pims === 0 },
+  { id: 'hits', text: 'Win with 8 or more hits.', check: (s) => s.winner === 0 && s.skaters.filter((k) => k.team === 0).reduce((a, k) => a + k.hits, 0) >= 8 },
+  { id: 'combo', text: 'Win and score a chemistry combo goal.', check: (s) => s.winner === 0 && s.goals.some((g) => g.team === 0 && g.special && g.special.combo) },
+  { id: 'spread', text: 'Win with all three skaters scoring a point.', check: (s) => s.winner === 0 && s.skaters.filter((k) => k.team === 0 && !k.extra).every((k) => k.goals + k.assists > 0) },
+];
+const GOAL_BY_ID = Object.fromEntries(DAILY_GOALS.map((g) => [g.id, g]));
+
+function dayKey(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function prevDay(key) {
+  const [y, m, d] = key.split('-').map(Number);
+  return dayKey(new Date(y, m - 1, d - 1));
+}
+function hash(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
+// Today's challenge. The same date always gives the same challenge.
+function dailyFor(date = dayKey()) {
+  const rng = makeRng(hash('glacial-strikers-daily-' + date));
+  const pick = (arr) => arr[Math.floor(rng() * arr.length)];
+  const teamId = pick(['lynx', 'comets', 'rams', 'ravens', 'royals']);
+  // usually their building; sometimes somewhere else
+  const arena = rng() < 0.65 ? (TEAMS[teamId].arena || 'home') : pick(Object.keys(ARENAS));
+  const pool = CHALLENGES.filter((c) => c.id !== 'sudden');
+  const mods = [];
+  const n = rng() < 0.45 ? 2 : 1;
+  while (mods.length < n) { const c = pick(pool).id; if (!mods.includes(c)) mods.push(c); }
+  let goal = pick(DAILY_GOALS);
+  if (mods.includes('onetimers') && goal.id === 'combo') goal = GOAL_BY_ID.onetimer;
+  return { date, teamId, arena, mods, goal: goal.id, seed: hash('seed-' + date) };
+}
+
+const dailyGoal = (id) => GOAL_BY_ID[id];
+
+function dailyState(save) {
+  return (save.daily ||= { last: null, streak: 0, best: 0, attempts: {}, completed: 0 });
+}
+
+// The streak still counts if the last completion was today or yesterday.
+function currentStreak(save, today = dayKey()) {
+  const d = dailyState(save);
+  return d.last === today || d.last === prevDay(today) ? d.streak : 0;
+}
+
+const doneToday = (save, today = dayKey()) => dailyState(save).last === today;
+
+function dailyReward(streak) { return 120 + 30 * Math.min(6, Math.max(0, streak - 1)); }
+
+// Mark today's challenge beaten. Returns { streak, coins } (null if already done).
+function completeDaily(save, today = dayKey()) {
+  const d = dailyState(save);
+  if (d.last === today) return null;
+  d.streak = d.last === prevDay(today) ? d.streak + 1 : 1;
+  d.last = today;
+  d.best = Math.max(d.best, d.streak);
+  d.completed++;
+  const coins = dailyReward(d.streak);
+  save.coins += coins;
+  return { streak: d.streak, coins };
+}
+
+function noteAttempt(save, today = dayKey()) {
+  const d = dailyState(save);
+  d.attempts = { [today]: (d.attempts[today] || 0) + 1 }; // only today's count is kept
+}
+
+return { DAILY_GOALS, dayKey, dailyFor, dailyGoal, dailyState, currentStreak, doneToday, dailyReward, completeDaily, noteAttempt };
 })();
 // ---- src/drills.js
 __m["src/drills.js"] = (() => {
@@ -7800,10 +8052,14 @@ const { CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, 
 const { standings } = __m["src/league.js"];
 const { BUFF_TEXT } = __m["src/lockerroom.js"];
 const { ACHIEVEMENTS } = __m["src/achievements.js"];
+const { AWARDS, AWARD_BY_ID, seasonStats } = __m["src/awards.js"];
+const { dailyFor, dailyGoal, dayKey, currentStreak, doneToday, dailyReward, dailyState } = __m["src/daily.js"];
 const { expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave, chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups } = __m["src/progress.js"];
 const { audio } = __m["src/audio.js"];
 const { DRILLS, MEDAL_NAMES, MEDAL_COLORS, formatScore } = __m["src/drills.js"];
 // Menu screens: title, hub (tournament / team / shop / training), dialogue, results.
+
+
 
 
 
@@ -7871,6 +8127,9 @@ const STATIONS = [
 ];
 // Where the dressed skaters and Halla stand on the floor (feet, % of the room).
 const CREW_SPOTS = [[29, 71], [41, 67], [53, 64], [64, 70]];
+
+// Portrait for a league stat row or award winner (ours or a rival's).
+const rowFace = (r, size) => (r.team === 'home' ? portrait(r.face, 0, null, size) : portrait(r.face, 1, r.team, size));
 
 // Hub characters: a portrait and a line of chatter at the top of their tab.
 const NPC_NAMES = { coach: 'Coach Brekka', shopkeeper: 'Gearsmith Ottar', announcer: 'Kip Vance, PA' };
@@ -8038,6 +8297,7 @@ class UI {
           ${nt ? `<div class="next">${esc(next.round)}<br><b>vs ${esc(nt.name)}</b>${s.buffs && s.buffs.length ? `<span class="buffs">${s.buffs.map((b) => `<span class="buff">${esc(BUFF_TEXT(b))}</span>`).join('')}</span>` : ''}</div>
           <button class="btn gold" id="h-play">Play match</button>` : `<div class="next"><b>${s.league && s.league.champion && s.league.champion !== 'home' ? `${esc(TEAMS[s.league.champion].name)} won the cup` : 'Champions!'}</b><br>Start a new season or play exhibitions.</div>
           <button class="btn gold" id="h-season">New season</button>`}
+          <button class="btn ghost daily-btn" id="h-daily" title="Today's daily challenge">${doneToday(s) ? '✓' : '★'} Daily${currentStreak(s) ? ` <span class="streak">${currentStreak(s)}🔥</span>` : ''}</button>
           <button class="btn ghost" id="h-title">Title</button>
         </div>
       </div>`);
@@ -8045,6 +8305,7 @@ class UI {
     this.click('#h-play', () => { audio.sfx('confirm'); this.app.startStage(); });
     this.click('#h-season', () => { audio.sfx('confirm'); this.app.newSeason(); });
     this.click('#h-title', () => { audio.sfx('back'); this.app.goTitle(); });
+    this.click('#h-daily', () => this.dailyCard());
     this.click('#h-settings', () => { audio.sfx('click'); this.settings(); });
     this.roomFit?.disconnect();
     if (room) {
@@ -8157,8 +8418,26 @@ class UI {
           <div class="around">${last.map((g) => `<div>${esc(short(g.a))} <b>${g.ga}–${g.gb}</b> ${esc(short(g.b))}</div>`).join('')}</div>` : ''}
           ${bracket}
         </div>
-        <div style="min-width:0"><div class="label" style="margin-bottom:6px;font-size:14px">Your schedule</div><div class="schedule">${schedule}</div></div>
+        <div style="min-width:0"><div class="label" style="margin-bottom:6px;font-size:14px">Your schedule</div><div class="schedule">${schedule}</div>
+          ${this.leadersHtml(L)}</div>
       </div>`;
+  }
+
+  // Scoring leaders this season, and the award winners once it's over.
+  leadersHtml(L) {
+    const st = L.stats && seasonStats(L);
+    let html = '';
+    if (L.awards && L.awards.length) {
+      html += `<div class="label" style="margin:14px 0 6px;font-size:14px">Season ${L.season} awards</div><div class="aw-list">${L.awards.map((w) => `
+        <div class="aw-row ${w.team === 'home' ? 'us' : ''}"><img src="${rowFace(w, 64)}" alt=""><div style="min-width:0"><small>${esc(AWARD_BY_ID[w.id].name)}</small><b>${esc(w.name)}</b><span class="muted">${esc(w.line)}</span></div><img class="cr" src="${crest(w.team, 40)}" alt=""></div>`).join('')}</div>`;
+    }
+    const rows = st ? Object.values(st.skaters).sort((x, y) => (y.g + y.a) - (x.g + x.a) || y.g - x.g).slice(0, 6) : [];
+    if (rows.length) {
+      html += `<div class="label" style="margin:14px 0 6px;font-size:14px">Scoring leaders</div>
+        <table class="league-table leaders"><thead><tr><th style="text-align:left">Player</th><th>GP</th><th>G</th><th>A</th><th>PTS</th></tr></thead><tbody>${rows.map((r) => `
+          <tr class="${r.team === 'home' ? 'us' : ''}"><td class="tm"><img src="${crest(r.team, 40)}" alt="" width="20" height="20">${esc(r.name)}</td><td>${r.gp}</td><td>${r.g}</td><td>${r.a}</td><td class="pts">${r.g + r.a}</td></tr>`).join('')}</tbody></table>`;
+    }
+    return html;
   }
 
   tabTrophies(body) {
@@ -8169,6 +8448,10 @@ class UI {
     body.innerHTML = `
       <div class="train-top"><div><div class="label">Trophy case</div>
         <p style="margin:2px 0 0;font-size:13px">${got.length} of ${ACHIEVEMENTS.length} unlocked · ${earned} coins earned${s.cups ? ` · ${s.cups} cup${s.cups > 1 ? 's' : ''} won` : ''}</p></div></div>
+      ${s.awards && s.awards.length ? `<div class="label" style="margin:4px 0 6px">Award cabinet</div>
+      <div class="aw-list cabinet">${s.awards.slice().reverse().map((w) => `
+        <div class="aw-row us"><img src="${rowFace({ ...w, team: 'home' }, 64)}" alt=""><div style="min-width:0"><small>Season ${w.season} · ${esc(AWARD_BY_ID[w.id].name)}</small><b>${esc(w.name)}</b><span class="muted">${esc(w.line)}</span></div><img class="cr" src="${ico(AWARD_BY_ID[w.id].icon, 64)}" alt=""></div>`).join('')}</div>
+      <div class="label" style="margin:14px 0 6px">Achievements</div>` : ''}
       <div class="trophies">${ACHIEVEMENTS.map((a) => {
         const done = tr.has(a.id);
         const pr = !done && tr.progress(a);
@@ -8179,6 +8462,90 @@ class UI {
           <span class="tcoins">${done ? '✓' : `+${a.coins}`}</span>
         </div>`;
       }).join('')}</div>`;
+  }
+
+  // The season's awards night, hosted by Kip Vance: one envelope at a time.
+  awardsNight(list, season, onDone) {
+    const npc = Assets.atlas.npcs && Assets.atlas.npcs.announcer;
+    const host = npc ? Assets.icon(npc, 128) : '';
+    let i = -1, opened = false;
+    const r = this.set(`
+      <div class="dim"></div>
+      <div class="awards panel">
+        <div class="aw-head">${host ? `<img src="${host}" alt="">` : ''}<div><div class="label">Frostline Awards · Season ${season}</div><div class="aw-say" id="aw-say">Welcome, everyone, to the Frostline Awards! ${['', 'One honour', 'Two honours', 'Three honours', 'Four honours', 'Five honours', 'Six honours'][list.length] || list.length + ' honours'}, one envelope each. Let's get to it.</div></div></div>
+        <div class="aw-stage" id="aw-stage"></div>
+        <div class="row" style="justify-content:flex-end"><button class="btn small ghost" id="aw-skip">Skip</button><button class="btn gold" id="aw-next">First award</button></div>
+      </div>`);
+    const stage = r.querySelector('#aw-stage'), say = r.querySelector('#aw-say'), next = r.querySelector('#aw-next');
+    const card = (w) => {
+      const a = AWARD_BY_ID[w.id];
+      const t = w.team === 'home' ? TEAMS.home : TEAMS[w.team];
+      return `<div class="aw-card ${opened ? 'open' : ''} ${w.team === 'home' ? 'us' : ''}">
+        <div class="aw-face aw-back"><img src="${ico(a.icon, 160)}" alt=""><b>${esc(a.name)}</b><span>${esc(a.blurb)}</span></div>
+        <div class="aw-face aw-front">
+          <img class="aw-portrait" src="${rowFace(w, 220)}" alt="">
+          <div style="min-width:0"><small>${esc(a.name)}</small><b>${esc(w.name)}</b>
+            <span class="aw-team"><img src="${crest(w.team, 40)}" alt="" width="20" height="20">${esc(t.name)}</span>
+            <span class="muted">${esc(w.line)}</span>
+            ${w.reward ? `<span class="gold-t">+${w.reward.coins} coins · +${w.reward.exp} EXP</span>` : ''}</div>
+        </div></div>`;
+    };
+    const show = () => {
+      const w = list[i];
+      stage.innerHTML = card(w);
+      if (!opened) {
+        say.textContent = `And the ${AWARD_BY_ID[w.id].name} goes to...`;
+        next.textContent = 'Open the envelope';
+        audio.sfx('whoosh');
+      } else {
+        const ours = w.team === 'home';
+        say.textContent = ours ? `${w.name} of the Glacial Strikers! What a season!` : `${w.name} of the ${TEAMS[w.team].name}. Tip of the cap.`;
+        next.textContent = i < list.length - 1 ? 'Next award' : 'That\'s the show';
+        if (ours) { audio.jingle('level'); audio.crowdCheer(0.8); } else audio.crowdOoh(0.5);
+      }
+    };
+    const summary = () => {
+      say.textContent = 'That\'s a wrap on the season. See you on the ice!';
+      stage.innerHTML = `<div class="aw-list">${list.map((w) => `<div class="aw-row ${w.team === 'home' ? 'us' : ''}"><img src="${rowFace(w, 64)}" alt=""><div style="min-width:0"><small>${esc(AWARD_BY_ID[w.id].name)}</small><b>${esc(w.name)}</b><span class="muted">${esc(w.line)}</span></div><img class="cr" src="${crest(w.team, 40)}" alt=""></div>`).join('')}</div>`;
+      next.textContent = 'Back to the locker room';
+    };
+    this.click('#aw-next', () => {
+      if (i >= list.length) { audio.sfx('confirm'); return onDone(); }
+      if (i < 0 || opened) { i++; opened = false; if (i >= list.length) return summary(); }
+      else opened = true;
+      show();
+    }, r);
+    this.click('#aw-skip', () => { i = list.length; summary(); }, r);
+  }
+
+  // Today's daily challenge card.
+  dailyCard() {
+    const s = this.app.save;
+    const d = dailyFor(dayKey());
+    const t = TEAMS[d.teamId];
+    const ar = ARENAS[d.arena];
+    const streak = currentStreak(s), done = doneToday(s);
+    const st = dailyState(s);
+    const tries = (st.attempts && st.attempts[d.date]) || 0;
+    audio.sfx('click');
+    this.modal(`
+      <h2>Daily challenge</h2>
+      <p class="muted" style="margin:0">${esc(d.date)} · the same challenge for everyone today. Beat the goal on consecutive days to build a streak.</p>
+      <div class="daily">
+        <img src="${crest(d.teamId, 96)}" alt="" width="64" height="64">
+        <div style="min-width:0"><b>vs ${esc(t.name)}</b><span class="muted">${esc(ar.name)}${ar.rule ? ` · ${esc(ar.rule)}` : ''}</span>
+          <span>${d.mods.map((id) => `<span class="chip" aria-pressed="true" style="pointer-events:none">${esc(CHALLENGES.find((c) => c.id === id).name)}</span>`).join(' ')}</span></div>
+      </div>
+      <div class="daily-goal"><small>Goal</small><b>${esc(dailyGoal(d.goal).text)}</b></div>
+      <div class="row" style="gap:14px;flex-wrap:wrap">
+        <span>Streak <b class="gold-t">${streak}</b>${st.best ? ` <span class="muted">(best ${st.best})</span>` : ''}</span>
+        <span>Reward <b class="gold-t">${done ? 'claimed' : dailyReward(streak + 1) + ' coins'}</b></span>
+        ${tries ? `<span class="muted">${tries} attempt${tries > 1 ? 's' : ''} today</span>` : ''}
+      </div>
+      ${done ? '<p class="good" style="margin:0">Done for today. Come back tomorrow to keep the streak going.</p>' : ''}
+      <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>Back</button><button class="btn gold" id="daily-go">${done ? 'Play again' : 'Play'}</button></div>`, (m, close) => {
+      this.click('#daily-go', () => { close(); audio.sfx('confirm'); this.app.startDaily(); }, m);
+    });
   }
 
   // Before a league match: pick a game plan, with a scouting report on theirs.
@@ -9551,12 +9918,18 @@ const { ClipRecorder } = __m["src/clips.js"];
 const { AchievementTracker } = __m["src/achievements.js"];
 const { createDrill, medalFor, DRILL_REWARDS } = __m["src/drills.js"];
 const { recordRivalResult, rivalLines, rivalAfterLine } = __m["src/rivals.js"];
+const { recordRealGame, computeAwards, AWARD_BY_ID } = __m["src/awards.js"];
+const { dailyFor, dailyGoal, completeDaily, noteAttempt, dayKey } = __m["src/daily.js"];
+const { standings } = __m["src/league.js"];
 const { nextFixture, recordOurGame, newLeague, rivalPlan } = __m["src/league.js"];
 const { pickMoment, markSeen, buffEffects } = __m["src/lockerroom.js"];
 const { GOAL_X } = __m["src/rink.js"];
 const { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS } = __m["src/data.js"];
 const { loadSave, newSave, writeSave, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards, lineupIds, homeKitGroups } = __m["src/progress.js"];
 // Glacial Strikers — boot, game loop and scene flow.
+
+
+
 
 
 
@@ -10015,7 +10388,7 @@ class App {
       s.lastPlan = plan;
       writeSave(s);
     }
-    this.cur = { teamId, stage, exhibition, stageIndex: exhibition ? -1 : s.stage, mods, plan, theirPlan, fixture: extra.fixture };
+    this.cur = { teamId, stage, exhibition, stageIndex: exhibition ? -1 : s.stage, mods, plan, theirPlan, fixture: extra.fixture, daily: extra.daily || null };
     const cfg = matchConfig(s, teamId, stage, { plans: [plan, theirPlan], buffs });
     cfg.mods = mods;
     const arena = extra.arena || this.arenaFor(teamId);
@@ -10033,6 +10406,7 @@ class App {
     this.scene = 'match';
     this.hud.show(m, teamId);
     this.announceRule(cfg.twist, arena);
+    if (this.cur.daily) setTimeout(() => { if (this.scene === 'match') this.hud.banner(`<div class="small">Daily challenge</div><div class="sub" style="font-size:clamp(16px,3vw,24px)">${dailyGoal(this.cur.daily.goal).text}</div>`, 3); }, 300);
     this.touch.reset();
     audio.play('match');
     const edge = m.planEdge(0);
@@ -10189,11 +10563,23 @@ class App {
     let becameChampion = false, leagueOut = null;
     if (rewards.won) s.record.wins++;
     if (!c.exhibition && s.league) {
+      recordRealGame(s, s.league, summary, c.teamId);
       leagueOut = recordOurGame(s.league, s, summary.score[0], summary.score[1]);
       leagueOut.kind = c.fixture ? c.fixture.kind : 'regular';
       leagueOut.won = rewards.won;
       if (leagueOut.champion === 'home') { s.champion = true; becameChampion = true; s.cups = (s.cups || 0) + 1; }
       s.stage = s.league.round;
+    }
+    if (c.daily) {
+      const goal = dailyGoal(c.daily.goal);
+      const met = goal.check(summary);
+      const done = met ? completeDaily(s, c.daily.date) : null;
+      if (done) {
+        rewards.lines.push([`Daily challenge · ${done.streak}-day streak`, done.coins]);
+        rewards.coins += done.coins;
+        this.ach.unlock('daily');
+        if (done.streak >= 7) this.ach.unlock('daily-streak');
+      } else rewards.lines.push([met ? 'Daily challenge (already done today)' : `Daily goal missed: ${goal.text}`, 0]);
     }
     this.ach.endMatch(summary, { league: !c.exhibition, exhibition: c.exhibition, mods: c.mods });
     this.ach.checkMeta();
@@ -10372,9 +10758,47 @@ class App {
     this.hud.hide();
     this.rotateEl.hidden = true;
     if (!this.attract) this.startAttract();
+    if (this.awardsNight()) return;
     this.ui.hub(tab);
     this.setHubBackground();
     audio.play('hub');
+  }
+
+  // Once a season is over: hand out the awards (once) and hold the ceremony.
+  awardsNight() {
+    const s = this.save, L = s.league;
+    if (!L || L.phase !== 'done' || L.awards) return false;
+    const order = standings(L).map((r) => r.id);
+    const list = computeAwards(s, L, order);
+    L.awards = list;
+    if (!list.length) { writeSave(s); return false; }
+    s.awards ||= [];
+    let ours = 0;
+    for (const w of list) {
+      if (w.team !== 'home') continue;
+      ours++;
+      const a = AWARD_BY_ID[w.id];
+      s.coins += a.coins;
+      w.reward = { coins: a.coins, exp: a.exp };
+      if (w.face === 'goalie') applyGoalieExp(s, a.exp); else if (s.roster[w.face]) applyExp(s, w.face, a.exp);
+      s.awards.push({ season: L.season, id: w.id, name: w.name, face: w.face, line: w.line });
+      if (w.id === 'mvp') this.ach.unlock('mvp');
+    }
+    if (ours >= 3) this.ach.unlock('sweep');
+    writeSave(s);
+    this.scene = 'results';
+    this.ui.awardsNight(list, L.season, () => this.resolvePerks(() => this.goHub('tournament')));
+    return true;
+  }
+
+  // Today's daily challenge: fixed rival, arena, modifiers and goal.
+  startDaily() {
+    const d = dailyFor(dayKey());
+    noteAttempt(this.save, d.date);
+    writeSave(this.save);
+    Assets.ensureTeam(d.teamId, d.arena).then(() => {
+      this.beginMatch(d.teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 120, round: 'Daily challenge' }, true, d.mods, { arena: d.arena, daily: d });
+    });
   }
 
   // The locker room fills the hub once its image is in; until then the rink shows through.
