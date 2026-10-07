@@ -1,6 +1,8 @@
 # Sprite requests
 
-What the game needs next, in priority order. Everything in pack v1 is already in use.
+What the game needs next, in priority order. Everything in pack v1 and the P1 gameplay pack is in use, apart from the layered nets (see the redo below).
+
+**Suggested next batch:** the net redo (small), then S1 near-glass layer, S3 scoreboard, S4 crowd and mascot, then P2 item 5 (rival rosters), which does the most for making each opponent feel different.
 
 ## Format notes (same as pack v1)
 
@@ -15,39 +17,19 @@ Shared style line for the prompts (from your v1 prompts):
 
 ---
 
-## P1: needed for gameplay to read right
+## Delivered: P1 gameplay pack ✓
 
-### 1. Side-facing goalies (most important)
-The rink is horizontal, so goalies face left or right, but v1 only has front and back views. The game uses the front view as a stand-in.
+All in the game now: 8-way skating (the new up-right/down-right poses), the 4-frame side stride with glide and hockey stop, stagger/knockdown/getting-up on big hits, Halla's side-on goalie poses (glove vs blocker side, dives, smothering the puck, getting up), the ice spray on hockey stops, ice chips on hits and dives, and the red goal light behind each net. Thank you, it looks great.
 
-- **Facing right (east).** The game mirrors it for the right-hand net.
-- Poses (one row each): ready stance, shuffle up-screen, shuffle down-screen, butterfly, glove save (high), blocker save, pad stretch (low, sideways), dive up-screen, dive down-screen, cover puck (smothering on the ice), get up.
-- Both team colours: 11 poses × 2 = 22 frames.
-- Prompt add-on: *"Goaltender seen from the side at 45° overhead, facing RIGHT toward the play, net behind him on the left. Bulky pads, blocker, catching glove, cage mask."*
+### Redo: side-view goal nets (the one P1 item that couldn't be used)
 
-### 1b. Side-view goal nets (two layers)
-The pack's nets are drawn from a front-right angle, but this camera sees the end goals from the side, so they could never line up with the goal line. The game now draws its own pixel nets in code as a stand-in. A proper sprite would look better:
-- **Right-hand net only** (the game mirrors it for the left): the mouth faces left toward center ice, seen from the side at the same 45° overhead angle. The red frame stands on the goal line and the mesh body extends to the right.
-- Two separate PNGs at the same size and position:
-  - **Back layer:** far side mesh, back mesh, base pipe, far post.
-  - **Front layer:** roof mesh, near side mesh, crossbar, near post.
-  The puck and goalie get drawn between the two layers.
-- Size: the mouth spans about 110 px top to bottom (in the scale of a 1254 px skater sheet), about 60 px deep.
-- Optional: 3 frames of the mesh bulging outward for goals, and a small red goal light on a post.
+The layered net in the P1 pack is drawn with the goal mouth turned about 45° toward the camera, so its two posts sit side by side with the mesh behind them. In this game's camera the goal line runs **straight up and down the screen**: the far post stands directly *above* the near post (76 px apart on screen), the crossbar runs vertically between their tops, and the mesh extends to the right. No warp of the P1 art can put both posts on that line without crushing the mesh, so the game is still drawing its own nets in code.
 
-### 2. Diagonal skater directions
-Skaters turn between 4 directions, which looks snappy on diagonals. Adding **up-right and down-right** (up-left and down-left come from mirroring) gives smooth 8-way skating.
-- Same 8 poses as v1 (idle, stride A, stride B, pass, windup, release, check, celebrate).
-- 3 characters × 2 teams × 2 directions × 8 = 96 frames. Even just stride A, stride B and idle would help a lot.
-
-### 3. Hit reactions
-Right now a hit skater just tilts and flashes white.
-- Per character, facing right and facing down: **stagger**, **knocked down (on the ice)**, **getting up**. 3 characters × 2 teams × 2 directions × 3 = 36 frames.
-
-### 4. Better skating loop and a hockey stop
-- **4-frame stride** for facing right (replaces the 2-frame A/B).
-- **Hockey stop**: body leaning back, skates sideways, with a snow spray.
-- **Glide**: coasting with stick on the ice.
+**Reference: [`reference/net-reference.png`](reference/net-reference.png).** It shows the in-game net at 4× with Halla for scale, and the back and front layers on their own at 8×. Please paint over those exact shapes:
+- Right-hand net only (the game mirrors it), mouth facing LEFT.
+- Two PNGs on the same canvas: **back** (far post, far-side mesh, back mesh, base) and **front** (near post, crossbar, roof and near-side mesh).
+- Final size in the game is small (posts about 34 px tall, mouth 76 px top to bottom, about 40 px deep), so it can be drawn at 2–4× that and scaled down.
+- Optional: 3 bulge frames for goals, same as before.
 
 ---
 
@@ -58,8 +40,8 @@ The arena is where most of the immersion comes from. In order of payoff:
 ### S1. Near-glass foreground layer
 A transparent PNG at the exact size and position of `rink_backdrop.png` (1536×1024) containing **only the near (bottom) boards, glass panels, posts and top rail**, with everything else erased. The game draws it over the players, so skaters along the bottom boards appear behind the glass. This is mostly an edit of the existing backdrop: keep the glass frame and make the glass itself about 25% opaque.
 
-### S2. Goal lights
-A red rotating goal lamp mounted on the glass behind each net, as 2 frames (off and on), about 40×60 px. It replaces the floodlight prop the game borrows now.
+### S2. Goal lights ✓
+Delivered in the P1 pack (the small red light on a post).
 
 ### S3. Scoreboard / jumbotron
 A hanging or tower scoreboard that sits in the top stands above the centre stairs (about 220×110 px), with a dark empty screen area. The game draws the live score and "GOAL!" onto the screen.
@@ -132,5 +114,4 @@ Overlay sprites so equipped sticks and skates show on the characters. These need
 ## Small fixes in v1 (optional)
 
 - Facing left uses mirrored facing-right frames, so the stick hand flips. A dedicated left-facing row fixes that.
-- `rink_props/props/lamp` is a floodlight. A small red **goal light** on a post behind the net would read better.
-- A tiny 8-frame **ice spray** strip and **ice chips** would replace the square particles.
+- Halla's side poses are drawn facing right only, so the right-hand goalie is mirrored and catches with the other hand. A dedicated facing-left set would fix that (low priority).

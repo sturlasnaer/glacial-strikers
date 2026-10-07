@@ -174,6 +174,7 @@ export class Skater {
     } else {
       const mv = norm(inp.mx, inp.my);
       let mag = Math.min(1, Math.hypot(inp.mx, inp.my));
+      this.gliding = false;
       // holding shoot while a pass is on its way = getting set for the one-timer:
       // the stick aims, the skates barely move
       const pk = m.puck;
@@ -197,6 +198,7 @@ export class Skater {
         }
       } else {
         this.stopping = false;
+        this.gliding = true;
         const f = Math.exp(-1.15 * dt);
         this.vx *= f; this.vy *= f;
       }
@@ -371,7 +373,7 @@ export class Goalie {
     return r;
   }
 
-  setState(s) { if (this.state !== s) { this.state = s; this.stateT = 0; } }
+  setState(s) { if (this.state !== s) { this.prevState = this.state; this.state = s; this.stateT = 0; } }
 
   // A shot was fired at our net: react after a short delay.
   onShot(shot) {
@@ -455,6 +457,7 @@ export class Goalie {
             this.vy = this.diveDir * 420;
             m.emit('goalie_dive', { g: this });
           } else {
+            this.saveHi = p.z > 14 || pr.y < this.y; // glove side is up-screen
             this.setState(p.z > 14 ? 'glove' : 'butterfly');
           }
         }

@@ -6,6 +6,9 @@ import { POWER_INFO, COMBOS } from './data.js';
 import { makeRng, clamp } from './util.js';
 
 const rnd = makeRng(1234);
+const SPRAY = 'ice_spray_goal_lights/ice_spray/phase_';
+const CHIPS = 'ice_spray_goal_lights/ice_chips/phase_';
+const PHASES = [1, 2, 3, 4, 5, 6, 7, 8];
 
 const ELEMENT_COLORS = {
   fire: ['#ffd27a', '#ff8a3d', '#ff4d2e'],
@@ -60,7 +63,10 @@ export class FX {
     on('stride', ({ s }) => this.scratch(s, 1));
     on('stop', ({ s, power }) => {
       this.scratch(s, 3);
-      const n = Math.min(26, 8 + power / 18);
+      // spray fans out in the direction of travel
+      const dir = Math.sign(s.vx) || 1;
+      this.anim(SPRAY, s.x + dir * 8, s.y + 2, clamp(0.09 + power / 4000, 0.1, 0.16), { fps: 22, frames: PHASES, flip: dir < 0 });
+      const n = Math.min(12, 3 + power / 40);
       for (let i = 0; i < n; i++) {
         const a = Math.atan2(s.vy, s.vx) + rnd.range(-0.9, 0.9);
         const sp = rnd.range(60, 220);
@@ -82,6 +88,7 @@ export class FX {
     on('hit', ({ a, b, power, stripped }) => {
       const x = (a.x + b.x) / 2, y = (a.y + b.y) / 2;
       this.anim('ability_effects/check_impact/phase_', x, y + 4, clamp(0.22 + power / 1600, 0.24, 0.5), { fps: 18, z: 26 });
+      if (power > 180) this.anim(CHIPS, b.x, b.y + 2, clamp(0.08 + power / 5000, 0.09, 0.15), { fps: 18, frames: PHASES, flip: b.x < a.x });
       this.shake(clamp(power / 700, 0.15, 0.6));
       this.hitstop = Math.max(this.hitstop, clamp(0.03 + power / 6000, 0.04, 0.1));
       this.excite = Math.min(1, this.excite + 0.15);
@@ -99,7 +106,10 @@ export class FX {
       if (speed > 850 || caught === false) this.text(g.x - g.goalSide * 30, g.y - 110, caught ? 'SAVE!' : 'REBOUND', caught ? '#ffffff' : '#fff2cb', 0.9, caught ? 20 : 15);
       this.excite = Math.min(1, this.excite + 0.2);
     });
-    on('goalie_dive', ({ g }) => this.burst(g.x, g.y, 2, 10, ELEMENT_COLORS.snow, 160, 0.4));
+    on('goalie_dive', ({ g }) => {
+      this.burst(g.x, g.y, 2, 6, ELEMENT_COLORS.snow, 160, 0.4);
+      this.anim(CHIPS, g.x, g.y + 2, 0.12, { fps: 18, frames: PHASES, flip: g.diveDir < 0 });
+    });
     on('post', ({ x, y }) => { this.burst(x, y, 20, 12, ELEMENT_COLORS.gold, 220, 0.4); this.text(x, y - 70, 'POST!', '#ff6f7d', 0.9, 18); this.shake(0.2); this.excite = Math.min(1, this.excite + 0.3); });
     on('puck_boards', ({ x, y, power }) => { if (power > 500) this.burst(x, y, 4, 6, ELEMENT_COLORS.snow, 100, 0.3); });
     on('goal', (g) => {
@@ -199,7 +209,7 @@ export class FX {
     }
   }
   ring(x, y, r, color, life) { this.rings.push({ x, y, r, color, life, t: 0 }); }
-  anim(prefix, x, y, scale, o = {}) { this.anims.push({ prefix, x, y, scale, t: 0, fps: o.fps || 12, frames: o.frames || [1, 2, 3, 4, 5, 6], follow: o.follow, rot: o.rot || 0, z: o.z ?? 0 }); }
+  anim(prefix, x, y, scale, o = {}) { this.anims.push({ prefix, x, y, scale, t: 0, fps: o.fps || 12, frames: o.frames || [1, 2, 3, 4, 5, 6], follow: o.follow, rot: o.rot || 0, z: o.z ?? 0, flip: !!o.flip }); }
   text(x, y, str, color, life = 1, size = 16) { this.texts.push({ x, y, str, color, life, t: 0, size }); }
   bolt(x0, y0, x1, y1) {
     const pts = [];

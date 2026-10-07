@@ -65,7 +65,8 @@ Hold shoot while a pass is on its way to fire a **one-timer**. Your skates plant
 - **Goal clips:** every instant replay is recorded as a short video with game sound and a caption. The results screen lists the match's highlights with Share (phones) and Save.
 - **Achievements:** 28 trophies (hat tricks, comebacks, every combo and power puck, empty-netters, shorthanded goals, the cup, a perfect season, gold in every drill and more), each paying coins, shown in the Trophies tab.
 - **Broadcast:** instant goal replays (skippable, toggle in Settings), play-by-play commentary ticker, ultimate cut-ins, crowd chants that speed up the cheered team's ultimates, a team logo at centre ice.
-- **Nets** are drawn in code as pixel art to fit the side-on camera, with the puck sitting inside the mesh and a ripple on goals, until a proper net sprite arrives.
+- **Animation:** 8-way skating, a 4-frame side stride with glide and hockey stop (with an ice spray), stagger and knockdown on big hits, and side-on goalie poses: shuffles, butterfly, glove and blocker saves, dives, covering the puck and getting up. A red goal light behind each net spins on goals.
+- **Nets** are drawn in code as pixel art to fit the side-on camera, with the puck sitting inside the mesh and a ripple on goals. [`reference/net-reference.png`](reference/net-reference.png) shows the exact shapes for a sprite version.
 
 ## Project layout
 
@@ -99,9 +100,10 @@ tools/                asset builder, dev server, balance sim, control tests
 ## Tools
 
 ```bash
-python3 tools/build_assets.py ../assets/Glacial-Strikers-Sprite-Pack assets/gfx
+python3 -m venv ../.venv && ../.venv/bin/pip install pillow numpy   # once
+../.venv/bin/python tools/build_assets.py ../assets/Glacial-Strikers-Sprite-Pack assets/gfx ../assets/Glacial-Strikers-P1-Gameplay
 ```
-Rebuilds the atlases from a sprite pack (needs Pillow and numpy). New sheets get added to the `SCALE` table.
+Rebuilds the atlases from the v1 sprite pack plus any expansion packs (P1 gameplay is the default). Expansion characters are rescaled to the v1 skaters' height, stray fragments from neighbouring cells are erased, and their poses are mapped onto the game's names. New v1-style sheets get added to the `SCALE` table.
 
 ```bash
 node tools/sim.mjs 20 0.6 0.6

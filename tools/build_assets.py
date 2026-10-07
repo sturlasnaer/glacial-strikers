@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """Slice the Glacial Strikers source sheets into compact WebP atlases for the game.
 
-Usage: python tools/build_assets.py <path-to-sprite-pack> <output-dir>
+Usage: python tools/build_assets.py <path-to-sprite-pack> <output-dir> [<expansion-pack> ...]
 
 - Crops every frame the game uses, downscales it per category (premultiplied alpha),
   trims empty margins, recomputes foot pivots for skaters/goalies, and shelf-packs the
   results into atlas pages. Away-team art is packed on its own pages so rival teams can
   be recoloured at runtime without touching the home team.
 - Writes atlas.json with frame rects, pivots and the skater direction mappings.
+- Expansion packs (P1 gameplay: diagonals, strides, hit reactions, side goalies, ice
+  spray) are rescaled to match the v1 characters and merged into the same atlas.
 """
 import json
 import os
@@ -18,6 +20,7 @@ from PIL import Image
 
 PACK = sys.argv[1] if len(sys.argv) > 1 else '../assets/Glacial-Strikers-Sprite-Pack'
 OUT = sys.argv[2] if len(sys.argv) > 2 else 'assets/gfx'
+EXTRA = sys.argv[3:] if len(sys.argv) > 3 else ['../assets/Glacial-Strikers-P1-Gameplay']
 
 # Atlas pixels per source pixel, by sheet. Picked so each sprite is close to its
 # on-screen size on a 2x phone screen while keeping the download small.
@@ -28,6 +31,11 @@ SCALE = {
     'hud_elements': 0.45, 'character_portraits': 0.6,
 }
 FOOT_PIVOT_SHEETS = {'frost_captain', 'frost_captain_variant', 'thunder_winger', 'stone_defender', 'goalies'}
+# Expansion character names -> v1 skater sheet.
+P1_CHARS = {'nix': 'frost_captain', 'volta': 'thunder_winger', 'bram': 'stone_defender'}
+# v1 pose names for the expansion's diagonal poses.
+DIAG_POSES = {'idle': 'idle', 'stride_a': 'skate_a', 'stride_b': 'skate_b', 'pass': 'pass',
+              'windup': 'shot_windup', 'release': 'shot_release', 'check': 'check', 'celebrate': 'celebrate'}
 PAGE = 2048
 PAD = 2
 
@@ -43,10 +51,56 @@ for char in src['skaters'].values():
 
 sheets = {}
 
-def sheet(name):
+def sheet(name, pack=PACK):
     if name not in sheets:
-        sheets[name] = Image.open(os.path.join(PACK, 'sheets', name + '.png')).convert('RGBA')
+        sheets[name] = Image.open(os.path.join(pack, 'sheets', name + '.png')).convert('RGBA')
     return sheets[name]
+
+
+def visible_height(fid, fr, pack):
+    r = fr['frame']
+    a = np.array(sheet(fr['sheet'], pack).crop((r['x'], r['y'], r['x'] + r['w'], r['y'] + r['h'])))[..., 3]
+    ys = np.nonzero((a > 100).any(axis=1))[0]
+    return float(ys.max() - ys.min() + 1)
+
+
+def drop_fragments(img):
+    """Erase small blobs touching the crop edge (stick tips etc. from neighbouring cells)."""
+    a = np.array(img)
+    solid = a[..., 3] > 24
+    h, w = solid.shape
+    label = np.zeros((h, w), np.int32)
+    sizes, edge = [0], [False]
+    n = 0
+    for y0, x0 in zip(*np.nonzero(solid)):
+        if label[y0, x0]:
+            continue
+        n += 1
+        label[y0, x0] = n
+        stack, size, touches = [(y0, x0)], 0, False
+        while stack:
+            y, x = stack.pop()
+            size += 1
+            if y in (0, h - 1) or x in (0, w - 1):
+                touches = True
+            for ny, nx in ((y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)):
+                if 0 <= ny < h and 0 <= nx < w and solid[ny, nx] and not label[ny, nx]:
+                    label[ny, nx] = n
+                    stack.append((ny, nx))
+        sizes.append(size)
+        edge.append(touches)
+    if n < 2:
+        return img
+    big = max(sizes)
+    kill = [i for i in range(1, n + 1) if edge[i] and sizes[i] < big * 0.06]
+    if not kill:
+        return img
+    mask = np.isin(label, kill)
+    # also clear the faint fringe around removed blobs
+    grow = mask.copy()
+    grow[1:] |= mask[:-1]; grow[:-1] |= mask[1:]; grow[:, 1:] |= mask[:, :-1]; grow[:, :-1] |= mask[:, 1:]
+    a[grow & ~(label > 0) | mask] = 0
+    return Image.fromarray(a)
 
 
 def is_away(fid):
@@ -69,6 +123,20 @@ def foot_pivot(img):
 
 
 items = []
+
+
+def add_item(fid, img, px, py, s, group):
+    a = np.array(img)[..., 3]
+    ys, xs = np.nonzero(a > 6)
+    if len(xs):
+        x0, y0 = max(0, xs.min() - 1), max(0, ys.min() - 1)
+        x1, y1 = min(img.width, xs.max() + 2), min(img.height, ys.max() + 2)
+        img = img.crop((x0, y0, x1, y1))
+        px -= x0
+        py -= y0
+    items.append({'id': fid, 'img': img, 'px': round(px, 1), 'py': round(py, 1), 'scale': s, 'group': group})
+
+
 for fid, f in frames.items():
     sh = f['sheet']
     if sh == 'rink_backdrop':
@@ -84,17 +152,71 @@ for fid, f in frames.items():
         px, py = foot_pivot(img)
     else:
         px, py = f['pivot_pixels']['x'] * s, f['pivot_pixels']['y'] * s
-    # trim fully transparent margins (keep 1px)
-    a = np.array(img)[..., 3]
-    ys, xs = np.nonzero(a > 6)
-    if len(xs):
-        x0, y0 = max(0, xs.min() - 1), max(0, ys.min() - 1)
-        x1, y1 = min(nw, xs.max() + 2), min(nh, ys.max() + 2)
-        img = img.crop((x0, y0, x1, y1))
-        px -= x0
-        py -= y0
-    items.append({'id': fid, 'img': img, 'px': round(px, 1), 'py': round(py, 1), 'scale': s,
-                  'group': 'away' if is_away(fid) else 'home'})
+    add_item(fid, img, px, py, s, 'away' if is_away(fid) else 'home')
+
+# ---------------------------------------------------------------- expansions
+skater_map = json.loads(json.dumps(src['skaters']))
+goalies_side = {}
+for pack in EXTRA:
+    if not os.path.exists(os.path.join(pack, 'atlas.json')):
+        print('skipping missing pack', pack)
+        continue
+    ex = json.load(open(os.path.join(pack, 'atlas.json')))
+    exf = ex['frames']
+    # Source px of the expansion sheet -> v1 source px, matched on standing height.
+    ratio = {}
+    for name, v1 in P1_CHARS.items():
+        v1_h = visible_height(None, frames[src['skaters'][v1]['home']['east']['frames']['idle']], PACK)
+        for kind in ('diagonals', 'skating', 'hit_reactions'):
+            sh = f'{name}_{kind}'
+            if sh in ex['sheets']:
+                ratio[sh] = ex['sheets'][sh]['recommended_render_scale'] * v1_h / ex['sheets'][sh]['recommended_standing_height']
+    if 'halla_side_goalies' in ex['sheets']:
+        ratio['halla_side_goalies'] = visible_height(None, frames['goalies/home_south/ready'], PACK) / \
+            visible_height(None, exf['halla_side_goalies/halla/home/east/set_a/pose_1'], pack)
+    for fid, f in exf.items():
+        sh = f['sheet']
+        if sh == 'side_net_layers':
+            continue  # drawn for a different camera angle; the game keeps its own nets
+        if sh == 'ice_spray_goal_lights':
+            k, s, cleanup, pivot = 0.3, 0.3, False, 'pack'
+        elif sh == 'halla_side_goalies':
+            s = SCALE['goalies']; k, cleanup, pivot = s * ratio[sh], True, 'foot'
+        else:
+            s = SCALE['frost_captain']; k, cleanup, pivot = s * ratio[sh], True, 'foot'
+        r = f['frame']
+        img = sheet(sh, pack).crop((r['x'], r['y'], r['x'] + r['w'], r['y'] + r['h']))
+        nw, nh = max(1, round(r['w'] * k)), max(1, round(r['h'] * k))
+        img = img.convert('RGBa').resize((nw, nh), Image.LANCZOS).convert('RGBA')
+        if cleanup:
+            img = drop_fragments(img)
+        if pivot == 'foot':
+            px, py = foot_pivot(img)
+        else:
+            px, py = f['pivot_pixels']['x'] * k, f['pivot_pixels']['y'] * k
+        add_item(fid, img, px, py, s, 'away' if is_away(fid) else 'home')
+    # direction mappings in the game's pose names
+    for name, v1 in P1_CHARS.items():
+        for team in ('home', 'away'):
+            dirs = ex['characters'].get(name, {}).get(team, {})
+            t = skater_map[v1][team]
+            for d, m in dirs.items():
+                t[d] = {'flip_x': m['flip_x'], 'frames': {DIAG_POSES[k]: v for k, v in m['frames'].items()}}
+            east = ex['animations'].get(f'{name}/{team}/east/stride')
+            if east:
+                t['stride'] = {
+                    'frames': east['frames'],
+                    'stop': ex['animations'][f'{name}/{team}/east/stop']['frames'][0],
+                    'glide': ex['animations'][f'{name}/{team}/east/glide']['frames'][0],
+                }
+            hit = {d: ex['animations'][f'{name}/{team}/{d}/hit_recovery']['frames']
+                   for d in ('east', 'south') if f'{name}/{team}/{d}/hit_recovery' in ex['animations']}
+            if hit:
+                t['hit'] = hit
+    for key, g in ex.get('goalies', {}).items():
+        team = key.split('/')[1]
+        if 'east' in g:
+            goalies_side[team] = g['east']['frames']
 
 out_frames = {}
 pages = []
@@ -136,7 +258,8 @@ Image.open(os.path.join(PACK, 'sheets', 'rink_backdrop.png')).convert('RGB').sav
 atlas = {
     'pages': pages,
     'frames': out_frames,
-    'skaters': src['skaters'],
+    'skaters': skater_map,
+    'goalies_side': goalies_side,
 }
 with open(os.path.join(OUT, 'atlas.json'), 'w') as fh:
     json.dump(atlas, fh, separators=(',', ':'))

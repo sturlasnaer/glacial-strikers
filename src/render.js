@@ -10,6 +10,9 @@ import { NetRenderer } from './net.js';
 const SKATER_SCALE = 0.5; // world px per source px
 const GOALIE_SCALE = 0.43;
 const PUCK_SCALE = 0.115;
+const DIRS8 = ['east', 'southeast', 'south', 'southwest', 'west', 'northwest', 'north', 'northeast'];
+const DIRS4 = ['east', 'south', 'west', 'north'];
+const GOAL_LIGHT = 'ice_spray_goal_lights/goal_light/phase_';
 
 const LAMPS = [
   [252, 18], [697, 15], [838, 15], [1282, 18], [18, 185], [1518, 185],
@@ -105,6 +108,7 @@ export class Renderer {
     Assets.draw(ctx, 'hud_elements/misc/home_crest', cc.x, cc.y + 2, 0.5, { alpha: 0.3, squash: 0.8 });
     this.drawLamps(ctx, fx);
     this.drawCrowd(ctx, fx, ui);
+    this.drawGoalLights(ctx, match, fx);
     if (fx.marks) ctx.drawImage(fx.marks, 0, 0, BACKDROP.w, BACKDROP.h);
     this.drawTwists(ctx, match, fx);
     this.drawTrails(ctx, match);
@@ -387,18 +391,24 @@ export class Renderer {
 
   // ------------------------------------------------------------- characters
   skaterFrame(s, match) {
-    const atlas = Assets.atlas;
-    const key = s.team === 0 ? 'home' : 'away';
-    const c = Math.cos(s.face), sn = Math.sin(s.face);
-    let dir;
-    if (Math.abs(c) > 0.55) dir = c > 0 ? 'east' : 'west';
-    else dir = sn > 0 ? 'south' : 'north';
-    // hysteresis
-    if (s._dir && s._dir !== dir && Math.abs(Math.abs(c) - 0.55) < 0.12) dir = s._dir;
-    s._dir = dir;
-    const map = atlas.skaters[s.def.sprite][key][dir];
-    let pose = 'idle';
+    const set = Assets.atlas.skaters[s.def.sprite][s.team === 0 ? 'home' : 'away'];
+    const dir = this.skaterDir(s, !!set.northeast, match.time || 0);
+    const map = set[dir];
+    const side = dir.endsWith('east') ? 'east' : dir.endsWith('west') ? 'west' : null;
     const sp = s.speed;
+
+    // hit reactions: stagger, then a knockdown held for the stun on big hits
+    if (s.stun <= 0) s._stunMax = 0;
+    else if (!s._stunMax || s.stun > s._prevStun + 1e-4) s._stunMax = s.stun; // new or refreshed
+    s._prevStun = s.stun;
+    if (s.stun > 0 && set.hit) {
+      const seq = set.hit[side ? 'east' : 'south'];
+      const t = s._stunMax - s.stun;
+      let i = 0;
+      if (s._stunMax >= 0.38) i = t < 0.1 ? 0 : s.stun > 0.14 ? 1 : 2;
+      return { id: seq[i], flip: side === 'west', pose: i === 1 ? 'down' : 'stagger' };
+    }
+    let pose = 'idle';
     if (s.celebrate > 0 && (match.state === 'goal' || match.state === 'over')) pose = 'celebrate';
     else if (s.stun > 0) pose = 'check';
     else if (s.ultWindup > 0 || (s.charging && s.chargeT > 0.08)) pose = 'shot_windup';
@@ -406,8 +416,42 @@ export class Renderer {
     else if (s.state === 'shoot') pose = 'shot_release';
     else if (s.state === 'pass') pose = 'pass';
     else if (s.state === 'check') pose = 'check';
-    else if (sp > 40) pose = Math.floor(s.animT * (3 + sp / 70)) % 2 ? 'skate_a' : 'skate_b';
+    else if (sp > 40) {
+      // side-on skating has a 4-frame stride, a glide and a hockey stop
+      if (set.stride && (dir === 'east' || dir === 'west')) {
+        const st = set.stride;
+        const flip = dir === 'west';
+        if (s.stopping) return { id: st.stop, flip, pose: 'stop' };
+        if (s.gliding && sp < s.d.maxSpeed * 1.05) return { id: st.glide, flip, pose: 'glide' };
+        return { id: st.frames[Math.floor(s.animT * (3 + sp / 60)) % 4], flip, pose: 'stride' };
+      }
+      if (s.gliding && map.frames.skate_a) pose = 'skate_b';
+      else pose = Math.floor(s.animT * (3 + sp / 70)) % 2 ? 'skate_a' : 'skate_b';
+    }
     return { id: map.frames[pose], flip: map.flip_x, pose };
+  }
+
+  // 8-way facing (4-way with v1 art only). Hysteresis plus a short hold keeps a skater
+  // turning along a sector edge from flickering between two directions.
+  skaterDir(s, eight, now) {
+    const a = Math.atan2(Math.sin(s.face), Math.cos(s.face));
+    const n = eight ? 8 : 4;
+    const step = (Math.PI * 2) / n;
+    const raw = ((Math.round(a / step) % n) + n) % n;
+    let i = raw, waiting = false;
+    if (s._dirI !== undefined && s._dirN === n && s._dirI !== raw) {
+      let d = Math.abs(a - s._dirI * step) % (Math.PI * 2);
+      if (d > Math.PI) d = Math.PI * 2 - d;
+      if (d < step / 2 + 0.14) i = s._dirI;
+      else if (d < step * 1.2) {
+        // adjacent sector: switch once the new facing has held for a moment
+        if (s._dirPend !== raw || now < s._dirPendT) { s._dirPend = raw; s._dirPendT = now; }
+        if (now - s._dirPendT < 0.07) { i = s._dirI; waiting = true; }
+      }
+    }
+    if (!waiting) s._dirPend = undefined;
+    s._dirI = i; s._dirN = n;
+    return (eight ? DIRS8 : DIRS4)[i];
   }
 
   drawSkater(ctx, s, match, fx) {
@@ -416,7 +460,8 @@ export class Renderer {
     const k = SKATER_SCALE * persp(s.y);
     let y = p.y, rot = 0;
     if (fr.pose === 'celebrate') y -= Math.abs(Math.sin(s.animT * 7 + s.slot)) * 12;
-    if (s.stun > 0) rot = Math.sin(s.animT * 30) * 0.12 + (fr.flip ? 0.25 : -0.25);
+    if (fr.pose === 'check' && s.stun > 0) rot = Math.sin(s.animT * 30) * 0.12 + (fr.flip ? 0.25 : -0.25);
+    else if (fr.pose === 'stagger') rot = Math.sin(s.animT * 30) * 0.05;
     const pages = s.team === 0 ? Assets.pages : this.awayPages;
     // aura for active abilities
     if (s.bedrockT > 0) this.aura(ctx, p.x, p.y - 30, 34, '#c9b79c', fx.time);
@@ -476,8 +521,34 @@ export class Renderer {
     ctx.restore();
   }
 
+  goalieSideFrame(g, set) {
+    let pose = 'ready';
+    switch (g.state) {
+      case 'butterfly': pose = 'butterfly'; break;
+      case 'glove': pose = g.saveHi ? 'glove_save' : 'blocker_save'; break;
+      case 'hold': pose = 'cover'; break;
+      case 'dive': case 'down': pose = g.stateT > 0.32 ? 'pad_stretch' : g.diveDir < 0 ? 'dive_up' : 'dive_down'; break;
+      default:
+        if ((g.prevState === 'hold' || g.prevState === 'dive' || g.prevState === 'down') && g.stateT < 0.2) pose = 'getting_up';
+        else if (g.shuffle) pose = g.shuffle < 0 ? 'shuffle_up' : 'shuffle_down';
+    }
+    return set[pose] || set.ready;
+  }
+
   drawGoalie(ctx, g, match) {
     const key = g.team === 0 ? 'home' : 'away';
+    const side = Assets.atlas.goalies_side && Assets.atlas.goalies_side[key];
+    if (side) {
+      const id = this.goalieSideFrame(g, side);
+      const p = toScreen(g.x, g.y);
+      const pages = g.team === 0 ? Assets.pages : this.awayPages;
+      const flip = g.goalSide > 0; // the art faces right, toward the play from the left net
+      const k = GOALIE_SCALE * persp(g.y) * (match.mods && match.mods.has('giant') ? 1.25 : 1);
+      Assets.draw(ctx, id, p.x, p.y, k, { pages, flip });
+      if (g.slowT > 0) this.drawTinted(ctx, id, pages, p.x, p.y, k, flip, 0, '#9fe8ff', 0.4);
+      if (g.flash > 0) this.drawTinted(ctx, id, pages, p.x, p.y, k, flip, 0, '#ffffff', g.flash * 2.5);
+      return;
+    }
     let pose = 'ready', rot = 0;
     switch (g.state) {
       case 'butterfly': pose = 'butterfly'; break;
@@ -571,7 +642,7 @@ export class Renderer {
     for (const a of fx.anims) {
       const i = Math.min(a.frames.length - 1, Math.floor(a.t * a.fps));
       const s = toScreen(a.x, a.y, a.z);
-      Assets.draw(ctx, a.prefix + a.frames[i], s.x, s.y, a.scale, { rot: a.rot });
+      Assets.draw(ctx, a.prefix + a.frames[i], s.x, s.y, a.scale, { rot: a.rot, flip: a.flip });
     }
   }
 
@@ -587,21 +658,39 @@ export class Renderer {
     }
   }
 
+  // Red goal lights on the end boards behind each net; the scored-on one spins.
+  goalLightPos(side) {
+    const s = toScreen(side * 727, -6);
+    return { x: s.x, y: s.y - 14 };
+  }
+
+  drawGoalLights(ctx, match, fx) {
+    if (!Assets.frame(GOAL_LIGHT + 1)) return;
+    for (const side of [-1, 1]) {
+      const p = this.goalLightPos(side);
+      const lit = fx.lamp > 0 && match.lastGoal && match.lastGoal.side === side;
+      const phase = !lit ? 1 : fx.flashes ? 2 + (Math.floor(fx.time * 16) % 6) : 4;
+      Assets.draw(ctx, GOAL_LIGHT + phase, p.x, p.y, 0.17, { flip: side > 0 });
+    }
+  }
+
   drawGoalLamp(ctx, match, fx) {
     if (fx.lamp <= 0 || !match.lastGoal) return;
     const side = match.lastGoal.side;
-    const s = toScreen(side * (GOAL_X + NET_DEPTH + 10), 0);
+    const sprite = !!Assets.frame(GOAL_LIGHT + 1);
+    const s = sprite ? this.goalLightPos(side) : toScreen(side * (GOAL_X + NET_DEPTH + 10), 0);
+    const cy = sprite ? s.y - 8 : s.y - 60;
     const on = fx.flashes ? Math.sin(fx.lamp * 12) > 0 : true;
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     const r = on ? 140 : 90;
-    const g = ctx.createRadialGradient(s.x, s.y - 60, 0, s.x, s.y - 60, r);
+    const g = ctx.createRadialGradient(s.x, cy, 0, s.x, cy, r);
     g.addColorStop(0, hexA('#ff3b3b', on ? 0.65 : 0.3));
     g.addColorStop(1, hexA('#ff3b3b', 0));
     ctx.fillStyle = g;
-    ctx.fillRect(s.x - r, s.y - 60 - r, r * 2, r * 2);
+    ctx.fillRect(s.x - r, cy - r, r * 2, r * 2);
     ctx.restore();
-    Assets.draw(ctx, 'rink_props/props/lamp', s.x + side * 18, s.y - 40, 0.22);
+    if (!sprite) Assets.draw(ctx, 'rink_props/props/lamp', s.x + side * 18, s.y - 40, 0.22);
   }
 
   drawReticle(ctx, fx) {
