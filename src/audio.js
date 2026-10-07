@@ -86,6 +86,7 @@ export class Audio {
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -14; comp.ratio.value = 4;
     this.master.connect(comp).connect(ctx.destination);
+    this.comp = comp;
     this.musicBus = ctx.createGain(); this.musicBus.gain.value = this.musicOn ? 0.55 : 0;
     this.sfxBus = ctx.createGain(); this.sfxBus.gain.value = this.sfxOn ? 1 : 0;
     this.musicBus.connect(this.master); this.sfxBus.connect(this.master);
@@ -102,6 +103,13 @@ export class Audio {
     this.startCrowd();
     if (this.pendingSong) { this.play(this.pendingSong); this.pendingSong = null; }
     this.timer = setInterval(() => this.schedule(), 25);
+  }
+
+  // A MediaStream of everything the game plays, for goal clips.
+  recordStream() {
+    if (!this.ctx || !this.ctx.createMediaStreamDestination) return null;
+    if (!this.recDest) { this.recDest = this.ctx.createMediaStreamDestination(); this.comp.connect(this.recDest); }
+    return this.recDest;
   }
 
   setMusic(on) { this.musicOn = on; if (this.musicBus) this.musicBus.gain.setTargetAtTime(on ? 0.55 : 0, this.ctx.currentTime, 0.1); }

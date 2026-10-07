@@ -61,6 +61,9 @@ Hold shoot while a pass is on its way to fire a **one-timer**. Your skates plant
 - **Rivalries:** head-to-head records per rival. Captains bring up past scores, streaks and who lit them up, and the bracket shows the record.
 - **Challenges:** exhibition modifiers (One-timers only, Giant goalies, Ice age, Lightning round, Heavy hitters, Next goal wins) with coin multipliers.
 - **Local versus:** two players on one keyboard or with gamepads, plus gamepad rumble on hits, goals, combos and ultimates.
+- **Accessibility and comfort (Settings):** aim assist (off/normal/strong), auto-sprint, relaxed game speed, screen shake strength, flashes off, reduced effects, colorblind-friendly team markers (blue triangles vs orange diamonds), large text, bigger touch buttons and a left-handed touch layout.
+- **Goal clips:** every instant replay is recorded as a short video with game sound and a caption. The results screen lists the match's highlights with Share (phones) and Save.
+- **Achievements:** 28 trophies (hat tricks, comebacks, every combo and power puck, empty-netters, shorthanded goals, the cup, a perfect season, gold in every drill and more), each paying coins, shown in the Trophies tab.
 - **Broadcast:** instant goal replays (skippable, toggle in Settings), play-by-play commentary ticker, ultimate cut-ins, crowd chants that speed up the cheered team's ultimates, a team logo at centre ice.
 - **Nets** are drawn in code as pixel art to fit the side-on camera, with the puck sitting inside the mesh and a ripple on goals, until a proper net sprite arrives.
 
@@ -75,6 +78,8 @@ src/rivals.js         head-to-head records and rivalry dialogue
 src/league.js         schedule, simulated games, standings, playoffs
 src/lockerroom.js     locker-room moments and next-match buffs
 src/replay.js         instant goal replays
+src/clips.js          records replays as shareable video clips
+src/achievements.js   achievements and the trophy case
 src/commentary.js     play-by-play ticker
 src/net.js            pixel-art nets drawn for the side-on camera
 src/entities.js       Skater, Goalie, Puck, Barrier

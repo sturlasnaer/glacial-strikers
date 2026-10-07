@@ -18,7 +18,7 @@ export class TeamAI {
 
   // ---- difficulty hooks used by the match
   faceoffReaction() { return lerp(0.5, 0.13, this.diff) + this.m.rng() * lerp(0.25, 0.1, this.diff); }
-  aimMul(s) { return s.controlled ? 1 : lerp(1.6, 0.85, this.diff); }
+  aimMul(s) { return s.controlled ? ({ off: 1.15, strong: 0.75 }[this.m.assist] || 1) : lerp(1.6, 0.85, this.diff); }
   catchMul(s) { return s.controlled ? 1 : lerp(0.72, 1, this.diff); }
   stealMul() {
     const plan = this.gamePlan;

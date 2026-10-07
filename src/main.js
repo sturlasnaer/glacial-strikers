@@ -11,6 +11,8 @@ import { HUD } from './hud.js';
 import { toScreen } from './rink.js';
 import { Replay } from './replay.js';
 import { Commentary } from './commentary.js';
+import { ClipRecorder } from './clips.js';
+import { AchievementTracker } from './achievements.js';
 import { createDrill, medalFor, DRILL_REWARDS } from './drills.js';
 import { recordRivalResult, rivalLines, rivalAfterLine } from './rivals.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan } from './league.js';
@@ -60,6 +62,7 @@ class App {
       ]);
     }
     this.save = loadSave() || newSave();
+    this.ach = new AchievementTracker(this.save, (a) => this.toastAchievement(a));
     audio.setMusic(this.save.settings.music);
     audio.setSfx(this.save.settings.sfx);
     this.renderer = new Renderer(this.canvas);
@@ -69,7 +72,9 @@ class App {
     this.ui = new UI(this);
     this.hud = new HUD(this);
     this.replay = new Replay();
+    this.clips = new ClipRecorder(this.canvas, audio);
     this.commentary = new Commentary((text) => this.hud.ticker(text));
+    this.applySettings();
     this.renderer.resize();
     window.addEventListener('resize', () => this.onResize());
     window.addEventListener('orientationchange', () => setTimeout(() => this.onResize(), 200));
@@ -86,6 +91,33 @@ class App {
     this.loadingEl.remove();
     this.goTitle();
     requestAnimationFrame((t) => this.loop(t));
+  }
+
+  // "Achievement unlocked" toast; shows anywhere (menus or matches).
+  toastAchievement(a) {
+    let box = document.getElementById('toasts');
+    if (!box) { box = document.createElement('div'); box.id = 'toasts'; document.getElementById('app').appendChild(box); }
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.innerHTML = `<img src="${Assets.icon(a.icon, 72)}" alt=""><div><small>Achievement unlocked</small><b></b><span>+${a.coins} coins</span></div>`;
+    el.querySelector('b').textContent = a.name;
+    box.appendChild(el);
+    audio.jingle('level');
+    setTimeout(() => el.remove(), 4200);
+  }
+
+  // Apply comfort / accessibility settings everywhere they matter.
+  applySettings() {
+    const st = this.save.settings;
+    audio.setMusic(st.music); audio.setSfx(st.sfx);
+    this.fx.shakeMul = st.shake ?? 1;
+    this.fx.flashes = st.flashes !== false;
+    this.fx.particleMul = st.particles === 'reduced' ? 0.35 : 1;
+    this.renderer.markers = st.markers || 'color';
+    document.body.classList.toggle('large-text', st.textSize === 'large');
+    const t = document.getElementById('touch');
+    t.dataset.size = st.touchSize || 'normal';
+    t.classList.toggle('lefty', !!st.lefty);
   }
 
   // Offline play and "install to home screen". Service workers need https, so this only
@@ -266,6 +298,7 @@ class App {
     this.scene = 'results';
     audio.jingle('win');
     const p1 = summary.winner === 0;
+    if (summary.winner !== null) { this.ach.unlock('versus'); writeSave(this.save); }
     this.ui.modal(`
       <div style="text-align:center">
         <div class="label">Local versus</div>
@@ -322,6 +355,7 @@ class App {
     if (c.drill === 'shootout') return this.finishShootout(res);
     const medal = medalFor(c.def, res.score);
     const rw = drillRewards(s, c.drill, c.char, res.score, medal, DRILL_REWARDS);
+    this.ach.checkMeta();
     writeSave(s);
     this.ui.drillResult(c.def, res.score, rw, c.char,
       () => this.startDrill(c.drill, c.char, c.opts),
@@ -347,6 +381,8 @@ class App {
     for (const id of ['frost', 'thunder', 'stone']) ups.push(...applyExp(s, id, won ? 20 : 10));
     applyGoalieExp(s, won ? 20 : 10);
     this.recordRival(c.teamId, res.goals[0], res.goals[1], won, true);
+    if (won) this.ach.unlock('shootout');
+    this.ach.checkMeta();
     writeSave(s);
     audio.jingle(won ? 'win' : 'lose');
     this.ui.modal(`
@@ -383,6 +419,8 @@ class App {
     const m = this.makeMatch(cfg, teamId);
     this.hookMatch(m);
     this.replay.clear();
+    this.clips.clear();
+    this.ach.attachMatch(m);
     this.replayPending = false;
     this.commentary.attach(m, teamId);
     this.chantCool = 25;
@@ -535,16 +573,18 @@ class App {
       leagueOut = recordOurGame(s.league, s, summary.score[0], summary.score[1]);
       leagueOut.kind = c.fixture ? c.fixture.kind : 'regular';
       leagueOut.won = rewards.won;
-      if (leagueOut.champion === 'home') { s.champion = true; becameChampion = true; }
+      if (leagueOut.champion === 'home') { s.champion = true; becameChampion = true; s.cups = (s.cups || 0) + 1; }
       s.stage = s.league.round;
     }
+    this.ach.endMatch(summary, { league: !c.exhibition, exhibition: c.exhibition, mods: c.mods });
+    this.ach.checkMeta();
     s.training.sessions = 2;
     writeSave(s);
     this.wake?.release?.().catch(() => {});
     this.hud.hide();
     this.scene = 'results';
     if (ups.length) setTimeout(() => audio.jingle('level'), 900);
-    this.ui.results({ summary, rewards, ups, chemUps, teamId: c.teamId, exhibition: c.exhibition, round: c.stage.round, gUp }, () => {
+    this.ui.results({ summary, rewards, ups, chemUps, teamId: c.teamId, exhibition: c.exhibition, round: c.stage.round, gUp, clips: this.clips }, () => {
       const finish = () => {
         if (becameChampion) { this.scene = 'results'; this.ui.champion(() => this.goHub('tournament')); } else this.goHub(rewards.won ? 'tournament' : 'team');
       };
@@ -575,8 +615,21 @@ class App {
     this.endReplay();
   }
 
+  startClip(m) {
+    if (!this.save.settings.clips || !this.clips.supported || !m.lastGoal) return;
+    const g = m.lastGoal, t = TEAMS[this.awayTeamId];
+    const scorer = g.scorer ? g.scorer.name : 'Goal';
+    const assist = g.assists && g.assists.length ? ` from ${g.assists.map((a) => a.name).join(' & ')}` : '';
+    const kind = g.kind === 'onetimer' ? ' · one-timer' : g.special && g.special.combo ? ` · ${COMBOS[g.special.combo].name}` : g.powerPlay ? ' · power play' : '';
+    const score = `GLA ${m.score[0]} – ${m.score[1]} ${t.short}`;
+    this.renderer.clipOverlay = { title: `${scorer.toUpperCase()}${assist}${kind}`, score };
+    this.clips.start({ scorer, line: `${scorer}${assist}${kind}. ${score}`, team: g.team, score });
+  }
+
   endReplay() {
     const m = this.match;
+    this.clips.stop();
+    this.renderer.clipOverlay = null;
     this.hud.replayMode(false);
     if (!m) return;
     m.holdGoal = false;
@@ -638,6 +691,7 @@ class App {
 
   resetSave() {
     this.save = newSave();
+    this.ach = new AchievementTracker(this.save, (a) => this.toastAchievement(a));
     writeSave(this.save);
     this.goTitle();
   }
@@ -739,8 +793,11 @@ class App {
           if (pads.length >= 2) { p1 = mergeInputs(p1, this.input.readPad(pads[0])); p2 = mergeInputs(p2, this.input.readPad(pads[1])); }
           else if (pads.length === 1) p2 = mergeInputs(p2, this.input.readPad(pads[0]));
           m.setHumanInput(p1, 0); m.setHumanInput(p2, 1);
-        } else if (this.scene === 'match') m.setHumanInput(raw);
-        let simDt = realDt * this.fx.slowScale;
+        } else if (this.scene === 'match') {
+          if (this.save.settings.autoSprint && Math.hypot(raw.mx, raw.my) > 0.92) raw.sprint = true;
+          m.setHumanInput(raw);
+        }
+        let simDt = realDt * this.fx.slowScale * (this.save.settings.speed === 'relaxed' && !(this.cur && this.cur.drill) && !this.attract ? 0.85 : 1);
         if (this.fx.hitstop > 0) simDt = 0;
         this.acc += simDt;
         let n = 0;
@@ -756,6 +813,7 @@ class App {
           this.replayPending = false;
           if (this.replay.start()) {
             m.holdGoal = true;
+            this.startClip(m);
             this.hud.replayMode(true);
             this.replayGuard = raw.a || raw.b || raw.sprint;
             this.fx.parts.length = 0;

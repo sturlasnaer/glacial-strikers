@@ -7,6 +7,7 @@ import {
 } from './data.js';
 import { standings } from './league.js';
 import { BUFF_TEXT } from './lockerroom.js';
+import { ACHIEVEMENTS } from './achievements.js';
 import {
   expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave,
   chemLevel, chemProgress,
@@ -151,7 +152,7 @@ export class UI {
           <button class="icon-btn" id="h-settings" aria-label="Settings">☰</button>
         </div>
         <div class="tabs" role="tablist">
-          ${['tournament', 'team', 'shop', 'training'].map((t) => `<button class="tab" role="tab" data-tab="${t}" aria-selected="${this.tab === t}">${t[0].toUpperCase() + t.slice(1)}${t === 'team' && anyPoints ? '<span class="dot"></span>' : ''}</button>`).join('')}
+          ${[['tournament', 'League'], ['team', 'Team'], ['shop', 'Shop'], ['training', 'Training'], ['trophies', 'Trophies']].map(([t, label]) => `<button class="tab" role="tab" data-tab="${t}" aria-selected="${this.tab === t}">${label}${t === 'team' && anyPoints ? '<span class="dot"></span>' : ''}</button>`).join('')}
         </div>
         <div class="hub-body panel" id="hub-body"></div>
         <div class="hub-cta">
@@ -167,7 +168,7 @@ export class UI {
     this.click('#h-title', () => { audio.sfx('back'); this.app.goTitle(); });
     this.click('#h-settings', () => { audio.sfx('click'); this.settings(); });
     const body = r.querySelector('#hub-body');
-    ({ tournament: () => this.tabTournament(body), team: () => this.tabTeam(body), shop: () => this.tabShop(body), training: () => this.tabTraining(body) })[this.tab]();
+    ({ tournament: () => this.tabTournament(body), team: () => this.tabTeam(body), shop: () => this.tabShop(body), training: () => this.tabTraining(body), trophies: () => this.tabTrophies(body) })[this.tab]();
     return r;
   }
 
@@ -215,6 +216,26 @@ export class UI {
         </div>
         <div style="min-width:0"><div class="label" style="margin-bottom:6px;font-size:14px">Your schedule</div><div class="schedule">${schedule}</div></div>
       </div>`;
+  }
+
+  tabTrophies(body) {
+    const s = this.app.save;
+    const tr = this.app.ach;
+    const got = ACHIEVEMENTS.filter((a) => tr.has(a.id));
+    const earned = got.reduce((n, a) => n + a.coins, 0);
+    body.innerHTML = `
+      <div class="train-top"><div><div class="label">Trophy case</div>
+        <p style="margin:2px 0 0;font-size:13px">${got.length} of ${ACHIEVEMENTS.length} unlocked · ${earned} coins earned${s.cups ? ` · ${s.cups} cup${s.cups > 1 ? 's' : ''} won` : ''}</p></div></div>
+      <div class="trophies">${ACHIEVEMENTS.map((a) => {
+        const done = tr.has(a.id);
+        const pr = !done && tr.progress(a);
+        return `<div class="trophy ${done ? 'got' : ''}">
+          <img src="${ico(a.icon, 96)}" alt="">
+          <div style="min-width:0"><b>${esc(a.name)}</b><span>${esc(a.text)}</span>
+            ${pr ? `<div class="xpbar" style="margin-top:4px"><i style="width:${Math.round((pr[0] / pr[1]) * 100)}%"></i></div><span class="muted">${pr[0]} / ${pr[1]}</span>` : ''}</div>
+          <span class="tcoins">${done ? '✓' : `+${a.coins}`}</span>
+        </div>`;
+      }).join('')}</div>`;
   }
 
   // Before a league match: pick a game plan, with a scouting report on theirs.
@@ -451,6 +472,7 @@ export class UI {
       if (s.coins < price || s.owned.includes(g.id)) return;
       s.coins -= price;
       s.discount = 0;
+      this.app.ach.checkMeta();
       s.owned.push(g.id);
       writeSave(s);
       audio.sfx('coin');
@@ -543,26 +565,54 @@ export class UI {
   settings() {
     const s = this.app.save;
     const st = s.settings;
-    this.modal(`
+    const seg = (key, opts) => `<span class="seg">${opts.map(([v, label]) => `<button class="chip" data-set="${key}" data-v="${v}" aria-pressed="${String(st[key]) === String(v)}">${label}</button>`).join('')}</span>`;
+    const row = (label, ctl, hint) => `<div class="toggle"><span>${label}${hint ? `<small class="muted" style="display:block;font-size:11.5px">${hint}</small>` : ''}</span>${ctl}</div>`;
+    const onOff = (key) => seg(key, [[true, 'On'], [false, 'Off']]);
+    const body = () => `
       <h2>Settings</h2>
-      <div class="toggle"><span>Music</span><button class="btn small ${st.music ? 'cream' : 'ghost'}" id="s-music">${st.music ? 'On' : 'Off'}</button></div>
-      <div class="toggle"><span>Sound effects</span><button class="btn small ${st.sfx ? 'cream' : 'ghost'}" id="s-sfx">${st.sfx ? 'On' : 'Off'}</button></div>
-      <div class="toggle"><span>Goal replays</span><button class="btn small ${st.replays !== false ? 'cream' : 'ghost'}" id="s-replays">${st.replays !== false ? 'On' : 'Off'}</button></div>
-      <div class="toggle"><span>Rival difficulty</span><span class="row">${['easy', 'normal', 'hard'].map((d) => `<button class="btn small ${st.difficulty === d ? 'cream' : 'ghost'}" data-diff="${d}">${d}</button>`).join('')}</span></div>
-      <div class="toggle"><span>Play offline</span><span style="font-size:13px;text-align:right;max-width:30ch">${installHelp(this.app)}</span></div>
+      <div class="label">Sound</div>
+      ${row('Music', onOff('music'))}
+      ${row('Sound effects', onOff('sfx'))}
+      <div class="label">Gameplay</div>
+      ${row('Rival difficulty', seg('difficulty', [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']]))}
+      ${row('Aim assist', seg('assist', [['off', 'Off'], ['normal', 'Normal'], ['strong', 'Strong']]), 'Strong tightens your shots and widens pass catching. Off aims dead centre unless you steer.')}
+      ${row('Auto-sprint', seg('autoSprint', [[false, 'Off'], [true, 'On']]), 'Sprint whenever the stick is pushed all the way.')}
+      ${row('Game speed', seg('speed', [['normal', 'Normal'], ['relaxed', 'Relaxed']]), 'Relaxed plays matches at 85% speed. Drills stay at full speed.')}
+      ${row('Goal replays', onOff('replays'))}
+      ${row('Goal clips', onOff('clips'), 'Record each replay as a short video you can share.')}
+      <div class="label">Comfort</div>
+      ${row('Screen shake', seg('shake', [[1, 'Full'], [0.5, 'Low'], [0, 'Off']]))}
+      ${row('Flashes', onOff('flashes'), 'Screen flashes and blinking goal lights.')}
+      ${row('Effects', seg('particles', [['full', 'Full'], ['reduced', 'Reduced']]), 'Fewer sparks, snow sprays and confetti.')}
+      <div class="label">Visibility and controls</div>
+      ${row('Team markers', seg('markers', [['color', 'Colors'], ['shapes', 'Shapes']]), 'Shapes: blue triangles for your team, orange diamonds for rivals.')}
+      ${row('Text size', seg('textSize', [['normal', 'Normal'], ['large', 'Large']]))}
+      ${row('Touch buttons', seg('touchSize', [['normal', 'Normal'], ['large', 'Large'], ['huge', 'Huge']]))}
+      ${row('Touch layout', seg('lefty', [[false, 'Stick left'], [true, 'Stick right']]))}
+      ${row('Play offline', `<span style="font-size:13px;text-align:right;max-width:30ch">${installHelp(this.app)}</span>`)}
       <div class="label">Controls</div>
       ${controlsHtml(this.app.isTouch)}
       <div class="toggle"><span class="muted">Erase the save and start over</span><button class="btn small ghost" id="s-reset">Reset save</button></div>
-      <button class="btn small" data-close>Close</button>`, (m, close) => {
-      this.click('#s-music', () => { st.music = !st.music; audio.setMusic(st.music); writeSave(s); close(); this.settings(); }, m);
-      this.click('#s-sfx', () => { st.sfx = !st.sfx; audio.setSfx(st.sfx); writeSave(s); close(); this.settings(); }, m);
-      this.click('#s-install', async () => { await this.app.install(); close(); this.settings(); }, m);
-      this.click('#s-replays', () => { st.replays = st.replays === false; writeSave(s); close(); this.settings(); }, m);
-      this.click('[data-diff]', (el) => { st.difficulty = el.dataset.diff; writeSave(s); audio.sfx('click'); close(); this.settings(); }, m);
-      this.click('#s-reset', (el) => {
-        if (el.dataset.armed) { clearSave(); close(); this.app.resetSave(); return; }
-        el.dataset.armed = '1'; el.textContent = 'Tap again to erase'; el.classList.add('gold');
-      }, m);
+      <button class="btn small" id="s-close">Close</button>`;
+    this.modal(body(), (m, close) => {
+      const bind = () => {
+        this.click('[data-set]', (el) => {
+          const v = el.dataset.v;
+          st[el.dataset.set] = v === 'true' ? true : v === 'false' ? false : Number.isNaN(+v) ? v : +v;
+          writeSave(s);
+          audio.sfx('click');
+          this.app.applySettings();
+          const y = m.scrollTop;
+          m.innerHTML = body(); bind(); m.scrollTop = y;
+        }, m);
+        this.click('#s-install', async () => { await this.app.install(); m.innerHTML = body(); bind(); }, m);
+        this.click('#s-close', () => { audio.sfx('back'); close(); }, m);
+        this.click('#s-reset', (el) => {
+          if (el.dataset.armed) { clearSave(); close(); this.app.resetSave(); return; }
+          el.dataset.armed = '1'; el.textContent = 'Tap again to erase'; el.classList.add('gold');
+        }, m);
+      };
+      bind();
     });
   }
 
@@ -667,8 +717,20 @@ export class UI {
             </div>
           </div>
         </div>
+        ${data.clips && data.clips.clips.length ? `<div>
+          <div class="label">Highlights</div>
+          <div class="clips">${data.clips.clips.map((c, i) => `<div class="clip">
+            <video src="${c.url}" muted loop playsinline autoplay></video>
+            <div class="clip-line">${esc(c.meta.line)}</div>
+            <div class="row" style="gap:6px">${data.clips.canShare(c) ? `<button class="btn small cream" data-share="${i}">Share</button>` : ''}<a class="btn small ghost" href="${c.url}" download="${esc(data.clips.fileFor(c, i).name)}">Save</a></div>
+          </div>`).join('')}</div>
+        </div>` : ''}
         <div class="row" style="justify-content:flex-end"><button class="btn gold" id="r-go">Continue</button></div>
       </div>`);
+    if (data.clips) this.click('[data-share]', async (el) => {
+      const i = +el.dataset.share;
+      try { await data.clips.share(data.clips.clips[i], i); } catch { /* share sheet closed */ }
+    }, r);
     requestAnimationFrame(() => r.querySelectorAll('[data-w]').forEach((el) => { el.style.width = el.dataset.w + '%'; }));
     if (won) audio.jingle('win'); else audio.jingle('lose');
     this.click('#r-go', () => { audio.sfx('confirm'); onContinue(); });

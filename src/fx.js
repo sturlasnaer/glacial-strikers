@@ -34,6 +34,7 @@ export class FX {
     this.crowd = makeCrowd();
     this.excite = 0; // crowd excitement 0..1
     this.cheerTeam = null;
+    this.shakeMul = 1; this.flashes = true; this.particleMul = 1; // comfort settings
     this.chant = null; // { team, t } crowd chanting in rhythm
     this.marks = null; // offscreen canvas for skate scratches
     this.marksCtx = null;
@@ -188,6 +189,7 @@ export class FX {
   // ---------------------------------------------------------------- spawners
   part(x, y, z, vx, vy, vz, life, color, size, kind = 'dot') {
     if (this.parts.length > 600) return;
+    if (this.particleMul < 1 && rnd() > this.particleMul) return;
     this.parts.push({ x, y, z, vx, vy, vz, life, t: 0, color, size, kind, rot: rnd.range(0, 6.28) });
   }
   burst(x, y, z, n, colors, speed, life) {
@@ -210,8 +212,8 @@ export class FX {
     this.bolts.push({ pts, t: 0, life: 0.35 });
   }
   ghost(s, delay) { this.parts.push({ kind: 'ghost', s, x: s.x, y: s.y, face: s.face, t: -delay, life: 0.3, z: 0, vx: 0, vy: 0, vz: 0 }); }
-  shake(a) { this.shakeT = Math.min(1, this.shakeT + a); }
-  flashScreen(color, life) { this.flash = { color, t: 0, life }; }
+  shake(a) { this.shakeT = Math.min(1, this.shakeT + a * this.shakeMul); }
+  flashScreen(color, life) { if (this.flashes) this.flash = { color, t: 0, life }; }
 
   scratch(s, w) {
     if (!this.marksCtx) return;

@@ -16,11 +16,13 @@ Ideas beyond the blueprint, roughly in the order they'd pay off. "Art" marks ite
 
 ## Next, without new art
 
-Done so far: chemistry, rivalries, training mini-games, shootouts, local versus, gamepad rumble, challenges, the league with playoffs, game plans, locker-room moments, penalties and power plays, pulling the goalie, and installing as an offline app. Still open:
+Everything on the original list is done: chemistry, rivalries, training mini-games, shootouts, local versus, gamepad rumble, challenges, the league with playoffs, game plans, locker-room moments, penalties, pulling the goalie, offline install, accessibility settings, goal clips and achievements.
 
-1. **Accessibility and comfort.** Toggles for screen shake, flashes, auto-sprint and aim assist strength, colourblind-safe team markers, and bigger touch buttons.
-2. **Goal clips.** Record the instant replay to a short video you can save and share.
-3. **Achievements and trophy case.** Hat tricks, shutouts, every combo, all-gold training, beating the Royals with Bram's Monolith, shown in the hub with the trophy and medal sprites.
+Ideas for later:
+1. **Online leaderboards** for training drills and shootouts (needs a small backend).
+2. **Season awards** at the end of each season: MVP, top scorer, best goalie, each with a portrait card.
+3. **Custom team name and colours** for your club.
+4. **Daily challenge:** a seeded match with fixed modifiers and a streak counter.
 
 ## Next, with art
 

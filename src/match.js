@@ -31,6 +31,7 @@ export class Match {
     this.barriers = [];
     this.trails = [];
     this.pickups = [];
+    this.assist = cfg.assist || 'normal'; // aim assist for human players
     this.mods = new Set(cfg.mods || []); // challenge modifiers, see CHALLENGES in data.js
     this.plans = cfg.plans || ['balanced', 'balanced']; // game plans, see GAME_PLANS in data.js
     this.buffs = cfg.buffs || {}; // locker-room buffs for the home team
@@ -460,6 +461,7 @@ export class Match {
     if (typeof iy === 'number' && Math.abs(iy) > 0.35 && explicit === undefined) return Math.sign(iy) * MOUTH * 0.66;
     if (explicit !== undefined && explicit !== null) return explicit;
     if (this.drill && this.drill.neutralAim !== undefined) return this.drill.neutralAim;
+    if (s.controlled && this.assist === 'off') return 0; // no auto-corner without assist
     // smart aim: the side the goalie is leaving open
     const side = g.y > 3 ? -1 : g.y < -3 ? 1 : (this.rng() < 0.5 ? -1 : 1);
     return side * MOUTH * 0.62;
@@ -929,7 +931,7 @@ export class Match {
       const ds = Math.hypot(st.x - p.x, st.y - p.y);
       const db = Math.hypot(s.x - p.x, s.y - p.y);
       const intended = p.pass && p.pass.to === s;
-      const reach = intended ? 30 : 22;
+      const reach = intended ? (s.controlled && this.assist === 'strong' ? 38 : 30) : 22;
       if (p.shot && p.shot.plow > 0 && p.shot.team !== s.team && db < s.r + PUCK_R + 10) {
         // Avalanche bulldozes through the blocker
         p.shot.plow--;

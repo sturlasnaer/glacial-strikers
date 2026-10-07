@@ -36,7 +36,12 @@ export function newSave() {
     discount: 0,
     locker: { seen: [], seasonSeen: [], season: 1 }, // drill bests, medal tiers, rewarded sessions left
     seenIntro: false,
-    settings: { music: true, sfx: true, difficulty: 'normal', tips: true, replays: true },
+    settings: {
+      music: true, sfx: true, difficulty: 'normal', tips: true, replays: true, clips: true,
+      assist: 'normal', autoSprint: false, speed: 'normal',
+      shake: 1, flashes: true, particles: 'full',
+      markers: 'color', textSize: 'normal', touchSize: 'normal', lefty: false,
+    },
     record: { played: 0, wins: 0, goals: 0 },
   };
 }
@@ -50,6 +55,7 @@ export function loadSave() {
     // fill fields added later
     const base = newSave();
     for (const k of Object.keys(base)) if (s[k] === undefined) s[k] = base[k];
+    for (const k of Object.keys(base.settings)) if (s.settings[k] === undefined) s.settings[k] = base.settings[k];
     for (const id of Object.keys(CHARACTERS)) if (!s.roster[id]) s.roster[id] = base.roster[id];
     for (const k of Object.keys(COMBOS)) if (typeof s.chem[k] !== 'number') s.chem[k] = 0;
     if (!s.league || !s.league.schedule) s.league = migrateLeague(s);
@@ -135,6 +141,7 @@ export function matchConfig(save, teamId, stage, opts = {}) {
     home.goalie.stats.rfx += fx.goalieRfx;
   }
   return {
+    assist: save.settings.assist || 'normal',
     plans: opts.plans || ['balanced', 'balanced'],
     buffs: fx ? { ultStart: fx.ultStart, staminaMul: fx.staminaMul, oppGoalieMul: fx.oppGoalieMul, stealMul: fx.stealMul } : {},
     teams: [home, away],

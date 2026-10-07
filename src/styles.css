@@ -197,6 +197,33 @@ img { image-rendering: auto; max-width: 100%; }
 .mod.up { background: rgba(127, 224, 138, 0.18); color: var(--good); border: 1px solid rgba(127, 224, 138, 0.5); }
 .mod.down { background: rgba(255, 111, 125, 0.16); color: var(--bad); border: 1px solid rgba(255, 111, 125, 0.45); }
 
+/* achievements */
+.trophies { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; margin-top: 10px; }
+.trophy { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 10px; background: rgba(11, 20, 36, 0.6); border: 2px solid var(--navy-3); border-radius: 6px; font-size: 12.5px; }
+.trophy img { width: 44px; height: 44px; filter: grayscale(1) brightness(0.55); }
+.trophy b { display: block; font-family: var(--display); font-weight: normal; font-size: 20px; line-height: 1; color: #a9bbd6; }
+.trophy span { color: #8ea3c4; }
+.trophy.got { border-color: var(--gold); background: rgba(255, 212, 94, 0.08); }
+.trophy.got img { filter: none; }
+.trophy.got b { color: var(--gold); }
+.trophy.got span { color: var(--cream); }
+.tcoins { font-family: var(--display); font-size: 18px; color: var(--gold); }
+#toasts { position: absolute; left: 50%; top: calc(56px + var(--safe-t)); transform: translateX(-50%); z-index: 70; display: grid; gap: 6px; pointer-events: none; }
+.toast { display: flex; align-items: center; gap: 10px; padding: 6px 14px 6px 6px; background: rgba(11, 20, 36, 0.95); border: 3px solid var(--gold); border-radius: 8px; box-shadow: 0 0 0 3px var(--navy), 0 0 24px rgba(255, 212, 94, 0.4); animation: toast 4.2s ease forwards; }
+.toast img { width: 44px; height: 44px; }
+.toast small { display: block; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ice); }
+.toast b { display: block; font-family: var(--display); font-weight: normal; font-size: 24px; line-height: 0.95; color: var(--gold); }
+.toast span { font-size: 12px; color: var(--cream); }
+@keyframes toast { 0% { transform: translateY(-20px); opacity: 0; } 8% { transform: none; opacity: 1; } 88% { opacity: 1; } 100% { opacity: 0; transform: translateY(-10px); } }
+
+/* goal clips */
+.clips { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.clip { background: rgba(11, 20, 36, 0.6); border: 2px solid var(--navy-3); border-radius: 6px; padding: 6px; display: grid; gap: 6px; }
+.clip video { width: 100%; border-radius: 4px; background: #000; aspect-ratio: 16 / 9; object-fit: cover; }
+.clip-line { font-size: 12px; color: #c3d3ea; }
+
+#touch.lefty .stick { left: calc(100% - 110px); }
+
 /* chemistry */
 .chem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
 .chem-head { display: flex; align-items: center; gap: 10px; }
@@ -399,6 +426,20 @@ img { image-rendering: auto; max-width: 100%; }
 .t-ult { width: 58px; height: 58px; right: calc(200px + var(--safe-r)); bottom: calc(46px + var(--safe-b)); background: var(--navy-2); }
 .cd { position: absolute; inset: -3px; border-radius: 50%; pointer-events: none; }
 .t-skill.ready, .t-ult.ready { border-color: var(--gold); box-shadow: 0 0 14px var(--gold), inset 0 -5px 0 rgba(0, 0, 0, 0.25); }
+
+/* touch size + left-handed layout (stick on the right) */
+#touch[data-size="large"] .tbtn { zoom: 1.18; }
+#touch[data-size="huge"] .tbtn { zoom: 1.35; }
+#touch.lefty .stick-zone { left: auto; right: 0; }
+#touch.lefty .t-a { right: auto; left: calc(22px + var(--safe-l)); }
+#touch.lefty .t-b { right: auto; left: calc(118px + var(--safe-l)); }
+#touch.lefty .t-sprint { right: auto; left: calc(124px + var(--safe-l)); }
+#touch.lefty .t-skill { right: auto; left: calc(34px + var(--safe-l)); }
+#touch.lefty .t-ult { right: auto; left: calc(200px + var(--safe-l)); }
+#touch.lefty .t-pull { right: auto; left: calc(30px + var(--safe-l)); }
+body.large-text .hub, body.large-text .modal, body.large-text .results, body.large-text .dlg-box, body.large-text #hud .ticker, body.large-text #hud .hint { zoom: 1.15; }
+.seg { display: inline-flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.seg .chip { padding: 3px 10px; }
 
 #rotate { position: absolute; inset: 0; z-index: 60; background: var(--ink); display: grid; place-items: center; text-align: center; padding: 24px; }
 #rotate .ph { font-size: 64px; animation: spin 2s infinite ease-in-out; display: inline-block; font-family: var(--display); }

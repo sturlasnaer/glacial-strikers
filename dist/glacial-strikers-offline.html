@@ -247,6 +247,33 @@ img { image-rendering: auto; max-width: 100%; }
 .mod.up { background: rgba(127, 224, 138, 0.18); color: var(--good); border: 1px solid rgba(127, 224, 138, 0.5); }
 .mod.down { background: rgba(255, 111, 125, 0.16); color: var(--bad); border: 1px solid rgba(255, 111, 125, 0.45); }
 
+/* achievements */
+.trophies { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; margin-top: 10px; }
+.trophy { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 10px; background: rgba(11, 20, 36, 0.6); border: 2px solid var(--navy-3); border-radius: 6px; font-size: 12.5px; }
+.trophy img { width: 44px; height: 44px; filter: grayscale(1) brightness(0.55); }
+.trophy b { display: block; font-family: var(--display); font-weight: normal; font-size: 20px; line-height: 1; color: #a9bbd6; }
+.trophy span { color: #8ea3c4; }
+.trophy.got { border-color: var(--gold); background: rgba(255, 212, 94, 0.08); }
+.trophy.got img { filter: none; }
+.trophy.got b { color: var(--gold); }
+.trophy.got span { color: var(--cream); }
+.tcoins { font-family: var(--display); font-size: 18px; color: var(--gold); }
+#toasts { position: absolute; left: 50%; top: calc(56px + var(--safe-t)); transform: translateX(-50%); z-index: 70; display: grid; gap: 6px; pointer-events: none; }
+.toast { display: flex; align-items: center; gap: 10px; padding: 6px 14px 6px 6px; background: rgba(11, 20, 36, 0.95); border: 3px solid var(--gold); border-radius: 8px; box-shadow: 0 0 0 3px var(--navy), 0 0 24px rgba(255, 212, 94, 0.4); animation: toast 4.2s ease forwards; }
+.toast img { width: 44px; height: 44px; }
+.toast small { display: block; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ice); }
+.toast b { display: block; font-family: var(--display); font-weight: normal; font-size: 24px; line-height: 0.95; color: var(--gold); }
+.toast span { font-size: 12px; color: var(--cream); }
+@keyframes toast { 0% { transform: translateY(-20px); opacity: 0; } 8% { transform: none; opacity: 1; } 88% { opacity: 1; } 100% { opacity: 0; transform: translateY(-10px); } }
+
+/* goal clips */
+.clips { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.clip { background: rgba(11, 20, 36, 0.6); border: 2px solid var(--navy-3); border-radius: 6px; padding: 6px; display: grid; gap: 6px; }
+.clip video { width: 100%; border-radius: 4px; background: #000; aspect-ratio: 16 / 9; object-fit: cover; }
+.clip-line { font-size: 12px; color: #c3d3ea; }
+
+#touch.lefty .stick { left: calc(100% - 110px); }
+
 /* chemistry */
 .chem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
 .chem-head { display: flex; align-items: center; gap: 10px; }
@@ -449,6 +476,20 @@ img { image-rendering: auto; max-width: 100%; }
 .t-ult { width: 58px; height: 58px; right: calc(200px + var(--safe-r)); bottom: calc(46px + var(--safe-b)); background: var(--navy-2); }
 .cd { position: absolute; inset: -3px; border-radius: 50%; pointer-events: none; }
 .t-skill.ready, .t-ult.ready { border-color: var(--gold); box-shadow: 0 0 14px var(--gold), inset 0 -5px 0 rgba(0, 0, 0, 0.25); }
+
+/* touch size + left-handed layout (stick on the right) */
+#touch[data-size="large"] .tbtn { zoom: 1.18; }
+#touch[data-size="huge"] .tbtn { zoom: 1.35; }
+#touch.lefty .stick-zone { left: auto; right: 0; }
+#touch.lefty .t-a { right: auto; left: calc(22px + var(--safe-l)); }
+#touch.lefty .t-b { right: auto; left: calc(118px + var(--safe-l)); }
+#touch.lefty .t-sprint { right: auto; left: calc(124px + var(--safe-l)); }
+#touch.lefty .t-skill { right: auto; left: calc(34px + var(--safe-l)); }
+#touch.lefty .t-ult { right: auto; left: calc(200px + var(--safe-l)); }
+#touch.lefty .t-pull { right: auto; left: calc(30px + var(--safe-l)); }
+body.large-text .hub, body.large-text .modal, body.large-text .results, body.large-text .dlg-box, body.large-text #hud .ticker, body.large-text #hud .hint { zoom: 1.15; }
+.seg { display: inline-flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.seg .chip { padding: 3px 10px; }
 
 #rotate { position: absolute; inset: 0; z-index: 60; background: var(--ink); display: grid; place-items: center; text-align: center; padding: 24px; }
 #rotate .ph { font-size: 64px; animation: spin 2s infinite ease-in-out; display: inline-block; font-family: var(--display); }
@@ -1529,7 +1570,7 @@ class TeamAI {
 
   // ---- difficulty hooks used by the match
   faceoffReaction() { return lerp(0.5, 0.13, this.diff) + this.m.rng() * lerp(0.25, 0.1, this.diff); }
-  aimMul(s) { return s.controlled ? 1 : lerp(1.6, 0.85, this.diff); }
+  aimMul(s) { return s.controlled ? ({ off: 1.15, strong: 0.75 }[this.m.assist] || 1) : lerp(1.6, 0.85, this.diff); }
   catchMul(s) { return s.controlled ? 1 : lerp(0.72, 1, this.diff); }
   stealMul() {
     const plan = this.gamePlan;
@@ -2317,6 +2358,7 @@ class Match {
     this.barriers = [];
     this.trails = [];
     this.pickups = [];
+    this.assist = cfg.assist || 'normal'; // aim assist for human players
     this.mods = new Set(cfg.mods || []); // challenge modifiers, see CHALLENGES in data.js
     this.plans = cfg.plans || ['balanced', 'balanced']; // game plans, see GAME_PLANS in data.js
     this.buffs = cfg.buffs || {}; // locker-room buffs for the home team
@@ -2746,6 +2788,7 @@ class Match {
     if (typeof iy === 'number' && Math.abs(iy) > 0.35 && explicit === undefined) return Math.sign(iy) * MOUTH * 0.66;
     if (explicit !== undefined && explicit !== null) return explicit;
     if (this.drill && this.drill.neutralAim !== undefined) return this.drill.neutralAim;
+    if (s.controlled && this.assist === 'off') return 0; // no auto-corner without assist
     // smart aim: the side the goalie is leaving open
     const side = g.y > 3 ? -1 : g.y < -3 ? 1 : (this.rng() < 0.5 ? -1 : 1);
     return side * MOUTH * 0.62;
@@ -3215,7 +3258,7 @@ class Match {
       const ds = Math.hypot(st.x - p.x, st.y - p.y);
       const db = Math.hypot(s.x - p.x, s.y - p.y);
       const intended = p.pass && p.pass.to === s;
-      const reach = intended ? 30 : 22;
+      const reach = intended ? (s.controlled && this.assist === 'strong' ? 38 : 30) : 22;
       if (p.shot && p.shot.plow > 0 && p.shot.team !== s.team && db < s.r + PUCK_R + 10) {
         // Avalanche bulldozes through the blocker
         p.shot.plow--;
@@ -3610,6 +3653,7 @@ class FX {
     this.crowd = makeCrowd();
     this.excite = 0; // crowd excitement 0..1
     this.cheerTeam = null;
+    this.shakeMul = 1; this.flashes = true; this.particleMul = 1; // comfort settings
     this.chant = null; // { team, t } crowd chanting in rhythm
     this.marks = null; // offscreen canvas for skate scratches
     this.marksCtx = null;
@@ -3764,6 +3808,7 @@ class FX {
   // ---------------------------------------------------------------- spawners
   part(x, y, z, vx, vy, vz, life, color, size, kind = 'dot') {
     if (this.parts.length > 600) return;
+    if (this.particleMul < 1 && rnd() > this.particleMul) return;
     this.parts.push({ x, y, z, vx, vy, vz, life, t: 0, color, size, kind, rot: rnd.range(0, 6.28) });
   }
   burst(x, y, z, n, colors, speed, life) {
@@ -3786,8 +3831,8 @@ class FX {
     this.bolts.push({ pts, t: 0, life: 0.35 });
   }
   ghost(s, delay) { this.parts.push({ kind: 'ghost', s, x: s.x, y: s.y, face: s.face, t: -delay, life: 0.3, z: 0, vx: 0, vy: 0, vz: 0 }); }
-  shake(a) { this.shakeT = Math.min(1, this.shakeT + a); }
-  flashScreen(color, life) { this.flash = { color, t: 0, life }; }
+  shake(a) { this.shakeT = Math.min(1, this.shakeT + a * this.shakeMul); }
+  flashScreen(color, life) { if (this.flashes) this.flash = { color, t: 0, life }; }
 
   scratch(s, w) {
     if (!this.marksCtx) return;
@@ -4270,6 +4315,7 @@ class Renderer {
     this.drawTexts(ctx, fx);
     this.drawSnow(ctx, fx);
     this.drawVignette(ctx, fx);
+    if (this.clipOverlay) this.drawClipOverlay(ctx, fx);
     if (fx.flash) {
       ctx.globalAlpha = 0.55 * (1 - fx.flash.t / fx.flash.life);
       ctx.fillStyle = fx.flash.color;
@@ -4286,7 +4332,7 @@ class Renderer {
     for (let i = 0; i < LAMPS.length; i++) {
       const [x, y] = LAMPS[i];
       const flick = 0.75 + Math.sin(t * 7 + i * 1.7) * 0.08 + Math.sin(t * 13 + i) * 0.05;
-      const goal = fx.lamp > 0 ? (Math.sin(fx.lamp * 14) > 0 ? 1 : 0.4) : 0;
+      const goal = fx.lamp > 0 ? (fx.flashes ? (Math.sin(fx.lamp * 14) > 0 ? 1 : 0.4) : 0.6) : 0;
       const r = 34 + goal * 18;
       const g = ctx.createRadialGradient(x, y + 6, 0, x, y + 6, r);
       const col = goal ? fx.lampColor : '#ffb84d';
@@ -4711,7 +4757,7 @@ class Renderer {
     if (fx.lamp <= 0 || !match.lastGoal) return;
     const side = match.lastGoal.side;
     const s = toScreen(side * (GOAL_X + NET_DEPTH + 10), 0);
-    const on = Math.sin(fx.lamp * 12) > 0;
+    const on = fx.flashes ? Math.sin(fx.lamp * 12) > 0 : true;
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     const r = on ? 140 : 90;
@@ -4770,6 +4816,17 @@ class Renderer {
     for (const s of match.skaters) {
       if (s.controlled || s.parked || match.state === 'goal') continue;
       const p = toScreen(s.x, s.y);
+      if (this.markers === 'shapes') {
+        // colorblind-friendly: blue down-triangle for us, orange diamond for them
+        ctx.lineWidth = 2; ctx.strokeStyle = '#ffffff';
+        ctx.beginPath();
+        if (s.team === 0) { ctx.moveTo(p.x - 7, p.y - 94); ctx.lineTo(p.x + 7, p.y - 94); ctx.lineTo(p.x, p.y - 84); }
+        else { ctx.moveTo(p.x, p.y - 96); ctx.lineTo(p.x + 6, p.y - 89); ctx.lineTo(p.x, p.y - 82); ctx.lineTo(p.x - 6, p.y - 89); }
+        ctx.closePath();
+        ctx.fillStyle = s.team === 0 ? '#3d8bff' : '#ff9f1c';
+        ctx.fill(); ctx.stroke();
+        continue;
+      }
       ctx.fillStyle = s.team === 0 ? 'rgba(113,220,232,0.85)' : 'rgba(255,111,125,0.85)';
       ctx.beginPath(); ctx.moveTo(p.x - 4, p.y - 88); ctx.lineTo(p.x + 4, p.y - 88); ctx.lineTo(p.x, p.y - 83); ctx.fill();
     }
@@ -4809,6 +4866,26 @@ class Renderer {
     ctx.globalAlpha = 1;
   }
 
+  // Letterbox + captions baked into recorded goal clips.
+  drawClipOverlay(ctx, fx) {
+    const o = this.clipOverlay, w = this.w, h = this.h, bar = Math.max(34, h * 0.1);
+    ctx.fillStyle = '#05080f';
+    ctx.fillRect(0, 0, w, bar); ctx.fillRect(0, h - bar, w, bar);
+    ctx.textBaseline = 'middle';
+    const big = Math.round(bar * 0.55);
+    ctx.font = `${big}px ${this.font}`;
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#71dce8'; ctx.fillText('GLACIAL STRIKERS', 14, bar / 2);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = Math.sin(fx.time * 6) > 0 ? '#ff3b3b' : '#7a1d1d';
+    ctx.beginPath(); ctx.arc(w - 14 - ctx.measureText('REPLAY').width - 12, bar / 2, big * 0.22, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffffff'; ctx.fillText('REPLAY', w - 14, bar / 2);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#ffd45e'; ctx.fillText(o.title, 14, h - bar / 2);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#fff2cb'; ctx.fillText(o.score, w - 14, h - bar / 2);
+  }
+
   drawVignette(ctx, fx) {
     if (!this.vig || this.vigW !== this.w || this.vigH !== this.h) {
       this.vigW = this.w; this.vigH = this.h;
@@ -4819,7 +4896,7 @@ class Renderer {
     }
     ctx.fillStyle = this.vig;
     ctx.fillRect(0, 0, this.w, this.h);
-    if (fx.lamp > 0 && Math.sin(fx.lamp * 12) > 0) {
+    if (fx.flashes && fx.lamp > 0 && Math.sin(fx.lamp * 12) > 0) {
       ctx.fillStyle = hexA(fx.lampColor, 0.08);
       ctx.fillRect(0, 0, this.w, this.h);
     }
@@ -5149,6 +5226,7 @@ class Audio {
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -14; comp.ratio.value = 4;
     this.master.connect(comp).connect(ctx.destination);
+    this.comp = comp;
     this.musicBus = ctx.createGain(); this.musicBus.gain.value = this.musicOn ? 0.55 : 0;
     this.sfxBus = ctx.createGain(); this.sfxBus.gain.value = this.sfxOn ? 1 : 0;
     this.musicBus.connect(this.master); this.sfxBus.connect(this.master);
@@ -5165,6 +5243,13 @@ class Audio {
     this.startCrowd();
     if (this.pendingSong) { this.play(this.pendingSong); this.pendingSong = null; }
     this.timer = setInterval(() => this.schedule(), 25);
+  }
+
+  // A MediaStream of everything the game plays, for goal clips.
+  recordStream() {
+    if (!this.ctx || !this.ctx.createMediaStreamDestination) return null;
+    if (!this.recDest) { this.recDest = this.ctx.createMediaStreamDestination(); this.comp.connect(this.recDest); }
+    return this.recDest;
   }
 
   setMusic(on) { this.musicOn = on; if (this.musicBus) this.musicBus.gain.setTargetAtTime(on ? 0.55 : 0, this.ctx.currentTime, 0.1); }
@@ -5687,7 +5772,12 @@ function newSave() {
     discount: 0,
     locker: { seen: [], seasonSeen: [], season: 1 }, // drill bests, medal tiers, rewarded sessions left
     seenIntro: false,
-    settings: { music: true, sfx: true, difficulty: 'normal', tips: true, replays: true },
+    settings: {
+      music: true, sfx: true, difficulty: 'normal', tips: true, replays: true, clips: true,
+      assist: 'normal', autoSprint: false, speed: 'normal',
+      shake: 1, flashes: true, particles: 'full',
+      markers: 'color', textSize: 'normal', touchSize: 'normal', lefty: false,
+    },
     record: { played: 0, wins: 0, goals: 0 },
   };
 }
@@ -5701,6 +5791,7 @@ function loadSave() {
     // fill fields added later
     const base = newSave();
     for (const k of Object.keys(base)) if (s[k] === undefined) s[k] = base[k];
+    for (const k of Object.keys(base.settings)) if (s.settings[k] === undefined) s.settings[k] = base.settings[k];
     for (const id of Object.keys(CHARACTERS)) if (!s.roster[id]) s.roster[id] = base.roster[id];
     for (const k of Object.keys(COMBOS)) if (typeof s.chem[k] !== 'number') s.chem[k] = 0;
     if (!s.league || !s.league.schedule) s.league = migrateLeague(s);
@@ -5786,6 +5877,7 @@ function matchConfig(save, teamId, stage, opts = {}) {
     home.goalie.stats.rfx += fx.goalieRfx;
   }
   return {
+    assist: save.settings.assist || 'normal',
     plans: opts.plans || ['balanced', 'balanced'],
     buffs: fx ? { ultStart: fx.ultStart, staminaMul: fx.staminaMul, oppGoalieMul: fx.oppGoalieMul, stealMul: fx.stealMul } : {},
     teams: [home, away],
@@ -6121,6 +6213,134 @@ function buffEffects(buffs = []) {
 }
 
 return { BUFF_TEXT, MOMENTS, pickMoment, markSeen, buffEffects };
+})();
+// ---- src/achievements.js
+__m["src/achievements.js"] = (() => {
+const { TEAMS, GEAR, CHEM_LEVELS } = __m["src/data.js"];
+// Achievements: tracked from match events and save progress, shown in the Trophies tab.
+
+
+
+const TROPHY = 'equipment_items/reward/trophy', MEDAL = 'equipment_items/reward/medal', STAR = 'hud_elements/misc/level_star';
+
+const ACHIEVEMENTS = [
+  { id: 'first-goal', name: 'Lamp Lighter', text: 'Score your first goal.', icon: STAR, coins: 25 },
+  { id: 'hat-trick', name: 'Hat Trick', text: 'One of your skaters scores 3 goals in a match.', icon: MEDAL, coins: 60 },
+  { id: 'shutout', name: 'Brick Wall', text: 'Win a match 5–0.', icon: 'equipment_items/armor/goalie_gloves', coins: 80 },
+  { id: 'comeback', name: 'Never Out of It', text: 'Win after trailing by 3 goals.', icon: MEDAL, coins: 100 },
+  { id: 'blitz', name: 'Blitz', text: 'Win a match in under 2 minutes.', icon: 'equipment_items/skates/lightning', coins: 70 },
+  { id: 'one-timers', name: 'One-Timer Specialist', text: 'Score 10 one-timer goals.', icon: 'equipment_items/stick/slapshot', coins: 70, counter: 'oneTimerGoals', goal: 10 },
+  { id: 'tic-tac-toe', name: 'Tic-Tac-Toe', text: 'Complete 5 passes in a row.', icon: 'equipment_items/stick/passing', coins: 40 },
+  { id: 'combos', name: 'Chemistry Class', text: 'Score with Frostbolt, Avalanche and Thunderquake.', icon: 'hud_elements/ability/lightning', coins: 120, set: 'comboGoals', goal: 3 },
+  { id: 'ultimates', name: 'Ultimate Power', text: 'Score with Absolute Zero and Thunderclap, and stop a shot with Monolith.', icon: 'hud_elements/ability/frost', coins: 100, set: 'ults', goal: 3 },
+  { id: 'power-pucks', name: 'Elemental', text: 'Score with all four power pucks.', icon: 'power_pucks/gravity/pickup_orb', coins: 90, set: 'powerGoals', goal: 4 },
+  { id: 'hitter', name: 'Freight Train', text: 'Land 10 checks in one match.', icon: 'equipment_items/armor/shoulders', coins: 50 },
+  { id: 'pickpocket', name: 'Pickpocket', text: 'Make 6 steals in one match.', icon: 'equipment_items/armor/gloves', coins: 50 },
+  { id: 'power-play', name: 'Power Play Pro', text: 'Score a power-play goal.', icon: 'hud_elements/ability/fire', coins: 40 },
+  { id: 'shorthanded', name: 'Shorthanded', text: 'Score while one of your skaters is in the box.', icon: 'hud_elements/ability/stone', coins: 80 },
+  { id: 'empty-net', name: 'Empty Netter', text: 'Score into an empty net.', icon: 'rink_props/nets/south', coins: 40 },
+  { id: 'extra-attacker', name: 'Extra Attacker', text: 'Score with your own goalie pulled.', icon: 'hud_elements/misc/player_arrow', coins: 90 },
+  { id: 'clean', name: 'Clean Game', text: 'Win a league match without taking a penalty.', icon: 'hud_elements/ability/stamina', coins: 30 },
+  { id: 'challenge', name: 'Up for a Challenge', text: 'Win an exhibition with 3 or more challenges on.', icon: 'equipment_items/hub/target', coins: 80 },
+  { id: 'champion', name: 'Frostline Champions', text: 'Win the Frostline Cup.', icon: TROPHY, coins: 200 },
+  { id: 'dynasty', name: 'Dynasty', text: 'Win the cup in two seasons.', icon: TROPHY, coins: 250 },
+  { id: 'perfect', name: 'Perfect Season', text: 'Win all 5 regular-season games.', icon: TROPHY, coins: 150 },
+  { id: 'rivals', name: 'Rival Slayer', text: 'Beat every rival at least once.', icon: 'hud_elements/misc/away_crest', coins: 80 },
+  { id: 'max-level', name: 'Fully Grown', text: 'Get a skater to level 10.', icon: STAR, coins: 100 },
+  { id: 'in-sync', name: 'In Sync', text: 'Get a pair to chemistry level 3.', icon: 'hud_elements/ability/lightning', coins: 100 },
+  { id: 'gold-drills', name: 'Gold Standard', text: 'Win gold in all four training drills.', icon: MEDAL, coins: 150 },
+  { id: 'shootout', name: 'Shootout Hero', text: 'Win a shootout.', icon: 'equipment_items/armor/goalie_gloves', coins: 50 },
+  { id: 'kitted', name: 'Fully Kitted', text: 'Own every piece of gear in the shop.', icon: 'equipment_items/hub/shop', coins: 150 },
+  { id: 'versus', name: 'Couch Champion', text: 'Win a local versus match.', icon: 'hud_elements/misc/home_crest', coins: 30 },
+];
+const BY_ID = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a]));
+
+class AchievementTracker {
+  constructor(save, onUnlock) {
+    this.save = save;
+    this.onUnlock = onUnlock;
+    save.achievements ||= { unlocked: {}, counters: {}, sets: {} };
+    this.data = save.achievements;
+  }
+
+  has(id) { return !!this.data.unlocked[id]; }
+
+  unlock(id) {
+    if (this.has(id) || !BY_ID[id]) return;
+    const a = BY_ID[id];
+    this.data.unlocked[id] = Date.now();
+    this.save.coins += a.coins;
+    this.onUnlock(a);
+  }
+
+  bump(counter, n = 1) {
+    this.data.counters[counter] = (this.data.counters[counter] || 0) + n;
+    for (const a of ACHIEVEMENTS) if (a.counter === counter && this.data.counters[counter] >= a.goal) this.unlock(a.id);
+  }
+
+  addToSet(set, value) {
+    const s = (this.data.sets[set] ||= []);
+    if (!s.includes(value)) s.push(value);
+    for (const a of ACHIEVEMENTS) if (a.set === set && s.length >= a.goal) this.unlock(a.id);
+  }
+
+  progress(a) {
+    if (a.counter) return [Math.min(a.goal, this.data.counters[a.counter] || 0), a.goal];
+    if (a.set) return [Math.min(a.goal, (this.data.sets[a.set] || []).length), a.goal];
+    return null;
+  }
+
+  // Watch a real match (not drills or versus) for in-game achievements.
+  attachMatch(m) {
+    this.minDiff = 0;
+    m.on('goal', (g) => {
+      this.minDiff = Math.min(this.minDiff, m.score[0] - m.score[1]);
+      if (g.team !== 0 || !g.scorer) return;
+      this.unlock('first-goal');
+      if (g.kind === 'onetimer') this.bump('oneTimerGoals');
+      if (g.special && g.special.combo) this.addToSet('comboGoals', g.special.combo);
+      if (g.kind === 'zero' || g.kind === 'thunderclap') this.addToSet('ults', g.kind);
+      if (g.power) this.addToSet('powerGoals', g.power);
+      if (g.powerPlay) this.unlock('power-play');
+      if (m.teamSkaters(0).some((k) => k.boxT > 0)) this.unlock('shorthanded');
+      if (m.goalies.find((k) => k.team === 1).disabled) this.unlock('empty-net');
+      if (m.extra && m.extra[0]) this.unlock('extra-attacker');
+    });
+    m.on('no_goal', () => { this.minDiff = Math.min(this.minDiff, m.score[0] - m.score[1]); });
+    m.on('chain', (e) => { if (e.team === 0 && e.n >= 5) this.unlock('tic-tac-toe'); });
+    m.on('barrier_block', (e) => { if (e.b.team === 0) this.addToSet('ults', 'monolith'); });
+  }
+
+  endMatch(summary, ctx) {
+    const won = summary.winner === 0;
+    const mine = summary.skaters.filter((k) => k.team === 0);
+    if (mine.some((k) => k.goals >= 3)) this.unlock('hat-trick');
+    if (won && summary.score[1] === 0 && summary.score[0] >= 5) this.unlock('shutout');
+    if (won && this.minDiff <= -3) this.unlock('comeback');
+    if (won && summary.time < 120) this.unlock('blitz');
+    if (mine.reduce((a, k) => a + k.hits, 0) >= 10) this.unlock('hitter');
+    if (mine.reduce((a, k) => a + k.steals, 0) >= 6) this.unlock('pickpocket');
+    if (won && ctx.league && summary.pen && summary.pen[0].pims === 0) this.unlock('clean');
+    if (won && ctx.exhibition && (ctx.mods || []).length >= 3) this.unlock('challenge');
+  }
+
+  // Progress-based achievements from the save itself.
+  checkMeta() {
+    const s = this.save;
+    if (s.champion || (s.league && s.league.champion === 'home')) this.unlock('champion');
+    if ((s.cups || 0) >= 2) this.unlock('dynasty');
+    const L = s.league;
+    if (L && L.results.length >= 5 && L.results.slice(0, 5).every((r) => r[0].ga > r[0].gb)) this.unlock('perfect');
+    const rivals = Object.keys(TEAMS).filter((k) => k !== 'home');
+    if (s.rivals && rivals.every((k) => s.rivals[k] && s.rivals[k].wins > 0)) this.unlock('rivals');
+    if (Object.values(s.roster).some((r) => r.level >= 10)) this.unlock('max-level');
+    if (Object.values(s.chem || {}).some((x) => x >= CHEM_LEVELS[2])) this.unlock('in-sync');
+    if (s.training && ['cones', 'sniper', 'rondo', 'breakaway'].every((d) => (s.training.medals[d] || 0) >= 3)) this.unlock('gold-drills');
+    if (GEAR.every((g) => s.owned.includes(g.id))) this.unlock('kitted');
+  }
+}
+
+return { ACHIEVEMENTS, AchievementTracker };
 })();
 // ---- src/drills.js
 __m["src/drills.js"] = (() => {
@@ -6645,10 +6865,12 @@ const { Assets } = __m["src/assets.js"];
 const { CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, STAT_HINT, POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS } = __m["src/data.js"];
 const { standings } = __m["src/league.js"];
 const { BUFF_TEXT } = __m["src/lockerroom.js"];
+const { ACHIEVEMENTS } = __m["src/achievements.js"];
 const { expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave, chemLevel, chemProgress } = __m["src/progress.js"];
 const { audio } = __m["src/audio.js"];
 const { DRILLS, MEDAL_NAMES, MEDAL_COLORS, formatScore } = __m["src/drills.js"];
 // Menu screens: title, hub (tournament / team / shop / training), dialogue, results.
+
 
 
 
@@ -6795,7 +7017,7 @@ class UI {
           <button class="icon-btn" id="h-settings" aria-label="Settings">☰</button>
         </div>
         <div class="tabs" role="tablist">
-          ${['tournament', 'team', 'shop', 'training'].map((t) => `<button class="tab" role="tab" data-tab="${t}" aria-selected="${this.tab === t}">${t[0].toUpperCase() + t.slice(1)}${t === 'team' && anyPoints ? '<span class="dot"></span>' : ''}</button>`).join('')}
+          ${[['tournament', 'League'], ['team', 'Team'], ['shop', 'Shop'], ['training', 'Training'], ['trophies', 'Trophies']].map(([t, label]) => `<button class="tab" role="tab" data-tab="${t}" aria-selected="${this.tab === t}">${label}${t === 'team' && anyPoints ? '<span class="dot"></span>' : ''}</button>`).join('')}
         </div>
         <div class="hub-body panel" id="hub-body"></div>
         <div class="hub-cta">
@@ -6811,7 +7033,7 @@ class UI {
     this.click('#h-title', () => { audio.sfx('back'); this.app.goTitle(); });
     this.click('#h-settings', () => { audio.sfx('click'); this.settings(); });
     const body = r.querySelector('#hub-body');
-    ({ tournament: () => this.tabTournament(body), team: () => this.tabTeam(body), shop: () => this.tabShop(body), training: () => this.tabTraining(body) })[this.tab]();
+    ({ tournament: () => this.tabTournament(body), team: () => this.tabTeam(body), shop: () => this.tabShop(body), training: () => this.tabTraining(body), trophies: () => this.tabTrophies(body) })[this.tab]();
     return r;
   }
 
@@ -6859,6 +7081,26 @@ class UI {
         </div>
         <div style="min-width:0"><div class="label" style="margin-bottom:6px;font-size:14px">Your schedule</div><div class="schedule">${schedule}</div></div>
       </div>`;
+  }
+
+  tabTrophies(body) {
+    const s = this.app.save;
+    const tr = this.app.ach;
+    const got = ACHIEVEMENTS.filter((a) => tr.has(a.id));
+    const earned = got.reduce((n, a) => n + a.coins, 0);
+    body.innerHTML = `
+      <div class="train-top"><div><div class="label">Trophy case</div>
+        <p style="margin:2px 0 0;font-size:13px">${got.length} of ${ACHIEVEMENTS.length} unlocked · ${earned} coins earned${s.cups ? ` · ${s.cups} cup${s.cups > 1 ? 's' : ''} won` : ''}</p></div></div>
+      <div class="trophies">${ACHIEVEMENTS.map((a) => {
+        const done = tr.has(a.id);
+        const pr = !done && tr.progress(a);
+        return `<div class="trophy ${done ? 'got' : ''}">
+          <img src="${ico(a.icon, 96)}" alt="">
+          <div style="min-width:0"><b>${esc(a.name)}</b><span>${esc(a.text)}</span>
+            ${pr ? `<div class="xpbar" style="margin-top:4px"><i style="width:${Math.round((pr[0] / pr[1]) * 100)}%"></i></div><span class="muted">${pr[0]} / ${pr[1]}</span>` : ''}</div>
+          <span class="tcoins">${done ? '✓' : `+${a.coins}`}</span>
+        </div>`;
+      }).join('')}</div>`;
   }
 
   // Before a league match: pick a game plan, with a scouting report on theirs.
@@ -7095,6 +7337,7 @@ class UI {
       if (s.coins < price || s.owned.includes(g.id)) return;
       s.coins -= price;
       s.discount = 0;
+      this.app.ach.checkMeta();
       s.owned.push(g.id);
       writeSave(s);
       audio.sfx('coin');
@@ -7187,26 +7430,54 @@ class UI {
   settings() {
     const s = this.app.save;
     const st = s.settings;
-    this.modal(`
+    const seg = (key, opts) => `<span class="seg">${opts.map(([v, label]) => `<button class="chip" data-set="${key}" data-v="${v}" aria-pressed="${String(st[key]) === String(v)}">${label}</button>`).join('')}</span>`;
+    const row = (label, ctl, hint) => `<div class="toggle"><span>${label}${hint ? `<small class="muted" style="display:block;font-size:11.5px">${hint}</small>` : ''}</span>${ctl}</div>`;
+    const onOff = (key) => seg(key, [[true, 'On'], [false, 'Off']]);
+    const body = () => `
       <h2>Settings</h2>
-      <div class="toggle"><span>Music</span><button class="btn small ${st.music ? 'cream' : 'ghost'}" id="s-music">${st.music ? 'On' : 'Off'}</button></div>
-      <div class="toggle"><span>Sound effects</span><button class="btn small ${st.sfx ? 'cream' : 'ghost'}" id="s-sfx">${st.sfx ? 'On' : 'Off'}</button></div>
-      <div class="toggle"><span>Goal replays</span><button class="btn small ${st.replays !== false ? 'cream' : 'ghost'}" id="s-replays">${st.replays !== false ? 'On' : 'Off'}</button></div>
-      <div class="toggle"><span>Rival difficulty</span><span class="row">${['easy', 'normal', 'hard'].map((d) => `<button class="btn small ${st.difficulty === d ? 'cream' : 'ghost'}" data-diff="${d}">${d}</button>`).join('')}</span></div>
-      <div class="toggle"><span>Play offline</span><span style="font-size:13px;text-align:right;max-width:30ch">${installHelp(this.app)}</span></div>
+      <div class="label">Sound</div>
+      ${row('Music', onOff('music'))}
+      ${row('Sound effects', onOff('sfx'))}
+      <div class="label">Gameplay</div>
+      ${row('Rival difficulty', seg('difficulty', [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']]))}
+      ${row('Aim assist', seg('assist', [['off', 'Off'], ['normal', 'Normal'], ['strong', 'Strong']]), 'Strong tightens your shots and widens pass catching. Off aims dead centre unless you steer.')}
+      ${row('Auto-sprint', seg('autoSprint', [[false, 'Off'], [true, 'On']]), 'Sprint whenever the stick is pushed all the way.')}
+      ${row('Game speed', seg('speed', [['normal', 'Normal'], ['relaxed', 'Relaxed']]), 'Relaxed plays matches at 85% speed. Drills stay at full speed.')}
+      ${row('Goal replays', onOff('replays'))}
+      ${row('Goal clips', onOff('clips'), 'Record each replay as a short video you can share.')}
+      <div class="label">Comfort</div>
+      ${row('Screen shake', seg('shake', [[1, 'Full'], [0.5, 'Low'], [0, 'Off']]))}
+      ${row('Flashes', onOff('flashes'), 'Screen flashes and blinking goal lights.')}
+      ${row('Effects', seg('particles', [['full', 'Full'], ['reduced', 'Reduced']]), 'Fewer sparks, snow sprays and confetti.')}
+      <div class="label">Visibility and controls</div>
+      ${row('Team markers', seg('markers', [['color', 'Colors'], ['shapes', 'Shapes']]), 'Shapes: blue triangles for your team, orange diamonds for rivals.')}
+      ${row('Text size', seg('textSize', [['normal', 'Normal'], ['large', 'Large']]))}
+      ${row('Touch buttons', seg('touchSize', [['normal', 'Normal'], ['large', 'Large'], ['huge', 'Huge']]))}
+      ${row('Touch layout', seg('lefty', [[false, 'Stick left'], [true, 'Stick right']]))}
+      ${row('Play offline', `<span style="font-size:13px;text-align:right;max-width:30ch">${installHelp(this.app)}</span>`)}
       <div class="label">Controls</div>
       ${controlsHtml(this.app.isTouch)}
       <div class="toggle"><span class="muted">Erase the save and start over</span><button class="btn small ghost" id="s-reset">Reset save</button></div>
-      <button class="btn small" data-close>Close</button>`, (m, close) => {
-      this.click('#s-music', () => { st.music = !st.music; audio.setMusic(st.music); writeSave(s); close(); this.settings(); }, m);
-      this.click('#s-sfx', () => { st.sfx = !st.sfx; audio.setSfx(st.sfx); writeSave(s); close(); this.settings(); }, m);
-      this.click('#s-install', async () => { await this.app.install(); close(); this.settings(); }, m);
-      this.click('#s-replays', () => { st.replays = st.replays === false; writeSave(s); close(); this.settings(); }, m);
-      this.click('[data-diff]', (el) => { st.difficulty = el.dataset.diff; writeSave(s); audio.sfx('click'); close(); this.settings(); }, m);
-      this.click('#s-reset', (el) => {
-        if (el.dataset.armed) { clearSave(); close(); this.app.resetSave(); return; }
-        el.dataset.armed = '1'; el.textContent = 'Tap again to erase'; el.classList.add('gold');
-      }, m);
+      <button class="btn small" id="s-close">Close</button>`;
+    this.modal(body(), (m, close) => {
+      const bind = () => {
+        this.click('[data-set]', (el) => {
+          const v = el.dataset.v;
+          st[el.dataset.set] = v === 'true' ? true : v === 'false' ? false : Number.isNaN(+v) ? v : +v;
+          writeSave(s);
+          audio.sfx('click');
+          this.app.applySettings();
+          const y = m.scrollTop;
+          m.innerHTML = body(); bind(); m.scrollTop = y;
+        }, m);
+        this.click('#s-install', async () => { await this.app.install(); m.innerHTML = body(); bind(); }, m);
+        this.click('#s-close', () => { audio.sfx('back'); close(); }, m);
+        this.click('#s-reset', (el) => {
+          if (el.dataset.armed) { clearSave(); close(); this.app.resetSave(); return; }
+          el.dataset.armed = '1'; el.textContent = 'Tap again to erase'; el.classList.add('gold');
+        }, m);
+      };
+      bind();
     });
   }
 
@@ -7311,8 +7582,20 @@ class UI {
             </div>
           </div>
         </div>
+        ${data.clips && data.clips.clips.length ? `<div>
+          <div class="label">Highlights</div>
+          <div class="clips">${data.clips.clips.map((c, i) => `<div class="clip">
+            <video src="${c.url}" muted loop playsinline autoplay></video>
+            <div class="clip-line">${esc(c.meta.line)}</div>
+            <div class="row" style="gap:6px">${data.clips.canShare(c) ? `<button class="btn small cream" data-share="${i}">Share</button>` : ''}<a class="btn small ghost" href="${c.url}" download="${esc(data.clips.fileFor(c, i).name)}">Save</a></div>
+          </div>`).join('')}</div>
+        </div>` : ''}
         <div class="row" style="justify-content:flex-end"><button class="btn gold" id="r-go">Continue</button></div>
       </div>`);
+    if (data.clips) this.click('[data-share]', async (el) => {
+      const i = +el.dataset.share;
+      try { await data.clips.share(data.clips.clips[i], i); } catch { /* share sheet closed */ }
+    }, r);
     requestAnimationFrame(() => r.querySelectorAll('[data-w]').forEach((el) => { el.style.width = el.dataset.w + '%'; }));
     if (won) audio.jingle('win'); else audio.jingle('lose');
     this.click('#r-go', () => { audio.sfx('confirm'); onContinue(); });
@@ -7869,6 +8152,78 @@ class Commentary {
 
 return { Commentary };
 })();
+// ---- src/clips.js
+__m["src/clips.js"] = (() => {
+
+// Goal clips: records the instant replay (canvas + game audio) into a short video.
+
+const TYPES = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+
+class ClipRecorder {
+  constructor(canvas, audio) {
+    this.canvas = canvas;
+    this.audio = audio;
+    this.clips = [];
+    this.rec = null;
+    this.mime = typeof MediaRecorder !== 'undefined' ? TYPES.find((t) => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) : null;
+  }
+
+  get supported() { return !!(this.mime && this.canvas.captureStream); }
+
+  start(meta) {
+    if (!this.supported || this.rec) return false;
+    try {
+      const stream = this.canvas.captureStream(30);
+      const dest = this.audio.recordStream && this.audio.recordStream();
+      if (dest) for (const t of dest.stream.getAudioTracks()) stream.addTrack(t);
+      const chunks = [];
+      const rec = new MediaRecorder(stream, { mimeType: this.mime, videoBitsPerSecond: 3_000_000 });
+      rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+      rec.onstop = () => {
+        stream.getVideoTracks().forEach((t) => t.stop());
+        if (!chunks.length) return;
+        const type = this.mime.split(';')[0];
+        const blob = new Blob(chunks, { type });
+        this.clips.push({ blob, url: URL.createObjectURL(blob), meta, ext: type.includes('mp4') ? 'mp4' : 'webm' });
+        if (this.clips.length > 6) { URL.revokeObjectURL(this.clips[0].url); this.clips.shift(); }
+      };
+      rec.start(250);
+      this.rec = rec;
+      return true;
+    } catch {
+      this.rec = null;
+      return false;
+    }
+  }
+
+  stop() {
+    if (this.rec && this.rec.state !== 'inactive') this.rec.stop();
+    this.rec = null;
+  }
+
+  clear() {
+    this.stop();
+    for (const c of this.clips) URL.revokeObjectURL(c.url);
+    this.clips = [];
+  }
+
+  fileFor(c, i) {
+    const who = (c.meta.scorer || 'goal').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    return new File([c.blob], `glacial-strikers-${who}-${i + 1}.${c.ext}`, { type: c.blob.type });
+  }
+
+  canShare(c) {
+    try { return !!(navigator.canShare && navigator.canShare({ files: [this.fileFor(c, 0)] })); } catch { return false; }
+  }
+
+  async share(c, i) {
+    const file = this.fileFor(c, i);
+    await navigator.share({ files: [file], title: 'Glacial Strikers goal', text: c.meta.line || 'Goal!' });
+  }
+}
+
+return { ClipRecorder };
+})();
 // ---- src/rivals.js
 __m["src/rivals.js"] = (() => {
 const { CHARACTERS, TEAMS } = __m["src/data.js"];
@@ -7954,6 +8309,8 @@ const { HUD } = __m["src/hud.js"];
 const { toScreen } = __m["src/rink.js"];
 const { Replay } = __m["src/replay.js"];
 const { Commentary } = __m["src/commentary.js"];
+const { ClipRecorder } = __m["src/clips.js"];
+const { AchievementTracker } = __m["src/achievements.js"];
 const { createDrill, medalFor, DRILL_REWARDS } = __m["src/drills.js"];
 const { recordRivalResult, rivalLines, rivalAfterLine } = __m["src/rivals.js"];
 const { nextFixture, recordOurGame, newLeague, rivalPlan } = __m["src/league.js"];
@@ -7962,6 +8319,8 @@ const { GOAL_X } = __m["src/rink.js"];
 const { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES } = __m["src/data.js"];
 const { loadSave, newSave, writeSave, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards } = __m["src/progress.js"];
 // Glacial Strikers — boot, game loop and scene flow.
+
+
 
 
 
@@ -8021,6 +8380,7 @@ class App {
       ]);
     }
     this.save = loadSave() || newSave();
+    this.ach = new AchievementTracker(this.save, (a) => this.toastAchievement(a));
     audio.setMusic(this.save.settings.music);
     audio.setSfx(this.save.settings.sfx);
     this.renderer = new Renderer(this.canvas);
@@ -8030,7 +8390,9 @@ class App {
     this.ui = new UI(this);
     this.hud = new HUD(this);
     this.replay = new Replay();
+    this.clips = new ClipRecorder(this.canvas, audio);
     this.commentary = new Commentary((text) => this.hud.ticker(text));
+    this.applySettings();
     this.renderer.resize();
     window.addEventListener('resize', () => this.onResize());
     window.addEventListener('orientationchange', () => setTimeout(() => this.onResize(), 200));
@@ -8047,6 +8409,33 @@ class App {
     this.loadingEl.remove();
     this.goTitle();
     requestAnimationFrame((t) => this.loop(t));
+  }
+
+  // "Achievement unlocked" toast; shows anywhere (menus or matches).
+  toastAchievement(a) {
+    let box = document.getElementById('toasts');
+    if (!box) { box = document.createElement('div'); box.id = 'toasts'; document.getElementById('app').appendChild(box); }
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.innerHTML = `<img src="${Assets.icon(a.icon, 72)}" alt=""><div><small>Achievement unlocked</small><b></b><span>+${a.coins} coins</span></div>`;
+    el.querySelector('b').textContent = a.name;
+    box.appendChild(el);
+    audio.jingle('level');
+    setTimeout(() => el.remove(), 4200);
+  }
+
+  // Apply comfort / accessibility settings everywhere they matter.
+  applySettings() {
+    const st = this.save.settings;
+    audio.setMusic(st.music); audio.setSfx(st.sfx);
+    this.fx.shakeMul = st.shake ?? 1;
+    this.fx.flashes = st.flashes !== false;
+    this.fx.particleMul = st.particles === 'reduced' ? 0.35 : 1;
+    this.renderer.markers = st.markers || 'color';
+    document.body.classList.toggle('large-text', st.textSize === 'large');
+    const t = document.getElementById('touch');
+    t.dataset.size = st.touchSize || 'normal';
+    t.classList.toggle('lefty', !!st.lefty);
   }
 
   // Offline play and "install to home screen". Service workers need https, so this only
@@ -8227,6 +8616,7 @@ class App {
     this.scene = 'results';
     audio.jingle('win');
     const p1 = summary.winner === 0;
+    if (summary.winner !== null) { this.ach.unlock('versus'); writeSave(this.save); }
     this.ui.modal(`
       <div style="text-align:center">
         <div class="label">Local versus</div>
@@ -8283,6 +8673,7 @@ class App {
     if (c.drill === 'shootout') return this.finishShootout(res);
     const medal = medalFor(c.def, res.score);
     const rw = drillRewards(s, c.drill, c.char, res.score, medal, DRILL_REWARDS);
+    this.ach.checkMeta();
     writeSave(s);
     this.ui.drillResult(c.def, res.score, rw, c.char,
       () => this.startDrill(c.drill, c.char, c.opts),
@@ -8308,6 +8699,8 @@ class App {
     for (const id of ['frost', 'thunder', 'stone']) ups.push(...applyExp(s, id, won ? 20 : 10));
     applyGoalieExp(s, won ? 20 : 10);
     this.recordRival(c.teamId, res.goals[0], res.goals[1], won, true);
+    if (won) this.ach.unlock('shootout');
+    this.ach.checkMeta();
     writeSave(s);
     audio.jingle(won ? 'win' : 'lose');
     this.ui.modal(`
@@ -8344,6 +8737,8 @@ class App {
     const m = this.makeMatch(cfg, teamId);
     this.hookMatch(m);
     this.replay.clear();
+    this.clips.clear();
+    this.ach.attachMatch(m);
     this.replayPending = false;
     this.commentary.attach(m, teamId);
     this.chantCool = 25;
@@ -8496,16 +8891,18 @@ class App {
       leagueOut = recordOurGame(s.league, s, summary.score[0], summary.score[1]);
       leagueOut.kind = c.fixture ? c.fixture.kind : 'regular';
       leagueOut.won = rewards.won;
-      if (leagueOut.champion === 'home') { s.champion = true; becameChampion = true; }
+      if (leagueOut.champion === 'home') { s.champion = true; becameChampion = true; s.cups = (s.cups || 0) + 1; }
       s.stage = s.league.round;
     }
+    this.ach.endMatch(summary, { league: !c.exhibition, exhibition: c.exhibition, mods: c.mods });
+    this.ach.checkMeta();
     s.training.sessions = 2;
     writeSave(s);
     this.wake?.release?.().catch(() => {});
     this.hud.hide();
     this.scene = 'results';
     if (ups.length) setTimeout(() => audio.jingle('level'), 900);
-    this.ui.results({ summary, rewards, ups, chemUps, teamId: c.teamId, exhibition: c.exhibition, round: c.stage.round, gUp }, () => {
+    this.ui.results({ summary, rewards, ups, chemUps, teamId: c.teamId, exhibition: c.exhibition, round: c.stage.round, gUp, clips: this.clips }, () => {
       const finish = () => {
         if (becameChampion) { this.scene = 'results'; this.ui.champion(() => this.goHub('tournament')); } else this.goHub(rewards.won ? 'tournament' : 'team');
       };
@@ -8536,8 +8933,21 @@ class App {
     this.endReplay();
   }
 
+  startClip(m) {
+    if (!this.save.settings.clips || !this.clips.supported || !m.lastGoal) return;
+    const g = m.lastGoal, t = TEAMS[this.awayTeamId];
+    const scorer = g.scorer ? g.scorer.name : 'Goal';
+    const assist = g.assists && g.assists.length ? ` from ${g.assists.map((a) => a.name).join(' & ')}` : '';
+    const kind = g.kind === 'onetimer' ? ' · one-timer' : g.special && g.special.combo ? ` · ${COMBOS[g.special.combo].name}` : g.powerPlay ? ' · power play' : '';
+    const score = `GLA ${m.score[0]} – ${m.score[1]} ${t.short}`;
+    this.renderer.clipOverlay = { title: `${scorer.toUpperCase()}${assist}${kind}`, score };
+    this.clips.start({ scorer, line: `${scorer}${assist}${kind}. ${score}`, team: g.team, score });
+  }
+
   endReplay() {
     const m = this.match;
+    this.clips.stop();
+    this.renderer.clipOverlay = null;
     this.hud.replayMode(false);
     if (!m) return;
     m.holdGoal = false;
@@ -8599,6 +9009,7 @@ class App {
 
   resetSave() {
     this.save = newSave();
+    this.ach = new AchievementTracker(this.save, (a) => this.toastAchievement(a));
     writeSave(this.save);
     this.goTitle();
   }
@@ -8700,8 +9111,11 @@ class App {
           if (pads.length >= 2) { p1 = mergeInputs(p1, this.input.readPad(pads[0])); p2 = mergeInputs(p2, this.input.readPad(pads[1])); }
           else if (pads.length === 1) p2 = mergeInputs(p2, this.input.readPad(pads[0]));
           m.setHumanInput(p1, 0); m.setHumanInput(p2, 1);
-        } else if (this.scene === 'match') m.setHumanInput(raw);
-        let simDt = realDt * this.fx.slowScale;
+        } else if (this.scene === 'match') {
+          if (this.save.settings.autoSprint && Math.hypot(raw.mx, raw.my) > 0.92) raw.sprint = true;
+          m.setHumanInput(raw);
+        }
+        let simDt = realDt * this.fx.slowScale * (this.save.settings.speed === 'relaxed' && !(this.cur && this.cur.drill) && !this.attract ? 0.85 : 1);
         if (this.fx.hitstop > 0) simDt = 0;
         this.acc += simDt;
         let n = 0;
@@ -8717,6 +9131,7 @@ class App {
           this.replayPending = false;
           if (this.replay.start()) {
             m.holdGoal = true;
+            this.startClip(m);
             this.hud.replayMode(true);
             this.replayGuard = raw.a || raw.b || raw.sprint;
             this.fx.parts.length = 0;

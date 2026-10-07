@@ -149,6 +149,7 @@ export class Renderer {
     this.drawTexts(ctx, fx);
     this.drawSnow(ctx, fx);
     this.drawVignette(ctx, fx);
+    if (this.clipOverlay) this.drawClipOverlay(ctx, fx);
     if (fx.flash) {
       ctx.globalAlpha = 0.55 * (1 - fx.flash.t / fx.flash.life);
       ctx.fillStyle = fx.flash.color;
@@ -165,7 +166,7 @@ export class Renderer {
     for (let i = 0; i < LAMPS.length; i++) {
       const [x, y] = LAMPS[i];
       const flick = 0.75 + Math.sin(t * 7 + i * 1.7) * 0.08 + Math.sin(t * 13 + i) * 0.05;
-      const goal = fx.lamp > 0 ? (Math.sin(fx.lamp * 14) > 0 ? 1 : 0.4) : 0;
+      const goal = fx.lamp > 0 ? (fx.flashes ? (Math.sin(fx.lamp * 14) > 0 ? 1 : 0.4) : 0.6) : 0;
       const r = 34 + goal * 18;
       const g = ctx.createRadialGradient(x, y + 6, 0, x, y + 6, r);
       const col = goal ? fx.lampColor : '#ffb84d';
@@ -590,7 +591,7 @@ export class Renderer {
     if (fx.lamp <= 0 || !match.lastGoal) return;
     const side = match.lastGoal.side;
     const s = toScreen(side * (GOAL_X + NET_DEPTH + 10), 0);
-    const on = Math.sin(fx.lamp * 12) > 0;
+    const on = fx.flashes ? Math.sin(fx.lamp * 12) > 0 : true;
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     const r = on ? 140 : 90;
@@ -649,6 +650,17 @@ export class Renderer {
     for (const s of match.skaters) {
       if (s.controlled || s.parked || match.state === 'goal') continue;
       const p = toScreen(s.x, s.y);
+      if (this.markers === 'shapes') {
+        // colorblind-friendly: blue down-triangle for us, orange diamond for them
+        ctx.lineWidth = 2; ctx.strokeStyle = '#ffffff';
+        ctx.beginPath();
+        if (s.team === 0) { ctx.moveTo(p.x - 7, p.y - 94); ctx.lineTo(p.x + 7, p.y - 94); ctx.lineTo(p.x, p.y - 84); }
+        else { ctx.moveTo(p.x, p.y - 96); ctx.lineTo(p.x + 6, p.y - 89); ctx.lineTo(p.x, p.y - 82); ctx.lineTo(p.x - 6, p.y - 89); }
+        ctx.closePath();
+        ctx.fillStyle = s.team === 0 ? '#3d8bff' : '#ff9f1c';
+        ctx.fill(); ctx.stroke();
+        continue;
+      }
       ctx.fillStyle = s.team === 0 ? 'rgba(113,220,232,0.85)' : 'rgba(255,111,125,0.85)';
       ctx.beginPath(); ctx.moveTo(p.x - 4, p.y - 88); ctx.lineTo(p.x + 4, p.y - 88); ctx.lineTo(p.x, p.y - 83); ctx.fill();
     }
@@ -688,6 +700,26 @@ export class Renderer {
     ctx.globalAlpha = 1;
   }
 
+  // Letterbox + captions baked into recorded goal clips.
+  drawClipOverlay(ctx, fx) {
+    const o = this.clipOverlay, w = this.w, h = this.h, bar = Math.max(34, h * 0.1);
+    ctx.fillStyle = '#05080f';
+    ctx.fillRect(0, 0, w, bar); ctx.fillRect(0, h - bar, w, bar);
+    ctx.textBaseline = 'middle';
+    const big = Math.round(bar * 0.55);
+    ctx.font = `${big}px ${this.font}`;
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#71dce8'; ctx.fillText('GLACIAL STRIKERS', 14, bar / 2);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = Math.sin(fx.time * 6) > 0 ? '#ff3b3b' : '#7a1d1d';
+    ctx.beginPath(); ctx.arc(w - 14 - ctx.measureText('REPLAY').width - 12, bar / 2, big * 0.22, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffffff'; ctx.fillText('REPLAY', w - 14, bar / 2);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#ffd45e'; ctx.fillText(o.title, 14, h - bar / 2);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#fff2cb'; ctx.fillText(o.score, w - 14, h - bar / 2);
+  }
+
   drawVignette(ctx, fx) {
     if (!this.vig || this.vigW !== this.w || this.vigH !== this.h) {
       this.vigW = this.w; this.vigH = this.h;
@@ -698,7 +730,7 @@ export class Renderer {
     }
     ctx.fillStyle = this.vig;
     ctx.fillRect(0, 0, this.w, this.h);
-    if (fx.lamp > 0 && Math.sin(fx.lamp * 12) > 0) {
+    if (fx.flashes && fx.lamp > 0 && Math.sin(fx.lamp * 12) > 0) {
       ctx.fillStyle = hexA(fx.lampColor, 0.08);
       ctx.fillRect(0, 0, this.w, this.h);
     }
