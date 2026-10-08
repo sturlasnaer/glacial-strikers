@@ -6,7 +6,13 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
-**Next:** one small, optional batch (M2, below). Nothing else is outstanding.
+**Next batches:**
+1. **P**: penalty box.
+2. **R**: rival mascots.
+3. **S**: rules for the Golden Hall and the Dark Aerie.
+4. **K**: scoreboards for Pine Pond, the Golden Hall and the Dark Aerie.
+5. **T**: training props.
+6. **M2**: gear masks for the rival side strides.
 
 ## Format notes
 
@@ -38,12 +44,56 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 ---
 
-## Next (optional)
+## Batch P: penalty box
 
-### Batch M2. Gear masks for the Batch C side strides
+A penalized skater stands at the far boards beside centre ice today, so the box is invisible. Please draw a small penalty box built into the far boards. The game puts one each side of centre: ours at about x 700, the visitors' at about x 836 on the 1536×1024 rink. The far boards' top rail is at about y 165 and the ice edge at about y 207 there.
+
+- About 70 px wide and 80 px tall at game size (please draw it at 2× or more, like the other props). It has glass sides and front glass, a bench inside, and a door in the boards facing the ice. The boards, rail and glass match the rink's (white boards, red rail, navy posts), so it fits every arena.
+- **Two layers** so a skater can stand inside. The back layer is the back wall and bench, drawn behind the skater. The front layer is the boards, door and front glass, drawn over the skater's legs. A skater is about 70 px tall in game and should show from the waist up.
+- **Frames:** `back`, `front_closed`, `front_open`, and a small red `light_on` overlay above the door that the game flashes while the penalty runs. 4 frames, drawn in neutral rink colours (not recoloured).
+
+## Batch R: rival mascots
+
+The Snow Fox dances on the near stairs at home, but the rival buildings have no mascot. Please draw one for each rival, made like the Snow Fox (`mascot/snow_fox`). They have the same four frames, **idle, wave, cheer_a and cheer_b**, on the same canvas size (about 456×508 source), and the game draws them at 1/8 (about 57×64 px).
+
+- **Pinewood Lynx:** a lynx in a toque.
+- **Ember Comets:** a grinning fireball with a comet tail.
+- **Gilded Rams:** a ram with gilded horns.
+- **Obsidian Ravens:** a raven in a hooded cloak.
+- **Aurora Royals:** a crowned polar bear, or whatever fits the Royals' crest best.
+
+Draw them in **coral + violet** like all rival art, one sheet per team named `<team>_mascot.png` (for example `gilded_rams_mascot.png`), so they land on the rival's pages and are recoloured into team colours. The game puts them where the Snow Fox stands at home: bottom centre, feet at about (768, 950) on the 1536×1024 arena. If an arena has no room there, say in the README where it should go. 20 frames.
+
+## Batch S: rules for the Golden Hall and the Dark Aerie
+
+The other three buildings each have a rule. These two will get theirs when this art lands (code-drawn placeholders first):
+
+- **Golden Hall, rumble strips:** ridged strips carved into the ice along the far and near boards. Skating over them with the puck makes it hop off the stick. Please draw a **tileable horizontal strip tile, 64×24 px** at game size, tiled edge to edge like the aurora tiles, in two frames (`rest`, `rattle`: the ridges catching the brazier light). Also a **3-frame puck hop**, a small burst of ice dust about 24 px.
+- **Dark Aerie, shadow zones:** a raven's shadow sweeps over the ice, and inside it the puck is hard to see. Please draw a **soft shadow decal**, top-down, about 200×120 px, dark violet, feathered edges with a wing shape, as a 4-frame drift loop. Also a **raven flying across** in side view, about 40 px, a 4-frame flap facing right (the game mirrors it).
+
+About 13 frames. The rule names and descriptions go in the game's text (and Icelandic).
+
+## Batch K: arena scoreboards
+
+The volcanic scoreboard made the Ember Dome feel like its own building. The other rival arenas still hang the Frostline scoreboard. Please draw a variant of the v3 scoreboard for each, with **the same canvas, pivot and display fields** as B5 (clock, home score, away score, period, left blank for live text):
+
+- **Pine Pond:** a rustic wooden board on posts, with snow on top and painted lettering (it's outdoors).
+- **Golden Hall:** carved stone and gold, with ram horns on the corners.
+- **Dark Aerie:** black stone with violet lanterns, and a raven perched on top.
+
+3 frames.
+
+## Batch T: training props
+
+Two training visuals are still drawn in code:
+
+- **Sniper targets:** round 3-ring target boards that hang in the goal mouth (top corner, middle and bottom corner), about 18 px tall at game size. Draw them slightly foreshortened, since our side-on camera sees them at an angle. Three states: `unlit` (grey), `lit` (red and cream), `hit` (gold flash). 3 frames.
+- **Speed lane tile** (the Frostline rink's stage twist): a **tileable strip like the aurora tiles, 64×36 px** at game size, cyan and white with a chevron pointing **right**, as an 8-frame shimmer. 8 frames.
+
+11 frames.
+
+---
+
+## Batch M2: gear masks for the rival side strides
+
 Signed rival skaters wear our gear, but their new side strides, stops and glides have no masks, so their special sticks and skates don't recolour in those poses. The same format as Batch M: `<sheet>_gearmask.png` beside each `<team>_<role>_side_strides.png` (15 sheets), red for the stick, green for the boots, blue for the blades. Captain celebrations don't need them.
-
-## Ideas (ask before drawing)
-
-- **Golden Hall rule: rumble strips** along the boards that shake the puck loose. It would need a strip tile, like the aurora lanes.
-- **Dark Aerie rule: shadow zones** where the puck is harder to see. It would need a soft shadow decal and a raven flying over.
