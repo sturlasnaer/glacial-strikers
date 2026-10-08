@@ -1,6 +1,7 @@
 // Game content: characters, gear, rival teams, tournament, dialogue.
 
 import { t } from './i18n.js';
+import { bodySprite } from './modular.js';
 
 export const STAT_KEYS = ['spd', 'agi', 'sht', 'pas', 'chk', 'sta'];
 export const STAT_NAMES = {
@@ -349,7 +350,8 @@ export function member(who) {
   const k = ROOKIES[who];
   if (k) {
     const c = CHARACTERS[k.kit];
-    return { who, kit: k.kit, def: makeDef(k.kit, k.arch, k.elem), name: k.name, title: ROOKIE_TITLE[c.role], base: k.base, role: c.role, blurb: k.blurb, recruit: null, rookie: k, hand: k.hand || 'L', sprite: `newcomer_${ROLE[k.kit]}`, look: 'homekit' };
+    const body = bodySprite(k.parts); // drawn from parts once that art is in (Batch AJ)
+    return { who, kit: k.kit, def: makeDef(k.kit, k.arch, k.elem), name: k.name, title: ROOKIE_TITLE[c.role], base: k.base, role: c.role, blurb: k.blurb, recruit: null, rookie: k, hand: k.hand || 'L', sprite: body || `newcomer_${ROLE[k.kit]}`, parts: body ? k.parts : null, look: 'homekit' };
   }
   const L = LEGENDS[who];
   if (L) {

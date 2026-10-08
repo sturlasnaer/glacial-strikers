@@ -63,6 +63,10 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
     const L = LEGENDS[id], p = P[LEGEND_ART.has(L.art) ? L.art : `newcomer_${ROLE[L.kit]}`], fid = p && ((expr && p[expr]) || p.neutral);
     return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT[L.kit]}`, size);
   }
+  if (team === 0 && ROOKIES[id] && member(id).parts) { // a rookie from parts (Batch AJ)
+    const url = Assets.partsPortrait(member(id).parts, expr || 'neutral', size, 'homekit');
+    if (url) return url;
+  }
   if (team === 0 && ROOKIES[id]) { // a drafted rookie: a newcomer (Batch AA) in our colours
     const p = P[`newcomer_${ROLE[ROOKIES[id].kit]}`], fid = p && ((expr && p[expr]) || p.neutral);
     return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT[ROOKIES[id].kit]}`, size);
@@ -723,7 +727,7 @@ export class UI {
     const cards = d.prospects.map((p, i) => {
       const m = { role: CHARACTERS[p.kit].role }, starter = member(s.lineup[m.role]);
       const P = (Assets.atlas.portraits || {})[`newcomer_${ROLE[p.kit]}`];
-      const face = P ? Assets.icon(P.determined || P.neutral, 152) : portrait(p.kit, 1, null, 152);
+      const face = (p.parts && Assets.partsPortrait(p.parts, 'determined', 152)) || (P ? Assets.icon(P.determined || P.neutral, 152) : portrait(p.kit, 1, null, 152));
       const pips = STAT_KEYS.map((k) => {
         const diff = p.base[k] - starter.base[k];
         return `<div class="stat"><span>${t(STAT_NAMES[k])}</span><span class="pips">${Array.from({ length: 12 }, (_, j) => `<i class="${j < p.base[k] ? 'b' : ''}"></i>`).join('')}</span><span class="v">${p.base[k]}</span><span class="${diff > 0 ? 'good' : diff < 0 ? 'bad' : 'muted'}" style="font-size:12px;width:2.2em">${diff > 0 ? '+' + diff : diff || ''}</span></div>`;

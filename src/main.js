@@ -29,6 +29,7 @@ import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
 import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, useNewArt } from './data.js';
 import { rollLegend, legendState, STAY } from './legends.js';
+import { useModular } from './modular.js';
 import { offerDraft } from './draft.js';
 import { recordCareer } from './career.js';
 import {
@@ -70,6 +71,7 @@ class App {
       // the legends wear their own art once it's in (?legends=1 previews them before it is)
       for (const L of Object.values(LEGENDS)) if (Assets.atlas.skaters && Assets.atlas.skaters[L.art]) LEGEND_ART.add(L.art);
       useNewArt((id) => !!Assets.atlas.frames[id]);
+      useModular(Assets.atlas); // players from parts, once that art is in
       this.legendsPreview = new URLSearchParams(location.search).has('legends');
     } catch (e) {
       this.loadingEl.querySelector('.err').textContent = t('The game art did not load. Check your connection and reload the page.');

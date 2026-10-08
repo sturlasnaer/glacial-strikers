@@ -7,6 +7,7 @@ import { POWER_INFO, COMBOS, TEAMS, ARENAS, PALETTES, GEAR_LOOK } from './data.j
 import { ELEMENT_COLORS } from './fx.js';
 import { NetRenderer, SpriteNets } from './net.js';
 import { t } from './i18n.js';
+import { headPlacement } from './modular.js';
 
 const SKATER_SCALE = 0.5; // world px per source px
 const GOALIE_SCALE = 0.43;
@@ -994,8 +995,19 @@ export class Renderer {
     else if (s.slowT > 0 && s.slowMul < 0.9) tint = ['#9fe8ff', 0.45];
     else if (s.bedrockT > 0) tint = ['#b8a58c', 0.22];
     if (tint) this.drawTinted(ctx, fr.id, pages, p.x, y, k, fr.flip, rot, tint[0], tint[1]);
+    if (s.parts) this.drawHead(ctx, s, fr, p.x, y, k, pages); // a player from parts: the head on its anchor
     if (s.gear) this.drawGearLook(ctx, s, fr, p, y, k, fx);
     ctx.restore();
+  }
+
+  // The head of a player from parts (Batch AJ), then anything that passes in front of it.
+  drawHead(ctx, s, fr, x, y, k, pages) {
+    const M = Assets.atlas.modular, f = Assets.frame(fr.id);
+    const hp = M && f && headPlacement(M, s.parts, fr.id, f, x, y, k, fr.flip);
+    if (!hp) return;
+    const hf = Assets.frame(hp.head), c = hf && Assets.partsCanvas(hp.head, s.parts);
+    if (c) this.drawFrameCanvas(ctx, c, hf, hp.x, hp.y, k, fr.flip, hp.rot);
+    if (hp.front) Assets.draw(ctx, hp.front, x, y, k, { flip: fr.flip, pages });
   }
 
   // A looping effect's frame id at time t, or null while its art isn't in the atlas.

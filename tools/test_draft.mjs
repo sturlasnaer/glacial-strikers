@@ -78,5 +78,28 @@ const old = newSave();
 old.league.stats = { skaters: { 'home:frost': { key: 'home:frost', team: 'home', face: 'frost', gp: 5, g: 3, a: 2, hits: 1, steals: 0, shots: 9 } }, goalies: { home: { gp: 5, sa: 60, sv: 54, so: 1 } } };
 check('an old save starts from this season', careerOf(old).skaters.frost.g === 3 && careerOf(old).goalie.sv === 54);
 
+// players from parts (Batch AJ): looks, recolouring through masks, head placement
+{
+  const Mo = await import('../src/modular.js');
+  check('no parts without the art', Mo.randomLook() === null && Mo.lookFor('rk1') === null);
+  Mo.useModular({ skaters: { body_std: {} }, modular: { heads: { braids: {}, beard: {} } } });
+  const a = Mo.lookFor('rk7'), b = Mo.lookFor('rk7'), c = Mo.lookFor('rk8');
+  check('a look per id, the same every time', a && JSON.stringify(a) === JSON.stringify(b) && a.body === 'std' && ['braids', 'beard'].includes(a.head), [a, c]);
+  check('the body sprite', Mo.bodySprite(a) === 'body_std' && Mo.bodySprite({ body: 'tall' }) === null);
+  // two skin pixels (one lit, one shaded), one hair pixel, one helmet pixel the mask leaves alone
+  const d = new Uint8ClampedArray([200, 150, 120, 255, 100, 75, 60, 255, 90, 60, 40, 255, 20, 30, 70, 255]);
+  const md = new Uint8ClampedArray([255, 0, 0, 255, 255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 0, 0]);
+  Mo.recolorParts(d, md, { skin: 5, hair: 6 });
+  check('skin recoloured, shading kept', d[0] > d[4] && Math.abs(d[0] / d[2] - 0x55 / 0x1f) < 0.6, [...d.slice(0, 8)]);
+  check('hair recoloured', d[8] > d[10] * 2, [...d.slice(8, 12)]);
+  check('the helmet untouched', d[12] === 20 && d[13] === 30 && d[14] === 70);
+  const M = { anchors: { f1: { x: 30, y: 10, view: 'e', rot: 10, state: 'effort' } }, heads: { braids: { e: { normal: 'h_n', effort: 'h_e' } } } };
+  const hp = Mo.headPlacement(M, { head: 'braids' }, 'f1', [0, 0, 0, 60, 120, 30, 120, 1], 100, 200, 0.5, false);
+  const hf = Mo.headPlacement(M, { head: 'braids' }, 'f1', [0, 0, 0, 60, 120, 20, 120, 1], 100, 200, 0.5, true);
+  check('the head on its anchor', hp.x === 100 && hp.y === 145 && hp.head === 'h_e' && hp.rot > 0, hp);
+  check('mirrored', hf.x === 95 && hf.rot < 0, hf);
+  Mo.useModular(null);
+}
+
 console.log(`draft and career: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

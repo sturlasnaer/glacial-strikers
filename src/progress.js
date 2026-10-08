@@ -6,6 +6,7 @@ import {
   RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, areTwins, setRookies, member, pairKey, recruitKey, slotDef,
 } from './data.js';
 import { newLeague, migrateLeague } from './league.js';
+import { lookFor } from './modular.js';
 import { seasonStats } from './awards.js';
 import { t } from './i18n.js';
 
@@ -62,6 +63,8 @@ export function loadSave() {
     const base = newSave();
     for (const k of Object.keys(base)) if (s[k] === undefined) s[k] = base[k];
     for (const k of Object.keys(base.settings)) if (s.settings[k] === undefined) s.settings[k] = base.settings[k];
+    // rookies drafted before the parts art was in get a face of their own once it is
+    for (const [id, k] of Object.entries(s.rookies || {})) if (!k.parts) { const l = lookFor(id); if (l) k.parts = l; }
     setRookies(s.rookies); // drafted rookies, so member() knows them
     // perks are kept as text: a player whose super or archetype has changed since gets the
     // same choice from their new lists
@@ -170,7 +173,8 @@ export const homeKitGroups = (save) => {
   const ids = rosterIds(save), legends = ids.filter((id) => LEGENDS[id]);
   return [...new Set([
     ...ids.filter((id) => RECRUITS[id]).map((id) => 'rival_' + TEAMS[RECRUITS[id].team].art),
-    ...(ids.some((id) => ROOKIES[id]) || legends.some((id) => !LEGEND_ART.has(LEGENDS[id].art)) ? ['newcomers'] : []),
+    ...(ids.some((id) => ROOKIES[id] && !member(id).parts) || legends.some((id) => !LEGEND_ART.has(LEGENDS[id].art)) ? ['newcomers'] : []),
+    ...(ids.some((id) => member(id).parts) ? ['parts'] : []), // players from parts (Batch AJ: the 'parts' page group)
     ...(legends.some((id) => LEGEND_ART.has(LEGENDS[id].art)) ? ['legends'] : []),
   ])];
 };
@@ -204,7 +208,7 @@ export function matchConfig(save, teamId, stage, opts = {}) {
       const m = member(who);
       return {
         def: m.def, who, stats: effectiveStats(who, save.roster[who]), name: m.name, perks: perkNames(save.roster[who]),
-        sprite: m.sprite, look: m.look, gear: { ...save.roster[who].gear }, twin: m.legend ? m.legend.twin : null, hand: m.hand,
+        sprite: m.sprite, look: m.look, parts: m.parts, gear: { ...save.roster[who].gear }, twin: m.legend ? m.legend.twin : null, hand: m.hand,
       };
     }),
     goalie: { stats: goalieStats(save), name: GOALIE.name },
@@ -282,7 +286,7 @@ export function allStarConfig(save, vote, opts = {}) {
     if (!save.roster[who]) return rival(who, 'homekit');
     const m = member(who);
     return { def: m.def, who, stats: effectiveStats(who, save.roster[who]), name: m.name, perks: perkNames(save.roster[who]),
-      sprite: m.sprite, look: m.look, gear: { ...save.roster[who].gear } };
+      sprite: m.sprite, look: m.look, parts: m.parts, gear: { ...save.roster[who].gear } };
   };
   const g = TEAMS[vote.goalie];
   const seasonBoost = (save.season - 1) * 0.08;

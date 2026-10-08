@@ -6,6 +6,7 @@
 // (Everything is prefetched into the browser cache, but only decoded when used.)
 
 import { TEAMS, PALETTES } from './data.js';
+import { recolorParts } from './modular.js';
 
 const BASE = new URL('assets/', document.baseURI).href;
 const INLINE = typeof window !== 'undefined' && window.__INLINE; // single-file offline build
@@ -288,6 +289,62 @@ export const Assets = {
   },
 
   // Data URL of a frame fitted in a square, for <img> tags in menus.
+  // A head or face frame of the parts art (Batch AJ) with a look's skin and hair, as an
+  // ordinary canvas the size of the frame (cached; null while the art isn't there).
+  partsCanvas(id, look) {
+    const f = this.atlas.frames[id], M = this.atlas.modular;
+    const mid = M && M.masks && M.masks[id], mf = mid && this.atlas.frames[mid];
+    if (!f || !this.pages[f[0]]) return null;
+    this.partsCache ||= new Map();
+    const key = `${id}|${look.skin}|${look.hair}`;
+    if (this.partsCache.has(key)) return this.partsCache.get(key);
+    const [pi, fx, fy, fw, fh] = f;
+    const c = document.createElement('canvas'); c.width = fw; c.height = fh;
+    const cx = c.getContext('2d', { willReadFrequently: true });
+    cx.drawImage(this.pages[pi], fx, fy, fw, fh, 0, 0, fw, fh);
+    if (mf && this.pages[mf[0]]) {
+      const m = document.createElement('canvas'); m.width = fw; m.height = fh;
+      const mx = m.getContext('2d', { willReadFrequently: true });
+      mx.drawImage(this.pages[mf[0]], mf[1], mf[2], mf[3], mf[4], mf[8] || 0, mf[9] || 0, mf[3], mf[4]);
+      const img = cx.getImageData(0, 0, fw, fh);
+      recolorParts(img.data, mx.getImageData(0, 0, fw, fh).data, look);
+      cx.putImageData(img, 0, 0);
+    }
+    const out = document.createElement('canvas'); out.width = fw; out.height = fh;
+    out.getContext('2d').drawImage(c, 0, 0);
+    if (this.partsCache.size > 400) this.partsCache.delete(this.partsCache.keys().next().value);
+    this.partsCache.set(key, out);
+    return out;
+  },
+
+  // A portrait from parts: the portrait body in a team's colours and the look's face on its
+  // anchor, fitted in a square like icon(). '' while the art isn't there.
+  partsPortrait(look, expr, size = 96, teamId = null) {
+    const P = this.atlas.modular && this.atlas.modular.portraits;
+    const faces = P && P.faces && P.faces[look.head];
+    const faceId = faces && (faces[expr] || faces.neutral);
+    const bf = P && this.atlas.frames[P.body], ff = faceId && this.atlas.frames[faceId];
+    const page = bf && this.pagesFor(teamId)[bf[0]];
+    if (!bf || !ff || !page) return '';
+    const key = `parts|${look.head}|${look.skin}|${look.hair}|${faceId}|${size}|${teamId}`;
+    if (this.iconCache.has(key)) return this.iconCache.get(key);
+    const face = this.partsCanvas(faceId, look);
+    if (!face) return '';
+    const c = document.createElement('canvas'); c.width = size; c.height = size;
+    const ctx = c.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    const [, fx, fy, fw, fh, px, py] = bf;
+    // fit the body and the face above it in the square
+    const a = P.anchor || { x: px, y: 0 };
+    const top = Math.min(0, a.y - ff[6]), h = fh - top, k = size / Math.max(fw, h);
+    const ox = (size - fw * k) / 2, oy = (size - h * k) / 2 - top * k;
+    ctx.drawImage(page, fx, fy, fw, fh, ox, oy, fw * k, fh * k);
+    ctx.drawImage(face, ox + (a.x - ff[5]) * k, oy + (a.y - ff[6]) * k, ff[3] * k, ff[4] * k);
+    const url = c.toDataURL('image/png');
+    this.iconCache.set(key, url);
+    return url;
+  },
+
   icon(id, size = 96, teamId = null, opts = {}) {
     const key = `${id}|${size}|${teamId}|${opts.flip ? 1 : 0}|${opts.crop || ''}`;
     if (this.iconCache.has(key)) return this.iconCache.get(key);

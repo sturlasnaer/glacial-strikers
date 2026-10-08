@@ -138,6 +138,7 @@ export class Skater {
     this.look = opts.look || null; // palette for recruits in our colours
     this.gear = opts.gear || null; // equipped gear ids, for how it shows on the ice
     this.twin = opts.twin || null; // a twin's roster id (Fáfnir and Fenrir)
+    this.parts = opts.parts || null; // a player from parts (Batch AJ): body, head, skin, hair
     this.hand = opts.hand || def.hand || 'L'; // which hand they shoot with (the art follows once it's drawn both ways)
     this.id = `${team}-${def.id}`;
     this.stats = stats;

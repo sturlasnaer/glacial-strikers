@@ -4,6 +4,7 @@
 // stars) makes them learn faster and lets their stats grow further than anyone's.
 import { CHARACTERS, ROOKIES, setRookies, KIT_OF_ROLE, TEAMS, STAT_KEYS, makeDef, ARCHETYPES, ELEMENTS } from './data.js';
 import { joinLevel, PERK_LEVELS, newMember } from './progress.js';
+import { randomLook } from './modular.js';
 
 const NAMES = {
   C: ['Flick', 'Pivot', 'Quill', 'Marlo', 'Juno', 'Rook', 'Tinsel', 'Sly', 'Pippa', 'Kestrel'],
@@ -52,7 +53,8 @@ function prospect(role, taken, rnd) {
   const arch = pick(Object.values(ARCHETYPES).filter((a) => a.roles.includes(role)).map((a) => a.id), rnd);
   const elem = pick(Object.keys(ELEMENTS), rnd);
   const hand = rnd() < 0.6 ? 'L' : 'R'; // (most players shoot left)
-  return { name, kit, base, potential, special, arch, elem, hand, blurb: pick(SCOUTING[role], rnd), perks: PERK_LEVELS.map(() => (rnd() < 0.5 ? 0 : 1)) };
+  const parts = randomLook(rnd); // a face of their own once the parts art is in
+  return { name, kit, base, potential, special, arch, elem, hand, parts, blurb: pick(SCOUTING[role], rnd), perks: PERK_LEVELS.map(() => (rnd() < 0.5 ? 0 : 1)) };
 }
 
 // The season's three prospects, and the two rivals who pick after you.
@@ -82,7 +84,7 @@ export function draftPick(save, i) {
   save.rookieN = (save.rookieN || 0) + 1;
   const id = 'rk' + save.rookieN;
   save.rookies ||= {};
-  save.rookies[id] = { name: p.name, kit: p.kit, arch: p.arch, elem: p.elem, hand: p.hand, base: p.base, potential: p.potential, blurb: p.blurb, season: d.season };
+  save.rookies[id] = { name: p.name, kit: p.kit, arch: p.arch, elem: p.elem, hand: p.hand, parts: p.parts || null, base: p.base, potential: p.potential, blurb: p.blurb, season: d.season };
   setRookies(save.rookies);
   const m = newMember();
   m.level = Math.max(1, joinLevel(save) - 2);

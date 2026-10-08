@@ -407,11 +407,12 @@ img { image-rendering: auto; max-width: 100%; }
 
 /* ultimate cut-ins */
 .cutins { position: absolute; inset: 0; pointer-events: none; z-index: 13; overflow: hidden; }
-.cutin { position: absolute; left: -10%; right: -10%; top: 32%; height: clamp(84px, 24vh, 180px); }
+/* a slim band under the scoreboard, so the ultimate itself stays in view on the ice */
+.cutin { position: absolute; left: -10%; right: -10%; top: calc(64px + var(--safe-t)); height: clamp(46px, 12vh, 92px); }
 .cutin .band { position: absolute; inset: 0; display: flex; align-items: center; gap: 18px; padding: 0 16%; overflow: hidden;
   background: linear-gradient(90deg, rgba(11, 20, 36, 0.96) 0%, var(--c) 45%, var(--c) 55%, rgba(11, 20, 36, 0.96) 100%);
   border-top: 4px solid var(--cream); border-bottom: 4px solid var(--cream); box-shadow: 0 0 0 4px var(--navy);
-  animation: cutin-l 1.15s cubic-bezier(.2, .9, .3, 1) forwards; transform: skewY(-5deg); }
+  animation: cutin-l 0.95s cubic-bezier(.2, .9, .3, 1) forwards; transform: skewY(-3deg); }
 .cutin.them .band { flex-direction: row-reverse; animation-name: cutin-r; text-align: right; }
 .cutin .band::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.22) 0 3px, transparent 3px 46px); animation: lines 0.25s linear infinite; }
 .cutin img { position: relative; height: 140%; width: auto; align-self: flex-end; margin-bottom: -18%; filter: drop-shadow(0 4px 0 var(--navy)); }
@@ -419,13 +420,13 @@ img { image-rendering: auto; max-width: 100%; }
 .cutin .pair { display: flex; align-self: flex-end; height: 140%; margin-bottom: -18%; position: relative; }
 .cutin .pair img { height: 100%; margin-bottom: 0; }
 .cutin .pair img + img { margin-left: -12%; }
-.cutin.combo { top: 26%; height: clamp(70px, 19vh, 140px); }
+.cutin.combo { height: clamp(42px, 11vh, 84px); }
 .cutin.combo .band { border-color: var(--gold); }
 .cutin .txt { position: relative; display: flex; flex-direction: column; }
-.cutin .txt small { font-family: var(--display); font-size: clamp(18px, 3vw, 28px); color: var(--cream); }
-.cutin .txt b { font-family: var(--display); font-weight: normal; font-size: clamp(38px, 8vw, 84px); line-height: 0.85; color: #fff; text-shadow: 0 4px 0 var(--navy); text-transform: uppercase; }
-@keyframes cutin-l { 0% { transform: translateX(-120%) skewY(-5deg); } 15% { transform: translateX(0) skewY(-5deg); } 78% { transform: translateX(3%) skewY(-5deg); opacity: 1; } 100% { transform: translateX(120%) skewY(-5deg); opacity: 0; } }
-@keyframes cutin-r { 0% { transform: translateX(120%) skewY(-5deg); } 15% { transform: translateX(0) skewY(-5deg); } 78% { transform: translateX(-3%) skewY(-5deg); opacity: 1; } 100% { transform: translateX(-120%) skewY(-5deg); opacity: 0; } }
+.cutin .txt small { font-family: var(--display); font-size: clamp(13px, 2vw, 20px); color: var(--cream); }
+.cutin .txt b { font-family: var(--display); font-weight: normal; font-size: clamp(24px, 4.6vw, 50px); line-height: 0.85; color: #fff; text-shadow: 0 3px 0 var(--navy); text-transform: uppercase; }
+@keyframes cutin-l { 0% { transform: translateX(-120%) skewY(-3deg); } 15% { transform: translateX(0) skewY(-3deg); } 78% { transform: translateX(3%) skewY(-3deg); opacity: 1; } 100% { transform: translateX(120%) skewY(-3deg); opacity: 0; } }
+@keyframes cutin-r { 0% { transform: translateX(120%) skewY(-3deg); } 15% { transform: translateX(0) skewY(-3deg); } 78% { transform: translateX(-3%) skewY(-3deg); opacity: 1; } 100% { transform: translateX(-120%) skewY(-3deg); opacity: 0; } }
 @keyframes lines { to { background-position: 46px 0; } }
 
 /* replay letterbox */
@@ -515,8 +516,8 @@ body.in-hub #screen {
 .npc .say { position: relative; flex: 1; min-width: 0; padding: 8px 12px; border-radius: 12px; background: rgba(255, 242, 203, 0.95); color: var(--navy, #14233b); font-size: 14px; line-height: 1.3; }
 .npc .say::before { content: ""; position: absolute; left: -8px; bottom: 12px; border: 8px solid transparent; border-right-color: rgba(255, 242, 203, 0.95); border-left: 0; }
 .npc .say b { display: block; font-family: var(--display); font-weight: normal; font-size: 18px; line-height: 1; color: #2a6f86; margin-bottom: 2px; }
-.cutin.art { top: 24%; height: clamp(120px, 34vh, 300px); }
-.cutin.art .band { align-items: flex-end; padding: 0 12% clamp(8px, 2vh, 18px); border-width: 4px; }
+.cutin.art { height: clamp(64px, 17vh, 130px); } /* (the banner art: a little taller than the plain band, still clear of the ice) */
+.cutin.art .band { align-items: flex-end; padding: 0 12% clamp(4px, 1vh, 10px); border-width: 3px; }
 .cutin.art .bn { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; margin: 0; filter: none; transform: none; align-self: auto; }
 .cutin.them.art .bn { transform: none; }
 .cutin.art .pair { height: 70%; margin-bottom: 0; }
