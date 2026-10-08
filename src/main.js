@@ -11,7 +11,7 @@ import { firstTime } from './guide.js';
 import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as cloudBackup } from './online.js';
 import { ARENA_MUSIC } from './songs.js';
 import { ResurfacerLap } from './scenery.js';
-import { UI, controlsHtml, crest } from './ui.js';
+import { UI, controlsHtml, crest, ruleIconSrc } from './ui.js';
 import { HUD } from './hud.js';
 import { toScreen } from './rink.js';
 import { Replay } from './replay.js';
@@ -320,7 +320,7 @@ class App {
 
   announceRule(twist, arena) {
     if (!twist || twist === 'none' || !TWIST_INFO[twist]) return;
-    setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t(TWIST_INFO[twist])); }, 1400);
+    setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t(TWIST_INFO[twist]), ruleIconSrc(twist, 64)); }, 1400);
   }
 
   // A rival's building brings its own rule; the Frostline rink keeps the stage's twist.
@@ -564,6 +564,9 @@ class App {
     const m = this.makeMatch(cfg, teamId, arena);
     const classic = !!(extra.fixture && extra.fixture.kind === 'classic');
     this.fx.heavySnow = classic;
+    m.classic = classic;
+    if (classic) Assets.loadGroup('winter').catch(() => {}); // Pine Pond dressed up
+    if (m.goalieMode) Assets.loadGroup('goalie').catch(() => {}); // Wall of Ice
     this.hookMatch(m);
     this.replay.clear();
     this.clips.clear();

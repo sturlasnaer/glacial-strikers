@@ -2,7 +2,7 @@
 
 import { Assets } from './assets.js';
 import { POWER_INFO, TEAMS, ART_NAME, RECRUITS } from './data.js';
-import { portrait, crest } from './ui.js';
+import { portrait, crest, keyGlyphs } from './ui.js';
 import { t } from './i18n.js';
 
 const digit = (n) => Assets.icon(`hud_elements/score/${Math.min(5, n)}`, 96);
@@ -44,7 +44,7 @@ export class HUD {
         <div class="rp-bar bottom"><button class="rp-skip" id="rp-skip">${t('Skip')} ▸</button></div>
       </div>
       <div class="cutins" id="cutins"></div>
-      <div class="ticker" id="ticker" hidden><span class="live">${t('LIVE')}</span><span class="tx"></span></div>
+      <div class="ticker" id="ticker" hidden><span class="live">${t('LIVE')}</span><img class="tk-ico" alt="" hidden><span class="tx"></span></div>
       <div class="penchip" id="penchip" hidden></div>
       <div class="powerchip" id="power" hidden><img alt=""><span></span><span class="t"><i></i></span></div>
       <button class="pause-btn" id="pause-btn" aria-label="${t('Pause')}"><img src="${Assets.icon('hud_elements/misc/pause', 88)}" alt=""></button>
@@ -52,8 +52,8 @@ export class HUD {
       <div class="keyhints" id="keyhints" ${this.app.isTouch ? 'hidden' : ''}>
         ${opts.versus ? `<b style="color:var(--ice)">P1</b> WASD · <kbd>F</kbd> ${t('shoot')} · <kbd>G</kbd> ${t('pass')} · <kbd>L-Shift</kbd> ${t('sprint')} · <kbd>R</kbd>/<kbd>T</kbd> ${t('skill/ult')}<br>
         <b style="color:var(--coral)">P2</b> ${t('Arrows')} · <kbd>K</kbd> ${t('shoot')} · <kbd>L</kbd> ${t('pass')} · <kbd>R-Shift</kbd> ${t('sprint')} · <kbd>O</kbd>/<kbd>P</kbd> ${t('skill/ult')}`
-        : match.goalieMode ? `<kbd>J</kbd> ${t('block / pass')} · <kbd>K</kbd> ${t('dive / clear')} · <kbd>Shift</kbd> ${t('quick feet')}<br><kbd>U</kbd> ${t('poke check')} · <kbd>I</kbd> ${t('Wall of Ice')} · <kbd>Esc</kbd> ${t('pause')}`
-        : `<kbd>J</kbd> ${t('shoot/check')} · <kbd>K</kbd> ${t('pass/switch')} · <kbd>Shift</kbd> ${t('sprint')}<br><kbd>U</kbd> ${t('skill')} · <kbd>I</kbd> ${t('ultimate')} · <kbd>Esc</kbd> ${t('pause')}`}</div>`;
+        : match.goalieMode ? `${keyGlyphs('J')} ${t('block / pass')} · ${keyGlyphs('K')} ${t('dive / clear')} · ${keyGlyphs('Shift')} ${t('quick feet')}<br>${keyGlyphs('U')} ${t('poke check')} · ${keyGlyphs('I')} ${t('Wall of Ice')} · ${keyGlyphs('Esc')} ${t('pause')}`
+        : `${keyGlyphs('J')} ${t('shoot/check')} · ${keyGlyphs('K')} ${t('pass/switch')} · ${keyGlyphs('Shift')} ${t('sprint')}<br>${keyGlyphs('U')} ${t('skill')} · ${keyGlyphs('I')} ${t('ultimate')} · ${keyGlyphs('Esc')} ${t('pause')}`}</div>`;
     this.el.querySelector('#pause-btn').addEventListener('click', (e) => { e.stopPropagation(); this.app.pause(); });
     const rp = this.el.querySelector('#replay');
     rp.addEventListener('pointerdown', (e) => { e.preventDefault(); this.app.skipReplay(); });
@@ -69,10 +69,13 @@ export class HUD {
     this.bannerEl.innerHTML = '';
   }
 
-  ticker(text) {
+  ticker(text, icon = '') {
     const t = this.el.querySelector('#ticker');
     if (!t) return;
     t.querySelector('.tx').textContent = text;
+    const ico = t.querySelector('.tk-ico');
+    ico.hidden = !icon;
+    if (icon) ico.src = icon;
     t.hidden = false;
     t.classList.remove('in'); void t.offsetWidth; t.classList.add('in');
     this.tickerT = 3.2;
@@ -248,8 +251,9 @@ export class HUD {
       this.el.querySelector('#pc-name').textContent = g.name;
       this.el.querySelector('#pc-sta').firstChild.style.transform = 'scaleX(1)';
       if (!this.touch.hidden) {
-        this.touch.querySelector('.t-skill img').src = Assets.icon('equipment_items/stick/wood', 80);
-        this.touch.querySelector('.t-ult img').src = Assets.icon('hud_elements/ability/frost', 80);
+        const A = Assets.atlas.goalie_mode && Assets.atlas.goalie_mode.actions || {};
+        this.touch.querySelector('.t-skill img').src = Assets.icon(A.poke_check || 'equipment_items/stick/wood', 80);
+        this.touch.querySelector('.t-ult img').src = Assets.icon(A.wall_of_ice || 'hud_elements/ability/frost', 80);
       }
     }
     const ub = this.el.querySelector('#pc-ult');

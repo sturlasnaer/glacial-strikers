@@ -1,7 +1,7 @@
 // Builds dist/puckbound-offline.html: one self-contained file with every script,
 // style, font and image embedded. Double-click it to play with no server or internet.
 //   node tools/build_offline.mjs
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
 import { join, dirname, normalize } from 'node:path';
 
 const root = new URL('..', import.meta.url).pathname;
@@ -56,7 +56,8 @@ bundle = bundle.replace(/<\/script/gi, '<\\/script');
 
 // ---- styles with fonts inlined
 const fonts = read('src/fonts.css').replace(/url\(\.\.\/assets\/fonts\/([^)]+)\)/g, (_, f) => `url(data:font/woff2;base64,${b64('assets/fonts/' + f)})`);
-const styles = read('src/styles.css');
+// the UI kit's skin images go into the stylesheet as data URIs
+const styles = read('src/styles.css').replace(/url\(\.\.\/assets\/gfx\/(ui-kit\/images\/[^)]+\.png)\)/g, (_, f) => `url(data:image/png;base64,${b64('assets/gfx/' + f)})`);
 
 // ---- art
 const atlas = JSON.parse(read('assets/gfx/atlas.json'));
@@ -64,8 +65,11 @@ const inline = { 'gfx/atlas.json': atlas };
 const images = [
   ...atlas.pages.map((p) => p.file), 'gfx/rink_backdrop.webp', atlas.locker, atlas.arena && atlas.arena.glass && atlas.arena.glass.file,
   ...Object.values(atlas.arenas || {}), ...Object.values(atlas.banners || {}),
+  atlas.awards_stage && atlas.awards_stage.file, atlas.awards_stage && atlas.awards_stage.podium_foreground && atlas.awards_stage.podium_foreground.file,
 ].filter(Boolean);
 for (const f of images) inline[f] = `data:image/webp;base64,${b64('assets/' + f)}`;
+// the UI kit's button prompts and keycaps (the skin's own pieces are inlined in the stylesheet)
+for (const f of readdirSync(join(root, 'assets/gfx/ui-kit/images'))) if (/^((ps|xbox|key)_.*|owned_stamp)\.png$/.test(f)) inline[`gfx/ui-kit/images/${f}`] = `data:image/png;base64,${b64('assets/gfx/ui-kit/images/' + f)}`;
 
 // ---- page
 let html = read('index.html');

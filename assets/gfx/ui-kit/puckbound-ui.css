@@ -1,0 +1,39 @@
+/* Puckbound: source pixels are3x logical pixels. HTML owns all labels. */
+*{box-sizing:border-box}
+.pb-skin{border-style:solid;image-rendering:pixelated;background-clip:padding-box;color:#fff2cb;font:inherit}
+.pb-prompt{display:inline-block;image-rendering:pixelated;vertical-align:middle}
+.pb-button{min-height:48px;cursor:pointer;position:relative;font-weight:700;white-space:normal;line-height:1.25}
+.pb-focused .pb-corner{position:absolute;width:16px;height:16px;pointer-events:none;background:url(images/focus_corner_a.png) center/contain no-repeat;animation:pb-pulse 1s steps(1,end) infinite}
+.pb-corner.tl{left:-8px;top:-8px}.pb-corner.tr{right:-8px;top:-8px;transform:scaleX(-1)}.pb-corner.bl{left:-8px;bottom:-8px;transform:scaleY(-1)}.pb-corner.br{right:-8px;bottom:-8px;transform:scale(-1)}
+@keyframes pb-pulse{50%{background-image:url(images/focus_corner_b.png)}}
+@media(prefers-reduced-motion:reduce){.pb-focused .pb-corner{animation:none}}
+.pb-disabled{cursor:default;color:#94a5b5}.pb-prompt-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.pb-panel{border-width:12.0px 12.0px 12.0px 12.0px;border-image-source:url(images/panel.png);border-image-slice:36 36 36 36;border-image-width:12.0px 12.0px 12.0px 12.0px;border-image-repeat:stretch;background-color:#14233b}
+.pb-panel_modal{border-width:12.0px 12.0px 12.0px 12.0px;border-image-source:url(images/panel_modal.png);border-image-slice:36 36 36 36;border-image-width:12.0px 12.0px 12.0px 12.0px;border-image-repeat:stretch;background-color:#14233b}
+.pb-card{border-width:12.0px 12.0px 12.0px 12.0px;border-image-source:url(images/card.png);border-image-slice:36 36 36 36;border-image-width:12.0px 12.0px 12.0px 12.0px;border-image-repeat:stretch;background-color:#14233b}
+.pb-card_focus{border-width:12.0px 12.0px 12.0px 12.0px;border-image-source:url(images/card_focus.png);border-image-slice:36 36 36 36;border-image-width:12.0px 12.0px 12.0px 12.0px;border-image-repeat:stretch;background-color:#14233b}
+.pb-btn_gold_normal{border-width:10.0px 10.0px 10.0px 10.0px;border-image-source:url(images/btn_gold_normal.png);border-image-slice:30 30 30 30;border-image-width:10.0px 10.0px 10.0px 10.0px;border-image-repeat:stretch;background-color:#ffd45e}
+.pb-btn_ice_normal{border-width:10.0px 10.0px 10.0px 10.0px;border-image-source:url(images/btn_ice_normal.png);border-image-slice:30 30 30 30;border-image-width:10.0px 10.0px 10.0px 10.0px;border-image-repeat:stretch;background-color:#71dce8}
+.pb-btn_cream_normal{border-width:10.0px 10.0px 10.0px 10.0px;border-image-source:url(images/btn_cream_normal.png);border-image-slice:30 30 30 30;border-image-width:10.0px 10.0px 10.0px 10.0px;border-image-repeat:stretch;background-color:#fff2cb}
+.pb-btn_ghost_normal{border-width:10.0px 10.0px 10.0px 10.0px;border-image-source:url(images/btn_ghost_normal.png);border-image-slice:30 30 30 30;border-image-width:10.0px 10.0px 10.0px 10.0px;border-image-repeat:stretch;background-color:#14233b}
+.pb-btn_disabled_normal{border-width:10.0px 10.0px 10.0px 10.0px;border-image-source:url(images/btn_disabled_normal.png);border-image-slice:30 30 30 30;border-image-width:10.0px 10.0px 10.0px 10.0px;border-image-repeat:stretch;background-color:#34455f}
+.pb-btn_gold_pressed{border-width:10.0px 10.0px 10.0px 10.0px;border-image-source:url(images/btn_gold_pressed.png);border-image-slice:30 30 30 30;border-image-width:10.0px 10.0px 10.0px 10.0px;border-image-repeat:stretch;background-color:#d3a73c}
+.pb-btn_ice_pressed{border-width:10.0px 10.0px 10.0px 10.0px;border-image-source:url(images/btn_ice_pressed.png);border-image-slice:30 30 30 30;border-image-width:10.0px 10.0px 10.0px 10.0px;border-image-repeat:stretch;background-color:#43bdc9}
+.pb-btn_cream_pressed{border-width:10.0px 10.0px 10.0px 10.0px;border-image-source:url(images/btn_cream_pressed.png);border-image-slice:30 30 30 30;border-image-width:10.0px 10.0px 10.0px 10.0px;border-image-repeat:stretch;background-color:#d9cfa6}
+.pb-btn_ghost_pressed{border-width:10.0px 10.0px 10.0px 10.0px;border-image-source:url(images/btn_ghost_pressed.png);border-image-slice:30 30 30 30;border-image-width:10.0px 10.0px 10.0px 10.0px;border-image-repeat:stretch;background-color:#14233b}
+.pb-btn_disabled_pressed{border-width:10.0px 10.0px 10.0px 10.0px;border-image-source:url(images/btn_disabled_pressed.png);border-image-slice:30 30 30 30;border-image-width:10.0px 10.0px 10.0px 10.0px;border-image-repeat:stretch;background-color:#29384e}
+.pb-tab{border-width:8.0px 8.0px 8.0px 8.0px;border-image-source:url(images/tab.png);border-image-slice:24 24 24 24;border-image-width:8.0px 8.0px 8.0px 8.0px;border-image-repeat:stretch;background-color:#14233b}
+.pb-tab_active{border-width:8.0px 8.0px 8.0px 8.0px;border-image-source:url(images/tab_active.png);border-image-slice:24 24 24 24;border-image-width:8.0px 8.0px 8.0px 8.0px;border-image-repeat:stretch;background-color:#14233b}
+.pb-chip{border-width:8.0px 8.0px 8.0px 8.0px;border-image-source:url(images/chip.png);border-image-slice:24 24 24 24;border-image-width:8.0px 8.0px 8.0px 8.0px;border-image-repeat:stretch;background-color:#14233b}
+.pb-chip_on{border-width:8.0px 8.0px 8.0px 8.0px;border-image-source:url(images/chip_on.png);border-image-slice:24 24 24 24;border-image-width:8.0px 8.0px 8.0px 8.0px;border-image-repeat:stretch;background-color:#14233b}
+.pb-coin_price_tag{border-width:6.0px 6.0px 6.0px 20.0px;border-image-source:url(images/coin_price_tag.png);border-image-slice:18 18 18 60;border-image-width:6.0px 6.0px 6.0px 20.0px;border-image-repeat:stretch;background-color:#14233b}
+.pb-scrollbar_track{border-width:4.0px 2.0px 4.0px 2.0px;border-image-source:url(images/scrollbar_track.png);border-image-slice:12 6 12 6;border-image-width:4.0px 2.0px 4.0px 2.0px;border-image-repeat:stretch;background-color:#14233b}
+.pb-scrollbar_thumb{border-width:4.0px 2.0px 4.0px 2.0px;border-image-source:url(images/scrollbar_thumb.png);border-image-slice:12 6 12 6;border-image-width:4.0px 2.0px 4.0px 2.0px;border-image-repeat:stretch;background-color:#ffd45e}
+.pb-dialogue_frame{border-width:8.0px 8.0px 8.0px 8.0px;border-image-source:url(images/dialogue_frame.png);border-image-slice:24 24 24 24;border-image-width:8.0px 8.0px 8.0px 8.0px;border-image-repeat:stretch;background-color:#14233b}
+.pb-dialogue_nameplate{border-width:6.0px 6.0px 6.0px 6.0px;border-image-source:url(images/dialogue_nameplate.png);border-image-slice:18 18 18 18;border-image-width:6.0px 6.0px 6.0px 6.0px;border-image-repeat:stretch;background-color:#14233b}
+.pb-button.pb-gold:active{border-image-source:url(images/btn_gold_pressed.png);background-color:#d3a73c}
+.pb-button.pb-ice:active{border-image-source:url(images/btn_ice_pressed.png);background-color:#43bdc9}
+.pb-button.pb-cream:active{border-image-source:url(images/btn_cream_pressed.png);background-color:#d9cfa6}
+.pb-button.pb-ghost:active{border-image-source:url(images/btn_ghost_pressed.png)}
+.pb-coin_price_tag{padding-left:14px}
+.pb-dialogue_frame{padding:12px;line-height:1.6}

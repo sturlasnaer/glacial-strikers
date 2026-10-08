@@ -153,6 +153,8 @@ img { image-rendering: auto; max-width: 100%; }
 .scout { display: flex; gap: 10px; align-items: center; background: rgba(11, 20, 36, 0.55); border: 2px solid var(--navy-3); border-radius: 6px; padding: 8px; font-size: 14px; }
 .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
 .play-as { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.pb-prompt { height: 1.45em; width: auto; vertical-align: middle; image-rendering: pixelated; margin: 0 1px; }
+.rule-ico { width: 1.35em; height: 1.35em; vertical-align: -0.35em; margin-right: 3px; image-rendering: pixelated; }
 .play-as .label { margin-right: 2px; }
 .plan { cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 3px; background: rgba(11, 20, 36, 0.6); border: 3px solid var(--navy-3); border-radius: 6px; padding: 8px 10px; font-family: var(--body); font-size: 12.5px; color: var(--cream); }
 .plan b { font-family: var(--display); font-weight: normal; font-size: 24px; line-height: 1; }
@@ -376,6 +378,7 @@ img { image-rendering: auto; max-width: 100%; }
 /* commentary ticker */
 .ticker { position: absolute; left: calc(8px + var(--safe-l)); top: calc(62px + var(--safe-t)); display: flex; align-items: center; gap: 8px; max-width: min(46vw, 420px); padding: 4px 10px 3px 4px; background: rgba(11, 20, 36, 0.86); border-left: 4px solid var(--coral); border-radius: 4px; font-family: var(--display); font-size: 19px; line-height: 1.05; }
 .ticker.in { animation: tick-in 0.25s ease-out; }
+.ticker .tk-ico { width: 32px; height: 32px; flex: none; image-rendering: auto; }
 .ticker .live { font-family: var(--body); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; background: var(--coral); color: var(--navy); padding: 1px 4px; border-radius: 2px; }
 @keyframes tick-in { from { transform: translateX(-30px); opacity: 0; } }
 
@@ -565,6 +568,29 @@ body.in-hub.hub-room #screen { background: linear-gradient(rgba(8, 14, 26, 0.82)
 .look::before { content: "✦ "; color: var(--gold, #ffd45e); }
 
 /* ---- season awards ---- */
+.aw-scene { position: absolute; inset: 0; overflow: hidden; background: #0b1424; }
+.aw-room { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.aw-bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.aw-host { position: absolute; }
+.aw-host img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.aw-podium { position: absolute; display: block; }
+.awards.on-stage { margin: auto auto 12px; max-height: 54%; background: rgba(20, 35, 59, 0.94); }
+.awards.on-stage .aw-head > img { display: none; }
+/* short screens: in landscape the panel docks right and the stage slides left so Kip stays in
+   view; in portrait the panel covers a darkened stage */
+@media (max-height: 520px) {
+  .awards.on-stage { margin: auto; max-height: calc(100% - 24px); padding: 10px; gap: 8px; }
+  .awards.on-stage .aw-stage { min-height: 168px; }
+  .awards.on-stage .aw-card { height: 160px; }
+  .awards.on-stage .aw-portrait { width: 96px; height: 96px; }
+  .awards.on-stage .aw-back img { width: 64px; height: 64px; }
+  .awards.on-stage .aw-say { font-size: 20px; }
+}
+@media (max-height: 520px) and (min-aspect-ratio: 4/3) {
+  .aw-room { left: 22%; }
+  .awards.on-stage { margin: 12px calc(12px + var(--safe-r)) 12px auto; width: min(520px, 58%); }
+}
+@media (max-height: 520px) and (max-aspect-ratio: 4/3) { .aw-room { filter: brightness(0.45); } .awards.on-stage .aw-head > img { display: block; } }
 .awards { position: relative; width: min(760px, calc(100% - 24px)); max-height: calc(100% - 24px); margin: auto; display: flex; flex-direction: column; gap: 12px; padding: 16px; overflow-y: auto; }
 .aw-head { display: flex; gap: 12px; align-items: center; }
 .aw-head img { width: 64px; height: 64px; border-radius: 10px; background: rgba(255, 242, 203, 0.1); flex: none; }
@@ -655,3 +681,112 @@ body.pad-nav .spot:focus { border-color: rgba(255, 242, 203, 0.9); background: r
 /* cloud save */
 .cloud-code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: clamp(14px, 3.4vw, 20px); letter-spacing: 0.04em; text-align: center; padding: 12px; margin: 8px 0; border-radius: 10px; background: rgba(255, 242, 203, 0.08); border: 2px dashed var(--ice); word-break: break-all; user-select: all; }
 .cloud-input { width: 100%; box-sizing: border-box; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 15px; padding: 10px; border-radius: 8px; border: 2px solid var(--ice); background: var(--navy); color: var(--cream); text-transform: uppercase; }
+
+/* ---------- Batch U: the pixel-art UI kit ----------
+   The same HTML, skinned with 9-slice border images (source pixels are 3x logical ones, so a
+   36-pixel slice is a 12px border). The flat fill sits inside the border. */
+.panel {
+  border: 12px solid transparent; border-radius: 0;
+  border-image: url(../assets/gfx/ui-kit/images/panel.png) 36 / 12px stretch;
+  background: #14233b; background-clip: padding-box;
+  box-shadow: 0 10px 0 rgba(0, 0, 0, 0.35);
+  image-rendering: pixelated;
+}
+.modal.panel { border-image-source: url(../assets/gfx/ui-kit/images/panel_modal.png); }
+.btn {
+  border: 10px solid transparent; border-radius: 0;
+  border-image: url(../assets/gfx/ui-kit/images/btn_ice_normal.png) 30 / 10px stretch;
+  background: #71dce8; background-clip: padding-box;
+  padding: 3px 10px 1px; box-shadow: none; image-rendering: pixelated;
+}
+.btn:active { transform: none; box-shadow: none; border-image-source: url(../assets/gfx/ui-kit/images/btn_ice_pressed.png); background-color: #43bdc9; }
+.btn.gold { border-image-source: url(../assets/gfx/ui-kit/images/btn_gold_normal.png); background-color: #ffd45e; }
+.btn.gold:active { border-image-source: url(../assets/gfx/ui-kit/images/btn_gold_pressed.png); background-color: #d3a73c; }
+.btn.cream { border-image-source: url(../assets/gfx/ui-kit/images/btn_cream_normal.png); background-color: #fff2cb; }
+.btn.cream:active { border-image-source: url(../assets/gfx/ui-kit/images/btn_cream_pressed.png); background-color: #d9cfa6; }
+.btn.ghost { border-image-source: url(../assets/gfx/ui-kit/images/btn_ghost_normal.png); background-color: #14233b; border-color: transparent; }
+.btn.ghost:active { border-image-source: url(../assets/gfx/ui-kit/images/btn_ghost_pressed.png); }
+.btn[disabled] { filter: none; color: #94a5b5; border-image-source: url(../assets/gfx/ui-kit/images/btn_disabled_normal.png); background-color: #34455f; }
+.btn.small { padding: 0 4px; }
+.tab {
+  border: 8px solid transparent; border-radius: 0; padding: 0 8px;
+  border-image: url(../assets/gfx/ui-kit/images/tab.png) 24 / 8px stretch;
+  background: #14233b; background-clip: padding-box; image-rendering: pixelated;
+}
+.tab[aria-selected="true"] { border-image-source: url(../assets/gfx/ui-kit/images/tab_active.png); background-color: #14233b; color: var(--gold); }
+.chip {
+  border: 8px solid transparent; border-radius: 0; padding: 0 6px;
+  border-image: url(../assets/gfx/ui-kit/images/chip.png) 24 / 8px stretch;
+  background: #14233b; background-clip: padding-box; image-rendering: pixelated;
+}
+.chip[aria-pressed="true"] { border-image-source: url(../assets/gfx/ui-kit/images/chip_on.png); background-color: #14233b; color: var(--gold); border-color: transparent; }
+.item {
+  border: 12px solid transparent; border-radius: 0; padding: 0;
+  border-image: url(../assets/gfx/ui-kit/images/card.png) 36 / 12px stretch;
+  background: #14233b; background-clip: padding-box; image-rendering: pixelated;
+}
+.item:focus { border-image-source: url(../assets/gfx/ui-kit/images/card_focus.png); }
+.dlg-box {
+  border: 8px solid transparent; border-radius: 0;
+  border-image: url(../assets/gfx/ui-kit/images/dialogue_frame.png) 24 / 8px stretch;
+  background: #14233b; background-clip: padding-box; box-shadow: 0 8px 0 rgba(0, 0, 0, 0.35);
+}
+.dlg-name {
+  border: 6px solid transparent; border-radius: 0; padding: 0 6px; top: -22px;
+  border-image: url(../assets/gfx/ui-kit/images/dialogue_nameplate.png) 18 / 6px stretch;
+  background: #14233b; background-clip: padding-box; color: var(--ice);
+}
+.dlg-name.them { background: #14233b; color: var(--coral); }
+/* the controller highlight: gold corner brackets that pulse */
+:where(.btn, .chip, .item, .plan) { position: relative; }
+.btn { --fb: 10px; } .item { --fb: 12px; } .tab, .chip { --fb: 8px; }
+body.pad-nav :is(.btn, .chip, .tab, .item, .plan, .spot, .crew, .room-board, [data-lbt], [data-playas]):focus { outline: none; box-shadow: none; }
+body.pad-nav :is(.btn, .chip, .tab, .item, .plan, .spot, .crew, .room-board):focus::after {
+  content: ''; position: absolute; inset: calc(-9px - var(--fb, 3px)); pointer-events: none; z-index: 3;
+  /* drawn at 2x (the art is 3x of 16px) so the brackets stand clear of gold frames; an absolute
+     box starts inside the border, so --fb (the border width) moves them past it */
+  background:
+    url(../assets/gfx/ui-kit/images/focus_corner_a.png) left top / 32px 32px no-repeat,
+    url(../assets/gfx/ui-kit/images/focus_corner_a_tr.png) right top / 32px 32px no-repeat,
+    url(../assets/gfx/ui-kit/images/focus_corner_a_bl.png) left bottom / 32px 32px no-repeat,
+    url(../assets/gfx/ui-kit/images/focus_corner_a_br.png) right bottom / 32px 32px no-repeat;
+  image-rendering: pixelated; animation: pb-focus 1s steps(1, end) infinite;
+}
+@keyframes pb-focus { 50% {
+  background-image: url(../assets/gfx/ui-kit/images/focus_corner_b.png), url(../assets/gfx/ui-kit/images/focus_corner_b_tr.png),
+    url(../assets/gfx/ui-kit/images/focus_corner_b_bl.png), url(../assets/gfx/ui-kit/images/focus_corner_b_br.png);
+} }
+@media (prefers-reduced-motion: reduce) { body.pad-nav :is(.btn, .chip, .tab, .item, .plan, .spot, .crew, .room-board):focus::after { animation: none; } }
+/* small parts: the coin price tag (the coin is in the art), the tab dot, scrollbars */
+.price {
+  border-style: solid; border-color: transparent; border-width: 6px 8px 6px 22px;
+  border-image: url(../assets/gfx/ui-kit/images/coin_price_tag.png) 18 18 18 60 / 6px 8px 6px 22px stretch;
+  background: #14233b; background-clip: padding-box; image-rendering: pixelated;
+  font-size: 20px; line-height: 20px; padding: 1px 4px 0 2px;
+}
+.owned-stamp { display: block; width: 96px; height: 48px; image-rendering: pixelated; transform: rotate(-4deg); }
+.tab .dot { width: 16px; height: 16px; border: 0; border-radius: 0; background: url(../assets/gfx/ui-kit/images/notification_dot.png) center / 16px 16px no-repeat; image-rendering: pixelated; }
+@media (hover: hover) and (pointer: fine) {
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { border: solid transparent; border-width: 4px 2px; border-image: url(../assets/gfx/ui-kit/images/scrollbar_track.png) 12 6 / 4px 2px stretch; background: #0b1424 padding-box; }
+  ::-webkit-scrollbar-thumb { border: solid transparent; border-width: 4px 2px; border-image: url(../assets/gfx/ui-kit/images/scrollbar_thumb.png) 12 6 / 4px 2px stretch; background: #c9a74a padding-box; }
+  ::-webkit-scrollbar-corner { background: transparent; }
+}
+/* controller prompts on the menus: ○/B on back buttons, L1/R1 (LB/RB) beside the tab bar, ✕/A on
+   the highlighted shop card's Buy button. Xbox glyphs unless a PlayStation pad is connected. */
+body.pad-nav :is([data-close], #s-close, #dlg-skip, .room-tab)::before,
+body.pad-nav .item:focus [data-buy]::before {
+  content: ''; display: inline-block; width: 20px; height: 20px; margin: -4px 5px -3px 0; vertical-align: middle;
+  background: url(../assets/gfx/ui-kit/images/xbox_b.png) center / contain no-repeat; image-rendering: pixelated;
+}
+body.pad-nav.pad-ps :is([data-close], #s-close, #dlg-skip, .room-tab)::before { background-image: url(../assets/gfx/ui-kit/images/ps_circle.png); }
+body.pad-nav .item:focus [data-buy]::before { background-image: url(../assets/gfx/ui-kit/images/xbox_a.png); }
+body.pad-nav.pad-ps .item:focus [data-buy]::before { background-image: url(../assets/gfx/ui-kit/images/ps_cross.png); }
+body.pad-nav .room-tab .arr { display: none; }
+body.pad-nav .tabs::before, body.pad-nav .tabs::after {
+  content: ''; width: 33px; height: 22px; align-self: center; flex: none;
+  background: url(../assets/gfx/ui-kit/images/xbox_lb.png) center / contain no-repeat; image-rendering: pixelated;
+}
+body.pad-nav .tabs::after { background-image: url(../assets/gfx/ui-kit/images/xbox_rb.png); }
+body.pad-nav.pad-ps .tabs::before { background-image: url(../assets/gfx/ui-kit/images/ps_l1.png); }
+body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/images/ps_r1.png); }

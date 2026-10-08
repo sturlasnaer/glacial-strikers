@@ -122,6 +122,16 @@ for section, values in new_mappings.items():
     art_mappings.setdefault(section, {}).update(values)
 NEW_MASKS = os.path.join(NEW, 'Puckbound-Batch-M2')
 check_mask_sources(NEW_MASKS, art_roots, src['sheets'])
+FINAL = sys.argv[11] if len(sys.argv) > 11 else '../assets/Puckbound-Batches-D-U-Q-W-O-E-J-F'
+from merge_final_batches import merge_final
+src, final_roots, final_mappings, awards_stage = merge_final(src, FINAL)
+art_roots.update(final_roots)
+for section, values in final_mappings.items():
+    if section == 'rival_polish':
+        for key, value in values.items():
+            art_mappings.setdefault(section, {}).setdefault(key, {}).update(value)
+    else:
+        art_mappings.setdefault(section, {}).update(values)
 frames = src['frames']
 info = src['sheets']
 os.makedirs(os.path.join(OUT, 'cutins'), exist_ok=True)
@@ -219,10 +229,12 @@ def rival_of(fid):
 
 
 # Scene art that only one scene uses gets its own pages, decoded when that scene opens.
-SCENE_GROUPS = {'polish': 'title', 'arena_rules': 'rules', 'hub_fullbody': 'hub', 'hub_chest': 'hub', 'hub_props': 'hub'}
+SCENE_GROUPS = {'polish': 'title', 'arena_rules': 'rules', 'hub_fullbody': 'hub', 'hub_chest': 'hub', 'hub_props': 'hub', 'awards_fullbody': 'awards', 'ui_skin': 'ui', 'winter_classic': 'winter', 'goalie_wall': 'goalie'}
 
 
 def group_of(fid):
+    if fid.startswith('winter_crowd/home/'):
+        return 'winter'
     t = rival_of(fid)
     if t:
         return 'rival_' + t
@@ -423,6 +435,7 @@ arena['scoreboards'] = {key: {**sb, 'pivot': [sb['pivot']['x'], sb['pivot']['y']
 arena['rival_mascots'] = art_mappings.get('rival_mascots', {})
 arena['mascot_arenas'] = {'pine_pond': 'pinewood_lynx', 'ember_dome': 'ember_comets', 'golden_hall': 'gilded_rams', 'dark_aerie': 'obsidian_ravens', 'aurora_palace': 'aurora_royals'}
 arena['penalty_box'] = art_mappings.get('penalty_box', {})
+arena['penalty_box_pond'] = art_mappings.get('penalty_box_pond', {})
 
 # ---------------------------------------------------------------- mappings
 skaters = json.loads(json.dumps(src['skaters']))
@@ -570,7 +583,37 @@ for key, b in src['ultimate_banners'].items():
     img.save(os.path.join(OUT, name), 'WEBP', quality=84, method=6)
     banners[who] = 'gfx/' + name
 
+import shutil
+ui_root = os.path.join(FINAL, 'Puckbound-Batch-U', 'ui-kit')
+if os.path.exists(ui_root):
+    shutil.copytree(ui_root, os.path.join(OUT, 'ui-kit'), dirs_exist_ok=True)
+    # the controller highlight's corner, mirrored for the other three corners (CSS can't flip
+    # one background image per corner)
+    for frame in ('a', 'b'):
+        corner = Image.open(os.path.join(OUT, 'ui-kit', 'images', f'focus_corner_{frame}.png'))
+        for name, img in (('tr', corner.transpose(Image.FLIP_LEFT_RIGHT)), ('bl', corner.transpose(Image.FLIP_TOP_BOTTOM)), ('br', corner.transpose(Image.ROTATE_180))):
+            img.save(os.path.join(OUT, 'ui-kit', 'images', f'focus_corner_{frame}_{name}.png'))
+if awards_stage:
+    stage_img = Image.open(awards_stage.pop('absolute_image')).convert('RGB')
+    if stage_img.size != (1536, 864):
+        raise ValueError('Awards stage must be exactly 1536x864')
+    stage_img.save(os.path.join(OUT, 'awards_stage.webp'), 'WEBP', quality=92, method=6)
+    awards_stage['file'] = 'gfx/awards_stage.webp'
+    podium = awards_stage.get('podium_foreground')
+    if podium:
+        x, y, w, h = (podium[k] for k in ('x','y','w','h'))
+        stage_img.crop((x,y,x+w,y+h)).save(os.path.join(OUT, 'awards_podium.webp'), 'WEBP', quality=92, method=6)
+        podium['file'] = 'gfx/awards_podium.webp'
+
 atlas = {
+    'awards_stage': awards_stage,
+    'rule_icons': art_mappings.get('rule_icons', {}),
+    'achievement_icons': art_mappings.get('achievement_icons', {}),
+    'awards_host': art_mappings.get('awards_host', {}),
+    'winter_classic': art_mappings.get('winter_classic', {}),
+    'winter_crowd': art_mappings.get('winter_crowd', {}),
+    'goalie_mode': art_mappings.get('goalie_mode', {}),
+    'ui_kit': {'manifest':'gfx/ui-kit/ui-kit.json','css':'gfx/ui-kit/puckbound-ui.css'},
     'art_additions': art_mappings,
     'art_draw_scales': {fid: (0.5 if info[f['sheet']]['category'] in ('stride', 'celebration') else 0.09 if info[f['sheet']]['category'] == 'scoreboard' else info[f['sheet']]['recommended_render_scale'] * (0.5 if info[f['sheet']]['category'] == 'npc' else 1)) for fid, f in frames.items() if f['sheet'] in art_roots},
     'pages': pages,

@@ -96,6 +96,9 @@ export class PadNav {
 
   mark() {
     if (!this.used) { this.used = true; document.body.classList.add('pad-nav'); }
+    // PlayStation or Xbox glyphs on the menu prompts (styles.css)
+    const pads = [...(navigator.getGamepads ? navigator.getGamepads() : [])].filter(Boolean);
+    document.body.classList.toggle('pad-ps', pads.some((p) => /dualsense|dualshock|playstation|054c/i.test(p.id)));
   }
 
   focused(root) {

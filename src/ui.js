@@ -18,7 +18,7 @@ import {
 import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave, resetsIn } from './online.js';
 import { nextGuide, doneGuide, guideOff } from './guide.js';
 import { audio } from './audio.js';
-import { t } from './i18n.js';
+import { t, getLang } from './i18n.js';
 const VOLUMES = () => [[0, t('Off')], [0.35, t('Low')], [0.7, t('Mid')], [1, t('Full')]];
 // dialogue voices: each role speaks at its own pitch; rivals a little lower
 const VOICE = { frost: 660, thunder: 800, stone: 470, goalie: 590 };
@@ -103,6 +103,35 @@ const NPC_SPOTS = [
   { who: 'ottar', tab: 'shop', at: [75.5, 46] },
   { who: 'kip', tab: 'tournament', at: [72.5, 86] },
 ];
+// Button prompts from the UI kit (Batch U), as small images with the text as their alt.
+const PAD_PROMPT = { '✕': 'ps_cross', '○': 'ps_circle', '□': 'ps_square', '△': 'ps_triangle', L1: 'ps_l1', R1: 'ps_r1', L2: 'ps_l2', R2: 'ps_r2', Options: 'ps_options', Create: 'ps_create', A: 'xbox_a', B: 'xbox_b', X: 'xbox_x', Y: 'xbox_y', LB: 'xbox_lb', RB: 'xbox_rb', LT: 'xbox_lt', RT: 'xbox_rt', Start: 'xbox_menu', Back: 'xbox_view' };
+const KEYS = ['a', 'd', 'enter', 'esc', 'h', 'i', 'j', 'k', 'l', 'o', 'p', 's', 'shift', 'space', 'u', 'w'];
+const promptImg = (name, alt) => `<img class="pb-prompt" src="${Assets.url(`gfx/ui-kit/images/${name}.png`)}" alt="${esc(alt)}">`;
+// controller buttons named in a (translated) sentence
+// the OWNED stamp has English lettering, so other languages keep the text
+const ownedStamp = () => getLang() === 'en' ? `<img class="owned-stamp" src="${Assets.url('gfx/ui-kit/images/owned_stamp.png')}" alt="${t('OWNED')}" width="96" height="48">` : `<span class="good" style="font-family:var(--display);font-size:20px">${t('OWNED')}</span>`;
+const padGlyphs = (text) => text.replace(/✕|○|□|△|\b(?:L1|R1|L2|R2|LB|RB|LT|RT|Options|Create|Start|Back|[ABXY])\b/g, (m) => promptImg(PAD_PROMPT[m], m));
+// a keyboard label like 'J / Space' or 'WASD / Arrows' as keycaps (keys without art stay text)
+export function keyGlyphs(label) {
+  return label.split(' / ').map((part) => {
+    if (part === 'WASD') return ['w', 'a', 's', 'd'].map((k) => promptImg('key_' + k, k.toUpperCase())).join('');
+    if (part === t('Arrows')) return ['up', 'left', 'down', 'right'].map((k) => promptImg('key_' + k, part)).join('');
+    const k = part.toLowerCase();
+    return KEYS.includes(k) ? promptImg('key_' + k, part) : esc(part);
+  }).join(' / ');
+}
+
+// A small icon for an arena rule (Batch O), or nothing without the art.
+export function ruleIconSrc(twist, size = 40) {
+  const key = twist === 'shadow_zones' ? 'raven_shadows' : twist;
+  const id = Assets.atlas.rule_icons && Assets.atlas.rule_icons[key];
+  return id ? Assets.icon(id, size) : '';
+}
+function ruleIcon(twist, size = 40) {
+  const src = ruleIconSrc(twist, size);
+  return src ? `<img class="rule-ico" src="${src}" alt="">` : '';
+}
+
 // "Play as: Skaters / Goalie" (goalie mode), remembered in the settings.
 function playAsHtml(s) {
   const goalie = s.settings.playAs === 'goalie';
@@ -175,7 +204,7 @@ export class UI {
           <button class="btn ghost" id="t-settings">${t('Settings')}</button>
           ${this.app.installPrompt && !this.app.standalone ? `<button class="btn cream" id="t-install">${t('Install app')}</button>` : ''}
         </div>
-        ${this.app.isTouch && !padList().length ? '' : `<div class="press" id="t-press">${padList().length ? t('Press {button} or Enter to start', { button: psPad() ? '✕' : 'Ⓐ' }) : t('Press Enter to start')}</div>`}
+        ${this.app.isTouch && !padList().length ? '' : `<div class="press" id="t-press">${padList().length ? t('Press {button} or Enter to start', { button: promptImg(psPad() ? 'ps_cross' : 'xbox_a', psPad() ? '✕' : 'A') }) : t('Press Enter to start')}</div>`}
       </div>
       <div class="title-foot">${t('Best in landscape on phones · Keyboard, gamepad and touch')}</div>`);
     this.click('#t-start', () => { audio.sfx('confirm'); this.app.startCampaign(); });
@@ -206,7 +235,7 @@ export class UI {
       </div>
       <div>
         <div class="label" style="font-size:15px">${t('Arena')}</div>
-        <div class="filters" style="margin:6px 0 0">${['auto', ...Object.keys(ARENAS)].map((k) => `<button class="chip" data-arena="${k}" aria-pressed="${(this.arenaPick || 'auto') === k}">${k === 'auto' ? t('Their building') : esc(ARENAS[k].name)}${ARENAS[k] && ARENAS[k].rule ? ` <span class="muted">· ${esc(t(ARENAS[k].rule))}</span>` : ''}</button>`).join('')}
+        <div class="filters" style="margin:6px 0 0">${['auto', ...Object.keys(ARENAS)].map((k) => `<button class="chip" data-arena="${k}" aria-pressed="${(this.arenaPick || 'auto') === k}">${k === 'auto' ? t('Their building') : esc(ARENAS[k].name)}${ARENAS[k] && ARENAS[k].rule ? ` <span class="muted">· ${ruleIcon(ARENAS[k].twist, 32)}${esc(t(ARENAS[k].rule))}</span>` : ''}</button>`).join('')}
           <button class="chip" id="arena-rules" aria-pressed="${this.arenaRules !== false}" title="${esc(t('Meltwater in the Ember Dome, aurora lanes in the Aurora Palace, pond cracks on Pine Pond, rumble strips in the Golden Hall, raven shadows in the Dark Aerie'))}">${this.arenaRules !== false ? t('Arena rules on') : t('Arena rules off')}</button></div>
       </div>
       <div class="choice">${opts.map((tm) => `
@@ -286,7 +315,7 @@ export class UI {
         </div>
         ${room ? `<div class="room-wrap" id="room-wrap"><div class="room" id="room">${this.roomHtml(s, anyPoints)}</div></div>` : `
         <div class="tabs" role="tablist">
-          <button class="tab room-tab" data-tab="room" aria-label="${t('Back to the locker room')}">◂ ${t('Locker room')}</button>
+          <button class="tab room-tab" data-tab="room" aria-label="${t('Back to the locker room')}"><span class="arr">◂</span> ${t('Locker room')}</button>
           ${[['tournament', t('League')], ['team', t('Team')], ['shop', t('Shop')], ['training', t('Training')], ['trophies', t('Trophies')]].map(([t, label]) => `<button class="tab" role="tab" data-tab="${t}" aria-selected="${this.tab === t}">${label}${t === 'team' && anyPoints ? '<span class="dot"></span>' : ''}</button>`).join('')}
         </div>
         <div class="hub-body panel" id="hub-body"></div>`}
@@ -560,15 +589,44 @@ export class UI {
   awardsNight(list, season, onDone) {
     const npc = Assets.atlas.npcs && Assets.atlas.npcs.announcer;
     const host = npc ? Assets.icon(npc, 128) : '';
+    // the Awards Night stage (Batch J): Kip at the podium behind the panel
+    const S = Assets.atlas.awards_stage, P = S && S.podium_foreground;
+    const onStage = !!(S && S.file);
+    const pct = (v, of) => `${(v / of) * 100}%`;
     let i = -1, opened = false;
     const r = this.set(`
-      <div class="dim"></div>
-      <div class="awards panel">
+      ${onStage ? `<div class="aw-scene"><div class="aw-room" id="aw-room"><img class="aw-bg" src="${Assets.url(S.file)}" alt="">
+        <div class="aw-host" id="aw-host"></div>
+        ${P && P.file ? `<img class="aw-podium" src="${Assets.url(P.file)}" alt="" style="left:${pct(P.x, S.width)};top:${pct(P.y, S.height)};width:${pct(P.w, S.width)};height:${pct(P.h, S.height)}">` : ''}</div></div>` : '<div class="dim"></div>'}
+      <div class="awards panel ${onStage ? 'on-stage' : ''}">
         <div class="aw-head">${host ? `<img src="${host}" alt="">` : ''}<div><div class="label">${t('Frostline Awards · Season {n}', { n: season })}</div><div class="aw-say" id="aw-say">${t('Welcome, everyone, to the Frostline Awards! {honours}, one envelope each. Let\'s get to it.', { honours: ['', t('One honour'), t('Two honours'), t('Three honours'), t('Four honours'), t('Five honours'), t('Six honours')][list.length] || t('{n} honours', { n: list.length }) })}</div></div></div>
         <div class="aw-stage" id="aw-stage"></div>
         <div class="row" style="justify-content:flex-end"><button class="btn small ghost" id="aw-skip">${t('Skip')}</button><button class="btn gold" id="aw-next">${t('First award')}</button></div>
       </div>`);
     const stage = r.querySelector('#aw-stage'), say = r.querySelector('#aw-say'), next = r.querySelector('#aw-next');
+    let pose = 'speaking';
+    const setPose = (p) => { pose = p; r.querySelectorAll('[data-pose]').forEach((img) => { img.hidden = img.dataset.pose !== p; }); };
+    if (onStage) {
+      const room = r.querySelector('#aw-room');
+      const fit = () => { // cover the screen, keeping the stage's 16:9
+        const k = Math.max(r.clientWidth / 16, r.clientHeight / 9);
+        room.style.width = `${16 * k}px`; room.style.height = `${9 * k}px`;
+      };
+      fit();
+      if (typeof ResizeObserver !== 'undefined') { this.roomFit?.disconnect(); this.roomFit = new ResizeObserver(fit); this.roomFit.observe(r); }
+      const poses = Assets.atlas.awards_host || {};
+      const ids = ['speaking', 'opening_envelope', 'applauding'].filter((p) => poses[p]);
+      Assets.loadGroup('awards').then(() => {
+        const set = ids.length && Assets.spriteSet(ids.map((p) => poses[p]), 420);
+        const box = r.querySelector('#aw-host');
+        if (!set || !box) return;
+        const fr = ids.map((p) => Assets.frame(poses[p]));
+        const srcH = Math.max(...fr.map((f) => f[4] / f[7])); // standing height in source pixels
+        box.style.cssText = `left:${pct(S.host_foot.x, S.width)};top:${pct(S.host_foot.y, S.height)};height:${pct(srcH * S.host_source_scale, S.height)};aspect-ratio:${set.w}/${set.h};transform:translate(-${set.fx * 100}%,-${set.fy * 100}%)`;
+        box.innerHTML = ids.map((p, k) => `<img data-pose="${p}" src="${set.urls[k]}" alt="">`).join('');
+        setPose(pose);
+      }).catch(() => {});
+    }
     const card = (w) => {
       const a = AWARD_BY_ID[w.id];
       const tm = w.team === 'home' ? TEAMS.home : TEAMS[w.team];
@@ -585,6 +643,7 @@ export class UI {
     const show = () => {
       const w = list[i];
       stage.innerHTML = card(w);
+      setPose(opened ? 'applauding' : 'opening_envelope');
       if (!opened) {
         say.textContent = t('And the {award} goes to...', { award: t(AWARD_BY_ID[w.id].name) });
         next.textContent = t('Open the envelope');
@@ -597,6 +656,7 @@ export class UI {
       }
     };
     const summary = () => {
+      setPose('speaking');
       say.textContent = t('That\'s a wrap on the season. See you on the ice!');
       stage.innerHTML = `<div class="aw-list">${list.map((w) => `<div class="aw-row ${w.team === 'home' ? 'us' : ''}"><img src="${rowFace(w, 64)}" alt=""><div style="min-width:0"><small>${esc(t(AWARD_BY_ID[w.id].name))}</small><b>${esc(w.name)}</b><span class="muted">${esc(w.line)}</span></div><img class="cr" src="${crest(w.team, 40)}" alt=""></div>`).join('')}</div>`;
       next.textContent = t('Back to the locker room');
@@ -625,7 +685,7 @@ export class UI {
       <p class="muted" style="margin:0">${t('{date} · the same challenge for everyone today. Beat the goal on consecutive days to build a streak.', { date: esc(d.date) })}</p>
       <div class="daily">
         <img src="${crest(d.teamId, 96)}" alt="" width="64" height="64">
-        <div style="min-width:0"><b>${t('vs {team}', { team: esc(tm.name) })}</b><span class="muted">${esc(ar.name)}${ar.rule ? ` · ${esc(t(ar.rule))}` : ''}</span>
+        <div style="min-width:0"><b>${t('vs {team}', { team: esc(tm.name) })}</b><span class="muted">${esc(ar.name)}${ar.rule ? ` · ${ruleIcon(ar.twist, 32)}${esc(t(ar.rule))}` : ''}</span>
           <span>${d.mods.map((id) => `<span class="chip" aria-pressed="true" style="pointer-events:none">${esc(t(CHALLENGES.find((c) => c.id === id).name))}</span>`).join(' ')}</span></div>
       </div>
       <div class="daily-goal"><small>${t('Goal')}</small><b>${esc(t(dailyGoal(d.goal).text))}</b></div>
@@ -1056,8 +1116,8 @@ export class UI {
             <h4>${esc(t(g.name))}</h4>
             <p>${esc(t(g.text))}</p>
             ${modsHtml(g.mods)}${lookHtml(g.id)}
-            <div class="buy">${owned ? `<span class="good" style="font-family:var(--display);font-size:20px">${t('OWNED')}</span>`
-              : `<span class="price"><img src="${ico('equipment_items/reward/coins', 40)}" alt="">${price}${s.discount ? ` <s class="muted" style="font-size:14px">${g.price}</s>` : ''}</span>
+            <div class="buy">${owned ? ownedStamp()
+              : `<span class="price">${price}${s.discount ? ` <s class="muted" style="font-size:14px">${g.price}</s>` : ''}</span>
                  <button class="btn small ${afford ? 'gold' : ''}" data-buy="${g.id}" ${afford ? '' : 'disabled'}>${t('Buy')}</button>`}</div>
           </div>
         </div>`;
@@ -1567,18 +1627,18 @@ export function controlsHtml(touch) {
   </div>`;
   }
   return `<div class="keys">
-    <kbd>WASD / ${t('Arrows')}</kbd><span>${t('Skate')}</span>
-    <kbd>Shift</kbd><span>${t('Sprint (uses stamina)')}</span>
-    <kbd>J / Space</kbd><span>${t('Shoot: tap for a wrist shot, hold for a slapshot. Without the puck: check')}</span>
-    <kbd>K / Enter</kbd><span>${t('Pass (aim with movement). Without the puck: switch player')}</span>
-    <kbd>U / Q</kbd><span>${t('Signature ability')}</span>
-    <kbd>I / E</kbd><span>${t('Ultimate (when the gold meter is full)')}</span>
-    <kbd>H</kbd><span>${t('Pull the goalie for an extra attacker (when trailing and they need one more goal)')}</span>
-    <kbd>Esc / P</kbd><span>${t('Pause')}</span>
+    <kbd>${keyGlyphs(`WASD / ${t('Arrows')}`)}</kbd><span>${t('Skate')}</span>
+    <kbd>${keyGlyphs('Shift')}</kbd><span>${t('Sprint (uses stamina)')}</span>
+    <kbd>${keyGlyphs('J / Space')}</kbd><span>${t('Shoot: tap for a wrist shot, hold for a slapshot. Without the puck: check')}</span>
+    <kbd>${keyGlyphs('K / Enter')}</kbd><span>${t('Pass (aim with movement). Without the puck: switch player')}</span>
+    <kbd>${keyGlyphs('U / Q')}</kbd><span>${t('Signature ability')}</span>
+    <kbd>${keyGlyphs('I / E')}</kbd><span>${t('Ultimate (when the gold meter is full)')}</span>
+    <kbd>${keyGlyphs('H')}</kbd><span>${t('Pull the goalie for an extra attacker (when trailing and they need one more goal)')}</span>
+    <kbd>${keyGlyphs('Esc / P')}</kbd><span>${t('Pause')}</span>
     ${psPad()
-    ? `<kbd>${t('PlayStation pad')}</kbd><span>${t('Left stick to skate · □ or R2 shoot-check · ✕ pass-switch · R1 or L2 sprint · ○ or L1 skill · △ ultimate · Options pause · Create pull goalie')}</span>`
-    : `<kbd>${t('Gamepad')}</kbd><span>${t('Left stick to skate · X or RT shoot-check · A pass-switch · RB or LT sprint · B or LB skill · Y ultimate · Start pause · Back pull goalie')}</span>`}
-    <kbd>${t('Pad in menus')}</kbd><span>${t('D-pad or stick to move · {select} select · {back} back · {tabs} switch tabs · right stick scrolls', { select: psPad() ? '✕' : 'A', back: psPad() ? '○' : 'B', tabs: psPad() ? 'L1/R1' : 'LB/RB' })}</span>
+    ? `<kbd>${t('PlayStation pad')}</kbd><span>${padGlyphs(t('Left stick to skate · □ or R2 shoot-check · ✕ pass-switch · R1 or L2 sprint · ○ or L1 skill · △ ultimate · Options pause · Create pull goalie'))}</span>`
+    : `<kbd>${t('Gamepad')}</kbd><span>${padGlyphs(t('Left stick to skate · X or RT shoot-check · A pass-switch · RB or LT sprint · B or LB skill · Y ultimate · Start pause · Back pull goalie'))}</span>`}
+    <kbd>${t('Pad in menus')}</kbd><span>${padGlyphs(t('D-pad or stick to move · {select} select · {back} back · {tabs} switch tabs · right stick scrolls', { select: psPad() ? '✕' : 'A', back: psPad() ? '○' : 'B', tabs: psPad() ? 'L1/R1' : 'LB/RB' }))}</span>
     <kbd>${t('Touch')}</kbd><span>${t('Left thumb anywhere to skate · right-side buttons for actions')}</span>
   </div>`;
 }

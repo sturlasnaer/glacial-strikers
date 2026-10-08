@@ -389,15 +389,38 @@ export class Renderer {
       else if (fx.excite > 0.55 || Math.floor(t / 3) % 4 === 0) pose = Math.floor(t * 2) % 2 ? 'wave' : 'idle';
       Assets.draw(ctx, mascot[pose], mascot.foot.x, mascot.foot.y - (party ? Math.abs(Math.sin(t * 8)) * 6 : 0), mascot.source_scale, { pages: Assets.pagesFor(hostTeam.id) });
     }
+    if (match.classic && arena === 'pine_pond') this.drawWinterClassic(ctx, fx);
     const board = (A.scoreboards && A.scoreboards[arena]) || (arena === 'ember_dome' ? A.scoreboard_volcanic : A.scoreboard);
     if (board) this.drawScoreboard(ctx, match, fx, board);
     this.drawGlassFans(ctx, fx);
     this.drawCameraFlashes(ctx, fx);
   }
 
+  // Pine Pond dressed for the Winter Classic (Batch W): a banner over the far snowbank, string
+  // lights, fire barrels in the corners and fans in toques and blankets.
+  drawWinterClassic(ctx, fx) {
+    const art = Assets.atlas.winter_classic, fans = Assets.atlas.winter_crowd;
+    const f0 = art && art.banner && Assets.frame(art.banner.frames[0]);
+    if (!f0 || !Assets.pages[f0[0]]) return;
+    const p = art.placement, t = fx.time, phase = Math.floor(t * 2) % 2;
+    const place = (set, i, foot, opts) => Assets.draw(ctx, set.frames[((i % set.frames.length) + set.frames.length) % set.frames.length], foot.x, foot.y, set.source_scale, opts);
+    place(art.banner, phase, p.banner_foot);
+    for (const run of [...p.far_light_runs, ...p.near_light_runs]) for (let i = 0; i < run.tiles; i++) place(art.lights, phase + i, { x: run.x + 32 + i * 64, y: run.y });
+    p.barrel_feet.forEach((foot, i) => place(art.barrels, Math.floor(t * 6) + i, foot));
+    const cheering = fx.cheerTeam !== null && fx.lamp > 0;
+    p.fan_feet.forEach((foot, i) => {
+      const kit = i < 2 ? 'home' : 'away';
+      const id = fans && fans[kit] && fans[kit][cheering && fx.cheerTeam === (i < 2 ? 0 : 1) ? 'cheering' : 'sitting'];
+      const fid = id && id[i % id.length];
+      // (home fans are on the winter pages, which load after the club colours are made: drawn as painted)
+      if (fid) Assets.draw(ctx, fid, foot.x, foot.y - (cheering ? Math.abs(Math.sin(t * 8 + i)) * 3 : 0), 0.15, kit === 'away' ? { pages: this.awayPages } : {});
+    });
+  }
+
   // The penalty boxes built into the far boards (Batch P), or null without the art.
   penaltyBox() {
-    const box = Assets.atlas.arena && Assets.atlas.arena.penalty_box;
+    const A = Assets.atlas.arena;
+    const box = A && (this.arena === ARENAS.pine_pond && A.penalty_box_pond?.frames ? A.penalty_box_pond : A.penalty_box);
     return box && box.frames ? box : null;
   }
   boxSpot(s) {
@@ -758,9 +781,17 @@ export class Renderer {
 
   drawGroundMarkers(ctx, match, fx) {
     const versus = match.humans && match.humans.length > 1;
-    // goalie mode: Wall of Ice lights up the crease
+    // goalie mode: Wall of Ice rises across the crease (Batch Q), or the crease lights up
     const wall = match.goalieMode && match.goalies[0].wallT > 0 ? match.goalies[0] : null;
-    if (wall) {
+    const W = wall && Assets.atlas.goalie_mode && Assets.atlas.goalie_mode.wall;
+    const wf = W && Assets.frame(W.rise[0]);
+    if (wall && wf && Assets.pages[wf[0]]) {
+      const age = W.duration - wall.wallT, c = toScreen(wall.goalSide * (GOAL_X - 4), 0);
+      const id = wall.wallT < W.shatter.length / W.shatter_fps
+        ? W.shatter[Math.min(W.shatter.length - 1, Math.floor((W.shatter.length / W.shatter_fps - wall.wallT) * W.shatter_fps))]
+        : age < W.rise.length / W.rise_fps ? W.rise[Math.floor(age * W.rise_fps)] : W.shimmer[Math.floor(age * W.shimmer_fps) % W.shimmer.length];
+      Assets.draw(ctx, id, c.x, c.y, W.source_scale, { alpha: W.opacity, flip: wall.goalSide > 0 }); // drawn for the left net
+    } else if (wall) {
       const c = toScreen(wall.goalSide * (GOAL_X - 4), 0), k = Math.min(1, wall.wallT / 0.6);
       ctx.save();
       ctx.globalAlpha = (0.35 + Math.sin(fx.time * 7) * 0.1) * k;

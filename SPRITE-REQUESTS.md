@@ -1,20 +1,14 @@
 # Sprite requests
 
-What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd), the remaining packs (Batches B, H, I, C and N-Extras) and the new batches (P, R, S, K, T and M2).
+What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd), the remaining packs (Batches B, H, I, C and N-Extras), the new batches (P, R, S, K, T and M2) and the latest delivery (D, U, Q, W, O, E, J and F).
 
 The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes** (the Snow Fox is their mascot; colours unchanged). Packs can be named `Puckbound-...` from now on; older `Glacial-Strikers-...` folder names still work.
 
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **U**: a pixel-art UI kit for the menus (if D is already underway, finish it first).
-2. **D**: celebrations for the rival wingers and defenders.
-3. **Q**: goalie mode (Wall of Ice and the goalie's action icons).
-4. **W**: Winter Classic dressing for Pine Pond.
-5. **O**: arena-rule icons.
-6. **E**: achievement icons.
-7. **J**: the Awards Night stage.
-8. **F**: a penalty box for Pine Pond.
+1. **V**: touch controls for phones, to match the new menu kit.
+2. **X**: cups, medals and small badges, replacing the last emoji and CSS circles.
 
 ## Format notes
 
@@ -49,95 +43,40 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - **Batch K scoreboards:** Pine Pond's wooden board, the Golden Hall's stone and gold, and the Dark Aerie's black stone.
 - **Batch T training props:** Sniper target boards (unlit, lit, hit) and the speed-lane tile for the Frostline twist.
 - **Batch M2 gear masks:** signed rival skaters' special sticks and skates now recolour in their side strides too.
+- **Batch U menu kit:** every panel, button, tab, chip, list row and dialogue box is skinned with the 9-slice pieces; the gold corner brackets pulse around the controller highlight; PlayStation, Xbox and keyboard prompts show on the title screen and in the controls help.
+- **Batch D celebrations:** all ten rival wingers and defenders celebrate their goals, for either side.
+- **Batch Q goalie mode:** the Wall of Ice rises, shimmers and shatters across Halla's crease; the poke-check and Wall of Ice icons are on the touch buttons.
+- **Batch W Winter Classic:** the banner, string lights, fire barrels and the fans in winter gear dress Pine Pond for the Classic.
+- **Batch O rule icons:** on the quick-play arena chips and the daily challenge card.
+- **Batch E achievement icons:** 14 achievements now have icons of their own.
+- **Batch J Awards Night:** the stage opens the season awards, with Kip at the podium speaking, opening the envelope and applauding.
+- **Batch F:** Pine Pond's log penalty box with the lantern.
 
 ---
 
-## Batch U: a pixel-art UI kit for the menus
+## Batch V: touch controls
 
-The menus are HTML styled in CSS: flat navy panels with an ice-blue rim, rounded buttons and chips, and a plain gold outline for the controller highlight. They should look as hand-made as the game. The menus stay HTML (that keeps text wrapping, Icelandic, phone layouts and screen readers working), skinned with these sprites through CSS `border-image`, so:
+On phones the stick and the five action buttons are still CSS circles (`#touch` in `src/styles.css`): a translucent ring with an ice-blue knob, and flat coloured discs for Shoot/Check (coral, 84 px), Pass/Steal (ice, 66 px), Sprint (cream, 56 px), Skill and Ultimate (navy, 58 px) and a small rounded Pull Goalie button. They should match the Batch U menu kit. As with U, **one transparent PNG per piece**, drawn at 3× and nearest-neighbour clean, in the game palette with navy outlines:
 
-- **Deliver every piece as its own transparent PNG** (CSS needs a file per image), drawn at 2× or 3× and nearest-neighbour clean. Add a small JSON listing each file and its **9-slice margins** (left/top/right/bottom, in source pixels).
-- **Centres must stretch or tile cleanly**: flat or very subtly dithered fills, with all the detail in the corners and edges.
-- Navy outlines and the game palette: navy `#14233b`, ice `#71dce8`, cream `#fff2cb`, gold `#ffd45e`, coral `#ff6f7d`.
+- **Stick:** the base ring (about 124 px in game; it must read on both white ice and the dark arenas, so a translucent navy disc with an ice rim works), and the knob (about 56 px), `idle` and `active` (brighter rim while it's held).
+- **Round buttons, `normal` and `pressed`:** `btn_round_coral`, `btn_round_ice`, `btn_round_cream` and `btn_round_navy`, each drawn at about 96 px in game and **without an icon or text**: the game puts the label or ability icon on top and scales the button down for the smaller slots. A clear centre area, with the detail in the rim. 8 images.
+- **Ready ring:** a gold ring with a soft glow that goes around Skill and Ultimate when they're charged, 2 frames for a pulse.
+- **Cooldown:** the game darkens the button with a pie sweep; a thin **ring overlay** that sits on top of the sweep (ice blue, with 12 small tick marks) would give it a clean edge. 1 image.
+- **Pull Goalie:** a 9-slice rounded rectangle button in coral, `normal` and `pressed`, like `btn_gold` in U but coral (the game writes PULL GOALIE on it).
+- **Goalie mode icons** for the two face buttons, in the Q style: **block** (the glove catching a puck) and **pass** (a puck leaving the goalie's stick). 2 frames.
 
-**Pieces:**
+- **Two blanks from Batch U:** `owned_stamp_blank` and `new_badge_blank`, the same frames with **no lettering** (the game writes the word, so it also works in Icelandic: KEYPT, NÝTT). The lettered versions stay for English. 2 images.
 
-- **Panels (9-slice):** `panel` (the main menu panel, navy with an ice rim and small riveted corners), `panel_modal` (pop-ups, a heavier frame), `card` (shop items, list rows, a lighter inner frame), and `card_focus` (the same card with a gold rim).
-- **Buttons (9-slice, about 48 px tall in game, `normal` and `pressed` each):** `btn_gold` (main actions), `btn_ice` (default), `btn_cream`, `btn_ghost` (outlined) and `btn_disabled`. 10 images.
-- **Tabs:** `tab` and `tab_active`. **Filter chips:** `chip` and `chip_on`.
-- **Controller highlight:** four gold corner brackets drawn around the highlighted button, two frames for a gentle pulse (`focus_corner_a`, `focus_corner_b`; the game mirrors one corner for the other three).
-- **Button prompts, about 32 px:**
-  - PlayStation: ✕ ○ □ △, L1 R1 L2 R2, Options, Create and the D-pad.
-  - Xbox: A B X Y, LB RB LT RT, Menu, View.
-  - Keyboard keycaps: Enter, Esc, Shift, Space, the arrow keys, W A S D and the letters H J K L O P U I.
+About 20 images.
 
-  They go on menu buttons ("✕ Buy", "○ Back"), the tab bar (L1/R1) and the controls help.
-- **Small parts:** a coin price tag (9-slice), an `OWNED` stamp, a `NEW` badge, a red notification dot, a scrollbar track and thumb, and a dialogue box frame (9-slice) with a name plate.
+## Batch X: cups, medals and small badges
 
-About 60 images.
+A few things are still emoji or CSS shapes. In the style and size of the reward icons (`equipment_items/reward/*`, about 200 px source), one sheet named `badges.png` with frame names `badges/<name>`:
 
----
+- **The Frostline Cup**, large: the league trophy for the championship screen, about 480 px tall source, silver and ice blue with a navy base band and a small snowflake crest (no lettering). 1 frame, plus 2 frames of a light glint travelling across it for a shine loop.
+- **Training medals:** `medal_bronze`, `medal_silver`, `medal_gold` (round medals on a ribbon) and `medal_empty` (a dim navy outline for medals not yet won). The training list shows three in a row at about 22 px, and the drill result shows the one you won at about 96 px. 4 frames.
+- **Leaderboard ranks:** `rank_1`, `rank_2`, `rank_3` (small gold, silver and bronze shields that can take a number on top) for the online boards. 3 frames.
+- **Daily challenge:** `daily_star` (a gold star, shown on the Daily button), `daily_done` (the star with a tick) and `streak_flame` (a small flame for the daily streak count). 3 frames.
+- **Hub badges:** `cup_small` (the cup count in the trophy case and the online-leaderboard buttons in training, replacing the 🏆 emoji) and `snowflake` (a small crest-style snowflake used on the Winter Classic row of the schedule, replacing ❄). 2 frames.
 
-## Batch D: celebrations for the rival wingers and defenders
-
-Only the five rival captains have a goal celebration (Batch C). When a rival winger or defender scores, or one you've signed scores for you, they just bob on the spot. Please draw four phases each for the other ten rival skaters, made like the captains' sheets: facing the camera, on the same scale and foot baseline, in **coral + violet**, one sheet per skater named `<team>_<role>_celebrations.png` (for example `gilded_rams_w_celebrations.png`). Some ideas:
-
-- **Pinewood Lynx:** the winger pounces into a knee slide; the defender flexes like a tree trunk.
-- **Ember Comets:** the winger spins with a comet tail of sparks; the defender pumps a fist of flame.
-- **Gilded Rams:** the winger stomps a hoof; the defender lowers their head and charges.
-- **Obsidian Ravens:** the winger glides with their cape spread; the defender gives a cold stick salute.
-- **Aurora Royals:** the winger takes a sweeping bow; the defender raises their stick like a sceptre.
-
-40 frames.
-
-## Batch Q: goalie mode
-
-Goalie mode lets you play a whole match as Halla while the AI skates. Her ultimate, **Wall of Ice**, gives her five seconds of extra reach. For now it's a code-drawn frost tint and a glowing crease. Please draw:
-
-- **Wall of Ice:** a translucent wall of ice crystals that rises in an arc across the front of the crease, seen from our camera, about 180×120 px at game size. It needs a 4-frame rise, a 2-frame shimmer loop and a 3-frame shatter when it ends. Draw it for the left net; the game mirrors it for the right. It goes in front of the crease and behind Halla, so leave her standing area clear.
-- **Goalie action icons** for the touch buttons and the HUD, in the style of the ability icons (`hud_elements/ability/*`, about 210 px source): **butterfly** (pads flat on the ice), **dive** (a goalie stretched sideways), **poke check** (a stick jabbing at a puck) and **Wall of Ice** (a crystal shield). 4 frames.
-13 frames.
-
-## Batch W: Winter Classic dressing for Pine Pond
-
-Once a season, after league round 3, the Foxes play the Winter Classic: an outdoor showcase on Pine Pond against the league leaders, in heavier snow, with its own anthem and fireworks for a win. Pine Pond should look dressed up for it. Everything goes on the existing `arena_pine_pond` backdrop (1536×1024) and must not cover the ice:
-
-- **A banner** strung between two poles above the far snowbank, about 420×110 px at game size: a big snowflake crest with crossed sticks and pine boughs, in navy, cream and ice blue. **No lettering** (the game is in English and Icelandic), so the emblem has to carry it. 2 frames of it swaying.
-- **String lights:** a tileable strip, about 64×20 px at game size, of warm bulbs on a wire that sags a little, to run along the far and near snowbanks. 2 frames (bulbs alternating bright and dim).
-- **Fire barrels:** an old oil drum with a fire in it, about 48×70 px at game size, as a 4-frame flicker loop. The game puts one in each corner behind the snowbank.
-- **Fans in winter gear:** 4 extra far-stand fans in toques, scarves and blankets, sitting and cheering (8 frames), in the far-stand fans' size and layout (`crowd/*`) with home and away versions like them.
-
-Say in the README where you'd hang the banner and run the lights; the game will place them from that. 16 frames.
-
-## Batch O: arena-rule icons
-
-The arena rules show as plain text on the quick-play arena chips, on the daily challenge card and in the rule announcement. Please draw one small icon for each, in the style of the ability icons (`hud_elements/ability/*`, about 210 px source, shown at 32–64 px): **meltwater** (a steaming pool), **aurora lanes** (a green-violet chevron), **pond cracks** (a cracked circle), **rumble strips** (gold ridges with a hopping puck), **raven shadows** (a raven over a dark wing shadow), **speed lanes** (a cyan chevron) and **cracked ice** (a rough patch). 7 frames, on one sheet named `rule_icons.png`.
-
-## Batch E: achievement icons
-
-34 achievements share 21 icons in the trophy case: five use the same trophy and four the same medal. Please draw an icon of its own for each of these 13, in the style and size of the reward icons (`equipment_items/reward/*`, about 200×192 source):
-
-- **Lamp Lighter** (first goal): a red goal lamp, lit.
-- **Daily Grind**: a calendar page with a puck on it.
-- **Never Out of It** (a comeback from 3 down): a scoreboard with a rising arrow.
-- **Hat Trick**: three pucks under a hat.
-- **On a Roll** (a daily-challenge streak): a puck with a flame trail.
-- **Shootout Hero**: a puck on the spot under a spotlight.
-- **In Sync**: two crossed sticks with matching sparks.
-- **Talent Scout**: binoculars.
-- **Dynasty**: three stacked cups.
-- **Perfect Season**: a cup inside a laurel wreath.
-- **Most Valuable**: a star medal on a ribbon.
-- **Awards Sweep**: a fan of award envelopes.
-- **Free Agent**: a contract and a pen.
-- **Winter Classic**: a cup with a snow cap and a pine sprig.
-
-14 frames, on one sheet named `achievement_icons.png`, with frame names `achievements/<name>`.
-
-## Batch J: Awards Night stage
-
-The season awards open over the dimmed locker room. Please draw a stage for them: a **1536×864 backdrop** with velvet curtains, spotlights, a podium at centre and a table of covered trophies, in navy and gold. Also **Kip Vance at the podium**, full body and facing the camera, at the same scale as the Batch H characters (about 820 px source standing), in 3 frames: `speaking`, `opening_envelope` and `applauding`. 1 backdrop and 3 frames.
-
-## Batch F: a penalty box for Pine Pond
-
-Batch P's glass box looks out of place on Pine Pond's snowbank. Please draw a rustic version with **the same four layers, size, feet positions and layering** as Batch P (`back`, `front_closed`, `front_open`, `light_on`): log walls, a plank bench, a gate set into a snowbank front, and a hanging lantern whose warm glow is the `light_on` frame. 4 frames, named `penalty_box_pond/*`.
+15 frames.
