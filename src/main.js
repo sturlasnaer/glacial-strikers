@@ -558,6 +558,8 @@ class App {
     m.on('receive', (e) => audio.sfx('receive', at(e.s.x, e.s.y)));
     m.on('goalie_pass', (e) => audio.sfx('pass', at(e.g.x, e.g.y, 0.6)));
     m.on('poke_check', (e) => audio.sfx('poke', at(e.g.x, e.g.y)));
+    m.on('dump', (e) => audio.sfx('slap', at(e.s.x, e.s.y, 0.6)));
+    m.on('goalie_plays', (e) => audio.sfx('stop', at(e.g.x, e.g.y, 0.7)));
     m.on('puck_boards', (e) => { if (e.power > 220) audio.sfx('boards', at(e.x, e.y, Math.min(1, e.power / 900))); });
     m.on('boards', (e) => audio.sfx('boards', at(e.s.x, e.s.y, 0.5)));
     m.on('post', (e) => { audio.sfx('post', at(e.x, e.y)); this.rumble(0.15, 0.6, 120); });

@@ -7,6 +7,71 @@ export const SKATER_R = 15;
 export const PUCK_R = 6;
 export const GOALIE_R = 21;
 const POKE_REACH = 16; // how far past touching a goalie's poke check reaches
+const ROAM_SPEED = 300; // a goalie skating out to play the puck (skaters top out around 330)
+const OPP_SPEED = 330;
+
+// Goalies skate around their own net, never through it. The net plus a margin is a box;
+// a path from a to b that would cross it goes via one or two of its corners.
+function netBox(side, margin) {
+  const gx = side * GOAL_X;
+  const xa = gx - side * 4, xb = gx + side * (NET_DEPTH + margin); // the crease in front is open ice
+  // (the sides and back keep a goalie-sized margin so the sprite clears the net)
+  return { x0: Math.min(xa, xb), x1: Math.max(xa, xb), y0: -MOUTH - margin, y1: MOUTH + margin };
+}
+const inBox = (b, x, y) => x > b.x0 && x < b.x1 && y > b.y0 && y < b.y1;
+// does the segment pass through the box (shrunk a hair, so corners and edges are fine)?
+function crosses(b, ax, ay, bx, by) {
+  const e = 0.5, x0 = b.x0 + e, x1 = b.x1 - e, y0 = b.y0 + e, y1 = b.y1 - e;
+  let t0 = 0, t1 = 1;
+  const dx = bx - ax, dy = by - ay;
+  for (const [p, q] of [[-dx, ax - x0], [dx, x1 - ax], [-dy, ay - y0], [dy, y1 - ay]]) {
+    if (p === 0) { if (q < 0) return false; continue; }
+    const r = q / p;
+    if (p < 0) { if (r > t1) return false; if (r > t0) t0 = r; } else { if (r < t0) return false; if (r < t1) t1 = r; }
+  }
+  return t1 - t0 > 1e-6;
+}
+// the next point to skate to on the way from (ax, ay) to (bx, by) around the net on `side`
+export function netWaypoint(side, ax, ay, bx, by, margin) {
+  const b = netBox(side, margin);
+  if (inBox(b, bx, by)) { // the target hugs the net: aim for the nearest point just outside
+    const opts = [[b.x0, by], [b.x1, by], [bx, b.y0], [bx, b.y1]];
+    [bx, by] = opts.sort((u, v) => Math.hypot(u[0] - bx, u[1] - by) - Math.hypot(v[0] - bx, v[1] - by))[0];
+  }
+  if (inBox(b, ax, ay)) { // squeezed against the net: step out sideways first
+    const sy = ay >= 0 ? 1 : -1;
+    return { x: ax, y: sy > 0 ? b.y1 : b.y0 };
+  }
+  if (!crosses(b, ax, ay, bx, by)) return { x: bx, y: by };
+  const C = [[b.x0, b.y0], [b.x1, b.y0], [b.x1, b.y1], [b.x0, b.y1]];
+  const len = (pts) => pts.reduce((s, p, i) => (i ? s + Math.hypot(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]) : 0), 0);
+  let best = null, bestLen = Infinity;
+  // the first waypoint that isn't where we already stand
+  const first = (pts) => pts.find((q) => Math.hypot(q[0] - ax, q[1] - ay) > 1) || pts[pts.length - 1];
+  for (let i = 0; i < 4; i++) {
+    const c = C[i];
+    if (!crosses(b, ax, ay, c[0], c[1]) && !crosses(b, c[0], c[1], bx, by)) {
+      const l = len([[ax, ay], c, [bx, by]]); if (l < bestLen) { bestLen = l; best = first([c, [bx, by]]); }
+    }
+    for (const j of [(i + 1) % 4, (i + 3) % 4]) {
+      const c2 = C[j];
+      if (!crosses(b, ax, ay, c[0], c[1]) && !crosses(b, c2[0], c2[1], bx, by)) {
+        const l = len([[ax, ay], c, c2, [bx, by]]); if (l < bestLen) { bestLen = l; best = first([c, c2, [bx, by]]); }
+      }
+    }
+  }
+  return best ? { x: best[0], y: best[1] } : { x: bx, y: by };
+}
+function pathLength(side, ax, ay, bx, by, margin) {
+  let x = ax, y = ay, total = 0;
+  for (let i = 0; i < 4; i++) {
+    const w = netWaypoint(side, x, y, bx, by, margin);
+    total += Math.hypot(w.x - x, w.y - y);
+    if (w.x === bx && w.y === by) break;
+    x = w.x; y = w.y;
+  }
+  return total;
+}
 
 // Convert 1-10 stats into physics numbers.
 export function derive(stats) {
@@ -304,7 +369,7 @@ export class Skater {
           return;
         }
       }
-      if (this.pressed('pass') && !this.charging) m.pass(this, inp.passTo);
+      if (this.pressed('pass') && !this.charging) { if (inp.dump) m.dumpPuck(this); else m.pass(this, inp.passTo); }
     } else {
       this.charging = false;
       if (inp.shoot) this.oneTimerArmed = 0.3;
@@ -396,13 +461,18 @@ export class Goalie {
     this.stateT += dt;
     if (this.disabled) { if (this.leaving) this.skateOff(dt); return; }
     if (this.state === 'skate_in') { this.skateIn(dt); return; }
+    if (this.state === 'roam' || this.state === 'return') { this.updateRoam(dt); return; }
     this.slowT = Math.max(0, this.slowT - dt);
     if (this.flash > 0) this.flash -= dt;
     const gx = this.goalSide * GOAL_X;
 
     if (this.state === 'hold') {
       this.holdT -= dt;
-      if (this.holdT <= 0 && m.state === 'play') m.goalieDistribute(this);
+      if (this.holdT <= 0 && m.state === 'play') {
+        m.goalieDistribute(this);
+        // played it from behind the net or the corner: head straight back, around the net
+        if (pathLength(this.goalSide, this.x, this.y, this.goalSide * (GOAL_X - 28), 0, this.r + 6) > 70) this.setState('return');
+      }
       return;
     }
     if (this.state === 'dive' || this.state === 'down') {
@@ -434,8 +504,10 @@ export class Goalie {
       return;
     }
 
-    // caught out of position on the way back from the bench: hurry to the crease
-    if (Math.abs(this.x - this.goalSide * (GOAL_X - 28)) > 80) { this.setState('skate_in'); return; }
+    // out of position (played the puck behind the net, or knocked off it): back to the crease
+    if (this.state === 'ready' && this.stateT > 0.25 && pathLength(this.goalSide, this.x, this.y, this.goalSide * (GOAL_X - 28), 0, this.r + 6) > 70) { this.setState('return'); return; }
+    this.roamCd = Math.max(0, (this.roamCd || 0) - dt);
+    if (this.state === 'ready' && this.roamCd <= 0 && this.shouldRoam()) { this.setState('roam'); return; }
     this.pokeCd = Math.max(0, this.pokeCd - dt);
     if (this.state === 'ready' && this.pokeCd <= 0 && m.state === 'play') this.tryPoke();
 
@@ -521,12 +593,59 @@ export class Goalie {
 
   // Back from the bench: skate to the crease, blocking anything on the way.
   skateIn(dt) {
-    const tx = this.goalSide * (GOAL_X - 28);
-    const dx = tx - this.x, dy = -this.y, d = Math.hypot(dx, dy);
-    const sp = 540;
-    if (d <= sp * dt) { this.x = tx; this.y = 0; this.vx = 0; this.vy = 0; this.setState('ready'); return; }
-    this.vx = (dx / d) * sp; this.vy = (dy / d) * sp;
-    this.x += this.vx * dt; this.y += this.vy * dt;
+    if (this.skateTo(this.goalSide * (GOAL_X - 28), 0, 540, dt)) this.setState('ready');
+  }
+
+  // Skate toward a point, around our net. True on arrival.
+  skateTo(tx, ty, speed, dt) {
+    const margin = this.r + 6;
+    let step = speed * dt;
+    for (let i = 0; i < 3 && step > 0; i++) {
+      const w = netWaypoint(this.goalSide, this.x, this.y, tx, ty, margin);
+      const dx = w.x - this.x, dy = w.y - this.y, d = Math.hypot(dx, dy);
+      if (d > 0.01) { this.vx = (dx / d) * speed; this.vy = (dy / d) * speed; }
+      if (d > step) { this.x += (dx / d) * step; this.y += (dy / d) * step; return false; }
+      this.x = w.x; this.y = w.y; step -= d;
+      if (Math.hypot(tx - this.x, ty - this.y) < 1) { this.vx = 0; this.vy = 0; return true; }
+    }
+    return false;
+  }
+
+  // Should we leave the crease for a loose puck behind our net? Only if we clearly win the race.
+  shouldRoam() {
+    const m = this.match, p = m.puck;
+    if (m.state !== 'play' || m.drill || p.owner || p.shot || p.pass || p.z > 10 || this.slowT > 0) return false;
+    const behind = (p.x - this.goalSide * GOAL_X) * this.goalSide;
+    if (behind < 6 || Math.abs(p.y) > 240 || p.speed > 680) return false; // stopping a rim is fine
+    const mine = pathLength(this.goalSide, this.x, this.y, p.x, p.y, this.r + 6) / ROAM_SPEED;
+    return mine + 0.2 < this.rivalTime();
+  }
+
+  rivalTime() {
+    const p = this.match.puck;
+    let t = Infinity;
+    for (const s of this.match.skaters) if (s.team !== this.team && !s.parked) t = Math.min(t, Math.hypot(s.x - p.x, s.y - p.y) / OPP_SPEED);
+    return t;
+  }
+
+  // Out of the crease: chase the puck ('roam'), or head back ('return').
+  updateRoam(dt) {
+    const m = this.match, p = m.puck;
+    if (this.state === 'roam') {
+      const loose = m.state === 'play' && !p.owner && !p.shot && (p.x - this.goalSide * GOAL_X) * this.goalSide > -30 && Math.abs(p.y) < 260;
+      const mine = Math.hypot(p.x - this.x, p.y - this.y) / ROAM_SPEED;
+      if (!loose || this.rivalTime() < mine + 0.05) { this.setState('return'); this.roamCd = 1.2; return; }
+      if (Math.hypot(p.x - this.x, p.y - this.y) < this.r + PUCK_R + 8 && !p.noPickup.has(this)) {
+        m.goalieCatch(this, false); // stops it with the stick, then plays it
+        this.holdT = 0.45; this.roamCd = 1.5;
+        m.emit('goalie_plays', { g: this });
+        return;
+      }
+      this.skateTo(p.x, p.y, ROAM_SPEED, dt);
+      return;
+    }
+    if (this.prevState === 'hold' && this.stateT < 0.2) return; // finish the pass first
+    if (this.skateTo(this.goalSide * (GOAL_X - 28), 0, ROAM_SPEED * 1.15, dt)) this.setState('ready');
   }
 
   predictY() {

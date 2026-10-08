@@ -150,7 +150,8 @@ export class Renderer {
       this.goaliePoses.set(g, pose);
       if (g.disabled) { list.push({ y: g.leaveY, f: () => this.drawGoalie(ctx, g, match, pose) }); continue; } // skating off to the bench
       const inMouth = this.goalieInMouth(g) && !(pose && pose.front); // facing the camera: step out in front of the net
-      list.push({ y: inMouth ? NET_KEY - 0.2 : Math.max(g.y + 1, NET_KEY + 0.5), f: () => this.drawGoalie(ctx, g, match, pose) });
+      const outBack = (g.x - g.goalSide * GOAL_X) * g.goalSide > -2 && !inMouth; // beside or behind the net: sort like a skater
+      list.push({ y: inMouth ? NET_KEY - 0.2 : outBack ? g.y + 1 : Math.max(g.y + 1, NET_KEY + 0.5), f: () => this.drawGoalie(ctx, g, match, pose) });
     }
     if (match.drill && match.drill.sprites) for (const sp of match.drill.sprites(match, this, Assets)) list.push({ y: sp.y, f: () => sp.f(ctx) });
     list.push({ y: inNet ? NET_KEY - 0.25 : p.owner ? p.y + 0.5 : p.y, f: () => this.drawPuck(ctx, p, fx, match) });
@@ -849,8 +850,10 @@ export class Renderer {
     const flip = S.flip, bflip = S.backFlip, pflip = S.puckFlip;
     const ms = match.state, mt = match.stateT;
     const beat = (t, n, rate) => Math.floor(t * rate) % n;
-    // skating to the bench when pulled, or back to the crease
-    if (S.skate && ((g.disabled && g.leaving) || g.state === 'skate_in')) {
+    // just played the puck from behind the net: the follow-through before skating back
+    if (S.puck && g.state === 'return' && g.prevState === 'hold' && g.stateT < 0.2) return { id: S.puck.pass_release, flip: S.puckFlip };
+    // skating to the bench when pulled, out to play the puck, or back to the crease
+    if (S.skate && ((g.disabled && g.leaving) || g.state === 'skate_in' || g.state === 'roam' || g.state === 'return')) {
       const vx = g.disabled ? (g.team === 0 ? -20 : 20) - g.leaveX : g.vx;
       const vy = g.disabled ? RINK.minY - g.leaveY : g.vy;
       const dir = Math.abs(vx) > Math.abs(vy) * 0.8 ? (vx > 0 ? 'east' : 'west') : vy < 0 ? 'north' : 'south';

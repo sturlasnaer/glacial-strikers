@@ -47,6 +47,8 @@ export class Commentary {
       if (e.speed > 900 || e.caught === false && e.speed > 700) this.say(pick([`${e.g.name} says no!`, `Huge stop by ${e.g.name}!`, `${e.g.name} with the glove!`]), 1);
     });
     m.on('goalie_dive', (e) => this.say(`${e.g.name} sprawls across!`, 1));
+    m.on('goalie_plays', (e) => this.say(pick([`${e.g.name} comes out to play it.`, `${e.g.name} stops it behind the net.`, `Out goes ${e.g.name} to handle the puck.`]), 1));
+    m.on('dump', (e) => { if (Math.random() < 0.4) this.say(`${n(e.s)} dumps it in.`, 0); });
     m.on('hit', (e) => {
       if (e.power > 250) this.say(pick([`${n(e.a)} lays out ${n(e.b)}!`, `BOOM! ${n(e.a)} with the hit!`, `${n(e.b)} won't forget that one.`]), 1);
     });

@@ -2,7 +2,7 @@
 // slow motion by writing recorded positions into the live entities.
 
 const SK = ['x', 'y', 'vx', 'vy', 'face', 'state', 'stateT', 'animT', 'charging', 'chargeT', 'ultWindup', 'dashT', 'stun', 'celebrate', 'flash', 'slowT', 'slowMul', 'bedrockT', 'boostT', 'trailT', 'empowered', 'controlled', 'stopping', 'gliding'];
-const GK = ['x', 'y', 'vy', 'state', 'stateT', 'prevState', 'saveHigh', 'saveUp', 'diveDir', 'shuffle', 'slowT', 'flash', 'holdT', 'stopPose', 'disabled', 'leaving', 'leaveX', 'leaveY'];
+const GK = ['x', 'y', 'vx', 'vy', 'state', 'stateT', 'prevState', 'saveHigh', 'saveUp', 'diveDir', 'shuffle', 'slowT', 'flash', 'holdT', 'stopPose', 'disabled', 'leaving', 'leaveX', 'leaveY'];
 const LERP = new Set(['x', 'y', 'face']);
 const SECONDS = 4.2;
 const RATE = 60;

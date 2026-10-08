@@ -53,7 +53,7 @@ export class TeamAI {
       if ((human && s.controlled) || s.scripted || s.parked) continue;
       const b = this.brain(s);
       const inp = s.in;
-      inp.shoot = inp.pass = inp.check = inp.skill = inp.ult = inp.sprint = false;
+      inp.shoot = inp.pass = inp.check = inp.skill = inp.ult = inp.sprint = inp.dump = false;
       inp.passTo = null; inp.aimY = 0;
 
       if (m.state === 'goal' || m.state === 'over') { this.celebrate(s, b); continue; }
@@ -406,6 +406,11 @@ export class TeamAI {
       const margin = lerp(0.05, 0.3, this.diff);
       if (best && (bestV > own + margin || (pressured && bestV > own - 0.4)) && m.rng() < lerp(0.5, 0.95, this.diff)) {
         inp.pass = true; inp.passTo = best;
+        return;
+      }
+      // dump it in: at their blue line, pressured, nothing on: rim it behind the net and chase
+      if (dx > 340 && dx < 500 && nearFront < 85 && !m.extra[this.team] && m.rng() < lerp(0.35, 0.6, this.diff)) {
+        inp.pass = true; inp.dump = true;
         return;
       }
       // abilities while carrying

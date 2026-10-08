@@ -644,6 +644,23 @@ export class Match {
     this.emit('pass', { s, to: target });
   }
 
+  // Dump it in: fire the puck around the end boards behind their net and chase it.
+  dumpPuck(s) {
+    const p = this.puck;
+    if (p.owner !== s) return;
+    const sy = Math.sign(s.y) || (this.rng() < 0.5 ? -1 : 1);
+    const tx = s.side * (GOAL_X + 60), ty = sy * 200 + this.rng.range(-30, 30);
+    const d = norm(tx - p.x, ty - p.y);
+    s.setState('pass', 0.2);
+    this.loosePuck(s);
+    const speed = 760;
+    p.vx = d.x * speed; p.vy = d.y * speed; p.vz = 0;
+    p.pass = null; p.shot = null;
+    p.noPickup.set(s, 0.4);
+    p.rolled.clear();
+    this.emit('dump', { s });
+  }
+
   goalieDistribute(g) {
     const p = this.puck;
     const mates = this.teamSkaters(g.team);
