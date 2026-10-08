@@ -709,12 +709,13 @@ atlas = {
     'banners': banners,
     'arena': arena,
 }
-# Part 2 and new additions (Batches AD to AM), then AN, AO and AP: appended on pages of their own
+# Part 2 and new additions (Batches AD to AM), then AN to AU: appended on pages of their own
 PART2 = sys.argv[15] if len(sys.argv) > 15 else '../assets/Puckbound-Part-2-and-New-Additions'
 AN_AO = sys.argv[16] if len(sys.argv) > 16 else '../assets/Puckbound-Batches-AN-AO'
 AP = sys.argv[17] if len(sys.argv) > 17 else '../assets/Puckbound-AP-Jersey-Moments'
+AP_AU = sys.argv[18] if len(sys.argv) > 18 else '../assets/Puckbound-Batches-AP-AU'
 from merge_part2 import merge_part2
-atlas = merge_part2(atlas, OUT, [PART2, AN_AO, AP], v1_h, v1_goalie_h)
+atlas = merge_part2(atlas, OUT, [PART2, AN_AO, AP, AP_AU], v1_h, v1_goalie_h)
 with open(os.path.join(OUT, 'atlas.json'), 'w') as fh:
     json.dump(atlas, fh, separators=(',', ':'))
 

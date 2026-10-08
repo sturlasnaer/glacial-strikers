@@ -11,14 +11,16 @@ from PIL import Image
 # Adapted from the pack's integration/compile_additions.py, with our compression: art pages
 # lossy like the rest, lossless only where exact channels matter (masks, the parts and the
 # newcomers, which are recoloured by hue).
-BATCHES = ('AD', 'AE', 'AF', 'AG', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP')
+BATCHES = ('AD', 'AE', 'AF', 'AG', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU')
+# the expansion clubs' identity art (Batch AU), by its key, and the arena each one hosts in
+AU_ARENAS = {'glacier_owls': 'owl_observatory', 'thunder_moose': 'moose_longhouse'}
 PARTS = ('AJ', 'AO', 'AP')  # the batches of players made from parts
 GOALIE_S = 0.5  # (as in build_assets.py)
 BACKUP_HEIGHT = 0.87  # the backup goalie stands this tall next to a starter
 ROLE_V1 = {'c': 'frost_captain', 'w': 'thunder_winger', 'd': 'stone_defender'}
 POSES = {'stride_a': 'skate_a', 'stride_b': 'skate_b', 'windup': 'shot_windup', 'release': 'shot_release'}
 EIGHT = ('south', 'southeast', 'east', 'northeast', 'north', 'northwest', 'west', 'southwest')
-LOSSLESS = {'parts', 'newcomers', 'draft_rookies', 'gearmask', 'newcomer_gearmask', 'legends_gearmask'}
+LOSSLESS = {'parts', 'newcomers', 'draft_rookies', 'gearmask', 'newcomer_gearmask', 'legends_gearmask', 'goalie_parts'}
 PAGE, PAD = 2048, 2
 # page groups the game knows, for groups packed separately here
 PAGE_GROUP = {'icons_new': 'icons_z', 'newcomer_goalie': 'newcomers'}
@@ -45,6 +47,16 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
             return 'parts'
         if b == 'AN':  # the backup goalie with the newcomers (recoloured per rival), the icons with the rest
             return 'newcomer_goalie' if cat in ('goalie', 'portrait') else 'icons_new'
+        if b == 'AQ':
+            return None  # (the cut-in backdrops are images of their own)
+        if b == 'AR':  # the agent: standing art with the hub's, her portraits and the market icon with the icons
+            return 'hub' if cat == 'npc' else 'icons_new'
+        if b == 'AS':
+            return 'linesman'
+        if b == 'AT':  # goalies from parts: bodies, masks and their paint masks (recoloured by team)
+            return 'goalie_parts'
+        if b == 'AU':  # crests with the icons; each club's mascot with its pages (its colours); boards and banners
+            return {'crest': 'icons_new', 'mascot': 'rival_' + sh[3:-7], 'scoreboard': 'arena_au', 'arena_banner': 'arena_au'}.get(cat)
         if b == 'AI':
             if sh.endswith('_banner'):
                 return None  # (cut-in banners are images of their own)
@@ -89,10 +101,27 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
             if fid not in necks and f.get('neck_pixels') and 'heads' in f['sheet']:
                 necks[fid] = f['neck_pixels']
 
+    # the backup goalie (Batch AN): its ready pose a set share of the v1 goalie's; the goalies
+    # from parts (Batch AT) were drawn at the same scale
+    backup_k = GOALIE_S * BACKUP_HEIGHT * v1_goalie_h / visible_h(folders['AN'], packs['AN'], packs['AN']['goalies_side']['newcomer']['ready']) if 'AN' in packs else None
+
+    def batch_scale(b, cat, fid):
+        """(k, s) for the later batches' sheets, which don't carry a render scale; None: the usual."""
+        if b == 'AR':
+            if cat == 'npc':  # the agent stands as tall as Brekka
+                old = atlas['frames']['hub_fullbody/brekka/idle_a']
+                return old[4] / visible_h(folders['AR'], packs['AR'], 'hub_fullbody/agent/idle_a'), old[7]
+            return 1, 1
+        if b == 'AS':  # the linesman's other calls: Batch AG's scale
+            return 0.6 * 0.825 * v1_h[ROLE_V1['c']] / 152, 0.6
+        if b == 'AT':
+            return (1, 1) if '/portrait/' in fid else (backup_k, GOALIE_S)
+        if b == 'AU':  # sized like the rivals' own crests, mascots, scoreboards and banners
+            return {'crest': (0.74, 0.4), 'mascot': (0.5, 0.25), 'scoreboard': (0.2, 0.2), 'arena_banner': (0.37, 0.37)}[cat]
+        return None
+
     for b, a in packs.items():
         folder = folders[b]
-        # the backup goalie: its ready pose a set share of the v1 goalie's
-        goalie_k = GOALIE_S * BACKUP_HEIGHT * v1_goalie_h / visible_h(folder, a, a['goalies_side']['newcomer']['ready']) if b == 'AN' else None
         for sh, meta in a['sheets'].items():
             group = group_of(b, sh, meta)
             if group is None:
@@ -104,7 +133,7 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
             k = 0.6 * rrs * v1_h[ROLE_V1[meta.get('role', 'c')]] / 152 if body else 2 * rrs
             s = 0.6 if body else k
             if cat == 'goalie':
-                k, s = goalie_k, GOALIE_S
+                k, s = backup_k, GOALIE_S
             im = Image.open(os.path.join(folder, meta['image'])).convert('RGBA')
             mask = Image.open(os.path.join(folder, meta['gearmask_image'])).convert('RGBA') if meta.get('gearmask_image') and group in MASK_GROUP else None
             for fid in meta['frame_ids']:
@@ -113,6 +142,8 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
                 box = (r['x'], r['y'], r['x'] + r['w'], r['y'] + r['h'])
                 q = im.crop(box)
                 kk, ss, py_fixed = k, s, None
+                if batch_scale(b, cat, fid):
+                    kk, ss = batch_scale(b, cat, fid)
                 if b == 'AM' and cat == 'npc':  # Ottar's and Brekka's new poses: their idle's height and foot line
                     who = 'ottar' if '/shopkeeper/' in fid else 'brekka'
                     old = atlas['frames'][f'hub_fullbody/{who}/idle_a']
@@ -315,6 +346,84 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
         atlas['ability_effects_al'] = packs['AL']['ability_effects_al']
     if 'AM' in packs:
         atlas['training_camp'] = packs['AM']['training_camp']
+
+    def save_image(b, fid, path, alpha=False):
+        f = packs[b]['frames'][fid]
+        m = packs[b]['sheets'][f['sheet']]
+        r = f['frame']
+        img = Image.open(os.path.join(folders[b], m['image'])).convert('RGBA').crop((r['x'], r['y'], r['x'] + r['w'], r['y'] + r['h']))
+        if alpha:
+            img.save(os.path.join(out, path), 'WEBP', quality=92, method=6, alpha_quality=100)
+        else:
+            img.convert('RGB').save(os.path.join(out, path), 'WEBP', quality=88, method=6)
+        return 'gfx/' + path
+
+    # ---- AQ: a cut-in backdrop per element, for players without a painted banner
+    if 'AQ' in packs:
+        for key, fid in packs['AQ']['cutin_bg'].items():
+            name = 'bg_glow' if key == 'portrait_glow' else 'bg_' + key
+            atlas['banners'][name] = save_image('AQ', fid, f'cutins/{name}.webp', alpha=key == 'portrait_glow')
+
+    # ---- AR: Vigga, the agent
+    if 'AR' in packs:
+        a = packs['AR']
+        poses = a['hub_fullbody']['agent']
+        atlas.setdefault('art_additions', {}).setdefault('hub_fullbody', {})['agent'] = {'idle': [poses['idle_a'], poses['idle_b']], 'talking': poses['talking'], 'offer': poses['offer']}
+        for alias, fid in a.get('aliases', {}).items():
+            atlas['frames'][alias] = atlas['frames'][fid]
+        atlas.setdefault('npcs', {})['agent'] = a['agent_portrait']
+        atlas.setdefault('portraits', {})['agent'] = a['agent_portraits']
+
+    # ---- AS: the linesman's signals for each call
+    if 'AS' in packs and 'linesman' in atlas:
+        atlas['linesman']['calls'].update(packs['AS']['linesman']['calls'])
+
+    # ---- AT: goalies from parts: a body drawn without a mask, and painted masks that sit on it.
+    # The body's sets join the others as 'parts'; goalie_parts holds the anchors and masks.
+    if 'AT' in packs:
+        gp = packs['AT']['goalie_parts']
+        body = gp['bodies']['body_std']
+        anchors = {}
+        for sec in body.values():
+            for poses in sec.values():
+                for v in poses.values():
+                    kx, ky = factors[v['frame']]
+                    an = v['anchor']
+                    anchors[v['frame']] = {'x': round(an['x'] * kx, 2), 'y': round(an['y'] * ky, 2), 'view': an['view'], 'rot': an.get('rot', 0), **({'front': v['front']} if v.get('front') else {})}
+        frames_of = lambda sec, d: {p: v['frame'] for p, v in body[sec][d].items()}
+        atlas.setdefault('goalies_side', {})['parts'] = frames_of('side', 'east')
+        atlas.setdefault('goalies_side_west', {})['parts'] = frames_of('side', 'west')
+        atlas.setdefault('goalies_front', {})['parts'] = frames_of('front', 'south')
+        atlas.setdefault('goalies_back', {})['parts'] = frames_of('back', 'north')
+        atlas.setdefault('goalies_puck_handling', {})['parts'] = frames_of('puck_handling', 'east')
+        atlas.setdefault('goalies_puck_handling_west', {})['parts'] = frames_of('puck_handling', 'west')
+        sk, ns = body['skating'], body['skating']['north_south']
+        atlas.setdefault('goalies_skating', {})['parts'] = {
+            'east': {'frames': [sk['east'][f'skate_{c}']['frame'] for c in 'abcd'], 'flip_x': False},
+            'west': {'frames': [sk['west'][f'skate_{c}']['frame'] for c in 'abcd'], 'flip_x': False},
+            'north': {'frames': [ns['north_skate_a']['frame'], ns['north_skate_b']['frame']], 'flip_x': False},
+            'south': {'frames': [ns['south_skate_a']['frame'], ns['south_skate_b']['frame']], 'flip_x': False},
+        }
+        pb = gp['portraits']['bodies']['body_std']
+        kx, ky = factors[pb['frame']]
+        atlas['goalie_parts'] = {'anchors': anchors, 'masks': gp['masks'], 'paint': gp['paint_masks'],
+                                 'portraits': {'body': pb['frame'], 'anchor': {'x': round(pb['anchor']['x'] * kx, 2), 'y': round(pb['anchor']['y'] * ky, 2)}, 'faces': gp['portraits']['faces']}}
+
+    # ---- AU: the expansion clubs' crests, buildings, mascots, scoreboards, banners and captains
+    if 'AU' in packs:
+        a = packs['AU']
+        atlas.setdefault('crests', {}).update(a['crests'])
+        ar = atlas.setdefault('arena', {})
+        for mark, key in AU_ARENAS.items():  # (the pack lists each building under the club and under its key)
+            fid = a['arenas'][mark]
+            atlas.setdefault('arenas', {})[key] = save_image('AU', fid, f'arena_{key}.webp')
+            m = a['expansion_mascots'][mark]  # (danced where the other hosts' mascots dance)
+            ar.setdefault('rival_mascots', {})[mark] = {'idle': m['idle'], 'wave': m['dance_a'], 'cheer_a': m['dance_b'], 'cheer_b': m['cheer'], 'foot': {'x': 768, 'y': 950}, 'source_scale': 0.125}
+            ar.setdefault('mascot_arenas', {})[key] = mark
+            ar.setdefault('scoreboards', {})[key] = a['expansion_scoreboards'][mark]
+            ar.setdefault('banners', {})[mark] = a['expansion_arena_banners'][mark]
+        for key, fid in a['expansion_cutins'].items():
+            atlas['banners'][key] = save_image('AU', fid, f'cutins/{key}.webp')
 
     # ---- AN: the backup goalie a rival plays once you've signed theirs, as 'newcomer'
     if 'AN' in packs:

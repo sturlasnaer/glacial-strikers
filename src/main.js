@@ -33,7 +33,7 @@ import { rivalSigning, rivalOffer } from './moves.js';
 import { refreshAgents } from './agents.js';
 import { addNews } from './news.js';
 import { teamHasParts, setFills, retireRivals } from './slots.js';
-import { useModular } from './modular.js';
+import { useModular, useGoalieParts } from './modular.js';
 import { Quality } from './quality.js';
 import { offerDraft } from './draft.js';
 import { recordCareer } from './career.js';
@@ -80,6 +80,7 @@ class App {
       }
       useNewArt((id) => !!Assets.atlas.frames[id]);
       useModular(Assets.atlas); // players from parts, once that art is in
+      useGoalieParts(Assets.atlas); // and goalies (Batch AT)
       useAchievementArt(Assets.atlas.frames); // the newer trophies' own icons (Batch AN)
       this.legendsPreview = new URLSearchParams(location.search).has('legends');
     } catch (e) {

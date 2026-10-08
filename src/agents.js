@@ -6,7 +6,7 @@
 // with agent: true); a signed goalie in save.freeGoalies.
 import { CHARACTERS, KIT_OF_ROLE, STAT_KEYS, ARCHETYPES, ELEMENTS, GOALIE_STYLES, setRookies, setFreeGoalies, makeDef } from './data.js';
 import { joinLevel, PERK_LEVELS, newMember, rosterIds } from './progress.js';
-import { randomLook } from './modular.js';
+import { randomLook, randomMask } from './modular.js';
 import { addNews } from './news.js';
 
 export const MARKET_FROM = 3; // matches played before the agent calls
@@ -62,7 +62,7 @@ function goalie(save, taken, rnd) {
   taken.add(name);
   const base = { rfx: 5 + Math.floor(rnd() * 3), pos: 5 + Math.floor(rnd() * 3) };
   const level = Math.max(1, save.goalie.level - 1);
-  return { goalie: true, name, base, level, style: pick(Object.keys(GOALIE_STYLES), rnd), blurb: pick(PITCH.G, rnd),
+  return { goalie: true, name, base, level, style: pick(Object.keys(GOALIE_STYLES), rnd), blurb: pick(PITCH.G, rnd), look: randomMask(rnd),
     price: Math.round((200 + level * 20 + (base.rfx + base.pos - 12) * 60) / 10) * 10 };
 }
 
@@ -91,7 +91,7 @@ export function signAgent(save, i) {
   st.n = (st.n || 0) + 1;
   if (a.goalie) {
     const id = 'fa_g' + st.n;
-    (save.freeGoalies ||= {})[id] = { name: a.name, base: a.base, style: a.style, blurb: a.blurb, price: a.price };
+    (save.freeGoalies ||= {})[id] = { name: a.name, base: a.base, style: a.style, blurb: a.blurb, price: a.price, look: a.look || null };
     setFreeGoalies(save.freeGoalies);
     (save.goalies ||= {})[id] = { level: a.level, exp: 0, gear: 'g_start' };
     addNews(save, { k: 'weAgent', name: a.name, kit: 'goalie' });

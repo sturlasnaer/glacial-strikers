@@ -69,6 +69,15 @@ for (const k of ['body_big', 'body_small']) {
   check(`${k}: an anchor on every frame`, fr.every((f) => M.anchors[f]), fr.filter((f) => !M.anchors[f]).slice(0, 3));
 }
 
+// AQ to AU
+check('cut-in backdrops per element', ['frost', 'thunder', 'stone', 'ember', 'gale', 'shadow'].every((e) => A.banners['bg_' + e]) && A.banners.bg_glow);
+check('Vigga: standing art, portrait, market icon', A.art_additions.hub_fullbody.agent.idle.every((f) => F[f]) && F[A.npcs.agent] && F['icons/free_agents']);
+const GP = A.goalie_parts;
+check('goalies from parts: every pose anchored, six masks with paint', Object.values(A.goalies_side.parts).every((f) => GP.anchors[f]) && Object.keys(GP.masks).length === 6 && Object.values(GP.masks).every((v) => Object.values(v).every((h) => F[h] && GP.paint[h] && F[GP.paint[h]])));
+check('...drawn at the backup goalie\'s scale', Math.abs(F[A.goalies_side.parts.ready][7] - F[A.goalies_side.newcomer.ready][7]) < 1e-6);
+check('the clubs\' crests, buildings, mascots, boards and banners', ['glacier_owls', 'thunder_moose'].every((m) => F[A.crests[m]] && A.arena.rival_mascots[m] && A.arena.banners[m] && A.banners[m + '_c']) && ['owl_observatory', 'moose_longhouse'].every((k) => A.arenas[k] && A.arena.scoreboards[k] && A.arena.mascot_arenas[k]));
+check('...on their own pages', A.pages[F[A.arena.rival_mascots.glacier_owls.idle][0]].group === 'rival_glacier_owls');
+
 // achievements: own icons for the old borrowers
 useAchievementArt(F);
 check('every achievement icon exists', ACHIEVEMENTS.every((a) => F[a.icon]), ACHIEVEMENTS.filter((a) => !F[a.icon]).map((a) => a.id));
@@ -98,9 +107,11 @@ m.state = 'goal';
 check('points at the net for a goal', L.frame(m, Lm).id === Lm.calls.goal);
 const Ls = { ...Lm, calls: { ...Lm.calls, charging: ['sig_a', 'sig_b'], washout: ['wo_a', 'wo_b'] } };
 m.state = 'penalty'; m.penaltyReason = 'Charging';
-check('the signal for the call, once it\'s drawn', Ls.calls.charging.includes(L.frame(m, Ls).id) && Lm.calls.penalty.includes(L.frame(m, Lm).id));
+check('the signal for the call (Batch AS)', Ls.calls.charging.includes(L.frame(m, Ls).id) && Lm.calls.charging.includes(L.frame(m, Lm).id) && Lm.calls.interference && Lm.calls.boarding);
 m.state = 'goal'; m.washedOut = true;
-check('waves off a goal that doesn\'t count', Ls.calls.washout.includes(L.frame(m, Ls).id) && L.frame(m, Lm).id === Lm.calls.goal);
+check('waves off a goal that doesn\'t count', Ls.calls.washout.includes(L.frame(m, Ls).id) && Lm.calls.washout.includes(L.frame(m, Lm).id));
+m.washedOut = false;
+check('points at the net for a real goal', L.frame(m, Lm).id === Lm.calls.goal);
 
 console.log(`part 2 art: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

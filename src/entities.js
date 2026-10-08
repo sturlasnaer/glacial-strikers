@@ -431,6 +431,7 @@ export class Goalie {
     this.name = opts.name || 'Goalie';
     this.art = opts.art || null;
     this.look = opts.look || null; // a signed rival goalie in our colours
+    this.mask = opts.mask || null; // a goalie made from parts: their mask and its paint (Batch AT)
     this.who = opts.who || (team === 0 ? 'halla' : null);
     this.style = (GOALIE_STYLES[opts.style] || GOALIE_STYLES.hybrid).mods; // how they play
     this.stats = stats; // { rfx, pos }

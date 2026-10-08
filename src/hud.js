@@ -68,7 +68,8 @@ export class HUD {
     // every cut-in banner this match can show, recoloured before play rather than at the first ultimate
     const keys = [...match.skaters, ...match.goalies].map((k) => [this.bannerKey(k), this.bannerPal(k, teamId)]);
     // (and the element backdrops for anyone without a painted banner, Batch AQ)
-    for (const k of match.skaters) if (!this.bannerKey(k) && k.def && k.def.elem) keys.push(['bg_' + k.def.elem, null]);
+    const painted = (k) => { const b = this.bannerKey(k); return b && Assets.atlas.banners && Assets.atlas.banners[b]; };
+    for (const k of match.skaters) if (!painted(k) && k.def && k.def.elem) keys.push(['bg_' + k.def.elem, null]);
     Assets.warmBanners(keys);
     const rp = this.el.querySelector('#replay');
     rp.addEventListener('pointerdown', (e) => { e.preventDefault(); this.app.skipReplay(); });
@@ -134,9 +135,13 @@ export class HUD {
     if (k.team === 0 && !k.isGoalie && RECRUITS[k.who]) return k.sprite; // a signing's own banner
     if (k.team === 0 && ROOKIES[k.who]) return null; // a rookie: no banner art, the portrait band
     if (k.team === 0 && LEGENDS[k.who]) return LEGEND_ART.has(k.sprite) ? k.sprite : null;
-    if (k.team === 0 && k.isGoalie && k.art) return `${k.art}_g`; // a signed rival goalie's own banner
+    if (k.team === 0 && k.isGoalie && k.art && k.art !== 'parts' && k.art !== 'newcomer') return `${k.art}_g`; // a signed rival goalie's own banner
+    if (k.team === 0 && RECRUITS[k.who] && TEAMS[RECRUITS[k.who].team].mark && RECRUITS[k.who].kit === 'frost') return `${TEAMS[RECRUITS[k.who].team].mark}_c`; // an expansion club's captain, signed
     if (k.team === 0) return ART_NAME[k.isGoalie ? 'goalie' : k.def.id];
-    if (k.isGoalie) return k.art ? `${k.art}_g` : null;
+    if (k.isGoalie) return k.art && k.art !== 'parts' && k.art !== 'newcomer' ? `${k.art}_g` : null;
+    const club = TEAMS[this.teamId];
+    if (club && club.mark && k.who === 'frost') return `${club.mark}_c`; // an expansion club's captain (Batch AU)
+    if (k.parts) return null; // made from parts: the element backdrop
     return k.sprite !== k.def.sprite ? k.sprite : null;
   }
 

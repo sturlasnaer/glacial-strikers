@@ -280,12 +280,14 @@ export const TEAMS = {
     style: 'Defending champions. No weaknesses, plenty of swagger.',
   },
   // The expansion clubs, from the second season of a save (league.js): no roster art of
-  // their own, so their players are made from parts (looks) in the team's colours, and
-  // their goalies wear the newcomer goalie. Batch AU brings their crests and buildings.
+  // their own, so their players are made from parts (looks) in the team's colours, and their
+  // goalies too (goalieLook). Their crests, buildings, mascots and captains' banners come from
+  // Batch AU under their mark.
   owls: {
     elems: { thunder: 'gale', stone: 'frost' }, // supers other than the slot's own
     id: 'owls', plan: 'counter', chem: 1, name: 'Glacier Owls', short: 'OWL', crest: 'hud_elements/misc/away_crest',
-    art: null, arena: 'home', expansion: true,
+    art: null, mark: 'glacier_owls', arena: 'owl_observatory', expansion: true,
+    goalieLook: { mask: 'stars', paint: '#dbe7f3' }, // (their goalie, made from parts: Batch AT)
     looks: { frost: { body: 'small', head: 'glasses', skin: 0, hair: 4 }, thunder: { body: 'std', head: 'visor', skin: 2, hair: 5 }, stone: { body: 'big', head: 'beard', skin: 1, hair: 7 } },
     color: '#e8eef5', color2: '#4a5568', recolor: { h1: 210, h2: 215, sat: 0.08, val: 1.08, sat2: 0.25, val2: 0.5 },
     diff: 0.45, bonus: { agi: 1, pas: 1, chk: -1 }, goalie: { rfx: 6, pos: 5 },
@@ -296,7 +298,8 @@ export const TEAMS = {
   moose: {
     elems: { frost: 'ember' }, // supers other than the slot's own
     id: 'moose', plan: 'forecheck', chem: 2, name: 'Thunder Moose', short: 'MOO', crest: 'hud_elements/misc/away_crest',
-    art: null, arena: 'home', expansion: true,
+    art: null, mark: 'thunder_moose', arena: 'moose_longhouse', expansion: true,
+    goalieLook: { mask: 'wolf_teeth', paint: '#f2a93b' },
     looks: { frost: { body: 'std', head: 'moustache', skin: 3, hair: 1 }, thunder: { body: 'small', head: 'mohawk', skin: 4, hair: 6 }, stone: { body: 'big', head: 'cage', skin: 2, hair: 0 } },
     color: '#2f7a4a', color2: '#f2a93b', recolor: { h1: 140, h2: 38, sat: 0.8, val: 0.62, sat2: 1.0, val2: 1.0 },
     diff: 0.62, bonus: { chk: 1, sta: 1, spd: -1 }, goalie: { rfx: 6, pos: 7 },
@@ -324,6 +327,8 @@ export const ARENAS = {
   golden_hall: { name: 'Golden Hall', lamps: '#ffc04a', flicker: 1.6, twist: 'rumble_strips', rule: 'Rumble strips' },
   dark_aerie: { name: 'Dark Aerie', lamps: '#b48cff', flicker: 0.7, twist: 'shadow_zones', rule: 'Shadow zones' },
   pine_pond: { name: 'Pine Pond', lamps: null, twist: 'pond_cracks', rule: 'Pond cracks' },
+  owl_observatory: { name: 'The Observatory', lamps: '#bfe8ff', twist: null }, // (the Glacier Owls')
+  moose_longhouse: { name: 'The Longhouse', lamps: '#ffb05c', flicker: 1.4, twist: null }, // (the Thunder Moose's)
 };
 
 // ---------------------------------------------------------------- recruitment
@@ -379,7 +384,7 @@ export const KIT_OF_ROLE = { C: 'frost', W: 'thunder', D: 'stone' };
 const GOALIE_PRICES = { lynx: 220, comets: 300, owls: 400, rams: 380, moose: 480, ravens: 460, royals: 560 };
 export const GOALIE_RECRUITS = Object.fromEntries(Object.entries(GOALIE_PRICES).map(([team, price]) => {
   const t = TEAMS[team];
-  return [`${team}_g`, { key: `${team}_g`, team, name: t.names.goalie, base: { ...t.goalie }, gstyle: t.gstyle, price, art: t.art || 'newcomer', title: 'Goaltender' }]; // (an expansion club's goalie wears the newcomer goalie)
+  return [`${team}_g`, { key: `${team}_g`, team, name: t.names.goalie, base: { ...t.goalie }, gstyle: t.gstyle, price, art: t.art || (t.goalieLook ? 'parts' : 'newcomer'), mask: t.goalieLook || null, title: 'Goaltender' }]; // (an expansion club's goalie: made from parts)
 }));
 // Free-agent goalies signed from the market (agents.js), by id ('fa_g1'), from the save.
 export const FREE_GOALIES = {};
@@ -391,8 +396,8 @@ export function setFreeGoalies(list = {}) {
 // art, Batch AN). { id, name, base, style, art }
 export function goalieInfo(id) {
   const g = GOALIE_RECRUITS[id], f = FREE_GOALIES[id];
-  if (g) return { id, name: g.name, base: g.base, style: g.gstyle, art: g.art, recruit: g };
-  if (f) return { id, name: f.name, base: f.base, style: f.style, art: 'newcomer', recruit: null, agent: f };
+  if (g) return { id, name: g.name, base: g.base, style: g.gstyle, art: g.art, mask: g.mask || null, recruit: g };
+  if (f) return { id, name: f.name, base: f.base, style: f.style, art: f.look ? 'parts' : 'newcomer', mask: f.look || null, recruit: null, agent: f }; // (a mask of their own once Batch AT is in)
   return { id: 'halla', name: GOALIE.name, base: GOALIE.base, style: GOALIE.gstyle, art: null, recruit: null };
 }
 

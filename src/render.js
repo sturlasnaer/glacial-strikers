@@ -122,8 +122,11 @@ export class Renderer {
     // team logo painted under the ice at centre
     const cc = toScreen(0, 0);
     const host = arena !== 'home' && TEAMS[ui.awayTeamId] && TEAMS[ui.awayTeamId].arena === arena ? TEAMS[ui.awayTeamId] : null;
-    const hostCrest = host && Assets.atlas.crests && Assets.atlas.crests[host.art];
-    if (hostCrest) Assets.draw(ctx, hostCrest, cc.x, cc.y + 4, 0.26, { alpha: 0.3, squash: 0.8 });
+    const hostCrest = host && Assets.atlas.crests && Assets.atlas.crests[host.art || host.mark];
+    if (hostCrest && !host.art) { // an expansion club's crest, drawn in coral and violet: in their colours (cached)
+      const cv = Assets.iconCanvas(hostCrest, 200, host.id, { recolor: true }), f = Assets.frame(hostCrest), w = f ? (f[3] / f[7]) * 0.26 : 96;
+      if (cv) { ctx.save(); ctx.globalAlpha *= 0.3; ctx.drawImage(cv, cc.x - w / 2, cc.y + 4 - (w * 0.8) / 2, w, w * 0.8); ctx.restore(); }
+    } else if (hostCrest) Assets.draw(ctx, hostCrest, cc.x, cc.y + 4, 0.26, { alpha: 0.3, squash: 0.8 });
     else Assets.draw(ctx, 'hud_elements/misc/home_crest', cc.x, cc.y + 2, 0.5, { alpha: 0.3, squash: 0.8, pages: Assets.clubPages() });
     this.drawLamps(ctx, fx);
     this.drawCrowd(ctx, fx, ui);
@@ -378,7 +381,7 @@ export class Renderer {
     if (!A) return;
     const t = fx.time;
     if (arena === 'home' && A.banners) {
-      const vis = TEAMS[ui.awayTeamId] && A.banners[TEAMS[ui.awayTeamId].art];
+      const vis = TEAMS[ui.awayTeamId] && A.banners[TEAMS[ui.awayTeamId].art || TEAMS[ui.awayTeamId].mark];
       const spots = [[102, 36, 0], [1433, 36, 1], [120, 856, 1], [1417, 850, 0]];
       spots.forEach(([x, y, theirs], i) => {
         const id = theirs && vis ? vis : A.banners.glacial_strikers;
@@ -395,7 +398,7 @@ export class Renderer {
     // the host's mascot dances where the Snow Fox does at home
     const host = A.mascot_arenas && A.mascot_arenas[arena];
     const mascot = host && A.rival_mascots && A.rival_mascots[host];
-    const hostTeam = mascot && Object.values(TEAMS).find((tm) => tm.art === host);
+    const hostTeam = mascot && Object.values(TEAMS).find((tm) => tm.art === host || tm.mark === host);
     if (hostTeam) {
       const playing = ui.awayTeamId === hostTeam.id; // only cheers for its own team
       const party = playing && ((fx.cheerTeam === 1 && fx.lamp > 0) || (fx.chant && fx.chant.team === 1));
@@ -1402,6 +1405,7 @@ export class Renderer {
       const pages = this.goaliePages(g);
       const k = GOALIE_SCALE * persp(wy) * (match.mods && match.mods.has('giant') ? 1.25 : 1);
       Assets.draw(ctx, id, p.x, p.y, k, { pages, flip });
+      if (g.mask) this.drawGoalieMask(ctx, g, id, p.x, p.y, k, flip, pages); // a goalie made from parts (Batch AT)
       if (g.wallT > 0) this.drawTinted(ctx, id, pages, p.x, p.y, k, flip, 0, '#9fe8ff', 0.3 + Math.sin(match.time * 7) * 0.12); // Wall of Ice
       if (g.slowT > 0) this.drawTinted(ctx, id, pages, p.x, p.y, k, flip, 0, '#9fe8ff', 0.4);
       if (g.flash > 0) this.drawTinted(ctx, id, pages, p.x, p.y, k, flip, 0, '#ffffff', g.flash * 2.5);
@@ -1424,6 +1428,19 @@ export class Renderer {
     Assets.draw(ctx, id, p.x, p.y + yOff, k, { pages, flip, rot });
     if (g.slowT > 0) this.drawTinted(ctx, id, pages, p.x, p.y + yOff, k, flip, rot, '#9fe8ff', 0.4);
     if (g.flash > 0) this.drawTinted(ctx, id, pages, p.x, p.y + yOff, k, flip, rot, '#ffffff', g.flash * 2.5);
+  }
+
+  // A goalie made from parts: the painted mask on the body frame's anchor, then whatever passes
+  // in front of it (a raised glove or paddle).
+  drawGoalieMask(ctx, g, id, x, y, k, flip, pages) {
+    const GP = Assets.atlas.goalie_parts, a = GP && GP.anchors[id], f = a && Assets.frame(id);
+    const views = a && GP.masks[g.mask.mask];
+    const head = views && (views[a.view] || views.s);
+    const hf = head && Assets.frame(head), c = hf && Assets.paintCanvas(head, g.mask);
+    if (!f || !c) return;
+    const dx = (a.x - f[5]) * (k / f[7]), dy = (a.y - f[6]) * (k / f[7]);
+    this.drawFrameCanvas(ctx, c, hf, x + (flip ? -dx : dx), y + dy, k, flip, ((a.rot || 0) * Math.PI / 180) * (flip ? -1 : 1));
+    if (a.front) Assets.draw(ctx, a.front, x, y, k, { pages, flip });
   }
 
   puckInNet(p) {

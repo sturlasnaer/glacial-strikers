@@ -7,7 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **AV**: small icons: the Veteran Presence achievement and the league news.
+1. **AV**: small icons for the league news.
 2. **AW**: crests for the player's club: six designs to choose from, recoloured to the club's colours.
 3. **AX**: big and slim builds for goalies made from parts.
 4. **AY**: a rule each for the Observatory and the Longhouse, the expansion clubs' buildings.
@@ -82,10 +82,9 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 ## Batch AV: small icons
 
 In the style and size of the reward icons (about 200 px source), sheet `icons_av.png`:
-- `achievements/veteran_presence`: a worn captain's armband lying on a signed contract (requested with AR, and the one AR piece still to come).
 - For **Around the Frostline**, the league news in the League tab, read at 20–24 px, so bold and simple: `icons/news_sign` (a quill over a contract), `icons/news_draft` (a jersey on a hanger with a star), `icons/news_trade` (two jerseys swapping, like `icons/trade` but simpler), `icons/news_retire` (a pair of skates hung up by their laces), `icons/news_cup` (the Frostline Cup), `icons/news_new_club` (a crest with a small plus).
 
-7 frames.
+6 frames. (The Veteran Presence icon came with the AP–AU v2 pack: thank you, it's in.)
 
 ## Batch AW: crests for the player's club
 

@@ -50,6 +50,45 @@ export function lookFor(id) {
 // The sprite set for a look's body.
 export const bodySprite = (look) => (look && MODULAR.bodies.includes(look.body) ? 'body_' + look.body : null);
 
+// Goalies from parts (Batch AT): a body drawn without the mask, and painted masks that sit on
+// it. A goalie's look is { mask: 'flame', paint: '#e7bf52' }; the paint goes where the mask's
+// paint layer is red. Set from the atlas at start; empty without the art.
+export const GOALIE_PARTS = { masks: [] };
+export const PAINTS = ['#e7bf52', '#c9d6e3', '#7fd16b', '#ff6f7d', '#9b8cff', '#71dce8', '#f2a93b', '#e8eef5', '#2a2f3d'];
+export function useGoalieParts(atlas) {
+  GOALIE_PARTS.masks = atlas && atlas.goalie_parts ? Object.keys(atlas.goalie_parts.masks) : [];
+  return GOALIE_PARTS.masks.length > 0;
+}
+export function randomMask(rnd = Math.random) {
+  if (!GOALIE_PARTS.masks.length) return null;
+  return { mask: pick(GOALIE_PARTS.masks, rnd), paint: pick(PAINTS, rnd) };
+}
+// The same mask every time for an id (free-agent goalies signed before the art was in).
+export function maskFor(id) {
+  let h = 2166136261;
+  for (const ch of String(id)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  let seed = h >>> 0;
+  return randomMask(() => ((seed = Math.imul(seed ^ (seed >>> 15), 2246822507) >>> 0) / 4294967296));
+}
+
+// Paint a mask: where its paint layer is red, the paint colour, keeping the drawn shading.
+export function recolorPaint(d, md, hex) {
+  const col = [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+  const lum = (i) => (d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11) / 255;
+  const on = (i) => d[i + 3] > 10 && md[i + 3] > 127 && md[i] > 127 && md[i + 1] <= 127;
+  const ls = [];
+  for (let i = 0; i < d.length; i += 4) if (on(i)) ls.push(lum(i));
+  if (!ls.length) return d;
+  ls.sort((a, b) => a - b);
+  const mid = ls[ls.length >> 1] || 0.5;
+  for (let i = 0; i < d.length; i += 4) {
+    if (!on(i)) continue;
+    const k = Math.min(1.35, Math.max(0.25, lum(i) / mid));
+    d[i] = Math.min(255, col[0] * k); d[i + 1] = Math.min(255, col[1] * k); d[i + 2] = Math.min(255, col[2] * k);
+  }
+  return d;
+}
+
 // Recolour skin and hair in a head's pixels through its mask, keeping the drawn shading:
 // each part's own middle brightness maps to the new colour, lighter and darker pixels follow.
 export function recolorParts(d, md, look) {

@@ -5,7 +5,7 @@ import {
   CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE, CAST_PAIRS, makeDef, perkSlot,
   RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, setFreeGoalies, goalieInfo, areTwins, setRookies, setStyles, ELEMENTS, ARCHETYPES, member, pairKey, recruitKey, slotDef, GOALIE_STYLES, RIVAL_IDS, slotSprite, slotLook } from './data.js';
 import { newLeague, migrateLeague } from './league.js';
-import { lookFor } from './modular.js';
+import { lookFor, maskFor } from './modular.js';
 import { seasonStats } from './awards.js';
 import { rivalSub, setFills, agedStats, grown, goalieGrowth, leagueGrowth } from './slots.js';
 import { t } from './i18n.js';
@@ -69,6 +69,7 @@ export function loadSave() {
     // rookies drafted before the parts art was in get a face of their own once it is
     for (const [id, k] of Object.entries(s.rookies || {})) if (!k.parts) { const l = lookFor(id); if (l) k.parts = l; }
     setRookies(s.rookies); // drafted rookies (and signed free agents), so member() knows them
+    for (const [id, g] of Object.entries(s.freeGoalies || {})) if (!g.look) { const m = maskFor(id); if (m) g.look = m; } // (a mask of their own once the art's in)
     setFreeGoalies(s.freeGoalies); // free-agent goalies, so goalieInfo() knows them
     setFills(s); // the rivals' fills, so their portraits know them
     setStyles(s.roster); // changes made at the training camp
@@ -226,7 +227,8 @@ export const homeKitGroups = (save) => {
   const ids = rosterIds(save), legends = ids.filter((id) => LEGENDS[id]);
   return [...new Set([
     ...ids.filter((id) => RECRUITS[id]).map((id) => (TEAMS[RECRUITS[id].team].art ? 'rival_' + TEAMS[RECRUITS[id].team].art : 'parts')), // (an expansion club's player: from parts)
-    ...Object.keys(save.goalies || {}).filter((k) => GOALIE_RECRUITS[k]).map((k) => (GOALIE_RECRUITS[k].art === 'newcomer' ? 'newcomers' : 'rival_' + GOALIE_RECRUITS[k].art)), // signed goalies
+    ...Object.keys(save.goalies || {}).filter((k) => GOALIE_RECRUITS[k]).map((k) => ({ newcomer: 'newcomers', parts: 'goalie_parts' }[GOALIE_RECRUITS[k].art] || 'rival_' + GOALIE_RECRUITS[k].art)), // signed goalies
+    ...(Object.keys(save.goalies || {}).some((k) => FREE_GOALIES[k] && FREE_GOALIES[k].look) ? ['goalie_parts'] : []), // (free agents with a mask of their own)
     ...(ids.some((id) => ROOKIES[id] && !member(id).parts) || legends.some((id) => !LEGEND_ART.has(LEGENDS[id].art)) || Object.keys(save.goalies || {}).some((k) => FREE_GOALIES[k]) ? ['newcomers'] : []), // (a free-agent goalie wears the newcomer goalie)
     ...(ids.some((id) => member(id).parts) ? ['parts'] : []), // players from parts (Batch AJ: the 'parts' page group)
     ...(legends.some((id) => LEGEND_ART.has(LEGENDS[id].art) || LEGEND_FACES.has(LEGENDS[id].art)) ? ['legends'] : []),
@@ -259,14 +261,14 @@ export function goalieStats(save, id = starterId(save)) {
 // Our goalie in a match config: who starts, in their own art (our colours) and style.
 export function homeGoalie(save) {
   const id = starterId(save), info = goalieInfo(id);
-  return { stats: goalieStats(save, id), name: info.name, art: info.art, look: info.art ? 'homekit' : null, style: goalieStyle(save, id), who: id };
+  return { stats: goalieStats(save, id), name: info.name, art: info.art, look: info.art ? 'homekit' : null, mask: info.mask || null, style: goalieStyle(save, id), who: id };
 }
 // A rival's goalie: their own, or a backup once you've signed theirs.
 export function rivalGoalie(save, teamId) {
   const t = TEAMS[teamId];
   const gg = goalieGrowth(save); // (the league gets better)
   if (isSigned(save, teamId + '_g')) return { stats: { rfx: Math.max(3, t.goalie.rfx - 1) + gg, pos: Math.max(3, t.goalie.pos - 1) + gg }, name: t.subs.goalie || t.names.goalie, art: 'newcomer', style: 'hybrid', who: 'sub_goalie' }; // (the plain away goalie until the newcomer goalie, Batch AN)
-  return { stats: { rfx: t.goalie.rfx + gg, pos: t.goalie.pos + gg }, name: t.names.goalie, art: t.art || 'newcomer', style: t.gstyle || 'hybrid' }; // (an expansion club's goalie: the newcomer goalie)
+  return { stats: { rfx: t.goalie.rfx + gg, pos: t.goalie.pos + gg }, name: t.names.goalie, art: t.art || (t.goalieLook ? 'parts' : 'newcomer'), mask: t.goalieLook || null, style: t.gstyle || 'hybrid' }; // (an expansion club's goalie: the newcomer goalie)
 }
 
 export function goalieStatus(save, key) {

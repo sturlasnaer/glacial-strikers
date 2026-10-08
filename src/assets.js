@@ -6,7 +6,7 @@
 // (Everything is prefetched into the browser cache, but only decoded when used.)
 
 import { TEAMS, PALETTES } from './data.js';
-import { recolorParts, headPlacement } from './modular.js';
+import { recolorParts, recolorPaint, headPlacement } from './modular.js';
 
 const BASE = new URL('assets/', document.baseURI).href;
 const INLINE = typeof window !== 'undefined' && window.__INLINE; // single-file offline build
@@ -14,7 +14,7 @@ const INLINE = typeof window !== 'undefined' && window.__INLINE; // single-file 
 // Page groups loaded at start and kept through every scene; and the ones every match needs,
 // loaded with the rival's (the newer supers' effects, the linesman).
 const CORE = ['home', 'away', 'title', 'icons_z', 'allstar', 'icons_ac', 'legends'];
-const MATCH = ['abilities_al', 'linesman'];
+const MATCH = ['abilities_al', 'linesman', 'arena_au'];
 
 export const Assets = {
   atlas: null,
@@ -23,7 +23,6 @@ export const Assets = {
   backdrops: new Map(), // arena key -> image
   recolored: new Map(), // teamId -> { pages, loaded } with the away and rival pages swapped
   iconCache: new Map(),
-  bannerCache: new Map(),
   loading: new Map(), // file -> Promise<image>
   images: new Map(), // file -> image
 
@@ -69,7 +68,8 @@ export const Assets = {
   async ensureTeam(teamId, arena) {
     const t = TEAMS[teamId];
     const jobs = [];
-    if (t && t.art) jobs.push(this.loadGroup('rival_' + t.art));
+    if (t && (t.art || t.mark)) jobs.push(this.loadGroup('rival_' + (t.art || t.mark)));
+    if (t && t.goalieLook) jobs.push(this.loadGroup('goalie_parts')); // (their goalie, made from parts)
     for (const g of MATCH) jobs.push(this.loadGroup(g));
     if (t && t.art && this.needNewcomers) jobs.push(this.loadGroup('newcomers')); // (a signed slot's newcomer)
     if (this.partsFor && this.partsFor(teamId)) jobs.push(this.loadGroup('parts')); // (a fill made from parts, in their colours)
@@ -81,7 +81,7 @@ export const Assets = {
   async ensureArena(key) {
     // the host's mascot lives on its team's pages
     const host = this.atlas.arena && this.atlas.arena.mascot_arenas && this.atlas.arena.mascot_arenas[key];
-    const team = host && Object.values(TEAMS).find((tm) => tm.art === host);
+    const team = host && Object.values(TEAMS).find((tm) => tm.art === host || tm.mark === host);
     if (team && this.atlas.arena.rival_mascots && this.atlas.arena.rival_mascots[host]) {
       await this.loadGroup('rival_' + host).catch(() => {});
       this.prepareTeam(team);
@@ -122,7 +122,7 @@ export const Assets = {
   trim(keep = {}) {
     const a = this.atlas;
     const groups = new Set([...CORE.filter((g) => g !== 'title'), ...(PALETTES.homekit.groups || []), ...(keep.groups || [])]);
-    for (const id of keep.teams || []) { const t = TEAMS[id]; if (t && t.art) groups.add('rival_' + t.art); }
+    for (const id of keep.teams || []) { const t = TEAMS[id]; if (t && (t.art || t.mark)) groups.add('rival_' + (t.art || t.mark)); if (t && t.goalieLook) groups.add('goalie_parts'); }
     if (this.needNewcomers && (keep.teams || []).length) groups.add('newcomers');
     if (this.partsFor && (keep.teams || []).some(this.partsFor)) groups.add('parts');
     if ((keep.teams || []).length) for (const g of MATCH) groups.add(g); // (in a match)
@@ -161,7 +161,7 @@ export const Assets = {
     const rc = PALETTES.club.recolor;
     this.recolored.delete('club');
     for (const k of [...this.iconCache.keys()]) if (k.includes('|club|')) this.iconCache.delete(k);
-    for (const k of [...this.bannerCache.keys()]) if (k.endsWith('|club')) this.bannerCache.delete(k);
+    for (const k of [...(this.bannerCanvasCache || new Map()).keys()]) if (k.endsWith('|club') || k.endsWith('|homekit')) this.bannerCanvasCache.delete(k);
     this.recolored.delete('homekit'); // signings follow the club colours too
     if (!rc) return;
     const ours = (id) => (/\/home[_/]/.test(id) && !id.startsWith('hud_elements/')) || id.startsWith('expressions_core/')
@@ -205,7 +205,8 @@ export const Assets = {
   // Recolour the away pages and this rival's roster pages into the team's colours
   // (or, for a palette with groups, just those pages).
   prepareTeam(team) {
-    const own = (g) => (team.groups ? team.groups.includes(g) : g === 'away' || g === 'newcomers' || g === 'parts' || (team.art && g === 'rival_' + team.art));
+    const mark = team.art || team.mark; // (an expansion club's identity art: Batch AU)
+    const own = (g) => (team.groups ? team.groups.includes(g) : g === 'away' || g === 'newcomers' || g === 'parts' || g === 'goalie_parts' || (mark && g === 'rival_' + mark));
     const loaded = this.pages.filter((img, i) => img && own(this.atlas.pages[i].group)).length + '|' + (team.groups || []).join(',');
     const r = this.recolored.get(team.id);
     if (r && r.loaded === loaded) return;
@@ -220,10 +221,9 @@ export const Assets = {
     for (const k of [...this.iconCache.keys()]) if (k.includes(`|${team.id}|`)) this.iconCache.delete(k);
   },
 
-  // Cut-in banner image URL for a character key ('nix', 'ember_comets_c', ...), in the
-  // team's colours. Returns null until the image has loaded.
-  // The same banner as something drawable (an image, or the recoloured canvas): no encoding,
-  // for the cut-ins mid-match. Null until it's loaded (warmBanners loads them ahead).
+  // A cut-in banner for a character key ('nix', 'ember_comets_c', ...) in the team's colours,
+  // as something drawable (the image, or the recoloured canvas): no encoding, for the cut-ins
+  // mid-match. Null until it's loaded (warmBanners loads them ahead).
   bannerCanvas(key, teamId) {
     const file = key && this.atlas.banners && this.atlas.banners[key];
     if (!file) return null;
@@ -244,31 +244,6 @@ export const Assets = {
     list.filter(([key]) => key && this.atlas.banners && this.atlas.banners[key]).forEach(([key, teamId], i) => {
       this.image(this.atlas.banners[key]).then(() => setTimeout(() => this.bannerCanvas(key, teamId), 120 * i)).catch(() => {});
     });
-  },
-
-  banner(key, teamId) {
-    const file = this.atlas.banners && this.atlas.banners[key];
-    if (!file) return null;
-    const ck = key + '|' + (teamId || '');
-    if (this.bannerCache.has(ck)) return this.bannerCache.get(ck);
-    const img = this.images.get(file);
-    if (!img) { this.image(file).catch(() => {}); return null; }
-    const t = teamId && (TEAMS[teamId] || PALETTES[teamId]);
-    let url = this.url(file);
-    if (t && t.recolor) url = recolorPage(img, t.recolor).toDataURL('image/jpeg', 0.88);
-    this.bannerCache.set(ck, url);
-    return url;
-  },
-
-  async ensureBanners(keys) { await Promise.all(keys.map((k) => this.atlas.banners && this.atlas.banners[k] && this.image(this.atlas.banners[k]).catch(() => {}))); },
-
-  // Make the cut-in banners a match can show ([key, team] pairs) ready ahead of time, then
-  // let go of the decoded pictures: the recoloured ones are kept as small image URLs.
-  async warmBanners(pairs) {
-    const list = pairs.filter(([k]) => k && this.atlas.banners && this.atlas.banners[k]);
-    await this.ensureBanners([...new Set(list.map(([k]) => k))]);
-    for (const [k, team] of list) this.banner(k, team);
-    for (const [k] of list) this.forget(this.atlas.banners[k]);
   },
 
   // Draw a frame with its pivot at (x, y). scale = world px per *source* px.
@@ -381,6 +356,91 @@ export const Assets = {
     return out;
   },
 
+  // A goalie mask (Batch AT) painted in a look's colour, as an ordinary canvas the size of the
+  // frame (cached; null while the art isn't there).
+  paintCanvas(id, look) {
+    const f = this.atlas.frames[id], P = this.atlas.goalie_parts;
+    const mid = P && P.paint && P.paint[id], mf = mid && this.atlas.frames[mid];
+    if (!f || !this.pages[f[0]]) return null;
+    this.partsCache ||= new Map();
+    const key = `paint|${id}|${look.paint}`;
+    if (this.partsCache.has(key)) return this.partsCache.get(key);
+    const [pi, fx, fy, fw, fh] = f;
+    const cx = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+    cx.canvas.width = fw; cx.canvas.height = fh;
+    cx.drawImage(this.pages[pi], fx, fy, fw, fh, 0, 0, fw, fh);
+    if (mf && this.pages[mf[0]] && look.paint) {
+      const mx = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+      mx.canvas.width = fw; mx.canvas.height = fh;
+      mx.drawImage(this.pages[mf[0]], mf[1], mf[2], mf[3], mf[4], mf[8] || 0, mf[9] || 0, mf[3], mf[4]);
+      const img = cx.getImageData(0, 0, fw, fh);
+      recolorPaint(img.data, mx.getImageData(0, 0, fw, fh).data, look.paint);
+      cx.putImageData(img, 0, 0);
+    }
+    const out = document.createElement('canvas'); out.width = fw; out.height = fh;
+    out.getContext('2d').drawImage(cx.canvas, 0, 0);
+    if (this.partsCache.size > 400) this.partsCache.delete(this.partsCache.keys().next().value);
+    this.partsCache.set(key, out);
+    return out;
+  },
+
+  // A goalie made from parts standing (a body frame with the painted mask on it and whatever's in
+  // front), as a data URL of the given height: for the locker room.
+  goalieStanding(id, look, height, teamId = null) {
+    const GP = this.atlas.goalie_parts, a = GP && GP.anchors[id], f = this.atlas.frames[id], pages = this.pagesFor(teamId);
+    const views = a && GP.masks[look.mask], head = views && (views[a.view] || views.s), hf = head && this.atlas.frames[head];
+    if (!f || !hf || !pages[f[0]]) return '';
+    const key = `gstand|${id}|${look.mask}|${look.paint}|${height}|${teamId}`;
+    if (this.iconCache.has(key)) return this.iconCache.get(key);
+    const face = this.paintCanvas(head, look);
+    if (!face) return '';
+    const [pi, fx, fy, fw, fh, px, py, s] = f, [, , , hw, hh, hx, hy, hs] = hf;
+    const ax = a.x / s, ay = a.y / s; // anchor, in source pixels from the body's corner
+    const top = Math.min(0, ay - hy / hs), left = Math.min(0, ax - hx / hs), right = Math.max(fw / s, ax - hx / hs + hw / hs);
+    const k = height / (fh / s - top), w = Math.ceil((right - left) * k);
+    const c = document.createElement('canvas'); c.width = w; c.height = height;
+    const ctx = c.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    const ox = -left * k, oy = -top * k;
+    ctx.drawImage(pages[pi], fx, fy, fw, fh, ox, oy, (fw / s) * k, (fh / s) * k);
+    ctx.drawImage(face, ox + (ax - hx / hs) * k, oy + (ay - hy / hs) * k, (hw / hs) * k, (hh / hs) * k);
+    const fr = a.front && this.atlas.frames[a.front];
+    if (fr && pages[fr[0]]) { // (placed like the body: the two share a foot point)
+      const [qi, qx, qy, qw, qh, qpx, qpy, qs] = fr;
+      ctx.drawImage(pages[qi], qx, qy, qw, qh, ox + (px / s - qpx / qs) * k, oy + (py / s - qpy / qs) * k, (qw / qs) * k, (qh / qs) * k);
+    }
+    const url = c.toDataURL('image/png');
+    this.iconCache.set(key, url);
+    return url;
+  },
+
+  // A goalie's portrait from parts: the shoulders in a team's colours and the painted mask.
+  goaliePortrait(look, expr, size = 96, teamId = null) {
+    const P = this.atlas.goalie_parts && this.atlas.goalie_parts.portraits;
+    const faces = P && P.faces && P.faces[look.mask];
+    const faceId = faces && (faces[expr] || faces.neutral);
+    const bf = P && this.atlas.frames[P.body], ff = faceId && this.atlas.frames[faceId];
+    const page = bf && this.pagesFor(teamId)[bf[0]];
+    if (!bf || !ff || !page) return '';
+    const key = `gparts|${look.mask}|${look.paint}|${faceId}|${size}|${teamId}${this.canvasMode ? '|c' : ''}`;
+    if (this.iconCache.has(key)) return this.iconCache.get(key);
+    const face = this.paintCanvas(faceId, look);
+    if (!face) return '';
+    const c = document.createElement('canvas'); c.width = size; c.height = size;
+    const ctx = c.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    const [, fx, fy, fw, fh, px] = bf;
+    const a = P.anchor || { x: px, y: 0 };
+    const top = Math.min(0, a.y - ff[6]), h = fh - top, k = size / Math.max(fw, h);
+    const ox = (size - fw * k) / 2, oy = (size - h * k) / 2 - top * k;
+    ctx.drawImage(page, fx, fy, fw, fh, ox, oy, fw * k, fh * k);
+    ctx.drawImage(face, ox + (a.x - ff[5]) * k, oy + (a.y - ff[6]) * k, ff[3] * k, ff[4] * k);
+    if (this.canvasMode) { this.iconCache.set(key, c); return c; }
+    const url = c.toDataURL('image/png');
+    this.iconCache.set(key, url);
+    return url;
+  },
+
   // A portrait from parts: the portrait body in a team's colours and the look's face on its
   // anchor, fitted in a square like icon(). '' while the art isn't there.
   partsPortrait(look, expr, size = 96, teamId = null) {
@@ -473,7 +533,7 @@ export const Assets = {
   // A frame fitted in a square, as a canvas: for pictures shown mid-match (the ultimate
   // cut-ins), where turning it into a PNG first would stall the frame. Cached.
   iconCanvas(id, size = 96, teamId = null, opts = {}) {
-    const key = `${id}|${size}|${teamId}|${opts.flip ? 1 : 0}|${opts.crop || ''}`;
+    const key = `${id}|${size}|${teamId}|${opts.flip ? 1 : 0}|${opts.crop || ''}|${opts.recolor ? 1 : ''}`;
     this.canvasCache ||= new Map();
     if (this.canvasCache.has(key)) return this.canvasCache.get(key);
     const c = this.iconDraw(id, size, teamId, opts);
@@ -485,7 +545,7 @@ export const Assets = {
 
   icon(id, size = 96, teamId = null, opts = {}) {
     if (this.canvasMode) return this.iconCanvas(id, size, teamId, opts); // (see portraitCanvas in ui.js)
-    const key = `${id}|${size}|${teamId}|${opts.flip ? 1 : 0}|${opts.crop || ''}`;
+    const key = `${id}|${size}|${teamId}|${opts.flip ? 1 : 0}|${opts.crop || ''}|${opts.recolor ? 1 : ''}`;
     if (this.iconCache.has(key)) return this.iconCache.get(key);
     const c = this.iconDraw(id, size, teamId, opts);
     if (!c) return '';
@@ -509,6 +569,9 @@ export const Assets = {
     const k = size / Math.max(sw, sh);
     if (opts.flip) { ctx.translate(size, 0); ctx.scale(-1, 1); }
     ctx.drawImage(page, sx, sy, sw, sh, (size - sw * k) / 2, (size - sh * k) / 2, sw * k, sh * k);
+    // (art drawn in coral and violet on a page the team doesn't recolour: an expansion club's crest)
+    const rc = opts.recolor && teamId && (TEAMS[teamId] || PALETTES[teamId] || {}).recolor;
+    if (rc) { const cx = document.createElement('canvas').getContext('2d', { willReadFrequently: true }); cx.canvas.width = size; cx.canvas.height = size; cx.drawImage(c, 0, 0); recolorPageIn(cx, rc); return cx.canvas; }
     return c;
   },
 };

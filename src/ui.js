@@ -59,6 +59,10 @@ const hexToHsvUI = (hex) => hexToHsv(hex);
 export const portrait = (id, team, teamId, size = 160, expr = null) => {
   const P = Assets.atlas.portraits || {};
   if (id === 'halla') id = 'goalie';
+  if (team === 0 && goalieInfo(id).mask) { // a goalie made from parts (Batch AT): their mask, in our colours
+    const url = Assets.goaliePortrait(goalieInfo(id).mask, expr || 'neutral', size, 'homekit');
+    if (url) return url;
+  }
   if (team === 0 && FREE_GOALIES[id]) { // a free-agent goalie: the newcomer goalie (Batch AN) in our colours
     const p = P.newcomer_g, fid = p && ((expr && p[expr]) || p.neutral);
     return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT.goalie}`, size, CLUB_PAGES());
@@ -115,6 +119,10 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
     return Assets.icon(`character_portraits/home/${PORTRAIT[id]}`, size, CLUB_PAGES());
   }
   const t = TEAMS[teamId];
+  if (t && t.goalieLook && id === 'goalie') { // an expansion club's goalie, made from parts (Batch AT)
+    const url = Assets.goaliePortrait(t.goalieLook, expr || 'neutral', size, teamId);
+    if (url) return url;
+  }
   if (t && !t.art && id === 'goalie' && P.newcomer_g) { // an expansion club's goalie: the newcomer goalie in their colours
     const fid = (expr && P.newcomer_g[expr]) || P.newcomer_g.neutral, url = fid && Assets.icon(fid, size, teamId);
     if (url) return url;
@@ -155,7 +163,8 @@ export const crest = (teamId, size = 96) => {
   if (teamId === 'home') return Assets.icon('hud_elements/misc/home_crest', size, CLUB_PAGES());
   if (teamId === 'allstar') return Assets.icon((Assets.atlas.allstar && Assets.atlas.allstar.crest) || 'hud_elements/misc/level_star', size); // the League All-Stars' crest
   const t = TEAMS[teamId];
-  const c = t && t.art && Assets.atlas.crests && Assets.atlas.crests[t.art];
+  const c = t && (t.art || t.mark) && Assets.atlas.crests && Assets.atlas.crests[t.art || t.mark];
+  if (c && !t.art) return Assets.icon(c, size, teamId, { recolor: true }); // an expansion club's crest (Batch AU), drawn in coral and violet
   return c ? Assets.icon(c, size) : Assets.icon('hud_elements/misc/away_crest', size, teamId);
 };
 // Expression for a dialogue line, from its punctuation and how the match went.
@@ -187,6 +196,7 @@ const NPC_SPOTS = [
   { who: 'brekka', tab: 'training', at: [22, 66] },
   { who: 'ottar', tab: 'shop', at: [75.5, 46] },
   { who: 'kip', tab: 'tournament', at: [72.5, 86] },
+  { who: 'agent', tab: 'team', at: [63, 38], when: marketOpen }, // Vigga, by the lockers once she has players to offer (Batch AR)
 ];
 // Button prompts from the UI kit (Batch U), as small images with the text as their alt.
 const PAD_PROMPT = { '✕': 'ps_cross', '○': 'ps_circle', '□': 'ps_square', '△': 'ps_triangle', L1: 'ps_l1', R1: 'ps_r1', L2: 'ps_l2', R2: 'ps_r2', Options: 'ps_options', Create: 'ps_create', A: 'xbox_a', B: 'xbox_b', X: 'xbox_x', Y: 'xbox_y', LB: 'xbox_lb', RB: 'xbox_rb', LT: 'xbox_lt', RT: 'xbox_rt', Start: 'xbox_menu', Back: 'xbox_view' };
@@ -509,7 +519,8 @@ export class UI {
       let src;
       if (id === 'goalie') {
         const F = Assets.atlas.goalies_front || {}, own = keeper.art && F[keeper.art] && F[keeper.art].idle_a;
-        src = (own && Assets.icon(own, 160, 'homekit')) || Assets.icon(F.home?.idle_a || Assets.atlas.goalies_side.home.ready, 160, CLUB_PAGES());
+        src = (own && keeper.mask && Assets.goalieStanding(own, keeper.mask, 160, 'homekit')) // (made from parts: the body and their mask)
+          || (own && !keeper.mask && Assets.icon(own, 160, 'homekit')) || Assets.icon(F.home?.idle_a || Assets.atlas.goalies_side.home.ready, 160, CLUB_PAGES());
       }
       else {
         const m = member(id);
@@ -546,6 +557,7 @@ export class UI {
       html += `<button class="room-board" data-board="tournament" aria-label="${esc(t('League'))}" style="${at(f.x, f.y)};height:${(240 / 864) * 100}%;aspect-ratio:${board.w}/${board.h};transform:translate(-${board.fx * 100}%,-${board.fy * 100}%)"><img src="${board.urls[0]}" alt=""></button>`;
     }
     for (const n of NPC_SPOTS) {
+      if (n.when && !n.when(s)) continue;
       const m = A.hub_fullbody[n.who];
       // idle a, idle b and talking in one strip: one element steps through it, so the
       // character never blinks out between frames (two toggled images could both be hidden)
@@ -1412,12 +1424,13 @@ export class UI {
     if (!marketOpen(s)) return '';
     const st = agentState(s), list = st.list || [];
     // their faces are made from parts: load them, then show the cards again
-    if (list.some((a) => a.parts) && !Assets.groupReady('parts') && !this.partsLoading) {
+    const needs = [list.some((a) => a.parts) && 'parts', list.some((a) => a.look) && 'goalie_parts'].filter((g) => g && !Assets.groupReady(g));
+    if (needs.length && !this.partsLoading) {
       this.partsLoading = true;
-      Assets.loadGroup('parts').then(() => { this.partsLoading = false; if (this.tab === 'team') this.hub('team'); }).catch(() => { this.partsLoading = false; });
+      Promise.all(needs.map((g) => Assets.loadGroup(g))).then(() => { this.partsLoading = false; if (this.tab === 'team') this.hub('team'); }).catch(() => { this.partsLoading = false; });
     }
     const P = Assets.atlas.portraits || {};
-    const face = (a) => (a.goalie ? (P.newcomer_g && Assets.icon(P.newcomer_g.neutral, 96)) || portrait('goalie', 1, null, 96)
+    const face = (a) => (a.goalie ? (a.look && Assets.goaliePortrait(a.look, 'neutral', 96)) || (P.newcomer_g && Assets.icon(P.newcomer_g.neutral, 96)) || portrait('goalie', 1, null, 96)
       : (a.parts && Assets.partsPortrait(a.parts, 'neutral', 96)) || (P[`newcomer_${ROLE[a.kit]}`] && Assets.icon(P[`newcomer_${ROLE[a.kit]}`].neutral, 96)) || portrait(a.kit, 1, null, 96));
     const cards = list.map((a, i) => {
       const what = a.goalie ? `${t('Goalie')} · ${esc(t(GOALIE_STYLES[a.style].name))}` : `${t(ROLE_NAME[CHARACTERS[a.kit].role])} · ${esc(t(ARCHETYPES[a.arch].name))} · ${esc(t(ELEMENTS[a.elem].name))}`;
@@ -1449,7 +1462,7 @@ export class UI {
       const row = (label, v, was) => `<div class="stat"><span>${label}</span><span class="pips">${Array.from({ length: 12 }, (_, j) => `<i class="${j < v ? 'b' : ''}"></i>`).join('')}</span><span class="v">${v}</span><span class="${v > was ? 'good' : v < was ? 'bad' : 'muted'}" style="font-size:12px">${v > was ? '+' : ''}${v - was || '='}</span></div>`;
       compare = row(t('Reflex'), theirs.rfx, cur.rfx) + row(t('Angles'), theirs.pos, cur.pos);
       joins = t('At level {lv}, compared with {name} (who starts now).', { lv: a.level, name: esc(goalieInfo(now).name) });
-      face = (P.newcomer_g && Assets.icon(P.newcomer_g.neutral, 152)) || portrait('goalie', 1, null, 152);
+      face = (a.look && Assets.goaliePortrait(a.look, 'determined', 152)) || (P.newcomer_g && Assets.icon(P.newcomer_g.neutral, 152)) || portrait('goalie', 1, null, 152);
     } else {
       const role = CHARACTERS[a.kit].role, starter = member(s.lineup[role]);
       compare = STAT_KEYS.map((k) => {
