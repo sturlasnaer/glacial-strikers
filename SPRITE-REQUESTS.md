@@ -9,7 +9,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Next batches:**
 1. **Y**: an in-match HUD kit (scoreboard, player card, meters, ticker), to match the menu and touch kits.
 2. **Z**: icons for the six season awards, two gear items that share art, the three chemistry combos, the six challenges and the four game plans.
-3. **AA**: three newcomer skaters, who fill a rival's slot when you sign one of their players (today they're drawn as our own cast in rival colours).
+3. **AB**: All-Star Game dressing: a crest for the League All-Stars, an achievement icon and banners for the home rink.
+4. **AA**: three newcomer skaters, who fill a rival's slot when you sign one of their players (today they're drawn as our own cast in rival colours).
 
 ## Format notes
 
@@ -83,11 +84,21 @@ In the style and size of the reward icons (`equipment_items/reward/*`, about 200
 
 21 frames.
 
+## Batch AB: All-Star Game dressing
+
+Once a season, after league round 2, the All-Star Game is played at the Frostline home rink: the fans vote in the league's stars, mixed across two benches. Your top scorer and two rival stars wear your colours; the other bench, the **League All-Stars**, wears navy with gold trim (rival art recoloured). Today the League All-Stars borrow the level-up star as their crest, the achievement uses the same star, and the rink looks like any other night. Please draw:
+
+- **League All-Stars crest**, in the style and size of the team crests (`crests/*`): a navy shield with a gold five-pointed star and a small snowflake, no lettering. It shows on the scoreboard, the schedule, the vote screen and the results. 1 frame.
+- **All-Star achievement icon**, in the style of `achievements/*` (about 200 px source): a gold star with a hockey stick through it and a little burst of sparkles. 1 frame.
+- **Home-rink dressing for the night** (on the `arena_home` backdrop, 1536×1024, never over the ice): a long **star banner** over the far glass, about 420×90 px at game size, navy with gold stars and our snowflake (no lettering), 2 frames of it swaying; and **star bunting**, a tileable strip about 64×24 px at game size of little gold and ice-blue star pennants on a string, for the far and near boards, 2 frames. Say in the README where you'd hang the banner and run the bunting.
+
+8 frames.
+
 ## Batch AA: newcomer skaters
 
 When you sign a rival's skater, a newcomer takes their slot on that team. Right now the newcomer is drawn as one of our own cast (Nix, Volta or Bram) in the rival's colours, which looks like our players changed teams. Please draw **three newcomers**, one per position (centre, winger, defender), in **coral + violet** like every rival, so the game can recolour them for any team. They should look like hungry rookies: a little smaller and scrappier than the captains, with distinct silhouettes (for example a lanky centre with a long reach, a quick winger with a ponytail or a mohawk, and a stocky defender).
 
 Each needs **the same pose list as one rival skater**, the way `gilded_rams_w` has them: the v2 skating set, the Batch A diagonals and hit reactions, the Batch C side strides, glides and stops, and the Batch D celebration, plus a portrait with the five expressions the dialogue uses (neutral, determined, grin, shocked, defeated). Same scale, foot baseline and sheet naming (`newcomer_c_*`, `newcomer_w_*`, `newcomer_d_*`), with gear masks for the stick and skates like Batch M.
 
-This is the biggest of the three, so it can come after Y and Z.
+This is the biggest batch, so it can come after Y, Z and AB.
 

@@ -1,7 +1,7 @@
 // In-match HUD (scoreboard, player card, power puck chip, banners) and touch button state.
 
 import { Assets } from './assets.js';
-import { POWER_INFO, TEAMS, ART_NAME, RECRUITS } from './data.js';
+import { POWER_INFO, TEAMS, ART_NAME, RECRUITS, teamInfo } from './data.js';
 import { portrait, crest, keyGlyphs } from './ui.js';
 import { t } from './i18n.js';
 
@@ -22,7 +22,7 @@ export class HUD {
     this.teamId = teamId;
     this.drill = drill;
     this.versus = !!opts.versus;
-    const team = TEAMS[teamId];
+    const team = teamInfo(teamId);
     this.el.hidden = false;
     this.el.innerHTML = `
       ${drill ? '<div class="drillbar"><div class="t"></div><div class="m"></div><div class="s"></div><div class="n"></div></div>' : ''}
@@ -88,7 +88,7 @@ export class HUD {
     const box = this.el.querySelector('#cutins');
     if (!box) return;
     const us = s.team === 0;
-    const color = us ? '#2a9fb0' : TEAMS[this.teamId].color;
+    const color = us ? '#2a9fb0' : teamInfo(this.teamId).color;
     const el = document.createElement('div');
     el.className = 'cutin ' + (us ? 'us' : 'them');
     const id = (k) => (k.isGoalie ? 'goalie' : k.who);
@@ -140,7 +140,7 @@ export class HUD {
   }
 
   goal(info) {
-    const team = TEAMS[this.teamId];
+    const team = teamInfo(this.teamId);
     const color = info.team === 0 ? '#71dce8' : team.color;
     const s = info.scorer;
     let sub = '';

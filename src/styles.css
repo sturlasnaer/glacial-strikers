@@ -848,3 +848,18 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .ghost-msg:empty { display: none; }
 .ghost-vs { margin-top: 6px; font-family: var(--display); font-size: 18px; color: var(--ice); }
 .ghost-vs.won { color: var(--gold); }
+/* the All-Star Game's fan vote */
+.as-benches { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 560px) { .as-benches { grid-template-columns: 1fr; } }
+.as-bench { display: grid; gap: 5px; align-content: start; padding: 8px; border-radius: 8px; background: rgba(13, 24, 42, 0.55); border: 2px solid var(--navy-3); }
+.as-bench.us { border-color: var(--ice); }
+.as-bench.them { border-color: #3d63b8; }
+.as-bench .label { display: flex; gap: 6px; align-items: center; font-size: 14px; }
+.as-row { display: grid; grid-template-columns: 44px 1fr auto; gap: 8px; align-items: center; }
+.as-row .as-face { width: 44px; height: 44px; border-radius: 8px; background: rgba(255, 242, 203, 0.08); }
+.as-row b { display: block; font-size: 15px; }
+.as-row .muted { display: flex; gap: 4px; align-items: center; font-size: 12px; }
+.as-row.star b { color: var(--gold); }
+.as-pts { font-family: var(--display); font-size: 15px; color: var(--ice); white-space: nowrap; }
+.as-goalie { font-size: 12px; }
+.fixture.allstar .fx-name b { color: var(--gold); }

@@ -23,13 +23,13 @@ import { recordRivalResult, rivalLines, rivalAfterLine } from './rivals.js';
 import { recordRealGame, computeAwards, AWARD_BY_ID } from './awards.js';
 import { dailyFor, dailyGoal, completeDaily, noteAttempt, dayKey, dailyState } from './daily.js';
 import { standings } from './league.js';
-import { nextFixture, recordOurGame, newLeague, rivalPlan, recordClassic } from './league.js';
+import { nextFixture, recordOurGame, newLeague, rivalPlan, recordClassic, recordAllStar } from './league.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS } from './data.js';
+import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ALLSTAR, teamInfo } from './data.js';
 import {
   loadSave, newSave, writeSave, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards,
-  lineupIds, homeKitGroups,
+  lineupIds, homeKitGroups, allStarVote, allStarConfig,
 } from './progress.js';
 import { t, setLang, getLang, defaultLang } from './i18n.js';
 
@@ -244,12 +244,13 @@ class App {
     const rules = RULE_ART.includes(cfg.twist);
     // the title and hub scenes show over the demo match, so their art stays with it
     const host = Object.values(TEAMS).find((tm) => tm.arena === arena); // its mascot dances in the stands
-    Assets.trim({ teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : [])] });
+    const team = teamInfo(teamId); // (the All-Stars recolour the rival pages they're given)
+    Assets.trim({ teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(team.groups || []), ...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : [])] });
     if (geared) Assets.ensureGear();
     if (rules) Assets.loadGroup('rules').catch(() => {});
     this.lap = null;
     this.fx.heavySnow = false;
-    Assets.prepareTeam(TEAMS[teamId]);
+    Assets.prepareTeam(team);
     this.awayTeamId = teamId;
     this.arena = arena;
     const m = new Match(cfg);
@@ -259,7 +260,7 @@ class App {
       Assets.warmBanners(pairs);
     }
     this.acc = 0;
-    this.fx.attach(m, TEAMS.home.color, TEAMS[teamId].color);
+    this.fx.attach(m, TEAMS.home.color, team.color);
     this.renderer.snapCamera(m);
     return m;
   }
@@ -306,6 +307,7 @@ class App {
   startStage() {
     const f = this.fixture();
     if (!f) return;
+    if (f.kind === 'allstar') return this.startAllStar(f);
     const stage = f.stage;
     const team = TEAMS[f.opponent];
     const powers = stage.powers.length ? t('Power pucks: {list}.', { list: stage.powers.map((p) => t(POWER_INFO[p].name)).join(', ') }) : t('No power pucks this match.');
@@ -315,6 +317,23 @@ class App {
     this.scene = 'dialogue';
     this.music('story');
     Assets.ensureTeam(team.id, arena).then(() => this.showStageDialogue(f, team, sub));
+  }
+
+  // The All-Star Game: the fans' vote, Kip's welcome, then the game. Our guests wear our
+  // colours (like signings) and the League All-Stars the All-Star kit, so both rival teams'
+  // pages load and get recoloured first.
+  startAllStar(f) {
+    const s = this.save;
+    const vote = allStarVote(s, s.league);
+    if (!vote) { recordAllStar(s.league, { skipped: true }); writeSave(s); return this.goHub('tournament'); }
+    ALLSTAR.groups = vote.teams.map((id) => 'rival_' + TEAMS[id].art);
+    this.scene = 'dialogue';
+    this.music('story');
+    Promise.all([Assets.ensureKit([...new Set([...homeKitGroups(s), ...ALLSTAR.groups])]), ...ALLSTAR.groups.map((g) => Assets.loadGroup(g))]).catch(() => {}).then(() => {
+      Assets.prepareTeam(ALLSTAR);
+      this.ui.allStarVote(vote, () => this.ui.dialogue(PLAYOFF_LINES.allstar.pre, 'allstar', { sub: t('No penalties, and ultimates charge twice as fast.') },
+        () => this.beginMatch('allstar', f.stage, false, [], { fixture: f, allstar: vote })));
+    });
   }
 
   // Rivals with their own building host you there.
@@ -558,7 +577,7 @@ class App {
     const plan = extra.plan || 'balanced';
     const theirPlan = extra.theirPlan || (exhibition ? rivalPlan(s, teamId, GAME_PLANS) : 'balanced');
     let buffs = null;
-    if (!exhibition) {
+    if (!exhibition && !extra.allstar) {
       // locker-room buffs are used up by this match
       buffs = buffEffects(s.buffs);
       s.buffs = [];
@@ -566,9 +585,9 @@ class App {
       s.lastPlan = plan;
       writeSave(s);
     }
-    this.cur = { teamId, stage, exhibition, stageIndex: exhibition ? -1 : s.stage, mods, plan, theirPlan, fixture: extra.fixture, daily: extra.daily || null };
+    this.cur = { teamId, stage, exhibition, stageIndex: exhibition ? -1 : s.stage, mods, plan, theirPlan, fixture: extra.fixture, daily: extra.daily || null, allstar: extra.allstar || null };
     const goalieMode = s.settings.playAs === 'goalie' && !extra.daily; // (daily goals are for skaters)
-    const cfg = matchConfig(s, teamId, stage, { plans: [plan, theirPlan], buffs, goalieMode });
+    const cfg = extra.allstar ? allStarConfig(s, extra.allstar, { goalieMode }) : matchConfig(s, teamId, stage, { plans: [plan, theirPlan], buffs, goalieMode });
     cfg.mods = mods;
     const arena = extra.arena || stage.arena || this.arenaFor(teamId);
     cfg.twist = this.twistFor(arena, stage, extra.rules !== false);
@@ -590,6 +609,7 @@ class App {
     this.scene = 'match';
     this.hud.show(m, teamId);
     if (classic) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t('The Winter Classic! Outdoor hockey under the snow, and the whole league is watching.')); }, 500);
+    if (extra.allstar) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t('The All-Star Game! The fans voted, and the league\'s best share the ice.')); }, 500);
     this.announceRule(cfg.twist, arena);
     if (this.cur.daily) setTimeout(() => { if (this.scene === 'match') this.hud.banner(`<div class="small">${t('Daily challenge')}</div><div class="sub" style="font-size:clamp(16px,3vw,24px)">${t(dailyGoal(this.cur.daily.goal).text)}</div>`, 3); }, 300);
     this.touch.reset();
@@ -777,8 +797,9 @@ class App {
     s.record.played++;
     s.record.goals += summary.score[0];
     const scorers = (team) => Object.fromEntries(summary.skaters.filter((k) => k.team === team && k.goals).map((k) => [k.id, k.goals]));
+    const allstar = !!(c.fixture && c.fixture.kind === 'allstar');
     const firstWin = rewards.won && !((s.rivals && s.rivals[c.teamId] && s.rivals[c.teamId].wins) > 0);
-    recordRivalResult(s, c.teamId, summary.score[0], summary.score[1], rewards.won, { ourScorers: scorers(0), theirScorers: scorers(1) });
+    if (!allstar) recordRivalResult(s, c.teamId, summary.score[0], summary.score[1], rewards.won, { ourScorers: scorers(0), theirScorers: scorers(1) });
     if (firstWin && TEAMS[c.teamId] && TEAMS[c.teamId].art) {
       setTimeout(() => this.toast(crest(c.teamId, 72), t('Scouting'), t('{team} will take your call', { team: TEAMS[c.teamId].name }), t('Sign their skaters in Team › Scouting')), 1600);
     }
@@ -790,6 +811,14 @@ class App {
       recordClassic(s.league, summary.score[0], summary.score[1], c.teamId);
       (s.classics ||= []).push({ season: s.season, opp: c.teamId, gf: summary.score[0], ga: summary.score[1] });
       if (rewards.won) this.ach.unlock('winter-classic');
+    } else if (!c.exhibition && s.league && allstar) {
+      // a showcase too; afterwards our signings' art is all the kit needs again
+      const score = (k) => k.goals * 3 + k.assists * 2 + k.steals + k.hits * 0.5;
+      const mvp = [...summary.skaters].sort((a, b) => score(b) - score(a))[0];
+      recordAllStar(s.league, { gf: summary.score[0], ga: summary.score[1], won: rewards.won, mvp: mvp && { name: mvp.name, team: mvp.team } });
+      (s.allstars ||= []).push({ season: s.season, gf: summary.score[0], ga: summary.score[1], star: c.allstar.star });
+      if (rewards.won) this.ach.unlock('all-star');
+      Assets.ensureKit(homeKitGroups(s));
     } else if (!c.exhibition && s.league) {
       recordRealGame(s, s.league, summary, c.teamId);
       leagueOut = recordOurGame(s.league, s, summary.score[0], summary.score[1]);
@@ -811,7 +840,7 @@ class App {
         if (done.streak >= 7) this.ach.unlock('daily-streak');
       } else rewards.lines.push([met ? t('Daily challenge (already done today)') : t('Daily goal missed: {goal}', { goal: t(goal.text) }), 0]);
     }
-    this.ach.endMatch(summary, { league: !c.exhibition, exhibition: c.exhibition, mods: c.mods });
+    this.ach.endMatch(summary, { league: !c.exhibition && !allstar, exhibition: c.exhibition, mods: c.mods });
     if (summary.goalieMode) { s.goalieGames = (s.goalieGames || 0) + 1; if (rewards.won) this.ach.unlock('between-pipes'); }
     this.ach.checkMeta();
     s.training.sessions = 2;
@@ -833,7 +862,7 @@ class App {
       const kind = c.fixture ? c.fixture.kind : 'regular';
       const script = kind === 'regular' ? DIALOGUE[c.teamId] : kind === 'final' && DIALOGUE[c.teamId].final ? { win: DIALOGUE[c.teamId].finalWin, loss: DIALOGUE[c.teamId].finalLoss } : PLAYOFF_LINES[kind];
       let lines = !c.exhibition && script ? [...(script[rewards.won ? 'win' : 'loss'] || [])] : null;
-      const extra = rivalAfterLine(s, c.teamId, rewards.won, summary.score[0], summary.score[1]);
+      const extra = allstar ? null : rivalAfterLine(s, c.teamId, rewards.won, summary.score[0], summary.score[1]);
       if (extra) lines = [...(lines || []), extra];
       if (lines) { this.scene = 'dialogue'; this.ui.dialogue(lines, c.teamId, null, after, rewards.won ? 'won' : 'lost'); } else after();
     });
@@ -856,7 +885,7 @@ class App {
 
   startClip(m) {
     if (!this.save.settings.clips || !this.clips.supported || !m.lastGoal) return;
-    const g = m.lastGoal, away = TEAMS[this.awayTeamId];
+    const g = m.lastGoal, away = teamInfo(this.awayTeamId);
     const scorer = g.scorer ? g.scorer.name : t('Goal');
     const assists = g.assists && g.assists.length ? g.assists.map((a) => a.name).join(' & ') : '';
     const who = (name) => (assists ? t('{scorer} from {assists}', { scorer: name, assists }) : name);
@@ -887,11 +916,11 @@ class App {
     this.chantCool = 30;
     this.fx.chant = { team, t: 0 };
     m.hype = { team, t: 7 };
-    const away = TEAMS[this.awayTeamId];
-    const name = team === 0 ? CLUB.nick.toUpperCase() : away.name.split(' ').slice(-1)[0].toUpperCase();
+    const away = teamInfo(this.awayTeamId);
+    const name = team === 0 ? CLUB.nick.toUpperCase() : (away.nick || away.name.split(' ').slice(-1)[0]).toUpperCase();
     audio.chant(team === 0 ? 0.9 : 0.6);
     this.fx.text(0, -420, t('LET\'S GO {name}!', { name }), team === 0 ? '#71dce8' : away.color, 4, 24);
-    this.hud.ticker(team === 0 ? t('The crowd is on its feet! {club} ultimates charge faster.', { club: CLUB.nick }) : t('{team} fans are loud. Their ultimates charge faster.', { team: away.name.split(' ').slice(-1)[0] }));
+    this.hud.ticker(team === 0 ? t('The crowd is on its feet! {club} ultimates charge faster.', { club: CLUB.nick }) : t('{team} fans are loud. Their ultimates charge faster.', { team: (away.nick || away.name.split(' ').slice(-1)[0]) }));
   }
 
   // After a league match: other results, standings moves and playoff news.
@@ -1142,7 +1171,7 @@ class App {
         if (this.scene === 'match' && !isDrill) { this.commentary.update(realDt); this.updateChants(realDt, m); }
         if (this.scene === 'match' && isDrill && m.state === 'drill_over' && m.stateT > 1.1 && !this.drillShown) { this.drillShown = true; this.finishDrill(); }
       }
-      const t = TEAMS[this.awayTeamId];
+      const t = teamInfo(this.awayTeamId);
       const lap = this.lap && this.attract ? this.lap : null;
       const focus = lap && toScreen(lap.pos().x, lap.pos().y);
       this.renderer.updateCamera(m, this.fx, realDt, { attract: this.attract, focus, zoom: this.attract ? 0.9 : this.replay.active ? 1.15 : 1 });

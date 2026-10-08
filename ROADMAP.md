@@ -22,6 +22,8 @@ Online leaderboards (drills, with weekly boards that reset on Mondays, shootout 
 
 Friends boards are live too: share a six-character code and get every board with just your friends. And ghost runs: race your own best Cone Weave, this week's best, or a friends board's best, with splits at every gate.
 
+The All-Star Game is in too: after round 2, the fans vote two mixed benches of the league's stars.
+
 Ideas for later:
 1. **Ghosts for Breakaway** (the shooter's path and the shot), if Cone Weave ghosts catch on.
 2. **Replay checks** on the server if faked scores become a problem; the stored ghost runs would help.

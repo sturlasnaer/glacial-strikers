@@ -1,5 +1,7 @@
 // Game content: characters, gear, rival teams, tournament, dialogue.
 
+import { t } from './i18n.js';
+
 export const STAT_KEYS = ['spd', 'agi', 'sht', 'pas', 'chk', 'sta'];
 export const STAT_NAMES = {
   spd: 'Speed', agi: 'Agility', sht: 'Shooting', pas: 'Passing', chk: 'Checking', sta: 'Stamina',
@@ -234,6 +236,18 @@ export const PALETTES = {
   club: { id: 'club', recolor: null },
 };
 
+// The All-Star Game's other bench: the league's stars in an All-Star kit (navy, gold trim).
+// Not a league team (it isn't in TEAMS); the rival art pages it recolours are set per game.
+export const ALLSTAR = {
+  id: 'allstar', plan: 'balanced', chem: 0, get name() { return t('League All-Stars'); }, get nick() { return t('All-Stars'); }, short: 'ALL', crest: null, art: null, arena: 'home',
+  color: '#3d63b8', color2: '#ffd45e', recolor: { h1: 222, h2: 46, sat: 0.75, val: 0.62, sat2: 1.0, val2: 1.05 },
+  diff: 0.2, bonus: {}, goalie: { rfx: 6, pos: 6 }, names: { goalie: 'All-Star goalie' }, subs: {}, groups: [],
+  style: 'The league\'s best, all on one bench.',
+};
+PALETTES.allstar = ALLSTAR;
+// A team by id, the All-Stars included.
+export const teamInfo = (id) => TEAMS[id] || (id === 'allstar' ? ALLSTAR : null);
+
 // ---------------------------------------------------------------- your club
 // Name, nickname, short code and colours (trim, jersey). Defaults are the Snowcrest Foxes.
 export const CLUB_DEFAULT = { name: 'Snowcrest Foxes', nick: 'Foxes', short: 'FOX', trim: '#71dce8', jersey: '#fff2cb' };
@@ -445,6 +459,17 @@ export const PLAYOFF_LINES = {
     ],
     win: [['kip', 'announcer', 'The Foxes win the Winter Classic! Light up the sky over Pine Pond!'], ['them', 'frost', 'Fine. You earned the cocoa.']],
     loss: [['kip', 'announcer', 'The visitors take the Winter Classic. What a night on the pond.'], ['them', 'frost', 'Pond hockey suits us. See you in the spring.']],
+  },
+  // the All-Star Game at home, mid-season (Kip Vance calls it)
+  allstar: {
+    pre: [
+      ['kip', 'announcer', 'Welcome to the All-Star Game! The fans have voted, and the league\'s best share one sheet of ice tonight.'],
+      ['kip', 'announcer', 'All-Star rules: no penalties, and the ultimates charge twice as fast. Let\'s see some highlights!'],
+      ['us', 'frost', 'Passing to the players we usually chase... this is going to be strange.'],
+      ['us', 'stone', 'Strange is fine. Just pass me the puck.'],
+    ],
+    win: [['kip', 'announcer', 'The home All-Stars take it! What a show for the fans!']],
+    loss: [['kip', 'announcer', 'The League All-Stars win it! Nobody leaves disappointed tonight.']],
   },
 };
 

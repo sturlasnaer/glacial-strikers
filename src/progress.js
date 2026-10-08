@@ -6,6 +6,7 @@ import {
   RECRUITS, member, pairKey, recruitKey,
 } from './data.js';
 import { newLeague, migrateLeague } from './league.js';
+import { seasonStats } from './awards.js';
 import { t } from './i18n.js';
 
 const KEY = 'glacial-strikers-save-v1';
@@ -221,6 +222,69 @@ export function matchConfig(save, teamId, stage, opts = {}) {
   };
 }
 
+// The All-Star Game's benches, by fan vote (this season's points). Our side: our best
+// scorer and the top star of each of the two rival teams with the biggest stars, all in our
+// colours. The League All-Stars: those two teams' next three, and the better of their two
+// goalies. Two rival teams at most, so a phone holds the art. Signed players are ours and
+// newcomers aren't voted in; null when there aren't enough stars left.
+const RIVAL_IDS = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
+export function allStarVote(save, L) {
+  const st = seasonStats(L);
+  const pts = (key) => { const r = st.skaters[key]; return r ? r.g * 3 + r.a * 2 + (r.hits + r.steals) * 0.25 : 0; };
+  const line = lineupIds(save);
+  const star = [...line].sort((a, b) => pts(`home:${b}`) - pts(`home:${a}`) || line.indexOf(a) - line.indexOf(b))[0];
+  const stars = (team) => ['frost', 'thunder', 'stone'].filter((kit) => !save.roster[recruitKey(team, kit)])
+    .map((kit) => ({ team, kit, who: recruitKey(team, kit), pts: pts(`${team}:${kit}`) }))
+    .sort((a, b) => b.pts - a.pts || a.kit.localeCompare(b.kit));
+  const teams = RIVAL_IDS.map((team) => ({ team, list: stars(team) })).filter((x) => x.list.length >= 2)
+    .sort((a, b) => (b.list[0].pts + b.list[1].pts) - (a.list[0].pts + a.list[1].pts) || RIVAL_IDS.indexOf(a.team) - RIVAL_IDS.indexOf(b.team));
+  let pair = null; // the best two teams that leave three for the other bench
+  for (let i = 0; i < teams.length && !pair; i++) for (let j = i + 1; j < teams.length && !pair; j++) if (teams[i].list.length + teams[j].list.length >= 5) pair = [teams[i], teams[j]];
+  if (!star || !pair) return null;
+  const [A, B] = pair;
+  const theirs = [...A.list.slice(1), ...B.list.slice(1)].sort((a, b) => b.pts - a.pts).slice(0, 3);
+  const svp = (team) => { const g = st.goalies[team]; return g && g.sa ? g.sv / g.sa : 0; };
+  const goalie = svp(B.team) > svp(A.team) ? B.team : A.team;
+  return { star, ours: [star, A.list[0].who, B.list[0].who], theirs: theirs.map((x) => x.who), teams: [A.team, B.team], goalie,
+    points: Object.fromEntries([[star, pts(`home:${star}`)], ...[...A.list, ...B.list].map((x) => [x.who, x.pts])]) };
+}
+
+// Match config for the All-Star Game (like matchConfig, from a vote).
+export function allStarConfig(save, vote, opts = {}) {
+  const rival = (who, look) => {
+    const m = member(who), t = TEAMS[m.recruit.team];
+    const stats = { ...m.base };
+    for (const [k, v] of Object.entries(t.bonus || {})) stats[k] = Math.max(1, stats[k] + v);
+    return { def: m.def, who, stats, name: m.name, perks: [], sprite: m.recruit.sprite, ...(look ? { look } : {}) };
+  };
+  const ours = (who) => {
+    if (!save.roster[who]) return rival(who, 'homekit');
+    const m = member(who);
+    return { def: m.def, who, stats: effectiveStats(who, save.roster[who]), name: m.name, perks: perkNames(save.roster[who]),
+      sprite: m.recruit ? m.recruit.sprite : null, look: m.recruit ? 'homekit' : null, gear: { ...save.roster[who].gear } };
+  };
+  const g = TEAMS[vote.goalie];
+  const seasonBoost = (save.season - 1) * 0.08;
+  const diff = Math.min(1, Math.max(0, (TEAMS[vote.teams[0]].diff + TEAMS[vote.teams[1]].diff) / 2 + 0.08 + (DIFF_OFFSET[save.settings.difficulty] || 0) + seasonBoost));
+  return {
+    assist: save.settings.assist || 'normal',
+    plans: ['balanced', 'balanced'],
+    buffs: {},
+    teams: [
+      { skaters: vote.ours.map(ours), goalie: { stats: goalieStats(save), name: GOALIE.name }, chem: {} },
+      { skaters: vote.theirs.map((w) => rival(w)), goalie: { stats: { rfx: g.goalie.rfx + 1, pos: g.goalie.pos + 1 }, name: g.names.goalie, art: g.art }, chem: {} },
+    ],
+    humanTeam: 0,
+    goalieMode: !!opts.goalieMode,
+    powers: ['fire', 'ice', 'lightning', 'gravity'],
+    twist: 'none',
+    diff: [opts.goalieMode ? 0.72 : 0.6, diff],
+    seed: (Math.random() * 1e9) >>> 0,
+    penalties: false, // All-Star rules: no penalties, and ultimates charge twice as fast
+    ultRate: 2,
+  };
+}
+
 // Rewards from a finished match summary.
 export function computeRewards(save, summary, stage, exhibition) {
   const won = summary.winner === 0;
@@ -251,6 +315,7 @@ export function computeRewards(save, summary, stage, exhibition) {
 
   const exp = {};
   for (const s of mine) {
+    if (!save.roster[s.id]) continue; // an All-Star guest
     let e = (won ? 45 : 28) + s.goals * 16 + s.assists * 11 + s.steals * 5 + s.hits * 3 + s.blocks * 6 + s.passes * 2 + Math.min(s.skills, 6) * 3 + s.ults * 6;
     if (pointGetters === 3) e += 15;
     if (exhibition) e = Math.round(e * 0.6);
@@ -258,7 +323,7 @@ export function computeRewards(save, summary, stage, exhibition) {
   }
   // chemistry: passes, assists and combo goals between each pair that dressed
   const chem = {};
-  const ids = [...new Set(mine.map((s) => s.id))];
+  const ids = [...new Set(mine.filter((s) => save.roster[s.id]).map((s) => s.id))];
   const pairs = [];
   for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) pairs.push(pairKey(ids[i], ids[j]));
   for (const k of pairs) {

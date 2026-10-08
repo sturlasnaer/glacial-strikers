@@ -82,6 +82,7 @@ export class Match {
     this.chemStats = [{}, {}]; // pairKey -> { passes, assists, comboGoals }
     this.chain = [0, 0]; // consecutive completed passes per team
     this.penaltiesOn = cfg.penalties !== false && !cfg.drill;
+    this.ultRate = cfg.ultRate || 1; // (the All-Star Game charges ultimates faster)
     this.pendingPenalty = null;
     this.penStats = [{ pims: 0, ppGoals: 0, kills: 0 }, { pims: 0, ppGoals: 0, kills: 0 }];
     this.extra = [null, null]; // extra attacker when a goalie is pulled
@@ -398,7 +399,7 @@ export class Match {
 
   addUlt(s, amt) {
     if (!s || !s.isSkater) return;
-    let mult = (s.hasPerk('Captain') || s.hasPerk('Storm Rider') || s.hasPerk('Bulwark')) ? 1.15 : 1;
+    let mult = ((s.hasPerk('Captain') || s.hasPerk('Storm Rider') || s.hasPerk('Bulwark')) ? 1.15 : 1) * this.ultRate;
     if (this.hype.t > 0 && this.hype.team === s.team) mult *= 1.25;
     const before = s.ult;
     s.ult = Math.min(100, s.ult + amt * mult);

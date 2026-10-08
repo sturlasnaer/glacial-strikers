@@ -4,9 +4,9 @@ import { Assets } from './assets.js';
 import {
   CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
-  RECRUITS, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, PALETTES, clubText, applyClub, hexToHsv,
+  RECRUITS, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
-import { standings, classicOpponent, CLASSIC_AFTER } from './league.js';
+import { standings, classicOpponent, CLASSIC_AFTER, ALLSTAR_AFTER } from './league.js';
 import { BUFF_TEXT } from './lockerroom.js';
 import { ACHIEVEMENTS } from './achievements.js';
 import { AWARDS, AWARD_BY_ID, seasonStats } from './awards.js';
@@ -56,6 +56,7 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
     return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT[r.kit]}`, size);
   }
   if (team !== 0 && id.startsWith('sub_')) return Assets.icon(`character_portraits/away/${PORTRAIT[id.slice(4)]}`, size, teamId);
+  if (team !== 0 && RECRUITS[id]) return portrait(RECRUITS[id].kit, 1, teamId === 'allstar' ? RECRUITS[id].team : teamId, size, expr); // a League All-Star, by player key
   if (team === 0) {
     const p = P[ART_NAME[id]];
     if (expr && p && p[expr]) return Assets.icon(p[expr], size, CLUB_PAGES());
@@ -69,6 +70,7 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
 };
 export const crest = (teamId, size = 96) => {
   if (teamId === 'home') return Assets.icon('hud_elements/misc/home_crest', size, CLUB_PAGES());
+  if (teamId === 'allstar') return Assets.icon('hud_elements/misc/level_star', size); // the All-Stars' star
   const t = TEAMS[teamId];
   const c = t && t.art && Assets.atlas.crests && Assets.atlas.crests[t.art];
   return c ? Assets.icon(c, size) : Assets.icon('hud_elements/misc/away_crest', size, teamId);
@@ -307,7 +309,7 @@ export class UI {
     if (tab) this.tab = tab;
     const s = this.app.save;
     const next = this.app.nextStage();
-    const nt = next ? TEAMS[next.team] : null;
+    const nt = next ? teamInfo(next.team) : null;
     const anyPoints = rosterIds(s).some((id) => s.roster[id].points > 0 || s.roster[id].pendingPerk !== null);
     const room = this.tab === 'room' && !!(Assets.atlas && Assets.atlas.locker);
     if (this.tab === 'room' && !room) this.tab = 'tournament';
@@ -366,7 +368,7 @@ export class UI {
       shop: shopNew ? t('New gear in reach') : '',
       training: s.training.sessions ? t(s.training.sessions > 1 ? '{n} sessions' : '{n} session', { n: s.training.sessions }) : '',
       trophies: `${got}/${ACHIEVEMENTS.length}`,
-      tournament: next ? t('Next: {team}', { team: TEAMS[next.opponent].name.split(' ').slice(-1)[0] }) : '',
+      tournament: next ? t('Next: {team}', { team: teamInfo(next.opponent).nick || teamInfo(next.opponent).name.split(' ').slice(-1)[0] }) : '',
     };
     const npcs = Assets.atlas.npcs || {};
     const spots = STATIONS.map((st) => {
@@ -506,16 +508,22 @@ export class UI {
         ${badge('snowflake', 48, 'row-ico', '<span class="muted">❄</span>')}<img src="${crest(clOpp, 48)}" alt="" width="26" height="26">
         <span class="fx-name"><b>${t('Winter Classic')}</b><span class="muted">${esc(TEAMS[clOpp].name)} · ${esc(ARENAS.pine_pond.name)}${cl ? '' : ` · ${standings(L)[0].id === 'home' ? t('the runners-up') : t('the league leaders')}`}</span></span>
         <span class="fx-res">${cl ? (cl.won ? `<span class="good">${t('W {a}–{b}', { a: cl.gf, b: cl.ga })}</span>` : `<span class="bad">${t('L {a}–{b}', { a: cl.gf, b: cl.ga })}</span>`) : clNext ? `<span class="gold-t">${t('NEXT')}</span>` : '<span class="muted">—</span>'}</span></div>` : '';
+    // the All-Star Game, between rounds 2 and 3
+    const as = L.allstar, asNext = !as && L.phase === 'regular' && L.round === ALLSTAR_AFTER;
+    const allstarRow = (as ? !as.skipped : L.phase === 'regular' && L.round <= ALLSTAR_AFTER) ? `<div class="fixture classic allstar ${asNext ? 'next' : ''}">
+        ${badge('daily_star', 48, 'row-ico', '<span class="muted">★</span>')}<img src="${crest('home', 48)}" alt="" width="26" height="26">
+        <span class="fx-name"><b>${t('All-Star Game')}</b><span class="muted">${esc(ARENAS.home ? ARENAS.home.name : 'Frostline Rink')} · ${t('the fans vote in the league\'s stars')}</span></span>
+        <span class="fx-res">${as ? (as.won ? `<span class="good">${t('W {a}–{b}', { a: as.gf, b: as.ga })}</span>` : `<span class="bad">${t('L {a}–{b}', { a: as.gf, b: as.ga })}</span>`) : asNext ? `<span class="gold-t">${t('NEXT')}</span>` : '<span class="muted">–</span>'}</span></div>` : '';
     const schedule = L.schedule.map((rd, i) => {
       const opp = rd.games[0].b;
       const res = L.results[i] && L.results[i][0];
       const tm = TEAMS[opp];
-      const isNext = i === L.round && L.phase === 'regular' && !clNext;
+      const isNext = i === L.round && L.phase === 'regular' && !clNext && !asNext;
       const status = res ? (res.ga > res.gb ? `<span class="good">${t('W {a}–{b}', { a: res.ga, b: res.gb })}</span>` : `<span class="bad">${t('L {a}–{b}', { a: res.ga, b: res.gb })}</span>`) : isNext ? `<span class="gold-t">${t('NEXT')}</span>` : '<span class="muted">—</span>';
       return `<div class="fixture ${isNext ? 'next' : ''}">
         <span class="muted">${t('R{n}', { n: i + 1 })}</span><img src="${crest(opp, 48)}" alt="" width="26" height="26">
         <span class="fx-name"><b>${esc(tm.name)}</b><span class="muted">${esc(t(GAME_PLANS[tm.plan === 'counter' ? 'balanced' : tm.plan].name))}${tm.plan === 'counter' ? ` ${t('(adapts)')}` : ''}${record(opp) ? ` · ${t('record {rec}', { rec: record(opp) })}` : ''}</span></span>
-        <span class="fx-res">${status}</span></div>${i === CLASSIC_AFTER - 1 ? classicRow : ''}`;
+        <span class="fx-res">${status}</span></div>${i === ALLSTAR_AFTER - 1 ? allstarRow : ''}${i === CLASSIC_AFTER - 1 ? classicRow : ''}`;
     }).join('');
     let bracket = '';
     if (L.playoffs) {
@@ -528,7 +536,7 @@ export class UI {
     }
     const last = L.results.length ? L.results[L.results.length - 1].slice(1) : [];
     const next = this.app.fixture && this.app.fixture();
-    const nt = next && TEAMS[next.opponent];
+    const nt = next && teamInfo(next.opponent);
     const venueKey = next && next.stage.arena ? next.stage.arena : nt && nt.arena;
     const venue = venueKey ? ARENAS[venueKey].name : 'Frostline Rink';
     const call = L.champion ? (L.champion === 'home' ? t('Champions! Ladies and gentlemen, your {club}!', { club: CLUB.name }) : t('What a season. The ice goes quiet until next year.'))
@@ -571,10 +579,11 @@ export class UI {
     const got = ACHIEVEMENTS.filter((a) => tr.has(a.id));
     const earned = got.reduce((n, a) => n + a.coins, 0);
     const classicWins = (s.classics || []).filter((c) => c.gf > c.ga).length;
+    const allstarWins = (s.allstars || []).filter((c) => c.gf > c.ga).length;
     if ((s.trophiesSeen || 0) !== got.length) { s.trophiesSeen = got.length; writeSave(s); } // the chest in the room stops glowing
     body.innerHTML = `
       <div class="train-top"><div><div class="label">${t('Trophy case')}</div>
-        <p style="margin:2px 0 0;font-size:13px">${t('{n} of {total} unlocked', { n: got.length, total: ACHIEVEMENTS.length })} · ${t('{n} coins earned', { n: earned })}${s.cups ? ` · ${t(s.cups > 1 ? '{n} cups won' : '{n} cup won', { n: s.cups })}` : ''}${classicWins ? ` · ${t(classicWins > 1 ? '{n} Winter Classics won' : '{n} Winter Classic won', { n: classicWins })}` : ''}</p></div>
+        <p style="margin:2px 0 0;font-size:13px">${t('{n} of {total} unlocked', { n: got.length, total: ACHIEVEMENTS.length })} · ${t('{n} coins earned', { n: earned })}${s.cups ? ` · ${t(s.cups > 1 ? '{n} cups won' : '{n} cup won', { n: s.cups })}` : ''}${classicWins ? ` · ${t(classicWins > 1 ? '{n} Winter Classics won' : '{n} Winter Classic won', { n: classicWins })}` : ''}${allstarWins ? ` · ${t(allstarWins > 1 ? '{n} All-Star Games won' : '{n} All-Star Game won', { n: allstarWins })}` : ''}</p></div>
         <button class="btn small ghost" id="tr-lb">${badge('cup_small', 48, 'btn-ico', '🏆')} ${t('Online leaderboards')}</button></div>
       ${s.awards && s.awards.length ? `<div class="label" style="margin:4px 0 6px">${t('Award cabinet')}</div>
       <div class="aw-list cabinet">${s.awards.slice().reverse().map((w) => `
@@ -594,6 +603,36 @@ export class UI {
   }
 
   // The season's awards night, hosted by Kip Vance: one envelope at a time.
+  // The All-Star Game's fan vote: both benches with this season's numbers, then Kip.
+  allStarVote(vote, onGo) {
+    const s = this.app.save, st = s.league && seasonStats(s.league);
+    const line = (key) => { const r = st && st.skaters[key]; return r ? `${r.g} ${t('G')} · ${r.a} ${t('A')}` : ''; };
+    const row = (who, side) => {
+      const r = RECRUITS[who], m = member(who);
+      const from = r && !s.roster[who] ? r.team : 'home';
+      const face = side === 0 ? portrait(who, 0, null, 96) : portrait(r.kit, 1, r.team, 96);
+      const key = from === 'home' ? `home:${who}` : `${r.team}:${r.kit}`;
+      return `<div class="as-row ${who === vote.star ? 'star' : ''}"><img class="as-face" src="${face}" alt="">
+        <div style="min-width:0"><b>${esc(m.name)}</b><span class="muted"><img src="${crest(from, 40)}" alt="" width="16" height="16"> ${esc(from === 'home' ? CLUB.name : TEAMS[from].name)}</span></div>
+        <span class="as-pts">${line(key)}</span></div>`;
+    };
+    const g = TEAMS[vote.goalie];
+    this.modal(`
+      <h2>${t('All-Star Game')}</h2>
+      <p style="margin:0;font-size:13.5px">${t('The fans have voted! {name} leads the home bench, with two of the league\'s stars in your colours. The rest of the league\'s best wear the All-Star navy.', { name: `<b>${esc(member(vote.star).name)}</b>` })}</p>
+      <div class="as-benches">
+        <div class="as-bench us"><div class="label"><img src="${crest('home', 40)}" alt="" width="20" height="20"> ${t('{club} All-Stars', { club: esc(CLUB.nick) })}</div>${vote.ours.map((w) => row(w, 0)).join('')}
+          <div class="as-goalie muted">${t('In goal: {name}', { name: esc(GOALIE.name) })}</div></div>
+        <div class="as-bench them"><div class="label"><img src="${crest('allstar', 40)}" alt="" width="20" height="20"> ${t('League All-Stars')}</div>${vote.theirs.map((w) => row(w, 1)).join('')}
+          <div class="as-goalie muted">${t('In goal: {name}', { name: `${esc(g.names.goalie)} (${esc(g.name)})` })}</div></div>
+      </div>
+      <p class="muted" style="margin:0;font-size:12.5px">${t('A showcase: no penalties, ultimates charge twice as fast, and the standings don\'t change. Only your own players earn EXP.')}</p>
+      <div class="row" style="justify-content:flex-end"><button class="btn gold" id="as-go">${t('To the ice')}</button></div>`, (m, close) => {
+      this.click('#as-go', () => { audio.sfx('confirm'); close(); onGo(); }, m);
+    }, false);
+    audio.jingle('reveal');
+  }
+
   awardsNight(list, season, onDone) {
     const npc = Assets.atlas.npcs && Assets.atlas.npcs.announcer;
     const host = npc ? Assets.icon(npc, 128) : '';
@@ -1505,7 +1544,7 @@ export class UI {
   // lines: [side ('us'|'them'), charId, text]
   dialogue(lines, teamId, header, onDone, mood = null) {
     lines = lines.map((l) => [l[0], l[1], clubText(t(l[2]))]);
-    const tm = TEAMS[teamId];
+    const tm = teamInfo(teamId);
     let i = 0, typing = null, shown = 0;
     const ours = (l) => portrait(l[1], 0, null, 420, expression('us', l[2], mood));
     const gone = (id) => isSigned(this.app.save, recruitKey(teamId, id));
@@ -1515,7 +1554,7 @@ export class UI {
       <div class="dim"></div>
       <div class="dlg" id="dlg">
         <button class="btn small ghost dlg-skip" id="dlg-skip">${t('Skip')}</button>
-        ${header ? `<div class="dlg-head"><div class="vs">${esc(CLUB.nick)}<em>${t('vs')}</em>${esc(tm.name.split(' ').slice(-1)[0])}</div>${header.sub ? `<div class="twist">${esc(header.sub)}</div>` : ''}</div>` : ''}
+        ${header ? `<div class="dlg-head"><div class="vs">${esc(CLUB.nick)}<em>${t('vs')}</em>${esc(tm.nick || tm.name.split(' ').slice(-1)[0])}</div>${header.sub ? `<div class="twist">${esc(header.sub)}</div>` : ''}</div>` : ''}
         <div class="portraits"><img id="pl" alt=""><img id="pr" class="them" alt=""></div>
         <div class="dlg-box panel"><div class="dlg-name" id="dn"></div><div class="dlg-text" id="dt"></div><div class="dlg-more">▼</div></div>
       </div>`);
@@ -1557,7 +1596,7 @@ export class UI {
   // --------------------------------------------------------------- results
   results(data, onContinue) {
     const { summary, rewards, ups, teamId, exhibition } = data;
-    const tm = TEAMS[teamId];
+    const tm = teamInfo(teamId);
     const won = summary.winner === 0;
     const mine = summary.skaters.filter((s) => s.team === 0);
     const score = (s) => s.goals * 3 + s.assists * 2 + s.steals + s.blocks + s.hits * 0.5;
@@ -1585,7 +1624,7 @@ export class UI {
             <div class="reward-total"><span>${t('Coins')}</span><span>+${rewards.coins}</span></div>
             <div class="label" style="margin-top:10px">${t('Experience')}</div>
             <div style="display:grid;gap:6px">
-              ${mine.map((k) => {
+              ${mine.filter((k) => s.roster[k.id]).map((k) => { // (All-Star guests go home with no EXP)
                 const rr = s.roster[k.id];
                 const lu = ups.filter((u) => u.id === k.id);
                 const pct = rr.level >= MAX_LEVEL ? 100 : Math.round((rr.exp / expToNext(rr.level)) * 100);
@@ -1593,7 +1632,7 @@ export class UI {
                   <div><div>${esc(k.name)} <span class="muted">${t('+{n} EXP', { n: rewards.exp[k.id] })}</span> ${lu.length ? `<span class="lvlup">${t('LEVEL {n}!', { n: rr.level })}</span>` : ''}</div>
                   <div class="xpbar"><i data-w="${pct}"></i></div></div><span class="lvl">${t('LV {n}', { n: rr.level })}</span></div>`;
               }).join('')}
-              ${data.rewards.chem ? `<div class="label" style="margin-top:6px">${t('Chemistry')}</div>
+              ${data.rewards.chem && Object.keys(data.rewards.chem).length ? `<div class="label" style="margin-top:6px">${t('Chemistry')}</div>
               ${Object.entries(data.rewards.chem).map(([k, g]) => {
                 const [a, b] = k.split('+');
                 const cb = comboFor(k);

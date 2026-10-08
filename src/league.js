@@ -2,7 +2,8 @@
 // The player's games are real matches; every other game is simulated with a quick
 // strength model so standings move each round. After round 3 comes the Winter Classic,
 // an outdoor showcase on Pine Pond against the league leaders that doesn't count in the
-// standings.
+// standings. After round 2 comes the All-Star Game at home: the fans vote in the league's
+// stars, mixed across two benches (it doesn't count either).
 
 import { TEAMS, TOURNAMENT } from './data.js';
 import { makeRng } from './util.js';
@@ -11,6 +12,7 @@ import { t } from './i18n.js';
 
 export const LEAGUE_TEAMS = ['home', 'lynx', 'comets', 'rams', 'ravens', 'royals'];
 export const CLASSIC_AFTER = 3; // the Winter Classic comes after this many rounds
+export const ALLSTAR_AFTER = 2; // and the All-Star Game after this many
 const OUR_ORDER = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
 
 // Rough team strength for simulated games (home strength follows the player's levels).
@@ -90,6 +92,9 @@ function headToHead(L, a, b) {
 
 // What the player plays next: { kind: 'regular'|'semi'|'final', opponent, round label, stage cfg }.
 export function nextFixture(L) {
+  if (L.phase === 'regular' && L.round === ALLSTAR_AFTER && !L.allstar) {
+    return { kind: 'allstar', opponent: 'allstar', label: t('All-Star Game'), stage: { team: 'allstar', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', round: 'All-Star Game', reward: 260, arena: 'home' } };
+  }
   if (L.phase === 'regular' && L.round === CLASSIC_AFTER && !L.classic) {
     const opp = classicOpponent(L);
     const base = TOURNAMENT.stages.find((s) => s.team === opp);
@@ -124,6 +129,12 @@ export function classicOpponent(L) {
 // The Winter Classic is played: remember the result (the standings don't change).
 export function recordClassic(L, gf, ga, opp) {
   L.classic = { opp, gf, ga, won: gf > ga };
+}
+
+// The All-Star Game is played (or skipped when there aren't enough stars to vote in):
+// remember it; the standings don't change.
+export function recordAllStar(L, result) {
+  L.allstar = result;
 }
 
 // Record the player's game, simulate everything else up to the next player game.

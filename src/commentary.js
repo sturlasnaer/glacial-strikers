@@ -1,6 +1,6 @@
 // Play-by-play commentary: short broadcast call-outs generated from match events.
 
-import { POWER_INFO, TEAMS, COMBOS, CLUB } from './data.js';
+import { POWER_INFO, TEAMS, COMBOS, CLUB, teamInfo } from './data.js';
 import { GOAL_X } from './rink.js';
 import { t } from './i18n.js';
 
@@ -15,11 +15,11 @@ export class Commentary {
 
   attach(m, awayTeamId) {
     this.m = m;
-    this.away = TEAMS[awayTeamId];
+    this.away = teamInfo(awayTeamId);
     this.cool = 2;
     this.queue.length = 0;
     this.lastBreak = null;
-    const team = (t) => (t === 0 ? CLUB.nick : this.away.name.split(' ').slice(-1)[0]);
+    const team = (t) => (t === 0 ? CLUB.nick : this.away.nick || this.away.name.split(' ').slice(-1)[0]);
     const n = (s) => s.name;
 
     m.on('goal', (g) => {

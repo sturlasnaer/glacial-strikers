@@ -1,7 +1,7 @@
 // Locker-room moments: short scenes between league matches with a choice. Choices give
 // chemistry, EXP, coins, or a buff that lasts for the next league match.
 
-import { CHARACTERS, TEAMS, CLUB } from './data.js';
+import { CHARACTERS, TEAMS, CLUB, teamInfo } from './data.js';
 import { applyExp, applyGoalieExp } from './progress.js';
 import { t } from './i18n.js';
 
@@ -90,7 +90,7 @@ export const MOMENTS = [
     id: 'trash-talk', who: ['frost', 'thunder'], weight: 6,
     when: (c) => c.next && c.save.rivals && c.save.rivals[c.next.opponent] && c.save.rivals[c.next.opponent].last && !c.save.rivals[c.next.opponent].last.won,
     title: 'Trash talk',
-    text: (c) => t('The {team} posted a video laughing at the last time we played them.', { team: TEAMS[c.next.opponent].name }),
+    text: (c) => t('The {team} posted a video laughing at the last time we played them.', { team: teamInfo(c.next.opponent).name }),
     choices: [
       { label: 'Answer on the ice', fx: 'Next match: fired up (25% ultimate) and a loud crowd', apply: all(buff({ id: 'fired', type: 'ult', v: 25 }), buff({ id: 'hype', type: 'hype' })), reply: 'Volta pins the video to the locker room door.' },
       { label: 'Ignore it, stay focused', fx: 'Next match: every skater +1 Passing', apply: buff({ id: 'focus', type: 'stat', who: 'all', stat: 'pas', v: 1 }), reply: 'Nix turns the TV off. "We play our game."' },
@@ -99,7 +99,7 @@ export const MOMENTS = [
   {
     id: 'scout', who: ['frost'], weight: 4, when: (c) => !!c.next,
     title: 'Scouting report',
-    text: (c) => t('The scout drops a thick folder on the table: everything on the {team}.', { team: TEAMS[c.next.opponent].name }),
+    text: (c) => t('The scout drops a thick folder on the table: everything on the {team}.', { team: teamInfo(c.next.opponent).name }),
     choices: [
       { label: 'Study their goalie', fx: 'Next match: their goalie covers 6% less net', apply: buff({ id: 'scout', type: 'scoutGoalie', v: 0.94 }), reply: '"Weak glove side when he\'s tired," Nix circles it twice.' },
       { label: 'Study their skaters', fx: 'Next match: +15% steals', apply: buff({ id: 'scout', type: 'steal', v: 1.15 }), reply: 'Bram memorizes every carrier\'s favourite move.' },
