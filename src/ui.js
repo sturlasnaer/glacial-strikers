@@ -16,6 +16,10 @@ import {
   chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups,
 } from './progress.js';
 import { audio } from './audio.js';
+const VOLUMES = [[0, 'Off'], [0.35, 'Low'], [0.7, 'Mid'], [1, 'Full']];
+// dialogue voices: each role speaks at its own pitch; rivals a little lower
+const VOICE = { frost: 660, thunder: 800, stone: 470, goalie: 590 };
+const voicePitch = (kit, us) => { const p = VOICE[String(kit).replace(/^sub_/, '')] || 620; return us ? p : p * 0.88; };
 import { DRILLS, MEDAL_NAMES, MEDAL_COLORS, formatScore } from './drills.js';
 
 const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
@@ -448,12 +452,12 @@ export class UI {
       if (!opened) {
         say.textContent = `And the ${AWARD_BY_ID[w.id].name} goes to...`;
         next.textContent = 'Open the envelope';
-        audio.sfx('whoosh');
+        audio.jingle('reveal');
       } else {
         const ours = w.team === 'home';
         say.textContent = ours ? `${w.name} of the ${CLUB.name}! What a season!` : `${w.name} of the ${TEAMS[w.team].name}. Tip of the cap.`;
         next.textContent = i < list.length - 1 ? 'Next award' : 'That\'s the show';
-        if (ours) { audio.jingle('level'); audio.crowdCheer(0.8); } else audio.crowdOoh(0.5);
+        if (ours) { audio.jingle('win'); audio.crowdCheer(0.8); } else { audio.crowdOoh(0.5); audio.crowdCheer(0.3); }
       }
     };
     const summary = () => {
@@ -743,7 +747,7 @@ export class UI {
         s.club = same ? null : { ...draft };
         this.app.applyClubLook();
         writeSave(s);
-        audio.jingle('level');
+        audio.jingle('achievement');
         close();
         this.hub(this.tab);
       }, m);
@@ -802,7 +806,7 @@ export class UI {
         this.app.ach.unlock('signing');
         this.app.ach.checkMeta();
         writeSave(s);
-        audio.jingle('level');
+        audio.jingle('sign');
         close();
         Assets.ensureKit(homeKitGroups(s)).then(() => this.hub('team'));
         this.modal(`<h2>${esc(r.name)} signs!</h2>
@@ -921,7 +925,7 @@ export class UI {
       this.app.ach.checkMeta();
       s.owned.push(g.id);
       writeSave(s);
-      audio.sfx('coin');
+      audio.sfx('purchase');
       // offer to equip right away
       if (g.slot === 'goalie') { s.goalie.gear = g.id; writeSave(s); this.hub('shop'); return; }
       this.modal(`
@@ -930,7 +934,7 @@ export class UI {
         <p class="muted">Equip it on someone now?</p>
         <div class="row">${rosterIds(s).map((id) => `<button class="btn ghost small" data-who="${id}" style="display:flex;gap:6px;align-items:center"><img src="${portrait(id, 0, null, 64)}" width="32" height="32" alt="">${esc(member(id).name)}</button>`).join('')}</div>
         <button class="btn small ghost" data-close>Later</button>`, (m, close) => {
-        this.click('[data-who]', (b) => { s.roster[b.dataset.who].gear[g.slot] = g.id; writeSave(s); audio.sfx('confirm'); close(); this.hub('shop'); }, m);
+        this.click('[data-who]', (b) => { s.roster[b.dataset.who].gear[g.slot] = g.id; writeSave(s); audio.sfx('equip'); close(); this.hub('shop'); }, m);
       }, true, () => this.hub('shop'));
     }, body);
   }
@@ -1009,6 +1013,22 @@ export class UI {
     return bg;
   }
 
+  // Music room: play any track. The scene's music comes back on close.
+  jukebox() {
+    audio.unlock();
+    const list = audio.tracks();
+    const back = this.app.track;
+    const mark = (m, id) => m.querySelectorAll('[data-track]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.track === id)));
+    this.modal(`
+      <h2>Music room</h2>
+      <p class="muted" style="margin-top:0">Every track is played live by the game's chiptune engine.</p>
+      <div class="jukebox">${list.map((t) => `<button class="chip" data-track="${t.id}" aria-pressed="false">${esc(t.name)}</button>`).join('')}</div>
+      <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>Close</button></div>`, (m) => {
+      mark(m, audio.songName);
+      this.click('[data-track]', (el) => { audio.play(el.dataset.track); mark(m, el.dataset.track); }, m);
+    }, true, () => { if (back) audio.play(back); });
+  }
+
   settings() {
     const s = this.app.save;
     const st = s.settings;
@@ -1018,8 +1038,9 @@ export class UI {
     const body = () => `
       <h2>Settings</h2>
       <div class="label">Sound</div>
-      ${row('Music', onOff('music'))}
-      ${row('Sound effects', onOff('sfx'))}
+      ${row('Music', seg('musicVol', VOLUMES))}
+      ${row('Sound effects', seg('sfxVol', VOLUMES))}
+      ${row('Music room', '<button class="btn small ghost" id="s-jukebox">Listen</button>', 'Every track in the game, from the title theme to the Cup Final.')}
       <div class="label">Gameplay</div>
       ${row('Rival difficulty', seg('difficulty', [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']]))}
       ${row('Aim assist', seg('assist', [['off', 'Off'], ['normal', 'Normal'], ['strong', 'Strong']]), 'Strong tightens your shots and widens pass catching. Off aims dead centre unless you steer.')}
@@ -1046,6 +1067,8 @@ export class UI {
         this.click('[data-set]', (el) => {
           const v = el.dataset.v;
           st[el.dataset.set] = v === 'true' ? true : v === 'false' ? false : Number.isNaN(+v) ? v : +v;
+          if (el.dataset.set === 'musicVol') st.music = st.musicVol > 0;
+          if (el.dataset.set === 'sfxVol') st.sfx = st.sfxVol > 0;
           writeSave(s);
           audio.sfx('click');
           this.app.applySettings();
@@ -1054,6 +1077,7 @@ export class UI {
         }, m);
         this.click('#s-install', async () => { await this.app.install(); m.innerHTML = body(); bind(); }, m);
         this.click('#s-close', () => { audio.sfx('back'); close(); }, m);
+        this.click('#s-jukebox', () => { audio.sfx('click'); this.jukebox(); }, m);
         this.click('#s-reset', (el) => {
           if (el.dataset.armed) { clearSave(); close(); this.app.resetSave(); return; }
           el.dataset.armed = '1'; el.textContent = 'Tap again to erase'; el.classList.add('gold');
@@ -1096,7 +1120,7 @@ export class UI {
       typing = setInterval(() => {
         shown += 2;
         dt.textContent = text.slice(0, shown);
-        if (shown % 4 === 0) audio.sfx('blip');
+        if (shown % 4 === 0) audio.sfx('blip', { pitch: voicePitch(us ? member(id)?.def?.id || 'goalie' : id, us), them: !us });
         if (shown >= text.length) { clearInterval(typing); typing = null; }
       }, 22);
     };

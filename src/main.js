@@ -6,6 +6,7 @@ import { Renderer } from './render.js';
 import { FX } from './fx.js';
 import { Input, TouchControls, mergeInputs } from './input.js';
 import { audio } from './audio.js';
+import { ARENA_MUSIC } from './songs.js';
 import { UI, controlsHtml, crest } from './ui.js';
 import { HUD } from './hud.js';
 import { toScreen } from './rink.js';
@@ -73,8 +74,6 @@ class App {
     const kit = homeKitGroups(this.save);
     if (kit.length) await Promise.race([Assets.ensureKit(kit), new Promise((r) => setTimeout(r, 2500))]);
     this.ach = new AchievementTracker(this.save, (a) => this.toastAchievement(a));
-    audio.setMusic(this.save.settings.music);
-    audio.setSfx(this.save.settings.sfx);
     this.renderer = new Renderer(this.canvas);
     this.fx = new FX();
     this.input = new Input();
@@ -90,7 +89,7 @@ class App {
     window.addEventListener('orientationchange', () => setTimeout(() => this.onResize(), 200));
     document.addEventListener('visibilitychange', () => { if (document.hidden && this.scene === 'match') this.pause(); });
     // audio needs a gesture
-    const unlock = () => { audio.unlock(); audio.play(this.scene === 'match' ? 'match' : 'hub'); };
+    const unlock = () => { audio.unlock(); audio.play(this.track || 'title'); };
     window.addEventListener('pointerdown', unlock, { once: true });
     window.addEventListener('keydown', unlock, { once: true });
     window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' && !this.isTouch) { this.isTouch = true; if (this.scene === 'match') this.hud.show(this.match, this.cur.teamId); } });
@@ -106,7 +105,7 @@ class App {
   // "Achievement unlocked" toast; shows anywhere (menus or matches).
   toastAchievement(a) {
     this.toast(Assets.icon(a.icon, 72), 'Achievement unlocked', a.name, `+${a.coins} coins`);
-    audio.jingle('level');
+    audio.jingle('achievement');
   }
 
   toast(img, small, title, line) {
@@ -125,7 +124,7 @@ class App {
   // Apply comfort / accessibility settings everywhere they matter.
   applySettings() {
     const st = this.save.settings;
-    audio.setMusic(st.music); audio.setSfx(st.sfx);
+    audio.setMusic(st.music !== false && (st.musicVol ?? 1) > 0, st.musicVol ?? 1); audio.setSfx(st.sfx !== false && (st.sfxVol ?? 1) > 0, st.sfxVol ?? 1);
     this.fx.shakeMul = st.shake ?? 1;
     this.fx.flashes = st.flashes !== false;
     this.fx.particleMul = st.particles === 'reduced' ? 0.35 : 1;
@@ -185,6 +184,15 @@ class App {
     }
   }
 
+  // The soundtrack follows the scene (and comes back after the music room).
+  music(name) { this.track = name; audio.play(name); }
+
+  // A close game: either side one goal from winning, or next goal wins.
+  clutch(m) {
+    if (m.drill || this.attract || !['play', 'faceoff', 'penalty'].includes(m.state)) return false;
+    return Math.max(m.score[0], m.score[1]) >= m.winScore - 1 || (m.mods && m.mods.has('sudden'));
+  }
+
   // ------------------------------------------------------------- matches
   makeMatch(cfg, teamId, arena = 'home') {
     Assets.prepareTeam(TEAMS[teamId]);
@@ -224,6 +232,7 @@ class App {
     audio.unlock();
     if (!this.save.seenIntro) {
       this.scene = 'dialogue';
+      this.music('story');
       this.ui.dialogue(INTRO, 'comets', null, () => {
         this.save.seenIntro = true;
         writeSave(this.save);
@@ -242,6 +251,7 @@ class App {
     const powers = stage.powers.length ? 'Power pucks: ' + stage.powers.map((p) => POWER_INFO[p].name).join(', ') + '.' : 'No power pucks this match.';
     const sub = `${stage.round} · ${powers} ${TWIST_INFO[this.twistFor(this.arenaFor(t.id), stage)]}`;
     this.scene = 'dialogue';
+    this.music('story');
     Assets.ensureTeam(t.id, this.arenaFor(t.id)).then(() => this.showStageDialogue(f, t, sub));
   }
 
@@ -301,7 +311,8 @@ class App {
     this.touch.reset();
     this.drillShown = false;
     this.tutorial = -1;
-    audio.play('match');
+    this.music(id === 'shootout' ? 'shootout' : 'training');
+    audio.setArena('home');
     this.checkRotate();
   }
 
@@ -340,7 +351,8 @@ class App {
     this.hud.show(m, teamId, null, { versus: true });
     this.touch.reset();
     this.tutorial = -1;
-    audio.play('match');
+    this.music(ARENA_MUSIC[arena] || 'frostline');
+    audio.setArena(arena);
     this.hud.banner('<div class="small">Local versus</div><div class="big" style="font-size:clamp(48px,10vw,110px)">FACEOFF</div>', 1.6);
     this.announceRule(cfg.twist, arena);
   }
@@ -350,6 +362,7 @@ class App {
     this.hud.hide();
     this.scene = 'results';
     audio.jingle('win');
+    this.music('victory');
     const p1 = summary.winner === 0;
     if (summary.winner !== null) { this.ach.unlock('versus'); writeSave(this.save); }
     this.ui.modal(`
@@ -438,6 +451,7 @@ class App {
     this.ach.checkMeta();
     writeSave(s);
     audio.jingle(won ? 'win' : 'lose');
+    this.music(won ? 'victory' : 'defeat');
     this.ui.modal(`
       <div style="text-align:center">
         <div class="label">Shootout vs ${t.name}</div>
@@ -485,7 +499,8 @@ class App {
     this.announceRule(cfg.twist, arena);
     if (this.cur.daily) setTimeout(() => { if (this.scene === 'match') this.hud.banner(`<div class="small">Daily challenge</div><div class="sub" style="font-size:clamp(16px,3vw,24px)">${dailyGoal(this.cur.daily.goal).text}</div>`, 3); }, 300);
     this.touch.reset();
-    audio.play('match');
+    this.music(/\bFinal$/.test(stage.round || '') ? 'final' : ARENA_MUSIC[arena] || 'frostline');
+    audio.setArena(arena);
     const edge = m.planEdge(0);
     const planLine = plan !== 'balanced' || theirPlan !== 'balanced'
       ? `<div class="sub" style="font-size:clamp(14px,2.4vw,20px)">${GAME_PLANS[plan].name} vs ${GAME_PLANS[theirPlan].name}${edge > 0 ? ' · your edge' : edge < 0 ? ' · their edge' : ''}</div>` : '';
@@ -517,19 +532,25 @@ class App {
       const s = toScreen(x, y);
       return Math.max(0.25, 1 - Math.hypot(s.x - cam().x, s.y - cam().y) / 1100);
     };
+    // volume by distance from the camera, and stereo position across the screen
+    const at = (x, y, k = 1) => {
+      const s = toScreen(x, y);
+      return { vol: k * vol(x, y), pan: Math.max(-0.8, Math.min(0.8, (s.x - cam().x) / 700)) };
+    };
     m.on('shot', (e) => {
-      audio.sfx(e.kind === 'thunderclap' ? 'thunder' : ['slap', 'onetimer', 'zero'].includes(e.kind) ? 'slap' : 'stick', { vol: vol(e.s.x, e.s.y) });
+      audio.sfx(e.kind === 'thunderclap' ? 'thunder' : ['slap', 'onetimer', 'zero'].includes(e.kind) ? 'slap' : 'stick', at(e.s.x, e.s.y));
       if (e.s.controlled && e.kind !== 'wrist') this.rumble(0.35, 0.6, 90, e.s.team);
     });
-    m.on('pass', (e) => audio.sfx('pass', { vol: vol(e.s.x, e.s.y) }));
-    m.on('receive', (e) => audio.sfx('receive', { vol: vol(e.s.x, e.s.y) }));
-    m.on('goalie_pass', () => audio.sfx('pass', { vol: 0.6 }));
-    m.on('puck_boards', (e) => { if (e.power > 220) audio.sfx('boards', { vol: Math.min(1, e.power / 900) * vol(e.x, e.y) }); });
-    m.on('boards', (e) => audio.sfx('boards', { vol: 0.5 * vol(e.s.x, e.s.y) }));
-    m.on('post', () => { audio.sfx('post'); this.rumble(0.15, 0.6, 120); });
-    m.on('net_hit', (e) => { audio.sfx('boards', { vol: 0.4 }); this.renderer.nets.ripple(e.side, this.match.puck.y, 0.4); });
+    m.on('pass', (e) => audio.sfx('pass', at(e.s.x, e.s.y)));
+    m.on('receive', (e) => audio.sfx('receive', at(e.s.x, e.s.y)));
+    m.on('goalie_pass', (e) => audio.sfx('pass', at(e.g.x, e.g.y, 0.6)));
+    m.on('poke_check', (e) => audio.sfx('poke', at(e.g.x, e.g.y)));
+    m.on('puck_boards', (e) => { if (e.power > 220) audio.sfx('boards', at(e.x, e.y, Math.min(1, e.power / 900))); });
+    m.on('boards', (e) => audio.sfx('boards', at(e.s.x, e.s.y, 0.5)));
+    m.on('post', (e) => { audio.sfx('post', at(e.x, e.y)); this.rumble(0.15, 0.6, 120); });
+    m.on('net_hit', (e) => { audio.sfx('net', at(e.side * GOAL_X, 0, 0.6)); this.renderer.nets.ripple(e.side, this.match.puck.y, 0.4); });
     m.on('hit', (e) => {
-      audio.sfx('check', { vol: Math.min(1, Math.max(0.4, e.power / 450)) });
+      audio.sfx('check', at(e.b.x, e.b.y, Math.min(1, Math.max(0.4, e.power / 450))));
       for (const k of [e.a, e.b]) if (k.controlled) { this.rumble(Math.min(1, e.power / 400), 0.3, 130, k.team); if (k === e.b) buzz(15); }
     });
     m.on('penalty', (e) => {
@@ -557,7 +578,7 @@ class App {
     });
         m.on('goalie_returned', (e) => { if (e.team === 0) this.hud.ticker('Halla is back in net.'); });
     m.on('no_goal', (e) => { this.hud.banner(`<div class="small" style="color:#ff6f7d">NO GOAL</div><div class="sub">${e.reason}</div>`, 1.6); audio.sfx('whistle'); audio.crowdOoh(0.8); });
-    m.on('save', (e) => { audio.sfx('save', { vol: 0.8 }); if (!e.caught) audio.crowdOoh(0.6); });
+    m.on('save', (e) => { audio.sfx(e.caught ? 'catch' : 'save', at(e.x, e.y, 0.85)); if (!e.caught) audio.crowdOoh(0.6); });
     m.on('big_save', (e) => { if (!this.attract && !(this.cur && this.cur.drill)) { this.hud.cutin(e.g, null, 'DENIED!'); audio.crowdOoh(1); } });
     m.on('block', () => audio.sfx('save', { vol: 0.6 }));
     m.on('goal', (e) => {
@@ -565,19 +586,25 @@ class App {
       this.replay.markGoal();
       this.replayPending = this.save.settings.replays !== false;
       this.renderer.nets.ripple(e.side, e.y, 1);
-      audio.sfx('horn');
+      // the building cheers its own team; a horn for the home side, a siren for visitors
+      const homeSide = this.arena === 'home' ? 0 : 1;
+      audio.goalHorn(e.team === homeSide);
+      audio.sfx('net', at(e.side * GOAL_X, e.y));
+      if (e.team === homeSide) audio.crowdCheer(1);
+      else { audio.crowdAww(1); audio.crowdCheer(0.25); if (homeSide === 1) audio.crowdBoo(0.6); }
+      if (!(this.cur && this.cur.drill)) audio.jingle(e.team === 0 || (this.cur && this.cur.versus) ? 'goal_for' : 'goal_against');
       this.hud.goal(e);
       if (e.team === 0) buzz([30, 40, 60]);
       setTimeout(() => { if (this.match === m) audio.sfx('whistle', { vol: 0.5 }); }, 2600);
     });
     m.on('faceoff', () => audio.sfx('whistle', { vol: 0.55 }));
     m.on('drop', () => audio.sfx('drop'));
-    m.on('stop', (e) => audio.sfx('stop', { vol: 0.8 * vol(e.s.x, e.s.y) }));
+    m.on('stop', (e) => audio.sfx('stop', at(e.s.x, e.s.y, 0.8)));
     m.on('splash', (e) => {
       const now = performance.now();
       if (now - (this.lastSplash || 0) < 700) return; // one splash at a time
       this.lastSplash = now;
-      audio.sfx('splash', { vol: Math.min(1, e.power / 300) * vol(e.x, e.y) });
+      audio.sfx('splash', at(e.x, e.y, Math.min(1, e.power / 300)));
     });
     m.on('ice_crack', (e) => { audio.sfx('crack', { vol: 0.5 + e.k * 0.3 }); if (!e.grow) this.rumble(0.1, 0.3, 80); });
     m.on('aurora_shift', () => audio.sfx('shimmer', { vol: 0.8 }));
@@ -587,7 +614,7 @@ class App {
       if (this.tutorial >= 0 && !this.powerTipShown) { this.powerTipShown = true; this.hud.hint(this.isTouch ? 'A power orb! Skate the puck through it to charge the puck.' : 'A power orb! Skate or shoot the puck through it to charge the puck.', 5); }
     });
     m.on('power_get', (e) => { audio.sfx('power', { type: e.type }); if (e.by && e.by.team === 0) this.hud.hint(POWER_INFO[e.type].text, 3.5); });
-    m.on('skill', (e) => audio.sfx({ dash: 'dash', glide: 'glide', bedrock: 'bedrock' }[e.id], { vol: vol(e.s.x, e.s.y) }));
+    m.on('skill', (e) => audio.sfx({ dash: 'dash', glide: 'glide', bedrock: 'bedrock' }[e.id], at(e.s.x, e.s.y)));
     m.on('ult', (e) => {
       audio.sfx(e.id === 'monolith' ? 'stone' : 'ult');
       audio.sfx('whoosh', { vol: 0.8 });
@@ -599,7 +626,7 @@ class App {
     m.on('barrier_block', () => audio.sfx('stone', { vol: 0.8 }));
     m.on('ult_denied', (e) => { if (e.s.controlled) { audio.sfx('deny'); this.hud.hint(`${e.s.def.ult.name} needs the puck.`, 2); } });
     m.on('ult_ready', (e) => { if (e.s.controlled) audio.sfx('pickup', { vol: 0.8 }); });
-    m.on('steal', (e) => audio.sfx('stick', { vol: 0.6 * vol(e.s.x, e.s.y) }));
+    m.on('steal', (e) => audio.sfx('stick', at(e.s.x, e.s.y, 0.6)));
     m.on('lightning_pass', () => audio.sfx('dash'));
     m.on('combo', (e) => {
       audio.sfx('combo', { key: e.key });
@@ -653,6 +680,7 @@ class App {
       const done = met ? completeDaily(s, c.daily.date) : null;
       if (done) {
         rewards.lines.push([`Daily challenge · ${done.streak}-day streak`, done.coins]);
+        setTimeout(() => audio.jingle('daily'), 4200);
         rewards.coins += done.coins;
         this.ach.unlock('daily');
         if (done.streak >= 7) this.ach.unlock('daily-streak');
@@ -665,10 +693,11 @@ class App {
     this.wake?.release?.().catch(() => {});
     this.hud.hide();
     this.scene = 'results';
-    if (ups.length) setTimeout(() => audio.jingle('level'), 900);
+    this.music(rewards.won ? 'victory' : 'defeat');
+    if (ups.length) setTimeout(() => audio.jingle('level'), 2600);
     this.ui.results({ summary, rewards, ups, chemUps, teamId: c.teamId, exhibition: c.exhibition, round: c.stage.round, gUp, clips: this.clips }, () => {
       const finish = () => {
-        if (becameChampion) { this.scene = 'results'; this.ui.champion(() => this.goHub('tournament')); } else this.goHub(rewards.won ? 'tournament' : 'team');
+        if (becameChampion) { this.scene = 'results'; this.music('final'); audio.jingle('champion'); this.ui.champion(() => this.goHub('tournament')); } else this.goHub(rewards.won ? 'tournament' : 'team');
       };
       const after = () => this.leagueUpdate(leagueOut, () => this.resolvePerks(() => this.ui.chemUnlocked(chemUps, () => {
         if (becameChampion || c.exhibition) return finish();
@@ -793,8 +822,8 @@ class App {
       <button class="btn small ghost" id="p-quit">${this.cur && this.cur.drill ? 'Quit' : 'Forfeit match'}</button></div>`, (m, close) => {
       const resume = () => { close(); this.resume(); };
       m.querySelector('#p-resume').addEventListener('click', resume);
-      m.querySelector('#p-music').addEventListener('click', (e) => { st.music = !st.music; audio.setMusic(st.music); writeSave(this.save); e.target.textContent = 'Music ' + (st.music ? 'on' : 'off'); e.target.className = 'btn small ' + (st.music ? 'cream' : 'ghost'); });
-      m.querySelector('#p-sfx').addEventListener('click', (e) => { st.sfx = !st.sfx; audio.setSfx(st.sfx); writeSave(this.save); e.target.textContent = 'Sound ' + (st.sfx ? 'on' : 'off'); e.target.className = 'btn small ' + (st.sfx ? 'cream' : 'ghost'); });
+      m.querySelector('#p-music').addEventListener('click', (e) => { st.music = !st.music; if (st.music && !st.musicVol) st.musicVol = 1; this.applySettings(); writeSave(this.save); e.target.textContent = 'Music ' + (st.music ? 'on' : 'off'); e.target.className = 'btn small ' + (st.music ? 'cream' : 'ghost'); });
+      m.querySelector('#p-sfx').addEventListener('click', (e) => { st.sfx = !st.sfx; if (st.sfx && !st.sfxVol) st.sfxVol = 1; this.applySettings(); writeSave(this.save); e.target.textContent = 'Sound ' + (st.sfx ? 'on' : 'off'); e.target.className = 'btn small ' + (st.sfx ? 'cream' : 'ghost'); });
       m.querySelector('#p-quit').addEventListener('click', (e) => {
         if (!e.target.dataset.armed) { e.target.dataset.armed = '1'; e.target.textContent = 'Tap again to confirm'; return; }
         close();
@@ -827,7 +856,8 @@ class App {
     this.hud.hide();
     if (!this.attract) this.startAttract();
     this.ui.title();
-    audio.play('hub');
+    this.music('title');
+    audio.setArena('menu');
   }
 
   goHub(tab) {
@@ -835,10 +865,11 @@ class App {
     this.hud.hide();
     this.rotateEl.hidden = true;
     if (!this.attract) this.startAttract();
+    audio.setArena('menu');
     if (this.awardsNight()) return;
     this.ui.hub(tab);
     this.setHubBackground();
-    audio.play('hub');
+    this.music('hub');
   }
 
   // New club colours or name: recolour our art and the signings, clear cached frames.
@@ -873,6 +904,7 @@ class App {
     if (ours >= 3) this.ach.unlock('sweep');
     writeSave(s);
     this.scene = 'results';
+    this.music('awards');
     this.ui.awardsNight(list, L.season, () => this.resolvePerks(() => this.goHub('tournament')));
     return true;
   }
@@ -974,7 +1006,11 @@ class App {
       this.clips.frame();
       this.hud.update(realDt);
       this.crowdT = (this.crowdT || 0) - realDt;
-      if (this.crowdT <= 0) { this.crowdT = 0.25; audio.setCrowd(this.attract ? 0.15 : this.fx.excite); }
+      if (this.crowdT <= 0) {
+        this.crowdT = 0.25;
+        audio.setCrowd(this.attract || this.scene !== 'match' ? 0 : this.fx.excite);
+        audio.setIntensity(this.scene === 'match' && this.clutch(m) ? 1 : 0);
+      }
       if (this.attract && m.state === 'over' && m.stateT > 3) this.startAttract();
       if (this.scene === 'match' && this.tutorial >= 0) {
         this.tutT -= realDt;

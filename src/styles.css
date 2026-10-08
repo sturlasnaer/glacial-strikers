@@ -596,3 +596,7 @@ body.in-hub.hub-room #screen { background: linear-gradient(rgba(8, 14, 26, 0.82)
 .color-pick { flex-direction: row; align-items: center; gap: 8px; }
 .color-pick input { width: 44px; height: 32px; padding: 0; border: 2px solid var(--navy); border-radius: 6px; background: none; }
 @media (max-width: 560px) { .club-form { grid-template-columns: 1fr 1fr; } .club-preview img { width: 70px; height: 70px; } }
+
+/* music room */
+.jukebox { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 16px; }
+.jukebox .chip { padding: 6px 14px; font-size: 14px; }

@@ -49,7 +49,9 @@ Hold shoot while a pass is on its way to fire a **one-timer**. Your skates plant
 - **Power pucks:** fire, ice, lightning, gravity. Orbs spawn in contested spots and the power belongs to the puck.
 - **Arena twists:** speed lanes (semifinal), cracked ice (final).
 - **RPG:** EXP and levels, stat points, perk choices at levels 3/5/7, gear with tradeoffs, training, a 5-stage tournament with dialogue, seasons and exhibitions. Progress saves in the browser.
-- **Feel:** reactive pixel crowd, flickering arena lamps, goal lamp, slow-mo goals, confetti, ice scratches that build up, snow, screen shake, synthesized chiptune music and SFX.
+- **Feel:** reactive pixel crowd, flickering arena lamps, goal lamp, slow-mo goals, confetti, ice scratches that build up, snow, screen shake.
+- **Soundtrack:** 13 SNES-style chiptune tracks played live by the game's own tracker engine (no audio files): the title theme, the locker room, a match theme for each arena (Frostline Faceoff, Ember Dome, Aurora Palace, the Pine Pond jig), the Cup Final, shootout, practice, awards night, story scenes, and victory and defeat. They share the Strikers motif. When either side is a goal from winning, extra harmony and drum layers fade in. Jingles mark goals for and against, wins, losses, level-ups, signings, achievements, the daily challenge, award envelopes and the championship. Settings has music and sound volumes and a Music room to play any track.
+- **Sound:** each arena has its own acoustics (a big echo in the Ember Dome and Aurora Palace, almost none outdoors on Pine Pond) and its own goal horn: Frostline's two-blast horn, a volcanic horn and flame burst, a royal fanfare with chimes, and cowbells with a hand-cranked siren. The visitors' goals get a siren instead. Sounds are panned to where they happen. The crowd murmurs and shouts, cheers its own team, groans or boos at the visitors, and chants. Glove catches, pad saves, poke checks, posts, glass rattles, nets and the shop register all have their own sounds, and every speaker in a dialogue has their own voice blip.
 - **Chemistry combos:** each pair (Nix+Volta, Nix+Bram, Volta+Bram) levels up chemistry from passes, assists and combo goals. From level 1, a pass between the pair followed by a quick shot fires their combo: Frostbolt, Avalanche or Thunderquake. Consecutive passes build a pass chain that adds shot power. Rivals have chemistry too.
 - **Penalties and power plays:** hitting a skater away from the puck can draw interference, and very hard hits can draw charging or boarding. The player sits 15 seconds in the box, the faceoff moves to the offender's end, and a power-play goal ends it early. Power-play goals and penalty kills pay bonus coins.
 - **Pull the goalie:** trailing when the other team needs one more goal, swap Halla for an extra attacker. She skates off to the bench, and if you send her back mid-play she skates back to the crease, so the net is open for about a second. The AI pulls its goalie too, so watch for empty nets.
@@ -103,7 +105,9 @@ src/abilities.js      skills and ultimates
 src/rink.js           rink geometry measured from the backdrop art
 src/render.js         canvas renderer and camera
 src/fx.js             particles, effects, crowd, shake/slow-mo
-src/audio.js          WebAudio music and SFX
+src/audio.js          sound effects, crowd, arena acoustics, music hookup
+src/music.js          chiptune tracker engine and synthesized instruments
+src/songs.js          the soundtrack and jingles
 src/ui.js, hud.js     menus, hub, dialogue, results, in-match HUD
 src/data.js           characters, gear, teams, tournament, dialogue
 src/progress.js       save data, rewards, levelling
@@ -118,6 +122,11 @@ python3 -m venv ../.venv && ../.venv/bin/pip install pillow numpy   # once
 ../.venv/bin/python tools/build_assets.py ../assets/Glacial-Strikers-Expansion-v2 assets/gfx ../assets/Glacial-Strikers-v3-Arena-Add-On ../assets/Glacial-Strikers-v4-Batch-A ../assets/Glacial-Strikers-Gear-Masks ../assets/Glacial-Strikers-v5-Goalies
 ```
 Rebuilds the atlases from the complete v2 sprite pack (v1, P1 gameplay and the rival/story/arena art in one atlas) plus the v3 arena add-on (nets, near glass, scoreboard, banners, mascot) v4 Batch A (rival diagonals and hit reactions, Blaze and Horn expressions; merged by `tools/merge_batch_a.py`), gear masks when they exist, and v5 goalies (front, back, skating and puck handling for all seven goalie variants; merged by `tools/merge_goalies.py`). Every character is rescaled to the v1 skaters' height, stray fragments from neighbouring cells are erased, and poses are mapped onto the game's names. Pages are split into `home`, `away` and one `rival_<team>` group per rival; rival pages, arenas, cut-in banners and the locker room load in the background after startup.
+
+```bash
+node tools/test_music.mjs
+```
+Compiles every song and jingle, checks each bar's length, and lints the harmony (melody notes that clash with the chord on strong beats, notes outside the key). Run it after editing `src/songs.js`.
 
 ```bash
 node tools/sim.mjs 20 0.6 0.6
