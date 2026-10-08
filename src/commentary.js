@@ -2,6 +2,7 @@
 
 import { POWER_INFO, TEAMS, COMBOS, CLUB } from './data.js';
 import { GOAL_X } from './rink.js';
+import { t } from './i18n.js';
 
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
@@ -24,47 +25,47 @@ export class Commentary {
     m.on('goal', (g) => {
       const s = g.scorer;
       let line;
-      if (!s) line = `Own goal! ${team(g.team)} will take it.`;
-      else if (g.kind === 'onetimer') line = pick([`ONE-TIMER! ${n(s)} buries it!`, `${n(s)} one-times it home!`]);
-      else if (g.kind === 'zero') line = `${n(s)} freezes the whole defense! GOAL!`;
-      else if (g.kind === 'thunderclap') line = `THUNDERCLAP! ${n(s)} lights the lamp!`;
-      else if (g.powerPlay) line = `Power-play goal! ${n(s)} makes them pay.`;
-      else if (m.goalies.find((k) => k.goalSide === g.side).disabled) line = `${n(s)} into the empty net!`;
-      else if (g.special && g.special.combo) line = `${COMBOS[g.special.combo].name} goal! ${n(s)} finishes the combo!`;
-      else if (g.power) line = `${n(s)} scores with the ${POWER_INFO[g.power].name}!`;
-      else if (g.assists.length) line = pick([`${n(s)} scores! Lovely feed from ${n(g.assists[0])}.`, `${n(g.assists[0])} to ${n(s)}... SCORES!`]);
-      else line = pick([`${n(s)} SCORES!`, `${n(s)} finds the back of the net!`, `What a finish from ${n(s)}!`]);
+      if (!s) line = t('Own goal! {team} will take it.', { team: team(g.team) });
+      else if (g.kind === 'onetimer') line = pick([t('ONE-TIMER! {name} buries it!', { name: n(s) }), t('{name} one-times it home!', { name: n(s) })]);
+      else if (g.kind === 'zero') line = t('{name} freezes the whole defense! GOAL!', { name: n(s) });
+      else if (g.kind === 'thunderclap') line = t('THUNDERCLAP! {name} lights the lamp!', { name: n(s) });
+      else if (g.powerPlay) line = t('Power-play goal! {name} makes them pay.', { name: n(s) });
+      else if (m.goalies.find((k) => k.goalSide === g.side).disabled) line = t('{name} into the empty net!', { name: n(s) });
+      else if (g.special && g.special.combo) line = t('{combo} goal! {name} finishes the combo!', { combo: t(COMBOS[g.special.combo].name), name: n(s) });
+      else if (g.power) line = t('{name} scores with the {power}!', { name: n(s), power: t(POWER_INFO[g.power].name) });
+      else if (g.assists.length) line = pick([t('{name} scores! Lovely feed from {from}.', { name: n(s), from: n(g.assists[0]) }), t('{from} to {name}... SCORES!', { from: n(g.assists[0]), name: n(s) })]);
+      else line = pick([t('{name} SCORES!', { name: n(s) }), t('{name} finds the back of the net!', { name: n(s) }), t('What a finish from {name}!', { name: n(s) })]);
       this.say(line, 3, true);
       const [a, b] = m.score;
       setTimeout(() => {
         if (this.m !== m) return;
-        if (a === 4 && b === 4) this.say('Four apiece. Next goal wins it!', 2);
-        else if (a === 4 || b === 4) { if (a < 5 && b < 5) this.say(`${team(a === 4 ? 0 : 1)} one goal from victory!`, 2); }
-        else if (a === b) this.say(`All tied up at ${a}!`, 2);
+        if (a === 4 && b === 4) this.say(t('Four apiece. Next goal wins it!'), 2);
+        else if (a === 4 || b === 4) { if (a < 5 && b < 5) this.say(t('{team} one goal from victory!', { team: team(a === 4 ? 0 : 1) }), 2); }
+        else if (a === b) this.say(t('All tied up at {n}!', { n: a }), 2);
       }, 2600);
     });
     m.on('save', (e) => {
-      if (e.speed > 900 || e.caught === false && e.speed > 700) this.say(pick([`${e.g.name} says no!`, `Huge stop by ${e.g.name}!`, `${e.g.name} with the glove!`]), 1);
+      if (e.speed > 900 || e.caught === false && e.speed > 700) this.say(pick([t('{name} says no!', { name: e.g.name }), t('Huge stop by {name}!', { name: e.g.name }), t('{name} with the glove!', { name: e.g.name })]), 1);
     });
-    m.on('goalie_dive', (e) => this.say(`${e.g.name} sprawls across!`, 1));
-    m.on('goalie_plays', (e) => this.say(pick([`${e.g.name} comes out to play it.`, `${e.g.name} stops it behind the net.`, `Out goes ${e.g.name} to handle the puck.`]), 1));
-    m.on('dump', (e) => { if (Math.random() < 0.4) this.say(`${n(e.s)} dumps it in.`, 0); });
+    m.on('goalie_dive', (e) => this.say(t('{name} sprawls across!', { name: e.g.name }), 1));
+    m.on('goalie_plays', (e) => this.say(pick([t('{name} comes out to play it.', { name: e.g.name }), t('{name} stops it behind the net.', { name: e.g.name }), t('Out goes {name} to handle the puck.', { name: e.g.name })]), 1));
+    m.on('dump', (e) => { if (Math.random() < 0.4) this.say(t('{name} dumps it in.', { name: n(e.s) }), 0); });
     m.on('hit', (e) => {
-      if (e.power > 250) this.say(pick([`${n(e.a)} lays out ${n(e.b)}!`, `BOOM! ${n(e.a)} with the hit!`, `${n(e.b)} won't forget that one.`]), 1);
+      if (e.power > 250) this.say(pick([t('{hitter} lays out {target}!', { hitter: n(e.a), target: n(e.b) }), t('BOOM! {name} with the hit!', { name: n(e.a) }), t('{name} won\'t forget that one.', { name: n(e.b) })]), 1);
     });
-    m.on('post', () => this.say(pick(['Off the iron!', 'PING! Off the post!', 'Inches away!']), 2));
-    m.on('steal', (e) => this.say(pick([`${n(e.s)} picks the pocket!`, `Takeaway by ${n(e.s)}!`]), 0));
-    m.on('block', (e) => this.say(`${n(e.s)} blocks it with the body!`, 1));
-    m.on('power_get', (e) => { if (e.by) this.say(`${n(e.by)} grabs the ${POWER_INFO[e.type].name}!`, 1); });
-    m.on('ult', (e) => this.say(`${n(e.s)} unleashes ${e.s.def.ult.name}!`, 2));
-    m.on('barrier_block', () => this.say('The wall holds!', 1));
-    m.on('faceoff_win', (e) => { if (Math.random() < 0.35) this.say(`${n(e.s)} wins the draw.`, 0); });
-    m.on('lightning_pass', (e) => this.say(`Lightning pass to ${n(e.to)}!`, 1));
-    m.on('combo', (e) => this.say(pick([`${n(e.from)} to ${n(e.s)}... ${COMBOS[e.key].name.toUpperCase()}!`, `${COMBOS[e.key].name}! ${n(e.from)} and ${n(e.s)} in sync!`]), 2));
-    m.on('chain', (e) => { if (e.n === 3) this.say(pick(['Tic-tac-toe!', 'Beautiful passing!', 'They\'re moving it around!']), 1); else if (e.n >= 5) this.say(`${e.n} passes in a row!`, 1); });
-    m.on('penalty', (e) => this.say(`${n(e.s)} heads to the box for ${e.reason.toLowerCase()}. ${team(1 - e.team)} on the power play!`, 3, true));
-    m.on('goalie_pulled', (e) => this.say(`${team(e.team)} pull their goalie for the extra attacker!`, 3));
-    m.on('plow', (e) => this.say(`${n(e.s)} gets bowled over!`, 1));
+    m.on('post', () => this.say(pick([t('Off the iron!'), t('PING! Off the post!'), t('Inches away!')]), 2));
+    m.on('steal', (e) => this.say(pick([t('{name} picks the pocket!', { name: n(e.s) }), t('Takeaway by {name}!', { name: n(e.s) })]), 0));
+    m.on('block', (e) => this.say(t('{name} blocks it with the body!', { name: n(e.s) }), 1));
+    m.on('power_get', (e) => { if (e.by) this.say(t('{name} grabs the {power}!', { name: n(e.by), power: t(POWER_INFO[e.type].name) }), 1); });
+    m.on('ult', (e) => this.say(t('{name} unleashes {ult}!', { name: n(e.s), ult: t(e.s.def.ult.name) }), 2));
+    m.on('barrier_block', () => this.say(t('The wall holds!'), 1));
+    m.on('faceoff_win', (e) => { if (Math.random() < 0.35) this.say(t('{name} wins the draw.', { name: n(e.s) }), 0); });
+    m.on('lightning_pass', (e) => this.say(t('Lightning pass to {name}!', { name: n(e.to) }), 1));
+    m.on('combo', (e) => this.say(pick([t('{from} to {name}... {combo}!', { from: n(e.from), name: n(e.s), combo: t(COMBOS[e.key].name).toUpperCase() }), t('{combo}! {from} and {name} in sync!', { combo: t(COMBOS[e.key].name), from: n(e.from), name: n(e.s) })]), 2));
+    m.on('chain', (e) => { if (e.n === 3) this.say(pick([t('Tic-tac-toe!'), t('Beautiful passing!'), t('They\'re moving it around!')]), 1); else if (e.n >= 5) this.say(t('{n} passes in a row!', { n: e.n }), 1); });
+    m.on('penalty', (e) => this.say(t('{name} heads to the box for {reason}. {team} on the power play!', { name: n(e.s), reason: t(e.reason).toLowerCase(), team: team(1 - e.team) }), 3, true));
+    m.on('goalie_pulled', (e) => this.say(t('{team} pull their goalie for the extra attacker!', { team: team(e.team) }), 3));
+    m.on('plow', (e) => this.say(t('{name} gets bowled over!', { name: n(e.s) }), 1));
   }
 
   say(text, priority = 0, force = false) {
@@ -88,7 +89,7 @@ export class Commentary {
       const dx = (c.side * GOAL_X - c.x) * c.side;
       if (dx < 520 && dx > 60) {
         const alone = m.opponents(c).every((o) => (o.x - c.x) * c.side < -30);
-        if (alone && this.lastBreak !== c) { this.lastBreak = c; this.say(pick([`${c.name} is in alone!`, `Breakaway, ${c.name}!`]), 2); }
+        if (alone && this.lastBreak !== c) { this.lastBreak = c; this.say(pick([t('{name} is in alone!', { name: c.name }), t('Breakaway, {name}!', { name: c.name })]), 2); }
       }
     } else if (!c) this.lastBreak = this.lastBreak && m.puck.speed > 50 ? this.lastBreak : null;
   }

@@ -30,6 +30,7 @@ import {
   loadSave, newSave, writeSave, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards,
   lineupIds, homeKitGroups,
 } from './progress.js';
+import { t, setLang, getLang, defaultLang } from './i18n.js';
 
 const STEP = 1 / 60;
 // Vibrate only once the player has interacted (browsers block it before that).
@@ -61,7 +62,7 @@ class App {
       await Assets.load((f) => { bar.style.width = Math.round(f * 100) + '%'; });
       setTimeout(() => Assets.prefetch(), 1200);
     } catch (e) {
-      this.loadingEl.querySelector('.err').textContent = 'The game art did not load. Check your connection and reload the page.';
+      this.loadingEl.querySelector('.err').textContent = t('The game art did not load. Check your connection and reload the page.');
       throw e;
     }
     if (document.fonts?.load) {
@@ -71,6 +72,9 @@ class App {
       ]);
     }
     this.save = loadSave() || newSave();
+    setLang(defaultLang(this.save.settings.lang)); this.save.settings.lang = getLang();
+    document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
+    document.querySelectorAll('[data-i18n-aria]').forEach((el) => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
     applyClub(this.save.club);
     Assets.prepareClub();
     // signings wear home colours, recoloured from their old team's pages
@@ -114,7 +118,7 @@ class App {
 
   // "Achievement unlocked" toast; shows anywhere (menus or matches).
   toastAchievement(a) {
-    this.toast(Assets.icon(a.icon, 72), 'Achievement unlocked', a.name, `+${a.coins} coins`);
+    this.toast(Assets.icon(a.icon, 72), t('Achievement unlocked'), t(a.name), t('+{n} coins', { n: a.coins }));
     audio.jingle('achievement');
   }
 
@@ -288,12 +292,13 @@ class App {
     const f = this.fixture();
     if (!f) return;
     const stage = f.stage;
-    const t = TEAMS[f.opponent];
-    const powers = stage.powers.length ? 'Power pucks: ' + stage.powers.map((p) => POWER_INFO[p].name).join(', ') + '.' : 'No power pucks this match.';
-    const sub = `${stage.round} · ${powers} ${TWIST_INFO[this.twistFor(this.arenaFor(t.id), stage)]}`;
+    const team = TEAMS[f.opponent];
+    const powers = stage.powers.length ? t('Power pucks: {list}.', { list: stage.powers.map((p) => t(POWER_INFO[p].name)).join(', ') }) : t('No power pucks this match.');
+    const twist = TWIST_INFO[this.twistFor(this.arenaFor(team.id), stage)];
+    const sub = `${t(stage.round, { n: stage.roundN })} · ${powers} ${twist ? t(twist) : ''}`;
     this.scene = 'dialogue';
     this.music('story');
-    Assets.ensureTeam(t.id, this.arenaFor(t.id)).then(() => this.showStageDialogue(f, t, sub));
+    Assets.ensureTeam(team.id, this.arenaFor(team.id)).then(() => this.showStageDialogue(f, team, sub));
   }
 
   // Rivals with their own building host you there.
@@ -304,7 +309,7 @@ class App {
 
   announceRule(twist, arena) {
     if (!twist || twist === 'none' || !TWIST_INFO[twist]) return;
-    setTimeout(() => { if (this.scene === 'match') this.hud.ticker(TWIST_INFO[twist]); }, 1400);
+    setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t(TWIST_INFO[twist])); }, 1400);
   }
 
   // A rival's building brings its own rule; the Frostline rink keeps the stage's twist.
@@ -367,13 +372,13 @@ class App {
   }
 
   beginVersus(teamId, arena) {
-    const t = TEAMS[teamId];
+    const team = TEAMS[teamId];
     const ids = ['frost', 'thunder', 'stone'];
     const chem = { 'frost+thunder': 1, 'frost+stone': 1, 'stone+thunder': 1 };
     const cfg = {
       teams: [
         { skaters: ids.map((id) => ({ def: CHARACTERS[id], stats: { ...CHARACTERS[id].base }, name: CHARACTERS[id].name, perks: [] })), goalie: { stats: { rfx: 6, pos: 6 }, name: GOALIE.name }, chem },
-        { skaters: ids.map((id) => ({ def: CHARACTERS[id], stats: { ...CHARACTERS[id].base }, name: t.names[id], perks: [], sprite: t.art ? `${t.art}_${ROLE[id]}` : null })), goalie: { stats: { rfx: 6, pos: 6 }, name: t.names.goalie, art: t.art }, chem },
+        { skaters: ids.map((id) => ({ def: CHARACTERS[id], stats: { ...CHARACTERS[id].base }, name: team.names[id], perks: [], sprite: team.art ? `${team.art}_${ROLE[id]}` : null })), goalie: { stats: { rfx: 6, pos: 6 }, name: team.names.goalie, art: team.art }, chem },
       ],
       humanTeam: 0, humans: [0, 1],
       powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none',
@@ -394,12 +399,12 @@ class App {
     this.tutorial = -1;
     this.music(ARENA_MUSIC[arena] || 'frostline');
     audio.setArena(arena);
-    this.hud.banner('<div class="small">Local versus</div><div class="big" style="font-size:clamp(48px,10vw,110px)">FACEOFF</div>', 1.6);
+    this.hud.banner(`<div class="small">${t('Local versus')}</div><div class="big" style="font-size:clamp(48px,10vw,110px)">${t('FACEOFF')}</div>`, 1.6);
     this.announceRule(cfg.twist, arena);
   }
 
   endVersus(summary) {
-    const t = TEAMS[this.cur.teamId];
+    const team = TEAMS[this.cur.teamId];
     this.hud.hide();
     this.scene = 'results';
     audio.jingle('win');
@@ -408,11 +413,11 @@ class App {
     if (summary.winner !== null) { this.ach.unlock('versus'); writeSave(this.save); }
     this.ui.modal(`
       <div style="text-align:center">
-        <div class="label">Local versus</div>
-        <div class="drill-score" style="color:${p1 ? 'var(--ice)' : 'var(--coral)'}">Player ${p1 ? 1 : 2} wins!</div>
-        <div class="medal-big" style="--m:var(--cream)">${CLUB.nick} ${summary.score[0]} – ${summary.score[1]} ${t.name.split(' ').slice(-1)[0]}</div>
+        <div class="label">${t('Local versus')}</div>
+        <div class="drill-score" style="color:${p1 ? 'var(--ice)' : 'var(--coral)'}">${t('Player {n} wins!', { n: p1 ? 1 : 2 })}</div>
+        <div class="medal-big" style="--m:var(--cream)">${CLUB.nick} ${summary.score[0]} – ${summary.score[1]} ${team.name.split(' ').slice(-1)[0]}</div>
       </div>
-      <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="vs-title">Title</button><button class="btn gold" id="vs-again">Rematch</button></div>`, (m, close) => {
+      <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="vs-title">${t('Title')}</button><button class="btn gold" id="vs-again">${t('Rematch')}</button></div>`, (m, close) => {
       m.querySelector('#vs-again').addEventListener('click', () => { close(); this.startVersus(this.cur.teamId); });
       m.querySelector('#vs-title').addEventListener('click', () => { close(); this.startAttract(); this.goTitle(); });
     }, false);
@@ -430,29 +435,29 @@ class App {
   hookDrill(m) {
     const fx = this.fx, hud = this.hud;
     m.on('drill_count', (e) => { hud.banner(`<div class="big" style="font-size:clamp(60px,14vw,140px)">${e.n}</div>`, 0.8); audio.sfx('click'); });
-    m.on('drill_go', () => { hud.banner('<div class="big" style="color:#ffd45e">GO!</div>', 0.8); audio.sfx('whistle', { vol: 0.6 }); });
+    m.on('drill_go', () => { hud.banner(`<div class="big" style="color:#ffd45e">${t('GO!')}</div>`, 0.8); audio.sfx('whistle', { vol: 0.6 }); });
     m.on('drill_goal', (e) => this.renderer.nets.ripple(e.side, e.y, 0.8));
     m.on('gate_ok', (e) => { fx.ring(e.x, e.y, 34, '#7fe08a', 0.4); audio.sfx('coin', { vol: 0.35 }); });
     m.on('gate_miss', (e) => { fx.text(e.x, e.y - 60, '+2s', '#ff6f7d', 0.9, 20); audio.sfx('deny'); });
     m.on('target_hit', (e) => { fx.text(GOAL_X - 70, e.y - 80, `+${e.pts}`, '#ffd45e', 1, 24); fx.burst(GOAL_X - 4, e.y, 14, 18, ['#ff3b3b', '#fff2cb', '#ffd45e'], 220, 0.5); audio.sfx('post', { vol: 0.6 }); audio.crowdCheer(0.3); });
     m.on('target_miss', (e) => { fx.text(GOAL_X - 70, e.y - 80, '+10', '#c3d3ea', 0.8, 16); audio.sfx('boards', { vol: 0.4 }); });
     m.on('rondo_pass', (e) => { fx.text(e.s.x, e.s.y - 100, `+${e.pts}`, '#71dce8', 0.8, 15 + e.pts * 2); audio.sfx('coin', { vol: 0.25 + e.pts * 0.05 }); });
-    m.on('rondo_steal', (e) => { hud.banner(`<div class="small">${e.why === 'zone' ? 'OUT OF THE ZONE' : e.why === 'shot' ? 'NO SHOOTING!' : 'STOLEN!'}</div>`, 1); audio.sfx('deny'); });
+    m.on('rondo_steal', (e) => { hud.banner(`<div class="small">${e.why === 'zone' ? t('OUT OF THE ZONE') : e.why === 'shot' ? t('NO SHOOTING!') : t('STOLEN!')}</div>`, 1); audio.sfx('deny'); });
     m.on('breakaway_result', (e) => {
-      hud.banner(`<div class="small" style="color:${e.kind === 'goal' ? '#ffd45e' : '#c3d3ea'}">${{ goal: 'GOAL!', save: 'SAVED', miss: 'MISSED', time: 'TOO SLOW' }[e.kind]}</div>`, 1.2);
+      hud.banner(`<div class="small" style="color:${e.kind === 'goal' ? '#ffd45e' : '#c3d3ea'}">${{ goal: t('GOAL!'), save: t('SAVED'), miss: t('MISSED'), time: t('TOO SLOW') }[e.kind]}</div>`, 1.2);
       if (e.kind === 'goal') { audio.jingle('goal'); audio.crowdCheer(0.6); fx.lamp = 1.5; } else audio.crowdOoh(0.5);
     });
     m.on('shootout_turn', (e) => {
       const us = e.us;
-      hud.banner(`<div class="small">${us ? 'YOUR SHOT' : 'YOU\'RE IN GOAL'}</div><div class="sub">${us ? e.shooter.name : `Stop ${e.shooter.name}!`}</div>`, 1.6);
+      hud.banner(`<div class="small">${us ? t('YOUR SHOT') : t('YOU\'RE IN GOAL')}</div><div class="sub">${us ? e.shooter.name : t('Stop {name}!', { name: e.shooter.name })}</div>`, 1.6);
     });
     m.on('shootout_result', (e) => {
       const mine = e.team === 0;
-      hud.banner(`<div class="small" style="color:${e.scored === mine ? '#ffd45e' : '#ff6f7d'}">${e.scored ? 'SCORES!' : mine ? 'STOPPED' : 'BIG SAVE!'}</div><div class="sub">${e.goals[0]} – ${e.goals[1]}</div>`, 1.4);
+      hud.banner(`<div class="small" style="color:${e.scored === mine ? '#ffd45e' : '#ff6f7d'}">${e.scored ? t('SCORES!') : mine ? t('STOPPED') : t('BIG SAVE!')}</div><div class="sub">${e.goals[0]} – ${e.goals[1]}</div>`, 1.4);
       if (e.scored) { audio.jingle('goal'); fx.lamp = 1.4; } else audio.crowdOoh(0.6);
       if (!mine && !e.scored) audio.crowdCheer(0.6);
     });
-    m.on('drill_over', () => { audio.sfx('whistle'); hud.banner('<div class="big" style="font-size:clamp(48px,10vw,110px)">FINISHED</div>', 1.4); });
+    m.on('drill_over', () => { audio.sfx('whistle'); hud.banner(`<div class="big" style="font-size:clamp(48px,10vw,110px)">${t('FINISHED')}</div>`, 1.4); });
   }
 
   finishDrill() {
@@ -477,7 +482,9 @@ class App {
       const el = where && document.querySelector(where);
       if (!el || !r) return;
       const info = BOARD_INFO[board];
-      el.innerHTML = `Online: <b>#${r.rank}</b> of ${r.total}${r.improved ? ' · new personal best posted' : ` · your best ${info.fmt(r.best)}`}`;
+      el.innerHTML = r.improved
+        ? t('Online: {rank} of {total} · new personal best posted', { rank: `<b>#${r.rank}</b>`, total: r.total })
+        : t('Online: {rank} of {total} · your best {best}', { rank: `<b>#${r.rank}</b>`, total: r.total, best: info.fmt(r.best) });
     });
   }
 
@@ -493,7 +500,7 @@ class App {
   finishShootout(res) {
     const s = this.save, c = this.cur;
     const won = res.score === 1;
-    const t = TEAMS[c.teamId];
+    const team = TEAMS[c.teamId];
     const coins = (won ? 60 : 20) + res.goals[0] * 10;
     s.coins += coins;
     const ups = [];
@@ -509,13 +516,13 @@ class App {
     this.music(won ? 'victory' : 'defeat');
     this.ui.modal(`
       <div style="text-align:center">
-        <div class="label">Shootout vs ${t.name}</div>
+        <div class="label">${t('Shootout vs {team}', { team: team.name })}</div>
         <div class="drill-score">${res.goals[0]} – ${res.goals[1]}</div>
-        <div class="medal-big" style="--m:${won ? '#ffd45e' : '#ff6f7d'}">${won ? 'You win the shootout!' : 'They take it'}</div>
+        <div class="medal-big" style="--m:${won ? '#ffd45e' : '#ff6f7d'}">${won ? t('You win the shootout!') : t('They take it')}</div>
       </div>
-      <div class="reward-lines"><div><span>Coins</span><span class="gold-t">+${coins}</span></div><div><span>Whole team</span><span class="gold-t">+${won ? 20 : 10} EXP</span></div></div>
-      ${ups.length ? '<div class="lvlup">Level up! Check the Team tab.</div>' : ''}
-      <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="so-again">Again</button><button class="btn gold" id="so-done">Done</button></div>`, (m, close) => {
+      <div class="reward-lines"><div><span>${t('Coins')}</span><span class="gold-t">+${coins}</span></div><div><span>${t('Whole team')}</span><span class="gold-t">${t('+{n} EXP', { n: won ? 20 : 10 })}</span></div></div>
+      ${ups.length ? `<div class="lvlup">${t('Level up! Check the Team tab.')}</div>` : ''}
+      <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="so-again">${t('Again')}</button><button class="btn gold" id="so-done">${t('Done')}</button></div>`, (m, close) => {
       m.querySelector('#so-again').addEventListener('click', () => { close(); this.startShootout(c.teamId); });
       m.querySelector('#so-done').addEventListener('click', () => { close(); this.resolvePerks(() => { this.startAttract(); this.goHub(); }); });
     }, false);
@@ -552,14 +559,15 @@ class App {
     this.scene = 'match';
     this.hud.show(m, teamId);
     this.announceRule(cfg.twist, arena);
-    if (this.cur.daily) setTimeout(() => { if (this.scene === 'match') this.hud.banner(`<div class="small">Daily challenge</div><div class="sub" style="font-size:clamp(16px,3vw,24px)">${dailyGoal(this.cur.daily.goal).text}</div>`, 3); }, 300);
+    if (this.cur.daily) setTimeout(() => { if (this.scene === 'match') this.hud.banner(`<div class="small">${t('Daily challenge')}</div><div class="sub" style="font-size:clamp(16px,3vw,24px)">${t(dailyGoal(this.cur.daily.goal).text)}</div>`, 3); }, 300);
     this.touch.reset();
     this.music(/\bFinal$/.test(stage.round || '') ? 'final' : ARENA_MUSIC[arena] || 'frostline');
     audio.setArena(arena);
     const edge = m.planEdge(0);
+    const plans = { a: t(GAME_PLANS[plan].name), b: t(GAME_PLANS[theirPlan].name) };
     const planLine = plan !== 'balanced' || theirPlan !== 'balanced'
-      ? `<div class="sub" style="font-size:clamp(14px,2.4vw,20px)">${GAME_PLANS[plan].name} vs ${GAME_PLANS[theirPlan].name}${edge > 0 ? ' · your edge' : edge < 0 ? ' · their edge' : ''}</div>` : '';
-    this.hud.banner(`<div class="small">${exhibition ? 'Exhibition' : stage.round}</div><div class="big" style="font-size:clamp(48px,10vw,110px)">FACEOFF</div>${planLine}`, 2);
+      ? `<div class="sub" style="font-size:clamp(14px,2.4vw,20px)">${edge > 0 ? t('{a} vs {b} · your edge', plans) : edge < 0 ? t('{a} vs {b} · their edge', plans) : t('{a} vs {b}', plans)}</div>` : '';
+    this.hud.banner(`<div class="small">${exhibition ? t('Exhibition') : t(stage.round, { n: stage.roundN })}</div><div class="big" style="font-size:clamp(48px,10vw,110px)">${t('FACEOFF')}</div>${planLine}`, 2);
     if (buffs && buffs.hype) { this.chantCool = 4; this.fx.excite = 0.7; }
     this.checkRotate();
     navigator.wakeLock?.request?.('screen').then((l) => { this.wake = l; }).catch(() => {});
@@ -571,13 +579,13 @@ class App {
   }
 
   tutorialTips() {
-    const t = this.isTouch;
+    const touch = this.isTouch;
     return [
-      t ? 'Drag your left thumb to skate. Hold SPRINT for a burst of speed.' : 'Skate with WASD or the arrow keys. Hold Shift to sprint.',
-      t ? 'With the puck: tap SHOOT for a wrist shot, hold it to charge a slapshot.' : 'With the puck: tap J for a wrist shot, hold J to charge a slapshot.',
-      t ? 'PASS goes to the teammate you\'re steering toward. Hold SHOOT as it arrives for a one-timer.' : 'K passes toward the teammate you\'re steering at. Hold J as it arrives for a one-timer.',
-      t ? 'No puck? SHOOT becomes CHECK and PASS switches to the skater nearest the puck.' : 'No puck? J checks and K switches to the skater nearest the puck.',
-      t ? 'The round button above SHOOT is your signature skill. The star fires your ultimate when it glows.' : 'U fires your signature skill. I fires your ultimate when the gold bar is full.',
+      touch ? t('Drag your left thumb to skate. Hold SPRINT for a burst of speed.') : t('Skate with WASD or the arrow keys. Hold Shift to sprint.'),
+      touch ? t('With the puck: tap SHOOT for a wrist shot, hold it to charge a slapshot.') : t('With the puck: tap J for a wrist shot, hold J to charge a slapshot.'),
+      touch ? t('PASS goes to the teammate you\'re steering toward. Hold SHOOT as it arrives for a one-timer.') : t('K passes toward the teammate you\'re steering at. Hold J as it arrives for a one-timer.'),
+      touch ? t('No puck? SHOOT becomes CHECK and PASS switches to the skater nearest the puck.') : t('No puck? J checks and K switches to the skater nearest the puck.'),
+      touch ? t('The round button above SHOOT is your signature skill. The star fires your ultimate when it glows.') : t('U fires your signature skill. I fires your ultimate when the gold bar is full.'),
     ];
   }
 
@@ -612,16 +620,16 @@ class App {
     });
     m.on('penalty', (e) => {
       const ours = e.team === 0;
-      this.hud.banner(`<div class="small" style="color:${ours ? '#ff6f7d' : '#ffd45e'}">PENALTY</div><div class="sub">${e.s.name} · ${e.reason} · ${PENALTY_SECONDS}s</div><div class="small" style="font-size:clamp(20px,3.6vw,34px);margin-top:6px">${ours ? 'Penalty kill: survive it!' : 'Power play!'}</div>`, 2);
+      this.hud.banner(`<div class="small" style="color:${ours ? '#ff6f7d' : '#ffd45e'}">${t('PENALTY')}</div><div class="sub">${e.s.name} · ${t(e.reason)} · ${PENALTY_SECONDS}s</div><div class="small" style="font-size:clamp(20px,3.6vw,34px);margin-top:6px">${ours ? t('Penalty kill: survive it!') : t('Power play!')}</div>`, 2);
       audio.sfx('whistle'); audio.crowdOoh(ours ? 0.4 : 0.8);
       if (ours && e.reason === 'Interference' && !this.penTipShown && !this.cur.versus) {
         this.penTipShown = true;
-        setTimeout(() => this.hud.hint(this.isTouch ? 'Only check the puck carrier. Hits away from the puck draw penalties.' : 'Only check the puck carrier. Hits away from the puck draw penalties.', 5), 2200);
+        setTimeout(() => this.hud.hint(this.isTouch ? t('Only check the puck carrier. Hits away from the puck draw penalties.') : t('Only check the puck carrier. Hits away from the puck draw penalties.'), 5), 2200);
       }
     });
-    m.on('penalty_over', (e) => { if (!e.byGoal) this.hud.ticker(`${e.s.name} is out of the box. Back to full strength.`); });
+    m.on('penalty_over', (e) => { if (!e.byGoal) this.hud.ticker(t('{name} is out of the box. Back to full strength.', { name: e.s.name })); });
     m.on('goalie_pulled', (e) => {
-      this.hud.banner(`<div class="small" style="color:${e.team === 0 ? '#ffd45e' : '#ff6f7d'}">${e.team === 0 ? 'GOALIE PULLED' : 'THEY PULLED THEIR GOALIE'}</div><div class="sub">${e.team === 0 ? 'Extra attacker on! Protect the empty net.' : 'Empty net! Shoot from anywhere.'}</div>`, 1.8);
+      this.hud.banner(`<div class="small" style="color:${e.team === 0 ? '#ffd45e' : '#ff6f7d'}">${e.team === 0 ? t('GOALIE PULLED') : t('THEY PULLED THEIR GOALIE')}</div><div class="sub">${e.team === 0 ? t('Extra attacker on! Protect the empty net.') : t('Empty net! Shoot from anywhere.')}</div>`, 1.8);
       audio.sfx('whistle', { vol: 0.4 }); audio.crowdCheer(0.4);
     });
     m.on('goal', () => {
@@ -629,14 +637,14 @@ class App {
         if (this.match !== m || this.pullTipShown || this.cur.versus) return;
         if (m.canPullGoalie && m.score[0] < m.score[1] && m.score[1] >= m.winScore - 1) {
           this.pullTipShown = true;
-          this.hud.hint(this.isTouch ? 'Desperate? Tap PULL GOALIE for an extra attacker.' : 'Desperate? Press H (gamepad: Back) to pull Halla for an extra attacker.', 6);
+          this.hud.hint(this.isTouch ? t('Desperate? Tap PULL GOALIE for an extra attacker.') : t('Desperate? Press H (gamepad: Back) to pull Halla for an extra attacker.'), 6);
         }
       }, 4200);
     });
-        m.on('goalie_returned', (e) => { if (e.team === 0) this.hud.ticker('Halla is back in net.'); });
-    m.on('no_goal', (e) => { this.hud.banner(`<div class="small" style="color:#ff6f7d">NO GOAL</div><div class="sub">${e.reason}</div>`, 1.6); audio.sfx('whistle'); audio.crowdOoh(0.8); });
+        m.on('goalie_returned', (e) => { if (e.team === 0) this.hud.ticker(t('Halla is back in net.')); });
+    m.on('no_goal', (e) => { this.hud.banner(`<div class="small" style="color:#ff6f7d">${t('NO GOAL')}</div><div class="sub">${t(e.reason)}</div>`, 1.6); audio.sfx('whistle'); audio.crowdOoh(0.8); });
     m.on('save', (e) => { audio.sfx(e.caught ? 'catch' : 'save', at(e.x, e.y, 0.85)); if (!e.caught) audio.crowdOoh(0.6); });
-    m.on('big_save', (e) => { if (!this.attract && !(this.cur && this.cur.drill)) { this.hud.cutin(e.g, null, 'DENIED!'); audio.crowdOoh(1); } });
+    m.on('big_save', (e) => { if (!this.attract && !(this.cur && this.cur.drill)) { this.hud.cutin(e.g, null, t('DENIED!')); audio.crowdOoh(1); } });
     m.on('block', () => audio.sfx('save', { vol: 0.6 }));
     m.on('goal', (e) => {
       this.rumble(0.9, 0.6, 400);
@@ -668,9 +676,9 @@ class App {
     m.on('stride', (e) => { if (e.s.controlled) audio.sfx('stride'); });
     m.on('pickup_spawn', () => {
       audio.sfx('pickup', { vol: 0.7 });
-      if (this.tutorial >= 0 && !this.powerTipShown) { this.powerTipShown = true; this.hud.hint(this.isTouch ? 'A power orb! Skate the puck through it to charge the puck.' : 'A power orb! Skate or shoot the puck through it to charge the puck.', 5); }
+      if (this.tutorial >= 0 && !this.powerTipShown) { this.powerTipShown = true; this.hud.hint(this.isTouch ? t('A power orb! Skate the puck through it to charge the puck.') : t('A power orb! Skate or shoot the puck through it to charge the puck.'), 5); }
     });
-    m.on('power_get', (e) => { audio.sfx('power', { type: e.type }); if (e.by && e.by.team === 0) this.hud.hint(POWER_INFO[e.type].text, 3.5); });
+    m.on('power_get', (e) => { audio.sfx('power', { type: e.type }); if (e.by && e.by.team === 0) this.hud.hint(t(POWER_INFO[e.type].text), 3.5); });
     m.on('skill', (e) => audio.sfx({ dash: 'dash', glide: 'glide', bedrock: 'bedrock' }[e.id], at(e.s.x, e.s.y)));
     m.on('ult', (e) => {
       audio.sfx(e.id === 'monolith' ? 'stone' : 'ult');
@@ -681,17 +689,17 @@ class App {
     });
     m.on('frozen', () => audio.sfx('freeze', { vol: 0.7 }));
     m.on('barrier_block', () => audio.sfx('stone', { vol: 0.8 }));
-    m.on('ult_denied', (e) => { if (e.s.controlled) { audio.sfx('deny'); this.hud.hint(`${e.s.def.ult.name} needs the puck.`, 2); } });
+    m.on('ult_denied', (e) => { if (e.s.controlled) { audio.sfx('deny'); this.hud.hint(t('{ult} needs the puck.', { ult: t(e.s.def.ult.name) }), 2); } });
     m.on('ult_ready', (e) => {
       if (!e.s.controlled) return;
       audio.sfx('pickup', { vol: 0.8 });
-      if (!this.attract && e.s.team === 0 && firstTime(this.save, 'ult')) this.hud.hint(this.isTouch ? 'Your ultimate is charged! Tap the glowing star.' : 'Your ultimate is charged! Press I (gamepad: Y / △).', 5);
+      if (!this.attract && e.s.team === 0 && firstTime(this.save, 'ult')) this.hud.hint(this.isTouch ? t('Your ultimate is charged! Tap the glowing star.') : t('Your ultimate is charged! Press I (gamepad: Y / △).'), 5);
     });
     m.on('steal', (e) => audio.sfx('stick', at(e.s.x, e.s.y, 0.6)));
     m.on('lightning_pass', () => audio.sfx('dash'));
     m.on('combo', (e) => {
       audio.sfx('combo', { key: e.key });
-      this.hud.cutin(e.s, e.from, COMBOS[e.key].name);
+      this.hud.cutin(e.s, e.from, t(COMBOS[e.key].name));
       if (e.s.controlled) this.rumble(0.5, 0.8, 220, e.s.team);
       this.fx.slowmo = 0.3; this.fx.slowScale = 0.35;
       if (e.s.team === 0) buzz(20);
@@ -701,7 +709,7 @@ class App {
     m.on('combo_ready', (e) => {
       if (!e.s.controlled) return;
       audio.sfx('pickup', { vol: 0.5 });
-      if (!this.attract && e.s.team === 0 && firstTime(this.save, 'combo')) this.hud.hint('Chemistry! Shoot right away after a bonded teammate\'s pass for a combo shot.', 5);
+      if (!this.attract && e.s.team === 0 && firstTime(this.save, 'combo')) this.hud.hint(t('Chemistry! Shoot right away after a bonded teammate\'s pass for a combo shot.'), 5);
     });
     m.on('chain', (e) => { if (e.team === 0) audio.sfx('coin', { vol: 0.5 }); });
     m.on('final', () => {
@@ -727,7 +735,7 @@ class App {
     const firstWin = rewards.won && !((s.rivals && s.rivals[c.teamId] && s.rivals[c.teamId].wins) > 0);
     recordRivalResult(s, c.teamId, summary.score[0], summary.score[1], rewards.won, { ourScorers: scorers(0), theirScorers: scorers(1) });
     if (firstWin && TEAMS[c.teamId] && TEAMS[c.teamId].art) {
-      setTimeout(() => this.toast(crest(c.teamId, 72), 'Scouting', `${TEAMS[c.teamId].name} will take your call`, 'Sign their skaters in Team › Scouting'), 1600);
+      setTimeout(() => this.toast(crest(c.teamId, 72), t('Scouting'), t('{team} will take your call', { team: TEAMS[c.teamId].name }), t('Sign their skaters in Team › Scouting')), 1600);
     }
     let becameChampion = false, leagueOut = null;
     if (rewards.won) s.record.wins++;
@@ -744,13 +752,13 @@ class App {
       const met = goal.check(summary);
       const done = met ? completeDaily(s, c.daily.date) : null;
       if (done) {
-        rewards.lines.push([`Daily challenge · ${done.streak}-day streak`, done.coins]);
+        rewards.lines.push([t('Daily challenge · {n}-day streak', { n: done.streak }), done.coins]);
         setTimeout(() => audio.jingle('daily'), 4200);
         this.postScore('daily_streak', dailyState(s).best);
         rewards.coins += done.coins;
         this.ach.unlock('daily');
         if (done.streak >= 7) this.ach.unlock('daily-streak');
-      } else rewards.lines.push([met ? 'Daily challenge (already done today)' : `Daily goal missed: ${goal.text}`, 0]);
+      } else rewards.lines.push([met ? t('Daily challenge (already done today)') : t('Daily goal missed: {goal}', { goal: t(goal.text) }), 0]);
     }
     this.ach.endMatch(summary, { league: !c.exhibition, exhibition: c.exhibition, mods: c.mods });
     this.ach.checkMeta();
@@ -761,7 +769,7 @@ class App {
     this.scene = 'results';
     this.music(rewards.won ? 'victory' : 'defeat');
     if (ups.length) setTimeout(() => audio.jingle('level'), 2600);
-    this.ui.results({ summary, rewards, ups, chemUps, teamId: c.teamId, exhibition: c.exhibition, round: c.stage.round, gUp, clips: this.clips }, () => {
+    this.ui.results({ summary, rewards, ups, chemUps, teamId: c.teamId, exhibition: c.exhibition, round: c.stage.round, roundN: c.stage.roundN, gUp, clips: this.clips }, () => {
       const finish = () => {
         if (becameChampion) { this.scene = 'results'; this.music('final'); audio.jingle('champion'); this.ui.champion(() => this.goHub('tournament')); } else this.goHub(rewards.won ? 'tournament' : 'team');
       };
@@ -794,13 +802,14 @@ class App {
 
   startClip(m) {
     if (!this.save.settings.clips || !this.clips.supported || !m.lastGoal) return;
-    const g = m.lastGoal, t = TEAMS[this.awayTeamId];
-    const scorer = g.scorer ? g.scorer.name : 'Goal';
-    const assist = g.assists && g.assists.length ? ` from ${g.assists.map((a) => a.name).join(' & ')}` : '';
-    const kind = g.kind === 'onetimer' ? ' · one-timer' : g.special && g.special.combo ? ` · ${COMBOS[g.special.combo].name}` : g.powerPlay ? ' · power play' : '';
-    const score = `${TEAMS.home.short} ${m.score[0]} – ${m.score[1]} ${t.short}`;
-    this.renderer.clipOverlay = { title: `${scorer.toUpperCase()}${assist}${kind}`, score };
-    this.clips.start({ scorer, line: `${scorer}${assist}${kind}. ${score}`, team: g.team, score });
+    const g = m.lastGoal, away = TEAMS[this.awayTeamId];
+    const scorer = g.scorer ? g.scorer.name : t('Goal');
+    const assists = g.assists && g.assists.length ? g.assists.map((a) => a.name).join(' & ') : '';
+    const who = (name) => (assists ? t('{scorer} from {assists}', { scorer: name, assists }) : name);
+    const kind = g.kind === 'onetimer' ? ` · ${t('one-timer')}` : g.special && g.special.combo ? ` · ${t(COMBOS[g.special.combo].name)}` : g.powerPlay ? ` · ${t('power play')}` : '';
+    const score = `${TEAMS.home.short} ${m.score[0]} – ${m.score[1]} ${away.short}`;
+    this.renderer.clipOverlay = { title: `${who(scorer.toUpperCase())}${kind}`, score };
+    this.clips.start({ scorer, line: `${who(scorer)}${kind}. ${score}`, team: g.team, score });
   }
 
   endReplay() {
@@ -824,11 +833,11 @@ class App {
     this.chantCool = 30;
     this.fx.chant = { team, t: 0 };
     m.hype = { team, t: 7 };
-    const t = TEAMS[this.awayTeamId];
-    const name = team === 0 ? CLUB.nick.toUpperCase() : t.name.split(' ').slice(-1)[0].toUpperCase();
+    const away = TEAMS[this.awayTeamId];
+    const name = team === 0 ? CLUB.nick.toUpperCase() : away.name.split(' ').slice(-1)[0].toUpperCase();
     audio.chant(team === 0 ? 0.9 : 0.6);
-    this.fx.text(0, -420, `LET'S GO ${name}!`, team === 0 ? '#71dce8' : t.color, 4, 24);
-    this.hud.ticker(team === 0 ? `The crowd is on its feet! ${CLUB.nick} ultimates charge faster.` : `${t.name.split(' ').slice(-1)[0]} fans are loud. Their ultimates charge faster.`);
+    this.fx.text(0, -420, t('LET\'S GO {name}!', { name }), team === 0 ? '#71dce8' : away.color, 4, 24);
+    this.hud.ticker(team === 0 ? t('The crowd is on its feet! {club} ultimates charge faster.', { club: CLUB.nick }) : t('{team} fans are loud. Their ultimates charge faster.', { team: away.name.split(' ').slice(-1)[0] }));
   }
 
   // After a league match: other results, standings moves and playoff news.
@@ -879,19 +888,19 @@ class App {
     this.touch.reset();
     const st = this.save.settings;
     const modal = this.ui.modal(`
-      <h2>Paused</h2>
-      <div class="row"><button class="btn gold" id="p-resume">Resume</button>
-      <button class="btn small ${st.music ? 'cream' : 'ghost'}" id="p-music">Music ${st.music ? 'on' : 'off'}</button>
-      <button class="btn small ${st.sfx ? 'cream' : 'ghost'}" id="p-sfx">Sound ${st.sfx ? 'on' : 'off'}</button></div>
+      <h2>${t('Paused')}</h2>
+      <div class="row"><button class="btn gold" id="p-resume">${t('Resume')}</button>
+      <button class="btn small ${st.music ? 'cream' : 'ghost'}" id="p-music">${st.music ? t('Music on') : t('Music off')}</button>
+      <button class="btn small ${st.sfx ? 'cream' : 'ghost'}" id="p-sfx">${st.sfx ? t('Sound on') : t('Sound off')}</button></div>
       ${controlsHtml(this.isTouch)}
-      <div class="row" style="justify-content:space-between"><span class="muted" style="font-size:13px">${this.cur && this.cur.drill ? 'Quitting a drill gives no rewards.' : `Score ${this.match.score[0]}–${this.match.score[1]}, first to 5 wins.`}</span>
-      <button class="btn small ghost" id="p-quit">${this.cur && this.cur.drill ? 'Quit' : 'Forfeit match'}</button></div>`, (m, close) => {
+      <div class="row" style="justify-content:space-between"><span class="muted" style="font-size:13px">${this.cur && this.cur.drill ? t('Quitting a drill gives no rewards.') : t('Score {a}–{b}, first to 5 wins.', { a: this.match.score[0], b: this.match.score[1] })}</span>
+      <button class="btn small ghost" id="p-quit">${this.cur && this.cur.drill ? t('Quit') : t('Forfeit match')}</button></div>`, (m, close) => {
       const resume = () => { close(); this.resume(); };
       m.querySelector('#p-resume').addEventListener('click', resume);
-      m.querySelector('#p-music').addEventListener('click', (e) => { st.music = !st.music; if (st.music && !st.musicVol) st.musicVol = 1; this.applySettings(); writeSave(this.save); e.target.textContent = 'Music ' + (st.music ? 'on' : 'off'); e.target.className = 'btn small ' + (st.music ? 'cream' : 'ghost'); });
-      m.querySelector('#p-sfx').addEventListener('click', (e) => { st.sfx = !st.sfx; if (st.sfx && !st.sfxVol) st.sfxVol = 1; this.applySettings(); writeSave(this.save); e.target.textContent = 'Sound ' + (st.sfx ? 'on' : 'off'); e.target.className = 'btn small ' + (st.sfx ? 'cream' : 'ghost'); });
+      m.querySelector('#p-music').addEventListener('click', (e) => { st.music = !st.music; if (st.music && !st.musicVol) st.musicVol = 1; this.applySettings(); writeSave(this.save); e.target.textContent = st.music ? t('Music on') : t('Music off'); e.target.className = 'btn small ' + (st.music ? 'cream' : 'ghost'); });
+      m.querySelector('#p-sfx').addEventListener('click', (e) => { st.sfx = !st.sfx; if (st.sfx && !st.sfxVol) st.sfxVol = 1; this.applySettings(); writeSave(this.save); e.target.textContent = st.sfx ? t('Sound on') : t('Sound off'); e.target.className = 'btn small ' + (st.sfx ? 'cream' : 'ghost'); });
       m.querySelector('#p-quit').addEventListener('click', (e) => {
-        if (!e.target.dataset.armed) { e.target.dataset.armed = '1'; e.target.textContent = 'Tap again to confirm'; return; }
+        if (!e.target.dataset.armed) { e.target.dataset.armed = '1'; e.target.textContent = t('Tap again to confirm'); return; }
         close();
         this.forfeit();
       });

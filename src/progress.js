@@ -6,6 +6,7 @@ import {
   RECRUITS, member, pairKey, recruitKey,
 } from './data.js';
 import { newLeague, migrateLeague } from './league.js';
+import { t } from './i18n.js';
 
 const KEY = 'glacial-strikers-save-v1';
 export const MAX_LEVEL = 10;
@@ -225,27 +226,27 @@ export function computeRewards(save, summary, stage, exhibition) {
   const baseReward = stage ? stage.reward : 80;
   const lines = [];
   let coins = Math.round(won ? baseReward : baseReward * 0.35);
-  lines.push([won ? 'Victory purse' : 'Appearance fee', coins]);
+  lines.push([won ? t('Victory purse') : t('Appearance fee'), coins]);
   const mine = summary.skaters.filter((s) => s.team === 0);
   const goals = mine.reduce((a, s) => a + s.goals, 0);
   const passes = mine.reduce((a, s) => a + s.passes, 0);
-  if (goals) { lines.push([`Goals x${goals}`, goals * 10]); coins += goals * 10; }
-  if (passes >= 10) { lines.push(['Teamwork (10+ passes)', 25]); coins += 25; }
+  if (goals) { lines.push([t('Goals x{n}', { n: goals }), goals * 10]); coins += goals * 10; }
+  if (passes >= 10) { lines.push([t('Teamwork (10+ passes)'), 25]); coins += 25; }
   const pointGetters = mine.filter((s) => s.goals + s.assists > 0).length;
-  if (pointGetters === 3) { lines.push(['Line chemistry (all 3 scored a point)', 30]); coins += 30; }
+  if (pointGetters === 3) { lines.push([t('Line chemistry (all 3 scored a point)'), 30]); coins += 30; }
   const powerGoals = mine.reduce((a, s) => a + s.powerGoals, 0);
-  if (powerGoals) { lines.push(['Power puck goals', powerGoals * 15]); coins += powerGoals * 15; }
+  if (powerGoals) { lines.push([t('Power puck goals'), powerGoals * 15]); coins += powerGoals * 15; }
   const oneTimers = summary.goals.filter((g) => g.team === 0 && g.kind === 'onetimer').length;
-  if (oneTimers) { lines.push(['One-timer goals', oneTimers * 15]); coins += oneTimers * 15; }
-  if (won && summary.score[1] === 0) { lines.push(['Shutout', 40]); coins += 40; }
+  if (oneTimers) { lines.push([t('One-timer goals'), oneTimers * 15]); coins += oneTimers * 15; }
+  if (won && summary.score[1] === 0) { lines.push([t('Shutout'), 40]); coins += 40; }
   if (summary.pen) {
     const ppg = summary.pen[0].ppGoals, kills = summary.pen[0].kills;
-    if (ppg) { lines.push([`Power-play goals x${ppg}`, ppg * 15]); coins += ppg * 15; }
-    if (kills) { lines.push([`Penalties killed x${kills}`, kills * 10]); coins += kills * 10; }
+    if (ppg) { lines.push([t('Power-play goals x{n}', { n: ppg }), ppg * 15]); coins += ppg * 15; }
+    if (kills) { lines.push([t('Penalties killed x{n}', { n: kills }), kills * 10]); coins += kills * 10; }
   }
-  if (exhibition) { coins = Math.round(coins * 0.5); lines.push(['Exhibition (half rewards)', 0]); }
+  if (exhibition) { coins = Math.round(coins * 0.5); lines.push([t('Exhibition (half rewards)'), 0]); }
   const mult = (summary.mods || []).reduce((m, id) => m * ((CHALLENGES.find((c) => c.id === id) || {}).mult || 1), 1);
-  if (mult !== 1) { const before = coins; coins = Math.round(coins * mult); lines.push([`Challenges x${+mult.toFixed(2)}`, coins - before]); }
+  if (mult !== 1) { const before = coins; coins = Math.round(coins * mult); lines.push([t('Challenges x{n}', { n: +mult.toFixed(2) }), coins - before]); }
 
   const exp = {};
   for (const s of mine) {

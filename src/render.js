@@ -6,6 +6,7 @@ import { clamp, lerp, makeRng } from './util.js';
 import { POWER_INFO, COMBOS, TEAMS, ARENAS, PALETTES, GEAR_LOOK } from './data.js';
 import { ELEMENT_COLORS } from './fx.js';
 import { NetRenderer, SpriteNets } from './net.js';
+import { t } from './i18n.js';
 
 const SKATER_SCALE = 0.5; // world px per source px
 const GOALIE_SCALE = 0.43;
@@ -236,7 +237,18 @@ export class Renderer {
         Assets.draw(ctx, list[f.fan], x, y - 4 * s, 0.18 * s, { pages: f.team ? this.awayPages : Assets.clubPages(), flip: f.phase > 3.14 });
         continue;
       }
-      // near benches: fans seen from behind (drawn until there are sprites), cached per pose
+      // near benches: fans seen from behind (Batch N sprites)
+      const backs = Assets.atlas.crowd_back;
+      if (backs && backs[f.team ? 'away' : 'home']) {
+        const team = f.team ? 'away' : 'home';
+        const up = cheer || (ex > 0.6 && Math.sin(t * 5 + f.phase) > 0.3);
+        const index = ((f.fan || 0) % 8 + 8) % 8;
+        const scale = Assets.atlas.crowd_back_scale?.[team]?.[index] || 0.25;
+        // the same fan and body size in both poses, feet on the bench
+        Assets.draw(ctx, backs[team][up ? 'cheering' : 'sitting'][index], x, y + 5 * s, scale * (s / 1.75), { pages: f.team ? this.awayPages : Assets.clubPages() });
+        continue;
+      }
+      // (drawn fans, for builds without those sprites), cached per pose
       const home = f.team === 0;
       const jersey = home ? (f.phase > 3 ? TEAMS.home.color : '#fff2cb') : (f.phase > 3 ? awayColor : awayColor2);
       const trim = home ? (f.phase > 3 ? '#fff2cb' : TEAMS.home.color) : (f.phase > 3 ? awayColor2 : awayColor);
@@ -333,7 +345,7 @@ export class Renderer {
     put(sb.fields.away_score, String(match.score[1]));
     const g = match.lastGoal;
     if ((match.state === 'goal' || match.state === 'over') && g) {
-      if (!fx.flashes || Math.floor(fx.time * 4) % 2) put(sb.fields.clock, match.state === 'over' ? 'FINAL' : 'GOAL!', g.team === 0 ? '#71dce8' : '#ff6f7d');
+      if (!fx.flashes || Math.floor(fx.time * 4) % 2) put(sb.fields.clock, match.state === 'over' ? t('FINAL') : t('GOAL!'), g.team === 0 ? '#71dce8' : '#ff6f7d');
     } else {
       const s = Math.floor(match.time || 0);
       put(sb.fields.clock, `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`);
@@ -1176,8 +1188,8 @@ export class Renderer {
     ctx.fillStyle = '#71dce8'; ctx.fillText('PUCKBOUND', 14, bar / 2);
     ctx.textAlign = 'right';
     ctx.fillStyle = Math.sin(fx.time * 6) > 0 ? '#ff3b3b' : '#7a1d1d';
-    ctx.beginPath(); ctx.arc(w - 14 - ctx.measureText('REPLAY').width - 12, bar / 2, big * 0.22, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#ffffff'; ctx.fillText('REPLAY', w - 14, bar / 2);
+    ctx.beginPath(); ctx.arc(w - 14 - ctx.measureText(t('REPLAY')).width - 12, bar / 2, big * 0.22, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffffff'; ctx.fillText(t('REPLAY'), w - 14, bar / 2);
     ctx.textAlign = 'left';
     ctx.fillStyle = '#ffd45e'; ctx.fillText(o.title, 14, h - bar / 2);
     ctx.textAlign = 'right';

@@ -3,6 +3,7 @@
 import { Assets } from './assets.js';
 import { POWER_INFO, TEAMS, ART_NAME, RECRUITS } from './data.js';
 import { portrait, crest } from './ui.js';
+import { t } from './i18n.js';
 
 const digit = (n) => Assets.icon(`hud_elements/score/${Math.min(5, n)}`, 96);
 
@@ -21,7 +22,7 @@ export class HUD {
     this.teamId = teamId;
     this.drill = drill;
     this.versus = !!opts.versus;
-    const t = TEAMS[teamId];
+    const team = TEAMS[teamId];
     this.el.hidden = false;
     this.el.innerHTML = `
       ${drill ? '<div class="drillbar"><div class="t"></div><div class="m"></div><div class="s"></div><div class="n"></div></div>' : ''}
@@ -29,9 +30,9 @@ export class HUD {
         <img class="crest" src="${crest('home', 72)}" alt="">
         <span class="abbr" style="color:${TEAMS.home.color}">${TEAMS.home.short}</span>
         <img class="digit" id="d0" src="${digit(0)}" alt="0">
-        <div class="mid">FIRST<br>TO 5</div>
+        <div class="mid">${t('FIRST{br}TO 5', { br: '<br>' })}</div>
         <img class="digit" id="d1" src="${digit(0)}" alt="0">
-        <span class="abbr" style="color:${t.color}">${t.short}</span>
+        <span class="abbr" style="color:${team.color}">${team.short}</span>
         <img class="crest" src="${crest(teamId, 72)}" alt="">
       </div>
       <div class="pcard"><img id="pc-img" alt=""><div><div class="nm" id="pc-name"></div>
@@ -39,19 +40,19 @@ export class HUD {
       ${opts.versus ? `<div class="pcard p2"><div><div class="nm" id="pc2-name"></div>
         <div class="bars"><div class="bar" id="pc2-sta"><i></i></div><div class="bar ult" id="pc2-ult"><i></i></div></div></div><img id="pc2-img" alt=""></div>` : ''}
       <div class="replay" id="replay" hidden>
-        <div class="rp-bar top"><span class="rp-tag"><i></i>REPLAY</span></div>
-        <div class="rp-bar bottom"><button class="rp-skip" id="rp-skip">Skip ▸</button></div>
+        <div class="rp-bar top"><span class="rp-tag"><i></i>${t('REPLAY')}</span></div>
+        <div class="rp-bar bottom"><button class="rp-skip" id="rp-skip">${t('Skip')} ▸</button></div>
       </div>
       <div class="cutins" id="cutins"></div>
-      <div class="ticker" id="ticker" hidden><span class="live">LIVE</span><span class="tx"></span></div>
+      <div class="ticker" id="ticker" hidden><span class="live">${t('LIVE')}</span><span class="tx"></span></div>
       <div class="penchip" id="penchip" hidden></div>
       <div class="powerchip" id="power" hidden><img alt=""><span></span><span class="t"><i></i></span></div>
-      <button class="pause-btn" id="pause-btn" aria-label="Pause"><img src="${Assets.icon('hud_elements/misc/pause', 88)}" alt=""></button>
+      <button class="pause-btn" id="pause-btn" aria-label="${t('Pause')}"><img src="${Assets.icon('hud_elements/misc/pause', 88)}" alt=""></button>
       <div class="hint" id="hint" hidden></div>
       <div class="keyhints" id="keyhints" ${this.app.isTouch ? 'hidden' : ''}>
-        ${opts.versus ? `<b style="color:var(--ice)">P1</b> WASD · <kbd>F</kbd> shoot · <kbd>G</kbd> pass · <kbd>L-Shift</kbd> sprint · <kbd>R</kbd>/<kbd>T</kbd> skill/ult<br>
-        <b style="color:var(--coral)">P2</b> Arrows · <kbd>K</kbd> shoot · <kbd>L</kbd> pass · <kbd>R-Shift</kbd> sprint · <kbd>O</kbd>/<kbd>P</kbd> skill/ult`
-        : '<kbd>J</kbd> shoot/check · <kbd>K</kbd> pass/switch · <kbd>Shift</kbd> sprint<br><kbd>U</kbd> skill · <kbd>I</kbd> ultimate · <kbd>Esc</kbd> pause'}</div>`;
+        ${opts.versus ? `<b style="color:var(--ice)">P1</b> WASD · <kbd>F</kbd> ${t('shoot')} · <kbd>G</kbd> ${t('pass')} · <kbd>L-Shift</kbd> ${t('sprint')} · <kbd>R</kbd>/<kbd>T</kbd> ${t('skill/ult')}<br>
+        <b style="color:var(--coral)">P2</b> ${t('Arrows')} · <kbd>K</kbd> ${t('shoot')} · <kbd>L</kbd> ${t('pass')} · <kbd>R-Shift</kbd> ${t('sprint')} · <kbd>O</kbd>/<kbd>P</kbd> ${t('skill/ult')}`
+        : `<kbd>J</kbd> ${t('shoot/check')} · <kbd>K</kbd> ${t('pass/switch')} · <kbd>Shift</kbd> ${t('sprint')}<br><kbd>U</kbd> ${t('skill')} · <kbd>I</kbd> ${t('ultimate')} · <kbd>Esc</kbd> ${t('pause')}`}</div>`;
     this.el.querySelector('#pause-btn').addEventListener('click', (e) => { e.stopPropagation(); this.app.pause(); });
     const rp = this.el.querySelector('#replay');
     rp.addEventListener('pointerdown', (e) => { e.preventDefault(); this.app.skipReplay(); });
@@ -87,7 +88,7 @@ export class HUD {
     const id = (k) => (k.isGoalie ? 'goalie' : k.who);
     const img = (k) => `<img src="${portrait(id(k), k.team, this.teamId, 320)}" alt="">`;
     const who = partner ? `${partner.name} + ${s.name}` : s.name;
-    const name = title || s.def.ult.name;
+    const name = title || t(s.def.ult.name);
     const art = Assets.banner(this.bannerKey(s), us ? (RECRUITS[s.who] ? 'homekit' : null) : this.teamId);
     if (partner) el.classList.add('combo');
     if (art) {
@@ -133,16 +134,16 @@ export class HUD {
   }
 
   goal(info) {
-    const t = TEAMS[this.teamId];
-    const color = info.team === 0 ? '#71dce8' : t.color;
+    const team = TEAMS[this.teamId];
+    const color = info.team === 0 ? '#71dce8' : team.color;
     const s = info.scorer;
     let sub = '';
     if (s) {
-      const assist = info.assists.length ? ` <span style="font-size:.7em;color:#c3d3ea">from ${info.assists.map((a) => a.name).join(' & ')}</span>` : '';
+      const assist = info.assists.length ? ` <span style="font-size:.7em;color:#c3d3ea">${t('from {names}', { names: info.assists.map((a) => a.name).join(' & ') })}</span>` : '';
       sub = `<div class="sub"><img src="${portrait(s.who, s.team, this.teamId, 96)}" alt="">${s.name}${assist}</div>`;
     }
-    const kind = info.kind === 'onetimer' ? 'ONE-TIMER!' : info.kind === 'zero' ? 'ABSOLUTE ZERO!' : info.kind === 'thunderclap' ? 'THUNDERCLAP!' : info.power ? POWER_INFO[info.power].name.toUpperCase() + '!' : '';
-    this.banner(`<div class="big" style="color:${color}">GOAL!</div>${kind ? `<div class="small">${kind}</div>` : ''}${sub}`, 3);
+    const kind = info.kind === 'onetimer' ? t('ONE-TIMER!') : info.kind === 'zero' ? t('ABSOLUTE ZERO!') : info.kind === 'thunderclap' ? t('THUNDERCLAP!') : info.power ? t(POWER_INFO[info.power].name).toUpperCase() + '!' : '';
+    this.banner(`<div class="big" style="color:${color}">${t('GOAL!')}</div>${kind ? `<div class="small">${kind}</div>` : ''}${sub}`, 3);
   }
 
   update(dt) {
@@ -201,8 +202,8 @@ export class HUD {
     const pc = this.el.querySelector('#penchip');
     if (pc) {
       const parts = [];
-      for (const k of m.skaters) if (k.boxT > 0) parts.push(`<span class="${k.team === 0 ? 'pk' : 'pp'}">${k.team === 0 ? 'PENALTY KILL' : 'POWER PLAY'} ${Math.ceil(k.boxT)}s</span>`);
-      for (const t of [0, 1]) if (m.extra && m.extra[t]) parts.push(`<span class="${t === 0 ? 'pp' : 'pk'}">${t === 0 ? 'YOUR NET IS EMPTY' : 'THEIR NET IS EMPTY'}</span>`);
+      for (const k of m.skaters) if (k.boxT > 0) parts.push(`<span class="${k.team === 0 ? 'pk' : 'pp'}">${k.team === 0 ? t('PENALTY KILL {n}s', { n: Math.ceil(k.boxT) }) : t('POWER PLAY {n}s', { n: Math.ceil(k.boxT) })}</span>`);
+      for (const side of [0, 1]) if (m.extra && m.extra[side]) parts.push(`<span class="${side === 0 ? 'pp' : 'pk'}">${side === 0 ? t('YOUR NET IS EMPTY') : t('THEIR NET IS EMPTY')}</span>`);
       const html = parts.join('');
       if (this.last.pen !== html) { this.last.pen = html; pc.innerHTML = html; pc.hidden = !html; }
     }
@@ -214,7 +215,7 @@ export class HUD {
       if (this.last.power !== p.power) {
         this.last.power = p.power;
         chip.querySelector('img').src = Assets.icon(info.icon, 52);
-        chip.querySelector('span').textContent = info.name;
+        chip.querySelector('span').textContent = t(info.name);
         chip.style.color = info.color;
         chip.style.borderColor = info.color;
       }
@@ -252,8 +253,8 @@ export class HUD {
     const incoming = !m.puck.owner && m.puck.pass && m.puck.pass.to === c;
     const comboIncoming = incoming && m.chemLevel(m.puck.pass.from, c) > 0;
     const dl = this.drill && this.drill.touchLabels ? this.drill.touchLabels(m) : null;
-    const aLbl = dl ? dl.a : has ? (c.comboT > 0 ? 'COMBO' : 'SHOOT') : comboIncoming ? 'COMBO' : incoming ? 'ONE-T' : 'CHECK';
-    const bLbl = dl ? dl.b : has ? 'PASS' : 'SWITCH';
+    const aLbl = dl ? dl.a : has ? (c.comboT > 0 ? t('COMBO') : t('SHOOT')) : comboIncoming ? t('COMBO') : incoming ? t('ONE-T') : t('CHECK');
+    const bLbl = dl ? dl.b : has ? t('PASS') : t('SWITCH');
     if (this.last.a !== aLbl) { this.last.a = aLbl; this.touch.querySelector('.t-a span').textContent = aLbl; }
     if (this.last.b !== bLbl) { this.last.b = bLbl; this.touch.querySelector('.t-b span').textContent = bLbl; }
     const skill = this.touch.querySelector('.t-skill');
@@ -263,7 +264,7 @@ export class HUD {
     const pull = this.touch.querySelector('.t-pull');
     const showPull = m.canPullGoalie && (m.canPullGoalie(0) || (m.extra && m.extra[0]));
     if (pull.hidden === !!showPull) pull.hidden = !showPull;
-    if (showPull) pull.querySelector('span').innerHTML = m.extra && m.extra[0] ? 'GOALIE<br>BACK' : 'PULL<br>GOALIE';
+    if (showPull) pull.querySelector('span').innerHTML = m.extra && m.extra[0] ? t('GOALIE{br}BACK', { br: '<br>' }) : t('PULL{br}GOALIE', { br: '<br>' });
     const ult = this.touch.querySelector('.t-ult');
     const uf = c.ult / 100;
     ult.querySelector('.cd').style.background = uf < 1 ? `conic-gradient(transparent ${uf * 360}deg, rgba(11,20,36,.78) 0)` : 'none';

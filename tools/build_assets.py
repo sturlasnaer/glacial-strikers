@@ -39,6 +39,7 @@ BATCH_G = sys.argv[6] if len(sys.argv) > 6 else '../assets/Glacial-Strikers-v5-G
 # real 'east' and 'west' sets (flip_x false) and optionally 'back_west'. The profile east
 # replaces the three-quarter side set; the west replaces the mirrored one.
 BATCH_L = sys.argv[7] if len(sys.argv) > 7 else '../assets/Puckbound-Batch-L'
+BATCH_N = sys.argv[8] if len(sys.argv) > 8 else '../assets/Puckbound-Batch-N'
 
 # Atlas pixels per source pixel for v1 sheets. Picked so each sprite is close to its
 # on-screen size on a 2x phone screen while keeping the download small.
@@ -97,6 +98,17 @@ if BATCH_L and os.path.exists(os.path.join(BATCH_L, 'atlas.json')):
             dst['back_west'] = g['back_west']
     goalie_west_sheets = set(west.get('sheets', {}))
     goalie_batch_sheets |= goalie_west_sheets
+crowd_back_sheets = set()
+if BATCH_N and os.path.exists(os.path.join(BATCH_N, 'atlas.json')):
+    near = json.load(open(os.path.join(BATCH_N, 'atlas.json')))
+    for section in ('sheets', 'frames'):
+        for key, value in near[section].items():
+            if key in src.setdefault(section, {}) and src[section][key] != value:
+                raise ValueError(f'Batch N conflicts with {section}/{key}')
+            src[section][key] = value
+    crowd_back_sheets = set(near['sheets'])
+    src['crowd_back'] = near['crowd_back']
+    src['crowd_back_scale'] = near['crowd_back_scale']
 frames = src['frames']
 info = src['sheets']
 os.makedirs(os.path.join(OUT, 'cutins'), exist_ok=True)
@@ -113,7 +125,7 @@ sheets = {}
 
 def sheet(name):
     if name not in sheets:
-        root = BATCH_L if name in goalie_west_sheets else BATCH_G if name in goalie_batch_sheets else (BATCH_A if name in batch_sheets else PACK)
+        root = BATCH_N if name in crowd_back_sheets else BATCH_L if name in goalie_west_sheets else BATCH_G if name in goalie_batch_sheets else (BATCH_A if name in batch_sheets else PACK)
         sheets[name] = Image.open(os.path.join(root, info[name]['image'])).convert('RGBA')
     return sheets[name]
 
@@ -295,6 +307,8 @@ for fid, f in frames.items():
             continue
         k = s = SCALE[sh]
         foot = sh in ROLE_V1.values()
+    elif sh in crowd_back_sheets:
+        k = s = 0.5 * info[sh]['recommended_render_scale']
     elif sh in FLAT:
         k = s = FLAT[sh]
         cleanup = sh == 'crowd_fans'
@@ -523,6 +537,8 @@ atlas = {
     'crests': crests,
     'npcs': {k: f'hub_npcs/portrait/{k}' for k in ('coach', 'shopkeeper', 'announcer')},
     'crowd': crowd,
+    'crowd_back': src.get('crowd_back', {}),
+    'crowd_back_scale': src.get('crowd_back_scale', {}),
     'arenas': arenas,
     'locker': 'gfx/locker_room.webp',
     'banners': banners,

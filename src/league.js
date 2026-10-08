@@ -5,6 +5,7 @@
 import { TEAMS, TOURNAMENT } from './data.js';
 import { makeRng } from './util.js';
 import { recordSimGame } from './awards.js';
+import { t } from './i18n.js';
 
 export const LEAGUE_TEAMS = ['home', 'lynx', 'comets', 'rams', 'ravens', 'royals'];
 const OUR_ORDER = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
@@ -89,7 +90,7 @@ export function nextFixture(L) {
   if (L.phase === 'regular') {
     const opp = L.schedule[L.round].games[0].b;
     const base = TOURNAMENT.stages.find((s) => s.team === opp);
-    return { kind: 'regular', opponent: opp, label: `Round ${L.round + 1} of 5`, stage: { ...base, round: `League · round ${L.round + 1}` } };
+    return { kind: 'regular', opponent: opp, label: t('Round {n} of 5', { n: L.round + 1 }), stage: { ...base, round: 'League · round {n}', roundN: L.round + 1 } };
   }
   if (L.phase === 'playoffs') {
     const po = L.playoffs;
@@ -97,11 +98,11 @@ export function nextFixture(L) {
     if (ourSemi && !ourSemi.winner) {
       const opp = ourSemi.a === 'home' ? ourSemi.b : ourSemi.a;
       const base = TOURNAMENT.stages.find((s) => s.team === opp);
-      return { kind: 'semi', opponent: opp, label: 'Semifinal', stage: { ...base, powers: ['fire', 'ice', 'lightning', 'gravity'], round: 'Semifinal', reward: 320 } };
+      return { kind: 'semi', opponent: opp, label: t('Semifinal'), stage: { ...base, powers: ['fire', 'ice', 'lightning', 'gravity'], round: 'Semifinal', reward: 320 } };
     }
     if (po.final && !po.final.winner && (po.final.a === 'home' || po.final.b === 'home')) {
       const opp = po.final.a === 'home' ? po.final.b : po.final.a;
-      return { kind: 'final', opponent: opp, label: 'Final', stage: { team: opp, powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'both', round: 'Cup Final', reward: 480 } };
+      return { kind: 'final', opponent: opp, label: t('Final'), stage: { team: opp, powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'both', round: 'Cup Final', reward: 480 } };
     }
   }
   return null;
@@ -143,7 +144,7 @@ export function recordOurGame(L, save, gf, ga) {
     if (ourSemi) {
       setResult(ourSemi, ourSemi.a === 'home' ? gf : ga, ourSemi.a === 'home' ? ga : gf);
       const other = po.semis.find((g) => g !== ourSemi);
-      if (!other.winner) { const [x, y] = simGame(strength(other.a, save), strength(other.b, save), rng); setResult(other, x, y); out.simulated.push({ ...other, stage: 'Semifinal' }); recordSimGame(save, L, other, rng); }
+      if (!other.winner) { const [x, y] = simGame(strength(other.a, save), strength(other.b, save), rng); setResult(other, x, y); out.simulated.push({ ...other, stage: t('Semifinal') }); recordSimGame(save, L, other, rng); }
       po.final = { a: po.semis[0].winner, b: po.semis[1].winner };
       if (ourSemi.winner !== 'home') { out.eliminated = true; finishPlayoffs(L, save, rng, out); }
       return out;
@@ -172,9 +173,9 @@ function setResult(g, x, y) { g.ga = x; g.gb = y; g.winner = x > y ? g.a : g.b; 
 // Simulate whatever playoff games remain (after the player is out).
 function finishPlayoffs(L, save, rng, out) {
   const po = L.playoffs;
-  for (const g of po.semis) if (!g.winner) { const [x, y] = simGame(strength(g.a, save), strength(g.b, save), rng); setResult(g, x, y); out.simulated.push({ ...g, stage: 'Semifinal' }); recordSimGame(save, L, g, rng); }
+  for (const g of po.semis) if (!g.winner) { const [x, y] = simGame(strength(g.a, save), strength(g.b, save), rng); setResult(g, x, y); out.simulated.push({ ...g, stage: t('Semifinal') }); recordSimGame(save, L, g, rng); }
   po.final = po.final || { a: po.semis[0].winner, b: po.semis[1].winner };
-  if (!po.final.winner) { const [x, y] = simGame(strength(po.final.a, save), strength(po.final.b, save), rng); setResult(po.final, x, y); out.simulated.push({ ...po.final, stage: 'Final' }); recordSimGame(save, L, po.final, rng); }
+  if (!po.final.winner) { const [x, y] = simGame(strength(po.final.a, save), strength(po.final.b, save), rng); setResult(po.final, x, y); out.simulated.push({ ...po.final, stage: t('Final') }); recordSimGame(save, L, po.final, rng); }
   L.champion = po.final.winner;
   L.phase = 'done';
   out.champion = L.champion;

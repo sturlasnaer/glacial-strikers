@@ -1,5 +1,7 @@
 // Goal clips: records the instant replay (canvas + game audio) into a short video.
 
+import { t } from './i18n.js';
+
 const TYPES = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
 const MAX_W = 1280; // phones render at 2-3x pixel density; clips don't need that
 
@@ -77,6 +79,6 @@ export class ClipRecorder {
 
   async share(c, i) {
     const file = this.fileFor(c, i);
-    await navigator.share({ files: [file], title: 'Puckbound goal', text: c.meta.line || 'Goal!' });
+    await navigator.share({ files: [file], title: t('Puckbound goal'), text: c.meta.line || t('Goal!') });
   }
 }

@@ -9,6 +9,7 @@ import { effectiveStats, perkNames, goalieStats, chemLevel, lineupIds, isSigned 
 import { toScreen, GOAL_X, MOUTH } from './rink.js';
 import { norm, clamp, makeRng } from './util.js';
 import { Skater } from './entities.js';
+import { t } from './i18n.js';
 
 export const DRILLS = {
   cones: {
@@ -44,9 +45,9 @@ export function medalFor(def, score) {
 
 export function formatScore(def, score) {
   if (score === null || score === undefined) return '–';
-  if (def.unit === 'time') return `${score.toFixed(2)}s`;
+  if (def.unit === 'time') return t('{seconds}s', { seconds: score.toFixed(2) });
   if (def.unit === 'goals') return `${score}/5`;
-  return `${score} pts`;
+  return t('{n} pts', { n: score });
 }
 
 const skaterCfg = (save, who) => {
@@ -168,9 +169,9 @@ class ConeDrill extends DrillBase {
   hud() {
     const n = this.gates.length;
     return {
-      title: 'Cone Weave',
-      main: `${(this.t + this.penalty).toFixed(2)}s`,
-      sub: this.next < n ? `Gate ${this.next + 1} of ${n}${this.penalty ? ` · +${this.penalty}s` : ''}` : `Score on the empty net!${this.penalty ? ` · +${this.penalty}s` : ''}`,
+      title: t('Cone Weave'),
+      main: t('{seconds}s', { seconds: (this.t + this.penalty).toFixed(2) }),
+      sub: this.next < n ? `${t('Gate {n} of {total}', { n: this.next + 1, total: n })}${this.penalty ? ` · +${t('{seconds}s', { seconds: this.penalty })}` : ''}` : `${t('Score on the empty net!')}${this.penalty ? ` · +${t('{seconds}s', { seconds: this.penalty })}` : ''}`,
     };
   }
   drawGround(ctx, R, m, fx) {
@@ -264,7 +265,7 @@ class SniperDrill extends DrillBase {
     m.emit(hit ? 'target_hit' : 'target_miss', { pts, y: info.y, x: GOAL_X });
   }
   hud() {
-    return { title: 'Sniper', main: `${this.score} pts`, sub: `${Math.max(0, Math.ceil(this.duration - this.t))}s left · ${this.hits} targets` };
+    return { title: t('Sniper'), main: t('{n} pts', { n: this.score }), sub: `${t('{seconds}s left', { seconds: Math.max(0, Math.ceil(this.duration - this.t)) })} · ${t(this.hits === 1 ? '{n} target' : '{n} targets', { n: this.hits })}` };
   }
   drawOver(ctx, R, m, fx) {
     for (const t of this.targets) {
@@ -331,7 +332,7 @@ class RondoDrill extends DrillBase {
   }
   onGoal(m) { this.turnover(m, 'shot'); }
   hud() {
-    return { title: 'Keep-Away', main: `${this.score} pts`, sub: `${Math.max(0, Math.ceil(this.duration - this.t))}s left · chain x${this.chain}` };
+    return { title: t('Keep-Away'), main: t('{n} pts', { n: this.score }), sub: `${t('{seconds}s left', { seconds: Math.max(0, Math.ceil(this.duration - this.t)) })} · ${t('chain x{n}', { n: this.chain })}` };
   }
   drawGround(ctx, R, m, fx) {
     const a = toScreen(RONDO_X, -280), b = toScreen(RONDO_X, 320);
@@ -390,7 +391,7 @@ class BreakawayDrill extends DrillBase {
   onGoal(m) { if (this.phase === 'run') { this.goals++; this.end(m, 'goal'); } }
   hud() {
     const dots = Array.from({ length: 5 }, (_, i) => (this.results[i] === 'goal' ? '●' : this.results[i] ? '○' : '·')).join(' ');
-    return { title: 'Breakaway', main: `${this.goals} goal${this.goals === 1 ? '' : 's'}`, sub: `Attempt ${Math.min(5, this.attempt + 1)} of 5  ${dots}` };
+    return { title: t('Breakaway'), main: t(this.goals === 1 ? '{n} goal' : '{n} goals', { n: this.goals }), sub: `${t('Attempt {n} of 5', { n: Math.min(5, this.attempt + 1) })}  ${dots}` };
   }
 }
 
@@ -400,7 +401,7 @@ class BreakawayDrill extends DrillBase {
 // five, then sudden death.
 class ShootoutDrill extends DrillBase {
   constructor(teamId) { super(); this.teamId = teamId; this.noSwitch = true; }
-  touchLabels() { return this.turn === 'them' ? { a: 'BLOCK', b: 'DIVE' } : null; }
+  touchLabels() { return this.turn === 'them' ? { a: t('BLOCK'), b: t('DIVE') } : null; }
   init(m) {
     this.round = 0; this.turn = 'us'; this.goals = [0, 0]; this.log = [[], []];
     this.rng = makeRng(23);
@@ -507,10 +508,10 @@ class ShootoutDrill extends DrillBase {
     };
     const sudden = this.log[0].length >= 5 && this.log[1].length >= 5;
     return {
-      title: sudden ? 'Shootout · sudden death' : `Shootout · round ${Math.min(this.round + 1, 99)}`,
+      title: sudden ? t('Shootout · sudden death') : t('Shootout · round {n}', { n: Math.min(this.round + 1, 99) }),
       main: `${this.goals[0]} – ${this.goals[1]}`,
-      sub: `You ${dots(0)}   Them ${dots(1)}`,
-      note: this.turn === 'us' ? 'Your shot' : 'You\'re in goal: steer to move, SHOOT = butterfly, PASS = dive',
+      sub: t('You {us}   Them {them}', { us: dots(0), them: dots(1) }),
+      note: this.turn === 'us' ? t('Your shot') : t('You\'re in goal: steer to move, SHOOT = butterfly, PASS = dive'),
     };
   }
 }

@@ -4,6 +4,7 @@
 import { toScreen, persp, GOAL_X, BACKDROP } from './rink.js';
 import { POWER_INFO, COMBOS, GEAR_LOOK } from './data.js';
 import { makeRng, clamp } from './util.js';
+import { t } from './i18n.js';
 
 const rnd = makeRng(1234);
 const SPRAY = 'ice_spray_goal_lights/ice_spray/phase_';
@@ -83,11 +84,11 @@ export class FX {
       this.ring(p.x, p.y, big ? 34 : 20, '#ffffff', 0.25);
       this.burst(p.x, p.y, 4, big ? 12 : 6, power ? ELEMENT_COLORS[power] : ELEMENT_COLORS.snow, 160, 0.35);
       if (big) this.shake(0.25);
-      if (kind === 'onetimer') this.text(s.x, s.y - 90, 'ONE-TIMER!', '#ffe066', 1.1, 22);
+      if (kind === 'onetimer') this.text(s.x, s.y - 90, t('ONE-TIMER!'), '#ffe066', 1.1, 22);
       if (kind === 'zero') this.anim('ability_effects/frost_shot/phase_', p.x, p.y, 0.5, { follow: p, fps: 14 });
       if (kind === 'thunderclap') { this.flashScreen('#fff7c2', 0.25); this.shake(0.5); this.anim('ability_effects/lightning_shot/phase_', p.x, p.y, 0.55, { follow: p, fps: 16 }); }
-      if (power) this.text(s.x, s.y - 90, POWER_INFO[power].name.toUpperCase() + '!', POWER_INFO[power].color, 1, 20);
-      if (special && special.charged) this.text(s.x, s.y - 110, 'CHARGED!', '#ffe066', 1, 18);
+      if (power) this.text(s.x, s.y - 90, t(POWER_INFO[power].name).toUpperCase() + '!', POWER_INFO[power].color, 1, 20);
+      if (special && special.charged) this.text(s.x, s.y - 110, t('CHARGED!'), '#ffe066', 1, 18);
     });
     on('hit', ({ a, b, power, stripped }) => {
       const x = (a.x + b.x) / 2, y = (a.y + b.y) / 2;
@@ -96,11 +97,11 @@ export class FX {
       this.shake(clamp(power / 700, 0.15, 0.6));
       this.hitstop = Math.max(this.hitstop, clamp(0.03 + power / 6000, 0.04, 0.1));
       this.excite = Math.min(1, this.excite + 0.15);
-      if (power > 260) this.text(x, y - 80, rnd.pick(['CRUNCH!', 'BOOM!', 'WHAM!']), '#ffffff', 0.8, 20);
-      if (stripped) this.text(b.x, b.y - 100, 'PUCK LOOSE', '#fff2cb', 0.8, 14);
+      if (power > 260) this.text(x, y - 80, rnd.pick([t('CRUNCH!'), t('BOOM!'), t('WHAM!')]), '#ffffff', 0.8, 20);
+      if (stripped) this.text(b.x, b.y - 100, t('PUCK LOOSE'), '#fff2cb', 0.8, 14);
       if (a.bedrockT > 0) this.anim('ability_effects/stone_barrier/phase_', b.x, b.y + 4, 0.18, { fps: 20, frames: [1, 2, 5, 6] });
     });
-    on('steal', ({ s }) => this.text(s.x, s.y - 92, 'STEAL!', '#71dce8', 0.9, 18));
+    on('steal', ({ s }) => this.text(s.x, s.y - 92, t('STEAL!'), '#71dce8', 0.9, 18));
     // gear doing its job
     const look = (s, slot) => s && s.gear && GEAR_LOOK[s.gear[slot]];
     on('hit', ({ b, power }) => {
@@ -131,22 +132,22 @@ export class FX {
     on('ice_crack', ({ x, y, k }) => {
       this.anim(CHIPS, x, y + 2, 0.1 + k * 0.03, { fps: 18, frames: PHASES });
       this.shake(0.12 * k);
-      this.text(x, y - 40, 'CRACK!', '#cfe9f7', 0.6, 14);
+      this.text(x, y - 40, t('CRACK!'), '#cfe9f7', 0.6, 14);
     });
-    on('block', ({ s }) => { this.text(s.x, s.y - 92, 'BLOCKED!', '#fff2cb', 0.9, 18); this.shake(0.15); });
+    on('block', ({ s }) => { this.text(s.x, s.y - 92, t('BLOCKED!'), '#fff2cb', 0.9, 18); this.shake(0.15); });
     on('save', ({ g, caught, speed }) => {
       if (caught === false || (speed && speed > 700)) {
         this.burst(g.x - g.goalSide * 10, g.y, 14, 10, ELEMENT_COLORS.snow, 180, 0.4);
         this.shake(0.15);
       }
-      if (speed > 850 || caught === false) this.text(g.x - g.goalSide * 30, g.y - 110, caught ? 'SAVE!' : 'REBOUND', caught ? '#ffffff' : '#fff2cb', 0.9, caught ? 20 : 15);
+      if (speed > 850 || caught === false) this.text(g.x - g.goalSide * 30, g.y - 110, caught ? t('SAVE!') : t('REBOUND'), caught ? '#ffffff' : '#fff2cb', 0.9, caught ? 20 : 15);
       this.excite = Math.min(1, this.excite + 0.2);
     });
     on('goalie_dive', ({ g }) => {
       this.burst(g.x, g.y, 2, 6, ELEMENT_COLORS.snow, 160, 0.4);
       this.anim(CHIPS, g.x, g.y + 2, 0.12, { fps: 18, frames: PHASES, flip: g.diveDir < 0 });
     });
-    on('post', ({ x, y }) => { this.burst(x, y, 20, 12, ELEMENT_COLORS.gold, 220, 0.4); this.text(x, y - 70, 'POST!', '#ff6f7d', 0.9, 18); this.shake(0.2); this.excite = Math.min(1, this.excite + 0.3); });
+    on('post', ({ x, y }) => { this.burst(x, y, 20, 12, ELEMENT_COLORS.gold, 220, 0.4); this.text(x, y - 70, t('POST!'), '#ff6f7d', 0.9, 18); this.shake(0.2); this.excite = Math.min(1, this.excite + 0.3); });
     on('puck_boards', ({ x, y, power }) => { if (power > 500) this.burst(x, y, 4, 6, ELEMENT_COLORS.snow, 100, 0.3); });
     on('goal', (g) => {
       const side = g.side;
@@ -168,7 +169,7 @@ export class FX {
     on('power_get', ({ type, k }) => {
       this.burst(k.x, k.y, 10, 26, ELEMENT_COLORS[type], 260, 0.6);
       this.ring(k.x, k.y, 70, POWER_INFO[type].color, 0.5);
-      this.text(k.x, k.y - 70, POWER_INFO[type].name.toUpperCase(), POWER_INFO[type].color, 1.2, 20);
+      this.text(k.x, k.y - 70, t(POWER_INFO[type].name).toUpperCase(), POWER_INFO[type].color, 1.2, 20);
     });
     on('pickup_spawn', ({ k }) => { this.ring(k.x, k.y, 46, POWER_INFO[k.type].color, 0.6); this.burst(k.x, k.y, 20, 14, ELEMENT_COLORS[k.type], 120, 0.6); });
     on('skill', ({ s, id }) => {
@@ -179,10 +180,10 @@ export class FX {
       }
       if (id === 'bedrock') { this.anim('ability_effects/stone_barrier/phase_', s.x, s.y + 6, 0.22, { fps: 16, frames: [1, 2, 3, 5, 6] }); this.shake(0.2); }
       if (id === 'glide') this.burst(s.x, s.y, 2, 16, ELEMENT_COLORS.ice, 160, 0.5);
-      this.text(s.x, s.y - 96, s.def.skill.name.toUpperCase(), '#ffffff', 0.9, 15);
+      this.text(s.x, s.y - 96, t(s.def.skill.name).toUpperCase(), '#ffffff', 0.9, 15);
     });
     on('ult', ({ s, id }) => {
-      this.text(s.x, s.y - 110, s.def.ult.name.toUpperCase() + '!', '#ffd45e', 1.3, 24);
+      this.text(s.x, s.y - 110, t(s.def.ult.name).toUpperCase() + '!', '#ffd45e', 1.3, 24);
       this.flashScreen(id === 'zero' ? '#bff4ff' : id === 'monolith' ? '#c9b79c' : '#fff7c2', 0.18);
       this.shake(0.35);
     });
@@ -191,22 +192,22 @@ export class FX {
       this.reticle = { side: s.side, t: 0, life: t + 0.3 };
     });
     on('barrier', ({ b }) => { this.shake(0.5); this.burst(b.x, b.y, 4, 26, ['#8a7f73', '#b5a796', '#5e564d'], 220, 0.6); });
-    on('barrier_block', ({ b }) => { this.shake(0.4); this.text(b.x, b.y - 80, 'WALLED!', '#c9b79c', 1, 20); this.burst(b.x, b.y, 10, 30, ['#8a7f73', '#b5a796', '#5e564d'], 260, 0.7); });
+    on('barrier_block', ({ b }) => { this.shake(0.4); this.text(b.x, b.y - 80, t('WALLED!'), '#c9b79c', 1, 20); this.burst(b.x, b.y, 10, 30, ['#8a7f73', '#b5a796', '#5e564d'], 260, 0.7); });
     on('frozen', ({ s, g }) => {
       const e = s || g;
       this.anim('ability_effects/frost_shot/phase_', e.x, e.y, 0.22, { fps: 14, z: 30 });
-      this.text(e.x, e.y - 96, 'FROZEN', '#bff4ff', 0.8, 15);
+      this.text(e.x, e.y - 96, t('FROZEN'), '#bff4ff', 0.8, 15);
     });
     on('lightning_pass', ({ x0, y0, to }) => {
       this.bolt(x0, y0, to.x, to.y);
       this.flashScreen('#fff7c2', 0.1);
-      this.text(to.x, to.y - 96, 'CHARGED!', '#ffe066', 1, 18);
+      this.text(to.x, to.y - 96, t('CHARGED!'), '#ffe066', 1, 18);
     });
-    on('faceoff_win', ({ s }) => this.text(s.x, s.y - 92, 'WON IT!', '#ffffff', 0.7, 14));
+    on('faceoff_win', ({ s }) => this.text(s.x, s.y - 92, t('WON IT!'), '#ffffff', 0.7, 14));
     on('combo', ({ s, key }) => {
       const p = match.puck;
       const c = COMBOS[key];
-      this.text(s.x, s.y - 112, c.name.toUpperCase() + '!', c.colors[1], 1.3, 26);
+      this.text(s.x, s.y - 112, t(c.name).toUpperCase() + '!', c.colors[1], 1.3, 26);
       this.burst(p.x, p.y, 6, 22, [c.colors[0], c.colors[1], '#ffffff'], 260, 0.5);
       this.ring(p.x, p.y, 60, c.colors[1], 0.4);
       this.shake(0.35);
@@ -224,12 +225,12 @@ export class FX {
     });
     on('plow', ({ s, x, y }) => {
       this.anim('ability_effects/check_impact/phase_', x, y, 0.3, { fps: 20, z: 20 });
-      this.text(s.x, s.y - 96, 'PLOWED!', '#c9b79c', 0.9, 18);
+      this.text(s.x, s.y - 96, t('PLOWED!'), '#c9b79c', 0.9, 18);
       this.shake(0.3);
     });
-    on('chain', ({ s, n }) => this.text(s.x, s.y - 100, `PASS CHAIN x${n}`, '#71dce8', 0.9, 16));
-    on('combo_ready', ({ s }) => { if (s.controlled || s.team === 0) this.text(s.x, s.y - 104, 'COMBO!', '#ffd45e', 0.6, 15); });
-    on('ult_ready', ({ s }) => { if (s.controlled) this.text(s.x, s.y - 110, 'ULTIMATE READY', '#ffd45e', 1.2, 16); });
+    on('chain', ({ s, n }) => this.text(s.x, s.y - 100, t('PASS CHAIN x{n}', { n }), '#71dce8', 0.9, 16));
+    on('combo_ready', ({ s }) => { if (s.controlled || s.team === 0) this.text(s.x, s.y - 104, t('COMBO!'), '#ffd45e', 0.6, 15); });
+    on('ult_ready', ({ s }) => { if (s.controlled) this.text(s.x, s.y - 110, t('ULTIMATE READY'), '#ffd45e', 1.2, 16); });
   }
 
   // ---------------------------------------------------------------- spawners

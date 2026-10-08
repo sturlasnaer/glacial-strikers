@@ -3,6 +3,7 @@
 // so playing offline (or before the server is set up) loses nothing.
 
 import { CLUB } from './data.js';
+import { t } from './i18n.js';
 
 // The leaderboard server (an AWS Lambda function URL). ?lb=<url> overrides it for testing.
 const DEFAULT_URL = '';
@@ -10,12 +11,12 @@ const query = typeof location !== 'undefined' ? new URLSearchParams(location.sea
 export const LB_URL = query || DEFAULT_URL;
 
 export const BOARD_INFO = {
-  cones: { name: 'Cone Weave', better: 'lower', fmt: (v) => `${v.toFixed(2)}s` },
-  sniper: { name: 'Sniper', better: 'higher', fmt: (v) => `${v} pts` },
-  rondo: { name: 'Keep-Away', better: 'higher', fmt: (v) => `${v} pts` },
+  cones: { name: 'Cone Weave', better: 'lower', fmt: (v) => t('{seconds}s', { seconds: v.toFixed(2) }) },
+  sniper: { name: 'Sniper', better: 'higher', fmt: (v) => t('{n} pts', { n: v }) },
+  rondo: { name: 'Keep-Away', better: 'higher', fmt: (v) => t('{n} pts', { n: v }) },
   breakaway: { name: 'Breakaway', better: 'higher', fmt: (v) => `${v}/5` },
-  shootout_wins: { name: 'Shootout wins', better: 'higher', fmt: (v) => `${v} win${v === 1 ? '' : 's'}` },
-  daily_streak: { name: 'Daily streak', better: 'higher', fmt: (v) => `${v} day${v === 1 ? '' : 's'}` },
+  shootout_wins: { name: 'Shootout wins', better: 'higher', fmt: (v) => t(v === 1 ? '{n} win' : '{n} wins', { n: v }) },
+  daily_streak: { name: 'Daily streak', better: 'higher', fmt: (v) => t(v === 1 ? '{n} day' : '{n} days', { n: v }) },
 };
 
 export function onlineState(save) {
@@ -128,12 +129,12 @@ export async function backup(save, force = false) {
 // Fetch a backed-up save by its code. Resolves to { save, at } or rejects.
 export async function fetchCloudSave(code) {
   const token = parseCode(code);
-  if (!token) throw new Error('That code doesn\'t look right: it has 32 letters and digits.');
-  if (!configured()) throw new Error('Cloud saves aren\'t open yet.');
+  if (!token) throw new Error(t('That code doesn\'t look right: it has 32 letters and digits.'));
+  if (!configured()) throw new Error(t('Cloud saves aren\'t open yet.'));
   try {
     const r = await request('POST', null, { op: 'save_get', token });
     return { save: JSON.parse(r.data), at: r.at };
   } catch (e) {
-    throw new Error(e.status === 404 ? 'No save found for that code.' : 'Couldn\'t reach the server. Try again in a moment.');
+    throw new Error(e.status === 404 ? t('No save found for that code.') : t('Couldn\'t reach the server. Try again in a moment.'));
   }
 }

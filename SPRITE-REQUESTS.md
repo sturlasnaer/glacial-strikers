@@ -1,18 +1,16 @@
 # Sprite requests
 
-What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies and the Batch M gear masks.
+What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies) and Batch N (near-side crowd).
 
 The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes** (the Snow Fox is their mascot; colours unchanged). Packs can be named `Puckbound-...` from now on; older `Glacial-Strikers-...` folder names still work.
 
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **L**: goalies in true profile, facing left and right (and holding the glove in the correct hand).
-2. **N**: the near-side crowd, seen from behind.
-3. **B**: atmosphere (two more arenas, fans at the glass).
-4. **H**: locker-room life.
-5. **I**: arena-rule art.
-6. **C**: polish.
+1. **B**: atmosphere (two more arenas, fans at the glass).
+2. **H**: locker-room life.
+3. **I**: arena-rule art.
+4. **C**: polish.
 
 ## Format notes
 
@@ -34,50 +32,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - **v4 Batch A:** rival diagonals (240), rival hit reactions (90), and Blaze and Horn expressions (10).
 - **v5 goalies (Batch G):** front, back, skating and puck handling for Halla (home and away) and the five rival goalies (168 frames). In the game: wave, pad taps, celebrations and dejection facing the camera; fishing the puck out after goals; looking back when the puck goes behind the net; skating to and from the bench; pass wind-ups, stick stops and poke checks; Halla's front view in the locker room.
 - **Batch M gear masks:** all 58 sheets, clean on the first pass. Equipped sticks, boots and blades now recolour on the sprites in every pose.
-
----
-
-## Batch L: goalies in true profile, facing left and right (next)
-
-**What's there now.** The goalies' "side" poses (Halla in home and away colours, and the five rival goalies) are **three-quarter views**: the body faces the camera and only the head and pads turn toward the play. They only face right, and the game mirrors them for the right-hand net, which also puts the glove in the wrong hand.
-
-**What we want:** every goalie in **true profile**, with the **whole body facing the play**: head, chest, pads, glove and stick all turned 90° to the side, seen from the same 45° overhead camera as everything else. That's two full sets per goalie: one **facing right** (defending the left-hand net) and one **facing left** (defending the right-hand net). Draw both; no mirrored copies.
-
-**Hands (important).** All our goalies catch left: **catching glove on the goalie's left hand, blocker and stick in the right.**
-- **Facing right:** the stick and blocker hand is on the near side, toward the camera. The glove is on the far side, partly behind the body.
-- **Facing left:** the glove is on the near side, toward the camera. The stick and blocker are on the far side.
-- So the right-facing and left-facing sets are not mirror images of each other.
-
-**Poses, for each direction:**
-
-| Group | Poses | Frames |
-|---|---|---|
-| Stance and saves | ready, ready_repeat (a breathing frame), shuffle_up, shuffle_down, butterfly, glove_save, blocker_save, pad_stretch, dive_up, dive_down, cover, getting_up | 12 |
-| Skating | skate_a–d, a 4-frame cycle skating in that direction | 4 |
-| Puck handling | pass_windup, pass_release, poke_a, poke_b, stop_behind_net | 5 |
-
-That's **21 frames × 2 directions = 42 per goalie, × 7 goalies = 294 frames.** `dive_up` stretches up-screen (away from the camera) and `dive_down` toward it, in both directions. In each direction, `glove_save` and `blocker_save` reach toward whichever side that hand is on.
-
-Not needed: the front views, the back views (they face the net, and the existing ones are fine), and the up/down skating frames.
-
-**Format:** same as the v5 goalies: the `halla_side_goalies` scale (ready pose about 205 px tall in the sheet), an add-on `atlas.json` in the v5 format whose `goalies` entries carry `east` and `west` frame sets (`flip_x: false`) with the pose names above (`<goalie>/g/<kit>/east/<pose>` and `.../west/<pose>`), delivered as `Puckbound-Batch-L`. The builder already reads this layout. Keep each goalie's mask and helmet design the right way round in both directions.
-
-**If that's too much at once:** start with the left-facing sets for the five rival goalies and Halla in away colours, since they defend the right-hand net (6 × 21 = 126 frames). Then the right-facing sets (126). Halla's home kit last (42).
-
----
-
-## Batch N: near-side crowd
-
-The far stands use the v2 crowd sprites (now drawn bigger). The near stands at the bottom of the screen, on the two benches either side of the mascot's stairs, are still drawn in code. Those fans sit with their **backs to the camera**, watching the ice, so they need their own sprites.
-
-- **Fans from behind**, at the same 45° overhead camera: back of the head (hair, beanies, caps, hoods), shoulders and jersey backs. Some wear scarves, some have a number on the jersey. Chibi proportions like the far fans, sitting on a bench.
-- **8 different fans**, each in **2 poses**: sitting and cheering (arms up). Two of the eight hold up a sign (we see the cardboard back).
-- **Home colours** (teal/cream/navy) and **away colours** (coral/violet, recoloured at runtime like the rival casts). Keep coral and violet off skin and hair.
-- **Size:** about 200 px tall in the sheet, so they draw at about 50 px next to the near benches (the far fans are 190 px drawn at about 34 px).
-- Feet or seat on a consistent baseline, transparent background, wide gutters, an add-on `atlas.json` as in Batch A, keyed like `crowd_back/<home|away>/<sitting|cheering>/fan_<n>`.
-- **Total:** 8 fans × 2 poses × 2 colourways = **32 frames**.
-
-Optional, same set: **2 frames of a flag waver** from behind (a big team flag swinging left and right) for goals.
+- **Batch L profile goalies:** 294 frames, true profile both ways for all seven goalies, with the glove in the correct hand at both nets. The game uses them for every side pose, skating and puck handling; glove and blocker saves follow the art.
+- **Batch N near-side crowd:** 32 frames of fans seen from behind, home and away colours, sitting and cheering, on the near benches.
 
 ---
 

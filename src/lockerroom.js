@@ -3,6 +3,7 @@
 
 import { CHARACTERS, TEAMS, CLUB } from './data.js';
 import { applyExp, applyGoalieExp } from './progress.js';
+import { t } from './i18n.js';
 
 const ALL_PAIRS = ['frost+thunder', 'frost+stone', 'stone+thunder'];
 
@@ -15,13 +16,13 @@ const all = (...fns) => (save, ctx) => { for (const f of fns) f(save, ctx); retu
 
 export const BUFF_TEXT = (b) => {
   switch (b.type) {
-    case 'stat': return `${CHARACTERS[b.who] ? CHARACTERS[b.who].name : 'Everyone'} +${b.v} ${{ spd: 'Speed', agi: 'Agility', sht: 'Shooting', pas: 'Passing', chk: 'Checking', sta: 'Stamina' }[b.stat]}`;
-    case 'ult': return `Fired up (start with ${b.v}% ultimate)`;
-    case 'stamina': return 'Well rested (+15% stamina)';
-    case 'goalie': return `Halla +${b.v} reflex`;
-    case 'scoutGoalie': return 'Scouted their goalie';
-    case 'steal': return 'Scouted their skaters (+15% steals)';
-    case 'hype': return 'Crowd ready to chant';
+    case 'stat': return t('{name} +{v} {stat}', { name: CHARACTERS[b.who] ? CHARACTERS[b.who].name : t('Everyone'), v: b.v, stat: { spd: t('Speed'), agi: t('Agility'), sht: t('Shooting'), pas: t('Passing'), chk: t('Checking'), sta: t('Stamina') }[b.stat] });
+    case 'ult': return t('Fired up (start with {v}% ultimate)', { v: b.v });
+    case 'stamina': return t('Well rested (+15% stamina)');
+    case 'goalie': return t('Halla +{v} reflex', { v: b.v });
+    case 'scoutGoalie': return t('Scouted their goalie');
+    case 'steal': return t('Scouted their skaters (+15% steals)');
+    case 'hype': return t('Crowd ready to chant');
     default: return b.label || b.id;
   }
 };
@@ -50,7 +51,7 @@ export const MOMENTS = [
   {
     id: 'tough-loss', who: ['frost'], weight: 6, when: (c) => c.won === false,
     title: 'After the loss',
-    text: (c) => `Nobody talks much after a ${c.ga}–${c.gf} loss. Nix breaks the silence: "We need to look at the tape."`,
+    text: (c) => t('Nobody talks much after a {ga}–{gf} loss. Nix breaks the silence: "We need to look at the tape."', { ga: c.ga, gf: c.gf }),
     choices: [
       { label: 'Film session (40 coins)', fx: 'Every skater +25 EXP', apply: all(coins(-40), exp(['frost', 'thunder', 'stone'], 25)), reply: 'Three hours of rewinding. Everyone sees something they\'ll fix.' },
       { label: 'Team dinner instead', fx: '+6 chemistry for every pair', apply: chem(ALL_PAIRS, 6), reply: 'Bram orders for the table. By dessert everyone is laughing again.' },
@@ -61,7 +62,7 @@ export const MOMENTS = [
     when: (c) => c.summary && c.summary.skaters.some((k) => k.team === 0 && k.goals >= 3),
     whoFn: (c) => [c.summary.skaters.filter((k) => k.team === 0).sort((a, b) => b.goals - a.goals)[0].id],
     title: 'Fan mail',
-    text: (c) => { const k = c.summary.skaters.filter((s) => s.team === 0).sort((a, b) => b.goals - a.goals)[0]; return `After that hat trick, ${k.name}'s locker is buried in fan mail.`; },
+    text: (c) => { const k = c.summary.skaters.filter((s) => s.team === 0).sort((a, b) => b.goals - a.goals)[0]; return t('After that hat trick, {name}\'s locker is buried in fan mail.', { name: k.name }); },
     choices: [
       { label: 'Answer every letter', fx: '+40 coins from a happy sponsor', apply: coins(40), reply: 'A local skate shop sends a thank-you cheque.' },
       { label: 'Sign sticks for kids', fx: 'Next match: the crowd is ready to chant from the start', apply: buff({ id: 'hype', type: 'hype' }), reply: 'Twenty kids leave with signed sticks. They\'ll be loud next game.' },
@@ -70,7 +71,7 @@ export const MOMENTS = [
   {
     id: 'lucky-socks', who: ['thunder', 'stone'], weight: 5, when: (c) => c.streak >= 2,
     title: 'Lucky socks',
-    text: (c) => `${c.streak} wins in a row, and Volta refuses to wash her socks. Bram is holding his nose.`,
+    text: (c) => t('{n} wins in a row, and Volta refuses to wash her socks. Bram is holding his nose.', { n: c.streak }),
     choices: [
       { label: 'Don\'t touch the streak', fx: 'Next match: fired up (start with 35% ultimate)', apply: buff({ id: 'fired', type: 'ult', v: 35 }), reply: '"Superstition is a strategy," Volta says. Nobody argues.' },
       { label: 'Laundry. Now.', fx: '+4 chemistry for every pair', apply: chem(ALL_PAIRS, 4), reply: 'The whole room cheers when the socks go in the machine.' },
@@ -89,7 +90,7 @@ export const MOMENTS = [
     id: 'trash-talk', who: ['frost', 'thunder'], weight: 6,
     when: (c) => c.next && c.save.rivals && c.save.rivals[c.next.opponent] && c.save.rivals[c.next.opponent].last && !c.save.rivals[c.next.opponent].last.won,
     title: 'Trash talk',
-    text: (c) => `The ${TEAMS[c.next.opponent].name} posted a video laughing at the last time we played them.`,
+    text: (c) => t('The {team} posted a video laughing at the last time we played them.', { team: TEAMS[c.next.opponent].name }),
     choices: [
       { label: 'Answer on the ice', fx: 'Next match: fired up (25% ultimate) and a loud crowd', apply: all(buff({ id: 'fired', type: 'ult', v: 25 }), buff({ id: 'hype', type: 'hype' })), reply: 'Volta pins the video to the locker room door.' },
       { label: 'Ignore it, stay focused', fx: 'Next match: every skater +1 Passing', apply: buff({ id: 'focus', type: 'stat', who: 'all', stat: 'pas', v: 1 }), reply: 'Nix turns the TV off. "We play our game."' },
@@ -98,7 +99,7 @@ export const MOMENTS = [
   {
     id: 'scout', who: ['frost'], weight: 4, when: (c) => !!c.next,
     title: 'Scouting report',
-    text: (c) => `The scout drops a thick folder on the table: everything on the ${TEAMS[c.next.opponent].name}.`,
+    text: (c) => t('The scout drops a thick folder on the table: everything on the {team}.', { team: TEAMS[c.next.opponent].name }),
     choices: [
       { label: 'Study their goalie', fx: 'Next match: their goalie covers 6% less net', apply: buff({ id: 'scout', type: 'scoutGoalie', v: 0.94 }), reply: '"Weak glove side when he\'s tired," Nix circles it twice.' },
       { label: 'Study their skaters', fx: 'Next match: +15% steals', apply: buff({ id: 'scout', type: 'steal', v: 1.15 }), reply: 'Bram memorizes every carrier\'s favourite move.' },
@@ -153,7 +154,7 @@ export const MOMENTS = [
   {
     id: 'blowout', who: ['thunder'], weight: 5, when: (c) => c.won && c.gf - c.ga >= 3,
     title: 'Front page',
-    text: (c) => `The morning paper: "${CLUB.nick.toUpperCase()} ROLL ${c.gf}–${c.ga}." Volta has already framed it.`,
+    text: (c) => t('The morning paper: "{club} ROLL {gf}–{ga}." Volta has already framed it.', { club: CLUB.nick.toUpperCase(), gf: c.gf, ga: c.ga }),
     choices: [
       { label: 'Enjoy it', fx: 'Next match: the crowd is ready to chant', apply: buff({ id: 'hype', type: 'hype' }), reply: 'Fans line up outside the rink for autographs.' },
       { label: 'Stay humble', fx: 'Every skater +10 EXP', apply: exp(['frost', 'thunder', 'stone'], 10), reply: 'Nix flips the paper over. "One game at a time."' },

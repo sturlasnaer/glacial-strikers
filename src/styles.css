@@ -422,6 +422,7 @@ img { image-rendering: auto; max-width: 100%; }
 .t-a { width: 84px; height: 84px; right: calc(22px + var(--safe-r)); bottom: calc(30px + var(--safe-b)); background: var(--coral); font-size: 22px; }
 .t-b { width: 66px; height: 66px; right: calc(118px + var(--safe-r)); bottom: calc(22px + var(--safe-b)); background: var(--ice); font-size: 19px; }
 .t-sprint { width: 56px; height: 56px; right: calc(124px + var(--safe-r)); bottom: calc(112px + var(--safe-b)); background: var(--cream); font-size: 15px; }
+:lang(is) .t-sprint { font-size: 12px; } /* SPRETTUR */
 .t-skill { width: 58px; height: 58px; right: calc(34px + var(--safe-r)); bottom: calc(134px + var(--safe-b)); background: var(--navy-2); }
 .t-ult { width: 58px; height: 58px; right: calc(200px + var(--safe-r)); bottom: calc(46px + var(--safe-b)); background: var(--navy-2); }
 .cd { position: absolute; inset: -3px; border-radius: 50%; pointer-events: none; }

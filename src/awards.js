@@ -3,6 +3,7 @@
 // season ends.
 
 import { TEAMS, RECRUITS, GOALIE, recruitKey } from './data.js';
+import { t } from './i18n.js';
 
 const TROPHY = 'equipment_items/reward/trophy', MEDAL = 'equipment_items/reward/medal';
 const KITS = ['frost', 'thunder', 'stone'];
@@ -85,7 +86,7 @@ export function recordSimGame(save, L, g, rng) {
   side(g.b, g.gb, g.ga);
 }
 
-const line = (r) => `${r.g} G · ${r.a} A · ${r.g + r.a} PTS${r.hits ? ` · ${r.hits} hits` : ''}`;
+const line = (r) => `${t('{g} G · {a} A · {pts} PTS', { g: r.g, a: r.a, pts: r.g + r.a })}${r.hits ? ` · ${t(r.hits === 1 ? '{n} hit' : '{n} hits', { n: r.hits })}` : ''}`;
 
 // Decide the season's awards. order: final standings (team ids, best first).
 export function computeAwards(save, L, order) {
@@ -102,10 +103,10 @@ export function computeAwards(save, L, order) {
   const gks = Object.values(st.goalies).filter((g) => g.sa >= 60);
   if (gks.length) {
     const g = [...gks].sort((x, y) => y.sv / y.sa - x.sv / x.sa)[0];
-    out.push({ id: 'iron_wall', key: 'goalie:' + g.team, name: g.name, team: g.team, face: 'goalie', line: `${(g.sv / g.sa).toFixed(3).replace(/^0/, '')} save % · ${g.sv} saves${g.so ? ` · ${g.so} shutout${g.so > 1 ? 's' : ''}` : ''}` });
+    out.push({ id: 'iron_wall', key: 'goalie:' + g.team, name: g.name, team: g.team, face: 'goalie', line: `${t('{pct} save %', { pct: (g.sv / g.sa).toFixed(3).replace(/^0/, '') })} · ${t(g.sv === 1 ? '{n} save' : '{n} saves', { n: g.sv })}${g.so ? ` · ${t(g.so > 1 ? '{n} shutouts' : '{n} shutout', { n: g.so })}` : ''}` });
   }
   const enf = best(rows, (r) => r.hits);
-  add('enforcer', enf, `${enf.hits} hits · ${enf.steals} steals`);
+  add('enforcer', enf, `${t(enf.hits === 1 ? '{n} hit' : '{n} hits', { n: enf.hits })} · ${t(enf.steals === 1 ? '{n} steal' : '{n} steals', { n: enf.steals })}`);
   const signings = rows.filter((r) => r.team === 'home' && RECRUITS[r.face]);
   if (signings.length) add('signing', best(signings, (r) => r.g * 3 + r.a * 2 + r.hits * 0.3));
   return out;

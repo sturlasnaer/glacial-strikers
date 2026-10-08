@@ -18,21 +18,21 @@
 </head>
 <body>
 <div id="app">
-  <canvas id="game" aria-label="Hockey rink"></canvas>
+  <canvas id="game" aria-label="Hockey rink" data-i18n-aria="Hockey rink"></canvas>
   <div id="hud" hidden></div>
   <div id="touch" hidden>
     <div class="stick-zone"></div>
     <div class="stick"><div class="stick-knob"></div></div>
-    <button class="tbtn t-a" data-btn="a" aria-label="Shoot or check"><span>SHOOT</span></button>
-    <button class="tbtn t-b" data-btn="b" aria-label="Pass or switch"><span>PASS</span></button>
-    <button class="tbtn t-sprint" data-btn="sprint" aria-label="Sprint"><span>SPRINT</span></button>
-    <button class="tbtn t-skill" data-btn="skill" aria-label="Skill"><img alt=""><div class="cd"></div></button>
-    <button class="tbtn t-ult" data-btn="ult" aria-label="Ultimate"><img alt=""><div class="cd"></div></button>
-    <button class="tbtn t-pull" data-btn="pull" aria-label="Pull the goalie" hidden><span>PULL<br>GOALIE</span></button>
+    <button class="tbtn t-a" data-btn="a" aria-label="Shoot or check" data-i18n-aria="Shoot or check"><span data-i18n="SHOOT">SHOOT</span></button>
+    <button class="tbtn t-b" data-btn="b" aria-label="Pass or switch" data-i18n-aria="Pass or switch"><span data-i18n="PASS">PASS</span></button>
+    <button class="tbtn t-sprint" data-btn="sprint" aria-label="Sprint" data-i18n-aria="Sprint"><span data-i18n="SPRINT">SPRINT</span></button>
+    <button class="tbtn t-skill" data-btn="skill" aria-label="Skill" data-i18n-aria="Skill"><img alt=""><div class="cd"></div></button>
+    <button class="tbtn t-ult" data-btn="ult" aria-label="Ultimate" data-i18n-aria="Ultimate"><img alt=""><div class="cd"></div></button>
+    <button class="tbtn t-pull" data-btn="pull" aria-label="Pull the goalie" data-i18n-aria="Pull the goalie" hidden><span>PULL<br>GOALIE</span></button>
   </div>
   <div id="banner"></div>
   <div id="screen"></div>
-  <div id="rotate" hidden><div><div class="ph">▯</div><p>Turn your phone sideways</p><span class="muted">Matches are played in landscape.</span></div></div>
+  <div id="rotate" hidden><div><div class="ph">▯</div><p data-i18n="Turn your phone sideways">Turn your phone sideways</p><span class="muted" data-i18n="Matches are played in landscape.">Matches are played in landscape.</span></div></div>
   <div id="loading"><div><div class="logo">Puck<br>bound</div><div class="bar"><i></i></div><div class="err"></div></div></div>
 </div>
 <script type="module" src="src/main.js"></script>

@@ -26,11 +26,9 @@ Ideas for later:
 
 ## Next, with art
 
-Done: recruitment (sign rival skaters, pick a line-up), arena rules (meltwater, aurora lanes, pond cracks), the clickable locker room, visible gear on the ice, season awards, the daily challenge and custom club name and colours, goalie life from the v5 goalies (front and back views, skating to and from the bench, pass wind-ups and poke checks), the new name (Puckbound, with the Snowcrest Foxes as the home team), gear recolours on the sprites from the Batch M masks, goalies who leave the crease to play pucks behind the net (with AI dump-ins), and the new soundtrack (13 tracks on a chiptune tracker engine, arena acoustics and horns, a voiced crowd, a Music room). Done from the v2 pack: rival casts, portraits and expressions, crests, banner cut-ins, signature celebrations, three arenas, sprite crowd, locker-room hub and hub characters.
+Done: recruitment (sign rival skaters, pick a line-up), arena rules (meltwater, aurora lanes, pond cracks), the clickable locker room, visible gear on the ice, season awards, the daily challenge and custom club name and colours, goalie life from the v5 goalies (front and back views, skating to and from the bench, pass wind-ups and poke checks), the new name (Puckbound, with the Snowcrest Foxes as the home team), gear recolours on the sprites from the Batch M masks, true-profile goalies both ways (Batch L), near-side crowd sprites (Batch N), goalies who leave the crease to play pucks behind the net (with AI dump-ins), Icelandic (every string, with a glossary and a checker), and the new soundtrack (13 tracks on a chiptune tracker engine, arena acoustics and horns, a voiced crowd, a Music room). Done from the v2 pack: rival casts, portraits and expressions, crests, banner cut-ins, signature celebrations, three arenas, sprite crowd, locker-room hub and hub characters.
 
-1. **Goalies in true profile** once Batch L lands: profile sets facing right and left replace the three-quarter poses and the mirrored copy, so the glove is on the correct hand in both nets. The builder and renderer are ready (tested with a stand-in pack); glove and blocker saves follow the art.
-2. **Near-side crowd sprites** (Batch N) in place of the drawn fans on the near benches.
-3. **Locker-room characters** standing at their stations (Batch H).
+1. **Locker-room characters** standing at their stations (Batch H).
 
 ## Balance knobs
 
