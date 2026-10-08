@@ -123,6 +123,13 @@ export const Assets = {
     for (const f of Object.values(a.banners || {})) this.forget(f);
   },
 
+  // Let go of the original pages of these groups when only recoloured copies are drawn (the
+  // All-Star Game: both rival teams' art in our kit and in the All-Star kit). They load
+  // again whenever something needs them.
+  dropOriginals(groups) {
+    this.atlas.pages.forEach((p, i) => { if (this.pages[i] && groups.includes(p.group)) { this.pages[i] = null; this.forget(p.file); } });
+  },
+
   frame(id) { return this.atlas.frames[id]; },
 
   // pages to use for a given team palette (null = original art)
@@ -187,8 +194,9 @@ export const Assets = {
     if (r && r.loaded === loaded) return;
     if (!team.recolor) { this.recolored.delete(team.id); return; }
     const pages = this.pages.map((img, i) => {
-      if (!img || !own(this.atlas.pages[i].group)) return img;
+      if (!own(this.atlas.pages[i].group)) return img;
       const prev = r && r.pages[i];
+      if (!img) return prev || null; // the original was let go (dropOriginals): keep the copy
       return prev && prev !== img ? prev : recolorPage(img, team.recolor);
     });
     this.recolored.set(team.id, { pages, loaded });

@@ -906,12 +906,15 @@ export class Renderer {
     return { id: map.frames[pose], flip: map.flip_x, pose };
   }
 
-  // A rival's own roster art once its page has loaded, else our art in their colours.
+  // A rival's own roster art once its page has loaded, else our art in their colours. (The
+  // page to look for is the one it's drawn from: in the All-Star Game only recoloured copies
+  // are kept.)
   spriteOf(s) {
     if (s.sprite === s.def.sprite) return s.sprite;
     const set = Assets.atlas.skaters[s.sprite];
     const f = set && Assets.frame(set.away.south.frames.idle);
-    return f && Assets.pages[f[0]] ? s.sprite : s.def.sprite;
+    const pages = s.team === 0 ? (s.look ? Assets.pagesFor(s.look) : Assets.clubPages()) : this.awayPages || Assets.pages;
+    return f && (pages[f[0]] || Assets.pages[f[0]]) ? s.sprite : s.def.sprite;
   }
 
   // 8-way facing (4-way with v1 art only). Hysteresis plus a short hold keeps a skater
@@ -972,11 +975,7 @@ export class Renderer {
       // a coloured haze where the puck is handled (the sprite's painted stick keeps its
       // look until gear-mask art lets us recolour it)
       if (!hot) { ctx.restore(); return this.drawVisor(ctx, s, fr, p, y, k, fx); }
-      const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, r);
-      g.addColorStop(0, hexA(st.color, 0.5));
-      g.addColorStop(1, hexA(st.color, 0));
-      ctx.fillStyle = g;
-      ctx.fillRect(b.x - r, b.y - r, r * 2, r * 2);
+      ctx.drawImage(this.glowSprite(st.color), b.x - r, b.y - r, r * 2, r * 2);
       ctx.translate(b.x, b.y);
       if (st.fx === 'swirl') {
         ctx.strokeStyle = hexA(st.color, hot ? 0.8 : 0.5); ctx.lineWidth = 1.5;
@@ -985,6 +984,20 @@ export class Renderer {
       ctx.restore();
     }
     this.drawVisor(ctx, s, fr, p, y, k, fx);
+  }
+
+  // A soft round glow in a colour, drawn once and scaled (no new gradient every frame).
+  glowSprite(color) {
+    this.glowCache ||= new Map();
+    let c = this.glowCache.get(color);
+    if (!c) {
+      c = document.createElement('canvas'); c.width = c.height = 48;
+      const g = c.getContext('2d'), gr = g.createRadialGradient(24, 24, 0, 24, 24, 24);
+      gr.addColorStop(0, hexA(color, 0.5)); gr.addColorStop(1, hexA(color, 0));
+      g.fillStyle = gr; g.fillRect(0, 0, 48, 48);
+      this.glowCache.set(color, c);
+    }
+    return c;
   }
 
   drawVisor(ctx, s, fr, p, y, k, fx) {
@@ -1022,7 +1035,7 @@ export class Renderer {
     this.gearCache ||= new Map();
     const key = `${id}|${pages === Assets.pages ? 'h' : pages === this.awayPages ? 'a' : 'k'}|${gear.stick}|${gear.skates}`;
     let c = this.gearCache.get(key);
-    if (c) return c;
+    if (c) { this.gearCache.delete(key); this.gearCache.set(key, c); return c; } // (most recently drawn last)
     const [pi, fx, fy, fw, fh] = f;
     c = document.createElement('canvas'); c.width = fw; c.height = fh;
     const cx = c.getContext('2d', { willReadFrequently: true });
@@ -1049,9 +1062,13 @@ export class Renderer {
       d[i] = Math.min(255, col[0] * k); d[i + 1] = Math.min(255, col[1] * k); d[i + 2] = Math.min(255, col[2] * k);
     }
     cx.putImageData(img, 0, 0);
-    if (this.gearCache.size > 400) this.gearCache.delete(this.gearCache.keys().next().value);
-    this.gearCache.set(key, c);
-    return c;
+    // the pixel work needed a CPU-side canvas; drawing every frame wants an ordinary one (a
+    // CPU canvas gets uploaded to the GPU on every draw, which phones feel)
+    const out = document.createElement('canvas'); out.width = fw; out.height = fh;
+    out.getContext('2d').drawImage(c, 0, 0);
+    if (this.gearCache.size > 600) this.gearCache.delete(this.gearCache.keys().next().value);
+    this.gearCache.set(key, out);
+    return out;
   }
 
   drawFrameCanvas(ctx, c, f, x, y, k, flip, rot) {
@@ -1162,7 +1179,8 @@ export class Renderer {
   // goalie has it, otherwise the right-facing art mirrored.
   goalieSets(g) {
     const A = Assets.atlas, key = g.team === 0 ? 'home' : 'away';
-    const loaded = (set, probe) => { const f = set && Assets.frame(probe(set)); return f && Assets.pages[f[0]] ? set : null; };
+    const drawn = g.team === 0 ? Assets.clubPages() : this.awayPages || Assets.pages;
+    const loaded = (set, probe) => { const f = set && Assets.frame(probe(set)); return f && (drawn[f[0]] || Assets.pages[f[0]]) ? set : null; };
     const pick = (all, probe) => (all && g.art && loaded(all[g.art], probe)) || (all && all[key]);
     const own = (all, probe) => all && loaded(all[g.art || key], probe); // never another goalie's art
     const left = g.goalSide > 0;

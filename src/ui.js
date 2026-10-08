@@ -57,7 +57,13 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
     return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT[r.kit]}`, size);
   }
   if (team !== 0 && id.startsWith('sub_')) return Assets.icon(`character_portraits/away/${PORTRAIT[id.slice(4)]}`, size, teamId);
-  if (team !== 0 && RECRUITS[id]) return portrait(RECRUITS[id].kit, 1, teamId === 'allstar' ? RECRUITS[id].team : teamId, size, expr); // a League All-Star, by player key
+  if (team !== 0 && RECRUITS[id]) { // a rival star by player key (a League All-Star: in the All-Star kit)
+    const r = RECRUITS[id];
+    if (teamId !== 'allstar') return portrait(r.kit, 1, r.team, size, expr);
+    const p = P[`${TEAMS[r.team].art}_${ROLE[r.kit]}`];
+    const fid = p && ((expr && p[expr]) || p.neutral_roster || p.neutral);
+    return (fid && Assets.icon(fid, size, 'allstar')) || Assets.icon(`character_portraits/away/${PORTRAIT[r.kit]}`, size, 'allstar');
+  }
   if (team === 0) {
     const p = P[ART_NAME[id]];
     if (expr && p && p[expr]) return Assets.icon(p[expr], size, CLUB_PAGES());
@@ -348,6 +354,9 @@ export class UI {
       anyPoints,
       shopNew: GEAR.some((g) => g.price > 0 && !s.owned.includes(g.id) && Math.round(g.price * (1 - (s.discount || 0))) <= s.coins),
       scoutOpen: Object.keys(RECRUITS).some((k) => recruitStatus(s, k) === 'open' && s.coins >= RECRUITS[k].price),
+      allstarNext: !!(this.app.fixture && this.app.fixture() && this.app.fixture().kind === 'allstar'),
+      online: onlineOn(s) && configured(),
+      draftOpen: !!(s.draft && !s.draft.picked),
     });
     this.roomFit?.disconnect();
     if (room) {

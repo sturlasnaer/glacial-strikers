@@ -637,6 +637,7 @@ class App {
     m.classic = classic;
     if (classic) Assets.loadGroup('winter').catch(() => {}); // Pine Pond dressed up
     if (m.goalieMode) Assets.loadGroup('goalie').catch(() => {}); // Wall of Ice
+    if (extra.allstar) Assets.dropOriginals(ALLSTAR.groups); // only the recoloured copies are drawn
     this.hookMatch(m);
     this.replay.clear();
     this.clips.clear();
