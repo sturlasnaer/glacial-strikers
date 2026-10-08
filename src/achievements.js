@@ -26,6 +26,7 @@ export const ACHIEVEMENTS = [
   { id: 'champion', name: 'Frostline Champions', text: 'Win the Frostline Cup.', icon: TROPHY, coins: 200 },
   { id: 'dynasty', name: 'Dynasty', text: 'Win the cup in two seasons.', icon: TROPHY, coins: 250 },
   { id: 'perfect', name: 'Perfect Season', text: 'Win all 5 regular-season games.', icon: TROPHY, coins: 150 },
+  { id: 'between-pipes', name: 'Between the Pipes', text: 'Win a match in goalie mode.', icon: 'equipment_items/armor/goalie_gloves', coins: 80 },
   { id: 'winter-classic', name: 'Winter Classic', text: 'Win the Winter Classic on Pine Pond.', icon: 'hud_elements/ability/frost', coins: 120 },
   { id: 'rivals', name: 'Rival Slayer', text: 'Beat every rival at least once.', icon: 'hud_elements/misc/away_crest', coins: 80 },
   { id: 'max-level', name: 'Fully Grown', text: 'Get a skater to level 10.', icon: STAR, coins: 100 },

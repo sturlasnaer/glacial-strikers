@@ -52,6 +52,7 @@ export class HUD {
       <div class="keyhints" id="keyhints" ${this.app.isTouch ? 'hidden' : ''}>
         ${opts.versus ? `<b style="color:var(--ice)">P1</b> WASD · <kbd>F</kbd> ${t('shoot')} · <kbd>G</kbd> ${t('pass')} · <kbd>L-Shift</kbd> ${t('sprint')} · <kbd>R</kbd>/<kbd>T</kbd> ${t('skill/ult')}<br>
         <b style="color:var(--coral)">P2</b> ${t('Arrows')} · <kbd>K</kbd> ${t('shoot')} · <kbd>L</kbd> ${t('pass')} · <kbd>R-Shift</kbd> ${t('sprint')} · <kbd>O</kbd>/<kbd>P</kbd> ${t('skill/ult')}`
+        : match.goalieMode ? `<kbd>J</kbd> ${t('block / pass')} · <kbd>K</kbd> ${t('dive / clear')} · <kbd>Shift</kbd> ${t('quick feet')}<br><kbd>U</kbd> ${t('poke check')} · <kbd>I</kbd> ${t('Wall of Ice')} · <kbd>Esc</kbd> ${t('pause')}`
         : `<kbd>J</kbd> ${t('shoot/check')} · <kbd>K</kbd> ${t('pass/switch')} · <kbd>Shift</kbd> ${t('sprint')}<br><kbd>U</kbd> ${t('skill')} · <kbd>I</kbd> ${t('ultimate')} · <kbd>Esc</kbd> ${t('pause')}`}</div>`;
     this.el.querySelector('#pause-btn').addEventListener('click', (e) => { e.stopPropagation(); this.app.pause(); });
     const rp = this.el.querySelector('#replay');
@@ -184,7 +185,7 @@ export class HUD {
       ub.firstChild.style.transform = `scaleX(${c.ult / 100})`;
       ub.classList.toggle('full', c.ult >= 100);
       this.updateTouch(c, m);
-    }
+    } else if (m.goalieMode) this.updateGoalie(m.goalies[0], m);
     if (this.versus) {
       const c2 = m.controlled(1);
       if (c2) {
@@ -237,6 +238,38 @@ export class HUD {
       this.keyhintT -= dt;
       if (this.keyhintT <= 0) this.el.querySelector('#keyhints').hidden = true;
     }
+  }
+
+  // Goalie mode: Halla's card (Wall of Ice is her meter) and the touch buttons for goaltending.
+  updateGoalie(g, m) {
+    if (this.last.ctrl !== g) {
+      this.last.ctrl = g;
+      this.el.querySelector('#pc-img').src = portrait('goalie', 0, null, 88);
+      this.el.querySelector('#pc-name').textContent = g.name;
+      this.el.querySelector('#pc-sta').firstChild.style.transform = 'scaleX(1)';
+      if (!this.touch.hidden) {
+        this.touch.querySelector('.t-skill img').src = Assets.icon('equipment_items/stick/wood', 80);
+        this.touch.querySelector('.t-ult img').src = Assets.icon('hud_elements/ability/frost', 80);
+      }
+    }
+    const ub = this.el.querySelector('#pc-ult');
+    ub.firstChild.style.transform = `scaleX(${g.wallT > 0 ? g.wallT / 5 : g.ult / 100})`;
+    ub.classList.toggle('full', g.ult >= 100 || g.wallT > 0);
+    if (this.touch.hidden) return;
+    const hold = g.state === 'hold';
+    const aLbl = hold ? t('PASS') : t('BLOCK'), bLbl = hold ? t('CLEAR') : t('DIVE');
+    if (this.last.a !== aLbl) { this.last.a = aLbl; this.touch.querySelector('.t-a span').textContent = aLbl; }
+    if (this.last.b !== bLbl) { this.last.b = bLbl; this.touch.querySelector('.t-b span').textContent = bLbl; }
+    const skill = this.touch.querySelector('.t-skill');
+    const cdf = g.pokeCd > 0 ? g.pokeCd / 0.8 : 0;
+    skill.querySelector('.cd').style.background = cdf > 0 ? `conic-gradient(rgba(11,20,36,.78) ${cdf * 360}deg, transparent 0)` : 'none';
+    skill.classList.toggle('ready', cdf === 0);
+    const pull = this.touch.querySelector('.t-pull');
+    if (!pull.hidden) pull.hidden = true;
+    const ult = this.touch.querySelector('.t-ult');
+    const uf = g.ult / 100;
+    ult.querySelector('.cd').style.background = uf < 1 ? `conic-gradient(transparent ${uf * 360}deg, rgba(11,20,36,.78) 0)` : 'none';
+    ult.classList.toggle('ready', uf >= 1);
   }
 
   updateTouchIcons(c) {

@@ -7,6 +7,7 @@ export const SKATER_R = 15;
 export const PUCK_R = 6;
 export const GOALIE_R = 21;
 const POKE_REACH = 16; // how far past touching a goalie's poke check reaches
+export const HUMAN_REACH = Number(globalThis.__humanReach) || 0.72; // goalie mode: your reads and moves make the saves
 const ROAM_SPEED = 300; // a goalie skating out to play the puck (skaters top out around 330)
 const OPP_SPEED = 330;
 
@@ -433,16 +434,20 @@ export class Goalie {
     this.pokeCd = 0;
     this.stopPose = false; // smothered a loose puck with the stick (pose only)
     this.leaving = false; this.leaveX = 0; this.leaveY = 0; // skating to the bench when pulled (visual)
+    this.human = false; // goalie mode: the player is in goal
+    this.ult = 0; this.wallT = 0; // goalie mode's ultimate, Wall of Ice
     this.id = `${team}-goalie`;
   }
-  get lat() { return (120 + this.stats.rfx * 11) * (this.slowT > 0 ? 0.45 : 1); }
+  get lat() { return (120 + this.stats.rfx * 11) * (this.slowT > 0 ? 0.45 : 1) * (this.wallT > 0 ? 1.2 : 1); }
 
   reach() {
     let r = 5.5 + this.stats.rfx * 0.7;
     if (this.match.mods && this.match.mods.has('giant')) r *= 1.4;
     if (this.alert > 0) r += 5;
-    if (this.state === 'butterfly') r += 5;
+    if (this.state === 'butterfly') r += this.human && this.match.puck.z > 14 ? -8 : 5; // down low: the top's open
     if (this.state === 'glove') r += 6;
+    if (this.human) r *= HUMAN_REACH;
+    if (this.wallT > 0) r += 10; // Wall of Ice
     if (this.slowT > 0) r *= 0.75;
     return r;
   }
@@ -470,6 +475,15 @@ export class Goalie {
 
     if (this.state === 'hold') {
       this.holdT -= dt;
+      if (this.human && m.state === 'play') {
+        // the player decides: A passes (toward the stick, or to the open teammate), B rims it
+        const inp = m.humanInput || {}, was = this.prevHuman || {};
+        this.prevHuman = { a: !!inp.a, b: !!inp.b, skill: !!inp.skill, ult: !!inp.ult };
+        const aim = Math.hypot(inp.mx || 0, inp.my || 0) > 0.4 ? { x: inp.mx, y: inp.my } : null;
+        const go = inp.a && !was.a ? 'pass' : inp.b && !was.b ? 'rim' : this.holdT <= 0 ? 'auto' : null;
+        if (go) m.goalieDistribute(this, go === 'auto' ? null : aim, go === 'rim');
+        return;
+      }
       if (this.holdT <= 0 && m.state === 'play') {
         m.goalieDistribute(this);
         // played it from behind the net or the corner: head straight back, around the net
@@ -485,6 +499,9 @@ export class Goalie {
       if (this.stateT > 0.55) this.setState('ready');
       return;
     }
+
+    // the player in goal (goalie mode)
+    if (this.human) { this.updateHuman(dt, gx); return; }
 
     // player-controlled goalie (shootout)
     if (this.manual) {
@@ -513,19 +530,7 @@ export class Goalie {
     this.pokeCd = Math.max(0, this.pokeCd - dt);
     if (this.state === 'ready' && this.pokeCd <= 0 && m.state === 'play') this.tryPoke();
 
-    // target position: stay on the line between puck and goal centre
-    const px = p.x, py = p.y;
-    const dx = px - gx, dy = py;
-    const depth = clamp(Math.abs(dx) / 16, 24, 38) * (0.85 + this.stats.pos * 0.025);
-    let tx, ty;
-    if (dx * -this.goalSide <= 0) {
-      // puck behind the goal line: hug the post on the puck's side
-      tx = gx - this.goalSide * 16; ty = Math.sign(py || 1) * (MOUTH - 10);
-    } else {
-      const ang = Math.atan2(dy, Math.abs(dx));
-      tx = gx - this.goalSide * depth * Math.cos(ang);
-      ty = clamp(depth * Math.sin(ang) + py * 0.04, -MOUTH + 8, MOUTH - 8);
-    }
+    let { tx, ty } = this.angleTarget(gx);
 
     if (this.react) {
       this.react.t -= dt;
@@ -571,6 +576,81 @@ export class Goalie {
     this.x += clamp((tx - this.x) * 6, -120, 120) * dt;
     if (!this.track && this.state !== 'ready' && this.stateT > 0.45) this.setState('ready');
     if (!this.track && Math.abs(this.vy) > 40) this.shuffle = Math.sign(this.vy); else this.shuffle = 0;
+  }
+
+  // Where to stand: on the line between the puck and the middle of the net, out a little
+  // further the further away the puck is.
+  angleTarget(gx) {
+    const p = this.match.puck;
+    const dx = p.x - gx, dy = p.y;
+    const depth = clamp(Math.abs(dx) / 16, 24, 38) * (0.85 + this.stats.pos * 0.025);
+    if (dx * -this.goalSide <= 0) {
+      // puck behind the goal line: hug the post on the puck's side
+      return { tx: gx - this.goalSide * 16, ty: Math.sign(p.y || 1) * (MOUTH - 10) };
+    }
+    const ang = Math.atan2(dy, Math.abs(dx));
+    return { tx: gx - this.goalSide * depth * Math.cos(ang), ty: clamp(depth * Math.sin(ang) + p.y * 0.04, -MOUTH + 8, MOUTH - 8) };
+  }
+
+  // Goalie mode. With positioning help (the default) Halla holds the angle and the stick nudges
+  // her: side to side, and out toward the play or back. Without it the stick places her. Help
+  // also drifts her toward where a shot will cross. A: butterfly. B: dive (toward the stick,
+  // else toward the shot). Skill: poke check. Ultimate: Wall of Ice, charged by saves.
+  updateHuman(dt, gx) {
+    const m = this.match, p = m.puck, inp = m.humanInput || {}, was = this.prevHuman || {};
+    const pressed = (k) => !!inp[k] && !was[k];
+    this.prevHuman = { a: !!inp.a, b: !!inp.b, skill: !!inp.skill, ult: !!inp.ult };
+    this.react = null; // no automatic reactions: the saves are yours
+    this.wallT = Math.max(0, this.wallT - dt);
+    this.pokeCd = Math.max(0, this.pokeCd - dt);
+    const help = { off: 0, normal: 0.35, strong: 0.6 }[m.assist] ?? 0.35;
+    const out = -this.goalSide; // toward the play
+    const mx = clamp(inp.mx || 0, -1, 1), my = clamp(inp.my || 0, -1, 1);
+    let tx, ty;
+    if (help > 0) {
+      const a = this.angleTarget(gx);
+      tx = a.tx + out * clamp(mx * out, -1, 1) * 22;
+      ty = a.ty + my * 28;
+    } else {
+      this.hy = clamp((this.hy ?? this.y) + my * 300 * dt, -MOUTH - 6, MOUTH + 6);
+      this.hx = clamp((this.hx ?? 4) + mx * out * 120 * dt, 0, 40);
+      tx = gx + out * (24 + this.hx); ty = this.hy;
+    }
+    const incoming = p.shot && p.shot.team !== this.team ? this.predictY() : null;
+    this.track = incoming;
+    // help reads a new shot like the AI goalie does: a moment late, and not exactly
+    if (p.shot !== this.helpShot) {
+      this.helpShot = p.shot;
+      const sp = Math.hypot(p.vx, p.vy);
+      this.helpT = Math.max(0.1, 0.26 - this.stats.rfx * 0.012) + m.rng() * 0.06;
+      this.helpErr = m.rng.normal() * (4 + (sp / 1000) * (16 - this.stats.rfx));
+    }
+    this.helpT = Math.max(0, (this.helpT || 0) - dt);
+    if (incoming && help > 0 && this.helpT <= 0) ty += (clamp(incoming.y + this.helpErr, -MOUTH - 4, MOUTH + 4) - ty) * help;
+
+    if (pressed('ult') && this.ult >= 100) { this.ult = 0; this.wallT = 5; m.emit('goalie_wall', { g: this }); }
+    if (pressed('b') && this.state !== 'poke') {
+      const dir = Math.abs(my) > 0.3 ? Math.sign(my) : Math.sign((incoming ? incoming.y : p.y) - this.y) || 1;
+      this.diveDir = dir; this.butterflyT = 0;
+      this.setState('dive'); this.vy = dir * 420;
+      m.emit('goalie_dive', { g: this });
+      return;
+    }
+    if (pressed('skill') && this.pokeCd <= 0) {
+      this.pokeCd = 0.8; this.setState('poke');
+      const c = p.owner;
+      if (c && c.isSkater && c.team !== this.team && Math.hypot(c.x - this.x, c.y - this.y) < this.r + c.r + POKE_REACH + 6 && m.rng() < 0.45 + this.stats.rfx * 0.03) m.goaliePoke(this, c);
+    }
+    if (pressed('a')) { this.butterflyT = 0.45; this.saveHigh = p.z > 14; }
+    if (this.butterflyT > 0) { this.butterflyT -= dt; if (this.state !== 'butterfly' && this.state !== 'poke') this.setState('butterfly'); }
+    else if ((this.state === 'butterfly' || this.state === 'glove') && this.stateT > 0.2) this.setState('ready');
+    else if (this.state === 'poke' && this.stateT > 0.35) this.setState('ready');
+
+    const lat = this.lat * (inp.sprint ? 1.25 : 1) * (this.state === 'butterfly' ? 0.55 : 1); // down on the ice she slides slower
+    this.vy = clamp((ty - this.y) * 12, -lat, lat);
+    this.y = clamp(this.y + this.vy * dt, -MOUTH - 14, MOUTH + 14);
+    this.x += clamp((tx - this.x) * 6, -140, 140) * dt;
+    this.shuffle = Math.abs(this.vy) > 40 ? Math.sign(this.vy) : 0;
   }
 
   // Poke check: a carrier cutting in close in front of the crease.

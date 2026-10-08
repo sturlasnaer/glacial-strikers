@@ -72,6 +72,12 @@ export class Renderer {
       tx = g.x; ty = g.y - 30;
     }
     if (opts.focus) { tx = opts.focus.x; ty = opts.focus.y; }
+    // goalie mode: keep Halla in the picture while the puck is in her end
+    if (match.goalieMode && match.state === 'play') {
+      const g = match.goalies[0], gs = toScreen(g.x, g.y);
+      const near = clamp(1 - (p.x - g.x) * -g.goalSide / 700, 0, 1);
+      tx = lerp(tx, gs.x, near * 0.4);
+    }
     if (opts.attract) { tx = lerp(tx, BACKDROP.cx, 0.5); }
     const k = 1 - Math.exp(-4.5 * dt);
     this.cam.x += (tx - this.cam.x) * k;
@@ -752,6 +758,22 @@ export class Renderer {
 
   drawGroundMarkers(ctx, match, fx) {
     const versus = match.humans && match.humans.length > 1;
+    // goalie mode: Wall of Ice lights up the crease
+    const wall = match.goalieMode && match.goalies[0].wallT > 0 ? match.goalies[0] : null;
+    if (wall) {
+      const c = toScreen(wall.goalSide * (GOAL_X - 4), 0), k = Math.min(1, wall.wallT / 0.6);
+      ctx.save();
+      ctx.globalAlpha = (0.35 + Math.sin(fx.time * 7) * 0.1) * k;
+      const gr = ctx.createRadialGradient(c.x, c.y, 10, c.x, c.y, 95);
+      gr.addColorStop(0, 'rgba(232,251,255,0.9)'); gr.addColorStop(1, 'rgba(113,220,232,0)');
+      ctx.fillStyle = gr;
+      ctx.beginPath(); ctx.ellipse(c.x, c.y, 95, 78, 0, 0, Math.PI * 2); ctx.fill();
+      for (const [w, col] of [[7, 'rgba(42,159,176,0.7)'], [3, '#e8fbff']]) { // a frosty rim around the crease
+        ctx.globalAlpha = k; ctx.strokeStyle = col; ctx.lineWidth = w;
+        ctx.beginPath(); ctx.ellipse(c.x, c.y, 82, 68, 0, -Math.PI / 2, Math.PI / 2, wall.goalSide > 0); ctx.stroke();
+      }
+      ctx.restore();
+    }
     for (const c of match.skaters) {
       if (!c.controlled || c.parked || match.state === 'over') continue;
       const p = toScreen(c.x, c.y);
@@ -1153,6 +1175,7 @@ export class Renderer {
       const pages = g.team === 0 ? Assets.clubPages() : this.awayPages;
       const k = GOALIE_SCALE * persp(wy) * (match.mods && match.mods.has('giant') ? 1.25 : 1);
       Assets.draw(ctx, id, p.x, p.y, k, { pages, flip });
+      if (g.wallT > 0) this.drawTinted(ctx, id, pages, p.x, p.y, k, flip, 0, '#9fe8ff', 0.3 + Math.sin(match.time * 7) * 0.12); // Wall of Ice
       if (g.slowT > 0) this.drawTinted(ctx, id, pages, p.x, p.y, k, flip, 0, '#9fe8ff', 0.4);
       if (g.flash > 0) this.drawTinted(ctx, id, pages, p.x, p.y, k, flip, 0, '#ffffff', g.flash * 2.5);
       return;

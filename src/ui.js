@@ -103,6 +103,14 @@ const NPC_SPOTS = [
   { who: 'ottar', tab: 'shop', at: [75.5, 46] },
   { who: 'kip', tab: 'tournament', at: [72.5, 86] },
 ];
+// "Play as: Skaters / Goalie" (goalie mode), remembered in the settings.
+function playAsHtml(s) {
+  const goalie = s.settings.playAs === 'goalie';
+  return `<div class="play-as"><span class="label" style="font-size:14px">${t('Play as')}</span>
+    <button class="chip" data-playas="skaters" aria-pressed="${!goalie}">${t('Skaters')}</button>
+    <button class="chip" data-playas="goalie" aria-pressed="${goalie}" title="${esc(t('You play Halla in goal; the AI skates your line.'))}">${t('Goalie')}</button></div>`;
+}
+
 // The painted logo for the title screen, or the lettering until its art has loaded.
 function logoHtml() {
   const P = Assets.atlas && Assets.atlas.art_additions && Assets.atlas.art_additions.polish;
@@ -208,7 +216,8 @@ export class UI {
           <span class="row" style="gap:6px"><button class="btn small" data-team="${tm.id}">${t('Match')}</button><button class="btn small ghost" data-so="${tm.id}">${t('Shootout')}</button></span>
         </div>`).join('')}
       </div>
-      <button class="btn small ghost" data-close>${t('Back')}</button>`, (m, close) => {
+      <div class="row" style="justify-content:space-between;align-items:center">${playAsHtml(this.app.save)}<button class="btn small ghost" data-close>${t('Back')}</button></div>`, (m, close) => {
+      this.bindPlayAs(m);
       const upd = () => { const x = mult(); m.querySelector('#ch-mult').textContent = this.challenges.size ? t('coins x{n}', { n: +x.toFixed(2) }) : ''; };
       upd();
       this.click('[data-ch]', (el) => {
@@ -655,7 +664,8 @@ export class UI {
           ${p.beats ? `<span class="muted">${t('Beats {plan}', { plan: esc(t(GAME_PLANS[p.beats].name)) })}</span>` : ''}
           ${counters(p.id) ? `<span class="edge good">${t('Counters their plan')}</span>` : countered(p.id) ? `<span class="edge bad">${t('Countered by their plan')}</span>` : ''}
         </button>`).join('')}</div>
-      <div class="row" style="justify-content:flex-end"><button class="btn gold" id="plan-go">${t('Drop the puck')}</button></div>`, (m, close) => {
+      <div class="row" style="justify-content:space-between;align-items:center">${playAsHtml(s)}<button class="btn gold" id="plan-go">${t('Drop the puck')}</button></div>`, (m, close) => {
+      this.bindPlayAs(m);
       let pick = cur;
       this.click('[data-plan]', (el) => {
         pick = el.dataset.plan;
@@ -668,6 +678,16 @@ export class UI {
         if (row) row.querySelectorAll('span').forEach((el, i) => { const id = lineupIds(s)[i]; el.innerHTML = `<img src="${portrait(id, 0, null, 64)}" width="26" height="26" alt="">${esc(member(id).name)}`; });
       }), m);
     }, false);
+  }
+
+  bindPlayAs(m) {
+    const s = this.app.save;
+    this.click('[data-playas]', (el) => {
+      s.settings.playAs = el.dataset.playas;
+      writeSave(s);
+      m.querySelectorAll('[data-playas]').forEach((b) => b.setAttribute('aria-pressed', b === el));
+      audio.sfx('click');
+    }, m);
   }
 
   // After a league match: the rest of the round, standings moves, playoff news.

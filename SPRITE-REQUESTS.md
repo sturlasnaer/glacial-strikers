@@ -9,11 +9,12 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Next batches:**
 1. **U**: a pixel-art UI kit for the menus (if D is already underway, finish it first).
 2. **D**: celebrations for the rival wingers and defenders.
-3. **W**: Winter Classic dressing for Pine Pond.
-4. **O**: arena-rule icons.
-5. **E**: achievement icons.
-6. **J**: the Awards Night stage.
-7. **F**: a penalty box for Pine Pond.
+3. **Q**: goalie mode (Wall of Ice and the goalie's action icons).
+4. **W**: Winter Classic dressing for Pine Pond.
+5. **O**: arena-rule icons.
+6. **E**: achievement icons.
+7. **J**: the Awards Night stage.
+8. **F**: a penalty box for Pine Pond.
 
 ## Format notes
 
@@ -88,6 +89,14 @@ Only the five rival captains have a goal celebration (Batch C). When a rival win
 - **Aurora Royals:** the winger takes a sweeping bow; the defender raises their stick like a sceptre.
 
 40 frames.
+
+## Batch Q: goalie mode
+
+Goalie mode lets you play a whole match as Halla while the AI skates. Her ultimate, **Wall of Ice**, gives her five seconds of extra reach. For now it's a code-drawn frost tint and a glowing crease. Please draw:
+
+- **Wall of Ice:** a translucent wall of ice crystals that rises in an arc across the front of the crease, seen from our camera, about 180×120 px at game size. It needs a 4-frame rise, a 2-frame shimmer loop and a 3-frame shatter when it ends. Draw it for the left net; the game mirrors it for the right. It goes in front of the crease and behind Halla, so leave her standing area clear.
+- **Goalie action icons** for the touch buttons and the HUD, in the style of the ability icons (`hud_elements/ability/*`, about 210 px source): **butterfly** (pads flat on the ice), **dive** (a goalie stretched sideways), **poke check** (a stick jabbing at a puck) and **Wall of Ice** (a crystal shield). 4 frames.
+13 frames.
 
 ## Batch W: Winter Classic dressing for Pine Pond
 

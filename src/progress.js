@@ -213,9 +213,10 @@ export function matchConfig(save, teamId, stage, opts = {}) {
     buffs: fx ? { ultStart: fx.ultStart, staminaMul: fx.staminaMul, oppGoalieMul: fx.oppGoalieMul, stealMul: fx.stealMul } : {},
     teams: [home, away],
     humanTeam: opts.attract ? null : 0,
+    goalieMode: !!opts.goalieMode && !opts.attract, // the player in goal, the AI skating
     powers: stage ? stage.powers : ['fire', 'ice', 'lightning', 'gravity'],
     twist: stage ? stage.twist : 'none',
-    diff: [opts.attract ? 0.6 : 0.6, diff],
+    diff: [opts.goalieMode ? 0.72 : 0.6, diff], // in goalie mode all three of ours are AI: sharper ones
     seed: (Math.random() * 1e9) >>> 0,
   };
 }
@@ -266,7 +267,8 @@ export function computeRewards(save, summary, stage, exhibition) {
     if (exhibition) x = Math.round(x * 0.6);
     chem[k] = { xp: Math.min(40, x), ...c };
   }
-  const gExp = Math.min(160, Math.round(((won ? 30 : 18) + summary.saves[0] * 3) * (exhibition ? 0.6 : 1)));
+  // in goalie mode Halla played the match herself: double
+  const gExp = Math.min(320, Math.round(((won ? 30 : 18) + summary.saves[0] * 3) * (exhibition ? 0.6 : 1) * (summary.goalieMode ? 2 : 1)));
   return { won, coins, lines, exp, gExp, chem };
 }
 

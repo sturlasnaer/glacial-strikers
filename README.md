@@ -44,6 +44,8 @@ Hold shoot while a pass is on its way to fire a **one-timer**. Your skates plant
 
 **Shootout goalie:** on the rival's shot you're in goal. Steer to move, shoot = butterfly, pass = dive.
 
+**Goalie mode** (Play as: Goalie): steer to move Halla, shoot (J / X / BLOCK) drops into the butterfly, pass (K / A / DIVE) dives toward the stick, skill (U / B) pokes, sprint gives quicker feet, ultimate (I / Y / star) fires Wall of Ice. Holding the puck, shoot passes toward the stick and pass rims it around the boards (CLEAR).
+
 ## What's in this build
 
 - **Match:** first to 5, 3 skaters + AI goalie per side, possession, passing with lead, wrist/slap/one-timer shots, smart aim with manual corner aim, checks with hit-stop, stick-checks, shot blocks, rebounds, posts, goalie dives and freezes, faceoffs.
@@ -60,6 +62,7 @@ Hold shoot while a pass is on its way to fire a **one-timer**. Your skates plant
 - **Penalties and power plays:** hitting a skater away from the puck can draw interference, and very hard hits can draw charging or boarding. The player sits 15 seconds in a glass penalty box built into the far boards (the door swings, a red light blinks and the timer hangs above it), the faceoff moves to the offender's end, and a power-play goal ends it early. Power-play goals and penalty kills pay bonus coins.
 - **Pull the goalie:** trailing when the other team needs one more goal, swap Halla for an extra attacker. She skates off to the bench, and if you send her back mid-play she skates back to the crease, so the net is open for about a second. The AI pulls its goalie too, so watch for empty nets.
 - **League and playoffs:** a 6-team round robin (5 rounds). Your games are real and the rest are simulated, with a standings table and the top 4 into semifinals and a Cup Final. Seasons repeat with tougher rivals.
+- **Goalie mode:** play a whole match as Halla while the AI skates your line. Choose Play as: Goalie in quick play or on the game-plan screen before a league match (it's remembered; daily challenges stay skaters only). Halla holds the angle and the stick nudges her in, out and across; Settings › Aim assist sets how much she helps track a shot (a moment late and not exactly, like the AI goalie reads it), and off means you place her yourself. The butterfly covers the ice but slows her slide and leaves the top open, the dive throws her across, the poke check knocks the puck off a carrier in close, and a caught puck waits for you to pass toward the stick or rim it. Saves charge her ultimate, Wall of Ice: five seconds of extra reach and quicker feet, with a frosted crease. The camera keeps her in the picture while the puck is in her end, she earns double EXP, and a win unlocks Between the Pipes. `tools/test_goalie.mjs` checks the controls and plays bot matches: holding the angle alone saves about 82%, timed butterflies about 85%, the AI goalie about 88%, so reading shots and diving is what beats it.
 - **Winter Classic:** once a season, after league round 3, the Foxes play an outdoor showcase on Pine Pond against the league leaders (or the runners-up if that's you). It doesn't count in the standings. Kip Vance calls it, the snow comes down harder, it has its own anthem, and a win pays a 320-coin purse, sets off fireworks, unlocks an achievement and goes in the trophy case. The schedule shows it between rounds 3 and 4.
 - **Game plans:** before each league match pick Balanced, Forecheck, Trap or Run-and-gun. They change how both teams' AI plays, and Forecheck beats Run-and-gun, which beats Trap, which beats Forecheck. Rivals have a usual style (scouting report shown) and the Royals counter whatever you used on them last time.
 - **Locker-room moments:** short scenes between league matches (tough losses, hat tricks, win streaks, playoff nerves, trash talk, scouting, Bram's stew and more). Each choice gives chemistry, EXP, coins or a buff for the next match.
@@ -73,7 +76,7 @@ Hold shoot while a pass is on its way to fire a **one-timer**. Your skates plant
 - **Local versus:** two players on one keyboard or with gamepads, plus gamepad rumble on hits, goals, combos and ultimates.
 - **Accessibility and comfort (Settings):** aim assist (off/normal/strong), auto-sprint, relaxed game speed, screen shake strength, flashes off, reduced effects, colorblind-friendly team markers (blue triangles vs orange diamonds), large text, bigger touch buttons and a left-handed touch layout.
 - **Goal clips:** every instant replay is recorded as a short video with game sound and a caption. The results screen lists the match's highlights with Share (phones) and Save.
-- **Achievements:** 35 trophies (hat tricks, comebacks, every combo and power puck, empty-netters, shorthanded goals, the cup, a perfect season, gold in every drill and more), each paying coins, shown in the Trophies tab.
+- **Achievements:** 36 trophies (hat tricks, comebacks, every combo and power puck, empty-netters, shorthanded goals, the cup, a perfect season, gold in every drill and more), each paying coins, shown in the Trophies tab.
 - **Broadcast:** instant goal replays (skippable, toggle in Settings), play-by-play commentary ticker, ultimate cut-ins, crowd chants that speed up the cheered team's ultimates, a team logo at centre ice.
 - **Recruitment:** beat a rival and their three skaters take your call (Team › Scouting). Signings cost coins, join a level below your line-up's average with points to spend and the perks they already had, and wear your club colours. A centre, a winger and a defender dress for each match; every position plays its kit (centres Nix's frost kit, wingers Volta's thunder kit, defenders Bram's stone kit), so a signing brings different stats and style, not new powers. Chemistry is between people, so a new signing has to build it before combos fire. The rival fills the slot with a newcomer and brings it up before your next game. Benched skaters can still train.
 - **Rivals with their own cast:** each of the five rivals has its own three skaters and goalie (on-ice sprites, portraits, cut-in banners), drawn in coral/violet and recoloured into the team's colours at runtime, plus its own crest. Captains change expression through the pre- and post-match talk, and so do Nix, Volta, Bram and Halla.
@@ -155,6 +158,11 @@ Plays AI-vs-AI matches headless and prints goals, save percentage, match length 
 node tools/test_controls.mjs
 ```
 Scripted checks of shooting, passing, one-timers, checking, switching, abilities, combos, pass chains, versus inputs and challenges.
+
+```bash
+node tools/test_goalie.mjs 10
+```
+Goalie mode: checks the controls (butterfly, dive, positioning with and without help, holding and passing, Wall of Ice), then plays bot-in-goal matches next to AI-goalie matches and prints both save rates.
 
 ```bash
 node tools/test_drills.mjs 3

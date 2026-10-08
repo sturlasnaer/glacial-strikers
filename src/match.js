@@ -52,6 +52,9 @@ export class Match {
     this.humanTeam = cfg.humanTeam ?? null; // player 1's team
     // every team with a human player (two in local versus)
     this.humans = cfg.humans ?? (this.humanTeam !== null ? [this.humanTeam] : []);
+    // goalie mode: the player is in goal for team 0 and the AI skates all three skaters
+    this.goalieMode = !!cfg.goalieMode && this.humanTeam === 0;
+    if (this.goalieMode) this.humans = [];
     this.humanInputs = {};
     this.abilities = new Abilities(this);
     this.winner = null;
@@ -65,6 +68,7 @@ export class Match {
       });
       this.goalies.push(new Goalie(this, team, t.goalie.stats, t.goalie));
     });
+    if (this.goalieMode) this.goalies[0].human = true;
     this.ai = [0, 1].map((team) => new TeamAI(this, team, (cfg.diff || [0.5, 0.5])[team]));
     for (const s of this.skaters) if (this.plans[s.team] === 'forecheck') s.d.regen *= 0.88;
     for (const s of this.teamSkaters(0)) {
@@ -661,14 +665,17 @@ export class Match {
     this.emit('dump', { s });
   }
 
-  goalieDistribute(g) {
+  // The goalie plays a held puck: to the open teammate (or the one the player aims at), else
+  // around the boards (or always, when the player rims it).
+  goalieDistribute(g, aim = null, rim = false) {
     const p = this.puck;
     const mates = this.teamSkaters(g.team);
     let best = null, bestScore = -1e9;
-    for (const m of mates) {
+    for (const m of rim ? [] : mates) {
       const lane = this.laneClear(g.x, g.y, m.x, m.y, g.team);
       const open = this.nearestOpp(m);
-      const score = lane * 2 + Math.min(open, 200) / 100 - Math.hypot(m.x - g.x, m.y - g.y) / 900;
+      let score = lane * 2 + Math.min(open, 200) / 100 - Math.hypot(m.x - g.x, m.y - g.y) / 900;
+      if (aim) { const d = norm(m.x - g.x, m.y - g.y), a = norm(aim.x, aim.y); score += (d.x * a.x + d.y * a.y) * 4 + 2; }
       if (score > bestScore) { bestScore = score; best = m; }
     }
     g.setState('ready');
@@ -903,6 +910,7 @@ export class Match {
     p.x = g.x - gs * 4; p.y = g.y + off;
     g.saves++;
     g.flash = 0.2;
+    if (g.human) g.ult = Math.min(100, g.ult + 14); // Wall of Ice charges with saves
     if (sh && (sh.kind === 'zero' || sh.kind === 'thunderclap' || (sh.special && sh.special.combo))) this.emit('big_save', { g, kind: sh.kind });
     for (const s of this.teamSkaters(g.team)) this.addUlt(s, 2);
     if (sh && sh.power === 'ice') { g.slowT = 1.3; this.emit('frozen', { g }); }
@@ -934,7 +942,7 @@ export class Match {
     p.shot = null; p.pass = null; p.curve = null;
     p.vx = 0; p.vy = 0; p.vz = 0; p.z = 0;
     g.setState('hold');
-    g.holdT = 0.9;
+    g.holdT = g.human ? 2.5 : 0.9; // the player gets a moment to pick a pass
     g.stopPose = !fromShot;
     g.track = null; g.react = null;
     if (p.power === 'ice') { /* ice power survives */ }
@@ -1309,6 +1317,7 @@ export class Match {
   // ------------------------------------------------------------ pulled goalie
   canPullGoalie(team) {
     if (this.drill || this.state !== 'play' || this.extra[team]) return false;
+    if (this.goalieMode && team === 0) return false; // you're the one in goal
     const us = this.score[team], them = this.score[1 - team];
     return us < them && them >= this.winScore - 1 && this.winScore > 1 && !!this.extraCfg[team];
   }
@@ -1407,6 +1416,7 @@ export class Match {
   // --------------------------------------------------------- summaries
   summary() {
     return {
+      goalieMode: this.goalieMode,
       pen: this.penStats,
       mods: [...this.mods],
       chem: this.chemStats[0],

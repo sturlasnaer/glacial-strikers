@@ -555,7 +555,8 @@ class App {
       writeSave(s);
     }
     this.cur = { teamId, stage, exhibition, stageIndex: exhibition ? -1 : s.stage, mods, plan, theirPlan, fixture: extra.fixture, daily: extra.daily || null };
-    const cfg = matchConfig(s, teamId, stage, { plans: [plan, theirPlan], buffs });
+    const goalieMode = s.settings.playAs === 'goalie' && !extra.daily; // (daily goals are for skaters)
+    const cfg = matchConfig(s, teamId, stage, { plans: [plan, theirPlan], buffs, goalieMode });
     cfg.mods = mods;
     const arena = extra.arena || stage.arena || this.arenaFor(teamId);
     cfg.twist = this.twistFor(arena, stage, extra.rules !== false);
@@ -590,12 +591,18 @@ class App {
     if (this.isTouch && document.documentElement.requestFullscreen && !document.fullscreenElement) {
       document.documentElement.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
     }
-    this.tutorial = this.save.record.played < 2 ? 0 : -1;
+    this.tutorial = (goalieMode ? (this.save.goalieGames || 0) : this.save.record.played) < 2 ? 0 : -1;
     this.tutT = 1.5;
   }
 
   tutorialTips() {
     const touch = this.isTouch;
+    if (this.match && this.match.goalieMode) return [
+      touch ? t('You\'re in goal! Drag your left thumb to move Halla: she holds the angle, you nudge her.') : t('You\'re in goal! Move Halla with WASD or the arrows: she holds the angle, you nudge her.'),
+      touch ? t('Shot coming? BLOCK drops into the butterfly, DIVE throws Halla across the net.') : t('Shot coming? J drops into the butterfly, K dives across the net.'),
+      touch ? t('Caught it? PASS goes toward your thumb, CLEAR rims it around the boards.') : t('Caught it? J passes toward where you\'re steering, K rims it around the boards.'),
+      touch ? t('The round button pokes the puck off a close carrier. Saves charge Wall of Ice: fire it with the star.') : t('U pokes the puck off a close carrier. Saves charge Wall of Ice: fire it with I.'),
+    ];
     return [
       touch ? t('Drag your left thumb to skate. Hold SPRINT for a burst of speed.') : t('Skate with WASD or the arrow keys. Hold Shift to sprint.'),
       touch ? t('With the puck: tap SHOOT for a wrist shot, hold it to charge a slapshot.') : t('With the puck: tap J for a wrist shot, hold J to charge a slapshot.'),
@@ -661,6 +668,12 @@ class App {
     m.on('no_goal', (e) => { this.hud.banner(`<div class="small" style="color:#ff6f7d">${t('NO GOAL')}</div><div class="sub">${t(e.reason)}</div>`, 1.6); audio.sfx('whistle'); audio.crowdOoh(0.8); });
     m.on('save', (e) => { audio.sfx(e.caught ? 'catch' : 'save', at(e.x, e.y, 0.85)); if (!e.caught) audio.crowdOoh(0.6); });
     m.on('big_save', (e) => { if (!this.attract && !(this.cur && this.cur.drill)) { this.hud.cutin(e.g, null, t('DENIED!')); audio.crowdOoh(1); } });
+    m.on('goalie_wall', (e) => {
+      audio.sfx('freeze'); audio.sfx('ult');
+      this.hud.cutin(e.g, null, t('WALL OF ICE'));
+      this.hud.ticker(t('{name} puts up the Wall of Ice!', { name: e.g.name }));
+      this.rumble(0.5, 0.7, 260, 0);
+    });
     m.on('block', () => audio.sfx('save', { vol: 0.6 }));
     m.on('goal', (e) => {
       this.rumble(0.9, 0.6, 400);
@@ -784,6 +797,7 @@ class App {
       } else rewards.lines.push([met ? t('Daily challenge (already done today)') : t('Daily goal missed: {goal}', { goal: t(goal.text) }), 0]);
     }
     this.ach.endMatch(summary, { league: !c.exhibition, exhibition: c.exhibition, mods: c.mods });
+    if (summary.goalieMode) { s.goalieGames = (s.goalieGames || 0) + 1; if (rewards.won) this.ach.unlock('between-pipes'); }
     this.ach.checkMeta();
     s.training.sessions = 2;
     writeSave(s);
