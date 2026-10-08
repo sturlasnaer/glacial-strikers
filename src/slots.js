@@ -27,11 +27,34 @@ export function fillStats(save, f) {
   return stats;
 }
 
+// A reserve is a step down from the star they stand in for: their two best stats a point lower.
+export function reserveStats(kit) {
+  const stats = { ...CHARACTERS[kit].base };
+  for (const k of [...STAT_KEYS].sort((a, b) => stats[b] - stats[a]).slice(0, 2)) stats[k] = Math.max(1, stats[k] - 1);
+  return stats;
+}
+
 // Who plays the slot, or null while their own player is still there:
-// { name, def, stats (null: the slot's usual numbers), hand, fill }.
+// { name, def, stats, hand, fill } (stats before the team's bonus).
 export function rivalSub(save, teamId, kit) {
   if (!vacated(save, teamId, kit)) return null;
   const f = fillOf(save, teamId, kit);
-  if (!f) return { name: TEAMS[teamId].subs[kit], def: slotDef(teamId, kit), stats: null, hand: undefined, fill: null };
+  if (!f) return { name: TEAMS[teamId].subs[kit], def: slotDef(teamId, kit), stats: reserveStats(kit), hand: undefined, fill: null };
   return { name: f.name, def: makeDef(kit, f.arch, f.elem), stats: fillStats(save, f), hand: f.hand, fill: f };
+}
+
+// What a rival has lost to you, for their strength in simulated games: each emptied slot
+// (a reserve costs the most; a fill costs what it's short of the kit's numbers, and a little
+// for being new), and a backup in goal.
+const SUM = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+export function rosterShift(save, teamId) {
+  if (!TEAMS[teamId] || teamId === 'home') return 0;
+  let d = 0;
+  for (const kit of ['frost', 'thunder', 'stone']) {
+    if (!vacated(save, teamId, kit)) continue;
+    const f = fillOf(save, teamId, kit);
+    d += f ? Math.min(0, SUM(fillStats(save, f)) - SUM(CHARACTERS[kit].base)) * 0.01 - 0.01 : -0.05;
+  }
+  if (save.goalies && save.goalies[teamId + '_g']) d -= 0.04;
+  return d;
 }

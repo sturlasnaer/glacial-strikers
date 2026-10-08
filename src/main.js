@@ -150,6 +150,7 @@ class App {
 
   // "Achievement unlocked" toast; shows anywhere (menus or matches).
   toastAchievement(a) {
+    if (this.testRun) return; // (a test run on a copy of the save: nothing to celebrate)
     this.toast(Assets.icon(a.icon, 72), t('Achievement unlocked'), t(a.name), t('+{n} coins', { n: a.coins }));
     audio.jingle('achievement');
   }
@@ -1043,6 +1044,7 @@ class App {
   // defence). It plays on a copy of the save: nothing is written and nothing goes online.
   twinsTest() {
     setSaveOff(true);
+    this.testRun = true;
     const s = this.save;
     s.settings.online = false;
     for (const k of ['fafnir', 'fenrir']) if (!s.roster[k]) joinLegend(s, k);

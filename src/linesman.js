@@ -60,7 +60,11 @@ export class Linesman {
       const i = m.stateT < DROP - 0.35 ? 0 : m.stateT < DROP - 0.2 ? 1 : 2; // crouched, the release, arms back
       return { id: L.faceoff.drop[i], flip: false };
     }
-    if (st === 'penalty') return { id: L.calls.penalty[beat(2, 3)], flip: false };
+    if (st === 'penalty') { // the signal for the call (Batch AS), or an arm up
+      const sig = L.calls[String(m.penaltyReason || '').toLowerCase()];
+      return { id: (Array.isArray(sig) && sig.length ? sig : L.calls.penalty)[beat(2, 3)], flip: false };
+    }
+    if (st === 'goal' && m.washedOut && L.calls.washout) return { id: L.calls.washout[beat(L.calls.washout.length, 3)], flip: false }; // no goal
     if (st === 'goal' && m.stateT < 2.6) return { id: L.calls.goal, flip: p.x < this.x }; // pointing at the net
     if (this.duckT > 0) return { id: L.calls.duck, flip: false };
     const sp = Math.hypot(this.vx, this.vy);

@@ -8,12 +8,14 @@ import { holes, rivalDraft, rivalSigning, rivalOffer, acceptOffer, SIGN_CHANCE, 
 import { rivalSub, fillStats, vacated } from '../src/slots.js';
 import { recordSimGame, seasonStats } from '../src/awards.js';
 import { TEAMS, TOURNAMENT, CHARACTERS, setRookies, recruitKey, member } from '../src/data.js';
+import { strength } from '../src/league.js';
 
 let pass = 0, fail = 0;
 const check = (name, cond, info) => { if (cond) pass++; else { fail++; console.log('✗', name, info ?? ''); } };
 let seed = 11;
 const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 const always = () => 0; // every chance comes up
+const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
 
 const s = newSave();
 setRookies({});
@@ -21,7 +23,8 @@ check('no holes before a signing', holes(s, 'lynx').length === 0 && rivalSub(s, 
 addRecruit(s, 'lynx_c');
 check('a signing leaves a hole', vacated(s, 'lynx', 'frost') && holes(s, 'lynx').join() === 'frost');
 const reserve = rivalSub(s, 'lynx', 'frost');
-check('a reserve until it\'s filled', reserve.name === TEAMS.lynx.subs.frost && reserve.fill === null && reserve.stats === null);
+check('a reserve until it\'s filled, a step down', reserve.name === TEAMS.lynx.subs.frost && reserve.fill === null && sum(reserve.stats) === sum(CHARACTERS.frost.base) - 2);
+check('the team is weaker for it', strength('lynx', s) < strength('lynx', newSave()) - 0.04, [strength('lynx', s), strength('lynx', newSave())]);
 
 // Draft Day: the centre prospect goes to the team that lost its centre
 s.draft = makeDraft(s, 1, rnd);
@@ -42,7 +45,6 @@ check('in a match: their name, style and numbers', sk.who === 'sub_frost' && sk.
 
 // a draft pick grows from their second season
 const f = sub.fill;
-const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
 s.season = f.season + 1;
 check('no growth in their first season', sum(fillStats(s, f)) === sum(f.base));
 s.season = f.season + 2;

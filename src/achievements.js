@@ -160,7 +160,7 @@ export class AchievementTracker {
     if (signed.length) this.unlock('signing');
     if (new Set(signed.map((k) => RECRUITS[k].team)).size >= 5) this.unlock('scout');
     if (Object.keys(s.rookies || {}).length) this.unlock('first-pick');
-    if (Object.values(s.roster).some((r) => r.camp)) this.unlock('new-tricks');
+    if (Object.values(s.roster).some((r) => r.camp) || [s.goalie, ...Object.values(s.goalies || {})].some((g) => g && g.camp)) this.unlock('new-tricks');
     if ((s.trades || []).length) this.unlock('dealmaker');
     if (Object.keys(s.goalies || {}).length) this.unlock('second-keeper');
     if (Object.keys(LEGENDS).some((k) => s.roster[k])) this.unlock('legend');

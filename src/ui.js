@@ -14,7 +14,7 @@ import { dailyFor, dailyGoal, dayKey, currentStreak, doneToday, dailyReward, dai
 import {
   expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave,
   chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups, capBonus,
-  CAMP, campOpen, campChoices, campChange, goalieIds, starterId, goalieRec, goalieStatus, signGoalie, setStarter,
+  CAMP, campOpen, campChoices, campChange, goalieIds, starterId, goalieRec, goalieStatus, signGoalie, setStarter, GOALIE_CAMP, goalieStyle, goalieCampOpen, goalieCampChange,
 } from './progress.js';
 import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave, resetsIn, groupsOf, createGroup, joinGroup, leaveGroup, inviteLink, MAX_GROUPS, fetchCup, fetchGhost, CHALLENGE_BOARDS, createChallenge, fetchChallenge, challengeLink } from './online.js';
 import { nextGuide, doneGuide, guideOff } from './guide.js';
@@ -1171,7 +1171,7 @@ export class UI {
     };
     const keepers = goalieIds(s), starting = starterId(s);
     const goalieCard = (gid) => {
-      const g = goalieRec(s, gid), info = goalieInfo(gid), gs = goalieStats(s, gid), st = GOALIE_STYLES[info.style] || GOALIE_STYLES.hybrid;
+      const g = goalieRec(s, gid), info = goalieInfo(gid), gs = goalieStats(s, gid), st = GOALIE_STYLES[goalieStyle(s, gid)] || GOALIE_STYLES.hybrid;
       const gg = GEAR_BY_ID[g.gear], on = gid === starting;
       const gpct = g.level >= MAX_LEVEL ? 100 : Math.round((g.exp / expToNext(g.level)) * 100);
       const pips = (n) => Array.from({ length: 12 }, (_, i) => `<i class="${i < n ? 'b' : ''}"></i>`).join('');
@@ -1185,6 +1185,7 @@ export class UI {
           <div class="stat"><span>${t('Angles')}</span><span class="pips">${pips(gs.pos)}</span><span class="v">${gs.pos}</span><span></span></div>
         </div>
         <div class="abil">${goalieStyleIcon(st.id)}<div><b>${esc(t(st.name))}</b>${esc(t(st.text))}</div></div>
+        <div class="style-row"><button class="btn small ghost camp-btn" data-gcamp="${gid}">${smallIcon('icons/respec', 40, 'btn-ico')}${t('Change style…')}</button></div>
         <p class="muted" style="margin:0;font-size:12.5px">${gid === 'halla' ? t('Halla levels up from saves. Reflex rises every two levels.') : t('Levels up from saves made in goal. Reflex rises every two levels.')}</p>
         <div class="gear-row" style="grid-template-columns:1fr"><button class="slot" data-gear="${gid}:goalie"><img src="${ico(gg.icon, 92)}" alt=""><span>${esc(t(gg.name))}</span></button></div>
       </div>`;
@@ -1221,6 +1222,7 @@ export class UI {
     this.click('[data-dress]', (el) => { setLineup(s, el.dataset.dress); writeSave(s); audio.sfx('confirm'); this.hub('team'); }, body);
     this.click('[data-start]', (el) => { setStarter(s, el.dataset.start); writeSave(s); audio.sfx('confirm'); Assets.ensureKit(homeKitGroups(s)).then(() => this.hub('team')); }, body);
     this.click('[data-gsign]', (el) => this.goalieOffer(el.dataset.gsign), body);
+    this.click('[data-gcamp]', (el) => this.goalieCamp(el.dataset.gcamp), body);
     this.click('[data-sign]', (el) => this.signOffer(el.dataset.sign), body);
     this.click('[data-trade]', (el) => this.tradeOffer(el.dataset.trade), body);
     this.click('[data-legend]', (el) => {
@@ -1503,6 +1505,40 @@ export class UI {
         <tbody>${els.map((a) => `<tr><td style="color:${a.color};text-align:left">${esc(t(a.name))}</td>${els.map((b) => `<td>${a === b ? '–' : esc(t(pair(a.id, b.id).name))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
       <p class="muted" style="font-size:12.5px;margin:8px 0 0">${t('Change a player\'s super or style once a season at the training camp: Change… on their Team card.')}</p>
       <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>${t('Done')}</button></div>`);
+  }
+
+  // Goalie camp: a new goaltending style, once a season. The first tap arms a choice, the second pays.
+  async goalieCamp(gid) {
+    await Assets.loadGroup('hub').catch(() => {}); // (Brekka)
+    const s = this.app.save, name = goalieInfo(gid).name, cur = goalieStyle(s, gid);
+    const open = goalieCampOpen(s, gid), price = GOALIE_CAMP.price, afford = s.coins >= price;
+    const who = Assets.atlas.frames['hub_fullbody/coach/whistle'] && Assets.groupReady('hub') && Assets.spriteSet(['hub_fullbody/coach/whistle'], 200);
+    const note = !open ? t('Already changed this season.') : !afford ? t('Not enough coins.') : '';
+    audio.sfx('click');
+    this.modal(`<h2>${t('{name}: goalie camp', { name: esc(name) })}</h2>
+      <p class="muted" style="margin:0;font-size:13px">${t('A week with Brekka and the shooters: a new way to play the net. Once a season.')}</p>
+      <div class="label camp-head" style="margin:10px 0 4px">${who ? `<img class="camp-npc" src="${who.urls[0]}" alt="">` : ''}<span>${t('Goaltending style')} · <img src="${ico('equipment_items/reward/coins', 40)}" alt="" width="14" height="14"> ${price}${note ? ` <span class="muted" style="text-transform:none;letter-spacing:0">${note}</span>` : ''}</span></div>
+      <div class="camp-grid">${Object.values(GOALIE_STYLES).map((st) => `<button class="camp-choice${st.id === cur ? ' cur' : ''}" data-gstyle="${st.id}" ${st.id === cur || !open || !afford ? 'disabled' : ''}>
+        ${goalieStyleIcon(st.id, 80).replace('<img ', '<img class="camp-ico" ')}<b>${esc(t(st.name))}${st.id === cur ? ` <small>${t('now')}</small>` : ''}</b><span>${esc(t(st.text))}</span></button>`).join('')}</div>
+      <p class="muted" id="gcamp-msg" style="min-height:1.2em;font-size:12.5px;margin:6px 0 0"></p>
+      <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>${t('Done')}</button></div>`, (mm, close) => {
+      let armed = null;
+      this.click('[data-gstyle]', (el) => {
+        if (armed !== el) {
+          mm.querySelectorAll('.camp-choice.armed').forEach((b) => b.classList.remove('armed'));
+          armed = el; el.classList.add('armed'); audio.sfx('click');
+          mm.querySelector('#gcamp-msg').textContent = t('Tap again to pay {n} coins.', { n: price });
+          return;
+        }
+        if (!goalieCampChange(s, gid, el.dataset.gstyle)) return;
+        this.app.ach.checkMeta();
+        writeSave(s);
+        audio.jingle('sign');
+        close();
+        this.hub('team');
+        this.toastNote(t('{name} now plays {what}.', { name, what: t(GOALIE_STYLES[el.dataset.gstyle].name) }));
+      }, mm);
+    });
   }
 
   toastNote(text) { this.app.toast(Assets.icon(Assets.atlas.npcs && Assets.atlas.npcs.coach, 72) || '', t('Training camp'), text, ''); }

@@ -4,7 +4,7 @@
 //   node tools/test_goalies.mjs [matches]
 import { Match } from '../src/match.js';
 import { CHARACTERS, GOALIE_STYLES, GOALIE_RECRUITS, TEAMS, TOURNAMENT, goalieInfo } from '../src/data.js';
-import { newSave, signGoalie, setStarter, starterId, goalieIds, goalieStats, homeGoalie, rivalGoalie, goalieStatus, applyGoalieExp, matchConfig, homeKitGroups } from '../src/progress.js';
+import { newSave, signGoalie, setStarter, starterId, goalieIds, goalieStats, homeGoalie, rivalGoalie, goalieStatus, applyGoalieExp, matchConfig, homeKitGroups, goalieCampChange, goalieCampOpen, goalieStyle, GOALIE_CAMP } from '../src/progress.js';
 import { careerOf, recordCareer, careerGoalies } from '../src/career.js';
 import { recordRealGame, computeAwards, seasonStats } from '../src/awards.js';
 
@@ -61,6 +61,15 @@ check('in the match', m.goalies[0].who === 'rams_g' && m.goalies[0].look === 'ho
 check('EXP goes to the starter', applyGoalieExp(s, 10000) > 0 && s.goalies.rams_g.level > 4 && s.goalie.exp === 0);
 check('stats grow with level', goalieStats(s, 'rams_g').rfx > GOALIE_RECRUITS.rams_g.base.rfx);
 check('Halla is Halla', goalieInfo('halla').name === 'Halla' && goalieInfo('nobody').name === 'Halla');
+
+// goalie camp: a new style once a season
+{
+  const c = newSave(); c.coins = 1000;
+  check('camp: Halla starts a Hybrid', goalieStyle(c, 'halla') === 'hybrid' && goalieCampOpen(c, 'halla'));
+  check('camp: no change to the same style', !goalieCampChange(c, 'halla', 'hybrid'));
+  check('camp: a new style', goalieCampChange(c, 'halla', 'butterfly') && goalieStyle(c, 'halla') === 'butterfly' && homeGoalie(c).style === 'butterfly' && c.coins === 1000 - GOALIE_CAMP.price);
+  check('camp: once a season', !goalieCampChange(c, 'halla', 'wall') && (c.season = 2, goalieCampChange(c, 'halla', 'wall')));
+}
 
 // careers and awards follow who was in net
 const sum = { skaters: [], shots: [5, 20], saves: [4, 18], score: [3, 2], goalie: 'rams_g' };

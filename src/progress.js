@@ -3,7 +3,7 @@
 import { GUIDE } from './guide.js';
 import {
   CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE, CAST_PAIRS, makeDef, perkSlot,
-  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, goalieInfo, areTwins, setRookies, setStyles, ELEMENTS, ARCHETYPES, member, pairKey, recruitKey, slotDef,
+  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, goalieInfo, areTwins, setRookies, setStyles, ELEMENTS, ARCHETYPES, member, pairKey, recruitKey, slotDef, GOALIE_STYLES,
 } from './data.js';
 import { newLeague, migrateLeague } from './league.js';
 import { lookFor } from './modular.js';
@@ -252,7 +252,7 @@ export function goalieStats(save, id = starterId(save)) {
 // Our goalie in a match config: who starts, in their own art (our colours) and style.
 export function homeGoalie(save) {
   const id = starterId(save), info = goalieInfo(id);
-  return { stats: goalieStats(save, id), name: info.name, art: info.art, look: info.art ? 'homekit' : null, style: info.style, who: id };
+  return { stats: goalieStats(save, id), name: info.name, art: info.art, look: info.art ? 'homekit' : null, style: goalieStyle(save, id), who: id };
 }
 // A rival's goalie: their own, or a backup once you've signed theirs.
 export function rivalGoalie(save, teamId) {
@@ -273,6 +273,21 @@ export function signGoalie(save, key) {
   save.coins -= g.price;
   (save.goalies ||= {})[key] = { level: Math.max(1, save.goalie.level - 1), exp: 0, gear: 'g_start' };
   return save.goalies[key];
+}
+// Goalies go to camp too: a new goaltending style, once a season.
+export const GOALIE_CAMP = { price: 200 };
+export const goalieStyle = (save, id) => (goalieRec(save, id) && goalieRec(save, id).style) || goalieInfo(id).style;
+export function goalieCampOpen(save, id) {
+  const g = goalieRec(save, id);
+  return !!g && g.camp !== save.season;
+}
+export function goalieCampChange(save, id, style) {
+  const g = goalieRec(save, id);
+  if (!g || !GOALIE_STYLES[style] || style === goalieStyle(save, id) || !goalieCampOpen(save, id) || save.coins < GOALIE_CAMP.price) return false;
+  save.coins -= GOALIE_CAMP.price;
+  g.style = style;
+  g.camp = save.season;
+  return true;
 }
 export function setStarter(save, id) {
   if (!goalieIds(save).includes(id)) return false;
@@ -307,7 +322,7 @@ export function matchConfig(save, teamId, stage, opts = {}) {
       for (const [k, v] of Object.entries(t.bonus || {})) stats[k] = Math.max(1, stats[k] + v);
       // a slot whose skater you signed: whoever they brought in, a newcomer in their colours
       const sub = rivalSub(save, teamId, id);
-      if (sub) return { def: sub.def, who: 'sub_' + id, stats: sub.stats ? withBonus(sub.stats, t) : stats, name: sub.name, perks: [], sprite: `newcomer_${ROLE[id]}`, hand: sub.hand };
+      if (sub) return { def: sub.def, who: 'sub_' + id, stats: withBonus(sub.stats, t), name: sub.name, perks: [], sprite: `newcomer_${ROLE[id]}`, hand: sub.hand };
       return { def: slotDef(teamId, id), stats, name: t.names[id], perks: [], sprite: t.art ? `${t.art}_${ROLE[id]}` : null, hand: RECRUITS[recruitKey(teamId, id)]?.hand };
     }),
     goalie: rivalGoalie(save, teamId),

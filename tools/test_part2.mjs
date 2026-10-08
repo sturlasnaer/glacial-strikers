@@ -96,6 +96,11 @@ m.state = 'penalty'; m.stateT = 0;
 check('an arm up for a penalty', Lm.calls.penalty.includes(L.frame(m, Lm).id));
 m.state = 'goal';
 check('points at the net for a goal', L.frame(m, Lm).id === Lm.calls.goal);
+const Ls = { ...Lm, calls: { ...Lm.calls, charging: ['sig_a', 'sig_b'], washout: ['wo_a', 'wo_b'] } };
+m.state = 'penalty'; m.penaltyReason = 'Charging';
+check('the signal for the call, once it\'s drawn', Ls.calls.charging.includes(L.frame(m, Ls).id) && Lm.calls.penalty.includes(L.frame(m, Lm).id));
+m.state = 'goal'; m.washedOut = true;
+check('waves off a goal that doesn\'t count', Ls.calls.washout.includes(L.frame(m, Ls).id) && L.frame(m, Lm).id === Lm.calls.goal);
 
 console.log(`part 2 art: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -71,7 +71,7 @@ export function rivalSigning(save, rnd = Math.random) {
 }
 
 // Trade offers: a rival whose players will take your call asks for one of yours (a style they
-// like first, then whoever's worth most), offering whichever of theirs is closest in value,
+// like counts double, worth counts too, and there's some luck in it), offering whichever of theirs is closest in value,
 // with coins to even it out either way (they pay half the difference when yours is worth more).
 export const OFFER_CHANCE = 0.12;
 const OFFER_GAP = 3; // matches between offers
@@ -85,7 +85,9 @@ export function rivalOffer(save, rnd = Math.random) {
   if (!teams.length || rnd() >= OFFER_CHANCE) return null;
   const team = pick(teams, rnd);
   const likes = TEAM_LIKES[team] || [];
-  const want = [...mine].sort((a, b) => (likes.includes(member(b).def.arch) - likes.includes(member(a).def.arch)) || playerValue(save, b) - playerValue(save, a))[0];
+  // who they ask for: a style they like weighs most, then value, with a little luck
+  const score = (id) => (likes.includes(member(id).def.arch) ? 2 : 1) * (1 + playerValue(save, id) / 600) * (0.6 + rnd() * 0.8);
+  const want = mine.map((id) => [id, score(id)]).sort((a, b) => b[1] - a[1])[0][0];
   const value = Math.round(playerValue(save, want) * (likes.includes(member(want).def.arch) ? 1.25 : 1));
   const theirs = KITS.map((k) => recruitKey(team, k)).filter((k) => recruitStatus(save, k) === 'open');
   const get = [...theirs].sort((a, b) => Math.abs(RECRUITS[a].price - value) - Math.abs(RECRUITS[b].price - value))[0];

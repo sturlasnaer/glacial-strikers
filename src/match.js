@@ -149,6 +149,7 @@ export class Match {
     this.state = 'faceoff';
     this.stateT = 0;
     this.dropped = false;
+    this.washedOut = false;
     this.faceoffRt = [0, 1].map((t) => this.ai[t].faceoffReaction());
     if (this.humans.length) {
       for (const s of this.skaters) s.controlled = this.humans.includes(s.team) && s === this.faceoffCenter(s.team);
@@ -1117,7 +1118,7 @@ export class Match {
     if (this.mods.has('onetimers') && !this.drill && !(sh && sh.kind === 'onetimer' && sh.team === team)) {
       // challenge: only one-timers count
       this.emit('no_goal', { team, reason: 'One-timers only!' });
-      this.state = 'goal'; this.stateT = 2.0; this.lastGoal = null;
+      this.state = 'goal'; this.stateT = 2.0; this.lastGoal = null; this.washedOut = true; // (the linesman waves it off)
       p.shot = null; p.pass = null; p.curve = null;
       return;
     }
@@ -1390,7 +1391,7 @@ export class Match {
     s.x = s.team === 0 ? -70 : 70; s.y = RINK.minY + 16; s.vx = 0; s.vy = 0; s.face = Math.PI / 2;
     if (this.puck.owner === s) this.loosePuck(s);
     this.penStats[s.team].pims++;
-    this.state = 'penalty'; this.stateT = 0;
+    this.state = 'penalty'; this.stateT = 0; this.penaltyReason = reason; // (the linesman's signal)
     this.penaltyDot = s.team === 0 ? -180 : 180; // faceoff in the offender's end
     this.emit('penalty', { s, reason, team: s.team });
   }

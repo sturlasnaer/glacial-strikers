@@ -67,6 +67,8 @@ export class HUD {
     for (const i of [0, 1]) paint(this.el.querySelector('#d' + i), digit(match.score[i]));
     // every cut-in banner this match can show, recoloured before play rather than at the first ultimate
     const keys = [...match.skaters, ...match.goalies].map((k) => [this.bannerKey(k), this.bannerPal(k, teamId)]);
+    // (and the element backdrops for anyone without a painted banner, Batch AQ)
+    for (const k of match.skaters) if (!this.bannerKey(k) && k.def && k.def.elem) keys.push(['bg_' + k.def.elem, null]);
     Assets.warmBanners(keys);
     const rp = this.el.querySelector('#replay');
     rp.addEventListener('pointerdown', (e) => { e.preventDefault(); this.app.skipReplay(); });
@@ -110,7 +112,7 @@ export class HUD {
     const img = (k) => { pics.push(k); return `<canvas width="200" height="200" data-pic="${pics.length - 1}"></canvas>`; };
     const who = partner ? `${partner.name} + ${s.name}` : s.name;
     const name = title || t(s.def.ult.name);
-    const art = Assets.bannerCanvas(this.bannerKey(s), this.bannerPal(s, this.teamId));
+    const art = Assets.bannerCanvas(this.bannerKey(s), this.bannerPal(s, this.teamId)) || this.backdropBanner(s, id(s));
     if (partner) el.classList.add('combo');
     if (art) {
       el.classList.add('art');
@@ -136,6 +138,26 @@ export class HUD {
     if (k.team === 0) return ART_NAME[k.isGoalie ? 'goalie' : k.def.id];
     if (k.isGoalie) return k.art ? `${k.art}_g` : null;
     return k.sprite !== k.def.sprite ? k.sprite : null;
+  }
+
+  // A banner for someone without a painted one (a player from parts, a rookie): their element's
+  // backdrop (Batch AQ) with their portrait on the left third. Null until the backdrops are in.
+  backdropBanner(k, who) {
+    const bg = k.def && k.def.elem && Assets.bannerCanvas('bg_' + k.def.elem, null);
+    if (!bg) return null;
+    const key = `${who}|${k.team}|${this.teamId}|${k.def.elem}`;
+    this.backdrops ||= new Map();
+    if (this.backdrops.has(key)) return this.backdrops.get(key);
+    const w = bg.width, h = bg.height, c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(bg, 0, 0);
+    const glow = Assets.bannerCanvas('bg_glow', null), size = Math.round(h * 0.96), x = Math.round(w * 0.06);
+    if (glow) ctx.drawImage(glow, x - size * 0.15, 0, size * 1.3, h);
+    const face = portraitCanvas(who, k.team, this.teamId, size);
+    if (face) ctx.drawImage(face, x, h - size, size, size);
+    this.backdrops.set(key, c);
+    return c;
   }
 
   // ...and its colours: a signing (skater or goalie) in our kit, a rival in theirs.

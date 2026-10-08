@@ -8,6 +8,7 @@
 import { TEAMS, TOURNAMENT } from './data.js';
 import { makeRng } from './util.js';
 import { recordSimGame } from './awards.js';
+import { rosterShift } from './slots.js';
 import { t } from './i18n.js';
 
 export const LEAGUE_TEAMS = ['home', 'lynx', 'comets', 'rams', 'ravens', 'royals'];
@@ -23,7 +24,7 @@ export function strength(teamId, save) {
     return 0.45 + lv * 0.06;
   }
   const t = TEAMS[teamId];
-  return 0.35 + t.diff * 0.75 + (save.season - 1) * 0.08;
+  return 0.35 + t.diff * 0.75 + (save.season - 1) * 0.08 + rosterShift(save, teamId); // (weaker for the players you took)
 }
 
 // Round-robin schedule where our opponents come in tournament order.
