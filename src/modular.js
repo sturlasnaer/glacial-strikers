@@ -27,10 +27,16 @@ export function useModular(atlas) {
 
 const pick = (list, rnd) => list[Math.floor(rnd() * list.length)];
 
-// A new look from the parts there are (null without them).
-export function randomLook(rnd = Math.random) {
+// Builds that suit a position (Batch AO): defenders lean big, forwards slim. A player gets one
+// of these most of the time, any build now and then.
+const FITS = { C: ['std', 'small'], W: ['std', 'small'], D: ['std', 'big'] };
+
+// A new look from the parts there are (null without them). role: 'C', 'W' or 'D', if known.
+export function randomLook(rnd = Math.random, role = null) {
   if (!MODULAR.bodies.length || !MODULAR.heads.length) return null;
-  return { body: pick(MODULAR.bodies, rnd), head: pick(MODULAR.heads, rnd), skin: Math.floor(rnd() * SKIN_TONES.length), hair: Math.floor(rnd() * HAIR_COLORS.length) };
+  const fits = MODULAR.bodies.filter((b) => (FITS[role] || []).includes(b));
+  const body = fits.length && rnd() < 0.85 ? pick(fits, rnd) : pick(MODULAR.bodies, rnd);
+  return { body, head: pick(MODULAR.heads, rnd), skin: Math.floor(rnd() * SKIN_TONES.length), hair: Math.floor(rnd() * HAIR_COLORS.length) };
 }
 
 // The same look every time for an id (players who came before the parts did).

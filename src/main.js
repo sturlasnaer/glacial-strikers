@@ -126,7 +126,8 @@ class App {
     window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' && !this.isTouch) { this.isTouch = true; if (this.scene === 'match') this.hud.show(this.match, this.cur.teamId); } });
     this.input.onKey((code) => this.onKey(code));
     // newcomer art (Batch AA) is needed once a rival slot has been signed away, or for drafted rookies
-    Assets.newcomerCheck = () => Object.keys(this.save.roster).some((k) => RECRUITS[k] || ROOKIES[k]);
+    // (a signed goalie leaves a backup in their old net: the newcomer goalie, Batch AN)
+    Assets.newcomerCheck = () => Object.keys(this.save.roster).some((k) => RECRUITS[k] || ROOKIES[k]) || Object.keys(this.save.goalies || {}).length > 0;
     this.setupInstall();
 
     flushScores(this.save).then((n) => { if (n) writeSave(this.save); });

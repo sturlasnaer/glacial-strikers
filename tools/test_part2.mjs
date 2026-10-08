@@ -49,13 +49,31 @@ check('away kits of the cast are left alone', !A.skaters.frost_captain.away.hand
 const M = A.modular, body = A.skaters.body_std.home;
 const bodyFrames = EIGHT.flatMap((d) => Object.values(body[d].frames));
 check('a head anchor on every body frame', bodyFrames.every((f) => M.anchors[f]), bodyFrames.filter((f) => !M.anchors[f]).slice(0, 4));
-check('four heads, each masked', Object.keys(M.heads).length === 4 && Object.values(M.heads).every((v) => Object.values(v).every((st) => Object.values(st).every((f) => M.masks[f] && F[M.masks[f]]))));
+check('every head masked', Object.keys(M.heads).length >= 4 && Object.values(M.heads).every((v) => Object.values(v).every((st) => Object.values(st).every((f) => M.masks[f] && F[M.masks[f]]))));
 check('portrait faces', Object.values(M.portraits.faces).every((e) => ['neutral', 'grin', 'determined', 'shocked', 'defeated'].every((x) => F[e[x]])));
+
+// AN: the backup goalie in every goalie view, its portrait, the style icons
+const G = ['goalies_side', 'goalies_side_west', 'goalies_front', 'goalies_back', 'goalies_skating', 'goalies_puck_handling', 'goalies_puck_handling_west'];
+check('the backup goalie in every view', G.every((k) => A[k].newcomer) && F[A.goalies_side.newcomer.ready] && A.portraits.newcomer_g && F[A.portraits.newcomer_g.neutral]);
+check('...the size of a younger goalie', (() => { const b = F[A.goalies_side.newcomer.ready], h = F[A.goalies_side.home.ready]; return b[4] / b[7] < h[4] / h[7] && b[4] / b[7] > (h[4] / h[7]) * 0.7; })(), [F[A.goalies_side.newcomer.ready], F[A.goalies_side.home.ready]]);
+check('...recoloured with the newcomers', A.pages[F[A.goalies_side.newcomer.ready][0]].group === 'newcomers');
+check('goaltending style icons', ['hybrid', 'scrambler', 'butterfly', 'wall', 'reader', 'puckhandler'].every((k) => F['icons/gstyle_' + k]) && F['icons/contract']);
+// AO: three builds, ten heads, shoulders per build, the jersey moment
+check('three builds', ['body_std', 'body_big', 'body_small'].every((k) => A.skaters[k] && EIGHT.every((d) => A.skaters[k].home[d])), Object.keys(A.skaters).filter((k) => k.startsWith('body_')));
+check('ten heads', Object.keys(M.heads).length === 10, Object.keys(M.heads));
+check('shoulders per build', ['std', 'big', 'small'].every((b) => M.portraits.bodies[b] && F[M.portraits.bodies[b].body]));
+const JM = M.jersey_moments && M.jersey_moments.body_std;
+check('the parts jersey moment', JM && JM.length === 3 && JM.every((f) => F[f] && M.anchors[f]) && M.anchors[JM[1]].hide_head && A.draft_animations.body_std && A.draft_animations.newcomer_c, JM);
+for (const k of ['body_big', 'body_small']) {
+  const fr = EIGHT.flatMap((d) => Object.values(A.skaters[k].home[d].frames));
+  check(`${k}: an anchor on every frame`, fr.every((f) => M.anchors[f]), fr.filter((f) => !M.anchors[f]).slice(0, 3));
+}
 
 // achievements: own icons for the old borrowers
 useAchievementArt(F);
 check('every achievement icon exists', ACHIEVEMENTS.every((a) => F[a.icon]), ACHIEVEMENTS.filter((a) => !F[a.icon]).map((a) => a.id));
-check('the Batch AF icons in use', ACHIEVEMENTS.filter((a) => a.icon.startsWith('achievements/')).length >= 36);
+const own = (a) => a.icon.startsWith('achievements/') || a.icon.startsWith('allstar/');
+check('every achievement has its own icon (AF and AN)', ACHIEVEMENTS.every(own), ACHIEVEMENTS.filter((a) => !own(a)).map((a) => a.id));
 
 // the linesman
 const KITS = ['frost', 'thunder', 'stone'];

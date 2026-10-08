@@ -3,26 +3,36 @@ import copy, json, os, shutil
 import numpy as np
 from PIL import Image
 
-# Part 2 and new additions (Batches AD, AE, AF, AG, AI part 2, AJ, AK, AL and AM), from the
-# pack's per-batch source atlases. Unlike the packs above, these are appended after the
+# Part 2 and new additions (Batches AD, AE, AF, AG, AI part 2, AJ, AK, AL and AM), and the
+# batches that followed (AN: the backup goalie and icons; AO: more for the parts), from the
+# packs' per-batch source atlases. Unlike the packs above, these are appended after the
 # pages built so far, on pages of their own, and drawn at their authored pivots (the AJ head
 # anchors and overlays are measured against the untrimmed frames, so nothing is trimmed).
 # Adapted from the pack's integration/compile_additions.py, with our compression: art pages
 # lossy like the rest, lossless only where exact channels matter (masks, the parts and the
 # newcomers, which are recoloured by hue).
-BATCHES = ('AD', 'AE', 'AF', 'AG', 'AI', 'AJ', 'AK', 'AL', 'AM')
+BATCHES = ('AD', 'AE', 'AF', 'AG', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO')
+GOALIE_S = 0.5  # (as in build_assets.py)
+BACKUP_HEIGHT = 0.87  # the backup goalie stands this tall next to a starter
 ROLE_V1 = {'c': 'frost_captain', 'w': 'thunder_winger', 'd': 'stone_defender'}
 POSES = {'stride_a': 'skate_a', 'stride_b': 'skate_b', 'windup': 'shot_windup', 'release': 'shot_release'}
 EIGHT = ('south', 'southeast', 'east', 'northeast', 'north', 'northwest', 'west', 'southwest')
 LOSSLESS = {'parts', 'newcomers', 'draft_rookies', 'gearmask', 'newcomer_gearmask', 'legends_gearmask'}
 PAGE, PAD = 2048, 2
+# page groups the game knows, for groups packed separately here
+PAGE_GROUP = {'icons_new': 'icons_z', 'newcomer_goalie': 'newcomers'}
 
 
-def merge_part2(atlas, out, root, v1_h):
-    """Append the pack to a built atlas (frames, pages and mappings). v1_h: the v1 skaters'
-    standing heights by sheet, which every character is scaled to."""
-    packs = {b: json.load(open(os.path.join(root, f'Puckbound-Batch-{b}', 'atlas.json')))
-             for b in BATCHES if os.path.exists(os.path.join(root, f'Puckbound-Batch-{b}', 'atlas.json'))}
+def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
+    """Append the packs to a built atlas (frames, pages and mappings). roots: the pack folders
+    (a batch in a later one wins). v1_h: the v1 skaters' standing heights by sheet, and
+    v1_goalie_h the v1 goalie's, which every character is scaled to."""
+    folders = {}
+    for root in [roots] if isinstance(roots, str) else roots:
+        for b in BATCHES:
+            if os.path.exists(os.path.join(root, f'Puckbound-Batch-{b}', 'atlas.json')):
+                folders[b] = os.path.join(root, f'Puckbound-Batch-{b}')
+    packs = {b: json.load(open(os.path.join(folders[b], 'atlas.json'))) for b in BATCHES if b in folders}
     if not packs:
         return atlas
     existing = set(atlas['frames'])
@@ -30,8 +40,10 @@ def merge_part2(atlas, out, root, v1_h):
 
     def group_of(b, sh, meta):
         cat = meta['category']
-        if b == 'AJ':
+        if b in ('AJ', 'AO'):
             return 'parts'
+        if b == 'AN':  # the backup goalie with the newcomers (recoloured per rival), the icons with the rest
+            return 'newcomer_goalie' if cat in ('goalie', 'portrait') else 'icons_new'
         if b == 'AI':
             if sh.endswith('_banner'):
                 return None  # (cut-in banners are images of their own)
@@ -52,17 +64,45 @@ def merge_part2(atlas, out, root, v1_h):
 
     MASK_GROUP = {'home': 'gearmask', 'newcomers': 'newcomer_gearmask', 'legends_ice': 'legends_gearmask', 'parts': 'parts'}
 
+    def visible_h(folder, a, fid):
+        f = a['frames'][fid]
+        r = f['frame']
+        im = Image.open(os.path.join(folder, a['sheets'][f['sheet']]['image'])).convert('RGBA').crop((r['x'], r['y'], r['x'] + r['w'], r['y'] + r['h']))
+        ys = np.nonzero((np.array(im)[..., 3] > 100).any(axis=1))[0]
+        return float(ys.max() - ys.min() + 1)
+
+    # heads and portrait faces turn on their necks: the anchors in the parts maps
+    necks = {}
+    for b in ('AJ', 'AO'):
+        m = packs.get(b, {}).get('modular', {})
+        for views in m.get('heads', {}).values():
+            for states in views.values():
+                for v in states.values():
+                    if v.get('anchor'):
+                        necks[v['frame']] = v['anchor']
+        for faces in m.get('portraits', {}).get('faces', {}).values():
+            for v in faces.values():
+                if v.get('anchor'):
+                    necks[v['frame']] = v['anchor']
+        for fid, f in packs.get(b, {}).get('frames', {}).items():  # (heads without an anchor in the map)
+            if fid not in necks and f.get('neck_pixels') and 'heads' in f['sheet']:
+                necks[fid] = f['neck_pixels']
+
     for b, a in packs.items():
-        folder = os.path.join(root, f'Puckbound-Batch-{b}')
+        folder = folders[b]
+        # the backup goalie: its ready pose a set share of the v1 goalie's
+        goalie_k = GOALIE_S * BACKUP_HEIGHT * v1_goalie_h / visible_h(folder, a, a['goalies_side']['newcomer']['ready']) if b == 'AN' else None
         for sh, meta in a['sheets'].items():
             group = group_of(b, sh, meta)
             if group is None:
                 continue
             cat, rrs = meta['category'], meta['recommended_render_scale']
-            body = cat in ('newcomer', 'legend', 'official') or (b == 'AJ' and 'portrait' not in sh)
+            body = cat in ('newcomer', 'legend', 'official') or (b in ('AJ', 'AO') and 'portrait' not in sh)
             # characters at the v1 skaters' scale; everything else at twice its draw scale
             k = 0.6 * rrs * v1_h[ROLE_V1[meta.get('role', 'c')]] / 152 if body else 2 * rrs
             s = 0.6 if body else k
+            if cat == 'goalie':
+                k, s = goalie_k, GOALIE_S
             im = Image.open(os.path.join(folder, meta['image'])).convert('RGBA')
             mask = Image.open(os.path.join(folder, meta['gearmask_image'])).convert('RGBA') if meta.get('gearmask_image') and group in MASK_GROUP else None
             for fid in meta['frame_ids']:
@@ -77,7 +117,7 @@ def merge_part2(atlas, out, root, v1_h):
                     kk, ss, py_fixed = old[4] / q.height, old[7], old[6]
                 size = (max(1, round(q.width * kk)), max(1, round(q.height * kk)))
                 factors[fid] = (size[0] / q.width, size[1] / q.height)
-                pivot = f.get('neck_pixels') if b == 'AJ' and 'heads' in sh and f.get('neck_pixels') else f['pivot_pixels']
+                pivot = necks.get(fid) or f['pivot_pixels']
                 px = pivot['x'] * factors[fid][0]
                 py = py_fixed if py_fixed is not None else pivot['y'] * factors[fid][1]
                 if fid not in existing:
@@ -122,7 +162,7 @@ def merge_part2(atlas, out, root, v1_h):
                 img.save(os.path.join(out, name), 'WEBP', quality=95 if group == 'icons_new' else 90, method=6, alpha_quality=100)
             pi = len(atlas['pages'])
             # new icons sit with the icons loaded at start
-            atlas['pages'].append({'file': 'gfx/' + name, 'group': 'icons_z' if group == 'icons_new' else group, 'w': img.width, 'h': img.height})
+            atlas['pages'].append({'file': 'gfx/' + name, 'group': PAGE_GROUP.get(group, group), 'w': img.width, 'h': img.height})
             for it, fx, fy in placed:
                 atlas['frames'][it['id']] = [pi, fx, fy, it['img'].width, it['img'].height, it['px'], it['py'], it['scale']]
             page, x, y, row, placed = None, 0, 0, 0, []
@@ -165,7 +205,7 @@ def merge_part2(atlas, out, root, v1_h):
             f = a['frames'][fid]
             m = a['sheets'][f['sheet']]
             rr = f['frame']
-            Image.open(os.path.join(root, 'Puckbound-Batch-AI', m['image'])).convert('RGB').crop((rr['x'], rr['y'], rr['x'] + rr['w'], rr['y'] + rr['h'])) \
+            Image.open(os.path.join(folders['AI'], m['image'])).convert('RGB').crop((rr['x'], rr['y'], rr['x'] + rr['w'], rr['y'] + rr['h'])) \
                 .save(os.path.join(out, 'cutins', key + '.webp'), 'WEBP', quality=88, method=6)
             atlas['banners'][key] = f'gfx/cutins/{key}.webp'
         atlas.setdefault('legends', {})['joint_celebration'] = a['twins'].get('joint_celebration')
@@ -184,46 +224,65 @@ def merge_part2(atlas, out, root, v1_h):
                 view.setdefault('hit', {})['west'] = list(data['hits']['west']['frames'].values())
                 view['stride_west'] = west_stride(data['strides']['west'])
 
-    # ---- AJ: a body drawn without a head, and the heads that sit on it
-    if 'AJ' in packs:
-        m = packs['AJ']['modular']
-        body = m['bodies']['body_std']
-        dirs = {d: {'flip_x': False, 'frames': {p: v['frame'] for p, v in poses.items()}} for d, poses in body['directions'].items()}
-        dirs['hit'] = {d: [v[p]['frame'] for p in (('stagger', 'fallen', 'getup') if d == 'west' else ('stagger', 'knocked_down', 'getting_up'))] for d, v in body['hits'].items()}
-        dirs['stride'] = west_stride({'frames': {p: v['frame'] for p, v in body['strides']['east'].items()}})
-        dirs['stride_west'] = west_stride({'frames': {p: v['frame'] for p, v in body['strides']['west'].items()}})
-        dirs['signature'] = [v['frame'] for v in body['signature']]
-        dirs['hands'] = {d: body.get('hand', 'L') for d in EIGHT}
-        skaters['body_std'] = {'home': copy.deepcopy(dirs), 'away': dirs}
-        M = {'anchors': {}, 'heads': {}, 'masks': {}, 'portraits': {}}
+    # ---- AJ and AO: bodies drawn without a head, the heads that sit on them, and their
+    # portrait pieces (AO adds two builds, six heads and the parts body's jersey moment)
+    M = None
+    for b in ('AJ', 'AO'):
+        if b not in packs:
+            continue
+        m = packs[b]['modular']
+        M = M or atlas.setdefault('modular', {'anchors': {}, 'heads': {}, 'masks': {}, 'portraits': {'faces': {}, 'bodies': {}}})
 
         def anchor(v):
             kx, ky = factors[v['frame']]
             a = v['anchor']
             M['anchors'][v['frame']] = {**a, 'x': round(a['x'] * kx, 2), 'y': round(a['y'] * ky, 2), **({'front': v['front']} if v.get('front') else {})}
-        for section in ('directions', 'hits', 'strides'):
-            for poses in body[section].values():
-                for v in poses.values():
-                    anchor(v)
-        for v in body['signature']:
-            anchor(v)
-        for family, views in m['heads'].items():
+        for name, body in m.get('bodies', {}).items():
+            for v in body.get('jersey_moment') or []:
+                anchor(v)
+            if body.get('jersey_moment'):
+                M.setdefault('jersey_moments', {})[name] = [v['frame'] for v in body['jersey_moment']]
+                atlas.setdefault('draft_animations', {})[name] = {**packs[b].get('jersey_moments', {}).get(name, {'fps': 2, 'loop': False}), 'frames': M['jersey_moments'][name]}
+            if 'directions' not in body:
+                continue
+            dirs = {d: {'flip_x': False, 'frames': {p: v['frame'] for p, v in poses.items()}} for d, poses in body['directions'].items()}
+            hit_order = ('stagger', 'knocked_down', 'fallen', 'getting_up', 'getup')
+            dirs['hit'] = {d: [v[p]['frame'] for p in hit_order if p in v] for d, v in body['hits'].items()}
+            dirs['stride'] = west_stride({'frames': {p: v['frame'] for p, v in body['strides']['east'].items()}})
+            dirs['stride_west'] = west_stride({'frames': {p: v['frame'] for p, v in body['strides']['west'].items()}})
+            dirs['signature'] = [v['frame'] for v in body['signature']]
+            dirs['hands'] = {d: body.get('hand', 'L') for d in EIGHT}
+            skaters[name] = {'home': copy.deepcopy(dirs), 'away': dirs}
+            for section in ('directions', 'hits', 'strides'):
+                for poses in body[section].values():
+                    for v in poses.values():
+                        anchor(v)
+            for v in body['signature']:
+                anchor(v)
+        for family, views in m.get('heads', {}).items():
             M['heads'][family.removeprefix('head_')] = {view: {state: v['frame'] for state, v in states.items()} for view, states in views.items()}
             for states in views.values():
                 for v in states.values():
                     M['masks'][v['frame']] = v['mask']
-        p = m['portraits']
-        kx, ky = factors[p['body']['frame']]
-        M['portraits'] = {'body': p['body']['frame'], 'anchor': {'x': round(p['body']['anchor']['x'] * kx, 2), 'y': round(p['body']['anchor']['y'] * ky, 2)}, 'faces': {}}
-        for family, faces in p['faces'].items():
-            M['portraits']['faces'][family.removeprefix('head_')] = {e: v['frame'] for e, v in faces.items()}
+        P = M['portraits']
+        p = m.get('portraits', {})
+        shoulders = dict(p.get('bodies', {}))
+        if 'body' in p:
+            shoulders['body_std'] = p['body']
+        for name, piece in shoulders.items():  # the shoulders a portrait's face sits on, per build
+            kx, ky = factors[piece['frame']]
+            entry = {'body': piece['frame'], 'anchor': {'x': round(piece['anchor']['x'] * kx, 2), 'y': round(piece['anchor']['y'] * ky, 2)}}
+            P.setdefault('bodies', {})[name.removeprefix('body_')] = entry
+            if name == 'body_std':
+                P.update(entry)  # (the default)
+        for family, faces in p.get('faces', {}).items():
+            P.setdefault('faces', {})[family.removeprefix('head_')] = {e: v['frame'] for e, v in faces.items()}
             for v in faces.values():
                 M['masks'][v['frame']] = v['mask']
-        atlas['modular'] = M
 
     # ---- AD: Draft Day
     if 'AD' in packs:
-        a, ad = packs['AD'], os.path.join(root, 'Puckbound-Batch-AD')
+        a, ad = packs['AD'], folders['AD']
         hall = dict(a['draft_hall'])
         Image.open(os.path.join(ad, hall['image'])).convert('RGB').save(os.path.join(out, 'draft_hall.webp'), 'WEBP', quality=90, method=6)
         fg = dict(hall['podium_foreground'])
@@ -233,7 +292,7 @@ def merge_part2(atlas, out, root, v1_h):
         atlas['draft_hall'] = hall
         shutil.copytree(os.path.join(ad, 'card-kit'), os.path.join(out, 'prospect-cards'), dirs_exist_ok=True)
         atlas['prospect_card_kit'] = {**a['prospect_card_kit'], 'manifest': 'gfx/prospect-cards/card-kit.json', 'css': 'gfx/prospect-cards/prospect-cards.css'}
-        atlas['draft_animations'] = a['jersey_moments']
+        atlas.setdefault('draft_animations', {}).update(a['jersey_moments'])
 
     # ---- AE: the Weekly Cup (the request's names too: podium, rosette_<place>)
     if 'AE' in packs:
@@ -248,6 +307,15 @@ def merge_part2(atlas, out, root, v1_h):
         atlas['ability_effects_al'] = packs['AL']['ability_effects_al']
     if 'AM' in packs:
         atlas['training_camp'] = packs['AM']['training_camp']
+
+    # ---- AN: the backup goalie a rival plays once you've signed theirs, as 'newcomer'
+    if 'AN' in packs:
+        a = packs['AN']
+        for key in ('goalies_side', 'goalies_side_west', 'goalies_front', 'goalies_back', 'goalies_skating', 'goalies_puck_handling', 'goalies_puck_handling_west'):
+            atlas.setdefault(key, {})['newcomer'] = a[key]['newcomer']
+        atlas.setdefault('portraits', {}).update(a['portraits'])
+        atlas.setdefault('goalie_animations', {}).update(a.get('goalie_animations', {}))
+
     return atlas
 
 

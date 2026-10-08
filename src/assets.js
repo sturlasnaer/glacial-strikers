@@ -6,7 +6,7 @@
 // (Everything is prefetched into the browser cache, but only decoded when used.)
 
 import { TEAMS, PALETTES } from './data.js';
-import { recolorParts } from './modular.js';
+import { recolorParts, headPlacement } from './modular.js';
 
 const BASE = new URL('assets/', document.baseURI).href;
 const INLINE = typeof window !== 'undefined' && window.__INLINE; // single-file offline build
@@ -107,7 +107,7 @@ export const Assets = {
   // Equipped gear recolours from the masks; load them only when someone wears special gear.
   ensureGear() { return Promise.all([this.loadGroup('gearmask'), ...(this.needLegends ? [this.loadGroup('legends_gearmask')] : []), ...(this.needNewcomers ? [this.loadGroup('newcomer_gearmask')] : [])]).catch(() => {}); },
   get needLegends() { return !!(PALETTES.homekit.groups && PALETTES.homekit.groups.includes('legends_ice')); }, // (a twin on the roster)
-  newcomerCheck: null, // the game's check: has the save signed a rival or drafted a rookie (newcomer art)?
+  newcomerCheck: null, // the game's check: has the save signed a rival (skater or goalie) or drafted a rookie (newcomer art)?
   get needNewcomers() { return !!(this.newcomerCheck && this.newcomerCheck()); },
 
   forget(file) { this.images.delete(file); this.loading.delete(file); },
@@ -381,10 +381,11 @@ export const Assets = {
     const P = this.atlas.modular && this.atlas.modular.portraits;
     const faces = P && P.faces && P.faces[look.head];
     const faceId = faces && (faces[expr] || faces.neutral);
-    const bf = P && this.atlas.frames[P.body], ff = faceId && this.atlas.frames[faceId];
+    const body = P && ((P.bodies && P.bodies[look.body]) || P); // the shoulders of their build (Batch AO)
+    const bf = body && this.atlas.frames[body.body], ff = faceId && this.atlas.frames[faceId];
     const page = bf && this.pagesFor(teamId)[bf[0]];
     if (!bf || !ff || !page) return '';
-    const key = `parts|${look.head}|${look.skin}|${look.hair}|${faceId}|${size}|${teamId}`;
+    const key = `parts|${look.body}|${look.head}|${look.skin}|${look.hair}|${faceId}|${size}|${teamId}`;
     if (this.iconCache.has(key)) return this.iconCache.get(key);
     const face = this.partsCanvas(faceId, look);
     if (!face) return '';
@@ -393,7 +394,7 @@ export const Assets = {
     ctx.imageSmoothingQuality = 'high';
     const [, fx, fy, fw, fh, px, py] = bf;
     // fit the body and the face above it in the square
-    const a = P.anchor || { x: px, y: 0 };
+    const a = body.anchor || { x: px, y: 0 };
     const top = Math.min(0, a.y - ff[6]), h = fh - top, k = size / Math.max(fw, h);
     const ox = (size - fw * k) / 2, oy = (size - h * k) / 2 - top * k;
     ctx.drawImage(page, fx, fy, fw, fh, ox, oy, fw * k, fh * k);
@@ -402,6 +403,42 @@ export const Assets = {
     const url = c.toDataURL('image/png');
     this.iconCache.set(key, url);
     return url;
+  },
+
+  // A player from parts in a sequence of body frames (the jersey moment, Batch AO): the body
+  // in a palette with the look's head on each frame's anchor (none where the anchor hides
+  // it), as data URLs of one size around a shared foot point, like spriteSet. Null until the
+  // art is in.
+  partsMoment(ids, look, height, teamId = null) {
+    const M = this.atlas.modular, pages = this.pagesFor(teamId);
+    const fr = ids.map((id) => this.atlas.frames[id]);
+    if (!M || !fr.length || fr.some((f) => !f || !pages[f[0]])) return null;
+    // each frame's head (frame id, its frame, offset from the body's pivot in source pixels)
+    const heads = ids.map((id, i) => {
+      const f = fr[i], hp = headPlacement(M, look, id, f, 0, 0, 1, false), hf = hp && this.atlas.frames[hp.head];
+      return hp && hf ? { id: hp.head, f: hf, x: hp.x, y: hp.y } : null; // (at scale 1: source pixels)
+    });
+    let l = 0, r = 0, t = 0, b = 0; // extents around the pivot, in source pixels
+    fr.forEach(([, , , fw, fh, px, py, s], i) => {
+      l = Math.max(l, px / s); r = Math.max(r, (fw - px) / s); t = Math.max(t, py / s); b = Math.max(b, (fh - py) / s);
+      const h = heads[i];
+      if (h) { const [, , , hw, hh, hx, hy, hs] = h.f; l = Math.max(l, hx / hs - h.x); r = Math.max(r, h.x + (hw - hx) / hs); t = Math.max(t, hy / hs - h.y); }
+    });
+    const k = height / (t + b), w = Math.ceil((l + r) * k);
+    const urls = fr.map(([pi, fx, fy, fw, fh, px, py, s], i) => {
+      const c = document.createElement('canvas');
+      c.width = w; c.height = height;
+      const ctx = c.getContext('2d');
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(pages[pi], fx, fy, fw, fh, (l - px / s) * k, (t - py / s) * k, (fw / s) * k, (fh / s) * k);
+      const h = heads[i], face = h && this.partsCanvas(h.id, look);
+      if (face) {
+        const [, , , hw, hh, hx, hy, hs] = h.f;
+        ctx.drawImage(face, (l + h.x - hx / hs) * k, (t + h.y - hy / hs) * k, (hw / hs) * k, (hh / hs) * k);
+      }
+      return c.toDataURL('image/png');
+    });
+    return { urls, w, h: height, fx: l / (l + r), fy: t / (t + b) };
   },
 
   // A frame's pixels in the colours of a page set, on a CPU canvas for pixel work (the gear

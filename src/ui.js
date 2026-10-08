@@ -826,9 +826,12 @@ export class UI {
           writeSave(s);
           audio.jingle('sign');
           close();
-          const J = !member(id).parts && (Assets.atlas.draft_animations || {})[`newcomer_${ROLE[p.kit]}`];
+          // the jersey moment: a newcomer's own (Batch AD), or the parts body with the rookie's head (Batch AO)
+          const look = member(id).parts, M = Assets.atlas.modular;
+          const PJ = look && M && M.jersey_moments && M.jersey_moments['body_' + look.body];
+          const J = !look && (Assets.atlas.draft_animations || {})[`newcomer_${ROLE[p.kit]}`];
           await Assets.ensureKit([...homeKitGroups(s), ...(J ? ['draft_rookies'] : [])]); // the rookie in our colours
-          const moment = J && Assets.spriteSet(J.frames, 300, 'homekit');
+          const moment = PJ ? Assets.partsMoment(PJ, look, 300, 'homekit') : J && Assets.spriteSet(J.frames, 300, 'homekit');
           this.app.goHub('team');
           const role = member(id).role;
           this.modal(`<h2>${t('{name} pulls on the {club} jersey!', { name: esc(p.name), club: esc(CLUB.nick) })}</h2>

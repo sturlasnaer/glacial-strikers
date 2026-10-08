@@ -54,7 +54,7 @@ function prospect(role, taken, rnd) {
   const arch = pick(Object.values(ARCHETYPES).filter((a) => a.roles.includes(role)).map((a) => a.id), rnd);
   const elem = pick(Object.keys(ELEMENTS), rnd);
   const hand = rnd() < 0.6 ? 'L' : 'R'; // (most players shoot left)
-  const parts = randomLook(rnd); // a face of their own once the parts art is in
+  const parts = randomLook(rnd, role); // a face (and a build) of their own once the parts art is in
   return { name, kit, base, potential, special, arch, elem, hand, parts, blurb: pick(SCOUTING[role], rnd), perks: PERK_LEVELS.map(() => (rnd() < 0.5 ? 0 : 1)) };
 }
 
