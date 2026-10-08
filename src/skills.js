@@ -9,8 +9,8 @@ import { member, TEAMS } from './data.js';
 import { makeRng } from './util.js';
 
 export const SKILLS_EVENTS = [
-  { id: 'fastest', drill: 'cones', name: 'Fastest Skater', coins: 75 },
-  { id: 'sharp', drill: 'sniper', name: 'Sharpshooter', coins: 75 },
+  { id: 'fastest', drill: 'cones', name: 'Fastest Skater', coins: 75, icon: 'icons/skills_fastest' },
+  { id: 'sharp', drill: 'sniper', name: 'Sharpshooter', coins: 75, icon: 'icons/skills_sharp' },
 ];
 
 // a rival star's stats, with their team's bonus

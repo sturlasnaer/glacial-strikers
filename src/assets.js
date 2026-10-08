@@ -27,7 +27,8 @@ export const Assets = {
     const atlas = INLINE ? INLINE['gfx/atlas.json'] : await (await fetch(BASE + 'gfx/atlas.json')).json();
     this.atlas = atlas;
     this.pages = new Array(atlas.pages.length);
-    const core = atlas.pages.map((p, i) => i).filter((i) => ['home', 'away', 'title'].includes(atlas.pages[i].group));
+    // (the icon pages are small and the menus use them everywhere: award, plan, challenge and online icons, the All-Star crest)
+    const core = atlas.pages.map((p, i) => i).filter((i) => ['home', 'away', 'title', 'icons_z', 'allstar', 'icons_ac'].includes(atlas.pages[i].group));
     const glass = atlas.arena && atlas.arena.glass && atlas.arena.glass.file;
     const files = [...core.map((i) => atlas.pages[i].file), ...(glass ? [glass] : []), 'gfx/rink_backdrop.webp'];
     let done = 0;
@@ -63,6 +64,7 @@ export const Assets = {
     const t = TEAMS[teamId];
     const jobs = [];
     if (t && t.art) jobs.push(this.loadGroup('rival_' + t.art));
+    if (t && t.art && this.needNewcomers) jobs.push(this.loadGroup('newcomers')); // (a signed slot's newcomer)
     if (arena && arena !== 'home') jobs.push(this.ensureArena(arena));
     await Promise.all(jobs).catch(() => {});
     if (t) this.prepareTeam(t);
@@ -98,7 +100,9 @@ export const Assets = {
   },
 
   // Equipped gear recolours from the masks; load them only when someone wears special gear.
-  ensureGear() { return this.loadGroup('gearmask').catch(() => {}); },
+  ensureGear() { return Promise.all([this.loadGroup('gearmask'), ...(this.needNewcomers ? [this.loadGroup('newcomer_gearmask')] : [])]).catch(() => {}); },
+  newcomerCheck: null, // the game's check: has the save signed a rival or drafted a rookie (newcomer art)?
+  get needNewcomers() { return !!(this.newcomerCheck && this.newcomerCheck()); },
 
   forget(file) { this.images.delete(file); this.loading.delete(file); },
 
@@ -107,9 +111,10 @@ export const Assets = {
   // club colours stay.
   trim(keep = {}) {
     const a = this.atlas;
-    const groups = new Set(['home', 'away', ...(PALETTES.homekit.groups || []), ...(keep.groups || [])]);
+    const groups = new Set(['home', 'away', 'icons_z', 'allstar', 'icons_ac', ...(PALETTES.homekit.groups || []), ...(keep.groups || [])]);
     for (const id of keep.teams || []) { const t = TEAMS[id]; if (t && t.art) groups.add('rival_' + t.art); }
-    if (keep.gear) groups.add('gearmask');
+    if (this.needNewcomers && (keep.teams || []).length) groups.add('newcomers');
+    if (keep.gear) { groups.add('gearmask'); if (this.needNewcomers) groups.add('newcomer_gearmask'); }
     const released = new Set();
     a.pages.forEach((p, i) => { if (this.pages[i] && !groups.has(p.group)) { released.add(this.pages[i]); this.pages[i] = null; this.forget(p.file); } });
     // recoloured page sets keep references to the original pages they didn't change: drop those too
@@ -188,7 +193,7 @@ export const Assets = {
   // Recolour the away pages and this rival's roster pages into the team's colours
   // (or, for a palette with groups, just those pages).
   prepareTeam(team) {
-    const own = (g) => (team.groups ? team.groups.includes(g) : g === 'away' || (team.art && g === 'rival_' + team.art));
+    const own = (g) => (team.groups ? team.groups.includes(g) : g === 'away' || g === 'newcomers' || (team.art && g === 'rival_' + team.art));
     const loaded = this.pages.filter((img, i) => img && own(this.atlas.pages[i].group)).length + '|' + (team.groups || []).join(',');
     const r = this.recolored.get(team.id);
     if (r && r.loaded === loaded) return;

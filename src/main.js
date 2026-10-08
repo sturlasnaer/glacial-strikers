@@ -107,6 +107,8 @@ class App {
     window.addEventListener('keydown', unlock, { once: true });
     window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' && !this.isTouch) { this.isTouch = true; if (this.scene === 'match') this.hud.show(this.match, this.cur.teamId); } });
     this.input.onKey((code) => this.onKey(code));
+    // newcomer art (Batch AA) is needed once a rival slot has been signed away, or for drafted rookies
+    Assets.newcomerCheck = () => Object.keys(this.save.roster).some((k) => RECRUITS[k] || this.save.roster[k].rookie);
     this.setupInstall();
 
     flushScores(this.save).then((n) => { if (n) writeSave(this.save); });
@@ -647,6 +649,8 @@ class App {
     this.chantCool = 25;
     this.ui.clear();
     this.scene = 'match';
+    m.allstar = !!extra.allstar; // the home rink is dressed for it
+    m.bigGame = classic || m.allstar || /\bFinal$/.test(stage.round || ''); // the gold scoreboard
     this.hud.show(m, teamId);
     if (classic) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t('The Winter Classic! Outdoor hockey under the snow, and the whole league is watching.')); }, 500);
     if (extra.allstar) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t('The All-Star Game! The fans voted, and the league\'s best share the ice.')); }, 500);

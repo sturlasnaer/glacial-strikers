@@ -1,0 +1,310 @@
+{
+  "manifest": "hud-kit/hud-kit.json",
+  "css": "hud-kit/puckbound-hud.css",
+  "source_scale": 3,
+  "pieces": {
+    "scoreboard_frame": {
+      "logical_size": [
+        300,
+        52
+      ],
+      "source_size": [
+        900,
+        156
+      ],
+      "source_scale": 3,
+      "file": "images/scoreboard_frame.png",
+      "background_color": "#14233b",
+      "stretch_center": true,
+      "nine_slice": {
+        "left": 24,
+        "top": 24,
+        "right": 24,
+        "bottom": 24
+      },
+      "frame_id": "hud_skin/scoreboard_frame"
+    },
+    "scoreboard_frame_gold": {
+      "logical_size": [
+        300,
+        52
+      ],
+      "source_size": [
+        900,
+        156
+      ],
+      "source_scale": 3,
+      "file": "images/scoreboard_frame_gold.png",
+      "background_color": "#14233b",
+      "stretch_center": true,
+      "nine_slice": {
+        "left": 24,
+        "top": 24,
+        "right": 24,
+        "bottom": 24
+      },
+      "frame_id": "hud_skin/scoreboard_frame_gold"
+    },
+    "player_card_ice": {
+      "logical_size": [
+        220,
+        56
+      ],
+      "source_size": [
+        660,
+        168
+      ],
+      "source_scale": 3,
+      "file": "images/player_card_ice.png",
+      "background_color": "#14233b",
+      "stretch_center": true,
+      "nine_slice": {
+        "left": 180,
+        "top": 24,
+        "right": 24,
+        "bottom": 24
+      },
+      "portrait_rect_logical": {
+        "x": 6,
+        "y": 6,
+        "w": 42,
+        "h": 44
+      },
+      "content_left_logical": 62,
+      "frame_id": "hud_skin/player_card_ice"
+    },
+    "player_card_coral": {
+      "logical_size": [
+        220,
+        56
+      ],
+      "source_size": [
+        660,
+        168
+      ],
+      "source_scale": 3,
+      "file": "images/player_card_coral.png",
+      "background_color": "#14233b",
+      "stretch_center": true,
+      "nine_slice": {
+        "left": 180,
+        "top": 24,
+        "right": 24,
+        "bottom": 24
+      },
+      "portrait_rect_logical": {
+        "x": 6,
+        "y": 6,
+        "w": 42,
+        "h": 44
+      },
+      "content_left_logical": 62,
+      "frame_id": "hud_skin/player_card_coral"
+    },
+    "stamina_frame": {
+      "logical_size": [
+        120,
+        12
+      ],
+      "source_size": [
+        360,
+        36
+      ],
+      "source_scale": 3,
+      "file": "images/stamina_frame.png",
+      "background_color": "#14233b",
+      "stretch_center": true,
+      "nine_slice": {
+        "left": 18,
+        "top": 9,
+        "right": 18,
+        "bottom": 9
+      },
+      "frame_id": "hud_skin/stamina_frame"
+    },
+    "ultimate_frame": {
+      "logical_size": [
+        120,
+        12
+      ],
+      "source_size": [
+        360,
+        36
+      ],
+      "source_scale": 3,
+      "file": "images/ultimate_frame.png",
+      "background_color": "#14233b",
+      "stretch_center": true,
+      "nine_slice": {
+        "left": 18,
+        "top": 9,
+        "right": 18,
+        "bottom": 9
+      },
+      "frame_id": "hud_skin/ultimate_frame"
+    },
+    "stamina_fill": {
+      "logical_size": [
+        112,
+        6
+      ],
+      "source_size": [
+        336,
+        18
+      ],
+      "source_scale": 3,
+      "file": "images/stamina_fill.png",
+      "background_color": "#71dce8",
+      "stretch_center": true,
+      "nine_slice": {
+        "left": 9,
+        "top": 6,
+        "right": 9,
+        "bottom": 6
+      },
+      "frame_id": "hud_skin/stamina_fill"
+    },
+    "ultimate_fill": {
+      "logical_size": [
+        112,
+        6
+      ],
+      "source_size": [
+        336,
+        18
+      ],
+      "source_scale": 3,
+      "file": "images/ultimate_fill.png",
+      "background_color": "#7554a7",
+      "stretch_center": true,
+      "nine_slice": {
+        "left": 9,
+        "top": 6,
+        "right": 9,
+        "bottom": 6
+      },
+      "frame_id": "hud_skin/ultimate_fill"
+    },
+    "ultimate_fill_full": {
+      "logical_size": [
+        112,
+        6
+      ],
+      "source_size": [
+        336,
+        18
+      ],
+      "source_scale": 3,
+      "file": "images/ultimate_fill_full.png",
+      "background_color": "#ffd45e",
+      "stretch_center": true,
+      "nine_slice": {
+        "left": 9,
+        "top": 6,
+        "right": 9,
+        "bottom": 6
+      },
+      "frame_id": "hud_skin/ultimate_fill_full"
+    },
+    "ticker_frame": {
+      "logical_size": [
+        420,
+        30
+      ],
+      "source_size": [
+        1260,
+        90
+      ],
+      "source_scale": 3,
+      "file": "images/ticker_frame.png",
+      "background_color": "#14233b",
+      "stretch_center": true,
+      "nine_slice": {
+        "left": 126,
+        "top": 18,
+        "right": 18,
+        "bottom": 18
+      },
+      "live_label_rect_logical": {
+        "x": 26,
+        "y": 5,
+        "w": 32,
+        "h": 20
+      },
+      "commentary_left_logical": 62,
+      "frame_id": "hud_skin/ticker_frame"
+    },
+    "power_puck_chip": {
+      "logical_size": [
+        120,
+        36
+      ],
+      "source_size": [
+        360,
+        108
+      ],
+      "source_scale": 3,
+      "file": "images/power_puck_chip.png",
+      "background_color": "#14233b",
+      "stretch_center": true,
+      "nine_slice": {
+        "left": 24,
+        "top": 24,
+        "right": 24,
+        "bottom": 24
+      },
+      "frame_id": "hud_skin/power_puck_chip"
+    },
+    "banner_plate": {
+      "logical_size": [
+        360,
+        64
+      ],
+      "source_size": [
+        1080,
+        192
+      ],
+      "source_scale": 3,
+      "file": "images/banner_plate.png",
+      "background_color": "#14233b",
+      "stretch_center": true,
+      "nine_slice": {
+        "left": 36,
+        "top": 30,
+        "right": 36,
+        "bottom": 30
+      },
+      "frame_id": "hud_skin/banner_plate"
+    },
+    "pause_normal": {
+      "logical_size": [
+        40,
+        40
+      ],
+      "source_size": [
+        120,
+        120
+      ],
+      "source_scale": 3,
+      "file": "images/pause_normal.png",
+      "background_color": "#14233b",
+      "stretch_center": false,
+      "frame_id": "hud_skin/pause_normal"
+    },
+    "pause_pressed": {
+      "logical_size": [
+        40,
+        40
+      ],
+      "source_size": [
+        120,
+        120
+      ],
+      "source_scale": 3,
+      "file": "images/pause_pressed.png",
+      "background_color": "#14233b",
+      "stretch_center": false,
+      "frame_id": "hud_skin/pause_pressed"
+    }
+  }
+}

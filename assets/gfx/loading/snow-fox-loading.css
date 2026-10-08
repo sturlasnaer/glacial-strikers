@@ -1,0 +1,1 @@
+.pb-loading-fox{width:224px;height:144px;background:url('snow_fox_loading.png') 0 0/896px 144px no-repeat;image-rendering:pixelated;animation:pb-loading-fox .5s steps(4) infinite}@keyframes pb-loading-fox{to{background-position:-896px 0}}@media(prefers-reduced-motion:reduce){.pb-loading-fox{animation:none}}

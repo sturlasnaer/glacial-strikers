@@ -177,6 +177,7 @@ export class Renderer {
     for (const d of list) d.f();
     // near glass over anyone skating along the bottom boards (Pine Pond has snowbanks)
     if (Assets.glass && arena !== 'pine_pond') ctx.drawImage(Assets.glass, Assets.atlas.arena.glass.x, Assets.atlas.arena.glass.y);
+    if (match.allstar && arena === 'home') this.drawAllStarDressing(ctx, fx, true);
 
     this.drawParticles(ctx, fx);
     this.drawAnims(ctx, fx);
@@ -390,6 +391,7 @@ export class Renderer {
       Assets.draw(ctx, mascot[pose], mascot.foot.x, mascot.foot.y - (party ? Math.abs(Math.sin(t * 8)) * 6 : 0), mascot.source_scale, { pages: Assets.pagesFor(hostTeam.id) });
     }
     if (match.classic && arena === 'pine_pond') this.drawWinterClassic(ctx, fx);
+    if (match.allstar && arena === 'home') this.drawAllStarDressing(ctx, fx, false);
     const board = (A.scoreboards && A.scoreboards[arena]) || (arena === 'ember_dome' ? A.scoreboard_volcanic : A.scoreboard);
     if (board) this.drawScoreboard(ctx, match, fx, board);
     this.drawGlassFans(ctx, fx);
@@ -415,6 +417,25 @@ export class Renderer {
       // (home fans are on the winter pages, which load after the club colours are made: drawn as painted)
       if (fid) Assets.draw(ctx, fid, foot.x, foot.y - (cheering ? Math.abs(Math.sin(t * 8 + i)) * 3 : 0), 0.15, kit === 'away' ? { pages: this.awayPages } : {});
     });
+  }
+
+  // The home rink on All-Star night (Batch AB): the star banner over the far glass and star
+  // bunting along the far boards, then (near) the bunting on the near boards, over the players.
+  drawAllStarDressing(ctx, fx, near) {
+    const A = Assets.atlas.allstar;
+    const f0 = A && A.banner && Assets.frame(A.banner[0]);
+    if (!f0 || !Assets.pages[f0[0]]) return;
+    const phase = Math.floor(fx.time * 2) % 2; // the cloth sways at 2 fps
+    const strip = (r, i) => {
+      ctx.save(); ctx.beginPath(); ctx.rect(r.x, r.y, r.w, r.h); ctx.clip(); // never onto the ice
+      for (let x = r.x; x < r.x + r.w; x += 64) Assets.draw(ctx, A.bunting[(phase + i) % 2], x + 32, r.y + r.h / 2, 0.5);
+      ctx.restore();
+    };
+    const [far, nearRun] = A.bunting_rects_backdrop;
+    if (near) { strip(nearRun, 1); return; }
+    const b = A.banner_rect_backdrop;
+    Assets.draw(ctx, A.banner[phase], b.x + b.w / 2, b.y + b.h / 2, 0.5);
+    strip(far, 0);
   }
 
   // The penalty boxes built into the far boards (Batch P), or null without the art.

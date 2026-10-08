@@ -82,14 +82,14 @@ export const GEAR = [
   { id: 'skate_bolt', slot: 'skates', name: 'Bolt Runners', icon: 'equipment_items/skates/lightning', price: 420, mods: { spd: 3, sta: -1, agi: -1 }, text: 'Blinding speed, tiring stride.' },
   // protection
   { id: 'arm_none', slot: 'armor', name: 'Practice Jersey', icon: 'equipment_items/armor/chest', price: 0, mods: {}, text: 'Light and breezy.' },
-  { id: 'arm_vest', slot: 'armor', name: 'Padded Vest', icon: 'equipment_items/armor/chest', price: 110, mods: { sta: 2, spd: -1 }, text: 'Extra stamina for long shifts.' },
+  { id: 'arm_vest', slot: 'armor', name: 'Padded Vest', icon: 'icons/gear_padded_vest', price: 110, mods: { sta: 2, spd: -1 }, text: 'Extra stamina for long shifts.' },
   { id: 'arm_should', slot: 'armor', name: 'Rampart Pads', icon: 'equipment_items/armor/shoulders', price: 180, mods: { chk: 2, agi: -1 }, text: 'Bounce checks right back.' },
   { id: 'arm_helm', slot: 'armor', name: 'Visor Helm', icon: 'equipment_items/armor/helmet', price: 150, mods: { pas: 1, sta: 1 }, text: 'Clear view of the ice.' },
   { id: 'arm_glove', slot: 'armor', name: 'Grip Gloves', icon: 'equipment_items/armor/gloves', price: 200, mods: { sht: 1, pas: 1, chk: -1 }, text: 'Soft hands, thin padding.' },
   { id: 'arm_legs', slot: 'armor', name: 'Glacier Guards', icon: 'equipment_items/armor/leg_guards', price: 260, mods: { chk: 2, sta: 2, spd: -1 }, text: 'Shot-blocking armour.' },
   // goalie
   { id: 'g_start', slot: 'goalie', name: 'Old Mitts', icon: 'equipment_items/armor/goalie_gloves', price: 0, mods: {}, text: 'Patched more than once.' },
-  { id: 'g_pro', slot: 'goalie', name: 'Halla\'s Pro Set', icon: 'equipment_items/armor/goalie_gloves', price: 380, mods: { rfx: 2 }, text: 'Faster glove, quicker pads.' },
+  { id: 'g_pro', slot: 'goalie', name: 'Halla\'s Pro Set', icon: 'icons/gear_pro_mitts', price: 380, mods: { rfx: 2 }, text: 'Faster glove, quicker pads.' },
 ];
 
 export const GEAR_BY_ID = Object.fromEntries(GEAR.map((g) => [g.id, g]));
@@ -313,17 +313,17 @@ export const CHEM_LEVELS = [12, 50, 120]; // total chemistry XP needed for level
 export const pairKey = (a, b) => [a, b].sort().join('+');
 export const COMBOS = {
   'frost+thunder': {
-    name: 'Frostbolt', colors: ['#bff4ff', '#ffe066'], icon: 'hud_elements/ability/lightning',
+    name: 'Frostbolt', colors: ['#bff4ff', '#ffe066'], icon: 'icons/combo_frostbolt',
     text: 'A crackling ice shot that slows every defender it passes and is hard to hold.',
     levels: ['Unlocks Frostbolt', 'Slows defenders longer', 'Goalies can\'t catch it'],
   },
   'frost+stone': {
-    name: 'Avalanche', colors: ['#bff4ff', '#c9b79c'], icon: 'hud_elements/ability/stone',
+    name: 'Avalanche', colors: ['#bff4ff', '#c9b79c'], icon: 'icons/combo_avalanche',
     text: 'A heavy shot that bulldozes through the first blocker. Goalies can\'t catch it.',
     levels: ['Unlocks Avalanche', 'Plows through two blockers', 'Big rebound into the slot'],
   },
   'stone+thunder': {
-    name: 'Thunderquake', colors: ['#ffe066', '#c9b79c'], icon: 'hud_elements/ability/stone',
+    name: 'Thunderquake', colors: ['#ffe066', '#c9b79c'], icon: 'icons/combo_thunderquake',
     text: 'The release sends a shockwave that knocks nearby defenders off their feet.',
     levels: ['Unlocks Thunderquake', 'Wider shockwave', 'Even faster shot'],
   },
@@ -331,20 +331,20 @@ export const COMBOS = {
 
 // Game plans picked before league matches. Each one beats one other plan.
 export const GAME_PLANS = {
-  balanced: { id: 'balanced', name: 'Balanced', beats: null, text: 'Read and react. No edge, no weakness.', pros: 'Safe against anything', cons: 'Never has the edge' },
-  forecheck: { id: 'forecheck', name: 'Forecheck', beats: 'rungun', text: 'Two skaters hunt the puck in their end and finish every check.', pros: 'More hits and steals', cons: 'Stamina recovers slower; can get caught up ice' },
-  trap: { id: 'trap', name: 'Trap', beats: 'forecheck', text: 'Clog the lanes at your blue line and sit goal-side of everyone.', pros: 'Fewer chances against, stronger goalie', cons: 'Fewer chances for' },
-  rungun: { id: 'rungun', name: 'Run-and-gun', beats: 'trap', text: 'Wingers cheat up ice, the defender joins the rush, shoot from anywhere.', pros: 'More and harder shots', cons: 'Your goalie sees more odd-man rushes' },
+  balanced: { id: 'balanced', name: 'Balanced', icon: 'icons/plan_balanced', beats: null, text: 'Read and react. No edge, no weakness.', pros: 'Safe against anything', cons: 'Never has the edge' },
+  forecheck: { id: 'forecheck', name: 'Forecheck', icon: 'icons/plan_forecheck', beats: 'rungun', text: 'Two skaters hunt the puck in their end and finish every check.', pros: 'More hits and steals', cons: 'Stamina recovers slower; can get caught up ice' },
+  trap: { id: 'trap', name: 'Trap', icon: 'icons/plan_trap', beats: 'forecheck', text: 'Clog the lanes at your blue line and sit goal-side of everyone.', pros: 'Fewer chances against, stronger goalie', cons: 'Fewer chances for' },
+  rungun: { id: 'rungun', name: 'Run-and-gun', icon: 'icons/plan_rungun', beats: 'trap', text: 'Wingers cheat up ice, the defender joins the rush, shoot from anywhere.', pros: 'More and harder shots', cons: 'Your goalie sees more odd-man rushes' },
 };
 
 // Challenge modifiers for exhibitions. mult scales the coin reward.
 export const CHALLENGES = [
-  { id: 'onetimers', name: 'One-timers only', text: 'Only one-timer goals count, for both teams.', mult: 1.5 },
-  { id: 'giant', name: 'Giant goalies', text: 'Both goalies cover 40% more net.', mult: 1.4 },
-  { id: 'iceage', name: 'Ice age', text: 'Ice power orbs appear every few seconds.', mult: 1.1 },
-  { id: 'speed', name: 'Lightning round', text: 'Everyone skates 20% faster and the puck glides further.', mult: 1.2 },
-  { id: 'heavy', name: 'Heavy hitters', text: 'Checks hit 50% harder and cost half the stamina.', mult: 1.1 },
-  { id: 'sudden', name: 'Next goal wins', text: 'One goal decides it.', mult: 0.5 },
+  { id: 'onetimers', name: 'One-timers only', icon: 'icons/ch_onetimers', text: 'Only one-timer goals count, for both teams.', mult: 1.5 },
+  { id: 'giant', name: 'Giant goalies', icon: 'icons/ch_giant_goalies', text: 'Both goalies cover 40% more net.', mult: 1.4 },
+  { id: 'iceage', name: 'Ice age', icon: 'icons/ch_ice_age', text: 'Ice power orbs appear every few seconds.', mult: 1.1 },
+  { id: 'speed', name: 'Lightning round', icon: 'icons/ch_lightning_round', text: 'Everyone skates 20% faster and the puck glides further.', mult: 1.2 },
+  { id: 'heavy', name: 'Heavy hitters', icon: 'icons/ch_heavy_hitters', text: 'Checks hit 50% harder and cost half the stamina.', mult: 1.1 },
+  { id: 'sudden', name: 'Next goal wins', icon: 'icons/ch_next_goal_wins', text: 'One goal decides it.', mult: 0.5 },
 ];
 
 export const POWER_INFO = {

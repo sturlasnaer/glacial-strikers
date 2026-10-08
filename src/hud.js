@@ -26,7 +26,7 @@ export class HUD {
     this.el.hidden = false;
     this.el.innerHTML = `
       ${drill ? '<div class="drillbar"><div class="t"></div><div class="m"></div><div class="s"></div><div class="n"></div></div>' : ''}
-      <div class="scoreboard" ${drill ? 'hidden' : ''}>
+      <div class="scoreboard${match.bigGame ? ' gold' : ''}" ${drill ? 'hidden' : ''}>
         <img class="crest" src="${crest('home', 72)}" alt="">
         <span class="abbr" style="color:${TEAMS.home.color}">${TEAMS.home.short}</span>
         <img class="digit" id="d0" src="${digit(0)}" alt="0">
@@ -47,7 +47,7 @@ export class HUD {
       <div class="ticker" id="ticker" hidden><span class="live">${t('LIVE')}</span><img class="tk-ico" alt="" hidden><span class="tx"></span></div>
       <div class="penchip" id="penchip" hidden></div>
       <div class="powerchip" id="power" hidden><img alt=""><span></span><span class="t"><i></i></span></div>
-      <button class="pause-btn" id="pause-btn" aria-label="${t('Pause')}"><img src="${Assets.icon('hud_elements/misc/pause', 88)}" alt=""></button>
+      <button class="pause-btn" id="pause-btn" aria-label="${t('Pause')}"></button>
       <div class="hint" id="hint" hidden></div>
       <div class="keyhints" id="keyhints" ${this.app.isTouch ? 'hidden' : ''}>
         ${opts.versus ? `<b style="color:var(--ice)">P1</b> WASD · <kbd>F</kbd> ${t('shoot')} · <kbd>G</kbd> ${t('pass')} · <kbd>L-Shift</kbd> ${t('sprint')} · <kbd>R</kbd>/<kbd>T</kbd> ${t('skill/ult')}<br>
@@ -134,7 +134,7 @@ export class HUD {
   }
 
   banner(html, secs = 2) {
-    this.bannerEl.innerHTML = `<div class="banner">${html}</div>`;
+    this.bannerEl.innerHTML = `<div class="banner"><div class="plate">${html}</div></div>`;
     clearTimeout(this.bannerTimer);
     this.bannerTimer = setTimeout(() => { this.bannerEl.innerHTML = ''; }, secs * 1000);
   }

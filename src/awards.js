@@ -5,16 +5,15 @@
 import { TEAMS, RECRUITS, GOALIE, recruitKey } from './data.js';
 import { t } from './i18n.js';
 
-const TROPHY = 'equipment_items/reward/trophy', MEDAL = 'equipment_items/reward/medal';
 const KITS = ['frost', 'thunder', 'stone'];
 
 export const AWARDS = [
-  { id: 'mvp', name: 'League MVP', blurb: 'The most valuable skater in the Frostline.', icon: TROPHY, coins: 200, exp: 80 },
-  { id: 'golden_stick', name: 'Golden Stick', blurb: 'Most goals this season.', icon: 'equipment_items/stick/slapshot', coins: 120, exp: 50 },
-  { id: 'playmaker', name: 'Playmaker', blurb: 'Most assists this season.', icon: 'equipment_items/stick/passing', coins: 120, exp: 50 },
-  { id: 'iron_wall', name: 'Iron Wall', blurb: 'Best save percentage (60+ shots faced).', icon: 'equipment_items/armor/goalie_gloves', coins: 120, exp: 60, goalie: true },
-  { id: 'enforcer', name: 'Enforcer', blurb: 'Most hits this season.', icon: 'equipment_items/armor/shoulders', coins: 100, exp: 40 },
-  { id: 'signing', name: 'Signing of the Year', blurb: 'The best season by a Foxes signing.', icon: MEDAL, coins: 100, exp: 50, ours: true },
+  { id: 'mvp', name: 'League MVP', blurb: 'The most valuable skater in the Frostline.', icon: 'icons/award_mvp', coins: 200, exp: 80 },
+  { id: 'golden_stick', name: 'Golden Stick', blurb: 'Most goals this season.', icon: 'icons/award_golden_stick', coins: 120, exp: 50 },
+  { id: 'playmaker', name: 'Playmaker', blurb: 'Most assists this season.', icon: 'icons/award_playmaker', coins: 120, exp: 50 },
+  { id: 'iron_wall', name: 'Iron Wall', blurb: 'Best save percentage (60+ shots faced).', icon: 'icons/award_iron_wall', coins: 120, exp: 60, goalie: true },
+  { id: 'enforcer', name: 'Enforcer', blurb: 'Most hits this season.', icon: 'icons/award_enforcer', coins: 100, exp: 40 },
+  { id: 'signing', name: 'Signing of the Year', blurb: 'The best season by a Foxes signing.', icon: 'icons/award_signing', coins: 100, exp: 50, ours: true },
 ];
 export const AWARD_BY_ID = Object.fromEntries(AWARDS.map((a) => [a.id, a]));
 

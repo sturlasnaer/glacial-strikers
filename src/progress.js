@@ -195,7 +195,7 @@ export function matchConfig(save, teamId, stage, opts = {}) {
       const stats = { ...CHARACTERS[id].base };
       for (const [k, v] of Object.entries(t.bonus || {})) stats[k] = Math.max(1, stats[k] + v);
       // a slot whose skater you signed is filled by a newcomer in their colours
-      if (isSigned(save, recruitKey(teamId, id))) return { def: CHARACTERS[id], who: 'sub_' + id, stats, name: t.subs[id], perks: [] };
+      if (isSigned(save, recruitKey(teamId, id))) return { def: CHARACTERS[id], who: 'sub_' + id, stats, name: t.subs[id], perks: [], sprite: `newcomer_${ROLE[id]}` };
       return { def: CHARACTERS[id], stats, name: t.names[id], perks: [], sprite: t.art ? `${t.art}_${ROLE[id]}` : null };
     }),
     goalie: { stats: { ...t.goalie }, name: t.names.goalie, art: t.art || null },

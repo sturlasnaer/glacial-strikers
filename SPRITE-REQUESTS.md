@@ -1,17 +1,17 @@
 # Sprite requests
 
-What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd), the remaining packs (Batches B, H, I, C and N-Extras), the new batches (P, R, S, K, T and M2) the D, U, Q, W, O, E, J and F delivery, and the latest batches (V and X).
+What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd), the remaining packs (Batches B, H, I, C and N-Extras), the new batches (P, R, S, K, T and M2) the D, U, Q, W, O, E, J and F delivery, V and X, and the latest delivery (Y, Z, AA, AB and AC).
 
 The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes** (the Snow Fox is their mascot; colours unchanged). Packs can be named `Puckbound-...` from now on; older `Glacial-Strikers-...` folder names still work.
 
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **Y**: an in-match HUD kit (scoreboard, player card, meters, ticker), to match the menu and touch kits.
-2. **Z**: icons for the six season awards, two gear items that share art, the three chemistry combos, the six challenges and the four game plans.
-3. **AB**: All-Star Game dressing: a crest for the League All-Stars, an achievement icon and banners for the home rink.
-4. **AA**: three newcomer skaters, who fill a rival's slot when you sign one of their players (today they're drawn as our own cast in rival colours).
-5. **AC**: icons for the online features and Skills Night, a loading-screen Snow Fox, and a champions painting.
+1. **AD**: Draft Day: a draft-hall painting, prospect cards, the rookies pulling on our jersey, and a few icons.
+2. **AE**: the Friends Weekly Cup (a small cup, a podium, rosettes) and icons for the new career stats page.
+3. **AF**: the last 22 achievements that still borrow other icons.
+4. **AG**: a linesman who drops the puck at faceoffs and makes the calls.
+5. **AH**: a second rookie class, three more newcomers, so drafts don't repeat faces.
 
 ## Format notes
 
@@ -56,69 +56,86 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - **Batch F:** Pine Pond's log penalty box with the lantern.
 - **Batch V touch controls:** the stick, the four round button colours (normal and pressed), the gold ready ring that pulses around Skill and Ultimate, the cooldown rim, the Pull Goalie button, block and pass icons for goalie mode, and blank OWNED and NEW frames (the OWNED stamp is now in both languages).
 - **Batch X cups and badges:** the Frostline Cup with its glint on the championship screen, training medals in the drill list and on the result card, gold, silver and bronze rank shields on the online boards, the daily star, tick and streak flame, and the small cup and snowflake that replaced the last emoji.
+- **Batch Y HUD kit:** the scoreboard (gold-rimmed for the final, the Winter Classic and the All-Star Game), the player card with the portrait slot, the stamina and ultimate meters (the gold fill pulses when the ultimate is ready), the commentary ticker with its LIVE lamp, the power-puck chip, the pause button and the plate behind FACEOFF, GOAL and the period banners.
+- **Batch Z icons:** the six season awards, the Padded Vest and Halla's Pro Set, the three chemistry combos, the six exhibition challenges and the four game plans all have their own pictures.
+- **Batch AA newcomers:** the three rookies take a signed skater's slot on their old team, in that team's colours, with their own portraits and expressions; they're also the faces of Draft Day.
+- **Batch AB All-Star dressing:** the League All-Stars crest, the All-Star achievement, and the star banner and bunting swaying over the home rink on All-Star night.
+- **Batch AC:** the friends, ghost, challenge and share icons on the online buttons, the Skills Night icons, the Snow Fox skating on the loading screen, and the champions painting behind "Champions!".
 
 ---
 
-## Batch Y: an in-match HUD kit
+## Batch AD: Draft Day
 
-The HUD during matches is still CSS: a navy box with an ice rim for the scoreboard, a box for the player card, plain bars for stamina and the ultimate, and a dark strip for the commentary ticker. With the menus (U) and touch controls (V) in pixel art, the HUD is the last plain part. Same rules as U and V: **one transparent PNG per piece**, drawn at 3× and nearest-neighbour clean, 9-slice margins in a small JSON, navy outlines and the game palette, centres flat so they stretch.
+At the end of each season, after Awards Night, the league holds a draft. Three prospects (one per position) step up, you pick one, and they join your roster as a rookie who grows over the seasons. The prospects are the Batch AA newcomers, recoloured into our teal and cream once they're picked. Kip hosts from the Batch J podium. Please draw:
 
-- **Scoreboard frame** (9-slice, about 300×52 px in game): the score digits (already sprites), the two crests and a small centre panel for the period text sit on top. A heavier gold-rimmed variant for the final and the Winter Classic. 2 images.
-- **Player card frame** (9-slice, about 220×56 px): a square portrait slot on the left. Ours in ice blue, and a coral one for player 2 in local versus. 2 images.
-- **Meters:** a stamina bar frame and fill, and an ultimate bar frame and fill (the fill is stretched; a gold `full` fill that the game pulses when the ultimate is ready). 5 images.
-- **Ticker frame** (9-slice, about 420×30 px) with a red `LIVE` lamp at its left end (no lettering; the game writes LIVE). 1 image.
-- **Power-puck chip frame** (9-slice, about 120×36 px) for the power you're carrying. 1 image.
-- **Pause button**, round, about 40 px: `normal` and `pressed`, with the two pause bars drawn in. 2 images.
-- **Banner plate** (9-slice, wide): the dark plate behind FACEOFF, GOAL and the period banners (the words stay HTML). 1 image.
+- **Draft hall painting**, 1536×864, behind the whole screen: the league hall on draft night, a stage with a podium on the left third (Kip stands there), six round tables with cloths in each team's colours (Snowcrest teal and cream, and the five rivals' colours as on their crests), spotlights, and scouts and families in the seats. No lettering. Three prospect cards sit across the middle and lower half, so keep those areas calm and a little darker. 1 image.
+- **Prospect card frame**, 9-slice, about 180×250 px in game: a portrait window in the top half and a flat lower panel for the name and stats (HTML). Three tiers by potential: **bronze, silver and gold** rims. Same rules as U and Y: one transparent PNG each at 3×, margins in a small JSON. 3 images.
+- **The jersey moment:** each newcomer (`newcomer_c`, `newcomer_w`, `newcomer_d`) facing the camera, (1) holding a jersey up with both hands, (2) pulling it over their head, (3) wearing it with a fist pump. In coral and violet like Batch AA, so the game recolours them into our kit. 3 frames each, 9 frames.
+- **Icons**, in the style and size of the reward icons (about 200 px source), sheet `icons_ad.png`, frame names `icons/<name>`: `draft` (a podium with a folded jersey on top, for the Draft Day button), `rookie` (a shiny new skate with a ribbon bow, the rookie badge on the roster), `scout` (a clipboard with a star sketched on it, the scouting report), `potential_full` and `potential_empty` (a filled and a hollow gold star, read small, for the 1–5 potential rating). 5 frames.
 
-About 14 images.
+18 frames and images.
 
-## Batch Z: award, gear, combo, challenge and plan icons
+## Batch AE: Friends Weekly Cup and career stats icons
 
-In the style and size of the reward icons (`equipment_items/reward/*`, about 200 px source), one sheet named `icons_z.png` with frame names `icons/<name>`:
+**Weekly Cup:** every friends board runs a cup each week (Monday to Sunday): the best score of the week on each board counts, and the top three get the cup and rosettes on their profile.
 
-- **Season awards** (Awards Night cards and the award cabinet; today they borrow gear icons): `award_mvp` (a tall star trophy), `award_golden_stick` (a gold stick on a plinth), `award_playmaker` (two sticks crossed with a puck between them, silver), `award_iron_wall` (a goalie mask on a shield), `award_enforcer` (a shoulder pad on a plinth, bronze) and `award_signing` (a contract under a small trophy). 6 frames.
-- **Gear that shares a picture:** `gear_padded_vest` (the Padded Vest; it shares the Practice Jersey's chest piece) and `gear_pro_mitts` (Halla's Pro Set, a sleek teal glove and blocker; it shares the Old Mitts). 2 frames.
-- **Chemistry combos** (the combo cards in Team and the combo pop-ups; Avalanche and Thunderquake share one icon now): `combo_frostbolt` (an ice shard crackling with yellow lightning), `combo_avalanche` (a puck pushing a wall of snow) and `combo_thunderquake` (a puck landing with a gold shockwave ring). 3 frames.
-- **Exhibition challenges** (chips in quick play and the daily card): `ch_onetimers` (a puck meeting a stick mid-swing), `ch_giant_goalies` (a goalie towering over a tiny net), `ch_ice_age` (an ice power orb), `ch_lightning_round` (a skate with speed lines), `ch_heavy_hitters` (two shoulder pads colliding) and `ch_next_goal_wins` (a single goal lamp with a "1" shape made of light, no lettering). 6 frames.
-- **Game plans** (the plan picker before league matches): `plan_balanced` (a level scale), `plan_forecheck` (arrows pressing forward), `plan_trap` (a closing net of lines) and `plan_rungun` (a puck with a long speed trail). 4 frames.
+- **Weekly Cup trophy**, about 120 px tall in game, in the style of `badges/frostline_cup` but clearly smaller and humbler: a silver bowl on a dark wooden base with a teal ribbon tied to one handle. Plus 2 glint frames like the Frostline Cup's. 3 frames.
+- **Podium**: three ice-block steps (the middle one tallest) with gold, silver and bronze fronts, no numbers, about 360×140 px in game. The game stands the winners' portraits on top. 1 image.
+- **Rosettes**: gold, silver and bronze ribbon rosettes, reward-icon size, for the week's top three. 3 frames.
 
-21 frames.
+**Career stats page:** a new page with every skater's lifetime numbers. These icons are read at 24–32 px next to numbers, so bold, simple shapes (about 96 px source is plenty), sheet `icons_ae.png`, frame names `icons/stat_<name>`:
 
-## Batch AB: All-Star Game dressing
+- `stat_games` (a jersey on a hanger), `stat_wins` (a stick raised in the air), `stat_goals` (a puck in the back of a net), `stat_assists` (two stick blades touching), `stat_shots` (a puck with a motion streak), `stat_hits` (a shoulder pad with impact lines), `stat_steals` (a glove lifting a puck), `stat_saves` (a goalie glove with a puck in it), `stat_shutouts` (a net with a padlock), `stat_seasons` (a calendar page with a snowflake), `stat_cups` (a tiny Frostline Cup) and `stat_streak` (three pucks stacked with a little flame). 12 frames.
+- `career` (a hockey trading card with a gold star in the corner), for the button that opens the page. 1 frame.
 
-Once a season, after league round 2, the All-Star Game is played at the Frostline home rink: the fans vote in the league's stars, mixed across two benches. Your top scorer and two rival stars wear your colours; the other bench, the **League All-Stars**, wears navy with gold trim (rival art recoloured). Today the League All-Stars borrow the level-up star as their crest, the achievement uses the same star, and the rink looks like any other night. Please draw:
+20 frames and images.
 
-- **League All-Stars crest**, in the style and size of the team crests (`crests/*`): a navy shield with a gold five-pointed star and a small snowflake, no lettering. It shows on the scoreboard, the schedule, the vote screen and the results. 1 frame.
-- **All-Star achievement icon**, in the style of `achievements/*` (about 200 px source): a gold star with a hockey stick through it and a little burst of sparkles. 1 frame.
-- **Home-rink dressing for the night** (on the `arena_home` backdrop, 1536×1024, never over the ice): a long **star banner** over the far glass, about 420×90 px at game size, navy with gold stars and our snowflake (no lettering), 2 frames of it swaying; and **star bunting**, a tileable strip about 64×24 px at game size of little gold and ice-blue star pennants on a string, for the far and near boards, 2 frames. Say in the README where you'd hang the banner and run the bunting.
+## Batch AF: the last achievement icons
 
-8 frames.
+Batch E gave 14 achievements their own icons; 22 still borrow a gear or HUD picture. In the style and size of `achievements/*` (about 200 px source), frame names `achievements/<name>`:
 
-## Batch AC: online and Skills Night icons, loading screen, champions painting
+| Frame | Achievement | Idea |
+| --- | --- | --- |
+| `brick_wall` | Brick Wall (win 5–0) | a net bricked up with ice blocks |
+| `blitz` | Blitz (win in under 2 minutes) | a stopwatch split by a lightning bolt |
+| `one_timer` | One-Timer Specialist | a stick meeting a puck mid-air with a spark |
+| `tic_tac_toe` | Tic-Tac-Toe (5 passes in a row) | three pucks joined by dotted pass lines in a triangle |
+| `chemistry_class` | Chemistry Class (all three combos) | ice, lightning and stone orbs linked in a triangle |
+| `ultimate_power` | Ultimate Power (all three ultimates) | a frost burst, a gold thunderbolt and a stone pillar together |
+| `elemental` | Elemental (all four power pucks) | four pucks in the power colours around a ring |
+| `freight_train` | Freight Train (10 checks) | a charging shoulder pad with speed lines and an impact star |
+| `pickpocket` | Pickpocket (6 steals) | a glove plucking a puck off a stick blade |
+| `power_play` | Power Play Pro | a puck flying past an open penalty-box door |
+| `shorthanded` | Shorthanded | a puck in the net while the penalty-box lamp glows red |
+| `empty_netter` | Empty Netter | a puck rolling into a net with no goalie |
+| `extra_attacker` | Extra Attacker | a goalie mask on the bench and an extra skater silhouette in front |
+| `clean_game` | Clean Game (no penalties) | a white rosette with a snowflake |
+| `up_for_a_challenge` | Up for a Challenge | three challenge chips fanned out |
+| `frostline_champions` | Frostline Champions | the Frostline Cup on a plinth inside a laurel wreath |
+| `between_the_pipes` | Between the Pipes (win in goalie mode) | Halla's mask framed by two goalposts |
+| `rival_slayer` | Rival Slayer (beat every rival) | five blank shields in the rival colours under a crossed stick |
+| `fully_grown` | Fully Grown (a skater at level 10) | the level star with ten rays and a sprout of sparkles |
+| `gold_standard` | Gold Standard (gold in all four drills) | four gold medals fanned out |
+| `fully_kitted` | Fully Kitted (own every piece of gear) | a gear stand with helmet, jersey, stick and skates |
+| `couch_champion` | Couch Champion (win local versus) | two game controllers crossed under a tiny trophy |
 
-New features that are still text-only, and two screens that deserve art:
+No lettering or numbers. 22 frames.
 
-- **Small icons**, in the style and size of the reward icons (`equipment_items/reward/*`, about 200 px source), one sheet `icons_ac.png`, frame names `icons/<name>`:
-  - `friends` (two little helmets side by side, for the Friends boards button),
-  - `ghost` (a frosted, see-through skater silhouette with a puck, for the Ghost picker on the Cone Weave and Breakaway cards),
-  - `challenge` (two sticks crossed with a spark, for "Challenge a friend" and the challenge screen),
-  - `share` (a puck with a curved arrow, for invite and share buttons),
-  - `skills_fastest` (a stopwatch with a skate blade, Skills Night's Fastest Skater),
-  - `skills_sharp` (a target board with a puck in the bullseye, Skills Night's Sharpshooter),
-  - `skills_night` (a gold star over two crossed sticks, the Skills Night title).
+## Batch AG: a linesman
 
-  7 frames.
-- **Loading screen:** the Snow Fox mascot skating with a puck, a 4-frame loop, about 120 px tall at game size, as **its own small transparent PNG strip** (it shows before the atlas has loaded, so it can't be on an atlas page; keep it under 30 KB). Today the loading screen is the word "Puckbound" and a bar. 4 frames.
-- **Champions painting:** a 1536×864 painting for the championship screen: Nix lifting the Frostline Cup (the Batch X cup) at centre ice with Volta skating a lap behind and Bram carrying Halla on his shoulders, confetti and the crowd on its feet, our teal and cream. It sits behind the "Champions!" text, so keep the middle third calm. 1 image.
+Faceoffs happen today with nobody dropping the puck, and penalties and goals are called by a whistle with no one on the ice. A linesman would make matches look like hockey. One adult official, a little taller than the skaters (about 165 px standing), black helmet, **navy-and-white striped jersey** (navy rather than black, to match the outlines), orange armbands, black pants, no number or lettering. The linesman isn't recoloured, so use whatever colours read best. Same camera, outlines and foot baseline as the skaters.
 
-12 images.
+- **Faceoff**, facing the camera (standing between the two centres): holding the puck ready (2 idle frames), then bending and dropping it (3 frames: crouched with the puck, puck released, arms back with the puck gone).
+- **Skating clear** after the drop: a side stride facing right (4 frames) and a glide (1 frame); the game mirrors them. Plus a glide facing away (north) and one facing the camera (south). 7 frames.
+- **Calls:** a penalty call facing the camera, arm straight up with the whistle in (2 frames); pointing at the net for a goal, side view facing right (1 frame); standing along the boards watching play, side view (2 frames).
+- **Ducking** a shot, hands over the helmet (1 frame), for the occasional puck that comes close.
 
-## Batch AA: newcomer skaters
+About 18 frames. No gear masks needed.
 
-When you sign a rival's skater, a newcomer takes their slot on that team. Right now the newcomer is drawn as one of our own cast (Nix, Volta or Bram) in the rival's colours, which looks like our players changed teams. Please draw **three newcomers**, one per position (centre, winger, defender), in **coral + violet** like every rival, so the game can recolour them for any team. They should look like hungry rookies: a little smaller and scrappier than the captains, with distinct silhouettes (for example a lanky centre with a long reach, a quick winger with a ponytail or a mohawk, and a stocky defender).
+## Batch AH: a second rookie class
 
-Each needs **the same pose list as one rival skater**, the way `gilded_rams_w` has them: the v2 skating set, the Batch A diagonals and hit reactions, the Batch C side strides, glides and stops, and the Batch D celebration, plus a portrait with the five expressions the dialogue uses (neutral, determined, grin, shocked, defeated). Same scale, foot baseline and sheet naming (`newcomer_c_*`, `newcomer_w_*`, `newcomer_d_*`), with gear masks for the stick and skates like Batch M.
+With Draft Day every season, the three Batch AA newcomers will start repeating. Please draw **three more newcomers**, one per position, in coral and violet like every rival, with silhouettes distinct from both the captains and the first class: for example a small centre with a long braid out the back of the helmet, a winger in a junior cage mask, and a big, quiet defender with a buzz cut. Keep coral and violet off skin and hair.
 
-This is the biggest batch, so it can come after Y, Z and AB.
+Each needs **exactly the Batch AA list**: the v2 skating set, the Batch A diagonals and hit reactions, the Batch C side strides, glides and stops, the Batch D celebration, a portrait with the five dialogue expressions (neutral, determined, grin, shocked, defeated), gear masks for the stick and skates like Batch M, and the Batch AD jersey moment. Name the sheets `newcomer2_c_*`, `newcomer2_w_*` and `newcomer2_d_*`.
 
+This is the biggest batch, so it can come last.

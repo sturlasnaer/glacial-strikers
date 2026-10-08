@@ -138,6 +138,12 @@ src, vx_roots, vx_mappings = merge_vx(src, VX)
 art_roots.update(vx_roots)
 for section, values in vx_mappings.items():
     art_mappings.setdefault(section, {}).update(values)
+YZA = sys.argv[13] if len(sys.argv) > 13 else '../assets/Puckbound-Batches-Y-Z-AA'
+from merge_yzaa import merge_yzaa
+src, yza_roots, yza_mappings = merge_yzaa(src, YZA)
+art_roots.update(yza_roots)
+for section, values in yza_mappings.items():
+    art_mappings.setdefault(section, {}).update(values)
 frames = src['frames']
 info = src['sheets']
 os.makedirs(os.path.join(OUT, 'cutins'), exist_ok=True)
@@ -239,6 +245,14 @@ SCENE_GROUPS = {'polish': 'title', 'arena_rules': 'rules', 'hub_fullbody': 'hub'
 
 
 def group_of(fid):
+    if fid.startswith('hud_skin/'):
+        return 'hud'
+    if fid.startswith('allstar/'):
+        return 'allstar'
+    if fid.startswith('icons/'):
+        return 'icons_ac' if fid in art_mappings.get('icons_ac', {}).values() else 'icons_z'
+    if fid.startswith('newcomer_'):
+        return 'newcomers'
     if fid.startswith('touch/'):
         return 'touch'
     if fid.startswith('badges/'):
@@ -307,7 +321,7 @@ def add_item(fid, img, px, py, s, group, mask=None):
         # keep only the painted part; the offset puts it back in place over the frame
         box = mask.getbbox()
         if box:
-            items.append({'id': 'gm:' + fid, 'img': mask.crop(box), 'px': round(px, 1), 'py': round(py, 1), 'scale': s, 'group': 'gearmask', 'off': box[:2]})
+            items.append({'id': 'gm:' + fid, 'img': mask.crop(box), 'px': round(px, 1), 'py': round(py, 1), 'scale': s, 'group': 'newcomer_gearmask' if fid.startswith('newcomer_') else 'gearmask', 'off': box[:2]})
 
 
 mask_sheets = {}
@@ -317,7 +331,7 @@ def gear_mask(fid, f, nw, nh):
     """The frame's gear mask, cropped and scaled exactly like the frame (or None)."""
     sh = f['sheet']
     if sh not in mask_sheets:
-        path = os.path.join(NEW_MASKS, 'sheets', sh + '_gearmask.png')
+        path = os.path.join(yza_roots[sh], info[sh]['gearmask_image']) if sh in yza_roots and info[sh].get('gearmask_image') else os.path.join(NEW_MASKS, 'sheets', sh + '_gearmask.png')
         if not os.path.exists(path):
             path = os.path.join(GEAR_MASKS, 'sheets', sh + '_gearmask.png')
         if os.path.exists(path):
@@ -352,7 +366,12 @@ for fid, f in frames.items():
         foot = sh in ROLE_V1.values()
     elif sh in art_roots:
         meta = info[sh]
-        if meta['category'] in ('stride', 'celebration'):
+        if meta['category'] == 'newcomer':
+            role = meta['role']
+            s = SKATER_S
+            k = SKATER_S * meta['recommended_render_scale'] * v1_h[ROLE_V1[role]] / 152
+            foot = True
+        elif meta['category'] in ('stride', 'celebration'):
             role = fid.split('/')[2]
             calibration = meta.get('per_role_scale', {}).get(role, meta['recommended_render_scale'])
             s, k = SKATER_S, SKATER_S * calibration * f.get('render_scale_multiplier', 1) * v1_h[ROLE_V1[role]] / 152
@@ -380,7 +399,7 @@ for fid, f in frames.items():
     r = f['frame']
     img = crop(fid)
     nw, nh = max(1, round(r['w'] * k)), max(1, round(r['h'] * k))
-    img = img.convert('RGBa').resize((nw, nh), Image.NEAREST if sh in vx_roots else Image.LANCZOS).convert('RGBA')
+    img = img.convert('RGBa').resize((nw, nh), Image.NEAREST if sh in vx_roots or sh in yza_roots else Image.LANCZOS).convert('RGBA')
     if cleanup:
         img = drop_fragments(img)
     if foot:
@@ -532,7 +551,7 @@ crowd = {team: {pose: [f'crowd_fans/{team}/{pose}/fan_{i}' for i in range(1, 9)]
 # ---------------------------------------------------------------- packing
 out_frames = {}
 pages = []
-groups = ['home', 'away'] + ['rival_' + t for t in RIVALS] + ['gearmask'] + sorted(set(SCENE_GROUPS.values())) + (['touch', 'badges'] if vx_roots else [])
+groups = ['home', 'away'] + ['rival_' + t for t in RIVALS] + ['gearmask'] + sorted(set(SCENE_GROUPS.values())) + (['touch', 'badges'] if vx_roots else []) + (['hud','icons_z','newcomers','newcomer_gearmask','allstar','icons_ac'] if yza_roots else [])
 for group in groups:
     group_items = sorted([i for i in items if i['group'] == group], key=lambda i: -i['img'].height)
     page_imgs = []
@@ -558,7 +577,7 @@ for group in groups:
         rows = np.nonzero(a.any(axis=1))[0]
         p = p.crop((0, 0, PAGE, int(rows.max()) + PAD + 1))
         name = f'{group}_{idx}.webp'
-        if group in ('gearmask', 'touch', 'badges'):
+        if group in ('gearmask', 'touch', 'badges', 'hud', 'icons_z', 'newcomers', 'newcomer_gearmask', 'allstar', 'icons_ac'):
             p.save(os.path.join(OUT, name), 'WEBP', lossless=True, method=6)  # exact channels
         else:
             p.save(os.path.join(OUT, name), 'WEBP', quality=90, method=6, alpha_quality=100)
@@ -618,7 +637,23 @@ if awards_stage:
 touch_root = os.path.join(VX, 'Puckbound-Batch-V', 'touch-kit')
 if os.path.exists(touch_root):
     shutil.copytree(touch_root, os.path.join(OUT, 'touch-kit'), dirs_exist_ok=True)
+hud_root = os.path.join(YZA, 'Puckbound-Batch-Y', 'hud-kit')
+if os.path.exists(hud_root):
+    shutil.copytree(hud_root, os.path.join(OUT, 'hud-kit'), dirs_exist_ok=True)
+ac_root = os.path.join(YZA, 'Puckbound-Batch-AC')
+if os.path.exists(os.path.join(ac_root, 'loading')):
+    shutil.copytree(os.path.join(ac_root, 'loading'), os.path.join(OUT, 'loading'), dirs_exist_ok=True)
+if os.path.exists(os.path.join(ac_root, 'images', 'champions.png')):
+    Image.open(os.path.join(ac_root, 'images', 'champions.png')).convert('RGB').save(os.path.join(OUT, 'champions.webp'), 'WEBP', quality=94, method=6)
 atlas = {
+    'hud_kit': {**art_mappings.get('hud_kit', {}), 'manifest':'gfx/hud-kit/hud-kit.json','css':'gfx/hud-kit/puckbound-hud.css'},
+    'icons_z': art_mappings.get('icons_z', {}),
+    'icons_ac': art_mappings.get('icons_ac', {}),
+    'loading_snowfox': {**art_mappings.get('loading_snowfox', {}), 'image':'gfx/loading/snow_fox_loading.png','css':'gfx/loading/snow-fox-loading.css'},
+    'champions_painting': {**art_mappings.get('champions_painting', {}), 'image':'gfx/champions.webp'},
+    'newcomer_portraits': art_mappings.get('newcomer_portraits', {}),
+    'allstar': art_mappings.get('allstar', {}),
+    'allstar_animations': {key: value for key, value in src.get('animations', {}).items() if key.startswith('allstar_')},
     'touch_kit': {**art_mappings.get('touch_kit', {}), 'manifest':'gfx/touch-kit/touch-kit.json','css':'gfx/touch-kit/puckbound-touch.css'},
     'badges': art_mappings.get('badges', {}),
     'badge_animations': {key: value for key, value in src.get('animations', {}).items() if key == 'frostline_cup_shine'},

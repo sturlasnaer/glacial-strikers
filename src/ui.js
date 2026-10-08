@@ -56,7 +56,10 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
     const fid = p && ((expr && p[expr]) || p.neutral_roster || p.neutral);
     return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT[r.kit]}`, size);
   }
-  if (team !== 0 && id.startsWith('sub_')) return Assets.icon(`character_portraits/away/${PORTRAIT[id.slice(4)]}`, size, teamId);
+  if (team !== 0 && id.startsWith('sub_')) { // a signed slot's newcomer (Batch AA), in the team's colours
+    const p = P[`newcomer_${ROLE[id.slice(4)]}`], fid = p && ((expr && p[expr]) || p.neutral);
+    return (fid && Assets.icon(fid, size, teamId)) || Assets.icon(`character_portraits/away/${PORTRAIT[id.slice(4)]}`, size, teamId);
+  }
   if (team !== 0 && RECRUITS[id]) { // a rival star by player key (a League All-Star: in the All-Star kit)
     const r = RECRUITS[id];
     if (teamId !== 'allstar') return portrait(r.kit, 1, r.team, size, expr);
@@ -77,7 +80,7 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
 };
 export const crest = (teamId, size = 96) => {
   if (teamId === 'home') return Assets.icon('hud_elements/misc/home_crest', size, CLUB_PAGES());
-  if (teamId === 'allstar') return Assets.icon('hud_elements/misc/level_star', size); // the All-Stars' star
+  if (teamId === 'allstar') return Assets.icon((Assets.atlas.allstar && Assets.atlas.allstar.crest) || 'hud_elements/misc/level_star', size); // the League All-Stars' crest
   const t = TEAMS[teamId];
   const c = t && t.art && Assets.atlas.crests && Assets.atlas.crests[t.art];
   return c ? Assets.icon(c, size) : Assets.icon('hud_elements/misc/away_crest', size, teamId);
@@ -144,6 +147,9 @@ export function ruleIconSrc(twist, size = 40) {
   const id = Assets.atlas.rule_icons && Assets.atlas.rule_icons[key];
   return id ? Assets.icon(id, size) : '';
 }
+// A picture in front of a chip's words (challenges, combos), or nothing without the art.
+const smallIcon = (id, size = 40, cls = 'rule-ico') => { const src = id && Assets.icon(id, size); return src ? `<img class="${cls}" src="${src}" alt="">` : ''; };
+const btnIcon = (id) => smallIcon(id, 48, 'btn-ico'); // in front of a button's words
 function ruleIcon(twist, size = 40) {
   const src = ruleIconSrc(twist, size);
   return src ? `<img class="rule-ico" src="${src}" alt="">` : '';
@@ -248,7 +254,7 @@ export class UI {
       <p class="muted" style="margin:0">${t('Exhibitions use your current team and pay half rewards. A shootout is five penalty shots each way: you shoot, then you play goalie.')}</p>
       <div>
         <div class="label" style="font-size:15px">${t('Match challenges')} <span class="muted" id="ch-mult" style="font-family:var(--body);font-size:12px;letter-spacing:0;text-transform:none"></span></div>
-        <div class="filters" style="margin:6px 0 0">${CHALLENGES.map((c) => `<button class="chip" data-ch="${c.id}" aria-pressed="${this.challenges.has(c.id)}" title="${esc(t(c.text))}">${esc(t(c.name))}</button>`).join('')}</div>
+        <div class="filters" style="margin:6px 0 0">${CHALLENGES.map((c) => `<button class="chip" data-ch="${c.id}" aria-pressed="${this.challenges.has(c.id)}" title="${esc(t(c.text))}">${smallIcon(c.icon)}${esc(t(c.name))}</button>`).join('')}</div>
       </div>
       <div>
         <div class="label" style="font-size:15px">${t('Arena')}</div>
@@ -625,7 +631,7 @@ export class UI {
       const note = place === 1 ? `<b class="gold-t">${t('You won it!')}</b>` : place ? t('You placed {n} of {total}.', { n: place, total: rows.length })
         : ev.ghost ? t('Race {name}\'s ghost.', { name: esc(ev.ghost.name) }) : t('Beat {score} to win.', { score: esc(formatScore(d, ev.field[0].score)) });
       return `<div class="card sk-event">
-        <div class="card-head"><img src="${ico(d.icon, 96)}" alt="" style="border:0;background:none"><div style="min-width:0"><h3>${esc(t(e.name))}</h3><div class="sub">${esc(t(d.name))} · ${t('win it: +{n} coins', { n: e.coins })}</div></div></div>
+        <div class="card-head"><img src="${ico(e.icon || d.icon, 96)}" alt="" style="border:0;background:none"><div style="min-width:0"><h3>${esc(t(e.name))}</h3><div class="sub">${esc(t(d.name))} · ${t('win it: +{n} coins', { n: e.coins })}</div></div></div>
         <div class="sk-field">${rows.map((r, i) => `<div class="sk-row ${r.me ? 'me' : ''}"><span class="sk-rank">${i + 1}</span><img src="${crest(r.team, 40)}" alt="" width="18" height="18"><span class="sk-name">${esc(r.name)}</span><b>${esc(formatScore(d, r.score))}</b></div>`).join('')}</div>
         <div class="row" style="justify-content:space-between;align-items:center;margin:0"><span class="muted" style="font-size:12.5px">${note}</span>
           <button class="btn small ${ev.mine === null ? 'gold' : ''}" data-sk="${e.id}">${ev.mine === null ? t('Compete') : t('Try again')}</button></div>
@@ -634,7 +640,7 @@ export class UI {
     const r = this.set(`<div class="dim"></div>
       <div class="results panel skills">
         <div class="label">${t('All-Star Game')}</div>
-        <h1 class="gold-t" style="font-family:var(--display);font-weight:normal;font-size:clamp(34px,6vw,54px);line-height:.9;margin:0">${t('Skills Night')}</h1>
+        <h1 class="gold-t" style="font-family:var(--display);font-weight:normal;font-size:clamp(34px,6vw,54px);line-height:.9;margin:0;display:flex;align-items:center;gap:10px">${smallIcon('icons/skills_night', 128, 'h-ico')}${t('Skills Night')}</h1>
         <p style="margin:0;font-size:13.5px">${t('Before the game, the stars show off. {name} competes for the {club} against the other five All-Stars. These runs don\'t use a training session.', { name: `<b>${esc(star.name)}</b>`, club: esc(CLUB.name) })}</p>
         <div class="sk-events">${events}</div>
         <div class="row" style="justify-content:flex-end"><button class="btn gold" id="sk-game">${t('To the All-Star Game')}</button></div>
@@ -773,7 +779,7 @@ export class UI {
       <div class="daily">
         <img src="${crest(d.teamId, 96)}" alt="" width="64" height="64">
         <div style="min-width:0"><b>${t('vs {team}', { team: esc(tm.name) })}</b><span class="muted">${esc(ar.name)}${ar.rule ? ` · ${ruleIcon(ar.twist, 32)}${esc(t(ar.rule))}` : ''}</span>
-          <span>${d.mods.map((id) => `<span class="chip" aria-pressed="true" style="pointer-events:none">${esc(t(CHALLENGES.find((c) => c.id === id).name))}</span>`).join(' ')}</span></div>
+          <span>${d.mods.map((id) => { const c = CHALLENGES.find((x) => x.id === id); return `<span class="chip" aria-pressed="true" style="pointer-events:none">${smallIcon(c.icon)}${esc(t(c.name))}</span>`; }).join(' ')}</span></div>
       </div>
       <div class="daily-goal"><small>${t('Goal')}</small><b>${esc(t(dailyGoal(d.goal).text))}</b></div>
       <div class="row" style="gap:14px;flex-wrap:wrap">
@@ -804,7 +810,7 @@ export class UI {
       ${rosterIds(s).length > 3 ? `<div class="line-row" id="line-row">${lineupIds(s).map((id) => `<span><img src="${portrait(id, 0, null, 64)}" width="26" height="26" alt="">${esc(member(id).name)}</span>`).join('')}<button class="btn small ghost" id="line-change">${t('Change line-up')}</button></div>` : ''}
       <div class="plans">${Object.values(GAME_PLANS).map((p) => `
         <button class="plan ${p.id === cur ? 'sel' : ''}" data-plan="${p.id}">
-          <b>${esc(t(p.name))}</b>
+          <b>${p.icon ? `<img class="plan-ico" src="${ico(p.icon, 80)}" alt="">` : ''}${esc(t(p.name))}</b>
           <span>${esc(t(p.text))}</span>
           <span class="good">+ ${esc(t(p.pros))}</span>
           <span class="bad">− ${esc(t(p.cons))}</span>
@@ -1291,7 +1297,7 @@ export class UI {
     const mine = s.ghosts && s.ghosts[id];
     const opts = [['off', t('Off')], ...(mine ? [['mine', `${t('Your best')} ${formatScore(DRILLS[id], mine.score)}`]] : []),
       ...(onlineOn(s) && configured() ? [['week', t('Week\'s best')], ...groupsOf(s).map((g) => ['g:' + g.code, g.name])] : [])];
-    return `<div class="ghost-row"><span class="label">${t('Ghost')}</span>${opts.map(([v, label]) => `<button class="chip" data-drill="${id}" data-ghost="${v}" aria-pressed="${v === pick}">${esc(label)}</button>`).join('')}</div>
+    return `<div class="ghost-row"><span class="label">${smallIcon('icons/ghost')}${t('Ghost')}</span>${opts.map(([v, label]) => `<button class="chip" data-drill="${id}" data-ghost="${v}" aria-pressed="${v === pick}">${esc(label)}</button>`).join('')}</div>
       <p class="muted ghost-msg" id="ghost-msg-${id}"></p>`;
   }
 
@@ -1316,7 +1322,7 @@ export class UI {
   // A friend's challenge from a #race= link: their run, raced as a ghost with a skater you pick.
   challengeInvite(code) {
     const s = this.app.save;
-    this.modal(`<h2>${t('Challenge')}</h2><div id="ch-body"><p class="muted">${t('Looking…')}</p></div>
+    this.modal(`<h2>${smallIcon('icons/challenge', 96, 'h-ico')}${t('Challenge')}</h2><div id="ch-body"><p class="muted">${t('Looking…')}</p></div>
       <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Not now')}</button><button class="btn gold" id="ch-go" disabled>${t('Race')}</button></div>`, (m, close) => {
       fetchChallenge(code).then((c) => {
         const d = DRILLS[c.board];
@@ -1349,7 +1355,7 @@ export class UI {
     const groups = groupsOf(s);
     if (!groups.some((g) => g.code === this.lbGroup)) this.lbGroup = null;
     const group = this.lbGroup;
-    const scope = onlineOn(s) && configured() ? `<div class="filters" style="margin:0 0 8px">${[[null, t('Everyone')], ...groups.map((g) => [g.code, g.name])].map(([code, label]) => `<button class="chip" data-lbg="${code || ''}" aria-pressed="${code === group}">${esc(label)}</button>`).join('')}<button class="btn small ghost" id="lb-friends">${t('Friends boards')}</button></div>` : '';
+    const scope = onlineOn(s) && configured() ? `<div class="filters" style="margin:0 0 8px">${[[null, t('Everyone')], ...groups.map((g) => [g.code, g.name])].map(([code, label]) => `<button class="chip" data-lbg="${code || ''}" aria-pressed="${code === group}">${esc(label)}</button>`).join('')}<button class="btn small ghost" id="lb-friends">${btnIcon('icons/friends')} ${t('Friends boards')}</button></div>` : '';
     const queued = st.pending[board];
     const note = (t) => `<p class="muted" style="font-size:13px">${t}</p>`;
     this.modal(`
@@ -1392,11 +1398,11 @@ export class UI {
     const groups = groupsOf(s);
     const off = !onlineOn(s) ? t('Online leaderboards are off in Settings.') : !configured() ? t('Couldn\'t reach the server. Try again in a moment.') : '';
     const list = groups.length ? groups.map((g) => `<div class="lb-row fb-row"><span class="lb-name">${esc(g.name)} <span class="lb-tag">${esc(g.code)}</span></span>
-        <span class="row" style="gap:6px;margin:0"><button class="btn small ghost" data-invite="${g.code}">${navigator.share ? t('Invite') : t('Copy link')}</button><button class="btn small ghost" data-leave="${g.code}">${t('Leave')}</button></span></div>`).join('')
+        <span class="row" style="gap:6px;margin:0"><button class="btn small ghost" data-invite="${g.code}">${btnIcon('icons/share')} ${navigator.share ? t('Invite') : t('Copy link')}</button><button class="btn small ghost" data-leave="${g.code}">${t('Leave')}</button></span></div>`).join('')
       : `<p class="muted" style="font-size:13px">${t('Not on any friends boards yet.')}</p>`;
     const full = groups.length >= MAX_GROUPS;
     this.modal(`
-      <h2>${t('Friends boards')}</h2>
+      <h2>${smallIcon('icons/friends', 96, 'h-ico')}${t('Friends boards')}</h2>
       <p style="font-size:13.5px">${t('A board for just you and your friends: the same drills, shootout wins and daily streaks, this week and all time. Make one and share its code, or join with a friend\'s code. You can be on up to {n}.', { n: MAX_GROUPS })}</p>
       <div class="lb-list">${list}</div>
       ${off ? `<p class="muted" style="font-size:13px">${off}</p>` : `
@@ -1454,7 +1460,7 @@ export class UI {
       ${lines.length ? `<div class="reward-lines">${lines.map(([a, b]) => `<div><span>${esc(a)}</span><span class="gold-t">${b}</span></div>`).join('')}</div>` : ''}
       ${ups}
       <div class="lb-result muted" id="d-online"></div>
-      ${rw.run && onlineOn(this.app.save) && configured() ? `<div class="row" style="justify-content:space-between;align-items:center"><span class="muted" id="d-ch-msg" style="font-size:12.5px"></span><button class="btn small ghost" id="d-challenge">${t('Challenge a friend')}</button></div>` : ''}
+      ${rw.run && onlineOn(this.app.save) && configured() ? `<div class="row" style="justify-content:space-between;align-items:center"><span class="muted" id="d-ch-msg" style="font-size:12.5px"></span><button class="btn small ghost" id="d-challenge">${btnIcon('icons/challenge')} ${t('Challenge a friend')}</button></div>` : ''}
       <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="d-retry">${t('Retry')}</button><button class="btn gold" id="d-done">${t('Done')}</button></div>`, (m, close) => {
       this.click('#d-challenge', async (el) => {
         const msg = m.querySelector('#d-ch-msg');
@@ -1496,8 +1502,8 @@ export class UI {
       <p>${t('Enter this code on another device (Settings › Cloud save › Restore), or open the link there, to carry on where you left off.')}</p>
       <div class="cloud-code" id="cc-code">${esc(code)}</div>
       <p class="muted" style="font-size:12.5px">${t('Anyone with the code can load your progress, so keep it to yourself.')} ${configured() ? '' : t('Cloud backups start when the online features open; the code stays the same.')}</p>
-      <div class="row" style="justify-content:flex-end"><button class="btn small ghost" id="cc-copy">${t('Copy code')}</button><button class="btn small ghost" id="cc-link">${navigator.share ? t('Share link') : t('Copy link')}</button><button class="btn small" data-close>${t('Done')}</button></div>`, (m) => {
-      const done = (el, text) => { el.textContent = text; setTimeout(() => { el.textContent = el.id === 'cc-copy' ? t('Copy code') : navigator.share ? t('Share link') : t('Copy link'); }, 1600); };
+      <div class="row" style="justify-content:flex-end"><button class="btn small ghost" id="cc-copy">${t('Copy code')}</button><button class="btn small ghost" id="cc-link">${btnIcon('icons/share')} <span>${navigator.share ? t('Share link') : t('Copy link')}</span></button><button class="btn small" data-close>${t('Done')}</button></div>`, (m) => {
+      const done = (btn, text) => { const el = btn.querySelector('span') || btn; el.textContent = text; setTimeout(() => { el.textContent = btn.id === 'cc-copy' ? t('Copy code') : navigator.share ? t('Share link') : t('Copy link'); }, 1600); };
       this.click('#cc-copy', (el) => { navigator.clipboard?.writeText(code).then(() => done(el, t('Copied!')), () => done(el, t('Copy failed'))); }, m);
       this.click('#cc-link', (el) => {
         if (navigator.share) navigator.share({ title: t('Puckbound save'), url: link }).catch(() => {});
@@ -1726,7 +1732,7 @@ export class UI {
           <div class="clips">${data.clips.clips.map((c, i) => `<div class="clip">
             <video src="${c.url}" muted loop playsinline autoplay></video>
             <div class="clip-line">${esc(c.meta.line)}</div>
-            <div class="row" style="gap:6px">${data.clips.canShare(c) ? `<button class="btn small cream" data-share="${i}">${t('Share')}</button>` : ''}<a class="btn small ghost" href="${c.url}" download="${esc(data.clips.fileFor(c, i).name)}">${t('Save')}</a></div>
+            <div class="row" style="gap:6px">${data.clips.canShare(c) ? `<button class="btn small cream" data-share="${i}">${btnIcon('icons/share')} ${t('Share')}</button>` : ''}<a class="btn small ghost" href="${c.url}" download="${esc(data.clips.fileFor(c, i).name)}">${t('Save')}</a></div>
           </div>`).join('')}</div>
         </div>` : ''}
         <div class="row" style="justify-content:flex-end"><button class="btn gold" id="r-go">${t('Continue')}</button></div>
@@ -1760,17 +1766,24 @@ export class UI {
 
   champion(onDone) {
     const s = this.app.save;
+    // the champions painting (Batch AC) fills the screen, with the title in the calm ice it leaves for it
+    const art = Assets.atlas.champions_painting;
+    const title = `<h1 class="gold-t" style="font-family:var(--display);font-weight:normal;font-size:clamp(44px,9vw,80px);line-height:.85;margin:0">${t('Champions!')}</h1>`;
     this.set(`
-      <div class="dim"></div>
-      <div class="results panel" style="text-align:center;align-items:center">
-        <div class="cup-big" id="c-cup">${Assets.groupReady('badges') ? '' : `<img src="${ico('equipment_items/reward/trophy', 256)}" alt="" width="150" height="150">`}</div>
-        <h1 class="gold-t" style="font-family:var(--display);font-weight:normal;font-size:clamp(44px,9vw,80px);line-height:.85;margin:0">${t('Champions!')}</h1>
+      ${art ? `<div class="champ-stage" id="c-stage"><div class="champ-title">${title}</div></div>` : '<div class="dim"></div>'}
+      <div class="results panel${art ? ' champ-panel' : ''}" style="text-align:center;align-items:center">
+        ${art ? '' : `<div class="cup-big" id="c-cup">${Assets.groupReady('badges') ? '' : `<img src="${ico('equipment_items/reward/trophy', 256)}" alt="" width="150" height="150">`}</div>${title}`}
         <p style="max-width:46ch">${s.season > 1 ? t('The {club} win the {cup} (season {n}).', { club: esc(CLUB.name), cup: esc(t(TOURNAMENT.name)), n: s.season }) : t('The {club} win the {cup}.', { club: esc(CLUB.name), cup: esc(t(TOURNAMENT.name)) })} ${t('Nix lifts the cup while Volta does laps and Bram carries Halla around on his shoulders.')}</p>
         <p class="muted" style="max-width:46ch">${t('Start a new season to face every rival again with sharper AI, keeping your levels and gear.')}</p>
         <div class="row" style="justify-content:center"><button class="btn gold" id="c-go">${t('Back to the hub')}</button></div>
       </div>`);
     audio.jingle('win');
     this.click('#c-go', () => { audio.sfx('confirm'); onDone(); });
+    if (art) {
+      const img = new Image(); // fades in once it has arrived
+      img.onload = () => { const st = this.root.querySelector('#c-stage'); if (st) { st.style.backgroundImage = `url(${img.src})`; st.classList.add('in'); } };
+      img.src = Assets.url(art.image);
+    }
     this.cupShine();
     this.fireworks();
   }

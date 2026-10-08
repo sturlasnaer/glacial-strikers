@@ -28,7 +28,7 @@ export const ACHIEVEMENTS = [
   { id: 'perfect', name: 'Perfect Season', text: 'Win all 5 regular-season games.', icon: 'achievements/perfect_season', coins: 150 },
   { id: 'between-pipes', name: 'Between the Pipes', text: 'Win a match in goalie mode.', icon: 'goalie_actions/butterfly', coins: 80 },
   { id: 'winter-classic', name: 'Winter Classic', text: 'Win the Winter Classic on Pine Pond.', icon: 'achievements/winter_classic', coins: 120 },
-  { id: 'all-star', name: 'All-Star', text: 'Win the All-Star Game.', icon: 'hud_elements/misc/level_star', coins: 100 },
+  { id: 'all-star', name: 'All-Star', text: 'Win the All-Star Game.', icon: 'allstar/allstar_achievement', coins: 100 },
   { id: 'rivals', name: 'Rival Slayer', text: 'Beat every rival at least once.', icon: 'hud_elements/misc/away_crest', coins: 80 },
   { id: 'max-level', name: 'Fully Grown', text: 'Get a skater to level 10.', icon: STAR, coins: 100 },
   { id: 'in-sync', name: 'In Sync', text: 'Get a pair to chemistry level 3.', icon: 'achievements/in_sync', coins: 100 },

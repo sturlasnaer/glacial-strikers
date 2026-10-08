@@ -62,6 +62,9 @@ img { image-rendering: auto; max-width: 100%; }
 /* ---------- loading ---------- */
 #loading { position: absolute; inset: 0; display: grid; place-items: center; background: var(--ink); z-index: 50; }
 #loading .logo { font-family: var(--display); font-size: clamp(42px, 9vw, 92px); color: var(--cream); text-shadow: 0 4px 0 var(--navy-3), 0 0 24px rgba(113, 220, 232, 0.45); text-align: center; line-height: 0.85; }
+#loading .fox { width: 224px; height: 144px; margin: 0 auto 8px; background: url(../assets/gfx/loading/snow_fox_loading.png) 0 0 / 896px 144px no-repeat; image-rendering: pixelated; animation: fox-run 0.5s steps(4) infinite; } /* Batch AC */
+@keyframes fox-run { to { background-position: -896px 0; } }
+@media (prefers-reduced-motion: reduce) { #loading .fox { animation: none; } }
 #loading .bar { width: min(320px, 70vw); height: 14px; border: 3px solid var(--ice); background: var(--navy); margin: 18px auto 0; }
 #loading .bar i { display: block; height: 100%; width: 0; background: var(--ice); transition: width 0.2s; }
 #loading .err { color: var(--coral); max-width: 40ch; text-align: center; margin-top: 12px; }
@@ -70,6 +73,19 @@ img { image-rendering: auto; max-width: 100%; }
 #screen { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; }
 #screen:empty { display: none; }
 .dim { position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(11, 20, 36, 0.35), rgba(11, 20, 36, 0.86)); }
+/* the champions painting covers the screen; the title sits in the calm ice above the cup (x 480, y 200, 576×100 of 1536×864) */
+.champ-stage { position: absolute; left: 50%; top: 50%; width: max(100%, 177.78vh); height: max(100%, 56.25vw); transform: translate(-50%, -50%); background: var(--ink) center / 100% 100% no-repeat; opacity: 0.25; transition: opacity 0.8s; container-type: size; }
+.champ-stage.in { opacity: 1; }
+.champ-title { position: absolute; left: 31.25%; top: 23.15%; width: 37.5%; height: 11.57%; display: grid; place-items: center; }
+.champ-title h1 { font-size: 10cqh !important; text-shadow: 0 4px 0 var(--navy), 0 0 24px rgba(11, 20, 36, 0.7); }
+.results.champ-panel { position: absolute; left: 50%; bottom: calc(10px + var(--safe-b)); transform: translateX(-50%); margin: 0; width: min(720px, calc(100% - 24px)); gap: 6px; padding: 10px 16px; background-color: rgba(20, 35, 59, 0.88); }
+.results.champ-panel p { margin: 0; font-size: 13.5px; }
+@media (max-height: 480px) { /* phones on their side: one line of text beside the button, below the team */
+  .results.champ-panel { flex-direction: row; justify-content: space-between; text-align: left !important; width: min(820px, calc(100% - 24px)); padding: 6px 12px; }
+  .results.champ-panel p { font-size: 12px; }
+  .results.champ-panel p.muted { display: none; }
+  .results.champ-panel .row { flex: none; margin: 0; }
+}
 
 /* title */
 .title-wrap { position: relative; margin: auto; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: calc(16px + var(--safe-t)) 16px calc(16px + var(--safe-b)); text-align: center; }
@@ -157,7 +173,8 @@ img { image-rendering: auto; max-width: 100%; }
 .rule-ico { width: 1.35em; height: 1.35em; vertical-align: -0.35em; margin-right: 3px; image-rendering: pixelated; }
 .play-as .label { margin-right: 2px; }
 .plan { cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 3px; background: rgba(11, 20, 36, 0.6); border: 3px solid var(--navy-3); border-radius: 6px; padding: 8px 10px; font-family: var(--body); font-size: 12.5px; color: var(--cream); }
-.plan b { font-family: var(--display); font-weight: normal; font-size: 24px; line-height: 1; }
+.plan b { font-family: var(--display); font-weight: normal; font-size: 24px; line-height: 1; display: flex; align-items: center; gap: 6px; }
+.plan-ico { width: 36px; height: 36px; flex: none; }
 .plan.sel { border-color: var(--gold); background: rgba(255, 212, 94, 0.1); }
 .plan .edge { font-weight: 600; }
 .locker { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; }
@@ -334,26 +351,28 @@ img { image-rendering: auto; max-width: 100%; }
 
 /* ---------- HUD ---------- */
 #hud { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
-.scoreboard { position: absolute; top: calc(6px + var(--safe-t)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; padding: 4px 10px; background: rgba(11, 20, 36, 0.78); border: 3px solid var(--ice); border-radius: 8px; box-shadow: 0 0 0 3px var(--navy); }
+.scoreboard { position: absolute; top: calc(6px + var(--safe-t)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 300px; min-height: 52px; padding: 0 8px; border: 8px solid transparent; border-image: url(../assets/gfx/hud-kit/images/scoreboard_frame.png) 24 / 8px stretch; background: #14233b padding-box; }
+.scoreboard.gold { border-image-source: url(../assets/gfx/hud-kit/images/scoreboard_frame_gold.png); }
 .scoreboard img.crest { width: 34px; height: 34px; }
 .scoreboard img.digit { height: 38px; width: auto; transition: transform 0.2s; }
 .scoreboard img.digit.bump { animation: bump 0.6s; }
 @keyframes bump { 30% { transform: scale(1.5); } }
 .scoreboard .mid { font-family: var(--display); font-size: 13px; line-height: 0.95; text-align: center; color: var(--ice-2); letter-spacing: 0.06em; }
 .scoreboard .abbr { font-family: var(--display); font-size: 18px; }
-.pcard { position: absolute; left: calc(8px + var(--safe-l)); top: calc(6px + var(--safe-t)); display: flex; gap: 8px; align-items: center; padding: 4px 10px 4px 4px; background: rgba(11, 20, 36, 0.78); border: 2px solid var(--navy-3); border-radius: 8px; }
-.pcard img { width: 44px; height: 44px; border-radius: 4px; background: var(--navy); }
-.pcard.p2 { left: auto; right: calc(60px + var(--safe-r)); padding: 4px 4px 4px 10px; text-align: right; border-color: var(--coral); }
-.pcard.p2 .bar i { transform-origin: left; }
-.pcard .nm { font-family: var(--display); font-size: 20px; line-height: 0.9; }
-.bars { display: grid; gap: 3px; width: 110px; margin-top: 2px; }
-.bar { height: 8px; background: var(--navy); border: 1px solid #000; border-radius: 2px; overflow: hidden; }
-.bar i { display: block; height: 100%; width: 100%; background: var(--ice); transform-origin: left; }
-.bar.ult i { background: var(--gold); }
-.bar.ult.full i { animation: glow 0.5s infinite alternate; }
-@keyframes glow { to { background: #fff7c2; } }
-.bar.low i { background: var(--coral); }
-.powerchip { position: absolute; top: calc(62px + var(--safe-t)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 6px; padding: 2px 10px 2px 4px; background: rgba(11, 20, 36, 0.85); border: 2px solid var(--gold); border-radius: 999px; font-family: var(--display); font-size: 18px; }
+/* the player card: the portrait sits in the frame's slot on the left (Batch Y) */
+.pcard { position: absolute; left: calc(8px + var(--safe-l)); top: calc(6px + var(--safe-t)); display: flex; flex-direction: column; justify-content: center; min-width: 220px; min-height: 56px; padding: 0 8px 0 2px; border: 8px solid transparent; border-left-width: 60px; border-image: url(../assets/gfx/hud-kit/images/player_card_ice.png) 24 24 24 180 / 8px 8px 8px 60px stretch; background: #14233b padding-box; }
+.pcard img { position: absolute; left: -55px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; }
+.pcard.p2 { left: auto; right: calc(60px + var(--safe-r)); border-image-source: url(../assets/gfx/hud-kit/images/player_card_coral.png); }
+.pcard .nm { font-family: var(--display); font-size: 18px; line-height: 0.9; }
+.bars { display: grid; gap: 2px; width: 120px; margin-top: 2px; }
+.bar { height: 12px; border: solid transparent; border-width: 3px 6px; border-image: url(../assets/gfx/hud-kit/images/stamina_frame.png) 9 18 / 3px 6px stretch; background: #14233b padding-box; }
+.bar.ult { border-image-source: url(../assets/gfx/hud-kit/images/ultimate_frame.png); }
+.bar i { display: block; height: 100%; width: 100%; border: solid transparent; border-width: 2px 3px; border-image: url(../assets/gfx/hud-kit/images/stamina_fill.png) 6 9 / 2px 3px stretch; background: #71dce8 padding-box; transform-origin: left; }
+.bar.ult i { border-image-source: url(../assets/gfx/hud-kit/images/ultimate_fill.png); background-color: #7554a7; }
+.bar.ult.full i { border-image-source: url(../assets/gfx/hud-kit/images/ultimate_fill_full.png); background-color: #ffd45e; animation: glow 0.5s infinite alternate; }
+@keyframes glow { to { filter: brightness(1.35); } }
+.bar.low i { filter: hue-rotate(170deg) saturate(1.4); }
+.powerchip { position: absolute; top: calc(62px + var(--safe-t)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 6px; min-width: 120px; min-height: 36px; padding: 0 6px 0 0; border: 8px solid transparent; border-image: url(../assets/gfx/hud-kit/images/power_puck_chip.png) 24 / 8px stretch; background: #14233b padding-box; font-family: var(--display); font-size: 18px; }
 .powerchip img { width: 26px; height: 26px; }
 .penchip { position: absolute; top: calc(62px + var(--safe-t)); right: calc(60px + var(--safe-r)); display: flex; flex-direction: column; gap: 4px; align-items: flex-end; font-family: var(--display); font-size: 17px; }
 .penchip span { padding: 1px 8px 0; border-radius: 4px; background: rgba(11, 20, 36, 0.85); border: 2px solid; }
@@ -364,23 +383,26 @@ img { image-rendering: auto; max-width: 100%; }
 .powerchip .t { width: 50px; height: 5px; background: var(--navy); border-radius: 2px; overflow: hidden; }
 .powerchip .t i { display: block; height: 100%; background: currentColor; }
 .hint { position: absolute; left: 50%; top: calc(96px + var(--safe-t)); transform: translateX(-50%); padding: 6px 12px; background: rgba(11, 20, 36, 0.85); border: 2px solid var(--navy-3); border-radius: 6px; font-size: 13px; max-width: min(560px, 80vw); text-align: center; transition: opacity 0.4s; }
-.pause-btn { pointer-events: auto; position: absolute; right: calc(8px + var(--safe-r)); top: calc(6px + var(--safe-t)); width: 44px; height: 44px; border: 0; background: none; padding: 0; cursor: pointer; }
-.pause-btn img { width: 44px; height: 44px; }
+.pause-btn { pointer-events: auto; position: absolute; right: calc(8px + var(--safe-r)); top: calc(6px + var(--safe-t)); width: 44px; height: 44px; border: 0; padding: 0; cursor: pointer; background: url(../assets/gfx/hud-kit/images/pause_normal.png) center / 40px 40px no-repeat; }
+.pause-btn:active { background-image: url(../assets/gfx/hud-kit/images/pause_pressed.png); }
 .keyhints { position: absolute; right: calc(10px + var(--safe-r)); bottom: calc(10px + var(--safe-b)); font-size: 12px; color: #c3d3ea; background: rgba(11, 20, 36, 0.7); padding: 6px 8px; border-radius: 6px; line-height: 1.6; }
 .keyhints kbd { font-family: var(--display); font-size: 15px; background: var(--navy); border: 1px solid var(--navy-3); border-bottom-width: 3px; border-radius: 3px; padding: 0 4px; }
 
 .banner { position: absolute; left: 0; right: 0; top: 34%; text-align: center; pointer-events: none; z-index: 12; }
 .banner .big { font-family: var(--display); font-size: clamp(64px, 16vw, 170px); line-height: 0.8; color: var(--cream); text-shadow: 0 6px 0 var(--navy), 0 0 40px currentColor; animation: slam 0.5s cubic-bezier(.2, 1.6, .4, 1); }
-.banner .sub { font-family: var(--display); font-size: clamp(20px, 3.4vw, 32px); color: var(--cream); text-shadow: 0 3px 0 var(--navy); display: inline-flex; align-items: center; gap: 10px; margin-top: 10px; background: rgba(11, 20, 36, 0.8); padding: 4px 14px 2px 4px; border-radius: 6px; }
+/* the plate behind FACEOFF, GOAL and the other banners (Batch Y) */
+.banner .plate { display: inline-flex; flex-direction: column; align-items: center; max-width: 92vw; padding: 4px 26px 8px; border: solid transparent; border-width: 10px 12px; border-image: url(../assets/gfx/hud-kit/images/banner_plate.png) 30 36 / 10px 12px stretch; background: rgba(20, 35, 59, 0.9) padding-box; animation: plate-in 0.3s ease-out; }
+@keyframes plate-in { from { transform: scaleX(0.4); opacity: 0; } }
+.banner .sub { font-family: var(--display); font-size: clamp(20px, 3.4vw, 32px); color: var(--cream); text-shadow: 0 3px 0 var(--navy); display: inline-flex; align-items: center; gap: 10px; margin-top: 6px; }
 .banner .sub img { width: 48px; height: 48px; }
 .banner .small { font-family: var(--display); font-size: clamp(30px, 6vw, 56px); color: var(--ice-2); text-shadow: 0 4px 0 var(--navy); }
 @keyframes slam { from { transform: scale(2.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
 /* commentary ticker */
-.ticker { position: absolute; left: calc(8px + var(--safe-l)); top: calc(62px + var(--safe-t)); display: flex; align-items: center; gap: 8px; max-width: min(46vw, 420px); padding: 4px 10px 3px 4px; background: rgba(11, 20, 36, 0.86); border-left: 4px solid var(--coral); border-radius: 4px; font-family: var(--display); font-size: 19px; line-height: 1.05; }
+.ticker { position: absolute; left: calc(8px + var(--safe-l)); top: calc(62px + var(--safe-t)); display: flex; align-items: center; gap: 6px; max-width: min(46vw, 420px); min-height: 30px; padding: 1px 8px 0 0; border: 6px solid transparent; border-left-width: 42px; border-image: url(../assets/gfx/hud-kit/images/ticker_frame.png) 18 18 18 126 / 6px 6px 6px 42px stretch; background: #14233b padding-box; font-family: var(--display); font-size: 19px; line-height: 1.05; }
 .ticker.in { animation: tick-in 0.25s ease-out; }
-.ticker .tk-ico { width: 32px; height: 32px; flex: none; image-rendering: auto; }
-.ticker .live { font-family: var(--body); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; background: var(--coral); color: var(--navy); padding: 1px 4px; border-radius: 2px; }
+.ticker .tk-ico { width: 26px; height: 26px; flex: none; image-rendering: auto; }
+.ticker .live { font-family: var(--body); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #ff6f7d; }
 @keyframes tick-in { from { transform: translateX(-30px); opacity: 0; } }
 
 /* ultimate cut-ins */
@@ -831,6 +853,7 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .owned-stamp { transform: rotate(-4deg); }
 /* ---------- Batch X badges ---------- */
 .btn-ico { width: 20px; height: 20px; vertical-align: -4px; image-rendering: auto; }
+.h-ico { width: 1.3em; height: 1.3em; vertical-align: -0.28em; margin-right: 6px; flex: none; image-rendering: auto; } /* a picture in front of a heading */
 .streak .btn-ico { width: 16px; height: 16px; margin-left: 1px; }
 .row-ico { width: 22px; height: 22px; flex: none; }
 .medal .medal-ico { width: 18px; height: 18px; vertical-align: -4px; margin: 0 3px 0 -3px; }

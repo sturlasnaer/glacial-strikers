@@ -79,7 +79,7 @@ export function createDrill(id, save, charId, opts = {}) {
   const awaySkater = (k) => {
     const stats = { ...CHARACTERS[k].base };
     for (const [s, v] of Object.entries(t.bonus || {})) stats[s] = Math.max(1, stats[s] + v);
-    if (isSigned(save, recruitKey(awayTeam, k))) return { def: CHARACTERS[k], who: 'sub_' + k, stats, name: t.subs[k], perks: [] };
+    if (isSigned(save, recruitKey(awayTeam, k))) return { def: CHARACTERS[k], who: 'sub_' + k, stats, name: t.subs[k], perks: [], sprite: `newcomer_${ROLE[k]}` };
     return { def: CHARACTERS[k], stats, name: t.names[k], perks: [], sprite: t.art ? `${t.art}_${ROLE[k]}` : null };
   };
   const cfg = {
