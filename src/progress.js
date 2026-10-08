@@ -3,7 +3,7 @@
 import { GUIDE } from './guide.js';
 import {
   CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE,
-  RECRUITS, member, pairKey, recruitKey,
+  RECRUITS, ROOKIES, setRookies, member, pairKey, recruitKey,
 } from './data.js';
 import { newLeague, migrateLeague } from './league.js';
 import { seasonStats } from './awards.js';
@@ -45,6 +45,8 @@ export function newSave() {
       markers: 'color', textSize: 'normal', touchSize: 'normal', lefty: false,
     },
     record: { played: 0, wins: 0, goals: 0 },
+    rookies: {}, // drafted rookies by roster id (rk1, rk2, …), see draft.js
+    draft: null, // this season's Draft Day once it's over
   };
 }
 
@@ -60,6 +62,7 @@ export function loadSave() {
     const base = newSave();
     for (const k of Object.keys(base)) if (s[k] === undefined) s[k] = base[k];
     for (const k of Object.keys(base.settings)) if (s.settings[k] === undefined) s.settings[k] = base.settings[k];
+    setRookies(s.rookies); // drafted rookies, so member() knows them
     for (const id of Object.keys(CHARACTERS)) if (!s.roster[id]) s.roster[id] = base.roster[id];
     for (const [role, who] of Object.entries(s.lineup)) {
       const m = member(who);
@@ -101,7 +104,7 @@ export function gearMods(r) {
   return out;
 }
 
-function newMember() {
+export function newMember() {
   return {
     level: 1, exp: 0, points: 0, alloc: Object.fromEntries(STAT_KEYS.map((k) => [k, 0])),
     perks: [], pendingPerk: null,
@@ -152,7 +155,7 @@ export function setLineup(save, who) {
 }
 
 // Rival roster pages to show our recruits in home colours.
-export const homeKitGroups = (save) => [...new Set(rosterIds(save).filter((id) => RECRUITS[id]).map((id) => 'rival_' + TEAMS[RECRUITS[id].team].art))];
+export const homeKitGroups = (save) => [...new Set([...rosterIds(save).filter((id) => RECRUITS[id]).map((id) => 'rival_' + TEAMS[RECRUITS[id].team].art), ...(rosterIds(save).some((id) => ROOKIES[id]) ? ['newcomers'] : [])])];
 
 export function effectiveStats(id, r) {
   const base = member(id).base;
@@ -183,7 +186,7 @@ export function matchConfig(save, teamId, stage, opts = {}) {
       const m = member(who);
       return {
         def: m.def, who, stats: effectiveStats(who, save.roster[who]), name: m.name, perks: perkNames(save.roster[who]),
-        sprite: m.recruit ? m.recruit.sprite : null, look: m.recruit ? 'homekit' : null, gear: { ...save.roster[who].gear },
+        sprite: m.sprite, look: m.look, gear: { ...save.roster[who].gear },
       };
     }),
     goalie: { stats: goalieStats(save), name: GOALIE.name },
@@ -261,7 +264,7 @@ export function allStarConfig(save, vote, opts = {}) {
     if (!save.roster[who]) return rival(who, 'homekit');
     const m = member(who);
     return { def: m.def, who, stats: effectiveStats(who, save.roster[who]), name: m.name, perks: perkNames(save.roster[who]),
-      sprite: m.recruit ? m.recruit.sprite : null, look: m.recruit ? 'homekit' : null, gear: { ...save.roster[who].gear } };
+      sprite: m.sprite, look: m.look, gear: { ...save.roster[who].gear } };
   };
   const g = TEAMS[vote.goalie];
   const seasonBoost = (save.season - 1) * 0.08;
@@ -341,7 +344,7 @@ export function computeRewards(save, summary, stage, exhibition) {
 export function applyExp(save, id, amount) {
   const r = save.roster[id];
   const ups = [];
-  r.exp += amount;
+  r.exp += ROOKIES[id] ? Math.round(amount * rookieExpMul(ROOKIES[id])) : amount;
   while (r.level < MAX_LEVEL && r.exp >= expToNext(r.level)) {
     r.exp -= expToNext(r.level);
     r.level++;
@@ -395,8 +398,12 @@ export function applyGoalieExp(save, amount) {
 }
 
 export function canRaise(r, id, k) {
-  return r.points > 0 && r.alloc[k] < STAT_CAP_BONUS && member(id).base[k] + r.alloc[k] < 12;
+  return r.points > 0 && r.alloc[k] < capBonus(id) && member(id).base[k] + r.alloc[k] < 12;
 }
+
+// Drafted rookies learn faster the higher their potential, and can raise each stat further.
+export const rookieExpMul = (k) => 1 + 0.15 * (k.potential - 1);
+export const capBonus = (id) => STAT_CAP_BONUS + (ROOKIES[id] ? Math.max(0, ROOKIES[id].potential - 2) : 0);
 
 // Chemistry levels for every pair in a line, keyed by member pair.
 export function lineChem(save, line) {

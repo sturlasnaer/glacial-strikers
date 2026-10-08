@@ -24,6 +24,8 @@ Friends boards are live too: share a six-character code and get every board with
 
 The All-Star Game is in too: after round 2, the fans vote two mixed benches of the league's stars, with Skills Night before it. Breakaway has ghosts now, and any run can be sent to a friend as a challenge link.
 
+Since then: **Draft Day** (three prospects at season's end; the pick joins as a rookie whose potential speeds up their growth), a **career stats** page, and the **Weekly Cup** on every friends board.
+
 Ideas for later:
 1. **Ghosts for Sniper** (the shots and the lit targets), if the others catch on.
 2. **Replay checks** on the server if faked scores become a problem; the stored ghost runs would help.

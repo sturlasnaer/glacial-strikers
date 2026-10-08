@@ -311,12 +311,13 @@ export const Assets = {
   },
 };
 
-function loadImage(src) {
+// One retry after a short pause: a dropped request on a patchy connection shouldn't stop the game.
+function loadImage(src, tries = 2) {
   return new Promise((res, rej) => {
     const img = new Image();
     img.decoding = 'async';
     img.onload = () => res(img);
-    img.onerror = () => rej(new Error('Could not load ' + src));
+    img.onerror = () => (tries > 1 ? setTimeout(() => loadImage(src, tries - 1).then(res, rej), 600) : rej(new Error('Could not load ' + src)));
     img.src = src;
   });
 }

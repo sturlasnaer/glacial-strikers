@@ -4,6 +4,7 @@
 
 export const GUIDE = [
   { id: 'play', when: (s) => s.record.played === 0, target: '#h-play', text: 'First things first: let\'s get a game in. Hit Play match when you\'re ready.' },
+  { id: 'draft', when: (s, x) => x.draftOpen, target: '#h-draft', text: 'Draft Day! Three rookies want to join the club. Tap Draft Day to meet them and pick one.' },
   { id: 'points', when: (s, x) => x.anyPoints, target: '[data-tab="team"]', text: 'You\'ve got skill points to spend. Open the lockers and make them count.' },
   { id: 'training', when: (s) => s.record.played >= 1 && s.training.sessions > 0, target: '[data-tab="training"]', text: 'Every match refills two rewarded training sessions. Grab a stick at the rack and earn some EXP.' },
   { id: 'shop', when: (s, x) => x.shopNew, target: '[data-tab="shop"]', text: 'Ottar has gear you can afford. Special sticks and skates show on the ice, too.' },
@@ -15,7 +16,6 @@ export const GUIDE = [
   { id: 'ghosts', when: (s) => !!(s.ghosts && (s.ghosts.cones || s.ghosts.breakaway)), target: '[data-tab="training"]', text: 'Your best Cone Weave and Breakaway runs are saved. Pick Ghost › Your best on the card and race yourself.' },
   { id: 'challenge', when: (s, x) => x.online && !!(s.ghosts && (s.ghosts.cones || s.ghosts.breakaway)) && s.record.played >= 3, target: '[data-tab="training"]', text: 'After a Cone Weave or Breakaway run, tap Challenge a friend and send them the link. They race your ghost.' },
   { id: 'friends', when: (s, x) => x.online && s.record.played >= 4 && !((s.online && s.online.groups) || []).length, target: '[data-tab="training"]', text: 'Make a friends board under the cup in Training and share its code: the same boards with just your friends, every week.' },
-  { id: 'draft', when: (s, x) => x.draftOpen, target: '[data-tab="team"]', text: 'Draft Day! Three rookies want to join the club. Meet them in the lockers and pick one.' },
 ];
 
 const state = (save) => (save.guide ||= { done: [], off: false, hints: [] });

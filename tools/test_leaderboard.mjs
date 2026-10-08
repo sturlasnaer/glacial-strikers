@@ -226,5 +226,30 @@ check('Monday starts the next', weekOf(Date.UTC(2026, 9, 12)).key === '2026-W42'
   r = await cpost({ op: 'challenge_put', board: 'breakaway', player: id(3), name: 'Owls', score: 1, ghost: { attempts: [{ path: path(2), puck: path(2), result: 'goal' }, { path: path(2), puck: path(2), result: 'save' }] } });
   check('a breakaway challenge', r.status === 200 && r.body.code !== code, r.body);
 }
+// the Weekly Cup: a friends board's four weekly drill boards, scored by place
+{
+  const ws = memoryStore();
+  let now = Date.UTC(2026, 9, 6, 12); // a Tuesday, week 41
+  const wpost = (b) => handle({ method: 'POST', query: {}, body: JSON.stringify(b) }, ws, (now += 40000));
+  const cupGet = (code, player) => handle({ method: 'GET', query: { cup: code, player } }, ws, now);
+  r = await wpost({ op: 'group_new', player: id(1), name: 'Pond Crew' });
+  const code = r.body.code;
+  await wpost({ op: 'group_join', player: id(2), code });
+  await wpost({ op: 'group_join', player: id(3), code });
+  const score = (n, board, sc) => wpost({ board, player: id(n), name: 'P' + n, score: sc, played: now, groups: [code] });
+  await score(1, 'sniper', 900); await score(2, 'sniper', 1200); await score(3, 'sniper', 400);
+  await score(1, 'cones', 15.5); await score(2, 'cones', 19);
+  await score(1, 'rondo', 30);
+  r = await cupGet(code, id(1));
+  const st = r.body.standings;
+  check('cup standings', r.status === 200 && st.length === 3 && st[0].name === 'P1' && st[0].points === 13 && st[0].me && st[1].name === 'P2' && st[1].points === 8 && st[2].points === 2, st);
+  check('cup places per board', st[0].places.sniper === 2 && st[0].places.cones === 1 && st[0].firsts === 2, st[0]);
+  check('cup name and week', r.body.name === 'Pond Crew' && r.body.week === '2026-W41' && r.body.last.week === '2026-W40' && r.body.last.standings.length === 0, r.body);
+  now += 7 * 86400000; // next week: last week's cup is settled, this week's is empty
+  r = await cupGet(code, id(2));
+  check('last week settled', r.body.last.standings[0].name === 'P1' && r.body.last.standings[1].me && r.body.standings.length === 0, r.body);
+  check('cup unknown code', (await cupGet('ZZZZZZ')).status === 404);
+  check('cup bad code', (await cupGet('nope')).status === 400);
+}
 console.log(`leaderboard: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

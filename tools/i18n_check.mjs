@@ -49,7 +49,7 @@ function walk(v, path, where, depth = 0) {
     }
   }
 }
-const modules = ['data.js', 'achievements.js', 'awards.js', 'drills.js', 'daily.js', 'lockerroom.js', 'guide.js', 'online.js', 'songs.js', 'skills.js'];
+const modules = ['data.js', 'achievements.js', 'awards.js', 'drills.js', 'daily.js', 'lockerroom.js', 'guide.js', 'online.js', 'songs.js', 'skills.js', 'draft.js'];
 for (const f of modules) {
   const mod = await import(join(root, 'src', f));
   for (const [name, v] of Object.entries(mod)) {
@@ -58,10 +58,10 @@ for (const f of modules) {
   }
 }
 // plain maps and lists of display text
-const STRING_MAPS = { 'data.js': ['STAT_NAMES', 'STAT_HINT', 'TWIST_INFO'], 'drills.js': ['MEDAL_NAMES'] };
+const STRING_MAPS = { 'data.js': ['STAT_NAMES', 'STAT_HINT', 'TWIST_INFO', 'ROOKIE_TITLE'], 'drills.js': ['MEDAL_NAMES'], 'draft.js': ['POTENTIAL_GRADE', 'SCOUTING'] };
 for (const [f, names] of Object.entries(STRING_MAPS)) {
   const mod = await import(join(root, 'src', f));
-  for (const n of names) for (const v of Object.values(mod[n] || {})) add(v, `${f}:${n}`);
+  for (const n of names) for (const v of Object.values(mod[n] || {})) [].concat(v).forEach((x) => add(x, `${f}:${n}`));
 }
 const uiSrc = readFileSync(join(root, 'src', 'ui.js'), 'utf8');
 // display text in the screens' own constant tables (hub stations and the like)

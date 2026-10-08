@@ -52,6 +52,11 @@ Terms the translation uses consistently. The tone is friendly, sporty and short;
 | daily challenge / streak | dagleg áskorun / runa |
 | leaderboard | stigatafla |
 | friends board / invite / join / leave | vinatafla / bjóða / vera með / hætta |
+| Weekly Cup | vikubikarinn |
+| Draft Day / the draft / to draft | Nýliðaval / nýliðavalið / velja |
+| rookie / prospect | nýliði / efni |
+| potential (stars) | efniviður (stjörnur) |
+| career stats | ferilstölur |
 | ghost (a recorded run to race) | draugur |
 | All-Star Game / All-Stars | Stjörnuleikurinn / stjörnulið |
 | Skills Night / challenge | hæfileikakvöld / áskorun |

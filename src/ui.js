@@ -4,7 +4,7 @@ import { Assets } from './assets.js';
 import {
   CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
-  RECRUITS, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
+  RECRUITS, ROOKIES, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
 import { standings, classicOpponent, CLASSIC_AFTER, ALLSTAR_AFTER } from './league.js';
 import { BUFF_TEXT } from './lockerroom.js';
@@ -13,10 +13,12 @@ import { AWARDS, AWARD_BY_ID, seasonStats } from './awards.js';
 import { dailyFor, dailyGoal, dayKey, currentStreak, doneToday, dailyReward, dailyState } from './daily.js';
 import {
   expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave,
-  chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups,
+  chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups, capBonus,
 } from './progress.js';
-import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave, resetsIn, groupsOf, createGroup, joinGroup, leaveGroup, inviteLink, MAX_GROUPS, fetchGhost, CHALLENGE_BOARDS, createChallenge, fetchChallenge, challengeLink } from './online.js';
+import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave, resetsIn, groupsOf, createGroup, joinGroup, leaveGroup, inviteLink, MAX_GROUPS, fetchCup, fetchGhost, CHALLENGE_BOARDS, createChallenge, fetchChallenge, challengeLink } from './online.js';
 import { nextGuide, doneGuide, guideOff } from './guide.js';
+import { draftOpen, draftPick, otherPicks, POTENTIAL_GRADE, DRAFT_LINES } from './draft.js';
+import { careerOf, careerRows } from './career.js';
 import { audio } from './audio.js';
 import { t } from './i18n.js';
 const VOLUMES = () => [[0, t('Off')], [0.35, t('Low')], [0.7, t('Mid')], [1, t('Full')]];
@@ -56,6 +58,10 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
     const fid = p && ((expr && p[expr]) || p.neutral_roster || p.neutral);
     return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT[r.kit]}`, size);
   }
+  if (team === 0 && ROOKIES[id]) { // a drafted rookie: a newcomer (Batch AA) in our colours
+    const p = P[`newcomer_${ROLE[ROOKIES[id].kit]}`], fid = p && ((expr && p[expr]) || p.neutral);
+    return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT[ROOKIES[id].kit]}`, size);
+  }
   if (team !== 0 && id.startsWith('sub_')) { // a signed slot's newcomer (Batch AA), in the team's colours
     const p = P[`newcomer_${ROLE[id.slice(4)]}`], fid = p && ((expr && p[expr]) || p.neutral);
     return (fid && Assets.icon(fid, size, teamId)) || Assets.icon(`character_portraits/away/${PORTRAIT[id.slice(4)]}`, size, teamId);
@@ -78,6 +84,14 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
   const url = fid && Assets.icon(fid, size, teamId);
   return url || Assets.icon(`character_portraits/away/${PORTRAIT[id]}`, size, teamId);
 };
+// A Weekly Cup finish: the cup (or, until Batch AE, the small cup) for first, rosettes (or
+// the rank shields) for second and third.
+export function cupPlaceImg(place, size = 64) {
+  const B = Assets.atlas.badges || {};
+  const id = place === 1 ? B.weekly_cup || B.cup_small : B[['', '', 'rosette_silver', 'rosette_bronze'][place]] || B['rank_' + place];
+  return id ? Assets.icon(id, size) : '';
+}
+
 export const crest = (teamId, size = 96) => {
   if (teamId === 'home') return Assets.icon('hud_elements/misc/home_crest', size, CLUB_PAGES());
   if (teamId === 'allstar') return Assets.icon((Assets.atlas.allstar && Assets.atlas.allstar.crest) || 'hud_elements/misc/level_star', size); // the League All-Stars' crest
@@ -148,6 +162,8 @@ export function ruleIconSrc(twist, size = 40) {
   return id ? Assets.icon(id, size) : '';
 }
 // A picture in front of a chip's words (challenges, combos), or nothing without the art.
+// A rookie's potential, two to five stars out of five.
+const stars = (n) => `<span class="stars" role="img" aria-label="${t('{n} of 5 stars', { n })}">${'★'.repeat(n)}<i>${'★'.repeat(5 - n)}</i></span>`;
 const smallIcon = (id, size = 40, cls = 'rule-ico') => { const src = id && Assets.icon(id, size); return src ? `<img class="${cls}" src="${src}" alt="">` : ''; };
 const btnIcon = (id) => smallIcon(id, 48, 'btn-ico'); // in front of a button's words
 function ruleIcon(twist, size = 40) {
@@ -345,14 +361,23 @@ export class UI {
         <div class="hub-cta">
           ${nt ? `<div class="next">${esc(t(next.round, { n: next.roundN }))}<br><b>${t('vs {team}', { team: esc(nt.name) })}</b>${s.buffs && s.buffs.length ? `<span class="buffs">${s.buffs.map((b) => `<span class="buff">${esc(BUFF_TEXT(b))}</span>`).join('')}</span>` : ''}</div>
           <button class="btn gold" id="h-play">${t('Play match')}</button>` : `<div class="next"><b>${s.league && s.league.champion && s.league.champion !== 'home' ? t('{team} won the cup', { team: esc(TEAMS[s.league.champion].name) }) : t('Champions!')}</b><br>${t('Start a new season or play exhibitions.')}</div>
-          <button class="btn gold" id="h-season">${t('New season')}</button>`}
+          ${draftOpen(s) ? `<button class="btn gold" id="h-draft">${t('Draft Day')}</button>` : ''}<button class="btn ${draftOpen(s) ? 'ghost' : 'gold'}" id="h-season">${t('New season')}</button>`}
           <button class="btn ghost daily-btn" id="h-daily" title="${t('Today\'s daily challenge')}">${doneToday(s) ? badge('daily_done', 48, 'btn-ico', '✓') : badge('daily_star', 48, 'btn-ico', '★')} ${t('Daily')}${currentStreak(s) ? ` <span class="streak">${currentStreak(s)}${badge('streak_flame', 40, 'btn-ico', '🔥')}</span>` : ''}</button>
           <button class="btn ghost" id="h-title">${t('Title')}</button>
         </div>
       </div>`);
     this.click('[data-tab]', (el) => { audio.sfx('click'); this.hub(el.dataset.tab); });
     this.click('#h-play', () => { audio.sfx('confirm'); this.app.startStage(); });
-    this.click('#h-season', () => { audio.sfx('confirm'); this.app.newSeason(); });
+    this.click('#h-season', () => {
+      if (!draftOpen(s)) { audio.sfx('confirm'); this.app.newSeason(); return; }
+      audio.sfx('click'); // the draft closes with the season
+      this.modal(`<h2>${t('Draft Day isn\'t done')}</h2><p>${t('Three rookies are still waiting for your pick. Once the new season starts, they sign elsewhere.')}</p>
+        <div class="row" style="justify-content:flex-end"><button class="btn small ghost" id="ns-skip">${t('Skip the draft')}</button><button class="btn gold" id="ns-draft">${t('Draft Day')}</button></div>`, (m, close) => {
+        this.click('#ns-draft', () => { close(); audio.sfx('confirm'); this.draftDay(); }, m);
+        this.click('#ns-skip', () => { close(); s.draft.picked = -1; audio.sfx('confirm'); this.app.newSeason(); }, m);
+      });
+    });
+    this.click('#h-draft', () => { audio.sfx('confirm'); this.draftDay(); });
     this.click('#h-title', () => { audio.sfx('back'); this.app.goTitle(); });
     this.click('#h-daily', () => this.dailyCard());
     this.click('#h-settings', () => { audio.sfx('click'); this.settings(); });
@@ -362,7 +387,7 @@ export class UI {
       scoutOpen: Object.keys(RECRUITS).some((k) => recruitStatus(s, k) === 'open' && s.coins >= RECRUITS[k].price),
       allstarNext: !!(this.app.fixture && this.app.fixture() && this.app.fixture().kind === 'allstar'),
       online: onlineOn(s) && configured(),
-      draftOpen: !!(s.draft && !s.draft.picked),
+      draftOpen: draftOpen(s),
     });
     this.roomFit?.disconnect();
     if (room) {
@@ -402,8 +427,8 @@ export class UI {
       if (id === 'goalie') src = Assets.icon((Assets.atlas.goalies_front || {}).home?.idle_a || Assets.atlas.goalies_side.home.ready, 160, CLUB_PAGES());
       else {
         const m = member(id);
-        const set = m.recruit ? Assets.atlas.skaters[m.recruit.sprite] : Assets.atlas.skaters[m.def.sprite];
-        src = m.recruit ? Assets.icon(set.home.south.frames.idle, 160, 'homekit') : Assets.icon(set.home.south.frames.idle, 160, CLUB_PAGES());
+        const set = Assets.atlas.skaters[m.sprite || m.def.sprite];
+        src = set && Assets.icon(set.home.south.frames.idle, 160, m.look || CLUB_PAGES());
         if (!src) src = Assets.icon(Assets.atlas.skaters[m.def.sprite].home.south.frames.idle, 160, CLUB_PAGES());
       }
       const name = id === 'goalie' ? GOALIE.name : member(id).name;
@@ -600,7 +625,9 @@ export class UI {
     body.innerHTML = `
       <div class="train-top"><div><div class="label">${t('Trophy case')}</div>
         <p style="margin:2px 0 0;font-size:13px">${t('{n} of {total} unlocked', { n: got.length, total: ACHIEVEMENTS.length })} · ${t('{n} coins earned', { n: earned })}${s.cups ? ` · ${t(s.cups > 1 ? '{n} cups won' : '{n} cup won', { n: s.cups })}` : ''}${classicWins ? ` · ${t(classicWins > 1 ? '{n} Winter Classics won' : '{n} Winter Classic won', { n: classicWins })}` : ''}${allstarWins ? ` · ${t(allstarWins > 1 ? '{n} All-Star Games won' : '{n} All-Star Game won', { n: allstarWins })}` : ''}</p></div>
-        <button class="btn small ghost" id="tr-lb">${badge('cup_small', 48, 'btn-ico', '🏆')} ${t('Online leaderboards')}</button></div>
+        <span class="row" style="gap:6px;margin:0"><button class="btn small ghost" id="tr-career">${btnIcon('icons/career')} ${t('Career stats')}</button><button class="btn small ghost" id="tr-lb">${badge('cup_small', 48, 'btn-ico', '🏆')} ${t('Online leaderboards')}</button></span></div>
+      ${s.weeklyCups && s.weeklyCups.length ? `<div class="label" style="margin:4px 0 6px">${t('Weekly Cups')}</div>
+      <div class="cup-shelf">${s.weeklyCups.slice(-12).reverse().map((w) => `<div class="cup-won" title="${esc(w.name)} · ${esc(w.week)}"><img src="${cupPlaceImg(w.place, 72)}" alt=""><small>${esc(w.name)}</small><span class="muted">${esc(w.week.replace(/^\d+-W/, t('week') + ' '))}</span></div>`).join('')}</div>` : ''}
       ${s.awards && s.awards.length ? `<div class="label" style="margin:4px 0 6px">${t('Award cabinet')}</div>
       <div class="aw-list cabinet">${s.awards.slice().reverse().map((w) => `
         <div class="aw-row us"><img src="${rowFace({ ...w, team: 'home' }, 64)}" alt=""><div style="min-width:0"><small>${t('Season {n}', { n: w.season })} · ${esc(t(AWARD_BY_ID[w.id].name))}</small><b>${esc(w.name)}</b><span class="muted">${esc(w.line)}</span></div><img class="cr" src="${ico(AWARD_BY_ID[w.id].icon, 64)}" alt=""></div>`).join('')}</div>
@@ -616,11 +643,124 @@ export class UI {
         </div>`;
       }).join('')}</div>`;
     this.click('#tr-lb', () => { audio.sfx('click'); this.leaderboard('cones'); }, body);
+    this.click('#tr-career', () => { audio.sfx('click'); this.careerPage(); }, body);
+  }
+
+  // Career stats: the club's lifetime numbers, every skater's totals (most points first,
+  // the leader of each column in gold) and Halla's in goal. Tap a skater for their seasons.
+  careerPage() {
+    const s = this.app.save, c = careerOf(s), rows = careerRows(s, rosterIds(s)), g = c.goalie;
+    const cols = [['gp', t('GP'), t('Games played'), 'games'], ['w', t('W'), t('Wins'), 'wins'], ['g', t('G'), t('Goals'), 'goals'], ['a', t('A'), t('Assists'), 'assists'], ['pts', t('PTS'), t('Points'), null],
+      ['shots', t('SH'), t('Shots'), 'shots'], ['hits', t('HIT'), t('Hits'), 'hits'], ['steals', t('STL'), t('Steals'), 'steals']];
+    const best = Object.fromEntries(cols.map(([k]) => [k, Math.max(0, ...rows.map((r) => r[k]))]));
+    const head = cols.map(([k, ab, name, icon]) => `<th title="${esc(name)}">${icon && Assets.atlas.frames['icons/stat_' + icon] ? smallIcon('icons/stat_' + icon, 48, 'th-ico') : ''}${ab}</th>`).join('');
+    const body = rows.map((r) => {
+      const m = member(r.id);
+      return `<tr data-car="${r.id}"><td class="car-who"><img src="${portrait(r.id, 0, null, 64)}" alt=""><span><b>${esc(m.name)}</b><small>${t(ROLE_NAME[m.role])}</small></span></td>
+        ${cols.map(([k]) => `<td class="${r[k] && r[k] === best[k] && k !== 'gp' ? 'lead' : ''}">${r[k]}</td>`).join('')}</tr>`;
+    }).join('');
+    const tile = (icon, n, label) => `<div class="car-tile">${icon && Assets.atlas.frames[icon] ? smallIcon(icon, 64, 'h-ico') : ''}<b>${n}</b><small>${esc(label)}</small></div>`;
+    const sv = g.sa ? (g.sv / g.sa).toFixed(3).replace(/^0/, '') : '–';
+    this.modal(`
+      <h2>${smallIcon('icons/career', 96, 'h-ico')}${t('Career stats')}</h2>
+      <div class="car-tiles">
+        ${tile('icons/stat_seasons', s.season, t('seasons'))}${tile('icons/stat_games', s.record.played, t('matches'))}${tile('icons/stat_wins', s.record.wins, t('wins'))}
+        ${tile('icons/stat_goals', s.record.goals, t('goals'))}${tile('icons/stat_cups', s.cups || 0, t('cups'))}${tile(null, (s.awards || []).length, t('awards'))}
+        ${tile(null, (s.allstars || []).length, t('All-Star Games'))}${tile('icons/stat_streak', dailyState(s).best || 0, t('best daily streak'))}
+      </div>
+      <div class="label" style="margin:8px 0 4px">${t('Skaters')}</div>
+      <div class="car-wrap"><table class="car-table"><thead><tr><th></th>${head}</tr></thead><tbody>${body}</tbody></table></div>
+      <div class="label" style="margin:10px 0 4px">${t('In goal')}</div>
+      <div class="car-goalie"><img src="${portrait('goalie', 0, null, 64)}" alt=""><b>${esc(GOALIE.name)}</b>
+        <span>${t('{n} games', { n: g.gp })} · ${t('{n} wins', { n: g.w })} · ${t('{n} saves', { n: g.sv })} · ${t('save % {n}', { n: sv })} · ${t('{n} shutouts', { n: g.so })}</span></div>
+      <p class="muted" style="font-size:12px;margin:8px 0 0">${t('Every full match counts: league, playoffs, showcases, exhibitions and the daily challenge. Tap a skater for their seasons.')}</p>
+      <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>${t('Done')}</button></div>`, (m) => {
+      this.click('[data-car]', (el) => { audio.sfx('click'); this.careerOne(el.dataset.car); }, m);
+    });
+  }
+
+  // One skater's career: season by season, and their awards.
+  careerOne(id) {
+    const s = this.app.save, m = member(id), r = careerRows(s, [id])[0];
+    const seasons = Object.entries(r.seasons).sort((a, b) => +a[0] - +b[0]);
+    const awards = (s.awards || []).filter((w) => w.face === id);
+    this.modal(`
+      <div class="card-head" style="margin:0"><img src="${portrait(id, 0, null, 152, 'grin')}" alt="" style="width:76px;height:76px"><div>
+        <h2 style="margin:0">${esc(m.name)}</h2><div class="sub">${esc(t(m.title))}</div>
+        <div>${t('{g} goals, {a} assists in {n} games', { g: r.g, a: r.a, n: r.gp })}</div></div></div>
+      ${seasons.length ? `<table class="car-table small"><thead><tr><th>${t('Season')}</th><th>${t('GP')}</th><th>${t('G')}</th><th>${t('A')}</th><th>${t('PTS')}</th></tr></thead>
+        <tbody>${seasons.map(([n, x]) => `<tr><td>${n}</td><td>${x.gp}</td><td>${x.g}</td><td>${x.a}</td><td>${x.g + x.a}</td></tr>`).join('')}</tbody></table>` : `<p class="muted">${t('No games yet.')}</p>`}
+      ${awards.length ? `<div class="label" style="margin:8px 0 4px">${t('Awards')}</div>${awards.map((w) => `<div class="car-award"><img src="${ico(AWARD_BY_ID[w.id].icon, 64)}" alt=""><span>${t('Season {n}', { n: w.season })} · ${esc(t(AWARD_BY_ID[w.id].name))}</span></div>`).join('')}` : ''}
+      <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>${t('Done')}</button></div>`);
   }
 
   // The season's awards night, hosted by Kip Vance: one envelope at a time.
   // Skills Night: two events before the All-Star Game. Your All-Star against the other five;
   // compete (again) in either, or go on to the game.
+  // Draft Day, once a season is over: Kip opens it (the first time), then the three prospects
+  // side by side with their potential, the scouts' line and their stats against our starter.
+  async draftDay() {
+    const s = this.app.save, d = s.draft;
+    if (!draftOpen(s)) return;
+    await Assets.loadGroup('newcomers').catch(() => {}); // the prospects' faces
+    if (!d.met) {
+      d.met = true; writeSave(s);
+      this.dialogue(DRAFT_LINES, 'home', null, () => this.draftDay());
+      return;
+    }
+    const cards = d.prospects.map((p, i) => {
+      const m = { role: CHARACTERS[p.kit].role }, starter = member(s.lineup[m.role]);
+      const P = (Assets.atlas.portraits || {})[`newcomer_${ROLE[p.kit]}`];
+      const face = P ? Assets.icon(P.determined || P.neutral, 152) : portrait(p.kit, 1, null, 152);
+      const pips = STAT_KEYS.map((k) => {
+        const diff = p.base[k] - starter.base[k];
+        return `<div class="stat"><span>${t(STAT_NAMES[k])}</span><span class="pips">${Array.from({ length: 12 }, (_, j) => `<i class="${j < p.base[k] ? 'b' : ''}"></i>`).join('')}</span><span class="v">${p.base[k]}</span><span class="${diff > 0 ? 'good' : diff < 0 ? 'bad' : 'muted'}" style="font-size:12px;width:2.2em">${diff > 0 ? '+' + diff : diff || ''}</span></div>`;
+      }).join('');
+      return `<div class="card prospect pot-${p.potential}">
+        <div class="card-head"><img src="${face}" alt=""><div style="min-width:0"><h3>${esc(p.name)}</h3>
+          <div class="sub">${t(ROLE_NAME[m.role])} · ${stars(p.potential)}</div><div class="muted" style="font-size:12.5px">${esc(t(POTENTIAL_GRADE[p.potential]))}</div></div></div>
+        <p class="scout-line">${esc(t(p.blurb))}</p>
+        <div class="stats">${pips}</div>
+        <p class="muted" style="margin:0;font-size:12px">${t('Compared with {name}.', { name: esc(starter.name) })}</p>
+        <button class="btn gold" data-pick="${i}">${t('Draft {name}', { name: esc(p.name) })}</button>
+      </div>`;
+    }).join('');
+    const r = this.set(`<div class="dim"></div>
+      <div class="results panel draft">
+        <div class="label">${t('Season {n}', { n: d.season })}</div>
+        <h1 class="gold-t" style="font-family:var(--display);font-weight:normal;font-size:clamp(34px,6vw,54px);line-height:.9;margin:0">${t('Draft Day')}</h1>
+        <p style="margin:0;font-size:13.5px">${t('One pick. Rookies start a couple of levels below your line-up, but the more stars of potential, the faster they learn and the further their stats can grow.')}</p>
+        <div class="prospects">${cards}</div>
+        <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="dr-later">${t('Decide later')}</button></div>
+      </div>`);
+    this.click('#dr-later', () => { audio.sfx('back'); this.app.goHub('tournament'); }, r);
+    this.click('[data-pick]', (el) => {
+      const p = d.prospects[+el.dataset.pick];
+      audio.sfx('click');
+      this.modal(`<h2>${t('Draft {name}?', { name: esc(p.name) })}</h2>
+        <p>${t('The other two go to rival clubs.')}</p>
+        <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Not yet')}</button><button class="btn gold" id="dr-yes">${t('Draft {name}', { name: esc(p.name) })}</button></div>`, (m, close) => {
+        this.click('#dr-yes', async () => {
+          const id = draftPick(s, +el.dataset.pick);
+          if (!id) return;
+          writeSave(s);
+          audio.jingle('sign');
+          close();
+          await Assets.ensureKit(homeKitGroups(s)); // the rookie in our colours
+          this.app.goHub('team');
+          const role = member(id).role;
+          this.modal(`<h2>${t('{name} pulls on the {club} jersey!', { name: esc(p.name), club: esc(CLUB.nick) })}</h2>
+            <div class="card-head" style="margin:0"><img src="${portrait(id, 0, null, 152, 'grin')}" alt="" style="width:76px;height:76px"><div>
+            ${otherPicks(d).map((o) => `<p style="margin:0 0 4px">${t('The {team} took {name}.', { team: esc(o.team.name), name: esc(o.name) })}</p>`).join('')}
+            <p class="muted" style="margin:0;font-size:13px">${t('Dress {name} at {role} from the Team tab, or before a match.', { name: esc(p.name), role: t(ROLE_NAME[role]).toLowerCase() })}</p></div></div>
+            <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Later')}</button><button class="btn gold" id="dress-now">${t('Dress now')}</button></div>`, (m2, close2) => {
+            this.click('#dress-now', () => { setLineup(s, id); writeSave(s); audio.sfx('confirm'); close2(); this.hub('team'); }, m2);
+          });
+        }, m);
+      });
+    }, r);
+  }
+
   skillsNight(sk, onEvent, onGame) {
     const star = member(sk.star);
     const events = SKILLS_EVENTS.map((e) => {
@@ -920,7 +1060,7 @@ export class UI {
           <img src="${portrait(id, 0, null, 152)}" alt="">
           <div style="min-width:0">
             <h3>${esc(m.name)}</h3>
-            <div class="sub">${esc(t(m.title))}${m.recruit ? ` · ${t('signed')}` : ''}</div>
+            <div class="sub">${esc(t(m.title))}${m.recruit ? ` · ${t('signed')}` : ''}${m.rookie ? ` · <span class="pot" title="${esc(t(POTENTIAL_GRADE[m.rookie.potential]))}">${stars(m.rookie.potential)}</span>` : ''}</div>
             <div class="lvl">${t('LV {n}', { n: r.level })}${r.points ? ` <span style="font-size:15px">· ${t(r.points > 1 ? '{n} points to spend' : '{n} point to spend', { n: r.points })}</span>` : ''}</div>
           </div>
         </div>
@@ -1398,7 +1538,7 @@ export class UI {
     const groups = groupsOf(s);
     const off = !onlineOn(s) ? t('Online leaderboards are off in Settings.') : !configured() ? t('Couldn\'t reach the server. Try again in a moment.') : '';
     const list = groups.length ? groups.map((g) => `<div class="lb-row fb-row"><span class="lb-name">${esc(g.name)} <span class="lb-tag">${esc(g.code)}</span></span>
-        <span class="row" style="gap:6px;margin:0"><button class="btn small ghost" data-invite="${g.code}">${btnIcon('icons/share')} ${navigator.share ? t('Invite') : t('Copy link')}</button><button class="btn small ghost" data-leave="${g.code}">${t('Leave')}</button></span></div>`).join('')
+        <span class="row" style="gap:6px;margin:0"><button class="btn small ghost" data-cup="${g.code}"><img class="btn-ico" src="${cupPlaceImg(1, 48)}" alt=""> ${t('Weekly Cup')}</button><button class="btn small ghost" data-invite="${g.code}">${btnIcon('icons/share')} ${navigator.share ? t('Invite') : t('Copy link')}</button><button class="btn small ghost" data-leave="${g.code}">${t('Leave')}</button></span></div>`).join('')
       : `<p class="muted" style="font-size:13px">${t('Not on any friends boards yet.')}</p>`;
     const full = groups.length >= MAX_GROUPS;
     this.modal(`
@@ -1428,12 +1568,38 @@ export class UI {
         const g = groups.find((x) => x.code === el.dataset.leave);
         busy(async () => { await leaveGroup(s, g.code); return t('You left {name}.', { name: g.name }); });
       }, m);
+      this.click('[data-cup]', (el) => { audio.sfx('click'); close(); this.weeklyCup(el.dataset.cup, () => this.friendsBoards('', back)); }, m);
       this.click('[data-invite]', (el) => {
         const g = groups.find((x) => x.code === el.dataset.invite);
         const link = inviteLink(g.code), text = t('Join my Puckbound friends board, {name}: code {code}', { name: g.name, code: g.code });
         if (navigator.share) navigator.share({ title: t('Friends boards'), text, url: link }).catch(() => {});
         else navigator.clipboard?.writeText(`${text}\n${link}`).then(() => { msg.textContent = t('Copied!'); }, () => { msg.textContent = t('Copy failed'); });
       }, m);
+    }, true, () => back && back());
+  }
+
+  // A friends board's Weekly Cup: this week's table so far (points, wins and the place on
+  // each drill), and last week's top three on the podium.
+  weeklyCup(code, back = null) {
+    const s = this.app.save;
+    const g = groupsOf(s).find((x) => x.code === code);
+    const drills = ['cones', 'sniper', 'rondo', 'breakaway'];
+    this.modal(`<h2><img class="h-ico" src="${cupPlaceImg(1, 96)}" alt="">${t('Weekly Cup')} · ${esc(g ? g.name : code)}</h2><div id="cup-body"><p class="muted">${t('Looking…')}</p></div>
+      <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>${t('Back')}</button></div>`, (m) => {
+      const body = m.querySelector('#cup-body');
+      fetchCup(s, code).then((r) => {
+        const row = (x) => `<div class="lb-row cup-row ${x.me ? 'me' : ''}"><span class="lb-rank">${x.place <= 3 ? `<img src="${cupPlaceImg(x.place, 48)}" alt="${x.place}" width="22" height="22">` : x.place}</span>
+          <span class="lb-name">${esc(x.name)} <span class="lb-tag">${esc(x.tag || '')}</span></span>
+          <span class="cup-places">${drills.map((d) => `<span title="${esc(t(DRILLS[d].name))}"><img src="${ico(DRILLS[d].icon, 40)}" alt="">${x.places[d] || '–'}</span>`).join('')}</span>
+          <b class="lb-score">${t('{n} pts', { n: x.points })}</b></div>`;
+        const podium = r.last.standings.filter((x) => x.place <= 3);
+        body.innerHTML = `
+          <p style="font-size:13.5px;margin:0 0 8px">${t('Every drill this week counts: 5, 3 and 2 points for the top three on each board, 1 for taking part. Ends in {time}.', { time: resetsIn(r.resetsAt) })}</p>
+          <div class="lb-list">${r.standings.length ? r.standings.map(row).join('') : `<p class="muted" style="font-size:13px">${t('No runs on this board yet this week. Play a drill to get on it.')}</p>`}</div>
+          <div class="label" style="margin:12px 0 6px">${t('Last week')}</div>
+          ${podium.length >= 2 ? `<div class="cup-podium">${[1, 0, 2].map((i) => podium[i]).filter(Boolean).map((x) => `<div class="pod p${x.place} ${x.me ? 'me' : ''}"><img src="${cupPlaceImg(x.place, 96)}" alt=""><b>${esc(x.name)}</b><small>${t('{n} pts', { n: x.points })}</small></div>`).join('')}</div>`
+            : `<p class="muted" style="font-size:13px">${t('No cup last week: it takes at least two players.')}</p>`}`;
+      }).catch(() => { body.innerHTML = `<p class="muted">${t('Couldn\'t reach the server. Try again in a moment.')}</p>`; });
     }, true, () => back && back());
   }
 

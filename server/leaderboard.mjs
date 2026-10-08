@@ -26,6 +26,10 @@ import { createHash, randomInt } from 'crypto';
 //
 // Challenges: any run (not just a best) can be filed under a short code for a friend to
 // race: POST {op: 'challenge_put'} returns the code, GET ?challenge=CODE the run.
+//
+// The Weekly Cup: every friends board runs one, Monday to Sunday, over the group's four
+// weekly drill boards. GET ?cup=CODE returns this week's standings and last week's.
+// Nothing new is stored: past weeks' group boards are still there to read.
 
 export const BOARDS = {
   cones: { better: 'lower', min: 8, max: 200, decimals: 2 }, // seconds
@@ -241,6 +245,30 @@ export function rankKey(board, score, at) {
   return (base * 10000000000000n + (9999999999999n - BigInt(at))).toString();
 }
 
+// A Weekly Cup table: 5, 3 and 2 points for the top three on each drill board, 1 for taking
+// part; most points first, then most wins. Ties share a place.
+const CUP_POINTS = [5, 3, 2];
+async function cupTable(store, code, wk, player) {
+  const table = new Map();
+  for (const board of WEEKLY) {
+    const rows = await store.top(groupKey(weekBoard(board, wk), code), TOP);
+    rows.forEach((r, i) => {
+      const e = table.get(r.player) || { player: r.player, points: 0, firsts: 0, places: {} };
+      Object.assign(e, { name: r.name, tag: r.tag });
+      e.points += CUP_POINTS[i] || 1;
+      if (i === 0) e.firsts++;
+      e.places[board] = i + 1;
+      table.set(r.player, e);
+    });
+  }
+  const list = [...table.values()].sort((a, b) => b.points - a.points || b.firsts - a.firsts || String(a.name).localeCompare(String(b.name)));
+  let place = 0;
+  return list.map((e, i) => {
+    if (!i || e.points !== list[i - 1].points || e.firsts !== list[i - 1].firsts) place = i + 1;
+    return { place, name: e.name, tag: e.tag, points: e.points, firsts: e.firsts, places: e.places, ...(e.player === player ? { me: true } : {}) };
+  });
+}
+
 const ok = (body, status = 200) => ({ status, body });
 const bad = (msg, status = 400) => ({ status, body: { error: msg } });
 
@@ -253,6 +281,18 @@ export async function handle(req, store, now = Date.now()) {
       const c = await store.get(CHALLENGE_BOARD, code);
       if (!c) return bad('not found', 404);
       return ok({ challenge: { board: c.b, name: c.name, tag: c.tag, char: c.char, score: c.score, path: c.path, splits: c.splits, attempts: c.attempts, at: c.at } });
+    }
+    if (req.query.cup !== undefined) {
+      const code = String(req.query.cup).toUpperCase();
+      if (!validCode(code)) return bad('bad code');
+      const g = await store.get(GROUP_BOARD, code);
+      if (!g) return bad('not found', 404);
+      const player = validPlayer(req.query.player) ? req.query.player : null;
+      const week = weekOf(now), last = weekOf(now - 7 * DAY);
+      return ok({
+        code, name: g.name, week: week.key, resetsAt: week.ends, standings: await cupTable(store, code, week.key, player),
+        last: { week: last.key, standings: await cupTable(store, code, last.key, player) },
+      });
     }
     const board = req.query.board;
     if (!BOARDS[board]) return bad('unknown board'); // (saves aren't readable this way)

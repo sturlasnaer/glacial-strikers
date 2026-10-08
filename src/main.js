@@ -8,10 +8,10 @@ import { Input, TouchControls, mergeInputs } from './input.js';
 import { audio } from './audio.js';
 import { PadNav } from './padnav.js';
 import { firstTime } from './guide.js';
-import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as cloudBackup } from './online.js';
+import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as cloudBackup, settleCups } from './online.js';
 import { ARENA_MUSIC } from './songs.js';
 import { ResurfacerLap } from './scenery.js';
-import { UI, controlsHtml, crest, ruleIconSrc } from './ui.js';
+import { UI, controlsHtml, crest, ruleIconSrc, cupPlaceImg } from './ui.js';
 import { HUD } from './hud.js';
 import { toScreen } from './rink.js';
 import { Replay } from './replay.js';
@@ -27,7 +27,9 @@ import { standings } from './league.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan, recordClassic, recordAllStar } from './league.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ALLSTAR, teamInfo } from './data.js';
+import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo } from './data.js';
+import { offerDraft } from './draft.js';
+import { recordCareer } from './career.js';
 import {
   loadSave, newSave, writeSave, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards,
   lineupIds, homeKitGroups, allStarVote, allStarConfig,
@@ -108,7 +110,7 @@ class App {
     window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' && !this.isTouch) { this.isTouch = true; if (this.scene === 'match') this.hud.show(this.match, this.cur.teamId); } });
     this.input.onKey((code) => this.onKey(code));
     // newcomer art (Batch AA) is needed once a rival slot has been signed away, or for drafted rookies
-    Assets.newcomerCheck = () => Object.keys(this.save.roster).some((k) => RECRUITS[k] || this.save.roster[k].rookie);
+    Assets.newcomerCheck = () => Object.keys(this.save.roster).some((k) => RECRUITS[k] || ROOKIES[k]);
     this.setupInstall();
 
     flushScores(this.save).then((n) => { if (n) writeSave(this.save); });
@@ -840,6 +842,7 @@ class App {
     const chemUps = applyChem(s, rewards.chem);
     s.record.played++;
     s.record.goals += summary.score[0];
+    recordCareer(s, summary, rewards.won);
     const scorers = (team) => Object.fromEntries(summary.skaters.filter((k) => k.team === team && k.goals).map((k) => [k.id, k.goals]));
     const allstar = !!(c.fixture && c.fixture.kind === 'allstar');
     const firstWin = rewards.won && !((s.rivals && s.rivals[c.teamId] && s.rivals[c.teamId].wins) > 0);
@@ -1004,6 +1007,7 @@ class App {
 
   resetSave() {
     this.save = newSave();
+    setRookies({});
     this.ach = new AchievementTracker(this.save, (a) => this.toastAchievement(a));
     writeSave(this.save);
     this.goTitle();
@@ -1071,8 +1075,16 @@ class App {
     audio.setArena('menu');
     flushScores(this.save).then((n) => { if (n) writeSave(this.save); });
     cloudBackup(this.save).then((t) => { if (t) writeSave(this.save); });
+    // last week's friends-board cups: a top-three finish gets a toast and a place in the trophies
+    settleCups(this.save).then((won) => {
+      if (!won.length) return;
+      writeSave(this.save);
+      won.forEach((w, i) => setTimeout(() => this.toast(cupPlaceImg(w.place, 72), t('Weekly Cup · {name}', { name: w.name }),
+        w.place === 1 ? t('You won the Weekly Cup!') : w.place === 2 ? t('Second in the Weekly Cup') : t('Third in the Weekly Cup'), t('{n} points last week', { n: w.points })), 800 + i * 2600));
+    });
     this.ui.guideBudget = 1; // one new coach's tip per visit
     if (this.awardsNight()) return;
+    if (offerDraft(this.save)) writeSave(this.save); // Draft Day opens once the awards are handed out
     this.ui.hub(tab);
     this.setHubBackground();
     this.music('hub');

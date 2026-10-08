@@ -8,10 +8,11 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 **Next batches:**
 1. **AD**: Draft Day: a draft-hall painting, prospect cards, the rookies pulling on our jersey, and a few icons.
-2. **AE**: the Friends Weekly Cup (a small cup, a podium, rosettes) and icons for the new career stats page.
-3. **AF**: the last 22 achievements that still borrow other icons.
-4. **AG**: a linesman who drops the puck at faceoffs and makes the calls.
-5. **AH**: a second rookie class, three more newcomers, so drafts don't repeat faces.
+2. **AI**: Fáfnir and Fenrir, twin legends who turn up in recruiting now and then: a look check first (portraits and one standing frame each), then their full pose sets.
+3. **AE**: the Friends Weekly Cup (a small cup, a podium, rosettes) and icons for the new career stats page.
+4. **AF**: the last 22 achievements that still borrow other icons.
+5. **AG**: a linesman who drops the puck at faceoffs and makes the calls.
+6. **AH**: a second rookie class, three more newcomers, so drafts don't repeat faces.
 
 ## Format notes
 
@@ -75,13 +76,28 @@ At the end of each season, after Awards Night, the league holds a draft. Three p
 
 18 frames and images.
 
+## Batch AI: Fáfnir and Fenrir, the twins
+
+Two hidden legends who now and then turn up in Scouting as free agents, rare and very good. They're twins, and when they dress together they get a twin synergy of their own. They're special, so they deserve the best art in the game.
+
+- **Fáfnir**, a defender: very fast, with a cannon of a shot, and **a dragon's face**: a chibi dragon head (short snout, small curled horns, a frill at the jaw, scales), emerald green with a gold belly and gold eyes, horns poking out past the helmet. A long tail, tucked low so it doesn't read as a stick.
+- **Fenrir**, a winger and sniper: very fast and technical, with **a wolf's face**: a chibi wolf head (pointed ears through the helmet, a long muzzle, a ruff of fur at the collar), storm grey and silver with ice-blue eyes. A bushy tail.
+- They're twins: the same build and height (a little taller than our captains), a matching gold twin-star patch on the shoulder of both jerseys (no lettering), mirrored poses where it suits.
+- Jerseys in **coral and violet** like every rival, so the game recolours them into our kit when signed. Keep coral and violet off the scales, fur and eyes.
+
+**Part 1 first, so the look can be approved:** both portraits with the five expressions (neutral, determined, grin, shocked, defeated) and one standing frame each (`south` idle), plus a 1536×864 **reveal painting** of the twins back to back on the ice for the moment they turn up in Scouting. About 13 images. Please stop there and send it.
+
+**Part 2, once the look is approved:** each twin with exactly the Batch AA pose list (the v2 skating set, the Batch A diagonals and hit reactions, the Batch C side strides, glides and stops, a signature celebration and gear masks like Batch M), a cut-in banner each like the rivals' `banners`, **a joint celebration** (the two of them leaping into a chest bump, 4 frames, drawn as one pair), and a combo icon `icons/combo_twins` (a dragon's head and a wolf's head facing each other in a ring, reward-icon size). Sheet names `fafnir_*` and `fenrir_*`.
+
 ## Batch AE: Friends Weekly Cup and career stats icons
 
 **Weekly Cup:** every friends board runs a cup each week (Monday to Sunday): the best score of the week on each board counts, and the top three get the cup and rosettes on their profile.
 
-- **Weekly Cup trophy**, about 120 px tall in game, in the style of `badges/frostline_cup` but clearly smaller and humbler: a silver bowl on a dark wooden base with a teal ribbon tied to one handle. Plus 2 glint frames like the Frostline Cup's. 3 frames.
-- **Podium**: three ice-block steps (the middle one tallest) with gold, silver and bronze fronts, no numbers, about 360×140 px in game. The game stands the winners' portraits on top. 1 image.
-- **Rosettes**: gold, silver and bronze ribbon rosettes, reward-icon size, for the week's top three. 3 frames.
+- **Weekly Cup trophy**, about 120 px tall in game, in the style of `badges/frostline_cup` but clearly smaller and humbler: a silver bowl on a dark wooden base with a teal ribbon tied to one handle. Plus 2 glint frames like the Frostline Cup's. Frame names `badges/weekly_cup`, `badges/weekly_cup_glint_1` and `badges/weekly_cup_glint_2`. 3 frames.
+- **Podium**: three ice-block steps (the middle one tallest) with gold, silver and bronze fronts, no numbers, about 360×140 px in game. The game stands the winners' portraits on top. Frame name `badges/podium`. 1 image.
+- **Rosettes**: gold, silver and bronze ribbon rosettes, reward-icon size, for the week's top three: `badges/rosette_gold`, `badges/rosette_silver` and `badges/rosette_bronze`. 3 frames.
+
+Put these seven in the `badges` map of the add-on atlas (keys without the `badges/` prefix), like Batch X.
 
 **Career stats page:** a new page with every skater's lifetime numbers. These icons are read at 24–32 px next to numbers, so bold, simple shapes (about 96 px source is plenty), sheet `icons_ae.png`, frame names `icons/stat_<name>`:
 

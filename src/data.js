@@ -214,13 +214,28 @@ for (const [key, r] of Object.entries(RECRUITS)) {
 export const recruitKey = (teamId, kit) => `${teamId}_${ROLE[kit]}`;
 export const KIT_OF_ROLE = { C: 'frost', W: 'thunder', D: 'stone' };
 
-// Everything about a member of our roster ('frost', 'thunder', 'stone' or a recruit key).
+// Drafted rookies (Draft Day), by roster id. They live in the save; loadSave and draftPick
+// register them here so member() knows them.
+export const ROOKIES = {};
+export function setRookies(list = {}) {
+  for (const k of Object.keys(ROOKIES)) delete ROOKIES[k];
+  Object.assign(ROOKIES, list);
+}
+export const ROOKIE_TITLE = { C: 'Rookie Centre', W: 'Rookie Winger', D: 'Rookie Defender' };
+
+// Everything about a member of our roster ('frost', 'thunder', 'stone', a recruit key or a
+// rookie's id). Signings and rookies are drawn from rival or newcomer art in home colours.
 export function member(who) {
+  const k = ROOKIES[who];
+  if (k) {
+    const c = CHARACTERS[k.kit];
+    return { who, kit: k.kit, def: c, name: k.name, title: ROOKIE_TITLE[c.role], base: k.base, role: c.role, blurb: k.blurb, recruit: null, rookie: k, sprite: `newcomer_${ROLE[k.kit]}`, look: 'homekit' };
+  }
   const r = RECRUITS[who];
   const c = CHARACTERS[r ? r.kit : who];
   if (!c) return null;
-  if (!r) return { who, kit: who, def: c, name: c.name, title: c.title, base: c.base, role: c.role, blurb: c.blurb, recruit: null };
-  return { who, kit: r.kit, def: c, name: r.name, title: r.title, base: r.base, role: c.role, blurb: r.blurb, recruit: r };
+  if (!r) return { who, kit: who, def: c, name: c.name, title: c.title, base: c.base, role: c.role, blurb: c.blurb, recruit: null, sprite: null, look: null };
+  return { who, kit: r.kit, def: c, name: r.name, title: r.title, base: r.base, role: c.role, blurb: r.blurb, recruit: r, sprite: r.sprite, look: 'homekit' };
 }
 
 // The combo two members fire comes from their kits; the bond itself is between them.

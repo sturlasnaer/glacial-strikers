@@ -175,6 +175,44 @@ export function resetsIn(at, now = Date.now()) {
   return d ? t('{d}d {h}h', { d, h }) : t('{h}h {m}m', { h, m: m % 60 });
 }
 
+// ------------------------------------------------------------------ the Weekly Cup
+// Every friends board runs a cup over its four weekly drill boards (5, 3 and 2 points for the
+// top three on each, 1 for taking part). Resolves to { name, week, resetsAt, standings,
+// last: { week, standings } }, the rows marked `me` for this player.
+export function fetchCup(save, code) {
+  if (!configured()) return Promise.reject(new Error('not configured'));
+  return request('GET', { cup: code, player: onlineState(save).id });
+}
+
+// The ISO week (UTC) a time falls in, as the server keys it ('2026-W41').
+export function weekKey(ms) {
+  const DAY = 86400000, d = new Date(ms);
+  const monday = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - ((d.getUTCDay() + 6) % 7) * DAY;
+  const year = new Date(monday + 3 * DAY).getUTCFullYear();
+  const jan4 = Date.UTC(year, 0, 4), week1 = jan4 - ((new Date(jan4).getUTCDay() + 6) % 7) * DAY;
+  return `${year}-W${String(Math.round((monday - week1) / (7 * DAY)) + 1).padStart(2, '0')}`;
+}
+
+// Once a week per board, see how last week's cup ended. A top-three finish (on a board where
+// at least two played) goes into the save's trophy case; resolves to the new ones.
+export async function settleCups(save, now = Date.now()) {
+  if (!onlineOn(save) || !configured()) return [];
+  const st = onlineState(save), last = weekKey(now - 7 * 86400000), out = [];
+  st.cups ||= {}; // board code -> the last week settled
+  for (const g of groupsOf(save)) {
+    if (st.cups[g.code] === last) continue;
+    const r = await fetchCup(save, g.code).catch(() => null);
+    if (!r) continue;
+    st.cups[g.code] = r.last.week;
+    const me = r.last.standings.find((x) => x.me);
+    if (!me || me.place > 3 || r.last.standings.length < 2) continue;
+    const won = { week: r.last.week, code: g.code, name: r.name, place: me.place, of: r.last.standings.length, points: me.points };
+    (save.weeklyCups ||= []).push(won);
+    out.push(won);
+  }
+  return out;
+}
+
 // ------------------------------------------------------------------ cloud saves
 // The save is backed up under a random backup code (only a hash of it is stored on the
 // server). The same code restores it on another device, which then keeps backing up to

@@ -897,3 +897,58 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .sk-rank { font-family: var(--display); color: var(--ice); text-align: right; }
 .sk-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sk-row b { font-family: var(--display); font-weight: normal; font-size: 15px; }
+
+/* Draft Day: three prospect cards, rimmed by potential (the Batch AD card frames will replace the rims) */
+.draft { width: min(1040px, calc(100% - 24px)); }
+.prospects { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.prospect { display: grid; gap: 8px; align-content: start; border-width: 3px; }
+.prospect.pot-2 { border-color: #b07a4a; }
+.prospect.pot-3 { border-color: #c3d3ea; }
+.prospect.pot-4, .prospect.pot-5 { border-color: var(--gold); }
+.prospect.pot-5 { box-shadow: 0 0 14px rgba(255, 212, 94, 0.45); }
+.prospect .scout-line { margin: 0; font-size: 13px; font-style: italic; }
+.prospect .btn { justify-self: stretch; }
+.stars { font-family: var(--body); color: var(--gold); letter-spacing: 1px; font-size: 0.95em; white-space: nowrap; }
+.stars i { color: #4a5a78; font-style: normal; }
+@media (max-width: 760px) { .prospects { grid-template-columns: 1fr; } }
+
+/* Career stats */
+.car-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; }
+.car-tile { display: grid; justify-items: center; gap: 1px; padding: 6px 4px; background: rgba(255, 255, 255, 0.05); border-radius: 6px; text-align: center; }
+.car-tile b { font-family: var(--display); font-weight: normal; font-size: 26px; line-height: 1; color: var(--cream); }
+.car-tile small { font-size: 11.5px; color: #c3d3ea; }
+.car-tile .h-ico { margin: 0; width: 26px; height: 26px; }
+.car-wrap { flex: none; overflow-x: auto; touch-action: pan-x pan-y; } /* (a scroll box in the modal's column would shrink to nothing) */
+.car-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.car-table th { font-family: var(--display); font-weight: normal; font-size: 15px; color: var(--ice-2); padding: 2px 5px; text-align: right; white-space: nowrap; }
+.car-table td { padding: 4px 5px; text-align: right; border-top: 1px solid rgba(255, 255, 255, 0.06); font-variant-numeric: tabular-nums; }
+.car-table tr[data-car] { cursor: pointer; }
+.car-table tr[data-car]:hover td { background: rgba(113, 220, 232, 0.07); }
+.car-table td.lead { color: var(--gold); font-weight: 700; }
+.car-table .car-who { text-align: left; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.car-who img { width: 30px; height: 30px; }
+.car-who span { display: grid; line-height: 1.1; }
+.car-who small { font-size: 11px; color: #c3d3ea; }
+.car-table.small { margin-top: 8px; }
+.th-ico { width: 18px; height: 18px; vertical-align: -4px; margin-right: 2px; }
+.car-goalie { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+.car-goalie img { width: 30px; height: 30px; }
+.car-award { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 2px 0; }
+.car-award img { width: 28px; height: 28px; }
+
+/* the Weekly Cup */
+.cup-row { grid-template-columns: 2.2em 1fr auto auto; align-items: center; }
+.cup-row.me { background: rgba(113, 220, 232, 0.12); }
+.cup-places { display: flex; gap: 6px; font-size: 12px; color: #c3d3ea; }
+.cup-places span { display: inline-flex; align-items: center; gap: 1px; }
+.cup-places img { width: 16px; height: 16px; }
+.cup-podium { display: flex; justify-content: center; align-items: flex-end; gap: 10px; }
+.pod { display: grid; justify-items: center; gap: 2px; padding: 8px 10px 6px; min-width: 96px; border-radius: 6px 6px 0 0; background: rgba(255, 255, 255, 0.06); text-align: center; }
+.pod.p1 { padding-top: 18px; background: rgba(255, 212, 94, 0.14); }
+.pod.me b { color: var(--ice); }
+.pod img { width: 48px; height: 48px; }
+.pod.p1 img { width: 64px; height: 64px; }
+.pod small { font-size: 11.5px; color: #c3d3ea; }
+.cup-shelf { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.cup-won { display: grid; justify-items: center; width: 84px; text-align: center; font-size: 11.5px; line-height: 1.15; }
+.cup-won img { width: 44px; height: 44px; }

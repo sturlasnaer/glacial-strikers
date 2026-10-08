@@ -1,0 +1,82 @@
+// Draft Day and career numbers: prospects, picking a rookie, how rookies grow, and the
+// career book filling up from match summaries.
+//   node tools/test_draft.mjs
+import { newSave, applyExp, canRaise, capBonus, matchConfig, homeKitGroups, rosterIds, STAT_CAP_BONUS } from '../src/progress.js';
+import { makeDraft, offerDraft, draftOpen, draftPick, otherPicks } from '../src/draft.js';
+import { member, ROOKIES, setRookies, TOURNAMENT } from '../src/data.js';
+import { careerOf, recordCareer, careerRows } from '../src/career.js';
+
+let pass = 0, fail = 0;
+const check = (name, cond, info) => { if (cond) pass++; else { fail++; console.log('✗', name, info ?? ''); } };
+let seed = 7;
+const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+
+const s = newSave();
+setRookies({});
+check('no draft mid-season', !offerDraft(s) && !draftOpen(s));
+s.league.phase = 'done';
+check('no draft before the awards', !offerDraft(s));
+s.league.awards = [];
+check('draft once the season is over', offerDraft(s) && draftOpen(s) && !offerDraft(s));
+for (let i = 0; i < 40; i++) {
+  const d = makeDraft(s, 1, rnd);
+  const roles = d.prospects.map((p) => member(p.kit).role).join('');
+  if (roles !== 'CWD') { check('one prospect per position', false, roles); break; }
+  for (const p of d.prospects) {
+    const sum = Object.values(p.base).reduce((a, b) => a + b, 0), kitSum = Object.values(member(p.kit).base).reduce((a, b) => a + b, 0);
+    if (p.potential < 2 || p.potential > 5 || sum !== kitSum - p.potential || Object.values(p.base).some((v) => v < 2 || v > 10)) { check('prospect stats', false, p); break; }
+  }
+  if (new Set(d.prospects.map((p) => p.name)).size !== 3 || new Set(d.rivals).size !== 2) { check('three names, two rivals', false, d); break; }
+}
+pass++; // the loop above
+
+s.draft = makeDraft(s, 1, rnd);
+const p = s.draft.prospects[1];
+const id = draftPick(s, 1);
+check('the pick joins the roster', id === 'rk1' && s.roster.rk1 && rosterIds(s).includes('rk1') && s.rookies.rk1.name === p.name, s.rookies);
+check('a rookie is a member', member('rk1').role === 'W' && member('rk1').sprite === 'newcomer_w' && member('rk1').look === 'homekit' && member('rk1').rookie.potential === p.potential);
+check('only one pick', draftPick(s, 0) === null && !draftOpen(s));
+check('the other two went to rivals', otherPicks(s.draft).length === 2 && otherPicks(s.draft).every((o) => o.team && o.name !== p.name));
+check('newcomer art in the home kit', homeKitGroups(s).includes('newcomers'));
+s.lineup.W = 'rk1';
+const cfg = matchConfig(s, 'lynx', TOURNAMENT.stages[0]);
+const w = cfg.teams[0].skaters[1];
+check('a rookie dresses in our colours', w.who === 'rk1' && w.sprite === 'newcomer_w' && w.look === 'homekit', w);
+
+// growth: more EXP the higher the potential, and more room in each stat
+const before = s.roster.rk1.exp;
+applyExp(s, 'rk1', 50);
+check('rookies learn faster', s.roster.rk1.exp - before === Math.round(50 * (1 + 0.15 * (p.potential - 1))), s.roster.rk1.exp);
+check('a bigger stat cap', capBonus('rk1') === STAT_CAP_BONUS + Math.max(0, p.potential - 2) && capBonus('frost') === STAT_CAP_BONUS);
+s.roster.rk1.points = 9;
+const k = Object.keys(p.base).find((x) => p.base[x] <= 6);
+s.roster.rk1.alloc[k] = STAT_CAP_BONUS;
+check('room past the usual cap', canRaise(s.roster.rk1, 'rk1', k) === p.potential > 2);
+
+// a second save forgets the first one's rookies
+setRookies({});
+check('rookies belong to their save', member('rk1') === null);
+setRookies(s.rookies);
+
+// career numbers
+const sum = (goals) => ({ skaters: [
+  { id: 'frost', team: 0, goals, assists: 1, hits: 2, steals: 1, shots: 4 },
+  { id: 'rk1', team: 0, goals: 1, assists: 0, hits: 0, steals: 0, shots: 2 },
+  { id: 'lynx_c', team: 1, goals: 3, assists: 0, hits: 0, steals: 0, shots: 5 },
+], shots: [6, 9], saves: [8, 4], score: [goals + 1, 0] });
+recordCareer(s, sum(2), true);
+recordCareer(s, sum(0), false);
+const c = careerOf(s);
+check('career totals', c.skaters.frost.gp === 2 && c.skaters.frost.g === 2 && c.skaters.frost.a === 2 && c.skaters.frost.w === 1 && c.skaters.rk1.g === 2, c.skaters);
+check('only our players', !c.skaters.lynx_c);
+check('goalie line', c.goalie.gp === 2 && c.goalie.sv === 16 && c.goalie.sa === 18 && c.goalie.so === 2, c.goalie);
+check('per season', c.skaters.frost.seasons[1].gp === 2);
+const rows = careerRows(s, rosterIds(s));
+check('rows by points', rows[0].id === 'frost' && rows[0].pts === 4 && rows.some((r) => r.id === 'thunder' && r.gp === 0), rows.map((r) => r.id + r.pts));
+
+const old = newSave();
+old.league.stats = { skaters: { 'home:frost': { key: 'home:frost', team: 'home', face: 'frost', gp: 5, g: 3, a: 2, hits: 1, steals: 0, shots: 9 } }, goalies: { home: { gp: 5, sa: 60, sv: 54, so: 1 } } };
+check('an old save starts from this season', careerOf(old).skaters.frost.g === 3 && careerOf(old).goalie.sv === 54);
+
+console.log(`draft and career: ${pass} passed, ${fail} failed`);
+process.exit(fail ? 1 : 0);

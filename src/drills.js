@@ -55,7 +55,7 @@ const skaterCfg = (save, who) => {
   const m = member(who);
   return {
     def: m.def, who, stats: effectiveStats(who, save.roster[who]), name: m.name, perks: perkNames(save.roster[who]),
-    sprite: m.recruit ? m.recruit.sprite : null, look: m.recruit ? 'homekit' : null, gear: { ...save.roster[who].gear },
+    sprite: m.sprite, look: m.look, gear: { ...save.roster[who].gear },
   };
 };
 const homeChem = (save) => Object.fromEntries(Object.keys(save.chem || {}).map((k) => [k, chemLevel(save.chem[k] || 0)]));
@@ -138,7 +138,7 @@ class DrillBase {
 // A stand-in skater for drawing a ghost (the renderer picks its frames; no physics).
 function ghostSkater(char, at) {
   const mem = member(char) || member('frost');
-  return { team: 0, def: mem.def, sprite: mem.recruit ? mem.recruit.sprite : mem.def.sprite, look: mem.recruit ? 'homekit' : null,
+  return { team: 0, def: mem.def, sprite: mem.sprite || mem.def.sprite, look: mem.look,
     x: at.x, y: at.y, face: 0, speed: 0, animT: 0, stun: 0, celebrate: 0, ultWindup: 0,
     charging: false, dashT: 0, state: 'skate', stopping: false, gliding: false, d: { maxSpeed: 330 } };
 }
