@@ -7,7 +7,7 @@ import {
 import { newLeague, migrateLeague } from './league.js';
 import { lookFor } from './modular.js';
 import { seasonStats } from './awards.js';
-import { rivalSub, setFills, agedStats } from './slots.js';
+import { rivalSub, setFills, agedStats, grown, goalieGrowth, leagueGrowth } from './slots.js';
 import { t } from './i18n.js';
 import { addNews } from './news.js';
 
@@ -101,7 +101,8 @@ export function clearSave() {
   try { localStorage.removeItem(KEY); } catch { /* storage unavailable */ }
 }
 
-export const expToNext = (level) => 100 + (level - 1) * 60;
+// (the top levels take longer: a season or so each, once you're past six)
+export const expToNext = (level) => 100 + (level - 1) * 60 + Math.max(0, level - 5) ** 2 * 45;
 
 export const chemLevel = (xp) => CHEM_LEVELS.filter((t) => xp >= t).length;
 
@@ -188,10 +189,12 @@ export function campChange(save, id, kind, value) {
   return true;
 }
 
+// What a rival's star costs now: their price, more each season as the league gets better.
+export const recruitPrice = (save, key) => Math.round((RECRUITS[key].price * (1 + 0.12 * ((save.season || 1) - 1))) / 10) * 10;
 export function signRecruit(save, key) {
   const r = RECRUITS[key];
-  if (!r || recruitStatus(save, key) !== 'open' || save.coins < r.price) return null;
-  save.coins -= r.price;
+  if (!r || recruitStatus(save, key) !== 'open' || save.coins < recruitPrice(save, key)) return null;
+  save.coins -= recruitPrice(save, key);
   addNews(save, { k: 'weSign', name: r.name, team: r.team });
   return addRecruit(save, key);
 }
@@ -203,7 +206,7 @@ export function addRecruit(save, key) {
   const m = newMember();
   const level = joinLevel(save);
   m.level = level;
-  m.points = level - 1; // yours to spend
+  m.points = level - 1 + 4 * leagueGrowth(save); // yours to spend (and what they've grown since the first season)
   const opts = member(key).def.perks;
   PERK_LEVELS.forEach((lv, i) => { if (level >= lv) m.perks.push(opts[i][r.perks[i]]); });
   save.roster[key] = m;
@@ -261,8 +264,9 @@ export function homeGoalie(save) {
 // A rival's goalie: their own, or a backup once you've signed theirs.
 export function rivalGoalie(save, teamId) {
   const t = TEAMS[teamId];
-  if (isSigned(save, teamId + '_g')) return { stats: { rfx: Math.max(3, t.goalie.rfx - 1), pos: Math.max(3, t.goalie.pos - 1) }, name: t.subs.goalie || t.names.goalie, art: 'newcomer', style: 'hybrid', who: 'sub_goalie' }; // (the plain away goalie until the newcomer goalie, Batch AN)
-  return { stats: { ...t.goalie }, name: t.names.goalie, art: t.art || 'newcomer', style: t.gstyle || 'hybrid' }; // (an expansion club's goalie: the newcomer goalie)
+  const gg = goalieGrowth(save); // (the league gets better)
+  if (isSigned(save, teamId + '_g')) return { stats: { rfx: Math.max(3, t.goalie.rfx - 1) + gg, pos: Math.max(3, t.goalie.pos - 1) + gg }, name: t.subs.goalie || t.names.goalie, art: 'newcomer', style: 'hybrid', who: 'sub_goalie' }; // (the plain away goalie until the newcomer goalie, Batch AN)
+  return { stats: { rfx: t.goalie.rfx + gg, pos: t.goalie.pos + gg }, name: t.names.goalie, art: t.art || 'newcomer', style: t.gstyle || 'hybrid' }; // (an expansion club's goalie: the newcomer goalie)
 }
 
 export function goalieStatus(save, key) {
@@ -327,8 +331,8 @@ export function matchConfig(save, teamId, stage, opts = {}) {
       for (const [k, v] of Object.entries(t.bonus || {})) stats[k] = Math.max(1, stats[k] + v);
       // a slot whose skater you signed: whoever they brought in, a newcomer in their colours
       const sub = rivalSub(save, teamId, id);
-      if (sub) return { def: sub.def, who: 'sub_' + id, stats: withBonus(sub.stats, t), name: sub.name, perks: [], sprite: sub.sprite, parts: sub.parts, hand: sub.hand };
-      return { def: slotDef(teamId, id), stats: agedStats(save, teamId, id, stats), name: t.names[id], perks: [], sprite: slotSprite(teamId, id), parts: slotLook(teamId, id), hand: RECRUITS[recruitKey(teamId, id)]?.hand };
+      if (sub) return { def: sub.def, who: 'sub_' + id, stats: grown(save, withBonus(sub.stats, t)), name: sub.name, perks: [], sprite: sub.sprite, parts: sub.parts, hand: sub.hand };
+      return { def: slotDef(teamId, id), stats: grown(save, agedStats(save, teamId, id, stats)), name: t.names[id], perks: [], sprite: slotSprite(teamId, id), parts: slotLook(teamId, id), hand: RECRUITS[recruitKey(teamId, id)]?.hand };
     }),
     goalie: rivalGoalie(save, teamId),
     chem: Object.fromEntries(CAST_PAIRS.map((k) => [k, Math.min(3, (t.chem || 0) + (save.season > 1 ? 1 : 0))])),

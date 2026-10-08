@@ -2,7 +2,7 @@
 // and now and then a free agent signed mid-season, and a rival who'll take your call may
 // ring after a match with a trade offer of their own.
 import { CHARACTERS, RECRUITS, ARCHETYPES, ELEMENTS, STAT_KEYS, member, recruitKey, RIVAL_IDS } from './data.js';
-import { recruitStatus } from './progress.js';
+import { recruitStatus, recruitPrice } from './progress.js';
 import { tradeable, playerValue, TEAM_LIKES, trade } from './trades.js';
 import { vacated, fillOf } from './slots.js';
 import { randomLook } from './modular.js';
@@ -94,8 +94,8 @@ export function rivalOffer(save, rnd = Math.random) {
   const want = mine.map((id) => [id, score(id)]).sort((a, b) => b[1] - a[1])[0][0];
   const value = Math.round(playerValue(save, want) * (likes.includes(member(want).def.arch) ? 1.25 : 1));
   const theirs = KITS.map((k) => recruitKey(team, k)).filter((k) => recruitStatus(save, k) === 'open');
-  const get = [...theirs].sort((a, b) => Math.abs(RECRUITS[a].price - value) - Math.abs(RECRUITS[b].price - value))[0];
-  const gap = RECRUITS[get].price - value;
+  const get = [...theirs].sort((a, b) => Math.abs(recruitPrice(save, a) - value) - Math.abs(recruitPrice(save, b) - value))[0];
+  const gap = recruitPrice(save, get) - value;
   const coins = gap > 0 ? Math.ceil(gap / 10) * 10 : -Math.floor(-gap / 20) * 10;
   save.lastOffer = played;
   return { team, give: want, get, coins, likes: likes.includes(member(want).def.arch) };

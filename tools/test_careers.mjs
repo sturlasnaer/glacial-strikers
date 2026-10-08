@@ -2,8 +2,8 @@
 // old decline, the oldest retire after the awards and Draft Day fills their places; and every
 // signing, pick, trade, retirement and champion lands in Around the Frostline.
 //   node tools/test_careers.mjs
-import { newSave, matchConfig, recruitStatus, signRecruit, addRecruit } from '../src/progress.js';
-import { startAge, ageOf, formShift, agedStats, retireRivals, vacated, rivalSub, RETIRE_AT } from '../src/slots.js';
+import { newSave, matchConfig, recruitStatus, signRecruit, addRecruit, recruitPrice, rivalGoalie, joinLevel, expToNext } from '../src/progress.js';
+import { startAge, ageOf, formShift, agedStats, retireRivals, vacated, rivalSub, RETIRE_AT, leagueGrowth, grown, goalieGrowth } from '../src/slots.js';
 import { holes, rivalDraft } from '../src/moves.js';
 import { makeDraft, draftPick, otherPicks } from '../src/draft.js';
 import { trade } from '../src/trades.js';
@@ -33,6 +33,23 @@ check('form moves their best stats', sum(agedStats(s, 'lynx', 'thunder', base)) 
 const cfg = matchConfig(s, 'lynx', TOURNAMENT.stages[0]);
 check('in a match', sum(cfg.teams[1].skaters[1].stats) > sum(matchConfig(newSave(), 'lynx', TOURNAMENT.stages[0]).teams[1].skaters[1].stats));
 check('a team with young stars gets stronger', strength('lynx', s) > strength('lynx', newSave()), [strength('lynx', s), strength('lynx', newSave())]);
+
+// the league gets better each season
+{
+  const g = newSave();
+  check('no growth in the first season', leagueGrowth(g) === 0 && sum(grown(g, base)) === sum(base));
+  g.season = 3;
+  check('four best stats up a point a season', leagueGrowth(g) === 2 && sum(grown(g, base)) === sum(base) + 8);
+  g.season = 9;
+  check('...four seasons at most', leagueGrowth(g) === 4 && Object.values(grown(g, base)).every((v) => v <= 12));
+  check('goalies every other season', goalieGrowth(g) === 2 && rivalGoalie(g, 'royals').stats.rfx === 10);
+  g.season = 3;
+  check('stars cost more later', recruitPrice(g, 'lynx_c') > RECRUITS.lynx_c.price && recruitPrice(newSave(), 'lynx_c') === RECRUITS.lynx_c.price);
+  g.rivals = { lynx: { wins: 1 } }; g.coins = 9999;
+  signRecruit(g, 'lynx_c');
+  check('...and arrive with what they\'ve grown', g.roster.lynx_c.points === joinLevel(g) - 1 + 4 * leagueGrowth(g), g.roster.lynx_c);
+  check('the top levels take longer', expToNext(9) > expToNext(5) + 4 * 60 + 400);
+}
 
 // retirement after the awards
 const r = newSave();

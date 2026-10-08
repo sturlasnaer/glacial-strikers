@@ -5,7 +5,7 @@
 // rival's reserves: they don't play against you, and a signing doesn't go back to their old
 // club.
 import { RECRUITS, ROOKIES, LEGENDS, TEAMS, member, KIT_OF_ROLE } from './data.js';
-import { rosterIds, recruitStatus, addRecruit } from './progress.js';
+import { rosterIds, recruitStatus, addRecruit, recruitPrice } from './progress.js';
 import { addNews } from './news.js';
 
 export const TEAM_LIKES = {
@@ -17,7 +17,7 @@ export const tradeable = (save) => rosterIds(save).filter((id) => (RECRUITS[id] 
 
 export function playerValue(save, id) {
   const r = save.roster[id], lv = r ? r.level - 1 : 0;
-  if (RECRUITS[id]) return RECRUITS[id].price + lv * 20;
+  if (RECRUITS[id]) return RECRUITS[id].price + lv * 20; // (what they cost in the first season, and a bit per level)
   if (ROOKIES[id]) return ROOKIES[id].agent ? ROOKIES[id].price + lv * 20 : 100 + ROOKIES[id].potential * 40 + lv * 20; // (a free agent: what they cost)
   return 0;
 }
@@ -26,7 +26,7 @@ export function playerValue(save, id) {
 export function tradeQuote(save, give, get) {
   const team = RECRUITS[get].team, likes = (TEAM_LIKES[team] || []).includes(member(give).def.arch);
   const value = Math.round(playerValue(save, give) * (likes ? 1.25 : 1));
-  return { value, likes, coins: Math.max(0, Math.ceil((RECRUITS[get].price - value) / 10) * 10) };
+  return { value, likes, coins: Math.max(0, Math.ceil((recruitPrice(save, get) - value) / 10) * 10) };
 }
 
 // (coins: a rival's own offer, which can pay you; otherwise the quote)

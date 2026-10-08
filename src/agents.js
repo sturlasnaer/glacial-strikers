@@ -34,10 +34,14 @@ export const agentState = (save) => (save.agents ||= { until: 0, list: [], n: 0 
 // then one who's simply better), a style that fits the position, any super, a look of their own.
 function skater(save, role, taken, rnd) {
   const kit = KIT_OF_ROLE[role], base = { ...CHARACTERS[kit].base };
-  const star = rnd() < 0.15;
-  const ups = star ? 3 : 2, downs = star ? 1 : 2;
+  // (stars turn up more often as the league gets better, and they're better)
+  const g = Math.max(0, Math.min(3, (save.season || 1) - 1));
+  const star = rnd() < 0.15 + 0.1 * g;
+  const ups = star ? 3 + g : 2, downs = star ? 1 : 2;
   for (let i = 0; i < ups; i++) { const k = pick(STAT_KEYS, rnd); base[k] = Math.min(10, base[k] + 1); }
   for (let i = 0, guard = 0; i < downs && guard < 30; guard++) { const k = pick(STAT_KEYS, rnd); if (base[k] > 2) { base[k]--; i++; } }
+  // the league gets better: so do the players looking for a club
+  for (const k of [...STAT_KEYS].sort((a, b) => base[b] - base[a]).slice(0, 4)) base[k] = Math.min(10 + g, base[k] + g);
   const level = joinLevel(save);
   const extra = STAT_KEYS.reduce((a, k) => a + base[k] - CHARACTERS[kit].base[k], 0);
   const names = NAMES[role].filter((n) => !taken.has(n));

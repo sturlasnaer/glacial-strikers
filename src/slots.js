@@ -33,6 +33,19 @@ export const ageOf = (save, key) => startAge(key) + ((save.season || 1) - 1);
 const curve = (a) => (a <= 25 ? (a - 25) * 0.6 : a <= 30 ? 0 : -(a - 30) * 0.8);
 // How much better (+) or worse (-) they are than in the first season, on their best stats.
 export const formShift = (save, key) => Math.round(curve(ageOf(save, key)) - curve(startAge(key)));
+// The league gets better every season: each rival player a point up on their four best
+// stats per season after the first (four seasons at most), each rival goalie a point every
+// other season.
+export const leagueGrowth = (save) => Math.max(0, Math.min(4, (save.season || 1) - 1));
+export function grown(save, stats) {
+  const g = leagueGrowth(save);
+  if (!g) return stats;
+  const out = { ...stats };
+  for (const k of [...STAT_KEYS].sort((a, b) => out[b] - out[a]).slice(0, 4)) out[k] = Math.min(12, out[k] + g);
+  return out;
+}
+export const goalieGrowth = (save) => Math.min(2, Math.floor(((save.season || 1) - 1) / 2));
+
 // A star's numbers now: the slot's numbers, their three best moved by their form.
 export function agedStats(save, teamId, kit, stats) {
   const d = formShift(save, recruitKey(teamId, kit));

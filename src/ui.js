@@ -14,7 +14,7 @@ import { dailyFor, dailyGoal, dayKey, currentStreak, doneToday, dailyReward, dai
 import {
   expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave,
   chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups, capBonus,
-  CAMP, campOpen, campChoices, campChange, goalieIds, starterId, goalieRec, goalieStatus, signGoalie, setStarter, GOALIE_CAMP, goalieStyle, goalieCampOpen, goalieCampChange,
+  CAMP, campOpen, campChoices, campChange, recruitPrice, goalieIds, starterId, goalieRec, goalieStatus, signGoalie, setStarter, GOALIE_CAMP, goalieStyle, goalieCampOpen, goalieCampChange,
 } from './progress.js';
 import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave, resetsIn, groupsOf, createGroup, joinGroup, leaveGroup, inviteLink, MAX_GROUPS, fetchCup, fetchGhost, CHALLENGE_BOARDS, createChallenge, fetchChallenge, challengeLink } from './online.js';
 import { nextGuide, doneGuide, guideOff } from './guide.js';
@@ -22,7 +22,7 @@ import { draftOpen, draftPick, otherPicks, POTENTIAL_GRADE, DRAFT_LINES } from '
 import { careerOf, careerRows, careerGoalies } from './career.js';
 import { legendState, legendLeft, signLegend } from './legends.js';
 import { tradeable, tradeQuote, trade, TEAM_LIKES } from './trades.js';
-import { rivalSub, fillLook, vacated, ageOf, RETIRE_AT } from './slots.js';
+import { rivalSub, fillLook, vacated, ageOf, RETIRE_AT, leagueGrowth } from './slots.js';
 import { acceptOffer } from './moves.js';
 import { agentState, marketOpen, agentsLeft, signAgent } from './agents.js';
 import { latestNews } from './news.js';
@@ -460,7 +460,7 @@ export class UI {
     this.showGuide(r, s, {
       anyPoints,
       shopNew: GEAR.some((g) => g.price > 0 && !s.owned.includes(g.id) && Math.round(g.price * (1 - (s.discount || 0))) <= s.coins),
-      scoutOpen: Object.keys(RECRUITS).some((k) => recruitStatus(s, k) === 'open' && s.coins >= RECRUITS[k].price),
+      scoutOpen: Object.keys(RECRUITS).some((k) => recruitStatus(s, k) === 'open' && s.coins >= recruitPrice(s, k)),
       allstarNext: !!(this.app.fixture && this.app.fixture() && this.app.fixture().kind === 'allstar'),
       online: onlineOn(s) && configured(),
       draftOpen: draftOpen(s),
@@ -1387,7 +1387,7 @@ export class UI {
         return `<div class="recruit ${st}">
           <img src="${face}" alt="">
           <div style="min-width:0"><b>${esc(r.name)}</b><span class="muted">${t(ROLE_NAME[r.role])} · ${esc(top)} · ${st === 'retired' ? t('retired') : ageOf(s, k) >= RETIRE_AT - 1 ? t('age {n}, last season', { n: ageOf(s, k) }) : t('age {n}', { n: ageOf(s, k) })}</span></div>
-          ${st === 'signed' ? `<span class="tag good">${t('Signed')}</span>` : st === 'retired' ? `<span class="tag">${t('Retired')}</span>` : st === 'traded' ? `<span class="tag">${t('With the {team}', { team: esc(TEAMS[s.tradedAway[k]].name.split(' ').slice(-1)[0]) })}</span>` : st === 'open' ? `<span class="row" style="gap:4px;margin:0;flex-wrap:nowrap"><button class="btn small ghost" data-trade="${k}" ${tradeable(s).length ? '' : 'disabled'} title="${esc(t('Trade one of your players for them'))}">${btnIcon('icons/trade')}${t('Trade')}</button><button class="btn small ${s.coins >= r.price ? 'gold' : 'ghost'}" data-sign="${k}"><img src="${ico('equipment_items/reward/coins', 40)}" alt="" width="16" height="16"> ${r.price}</button></span>` : `<span class="tag">${t('Locked')}</span>`}
+          ${st === 'signed' ? `<span class="tag good">${t('Signed')}</span>` : st === 'retired' ? `<span class="tag">${t('Retired')}</span>` : st === 'traded' ? `<span class="tag">${t('With the {team}', { team: esc(TEAMS[s.tradedAway[k]].name.split(' ').slice(-1)[0]) })}</span>` : st === 'open' ? `<span class="row" style="gap:4px;margin:0;flex-wrap:nowrap"><button class="btn small ghost" data-trade="${k}" ${tradeable(s).length ? '' : 'disabled'} title="${esc(t('Trade one of your players for them'))}">${btnIcon('icons/trade')}${t('Trade')}</button><button class="btn small ${s.coins >= recruitPrice(s, k) ? 'gold' : 'ghost'}" data-sign="${k}"><img src="${ico('equipment_items/reward/coins', 40)}" alt="" width="16" height="16"> ${recruitPrice(s, k)}</button></span>` : `<span class="tag">${t('Locked')}</span>`}
         </div>`;
       }).join('') + `<div class="recruit ${gst}">
           <img src="${gst === 'signed' ? portrait(gk, 0, null, 96) : portrait('goalie', 1, tid, 96)}" alt="">
@@ -1556,7 +1556,7 @@ export class UI {
     const s = this.app.save;
     const r = RECRUITS[key];
     const m = member(key);
-    const lv = joinLevel(s);
+    const lv = joinLevel(s), pts = lv - 1 + 4 * leagueGrowth(s); // (and what they've grown since the first season)
     const starter = member(s.lineup[r.role]);
     const perks = m.def.perks.filter((_, i) => lv >= [3, 5, 7][i]).map((opts, i) => t(opts[r.perks[i]]).split(':')[0]);
     audio.sfx('click');
@@ -1568,9 +1568,9 @@ export class UI {
         const diff = r.base[k] - starter.base[k];
         return `<div class="stat"><span>${t(STAT_NAMES[k])}</span><span class="pips">${Array.from({ length: 12 }, (_, i) => `<i class="${i < r.base[k] ? 'b' : ''}"></i>`).join('')}</span><span class="v">${r.base[k]}</span><span class="${diff > 0 ? 'good' : diff < 0 ? 'bad' : 'muted'}" style="font-size:12px">${diff > 0 ? '+' : ''}${diff || '='}</span></div>`;
       }).join('')}</div>
-      <p class="muted" style="margin:0;font-size:13px">${t('Base stats, compared with {name}.', { name: esc(starter.name) })} ${t('Plays the {role} kit ({skill}, {ult}).', { role: t(ROLE_NAME[r.role]).toLowerCase(), skill: esc(t(m.def.skill.name)), ult: esc(t(m.def.ult.name)) })} ${perks.length ? t(lv === 2 ? 'Joins at level {lv} with {n} point to spend and {perks}.' : 'Joins at level {lv} with {n} points to spend and {perks}.', { lv, n: lv - 1, perks: perks.join(', ') }) : t(lv === 2 ? 'Joins at level {lv} with {n} point to spend.' : 'Joins at level {lv} with {n} points to spend.', { lv, n: lv - 1 })} ${t('No chemistry with your line yet.')}</p>
+      <p class="muted" style="margin:0;font-size:13px">${t('Base stats, compared with {name}.', { name: esc(starter.name) })} ${t('Plays the {role} kit ({skill}, {ult}).', { role: t(ROLE_NAME[r.role]).toLowerCase(), skill: esc(t(m.def.skill.name)), ult: esc(t(m.def.ult.name)) })} ${perks.length ? t(pts === 1 ? 'Joins at level {lv} with {n} point to spend and {perks}.' : 'Joins at level {lv} with {n} points to spend and {perks}.', { lv, n: pts, perks: perks.join(', ') }) : t(pts === 1 ? 'Joins at level {lv} with {n} point to spend.' : 'Joins at level {lv} with {n} points to spend.', { lv, n: pts })} ${t('No chemistry with your line yet.')}</p>
       <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Not now')}</button>
-        <button class="btn gold" id="sign-go" ${s.coins >= r.price ? '' : 'disabled'}>${t('Sign for {n}', { n: r.price })}</button></div>`, (mm, close) => {
+        <button class="btn gold" id="sign-go" ${s.coins >= recruitPrice(s, key) ? '' : 'disabled'}>${t('Sign for {n}', { n: recruitPrice(s, key) })}</button></div>`, (mm, close) => {
       this.click('#sign-go', () => {
         if (!signRecruit(s, key)) return;
         this.app.ach.unlock('signing');
@@ -1708,7 +1708,7 @@ export class UI {
     audio.sfx('click');
     this.modal(`<h2>${t('Trade for {name}', { name: esc(r.name) })}</h2>
       <div class="card-head" style="margin:0"><img src="${portrait(r.kit, 1, r.team, 152)}" alt="" style="width:64px;height:64px">
-        <div><div class="sub">${esc(team.name)} · ${t(ROLE_NAME[r.role])} · ${t('price {n}', { n: r.price })}</div><div class="style-row">${styleChips(member(key).def)}</div></div></div>
+        <div><div class="sub">${esc(team.name)} · ${t(ROLE_NAME[r.role])} · ${t('price {n}', { n: recruitPrice(s, key) })}</div><div class="style-row">${styleChips(member(key).def)}</div></div></div>
       <p class="muted" style="margin:6px 0;font-size:12.5px">${t('Send one of your signings or drafted rookies. The {team} like {styles} (★): they count those for a quarter more. Whoever you send joins their reserves.', { team: esc(team.name), styles: likes })}</p>
       <div class="trade-list">${rows || `<p class="muted">${t('You need a signing or a drafted rookie to trade.')}</p>`}</div>
       <p class="muted" id="tr-msg" style="min-height:1.2em;font-size:12.5px;margin:4px 0 0"></p>
