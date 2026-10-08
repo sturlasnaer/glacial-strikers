@@ -23,13 +23,12 @@ Ideas for later:
 
 ## Next, with art
 
-Done: recruitment (sign rival skaters, pick a line-up), arena rules (meltwater, aurora lanes, pond cracks), the clickable locker room, visible gear on the ice, season awards, the daily challenge and custom club name and colours, goalie life from the v5 goalies (front and back views, skating to and from the bench, pass wind-ups and poke checks), the new name (Puckbound, with the Snowcrest Foxes as the home team), and the new soundtrack (13 tracks on a chiptune tracker engine, arena acoustics and horns, a voiced crowd, a Music room). Done from the v2 pack: rival casts, portraits and expressions, crests, banner cut-ins, signature celebrations, three arenas, sprite crowd, locker-room hub and hub characters.
+Done: recruitment (sign rival skaters, pick a line-up), arena rules (meltwater, aurora lanes, pond cracks), the clickable locker room, visible gear on the ice, season awards, the daily challenge and custom club name and colours, goalie life from the v5 goalies (front and back views, skating to and from the bench, pass wind-ups and poke checks), the new name (Puckbound, with the Snowcrest Foxes as the home team), gear recolours on the sprites from the Batch M masks, and the new soundtrack (13 tracks on a chiptune tracker engine, arena acoustics and horns, a voiced crowd, a Music room). Done from the v2 pack: rival casts, portraits and expressions, crests, banner cut-ins, signature celebrations, three arenas, sprite crowd, locker-room hub and hub characters.
 
-1. **Gear recolours on the sprites** with the gear masks (Batch M), arriving now.
-2. **Goalies facing both ways** once Batch L lands: the goalie in the right-hand net uses real left-facing art, with the glove on the correct hand, and the save logic follows (the glove side is toward the camera there).
-3. **Near-side crowd sprites** (Batch N) in place of the drawn fans on the near benches.
-4. **Locker-room characters** standing at their stations (Batch H).
-5. **Goalies who leave the crease** to play rimmed pucks behind the net, now that there's skating and puck-handling art (needs pathing around the net).
+1. **Goalies facing both ways** once Batch L lands: the goalie in the right-hand net uses real left-facing art, with the glove on the correct hand, and the save logic follows (the glove side is toward the camera there).
+2. **Near-side crowd sprites** (Batch N) in place of the drawn fans on the near benches.
+3. **Locker-room characters** standing at their stations (Batch H).
+4. **Goalies who leave the crease** to play rimmed pucks behind the net, now that there's skating and puck-handling art (needs pathing around the net).
 
 ## Balance knobs
 

@@ -240,7 +240,12 @@ def gear_mask(fid, f, nw, nh):
     sh = f['sheet']
     if sh not in mask_sheets:
         path = os.path.join(GEAR_MASKS, 'sheets', sh + '_gearmask.png')
-        mask_sheets[sh] = Image.open(path).convert('RGB') if os.path.exists(path) else None
+        if os.path.exists(path):
+            rgba = np.array(Image.open(path).convert('RGBA'))
+            rgba[rgba[..., 3] < 128, :3] = 0  # transparent pixels never count, whatever colour they hold
+            mask_sheets[sh] = Image.fromarray(rgba[..., :3])
+        else:
+            mask_sheets[sh] = None
     m = mask_sheets[sh]
     if m is None:
         return None

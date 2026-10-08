@@ -26,7 +26,7 @@ export const Assets = {
     const atlas = INLINE ? INLINE['gfx/atlas.json'] : await (await fetch(BASE + 'gfx/atlas.json')).json();
     this.atlas = atlas;
     this.pages = new Array(atlas.pages.length);
-    const core = atlas.pages.map((p, i) => i).filter((i) => atlas.pages[i].group === 'home' || atlas.pages[i].group === 'away');
+    const core = atlas.pages.map((p, i) => i).filter((i) => ['home', 'away', 'gearmask'].includes(atlas.pages[i].group)); // masks are tiny: load them up front
     const glass = atlas.arena && atlas.arena.glass && atlas.arena.glass.file;
     const files = [...core.map((i) => atlas.pages[i].file), ...(glass ? [glass] : []), 'gfx/rink_backdrop.webp'];
     let done = 0;

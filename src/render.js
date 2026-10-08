@@ -721,14 +721,20 @@ export class Renderer {
     mx.drawImage(Assets.pages[mf[0]], mf[1], mf[2], mf[3], mf[4], 0, 0, mf[3], mf[4]);
     const img = cx.getImageData(0, 0, fw, fh), d = img.data, md = mx.getImageData(0, 0, fw, fh).data;
     const rgb = (hex) => [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
-    const stick = st && rgb(st.color), boot = sk && rgb(sk.color).map((v) => v * 0.55), blade = sk && rgb(sk.color);
+    const stick = st && rgb(st.color), boot = sk && rgb(sk.color).map((v) => v * 0.8), blade = sk && rgb(sk.color);
+    const row = fw * 4;
+    // the sprite's own edge (next to transparency) is its outline
+    const edge = (i) => d[i - 4 + 3] < 10 || d[i + 4 + 3] < 10 || (i >= row && d[i - row + 3] < 10) || (i + row < d.length && d[i + row + 3] < 10);
     for (let i = 0; i < d.length; i += 4) {
       if (d[i + 3] < 10 || md[i + 3] < 128) continue;
-      const col = md[i] > 127 ? stick : md[i + 1] > 127 ? boot : md[i + 2] > 127 ? blade : null;
+      const isBoot = md[i] <= 127 && md[i + 1] > 127;
+      const col = md[i] > 127 ? stick : isBoot ? boot : md[i + 2] > 127 ? blade : null;
       if (!col) continue;
       const l = (d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11) / 255;
-      if (l < 0.2) continue; // outline
-      const k = 0.35 + l * 0.85;
+      let k;
+      if (l >= 0.2) k = 0.35 + l * 0.85;
+      else if (isBoot && !edge(i)) k = 0.5 + l * 1.2; // dark boot leather takes a deep shade of the colour
+      else continue; // outline
       d[i] = Math.min(255, col[0] * k); d[i + 1] = Math.min(255, col[1] * k); d[i + 2] = Math.min(255, col[2] * k);
     }
     cx.putImageData(img, 0, 0);

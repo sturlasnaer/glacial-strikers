@@ -1,19 +1,18 @@
 # Sprite requests
 
-What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A and the v5 goalies.
+What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies and the Batch M gear masks.
 
 The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes** (the Snow Fox is their mascot; colours unchanged). Packs can be named `Puckbound-...` from now on; older `Glacial-Strikers-...` folder names still work.
 
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **M**: gear masks, so equipped sticks and skates recolour on the players (delivered, going in now).
-2. **L**: left-facing goalies, so the goalie in the right-hand net stops catching with the wrong hand.
-3. **N**: the near-side crowd, seen from behind.
-4. **B**: atmosphere (two more arenas, fans at the glass).
-5. **H**: locker-room life.
-6. **I**: arena-rule art.
-7. **C**: polish.
+1. **L**: left-facing goalies, so the goalie in the right-hand net stops catching with the wrong hand.
+2. **N**: the near-side crowd, seen from behind.
+3. **B**: atmosphere (two more arenas, fans at the glass).
+4. **H**: locker-room life.
+5. **I**: arena-rule art.
+6. **C**: polish.
 
 ## Format notes
 
@@ -34,29 +33,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - **v3:** side-view nets, near glass, scoreboard, team banners and the Snow Fox.
 - **v4 Batch A:** rival diagonals (240), rival hit reactions (90), and Blaze and Horn expressions (10).
 - **v5 goalies (Batch G):** front, back, skating and puck handling for Halla (home and away) and the five rival goalies (168 frames). In the game: wave, pad taps, celebrations and dejection facing the camera; fishing the puck out after goals; looking back when the puck goes behind the net; skating to and from the bench; pass wind-ups, stick stops and poke checks; Halla's front view in the locker room.
-
----
-
-## Batch M: gear masks (sticks and skates) (next)
-
-Equipped gear already shows on the ice through code effects: skate trails and coloured skate marks, stick glow, crackle and shot trails, and armour flashes. To also **recolour the stick and skates on the sprite itself** for every pose, the game needs one mask per skater sheet. The game's renderer and asset builder already support these, so they drop straight in.
-
-**What to make:** for each sheet below, `<sheet>_gearmask.png`.
-- Exactly the **same pixel size and layout** as the sheet, painted over the same poses.
-- **Pure red `#FF0000`:** the stick, meaning shaft, blade and tape.
-- **Pure green `#00FF00`:** the skate boots.
-- **Pure blue `#0000FF`:** the skate blades.
-- **Everything else transparent.**
-- Hard edges and only those three colours, no anti-aliasing. Cover the art's own pixels and don't paint past the outline.
-- The game shades each recoloured pixel by the original art's brightness and keeps the dark outlines, so the masks only say *which* pixels, not what colour.
-
-**Sheets (58)**, the ones our skaters and signings use:
-- v1: `frost_captain`, `thunder_winger`, `stone_defender`
-- P1: `nix_`, `volta_`, `bram_` × `diagonals`, `skating`, `hit_reactions` (9)
-- v2: `signature_celebrations`, plus the 15 rival sheets `<team>_<role>` (`aurora_royals_c` … `pinewood_lynx_d`)
-- v4: the 30 rival sheets `<team>_<role>_diagonals` and `<team>_<role>_hit_reactions`
-
-**Delivery:** a folder `Glacial-Strikers-Gear-Masks/sheets/` containing the 58 PNGs. No atlas is needed: the builder cuts masks with the existing frame rectangles. If that's too much at once, start with the three v1 sheets and the P1 sheets (13). Those cover Nix, Volta and Bram in every pose.
+- **Batch M gear masks:** all 58 sheets, clean on the first pass. Equipped sticks, boots and blades now recolour on the sprites in every pose.
 
 ---
 
