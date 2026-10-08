@@ -1,18 +1,17 @@
 # Sprite requests
 
-What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd) and the remaining packs (Batches B, H, I, C and N-Extras).
+What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd), the remaining packs (Batches B, H, I, C and N-Extras) and the new batches (P, R, S, K, T and M2).
 
 The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes** (the Snow Fox is their mascot; colours unchanged). Packs can be named `Puckbound-...` from now on; older `Glacial-Strikers-...` folder names still work.
 
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **P**: penalty box.
-2. **R**: rival mascots.
-3. **S**: rules for the Golden Hall and the Dark Aerie.
-4. **K**: scoreboards for Pine Pond, the Golden Hall and the Dark Aerie.
-5. **T**: training props.
-6. **M2**: gear masks for the rival side strides.
+1. **D**: celebrations for the rival wingers and defenders.
+2. **O**: arena-rule icons.
+3. **E**: achievement icons.
+4. **J**: the Awards Night stage.
+5. **F**: a penalty box for Pine Pond.
 
 ## Format notes
 
@@ -41,59 +40,55 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - **Batch I arena-rule art:** meltwater pools and splashes, pond cracks that grow through their four stages, and aurora lane tiles that scroll the way the lane pushes.
 - **Batch C polish:** side strides, stops and glides for all 15 rival skaters, the five captains' celebrations, the title logo, championship fireworks, and the ice resurfacer that laps the title screen's rink before the demo match.
 - **Batch N-Extras:** a flag waver on each near bench.
+- **Batch P penalty box:** a glass box each side of centre in the far boards. The penalized skater sits inside behind the glass, the door swings as they go in and out, the red light blinks, and the timer hangs above it.
+- **Batch R rival mascots:** the lynx, fireball, ram, raven and crowned polar bear dance on the near stairs of their buildings, in team colours, and cheer when their team scores at home.
+- **Batch S new-arena rules:** the Golden Hall's rumble strips (the puck hops off the stick, with a puff of ice dust) and the Dark Aerie's raven shadows (two ravens circle overhead, and the puck nearly vanishes in their shadows).
+- **Batch K scoreboards:** Pine Pond's wooden board, the Golden Hall's stone and gold, and the Dark Aerie's black stone.
+- **Batch T training props:** Sniper target boards (unlit, lit, hit) and the speed-lane tile for the Frostline twist.
+- **Batch M2 gear masks:** signed rival skaters' special sticks and skates now recolour in their side strides too.
 
 ---
 
-## Batch P: penalty box
+## Batch D: celebrations for the rival wingers and defenders
 
-A penalized skater stands at the far boards beside centre ice today, so the box is invisible. Please draw a small penalty box built into the far boards. The game puts one each side of centre: ours at about x 700, the visitors' at about x 836 on the 1536×1024 rink. The far boards' top rail is at about y 165 and the ice edge at about y 207 there.
+Only the five rival captains have a goal celebration (Batch C). When a rival winger or defender scores, or one you've signed scores for you, they just bob on the spot. Please draw four phases each for the other ten rival skaters, made like the captains' sheets: facing the camera, on the same scale and foot baseline, in **coral + violet**, one sheet per skater named `<team>_<role>_celebrations.png` (for example `gilded_rams_w_celebrations.png`). Some ideas:
 
-- About 70 px wide and 80 px tall at game size (please draw it at 2× or more, like the other props). It has glass sides and front glass, a bench inside, and a door in the boards facing the ice. The boards, rail and glass match the rink's (white boards, red rail, navy posts), so it fits every arena.
-- **Two layers** so a skater can stand inside. The back layer is the back wall and bench, drawn behind the skater. The front layer is the boards, door and front glass, drawn over the skater's legs. A skater is about 70 px tall in game and should show from the waist up.
-- **Frames:** `back`, `front_closed`, `front_open`, and a small red `light_on` overlay above the door that the game flashes while the penalty runs. 4 frames, drawn in neutral rink colours (not recoloured).
+- **Pinewood Lynx:** the winger pounces into a knee slide; the defender flexes like a tree trunk.
+- **Ember Comets:** the winger spins with a comet tail of sparks; the defender pumps a fist of flame.
+- **Gilded Rams:** the winger stomps a hoof; the defender lowers their head and charges.
+- **Obsidian Ravens:** the winger glides with their cape spread; the defender gives a cold stick salute.
+- **Aurora Royals:** the winger takes a sweeping bow; the defender raises their stick like a sceptre.
 
-## Batch R: rival mascots
+40 frames.
 
-The Snow Fox dances on the near stairs at home, but the rival buildings have no mascot. Please draw one for each rival, made like the Snow Fox (`mascot/snow_fox`). They have the same four frames, **idle, wave, cheer_a and cheer_b**, on the same canvas size (about 456×508 source), and the game draws them at 1/8 (about 57×64 px).
+## Batch O: arena-rule icons
 
-- **Pinewood Lynx:** a lynx in a toque.
-- **Ember Comets:** a grinning fireball with a comet tail.
-- **Gilded Rams:** a ram with gilded horns.
-- **Obsidian Ravens:** a raven in a hooded cloak.
-- **Aurora Royals:** a crowned polar bear, or whatever fits the Royals' crest best.
+The arena rules show as plain text on the quick-play arena chips, on the daily challenge card and in the rule announcement. Please draw one small icon for each, in the style of the ability icons (`hud_elements/ability/*`, about 210 px source, shown at 32–64 px): **meltwater** (a steaming pool), **aurora lanes** (a green-violet chevron), **pond cracks** (a cracked circle), **rumble strips** (gold ridges with a hopping puck), **raven shadows** (a raven over a dark wing shadow), **speed lanes** (a cyan chevron) and **cracked ice** (a rough patch). 7 frames, on one sheet named `rule_icons.png`.
 
-Draw them in **coral + violet** like all rival art, one sheet per team named `<team>_mascot.png` (for example `gilded_rams_mascot.png`), so they land on the rival's pages and are recoloured into team colours. The game puts them where the Snow Fox stands at home: bottom centre, feet at about (768, 950) on the 1536×1024 arena. If an arena has no room there, say in the README where it should go. 20 frames.
+## Batch E: achievement icons
 
-## Batch S: rules for the Golden Hall and the Dark Aerie
+34 achievements share 21 icons in the trophy case: five use the same trophy and four the same medal. Please draw an icon of its own for each of these 13, in the style and size of the reward icons (`equipment_items/reward/*`, about 200×192 source):
 
-The other three buildings each have a rule. These two will get theirs when this art lands (code-drawn placeholders first):
+- **Lamp Lighter** (first goal): a red goal lamp, lit.
+- **Daily Grind**: a calendar page with a puck on it.
+- **Never Out of It** (a comeback from 3 down): a scoreboard with a rising arrow.
+- **Hat Trick**: three pucks under a hat.
+- **On a Roll** (a daily-challenge streak): a puck with a flame trail.
+- **Shootout Hero**: a puck on the spot under a spotlight.
+- **In Sync**: two crossed sticks with matching sparks.
+- **Talent Scout**: binoculars.
+- **Dynasty**: three stacked cups.
+- **Perfect Season**: a cup inside a laurel wreath.
+- **Most Valuable**: a star medal on a ribbon.
+- **Awards Sweep**: a fan of award envelopes.
+- **Free Agent**: a contract and a pen.
 
-- **Golden Hall, rumble strips:** ridged strips carved into the ice along the far and near boards. Skating over them with the puck makes it hop off the stick. Please draw a **tileable horizontal strip tile, 64×24 px** at game size, tiled edge to edge like the aurora tiles, in two frames (`rest`, `rattle`: the ridges catching the brazier light). Also a **3-frame puck hop**, a small burst of ice dust about 24 px.
-- **Dark Aerie, shadow zones:** a raven's shadow sweeps over the ice, and inside it the puck is hard to see. Please draw a **soft shadow decal**, top-down, about 200×120 px, dark violet, feathered edges with a wing shape, as a 4-frame drift loop. Also a **raven flying across** in side view, about 40 px, a 4-frame flap facing right (the game mirrors it).
+13 frames, on one sheet named `achievement_icons.png`, with frame names `achievements/<name>`.
 
-About 13 frames. The rule names and descriptions go in the game's text (and Icelandic).
+## Batch J: Awards Night stage
 
-## Batch K: arena scoreboards
+The season awards open over the dimmed locker room. Please draw a stage for them: a **1536×864 backdrop** with velvet curtains, spotlights, a podium at centre and a table of covered trophies, in navy and gold. Also **Kip Vance at the podium**, full body and facing the camera, at the same scale as the Batch H characters (about 820 px source standing), in 3 frames: `speaking`, `opening_envelope` and `applauding`. 1 backdrop and 3 frames.
 
-The volcanic scoreboard made the Ember Dome feel like its own building. The other rival arenas still hang the Frostline scoreboard. Please draw a variant of the v3 scoreboard for each, with **the same canvas, pivot and display fields** as B5 (clock, home score, away score, period, left blank for live text):
+## Batch F: a penalty box for Pine Pond
 
-- **Pine Pond:** a rustic wooden board on posts, with snow on top and painted lettering (it's outdoors).
-- **Golden Hall:** carved stone and gold, with ram horns on the corners.
-- **Dark Aerie:** black stone with violet lanterns, and a raven perched on top.
-
-3 frames.
-
-## Batch T: training props
-
-Two training visuals are still drawn in code:
-
-- **Sniper targets:** round 3-ring target boards that hang in the goal mouth (top corner, middle and bottom corner), about 18 px tall at game size. Draw them slightly foreshortened, since our side-on camera sees them at an angle. Three states: `unlit` (grey), `lit` (red and cream), `hit` (gold flash). 3 frames.
-- **Speed lane tile** (the Frostline rink's stage twist): a **tileable strip like the aurora tiles, 64×36 px** at game size, cyan and white with a chevron pointing **right**, as an 8-frame shimmer. 8 frames.
-
-11 frames.
-
----
-
-## Batch M2: gear masks for the rival side strides
-
-Signed rival skaters wear our gear, but their new side strides, stops and glides have no masks, so their special sticks and skates don't recolour in those poses. The same format as Batch M: `<sheet>_gearmask.png` beside each `<team>_<role>_side_strides.png` (15 sheets), red for the stick, green for the boots, blue for the blades. Captain celebrations don't need them.
+Batch P's glass box looks out of place on Pine Pond's snowbank. Please draw a rustic version with **the same four layers, size, feet positions and layering** as Batch P (`back`, `front_closed`, `front_open`, `light_on`): log walls, a plank bench, a gate set into a snowbank front, and a hanging lantern whose warm glow is the `light_on` frame. 4 frames, named `penalty_box_pond/*`.

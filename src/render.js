@@ -119,6 +119,8 @@ export class Renderer {
     this.drawLamps(ctx, fx);
     this.drawCrowd(ctx, fx, ui);
     this.drawArenaProps(ctx, match, fx, ui, arena);
+    const box = this.penaltyBox();
+    if (box) this.drawPenaltyBoxes(ctx, match, fx, box);
     this.drawGoalLights(ctx, match, fx);
     if (fx.marks) ctx.drawImage(fx.marks, 0, 0, BACKDROP.w, BACKDROP.h);
     const lap = ui.lap; // the resurfacer's lap before the title screen's match: nobody on the ice
@@ -137,7 +139,7 @@ export class Renderer {
     // depth-sorted sprites
     const list = [];
     if (lap) list.push({ y: lap.pos().y, f: () => this.drawResurfacer(ctx, lap) });
-    else for (const s of match.skaters) list.push({ y: s.y, f: () => this.drawSkater(ctx, s, match, fx) });
+    else for (const s of match.skaters) if (!(box && s.boxT > 0)) list.push({ y: s.y, f: () => this.drawSkater(ctx, s, match, fx) });
     // Nets: back layer, then a puck that's inside the net, then the front layer.
     // The goalie always draws after his own net so the crossbar never cuts through him.
     const NET_KEY = -MOUTH * 0.5;
@@ -175,6 +177,7 @@ export class Renderer {
     this.drawBolts(ctx, fx);
     this.drawGoalLamp(ctx, match, fx);
     this.drawReticle(ctx, fx);
+    if (!lap) this.drawRavens(ctx, match, fx);
     if (!lap) this.drawOverheads(ctx, match, fx);
     if (match.drill && match.drill.drawOver) match.drill.drawOver(ctx, this, match, fx, Assets);
 
@@ -190,6 +193,14 @@ export class Renderer {
       ctx.fillRect(0, 0, this.w, this.h);
       ctx.globalAlpha = 1;
     }
+  }
+
+  // A Sniper drill target board (Batch T); false without the art, so the drill draws its own.
+  drawSniperTarget(ctx, x, y, state, pulse = 0) {
+    const A = Assets.atlas.art_additions, T = A && A.training_props && A.training_props.sniper_target;
+    if (!T || !T[state]) return false;
+    Assets.draw(ctx, T[state], x, y, Assets.atlas.art_draw_scales[T[state]] * (1 + pulse));
+    return true;
   }
 
   // ------------------------------------------------------------ the resurfacer's lap
@@ -360,10 +371,49 @@ export class Renderer {
       else if (fx.excite > 0.55 || Math.floor(t / 3) % 4 === 0) pose = Math.floor(t * 2) % 2 ? 'wave' : 'idle';
       Assets.draw(ctx, A.mascot[pose], 768, 950 - (party ? Math.abs(Math.sin(t * 8)) * 6 : 0), 0.125, { pages: Assets.clubPages() });
     }
-    const board = arena === 'ember_dome' ? A.scoreboard_volcanic : A.scoreboard;
+    // the host's mascot dances where the Snow Fox does at home
+    const host = A.mascot_arenas && A.mascot_arenas[arena];
+    const mascot = host && A.rival_mascots && A.rival_mascots[host];
+    const hostTeam = mascot && Object.values(TEAMS).find((tm) => tm.art === host);
+    if (hostTeam) {
+      const playing = ui.awayTeamId === hostTeam.id; // only cheers for its own team
+      const party = playing && ((fx.cheerTeam === 1 && fx.lamp > 0) || (fx.chant && fx.chant.team === 1));
+      let pose = 'idle';
+      if (party) pose = Math.floor(t * 4) % 2 ? 'cheer_a' : 'cheer_b';
+      else if (fx.excite > 0.55 || Math.floor(t / 3) % 4 === 0) pose = Math.floor(t * 2) % 2 ? 'wave' : 'idle';
+      Assets.draw(ctx, mascot[pose], mascot.foot.x, mascot.foot.y - (party ? Math.abs(Math.sin(t * 8)) * 6 : 0), mascot.source_scale, { pages: Assets.pagesFor(hostTeam.id) });
+    }
+    const board = (A.scoreboards && A.scoreboards[arena]) || (arena === 'ember_dome' ? A.scoreboard_volcanic : A.scoreboard);
     if (board) this.drawScoreboard(ctx, match, fx, board);
     this.drawGlassFans(ctx, fx);
     this.drawCameraFlashes(ctx, fx);
+  }
+
+  // The penalty boxes built into the far boards (Batch P), or null without the art.
+  penaltyBox() {
+    const box = Assets.atlas.arena && Assets.atlas.arena.penalty_box;
+    return box && box.frames ? box : null;
+  }
+  boxSpot(s) {
+    const box = this.penaltyBox(), f = box && box.foot_positions[s.team];
+    return f ? { x: f.x, y: f.y - 8 } : toScreen(s.x, s.y);
+  }
+
+  // Each team's box: the back wall and bench, whoever is serving time, then the boards, door
+  // and front glass over their legs, and the red light blinking while the penalty runs. The
+  // door swings open for a moment as a skater goes in or comes out.
+  drawPenaltyBoxes(ctx, match, fx, box) {
+    this.boxIn ||= [false, false];
+    this.boxDoor ||= [0, 0];
+    const opts = { squash: box.runtime_squash };
+    box.foot_positions.forEach((f, team) => {
+      const inside = match.skaters.filter((s) => s.team === team && s.boxT > 0);
+      if (!!inside.length !== this.boxIn[team]) { this.boxIn[team] = !!inside.length; this.boxDoor[team] = fx.time + 0.45; }
+      Assets.draw(ctx, box.frames.back, f.x, f.y, box.source_scale, opts);
+      for (const s of inside) this.drawSkater(ctx, s, match, fx, this.boxSpot(s));
+      Assets.draw(ctx, box.frames[fx.time < this.boxDoor[team] ? 'front_open' : 'front_closed'], f.x, f.y, box.source_scale, opts);
+      if (inside.length && Math.floor(fx.time * 3) % 2 === 0) Assets.draw(ctx, box.frames.light_on, f.x, f.y, box.source_scale, opts);
+    });
   }
 
   // After a goal, fans run down to the far glass behind that net and bang on it.
@@ -428,32 +478,81 @@ export class Renderer {
     const t = fx.time;
     const art = this.ruleArt();
     const aurora = tw.kind === 'aurora_lanes';
-    for (const l of tw.lanes) if (aurora && art) this.drawAuroraTiles(ctx, l, t, art, 1); else this.drawLane(ctx, l, t, aurora, 1);
+    const tiles = art && (aurora ? art.lane : art.speed_lane);
+    for (const l of tw.lanes) if (tiles) this.drawLaneTiles(ctx, l, t, tiles, 1); else this.drawLane(ctx, l, t, aurora, 1);
     if (aurora && tw.next) {
       // the next lanes flicker in before the lights shift
       const blink = 0.35 + Math.max(0, Math.sin(t * 12)) * 0.4;
-      for (const l of tw.next) if (art) this.drawAuroraTiles(ctx, l, t, art, blink, true); else this.drawLane(ctx, l, t, true, blink, true);
+      for (const l of tw.next) if (tiles) this.drawLaneTiles(ctx, l, t, tiles, blink, true); else this.drawLane(ctx, l, t, true, blink, true);
     }
     for (const p of tw.pools) if (art) this.drawPoolArt(ctx, p, t, art); else this.drawPool(ctx, p, t);
     for (const c of tw.cracks) if (art) this.drawCrackArt(ctx, c, art); else this.drawCrack(ctx, c, tw);
+    for (const st of tw.strips) this.drawStrip(ctx, st, match, art);
+    for (const z of tw.shadows) this.drawShadowZone(ctx, z, t, art);
   }
 
-  // The Batch I sprites for the arena rules, once their pages are in (drawn in code until then).
+  // The rule sprites (Batches I, S and T), once their pages are in (drawn in code until then).
   ruleArt() {
-    const R = Assets.atlas.art_additions && Assets.atlas.art_additions.arena_rules;
+    const A = Assets.atlas.art_additions;
+    const R = A && A.arena_rules;
     const f = R && R.pool && Assets.frame(R.pool[0]);
-    return f && Assets.pages[f[0]] ? R : null;
+    if (!f || !Assets.pages[f[0]]) return null;
+    return (this.ruleSet ||= { ...R, ...(A.new_arena_rules || {}) });
   }
 
-  // Aurora lanes: the shimmering tile repeated along the lane, scrolling the way it pushes.
-  drawAuroraTiles(ctx, l, t, R, alpha, ghost) {
+  // Rumble strips: the ridged tile along the boards, rattling while someone rides it fast.
+  drawStrip(ctx, st, match, art) {
+    const a = toScreen(st.x0, st.y), b = toScreen(st.x1, st.y);
+    const busy = match.skaters.some((s) => s.speed > 150 && match.stripAt(s.x, s.y) === st);
+    if (art && art.rumble_strip) { this.drawLaneTiles(ctx, { ...st, dir: 1 }, 0, [art.rumble_strip[busy ? 1 : 0]], 1, false, 0); return; }
+    ctx.save();
+    ctx.fillStyle = busy ? 'rgba(255,212,94,0.45)' : 'rgba(255,212,94,0.28)';
+    ctx.fillRect(a.x, a.y - st.h / 2, b.x - a.x, st.h);
+    ctx.strokeStyle = 'rgba(120,80,20,0.55)'; ctx.lineWidth = 2;
+    for (let x = a.x + 4; x < b.x; x += 9) { ctx.beginPath(); ctx.moveTo(x, a.y - st.h / 2 + 3); ctx.lineTo(x, a.y + st.h / 2 - 3); ctx.stroke(); }
+    ctx.restore();
+  }
+
+  // A raven's shadow drifting over the ice (the raven itself is drawn overhead, later).
+  drawShadowZone(ctx, z, t, art) {
+    const s = toScreen(z.x, z.y), rx = z.rx * persp(z.y);
+    const frames = art && art.shadow_zone;
+    if (frames) {
+      const id = frames[Math.floor(t * 4) % frames.length], f = Assets.frame(id);
+      const k = (2.1 * rx) / (f[3] / f[7]);
+      Assets.draw(ctx, id, s.x, s.y, k, { squash: (2.1 * z.ry) / ((f[4] / f[7]) * k), alpha: 0.75 });
+      return;
+    }
+    ctx.save();
+    const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, rx);
+    g.addColorStop(0, 'rgba(30,18,50,0.55)'); g.addColorStop(1, 'rgba(30,18,50,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.ellipse(s.x, s.y, rx, z.ry, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  // The ravens circling high over the Dark Aerie, above their shadows.
+  drawRavens(ctx, match, fx) {
+    const tw = match.twists;
+    if (!tw || !tw.shadows.length) return;
+    const art = this.ruleArt(), frames = art && art.flying_raven;
+    if (!frames) return;
+    for (const z of tw.shadows) {
+      const s = toScreen(z.x, z.y);
+      const left = -Math.sin(z.ph + tw.t * z.w) * z.w < 0; // which way it's flying round
+      Assets.draw(ctx, frames[Math.floor(fx.time * 8 + z.ph) % frames.length], s.x + 24, s.y - 170, Assets.atlas.art_draw_scales[frames[0]] * 1.3, { flip: left });
+    }
+  }
+
+  // Lanes and strips: a tile repeated along the lane, scrolling the way it pushes.
+  drawLaneTiles(ctx, l, t, frames, alpha, ghost, speed = 45) {
     const a = toScreen(l.x0, l.y), b = toScreen(l.x1, l.y);
-    const id = R.lane[Math.floor(t * 8) % R.lane.length];
+    const id = frames[Math.floor(t * 8) % frames.length];
     const f = Assets.frame(id);
     const len = b.x - a.x, n = Math.max(1, Math.round(len / 64)), w = len / n;
     const k = w / (f[3] / f[7]);
     const squash = l.h / ((f[4] / f[7]) * k);
-    const off = ((t * 45) % w) * l.dir;
+    const off = ((t * speed) % w) * l.dir;
     ctx.save();
     ctx.beginPath(); ctx.rect(a.x, a.y - l.h / 2, len, l.h); ctx.clip();
     ctx.globalAlpha = alpha;
@@ -631,7 +730,9 @@ export class Renderer {
 
   drawShadows(ctx, match) {
     ctx.fillStyle = 'rgba(20,35,59,0.28)';
+    const box = this.penaltyBox();
     for (const s of match.skaters) {
+      if (box && s.boxT > 0) continue;
       const p = toScreen(s.x, s.y), k = persp(s.y);
       ctx.beginPath(); ctx.ellipse(p.x, p.y, 21 * k, 7 * k, 0, 0, Math.PI * 2); ctx.fill();
     }
@@ -641,7 +742,7 @@ export class Renderer {
       ctx.beginPath(); ctx.ellipse(p.x, p.y, 28, 9, 0, 0, Math.PI * 2); ctx.fill();
     }
     const pk = match.puck;
-    if (!pk.inNet || true) {
+    if (!match.inShadow(pk.x, pk.y)) {
       const p = toScreen(pk.x, pk.y);
       const zf = clamp(1 - pk.z / 80, 0.4, 1);
       ctx.fillStyle = `rgba(20,35,59,${0.35 * zf})`;
@@ -783,9 +884,9 @@ export class Renderer {
     return (eight ? DIRS8 : DIRS4)[i];
   }
 
-  drawSkater(ctx, s, match, fx) {
+  drawSkater(ctx, s, match, fx, at = null) {
     const fr = this.skaterFrame(s, match);
-    const p = toScreen(s.x, s.y);
+    const p = at || toScreen(s.x, s.y);
     const k = SKATER_SCALE * persp(s.y);
     let y = p.y, rot = 0;
     if (fr.pose === 'celebrate') y -= Math.abs(Math.sin(s.animT * 7 + s.slot)) * 12;
@@ -1086,6 +1187,9 @@ export class Renderer {
 
   drawPuck(ctx, p, fx, match) {
     if (p.owner && p.owner.isGoalie && this.goaliePoses && this.goaliePoses.get(p.owner)?.hidePuck) return;
+    const dark = match.twists && match.twists.shadows.length && match.inShadow(p.x, p.y);
+    ctx.save();
+    if (dark) ctx.globalAlpha = 0.2; // hard to see in a raven's shadow
     // trail
     if (p.trail.length > 1) {
       const cb = p.shot && p.shot.special && p.shot.special.combo;
@@ -1106,6 +1210,7 @@ export class Renderer {
     const type = p.power || comboType || (sp && sp.zero ? 'ice' : sp && (sp.thunder || sp.charged) ? 'lightning' : 'plain');
     const ph = 1 + (Math.floor(fx.time * 8) % 4);
     Assets.draw(ctx, `power_pucks/${type}/phase_${ph}`, s.x, s.y - 2, PUCK_SCALE * persp(p.y));
+    ctx.restore();
     if (p.power && match.state === 'play' && Math.random() < 0.5) {
       fx.part(p.x, p.y, 4, (Math.random() - 0.5) * 40, (Math.random() - 0.5) * 30, 60, 0.4, ELEMENT_COLORS[p.power][Math.floor(Math.random() * 3)], 2);
     }
@@ -1242,7 +1347,7 @@ export class Renderer {
     for (const s of match.skaters) {
       const tag = s.boxT > 0 ? `${Math.ceil(s.boxT)}s` : s.extraAttacker ? '+1' : null;
       if (!tag) continue;
-      const p = toScreen(s.x, s.y);
+      const p = s.boxT > 0 ? this.boxSpot(s) : toScreen(s.x, s.y);
       ctx.font = `bold 15px ${this.font}`;
       ctx.lineWidth = 4; ctx.strokeStyle = '#14233b'; ctx.strokeText(tag, p.x, p.y - 100);
       ctx.fillStyle = s.boxT > 0 ? '#ff6f7d' : '#ffd45e'; ctx.fillText(tag, p.x, p.y - 100);

@@ -114,6 +114,14 @@ if BATCH_N and os.path.exists(os.path.join(BATCH_N, 'atlas.json')):
 REST = sys.argv[9] if len(sys.argv) > 9 else '../assets/Puckbound-Remaining-Packs'
 from merge_remaining_packs import merge_remaining
 src, art_roots, art_mappings, art_backgrounds = merge_remaining(src, REST)
+NEW = sys.argv[10] if len(sys.argv) > 10 else '../assets/Puckbound-New-Batches'
+from merge_new_batches import merge_new, check_mask_sources
+src, new_roots, new_mappings = merge_new(src, NEW)
+art_roots.update(new_roots)
+for section, values in new_mappings.items():
+    art_mappings.setdefault(section, {}).update(values)
+NEW_MASKS = os.path.join(NEW, 'Puckbound-Batch-M2')
+check_mask_sources(NEW_MASKS, art_roots, src['sheets'])
 frames = src['frames']
 info = src['sheets']
 os.makedirs(os.path.join(OUT, 'cutins'), exist_ok=True)
@@ -287,7 +295,9 @@ def gear_mask(fid, f, nw, nh):
     """The frame's gear mask, cropped and scaled exactly like the frame (or None)."""
     sh = f['sheet']
     if sh not in mask_sheets:
-        path = os.path.join(GEAR_MASKS, 'sheets', sh + '_gearmask.png')
+        path = os.path.join(NEW_MASKS, 'sheets', sh + '_gearmask.png')
+        if not os.path.exists(path):
+            path = os.path.join(GEAR_MASKS, 'sheets', sh + '_gearmask.png')
         if os.path.exists(path):
             rgba = np.array(Image.open(path).convert('RGBA'))
             rgba[rgba[..., 3] < 128, :3] = 0  # transparent pixels never count, whatever colour they hold
@@ -355,7 +365,7 @@ for fid, f in frames.items():
         px, py = foot_pivot(img)
     else:
         px, py = f['pivot_pixels']['x'] * k, f['pivot_pixels']['y'] * k
-    mask = gear_mask(fid, f, nw, nh) if foot else None
+    mask = gear_mask(fid, f, nw, nh) if foot or info[sh].get('category') == 'stride' else None
     if mask is not None:
         mask = Image.fromarray(np.where(np.array(img)[..., 3:4] > 6, np.array(mask), 0).astype(np.uint8))
     add_item(fid, img, px, py, s, group_of(fid), mask)
@@ -408,6 +418,11 @@ else:
 if 'scoreboard_volcanic' in art_mappings.get('arena_additions', {}):
     sb = art_mappings['arena_additions']['scoreboard_volcanic']
     arena['scoreboard_volcanic'] = {**sb, 'pivot': [sb['pivot']['x'], sb['pivot']['y']]}
+
+arena['scoreboards'] = {key: {**sb, 'pivot': [sb['pivot']['x'], sb['pivot']['y']]} for key, sb in art_mappings.get('arena_scoreboards', {}).items()}
+arena['rival_mascots'] = art_mappings.get('rival_mascots', {})
+arena['mascot_arenas'] = {'pine_pond': 'pinewood_lynx', 'ember_dome': 'ember_comets', 'golden_hall': 'gilded_rams', 'dark_aerie': 'obsidian_ravens', 'aurora_palace': 'aurora_royals'}
+arena['penalty_box'] = art_mappings.get('penalty_box', {})
 
 # ---------------------------------------------------------------- mappings
 skaters = json.loads(json.dumps(src['skaters']))

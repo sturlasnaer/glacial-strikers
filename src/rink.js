@@ -106,14 +106,15 @@ export function collideNets(p, rad) {
 }
 
 // Twists: arena rules. Rivals' buildings have their own (meltwater, aurora lanes, pond
-// cracks); the old stage twists (speed lanes, cracked ice) remain for the Frostline rink.
+// cracks, rumble strips, shadow zones); the old stage twists (speed lanes, cracked ice)
+// remain for the Frostline rink.
 // Dynamic twists are updated by Match.updateTwists.
 export const AURORA_ROWS = [-215, -120, 125, 245];
 const lane = (y, dir) => ({ x0: -440, x1: 440, y, h: 34, dir });
 
 export function makeTwists(kind, rng = Math.random) {
   const pick = (n) => Math.floor(rng() * n);
-  const base = { kind, lanes: [], cracks: [], pools: [], t: 0 };
+  const base = { kind, lanes: [], cracks: [], pools: [], strips: [], shadows: [], t: 0 };
   if (kind === 'speed_lanes') return { ...base, lanes: [lane(-205, 1), lane(250, -1)] };
   if (kind === 'cracked_ice') {
     return { ...base, cracks: [{ x: -340, y: -70, r: 70 }, { x: 340, y: 90, r: 70 }, { x: 0, y: 215, r: 60 }, { x: 0, y: -190, r: 60 }] };
@@ -133,6 +134,18 @@ export function makeTwists(kind, rng = Math.random) {
   if (kind === 'aurora_lanes') {
     const rows = auroraRows(rng);
     return { ...base, lanes: rows, next: null, period: 14, phaseT: 0 };
+  }
+  if (kind === 'rumble_strips') {
+    // ridged ice along the far and near boards
+    return { ...base, strips: [{ x0: -470, x1: 470, y: -251, h: 26 }, { x0: -470, x1: 470, y: 274, h: 26 }] };
+  }
+  if (kind === 'shadow_zones') {
+    // two ravens circling overhead, each casting a drifting shadow
+    const anchors = [[-250, -40], [250, 50]];
+    return {
+      ...base,
+      shadows: anchors.map(([ax, ay], i) => ({ ax, ay, x: ax, y: ay, rx: 118, ry: 72, orbit: 120 + pick(70), w: (0.16 + rng() * 0.08) * (i ? 1 : -1), ph: rng() * 6.28 })),
+    };
   }
   if (kind === 'pond_cracks') {
     // two hairline cracks to start; hits, hard shots and quakes add more

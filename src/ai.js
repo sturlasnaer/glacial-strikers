@@ -262,8 +262,15 @@ export class TeamAI {
       const ox = s.x - o.x, oy = s.y - o.y, od = Math.hypot(ox, oy);
       if (od < 70 && od > 0.1) { dx += (ox / od) * (70 - od) * 1.2; dy += (oy / od) * (70 - od) * 1.2; }
     }
-    // arena rules: skirt slush pools and cracks unless the target is inside one
+    // arena rules: skirt slush pools and cracks unless the target is inside one, and keep
+    // the puck off the rumble strips
     const tw = this.m.twists;
+    if (tw.strips.length && this.m.puck.owner === s) {
+      for (const st of tw.strips) {
+        const off = s.y - st.y;
+        if (Math.abs(off) < st.h / 2 + 22 && s.x > st.x0 - 40 && s.x < st.x1 + 40) dy += Math.sign(st.y) * -1 * (st.h / 2 + 22 - Math.abs(off)) * (0.6 + this.diff * 0.8);
+      }
+    }
     if (tw.pools.length || tw.cracks.length) {
       for (const z of tw.pools.length ? tw.pools : tw.cracks) {
         const zr = z.rx || z.r;

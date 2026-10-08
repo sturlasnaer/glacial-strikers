@@ -175,8 +175,8 @@ export const ARENAS = {
   home: { name: 'Frostline Rink', lamps: '#ffb84d', twist: null },
   ember_dome: { name: 'Ember Dome', lamps: '#ff7a2e', flicker: 2.2, ice: 'rgba(255,140,60,0.06)', twist: 'meltwater', rule: 'Meltwater' },
   aurora_palace: { name: 'Aurora Palace', lamps: '#ffd27a', twist: 'aurora_lanes', rule: 'Aurora lanes' },
-  golden_hall: { name: 'Golden Hall', lamps: '#ffc04a', flicker: 1.6, twist: null },
-  dark_aerie: { name: 'Dark Aerie', lamps: '#b48cff', flicker: 0.7, twist: null },
+  golden_hall: { name: 'Golden Hall', lamps: '#ffc04a', flicker: 1.6, twist: 'rumble_strips', rule: 'Rumble strips' },
+  dark_aerie: { name: 'Dark Aerie', lamps: '#b48cff', flicker: 0.7, twist: 'shadow_zones', rule: 'Shadow zones' },
   pine_pond: { name: 'Pine Pond', lamps: null, twist: 'pond_cracks', rule: 'Pond cracks' },
 };
 
@@ -348,6 +348,8 @@ export const TWIST_INFO = {
   meltwater: 'Ember Dome rules: meltwater pools drift across the warm ice. Skaters and the puck bog down in them.',
   aurora_lanes: 'Aurora Palace rules: aurora lanes push skaters and the puck along the arrows, and shift every few seconds with the lights.',
   pond_cracks: 'Pine Pond rules: big hits and hard shots crack the pond. Cracks slow skaters, grab the puck and spread as the game goes on.',
+  rumble_strips: 'Golden Hall rules: ridged ice runs along the boards. Carry the puck fast across it and it hops off your stick.',
+  shadow_zones: 'Dark Aerie rules: ravens circle overhead. The puck is hard to see in their shadows, and goalies pick up shots from them late.',
 };
 
 // Pre- and post-match scenes. speaker: 'us' (our captain), 'them' (their captain),

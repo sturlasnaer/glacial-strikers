@@ -147,6 +147,7 @@ export class FX {
       this.excite = Math.min(1, this.excite + 0.2);
     });
     on('splash', ({ x, y }) => this.anim('arena_rules/splash/phase_', x, y + 2, 0.2, { fps: 14 }));
+    on('puck_hop', ({ x, y }) => this.anim('arena_rules/puck_hop/phase_', x, y + 2, 0.085, { fps: 12, frames: [1, 2, 3] }));
     on('goalie_dive', ({ g }) => {
       this.burst(g.x, g.y, 2, 6, ELEMENT_COLORS.snow, 160, 0.4);
       this.anim(CHIPS, g.x, g.y + 2, 0.12, { fps: 18, frames: PHASES, flip: g.diveDir < 0 });

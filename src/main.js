@@ -37,7 +37,7 @@ const STEP = 1 / 60;
 // Vibrate only once the player has interacted (browsers block it before that).
 const buzz = (p) => { if (navigator.userActivation?.hasBeenActive !== false) navigator.vibrate?.(p); };
 const RIVALS = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
-const RULE_ART = ['meltwater', 'aurora_lanes', 'pond_cracks', 'cracked_ice', 'both']; // rules drawn with the Batch I sprites
+const RULE_ART = ['meltwater', 'aurora_lanes', 'pond_cracks', 'cracked_ice', 'both', 'speed_lanes', 'rumble_strips', 'shadow_zones']; // rules drawn with the rule sprites
 
 const INTRO = [
   ['us', 'frost', 'Welcome to the Frostline Regional Cup, Foxes. Five wins and the cup comes home.'],
@@ -238,7 +238,8 @@ class App {
     const geared = cfg.teams.some((t) => t.skaters.some((k) => k.gear && (GEAR_LOOK[k.gear.stick] || GEAR_LOOK[k.gear.skates])));
     const rules = RULE_ART.includes(cfg.twist);
     // the title and hub scenes show over the demo match, so their art stays with it
-    Assets.trim({ teams: [teamId], arena, gear: geared, groups: [...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : [])] });
+    const host = Object.values(TEAMS).find((tm) => tm.arena === arena); // its mascot dances in the stands
+    Assets.trim({ teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: [...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : [])] });
     if (geared) Assets.ensureGear();
     if (rules) Assets.loadGroup('rules').catch(() => {});
     this.lap = null;
@@ -681,6 +682,7 @@ class App {
     });
     m.on('ice_crack', (e) => { audio.sfx('crack', { vol: 0.5 + e.k * 0.3 }); if (!e.grow) this.rumble(0.1, 0.3, 80); });
     m.on('aurora_shift', () => audio.sfx('shimmer', { vol: 0.8 }));
+    m.on('puck_hop', (e) => { audio.sfx('boards', at(e.x, e.y, 0.45)); audio.sfx('stick', at(e.x, e.y, 0.5)); });
     m.on('stride', (e) => { if (e.s.controlled) audio.sfx('stride'); });
     m.on('pickup_spawn', () => {
       audio.sfx('pickup', { vol: 0.7 });

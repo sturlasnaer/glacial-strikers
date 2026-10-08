@@ -270,6 +270,7 @@ class SniperDrill extends DrillBase {
   drawOver(ctx, R, m, fx) {
     for (const t of this.targets) {
       const p = toScreen(GOAL_X - 4, t.y, 14);
+      if (R.drawSniperTarget(ctx, p.x, p.y, t.flash ? 'hit' : t.lit ? 'lit' : 'unlit', t.lit ? Math.sin(fx.time * 7) * 0.06 : 0)) continue;
       const r = 9 + (t.lit ? Math.sin(fx.time * 7) * 1 : 0) + t.flash * 10;
       ctx.globalAlpha = t.lit || t.flash ? 1 : 0.35;
       for (const [rr, col] of [[r + 2, '#14233b'], [r, t.flash ? '#ffd45e' : t.lit ? '#ff3b3b' : '#8ea3c4'], [r * 0.66, '#fff2cb'], [r * 0.33, t.lit ? '#ff3b3b' : '#8ea3c4']]) {

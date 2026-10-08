@@ -452,7 +452,9 @@ export class Goalie {
   // A shot was fired at our net: react after a short delay.
   onShot(shot) {
     this.shotsFaced++;
-    const delay = Math.max(0.08, 0.24 - this.stats.rfx * 0.012) + this.match.rng() * 0.06;
+    let delay = Math.max(0.08, 0.24 - this.stats.rfx * 0.012) + this.match.rng() * 0.06;
+    const p = this.match.puck;
+    if (this.match.twists && this.match.inShadow(p.x, p.y)) delay += 0.07; // a shot out of a raven's shadow is picked up late
     this.react = { t: delay, shot };
   }
 

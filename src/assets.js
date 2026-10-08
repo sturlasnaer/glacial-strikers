@@ -69,6 +69,13 @@ export const Assets = {
   },
 
   async ensureArena(key) {
+    // the host's mascot lives on its team's pages
+    const host = this.atlas.arena && this.atlas.arena.mascot_arenas && this.atlas.arena.mascot_arenas[key];
+    const team = host && Object.values(TEAMS).find((tm) => tm.art === host);
+    if (team && this.atlas.arena.rival_mascots && this.atlas.arena.rival_mascots[host]) {
+      await this.loadGroup('rival_' + host).catch(() => {});
+      this.prepareTeam(team);
+    }
     const file = this.atlas.arenas && this.atlas.arenas[key];
     if (!file || this.backdrops.has(key)) return;
     this.backdrops.set(key, await this.image(file));

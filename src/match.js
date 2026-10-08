@@ -1139,6 +1139,17 @@ export class Match {
     }
     return null;
   }
+  stripAt(x, y) {
+    for (const st of this.twists.strips) if (x > st.x0 && x < st.x1 && Math.abs(y - st.y) < st.h / 2) return st;
+    return null;
+  }
+  inShadow(x, y) {
+    for (const z of this.twists.shadows) {
+      const dx = (x - z.x) / z.rx, dy = (y - z.y) / z.ry;
+      if (dx * dx + dy * dy < 1) return z;
+    }
+    return null;
+  }
   surfaceSpeed(s) {
     if (this.inCrack(s.x, s.y)) return 0.7;
     if (this.twists.pools.length && this.inPool(s.x, s.y)) return 0.78;
@@ -1146,7 +1157,7 @@ export class Match {
   }
 
   // Moving parts of the arena rules: drifting meltwater, shifting aurora lanes,
-  // spreading pond cracks.
+  // spreading pond cracks, circling raven shadows, and pucks hopping on rumble strips.
   updateTwists(dt) {
     const tw = this.twists;
     tw.t += dt;
@@ -1176,7 +1187,34 @@ export class Match {
       }
     } else if (tw.kind === 'pond_cracks' && this.state === 'play') {
       for (const c of tw.cracks) c.r = Math.min(CRACK_MAX, c.r + dt * 0.3); // cracks creep outward
+    } else if (tw.kind === 'shadow_zones') {
+      for (const z of tw.shadows) {
+        const a = z.ph + tw.t * z.w;
+        z.x = z.ax + Math.cos(a) * z.orbit;
+        z.y = z.ay + Math.sin(a) * z.orbit * 0.6;
+      }
+    } else if (tw.kind === 'rumble_strips' && this.state === 'play') {
+      // carry the puck fast over the ridges and now and then it hops off the stick
+      const s = this.puck.owner;
+      if (s && s.isSkater) {
+        s.hopCd = Math.max(0, (s.hopCd || 0) - dt);
+        if (!s.hopCd && s.speed > 150 && this.stripAt(s.x, s.y)) {
+          s.hopCd = 0.3;
+          if (this.rng() < 0.4) this.puckHop(s);
+        }
+      }
     }
+  }
+
+  puckHop(s) {
+    const p = this.puck;
+    this.loosePuck(s);
+    p.vx = s.vx * 1.15 + (this.rng() - 0.5) * 140;
+    p.vy = s.vy * 0.8 + (this.rng() - 0.5) * 140;
+    p.vz = 160;
+    p.noPickup.set(s, 0.45);
+    s.hopCd = 1.2;
+    this.emit('puck_hop', { x: p.x, y: p.y, s });
   }
 
   crackAt(x, y, k = 1) {
