@@ -905,7 +905,7 @@ export class Match {
     p.shot = null; p.pass = null; p.curve = null;
     p.noPickup.set(g, 0.4);
     p.rolled.clear();
-    g.saveHi = p.z > 14 || p.y < g.y;
+    g.saveHigh = p.z > 14; g.saveUp = p.y < g.y;
     if (g.state !== 'skate_in') g.setState(Math.abs(off) > 10 ? 'glove' : 'butterfly');
     this.emit('save', { g, caught: false, speed, x: p.x, y: p.y });
     return false;

@@ -20,6 +20,9 @@ const VOLUMES = [[0, 'Off'], [0.35, 'Low'], [0.7, 'Mid'], [1, 'Full']];
 // dialogue voices: each role speaks at its own pitch; rivals a little lower
 const VOICE = { frost: 660, thunder: 800, stone: 470, goalie: 590 };
 const voicePitch = (kit, us) => { const p = VOICE[String(kit).replace(/^sub_/, '')] || 620; return us ? p : p * 0.88; };
+// Connected controllers: any at all, and whether it's a PlayStation pad (for button names).
+const padList = () => [...(navigator.getGamepads ? navigator.getGamepads() : [])].filter(Boolean);
+const psPad = () => padList().some((p) => /dualsense|dualshock|playstation|054c/i.test(p.id));
 import { DRILLS, MEDAL_NAMES, MEDAL_COLORS, formatScore } from './drills.js';
 
 const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
@@ -141,7 +144,7 @@ export class UI {
           <button class="btn ghost" id="t-settings">Settings</button>
           ${this.app.installPrompt && !this.app.standalone ? '<button class="btn cream" id="t-install">Install app</button>' : ''}
         </div>
-        ${this.app.isTouch ? '' : '<div class="press" id="t-press">Press Enter to start</div>'}
+        ${this.app.isTouch && !padList().length ? '' : `<div class="press" id="t-press">${padList().length ? `Press ${psPad() ? '✕' : 'Ⓐ'} or Enter to start` : 'Press Enter to start'}</div>`}
       </div>
       <div class="title-foot">Best in landscape on phones · Keyboard, gamepad and touch</div>`);
     this.click('#t-start', () => { audio.sfx('confirm'); this.app.startCampaign(); });
@@ -1295,7 +1298,10 @@ export function controlsHtml(touch) {
     <kbd>I / E</kbd><span>Ultimate (when the gold meter is full)</span>
     <kbd>H</kbd><span>Pull the goalie for an extra attacker (when trailing and they need one more goal)</span>
     <kbd>Esc / P</kbd><span>Pause</span>
-    <kbd>Gamepad</kbd><span>Stick to skate · X/RT shoot-check · A pass-switch · RB sprint · B skill · Y ultimate</span>
+    ${psPad()
+    ? '<kbd>PlayStation pad</kbd><span>Left stick to skate · □ or R2 shoot-check · ✕ pass-switch · R1 or L2 sprint · ○ or L1 skill · △ ultimate · Options pause · Create pull goalie</span>'
+    : '<kbd>Gamepad</kbd><span>Left stick to skate · X or RT shoot-check · A pass-switch · RB or LT sprint · B or LB skill · Y ultimate · Start pause · Back pull goalie</span>'}
+    <kbd>Pad in menus</kbd><span>D-pad or stick to move · ${psPad() ? '✕' : 'A'} select · ${psPad() ? '○' : 'B'} back · ${psPad() ? 'L1/R1' : 'LB/RB'} switch tabs · right stick scrolls</span>
     <kbd>Touch</kbd><span>Left thumb anywhere to skate · right-side buttons for actions</span>
   </div>`;
 }

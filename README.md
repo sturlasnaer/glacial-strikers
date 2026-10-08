@@ -34,11 +34,13 @@ The game needs to be served over http; opening `index.html` straight from disk w
 | Ultimate | I or E | Y | Star button |
 | Pause | Esc / P | Start | Pause icon |
 
-**Pull the goalie:** H on keyboard, Back/View on a gamepad, or the PULL GOALIE touch button. It's available when you're behind and the other team needs one more goal.
+**Pull the goalie:** H on keyboard, Back/View (Create on PlayStation) on a gamepad, or the PULL GOALIE touch button. It's available when you're behind and the other team needs one more goal.
 
 Hold shoot while a pass is on its way to fire a **one-timer**. Your skates plant while you hold it, so steering only aims.
 
 **Local versus (2 players):** P1 uses WASD, F shoot/check, G pass/switch, Left Shift sprint, R skill, T ultimate. P2 uses the arrows, K shoot/check, L pass/switch, Right Shift sprint, O skill, P ultimate. With two gamepads each player gets one; with one gamepad it goes to P2. Esc pauses.
+
+**Gamepad in menus:** the D-pad or left stick moves a highlight, ✕/A selects, ○/B goes back or closes a pop-up, L1/R1 switch hub tabs, and the right stick scrolls. PlayStation and Xbox pads both work (Chrome needs a button press before it sees the pad).
 
 **Shootout goalie:** on the rival's shot you're in goal. Steer to move, shoot = butterfly, pass = dive.
 

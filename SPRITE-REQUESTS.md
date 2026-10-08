@@ -7,7 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **L**: left-facing goalies, so the goalie in the right-hand net stops catching with the wrong hand.
+1. **L**: goalies in true profile, facing left and right (and holding the glove in the correct hand).
 2. **N**: the near-side crowd, seen from behind.
 3. **B**: atmosphere (two more arenas, fans at the glass).
 4. **H**: locker-room life.
@@ -20,7 +20,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - Same camera (45° overhead), chibi proportions, navy outlines and palette.
 - Skaters about 152 px standing (`recommended_standing_height`), skates on a consistent baseline.
 - Goalies match `halla_side_goalies` scale (the ready pose is about 205 px tall in that sheet). The v5 goalie sheets got this right.
-- Side-view poses face **right**, and the game mirrors them for the other side. Goalies are the exception: see Batch L for their left-facing set.
+- Side-view poses face **right**, and the game mirrors them for the other side. Goalies are the exception: Batch L asks for true-profile goalies drawn in both directions.
 - Home colours teal/cream/navy. Every rival is drawn in **coral + violet** and recoloured at runtime, so keep coral and violet off skin and hair.
 
 ---
@@ -37,28 +37,32 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 ---
 
-## Batch L: left-facing goalies (next)
+## Batch L: goalies in true profile, facing left and right (next)
 
-**What's there now.** Every goalie (Halla in home and away colours, and the five rival goalies) has a complete **right-facing** set: 21 side poses for saves, skating and puck handling, plus the back views. There is nothing facing **left**. The goalie in the right-hand net faces left, so the game mirrors the right-facing art. A mirror swaps the hands: that goalie catches with the right hand and holds the stick in the left. It also flips mask and helmet details.
+**What's there now.** The goalies' "side" poses (Halla in home and away colours, and the five rival goalies) are **three-quarter views**: the body faces the camera and only the head and pads turn toward the play. They only face right, and the game mirrors them for the right-hand net, which also puts the glove in the wrong hand.
 
-**Hands (the important part).** All our goalies catch left: **catching glove on the goalie's left hand, blocker and stick in the right**. In the right-facing art the glove is on the far side and the stick on the near side, toward the camera. Facing left, it's the other way round: **glove on the near side (toward the camera), blocker and stick on the far side.** Draw these fresh in the same style; don't flip the existing sprites.
+**What we want:** every goalie in **true profile**, with the **whole body facing the play**: head, chest, pads, glove and stick all turned 90° to the side, seen from the same 45° overhead camera as everything else. That's two full sets per goalie: one **facing right** (defending the left-hand net) and one **facing left** (defending the right-hand net). Draw both; no mirrored copies.
 
-**Poses for each goalie, facing left (west):**
+**Hands (important).** All our goalies catch left: **catching glove on the goalie's left hand, blocker and stick in the right.**
+- **Facing right:** the stick and blocker hand is on the near side, toward the camera. The glove is on the far side, partly behind the body.
+- **Facing left:** the glove is on the near side, toward the camera. The stick and blocker are on the far side.
+- So the right-facing and left-facing sets are not mirror images of each other.
+
+**Poses, for each direction:**
 
 | Group | Poses | Frames |
 |---|---|---|
-| Side set | ready, ready_repeat, shuffle_up, shuffle_down, butterfly, glove_save, blocker_save, pad_stretch, dive_up, dive_down, cover, getting_up | 12 |
-| Skating | skate_a–d (a 4-frame cycle skating left) | 4 |
+| Stance and saves | ready, ready_repeat (a breathing frame), shuffle_up, shuffle_down, butterfly, glove_save, blocker_save, pad_stretch, dive_up, dive_down, cover, getting_up | 12 |
+| Skating | skate_a–d, a 4-frame cycle skating in that direction | 4 |
 | Puck handling | pass_windup, pass_release, poke_a, poke_b, stop_behind_net | 5 |
-| Back view | ready, look_back, fish_puck_a, fish_puck_b, dejected, turned toward the **right-hand** net, so they fish to the right | 5 |
 
-That's **26 frames per goalie × 7 goalies = 182 frames**. In the glove and blocker saves the glove is on the near side, so `glove_save` reaches down-screen toward the camera and `blocker_save` reaches up-screen. In the dives the body stretches the same way as the right-facing set (`dive_up` goes up-screen).
+That's **21 frames × 2 directions = 42 per goalie, × 7 goalies = 294 frames.** `dive_up` stretches up-screen (away from the camera) and `dive_down` toward it, in both directions. In each direction, `glove_save` and `blocker_save` reach toward whichever side that hand is on.
 
-Not needed: the front views (they face the camera) and the north/south skating frames (those don't change with direction).
+Not needed: the front views, the back views (they face the net, and the existing ones are fine), and the up/down skating frames.
 
-**Format:** same as the v5 goalies: the `halla_side_goalies` scale (ready pose about 205 px tall in the sheet), an add-on `atlas.json` in the v5 format with the same pose names and `west` in the path (`<goalie>/g/<kit>/west/<pose>`, back views `<goalie>/g/<kit>/back_west/<pose>`), and a builder patch like v5's. Keep each goalie's mask and helmet design the right way round.
+**Format:** same as the v5 goalies: the `halla_side_goalies` scale (ready pose about 205 px tall in the sheet), an add-on `atlas.json` in the v5 format whose `goalies` entries carry `east` and `west` frame sets (`flip_x: false`) with the pose names above (`<goalie>/g/<kit>/east/<pose>` and `.../west/<pose>`), delivered as `Puckbound-Batch-L`. The builder already reads this layout. Keep each goalie's mask and helmet design the right way round in both directions.
 
-**If that's too much at once:** the right-hand net is defended by the five rival goalies, and by Halla in away colours in the training drills. Do those six first (156 frames). Halla's home kit can come last (26 frames); she only plays the left-hand net today.
+**If that's too much at once:** start with the left-facing sets for the five rival goalies and Halla in away colours, since they defend the right-hand net (6 × 21 = 126 frames). Then the right-facing sets (126). Halla's home kit last (42).
 
 ---
 

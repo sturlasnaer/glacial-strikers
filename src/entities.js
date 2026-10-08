@@ -472,7 +472,7 @@ export class Goalie {
             this.vy = this.diveDir * 420;
             m.emit('goalie_dive', { g: this });
           } else {
-            this.saveHi = p.z > 14 || pr.y < this.y; // glove side is up-screen
+            this.saveHigh = p.z > 14; this.saveUp = pr.y < this.y; // the renderer picks glove or blocker
             this.setState(p.z > 14 ? 'glove' : 'butterfly');
           }
         }

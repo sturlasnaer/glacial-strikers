@@ -35,6 +35,10 @@ BATCH_A = sys.argv[4] if len(sys.argv) > 4 else '../assets/Glacial-Strikers-v4-B
 # The game recolours those pixels for the equipped gear.
 GEAR_MASKS = sys.argv[5] if len(sys.argv) > 5 else '../assets/Glacial-Strikers-Gear-Masks'
 BATCH_G = sys.argv[6] if len(sys.argv) > 6 else '../assets/Glacial-Strikers-v5-Goalies'
+# Batch L: goalies in true profile, an add-on atlas in the v5 format whose goalies carry
+# real 'east' and 'west' sets (flip_x false) and optionally 'back_west'. The profile east
+# replaces the three-quarter side set; the west replaces the mirrored one.
+BATCH_L = sys.argv[7] if len(sys.argv) > 7 else '../assets/Puckbound-Batch-L'
 
 # Atlas pixels per source pixel for v1 sheets. Picked so each sprite is close to its
 # on-screen size on a 2x phone screen while keeping the download small.
@@ -75,6 +79,24 @@ if BATCH_G and os.path.exists(os.path.join(BATCH_G, 'atlas.json')):
     goalie_batch = json.load(open(os.path.join(BATCH_G, 'atlas.json')))
     src = merge_goalies(src, goalie_batch)
     goalie_batch_sheets = set(goalie_batch['sheets'])
+goalie_west_sheets = set()
+if BATCH_L and os.path.exists(os.path.join(BATCH_L, 'atlas.json')):
+    west = json.load(open(os.path.join(BATCH_L, 'atlas.json')))
+    for section in ('sheets', 'frames', 'animations'):
+        for key, value in west.get(section, {}).items():
+            if key in src.setdefault(section, {}) and src[section][key] != value:
+                raise ValueError(f'Batch L conflicts with {section}/{key}')
+            src[section][key] = value
+    for key, g in west.get('goalies', {}).items():
+        dst = src['goalies'].setdefault(key, {})
+        if 'west' in g:
+            dst['west_real'] = g['west']  # used in place of the mirrored 'west'
+        if 'east' in g:
+            dst['east_real'] = g['east']  # profile art in place of the three-quarter side set
+        if 'back_west' in g:
+            dst['back_west'] = g['back_west']
+    goalie_west_sheets = set(west.get('sheets', {}))
+    goalie_batch_sheets |= goalie_west_sheets
 frames = src['frames']
 info = src['sheets']
 os.makedirs(os.path.join(OUT, 'cutins'), exist_ok=True)
@@ -91,7 +113,7 @@ sheets = {}
 
 def sheet(name):
     if name not in sheets:
-        root = BATCH_G if name in goalie_batch_sheets else (BATCH_A if name in batch_sheets else PACK)
+        root = BATCH_L if name in goalie_west_sheets else BATCH_G if name in goalie_batch_sheets else (BATCH_A if name in batch_sheets else PACK)
         sheets[name] = Image.open(os.path.join(root, info[name]['image'])).convert('RGBA')
     return sheets[name]
 
@@ -384,6 +406,36 @@ for key, g in src['goalies'].items():
     goalies_back[name] = g['back']['frames']
     goalies_skating[name] = {d: {'frames': [g[d]['frames']['skate_' + phase] for phase in ('abcd' if d in ('east', 'west') else 'ab')], 'flip_x': d == 'west'} for d in ('east', 'west', 'north', 'south')}
     goalies_puck_handling[name] = {pose: g['east']['frames'][pose] for pose in ('pass_windup', 'pass_release', 'poke_a', 'poke_b', 'stop_behind_net')}
+# Batch L: real left-facing sets, for the goalie in the right-hand net
+SIDE_POSES = ('ready', 'ready_repeat', 'shuffle_up', 'shuffle_down', 'butterfly', 'glove_save', 'blocker_save',
+              'pad_stretch', 'dive_up', 'dive_down', 'cover', 'getting_up')
+PUCK_POSES = ('pass_windup', 'pass_release', 'poke_a', 'poke_b', 'stop_behind_net')
+goalies_side_west, goalies_back_west, goalies_puck_handling_west = {}, {}, {}
+for key, g in src['goalies'].items():
+    e = g.get('east_real')
+    if e and 'ready' in e.get('frames', {}):
+        team, colour = key.split('/')
+        name = colour if team == 'halla' else team
+        ef = e['frames']
+        goalies_side[name] = {**goalies_side.get(name, {}), **{p: ef[p] for p in SIDE_POSES if p in ef}}
+        if all(p in ef for p in PUCK_POSES):
+            goalies_puck_handling[name] = {p: ef[p] for p in PUCK_POSES}
+        if all(f'skate_{c}' in ef for c in 'abcd') and name in goalies_skating:
+            goalies_skating[name]['east'] = {'frames': [ef[f'skate_{c}'] for c in 'abcd'], 'flip_x': False}
+for key, g in src['goalies'].items():
+    w = g.get('west_real')
+    if not w or 'ready' not in w.get('frames', {}):
+        continue
+    team, colour = key.split('/')
+    name = colour if team == 'halla' else team
+    wf = w['frames']
+    goalies_side_west[name] = {p: wf[p] for p in SIDE_POSES if p in wf}
+    if all(p in wf for p in PUCK_POSES):
+        goalies_puck_handling_west[name] = {p: wf[p] for p in PUCK_POSES}
+    if all(f'skate_{c}' in wf for c in 'abcd') and name in goalies_skating:
+        goalies_skating[name]['west'] = {'frames': [wf[f'skate_{c}'] for c in 'abcd'], 'flip_x': False}
+    if 'back_west' in g:
+        goalies_back_west[name] = g['back_west']['frames']
 goalie_animations = {key: value for key, value in src['animations'].items() if '/g/' in key and any(fid in frames and frames[fid]['sheet'] in goalie_batch_sheets for fid in value['frames'])}
 
 portraits = {}
@@ -460,6 +512,9 @@ atlas = {
     'goalies_back': goalies_back,
     'goalies_skating': goalies_skating,
     'goalies_puck_handling': goalies_puck_handling,
+    'goalies_side_west': goalies_side_west,
+    'goalies_back_west': goalies_back_west,
+    'goalies_puck_handling_west': goalies_puck_handling_west,
     'goalie_animations': goalie_animations,
     'portraits': portraits,
     'crests': crests,

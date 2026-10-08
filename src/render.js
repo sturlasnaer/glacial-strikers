@@ -803,11 +803,13 @@ export class Renderer {
     return Math.abs(g.x - g.goalSide * GOAL_X) < 36 && Math.abs(g.y) < MOUTH + 8 && g.state !== 'dive';
   }
 
-  goalieSideFrame(g, set) {
+  // gloveUp: which side the catching glove is on in this art (up-screen for the
+  // right-facing set and its mirror, toward the camera for real left-facing art)
+  goalieSideFrame(g, set, gloveUp = true) {
     let pose = 'ready';
     switch (g.state) {
       case 'butterfly': pose = 'butterfly'; break;
-      case 'glove': pose = g.saveHi ? 'glove_save' : 'blocker_save'; break;
+      case 'glove': pose = g.saveHigh || (gloveUp ? g.saveUp : !g.saveUp) ? 'glove_save' : 'blocker_save'; break;
       case 'hold': pose = 'cover'; break;
       case 'dive': case 'down': pose = g.stateT > 0.32 ? 'pad_stretch' : g.diveDir < 0 ? 'dive_up' : 'dive_down'; break;
       default:
@@ -818,19 +820,23 @@ export class Renderer {
   }
 
   // A goalie's art sets: their own rival art once it's loaded, otherwise home or away.
+  // In the right-hand net they face left: real left-facing art (Batch L) when this
+  // goalie has it, otherwise the right-facing art mirrored.
   goalieSets(g) {
     const A = Assets.atlas, key = g.team === 0 ? 'home' : 'away';
-    const pick = (all, probe) => {
-      const own = all && g.art && all[g.art];
-      const f = own && Assets.frame(probe(own));
-      return f && Assets.pages[f[0]] ? own : all && all[key];
-    };
+    const loaded = (set, probe) => { const f = set && Assets.frame(probe(set)); return f && Assets.pages[f[0]] ? set : null; };
+    const pick = (all, probe) => (all && g.art && loaded(all[g.art], probe)) || (all && all[key]);
+    const own = (all, probe) => all && loaded(all[g.art || key], probe); // never another goalie's art
+    const left = g.goalSide > 0;
+    const sideW = left && own(A.goalies_side_west, (s) => s.ready);
+    const backW = left && own(A.goalies_back_west, (s) => s.ready);
+    const puckW = left && own(A.goalies_puck_handling_west, (s) => s.pass_windup);
     return {
-      side: pick(A.goalies_side, (s) => s.ready),
+      side: sideW || pick(A.goalies_side, (s) => s.ready), flip: left && !sideW, gloveUp: !sideW,
       front: pick(A.goalies_front, (s) => s.idle_a),
-      back: pick(A.goalies_back, (s) => s.ready),
+      back: backW || pick(A.goalies_back, (s) => s.ready), backFlip: left && !backW,
       skate: pick(A.goalies_skating, (s) => s.east.frames[0]),
-      puck: pick(A.goalies_puck_handling, (s) => s.pass_windup),
+      puck: puckW || pick(A.goalies_puck_handling, (s) => s.pass_windup), puckFlip: left && !puckW,
     };
   }
 
@@ -840,7 +846,7 @@ export class Renderer {
   goaliePose(g, match, replay) {
     const S = this.goalieSets(g);
     if (!S.side) return null;
-    const flip = g.goalSide > 0;
+    const flip = S.flip, bflip = S.backFlip, pflip = S.puckFlip;
     const ms = match.state, mt = match.stateT;
     const beat = (t, n, rate) => Math.floor(t * rate) % n;
     // skating to the bench when pulled, or back to the crease
@@ -860,22 +866,22 @@ export class Renderer {
       if (ms === 'over') return { id: match.winner === g.team ? (beat(mt, 2, 2.5) ? F.wave : F.celebrate) : F.dejected, flip: false, front: true };
       if (ms === 'goal' && match.lastGoal) {
         if (match.lastGoal.team === g.team) return { id: mt < 0.25 ? F.idle_a : F.celebrate, flip: false, front: true };
-        if (mt < 0.7) return { id: B.look_back, flip };
-        if (mt < 2.4) return { id: beat(mt, 2, 3.5) ? B.fish_puck_b : B.fish_puck_a, flip };
-        return { id: B.dejected, flip };
+        if (mt < 0.7) return { id: B.look_back, flip: bflip };
+        if (mt < 2.4) return { id: beat(mt, 2, 3.5) ? B.fish_puck_b : B.fish_puck_a, flip: bflip };
+        return { id: B.dejected, flip: bflip };
       }
     }
     const P = S.puck;
     if (P) {
-      if (g.state === 'poke') return { id: g.stateT < 0.12 ? P.poke_a : P.poke_b, flip };
-      if (g.state === 'hold' && g.holdT < 0.3) return { id: P.pass_windup, flip, hidePuck: true };
-      if (g.state === 'hold' && g.stopPose && g.stateT < 0.4) return { id: P.stop_behind_net, flip, hidePuck: true };
-      if (g.state === 'ready' && g.prevState === 'hold' && g.stateT < 0.22) return { id: P.pass_release, flip };
+      if (g.state === 'poke') return { id: g.stateT < 0.12 ? P.poke_a : P.poke_b, flip: pflip };
+      if (g.state === 'hold' && g.holdT < 0.3) return { id: P.pass_windup, flip: pflip, hidePuck: true };
+      if (g.state === 'hold' && g.stopPose && g.stateT < 0.4) return { id: P.stop_behind_net, flip: pflip, hidePuck: true };
+      if (g.state === 'ready' && g.prevState === 'hold' && g.stateT < 0.22) return { id: P.pass_release, flip: pflip };
     }
     // the puck's behind the goal line: look back over the shoulder
     const p = match.puck;
-    if (S.back && g.state === 'ready' && !g.shuffle && !p.inNet && (p.x - g.goalSide * GOAL_X) * g.goalSide > 8) return { id: S.back.look_back, flip };
-    return { id: this.goalieSideFrame(g, S.side), flip };
+    if (S.back && g.state === 'ready' && !g.shuffle && !p.inNet && (p.x - g.goalSide * GOAL_X) * g.goalSide > 8) return { id: S.back.look_back, flip: bflip };
+    return { id: this.goalieSideFrame(g, S.side, S.gloveUp), flip };
   }
 
   drawGoalie(ctx, g, match, pose) {

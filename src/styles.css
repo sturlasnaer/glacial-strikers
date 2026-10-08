@@ -600,3 +600,7 @@ body.in-hub.hub-room #screen { background: linear-gradient(rgba(8, 14, 26, 0.82)
 /* music room */
 .jukebox { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 16px; }
 .jukebox .chip { padding: 6px 14px; font-size: 14px; }
+
+/* controller navigation in menus: a clear highlight on the picked button */
+body.pad-nav :is(button, a, input, select, [tabindex="0"]):focus { outline: 3px solid var(--gold); outline-offset: 3px; box-shadow: 0 0 0 6px rgba(255, 212, 94, 0.25); }
+body.pad-nav .spot:focus { border-color: rgba(255, 242, 203, 0.9); background: rgba(255, 242, 203, 0.12); }

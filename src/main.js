@@ -6,6 +6,7 @@ import { Renderer } from './render.js';
 import { FX } from './fx.js';
 import { Input, TouchControls, mergeInputs } from './input.js';
 import { audio } from './audio.js';
+import { PadNav } from './padnav.js';
 import { ARENA_MUSIC } from './songs.js';
 import { UI, controlsHtml, crest } from './ui.js';
 import { HUD } from './hud.js';
@@ -79,6 +80,9 @@ class App {
     this.input = new Input();
     this.touch = new TouchControls(document.getElementById('touch'), this.input);
     this.ui = new UI(this);
+    this.padnav = new PadNav(this);
+    window.addEventListener('pointerdown', () => { this.padnav.used = false; document.body.classList.remove('pad-nav'); });
+    window.addEventListener('gamepadconnected', () => { if (this.scene === 'title') this.ui.title(); });
     this.hud = new HUD(this);
     this.replay = new Replay();
     this.clips = new ClipRecorder(this.canvas, audio);
@@ -182,6 +186,14 @@ class App {
       const m = document.querySelector('.modal-bg');
       if (m && this.scene !== 'paused') m.remove();
     }
+  }
+
+  // A controller press counts as the first touch: wake the audio (Chrome may still want a click).
+  onPadPress() {
+    if (this.padWoke) return;
+    this.padWoke = true;
+    audio.unlock(); audio.play(this.track || 'title');
+    setTimeout(() => { this.padWoke = audio.ctx && audio.ctx.state === 'running'; }, 300);
   }
 
   // The soundtrack follows the scene (and comes back after the music room).
@@ -949,6 +961,7 @@ class App {
     this.prevPause = raw.pause;
 
     if (this.hubBg && this.scene !== 'hub') { this.hubBg = false; document.body.classList.remove('in-hub'); }
+    this.padnav.update(Math.min(0.05, realDt));
     const m = this.hubBg ? null : this.match; // nothing to draw behind the locker room
     // catch size changes that don't fire resize events (browser UI, emulation)
     if (this.canvas.clientWidth !== Math.round(this.renderer.w) || this.canvas.clientHeight !== Math.round(this.renderer.h)) this.onResize();
