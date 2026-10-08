@@ -1,17 +1,17 @@
 # Sprite requests
 
-What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd), the remaining packs (Batches B, H, I, C and N-Extras), the new batches (P, R, S, K, T and M2) the D, U, Q, W, O, E, J and F delivery, V and X, the Y, Z, AA, AB and AC delivery, the twins' first look (AI part 1), Part 2 and the new additions (AD, AE, AF, AG, AI part 2, AJ, AK, AL and AM), and AN, AO and AP. AH was skipped: the AJ pilot works, so new faces come from parts.
+What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd), the remaining packs (Batches B, H, I, C and N-Extras), the new batches (P, R, S, K, T and M2) the D, U, Q, W, O, E, J and F delivery, V and X, the Y, Z, AA, AB and AC delivery, the twins' first look (AI part 1), Part 2 and the new additions (AD, AE, AF, AG, AI part 2, AJ, AK, AL and AM), AN, AO, AP, and AQ to AU. AH was skipped: the AJ pilot works, so new faces come from parts.
 
 The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes** (the Snow Fox is their mascot; colours unchanged). Packs can be named `Puckbound-...` from now on; older `Glacial-Strikers-...` folder names still work.
 
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **AQ**: cut-in banners for players made from parts, one backdrop per element.
-2. **AR**: an agent in the locker room, for a free-agent market.
-3. **AS**: the linesman's penalty signals.
-4. **AT**: goalies from parts: a goalie body and painted mask heads.
-5. **AU**: the two expansion clubs (now in the game from the second season): crests, buildings, mascots.
+1. **AV**: small icons: the Veteran Presence achievement and the league news.
+2. **AW**: crests for the player's club: six designs to choose from, recoloured to the club's colours.
+3. **AX**: big and slim builds for goalies made from parts.
+4. **AY**: a rule each for the Observatory and the Longhouse, the expansion clubs' buildings.
+5. **AZ**: six more heads for players made from parts.
 
 ## Format notes
 
@@ -25,6 +25,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - **Batch AN:** the goaltending-style icons on the goalie cards, the contract in the league news, icons for the nine newest achievements, and the backup goalie a rival plays once you've signed theirs (in their colours, with portraits).
 - **Batch AO:** two more builds (big and slim) and six more heads (cage, visor, mohawk, ponytail, moustache, glasses), with portrait shoulders per build, and the jersey moment for the parts body: drafted rookies now pull on our jersey with their own face.
 - **Batch AP:** big and slim rookies pull on our jersey too.
+- **Batches AQ to AU:** cut-in backdrops for players made from parts, Vigga the agent, the linesman's signals for each call, goalies made from parts (a body and six painted masks), and the Glacier Owls' and Thunder Moose's crests, buildings, mascots, scoreboards, banners and captains.
 
 ---
 
@@ -78,50 +79,37 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 ---
 
-## Batch AQ: cut-in banners for players made from parts
+## Batch AV: small icons
 
-When a player uses their ultimate, a banner slides across the screen with their art (the cut-ins). The cast, the rivals and the twins have painted banners, but rookies and anyone else made from parts get a plain band. Please paint **one banner backdrop per element**, in the style and size of the existing cut-in banners (`cutins/*.webp`, 960 wide), with the left third left clear: the game drops the player's portrait (their own face and build) there and writes the super's name over the right side.
-- `frost` (ice blue, a blizzard), `thunder` (yellow, lightning across a storm), `stone` (tan, a rockslide), `ember` (orange, a wall of flame), `gale` (mint, a whirlwind), `shadow` (violet-black, an eclipse).
-- Frame names `cutin_bg/<element>`, plus a soft-edged vignette PNG `cutin_bg/portrait_glow` the game puts behind the portrait.
+In the style and size of the reward icons (about 200 px source), sheet `icons_av.png`:
+- `achievements/veteran_presence`: a worn captain's armband lying on a signed contract (requested with AR, and the one AR piece still to come).
+- For **Around the Frostline**, the league news in the League tab, read at 20–24 px, so bold and simple: `icons/news_sign` (a quill over a contract), `icons/news_draft` (a jersey on a hanger with a star), `icons/news_trade` (two jerseys swapping, like `icons/trade` but simpler), `icons/news_retire` (a pair of skates hung up by their laces), `icons/news_cup` (the Frostline Cup), `icons/news_new_club` (a crest with a small plus).
 
-7 images.
+7 frames.
 
-## Batch AR: an agent in the locker room
+## Batch AW: crests for the player's club
 
-Next in the game: a **free-agent market**, players made from parts who aren't on any team and can be signed for coins, refreshed every few matches. They need someone to pitch them. Please draw **an agent** in the Batch H style and scale (Brekka, Ottar and Kip): a sharp coat over a hockey hoodie, a phone in one hand and a folder of contracts under the other arm. Adult, any look you like, distinct from the three NPCs.
-- Standing art: `hub_fullbody/agent/idle_a`, `idle_b`, `talking`, and `offer` (holding a contract out). Same foot baseline as the others.
-- A portrait with the five dialogue expressions (neutral, determined, grin, shocked, defeated), in the style of the NPC portraits: `hub_npcs/portrait/agent` and `hub_npcs/agent/<expression>`.
-- A station icon, `icons/free_agents` (a folder of player cards with a paperclip), reward-icon size.
-- An achievement icon, `achievements/veteran_presence` (a worn captain's armband on a signed contract), in the style of `achievements/*`.
+Players rename their club and pick its colours, but the crest is always the Snow Fox. Please draw **six more crest designs** to choose from, in the style and size of `hud_elements/misc/home_crest`, in our **teal and cream** (the game recolours them to the club's colours, as it does the Snow Fox): a **howling wolf**, a **polar bear**, a **snowy owl in flight** (different from the Glacier Owls' front-on owl), a **narwhal**, a **crossed sticks over a mountain**, and a **lightning bolt through a snowflake**. Frame names `crests_club/<name>` (`wolf`, `bear`, `owl`, `narwhal`, `mountain`, `bolt`). The same shield shape family as the Snow Fox is fine, or each its own shape.
 
-The market is in the game now: her name is **Vigga**. 9 frames.
+6 frames.
 
-## Batch AS: the linesman's penalty signals
+## Batch AX: goalie builds
 
-The linesman (Batch AG) raises an arm for every penalty. The game calls three kinds: **interference**, **charging** and **boarding**. Please add the real hockey signal for each, facing the camera, two frames each so it can loop for a second:
-- `interference`: arms crossed and held in front of the chest.
-- `charging`: clenched fists rotating around each other in front of the chest.
-- `boarding`: one clenched fist striking the open palm of the other hand.
-- `washout`: both arms swept out to the sides at shoulder height, for a goal that doesn't count.
+Batch AT's goalie body is one build. Like AO did for skaters, please draw **`body_big`** (a wide, heavy goalie who fills the net) and **`body_small`** (a small, quick one) with exactly AT's list: the side sets both ways, front, back, skating and puck handling, the foreground layers, mask anchors on every frame, and the portrait shoulders. The six masks fit all three bodies, so no new masks.
 
-Same character, scale and foot baseline as Batch AG, under `linesman.calls`. 8 frames.
+About 120 frames per build.
 
-## Batch AT: goalies from parts
+## Batch AY: rules for the expansion buildings
 
-Signed rival goalies and the rivals' backups cover today's needs, but drafted and free-agent goalies would need faces of their own. Goalie masks hide the face, so a goalie's look is **a body and a painted mask**:
-- **A goalie body** with exactly the list the backup goalie got in Batch AN: the side sets both ways, front, back, skating and puck handling, in coral and violet, **drawn without the mask and helmet**, with an anchor for the mask on every frame like the AJ bodies (x, y, view, rotation; views s, se, e, ne, n and the side views).
-- **Six masks**, each in all those views: `classic` (plain with a cage), `flame`, `wolf_teeth`, `stars`, `stripes`, `skull`. Paint each design's art in pure red on a separate mask layer (like the AJ skin and hair masks) so the game can recolour it per player.
-- A portrait: the shoulders plus each mask facing the camera, with the five expressions showing through the cage (eyes and brows only).
+Every rival's building has a rule (meltwater, aurora lanes, pond cracks, rumble strips, shadow zones). The two new ones need theirs:
+- **The Observatory (Glacier Owls): moonbeams.** A wide beam of moonlight slowly sweeps across the ice from the telescope dome. A shot taken from inside it glares in the goalie's eyes. Art: the beam as a soft translucent light shape on the ice, about a third of the rink's width (one frame plus three shimmer frames), and the glare as a small star-burst on the puck (three frames).
+- **The Longhouse (Thunder Moose): loose planks.** Stretches of the wooden boards rattle, and a puck that hits one takes an odd bounce. Art: a board-plank segment overlay for the side boards and one for the end boards, each rattling (three frames), and a puff of wood splinters (four frames).
+- A rule icon for each, in the style of the Batch O rule icons: `icons/rule_moonbeams` and `icons/rule_loose_planks`.
 
-About 70 body frames and 6 × 12 mask views. If time is short, the body and two masks first.
+About 18 frames.
 
-## Batch AU: the two expansion clubs
+## Batch AZ: six more heads
 
-The league grows to eight teams from a save's second season: **the Glacier Owls** (snowy white and slate) and **the Thunder Moose** (forest green and amber) are in the game now. Their players are made from parts in their colours, and their goalies wear the AN backup goalie. Today they use the generic away crest and play at the Frostline Rink. Each club needs its own identity:
-- **A crest** like `rival_crests` (ignore the team colours in the art; draw it coral and violet so the game recolours it).
-- **A home arena**, a 1536×1024 painting in the style of the Golden Hall and the Dark Aerie: an owl's frozen observatory, and a timber longhouse with antlers in the rafters.
-- **A mascot** dancing on the near stairs, like Batch R (idle, two dance frames, a cheer).
-- **A scoreboard** like Batch K, and an arena banner like v3's.
-- A captain's cut-in banner, painted like the rivals' (the captain can be made from parts, so any face you like that fits the team).
+Players made from parts have ten heads. Six more, in the AJ/AO format (the five views with normal and effort states, skin and hair masks, the five portrait faces), so drafts and free agents keep looking new: `curls` (curly hair spilling out under the helmet), `bun` (a hair bun at the back), `long_hair` (straight hair to the shoulders), `eye_black` (stripes under the eyes), `bandaged_nose` (a strip across the nose), `freckled_redhead` (a different face from `freckles`, with a wide grin). Keep coral and violet off skin and hair.
 
-About 20 images and frames per team. Put the arenas in `arenas` as `owl_observatory` and `moose_longhouse`, the crests under `rival_crests/crest/glacier_owls` and `.../thunder_moose`, and the mascots as Batch R did.
+About 150 frames.
