@@ -1,5 +1,7 @@
-// Online leaderboards: the request handling, shared by the AWS Lambda (server/lambda.mjs)
-// and the local test server (tools/leaderboard_server.mjs). Storage is passed in.
+// Online leaderboards and cloud saves: the request handling, shared by the AWS Lambda
+// (server/lambda.mjs) and the local test server (tools/leaderboard_server.mjs). Storage is
+// passed in.
+import { createHash } from 'crypto';
 //
 // One record per player per board holds their best score. Boards rank by a sortable key
 // (better scores first, earlier on ties). Scores come from a browser game, so they can be
@@ -16,6 +18,30 @@ export const BOARDS = {
 
 const TOP = 25;
 const MIN_GAP_MS = 2000; // per player and board
+export const MAX_SCORE_BODY = 2048;
+export const MAX_SAVE_BODY = 262144; // a save is a few tens of KB; the table allows 400 KB
+const SAVE_GAP_MS = 20000;
+const SAVE_BOARD = '_save';
+
+// Cloud saves are filed under a hash of the player's backup code, so the code itself is
+// never stored: knowing the table's contents doesn't let anyone read or overwrite a save.
+const saveKey = (token) => createHash('sha256').update('puckbound-save:' + token).digest('hex');
+const validToken = (t) => typeof t === 'string' && /^[A-Z2-7]{32}$/.test(t);
+
+async function cloudSave(b, store, now) {
+  if (!validToken(b.token)) return bad('bad code');
+  const key = saveKey(b.token);
+  if (b.op === 'save_get') {
+    const row = await store.get(SAVE_BOARD, key);
+    return row ? ok({ data: row.data, at: row.at }) : bad('not found', 404);
+  }
+  if (typeof b.data !== 'string' || b.data.length < 2 || b.data.length > MAX_SAVE_BODY - 512) return bad('bad save');
+  try { if (typeof JSON.parse(b.data) !== 'object') return bad('bad save'); } catch { return bad('bad save'); }
+  const prev = await store.get(SAVE_BOARD, key);
+  if (prev && now - (prev.at || 0) < SAVE_GAP_MS) return bad('slow down', 429);
+  await store.put({ board: SAVE_BOARD, player: key, data: b.data, at: now });
+  return ok({ at: now });
+}
 
 // a small filter: clubs with these in the name post as "Anonymous Club"
 const BLOCK = ['fuck', 'shit', 'cunt', 'nigg', 'fag', 'rape', 'nazi', 'hitler', 'whore', 'slut', 'bitch', 'dick', 'cock', 'pussy', 'retard', 'kike', 'spic', 'chink'];
@@ -41,7 +67,7 @@ export async function handle(req, store, now = Date.now()) {
   if (req.method === 'OPTIONS') return ok({});
   if (req.method === 'GET') {
     const board = req.query.board;
-    if (!BOARDS[board]) return bad('unknown board');
+    if (!BOARDS[board]) return bad('unknown board'); // (saves aren't readable this way)
     const top = await store.top(board, TOP);
     let me = null;
     const player = req.query.player;
@@ -53,8 +79,11 @@ export async function handle(req, store, now = Date.now()) {
   }
   if (req.method === 'POST') {
     let b;
+    const size = typeof req.body === 'string' ? req.body.length : 0;
     try { b = typeof req.body === 'string' ? JSON.parse(req.body) : req.body; } catch { return bad('bad json'); }
     if (!b || typeof b !== 'object') return bad('bad body');
+    if (b.op === 'save_put' || b.op === 'save_get') return cloudSave(b, store, now);
+    if (size > MAX_SCORE_BODY) return bad('too big', 413);
     const { board, player } = b;
     const def = BOARDS[board];
     if (!def) return bad('unknown board');
@@ -87,7 +116,7 @@ export function memoryStore() {
   const of = (b) => { if (!boards.has(b)) boards.set(b, new Map()); return boards.get(b); };
   const cmp = (a, b) => (BigInt(b.rank) > BigInt(a.rank) ? 1 : BigInt(b.rank) < BigInt(a.rank) ? -1 : 0);
   return {
-    async get(board, player) { return of(board).get(player) || null; },
+    async get(board, player) { const r = of(board).get(player); return r ? { ...r } : null; },
     async put(row) { of(row.board).set(row.player, { ...row }); },
     async top(board, n) { return [...of(board).values()].sort(cmp).slice(0, n); },
     async countAbove(board, rank) { const r = BigInt(rank); return [...of(board).values()].filter((x) => BigInt(x.rank) > r).length; },

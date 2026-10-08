@@ -2,7 +2,7 @@
 // Table: puckbound-leaderboard, key (board, player); index byRank on (board, rank).
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand, NumberValue } from '@aws-sdk/lib-dynamodb';
-import { handle } from './leaderboard.mjs';
+import { handle, MAX_SAVE_BODY } from './leaderboard.mjs';
 
 const TABLE = process.env.TABLE || 'puckbound-leaderboard';
 // numbers come back exact (the rank key has ~20 digits, more than a double holds)
@@ -10,7 +10,14 @@ const db = DynamoDBDocumentClient.from(new DynamoDBClient({}), { unmarshallOptio
 
 const num = (v) => (v && typeof v === 'object' && 'value' in v ? v.value : v);
 // rank is stored as a number (it sorts the index); in code it's a decimal string
-const toRow = (item) => item && { ...item, score: Number(num(item.score)), at: Number(num(item.at)), last: Number(num(item.last)), rank: String(num(item.rank)) };
+const toRow = (item) => {
+  if (!item) return null;
+  const row = { ...item, at: Number(num(item.at)) };
+  if (item.score !== undefined) row.score = Number(num(item.score));
+  if (item.last !== undefined) row.last = Number(num(item.last));
+  if (item.rank !== undefined) row.rank = String(num(item.rank));
+  return row;
+};
 
 const store = {
   async get(board, player) {
@@ -18,7 +25,9 @@ const store = {
     return toRow(r.Item) || null;
   },
   async put(row) {
-    await db.send(new PutCommand({ TableName: TABLE, Item: { ...row, rank: NumberValue.from(row.rank) } }));
+    const item = { ...row };
+    if (row.rank !== undefined) item.rank = NumberValue.from(row.rank); // saves have no rank (and stay out of the index)
+    await db.send(new PutCommand({ TableName: TABLE, Item: item }));
   },
   async top(board, n) {
     const r = await db.send(new QueryCommand({
@@ -58,7 +67,7 @@ export async function handler(event) {
     query: event.queryStringParameters || {},
     body: event.isBase64Encoded ? Buffer.from(event.body || '', 'base64').toString() : event.body,
   };
-  if ((req.body || '').length > 2048) return { statusCode: 413, body: '{"error":"too big"}' };
+  if ((req.body || '').length > MAX_SAVE_BODY) return { statusCode: 413, body: '{"error":"too big"}' };
   try {
     const res = await handle(req, store);
     return { statusCode: res.status, headers: { 'content-type': 'application/json' }, body: JSON.stringify(res.body) };

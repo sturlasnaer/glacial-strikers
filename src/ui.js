@@ -15,7 +15,7 @@ import {
   expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave,
   chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups,
 } from './progress.js';
-import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn } from './online.js';
+import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave } from './online.js';
 import { nextGuide, doneGuide, guideOff } from './guide.js';
 import { audio } from './audio.js';
 const VOLUMES = [[0, 'Off'], [0.35, 'Low'], [0.7, 'Mid'], [1, 'Full']];
@@ -23,6 +23,14 @@ const VOLUMES = [[0, 'Off'], [0.35, 'Low'], [0.7, 'Mid'], [1, 'Full']];
 const VOICE = { frost: 660, thunder: 800, stone: 470, goalie: 590 };
 const voicePitch = (kit, us) => { const p = VOICE[String(kit).replace(/^sub_/, '')] || 620; return us ? p : p * 0.88; };
 // Connected controllers: any at all, and whether it's a PlayStation pad (for button names).
+// "Backed up 3 min ago" for the settings
+function cloudStatus(save) {
+  if (!configured()) return 'Opens with the online leaderboards. Your backup code is ready now.';
+  const at = cloudState(save).at;
+  if (!at) return 'Your save backs up automatically when you\'re in the locker room.';
+  const min = Math.round((Date.now() - at) / 60000);
+  return `Backed up ${min < 1 ? 'just now' : min < 60 ? `${min} min ago` : new Date(at).toLocaleString()}.`;
+}
 const padList = () => [...(navigator.getGamepads ? navigator.getGamepads() : [])].filter(Boolean);
 const psPad = () => padList().some((p) => /dualsense|dualshock|playstation|054c/i.test(p.id));
 import { DRILLS, MEDAL_NAMES, MEDAL_COLORS, formatScore } from './drills.js';
@@ -1092,6 +1100,54 @@ export class UI {
     return bg;
   }
 
+  // Your backup code (and a link) for moving the save to another device.
+  cloudCode() {
+    const s = this.app.save;
+    const code = formatCode(cloudState(s).token);
+    const link = restoreLink(s);
+    this.modal(`
+      <h2>Your backup code</h2>
+      <p>Enter this code on another device (Settings › Cloud save › Restore), or open the link there, to carry on where you left off.</p>
+      <div class="cloud-code" id="cc-code">${esc(code)}</div>
+      <p class="muted" style="font-size:12.5px">Anyone with the code can load your progress, so keep it to yourself. ${configured() ? '' : 'Cloud backups start when the online features open; the code stays the same.'}</p>
+      <div class="row" style="justify-content:flex-end"><button class="btn small ghost" id="cc-copy">Copy code</button><button class="btn small ghost" id="cc-link">${navigator.share ? 'Share link' : 'Copy link'}</button><button class="btn small" data-close>Done</button></div>`, (m) => {
+      const done = (el, text) => { el.textContent = text; setTimeout(() => { el.textContent = el.id === 'cc-copy' ? 'Copy code' : navigator.share ? 'Share link' : 'Copy link'; }, 1600); };
+      this.click('#cc-copy', (el) => { navigator.clipboard?.writeText(code).then(() => done(el, 'Copied!'), () => done(el, 'Copy failed')); }, m);
+      this.click('#cc-link', (el) => {
+        if (navigator.share) navigator.share({ title: 'Puckbound save', url: link }).catch(() => {});
+        else navigator.clipboard?.writeText(link).then(() => done(el, 'Copied!'), () => done(el, 'Copy failed'));
+      }, m);
+    });
+  }
+
+  // Load a backed-up save by its code, after showing what it holds.
+  cloudRestore(prefill = '') {
+    this.modal(`
+      <h2>Restore a save</h2>
+      <p>Type or paste the backup code from your other device.</p>
+      <input class="cloud-input" id="cr-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX" value="${esc(prefill)}">
+      <p class="muted" id="cr-msg" style="min-height:1.3em;font-size:13px"></p>
+      <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>Cancel</button><button class="btn small gold" id="cr-go">Find save</button></div>`, (m, close) => {
+      const msg = m.querySelector('#cr-msg');
+      this.click('#cr-go', async () => {
+        msg.textContent = 'Looking…';
+        try {
+          const { save, at } = await fetchCloudSave(m.querySelector('#cr-code').value);
+          close();
+          const club = (save.club && save.club.name) || 'Snowcrest Foxes';
+          const when = new Date(at).toLocaleString();
+          this.modal(`
+            <h2>Replace this device's progress?</h2>
+            <p><b>${esc(club)}</b> · season ${save.season || 1} · ${save.record ? save.record.played : 0} matches played · ${save.coins || 0} coins<br><span class="muted">Backed up ${esc(when)}</span></p>
+            <p class="muted" style="font-size:13px">Everything on this device is replaced by that save. This can't be undone.</p>
+            <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>Keep this device's</button><button class="btn small gold" id="cr-yes">Replace</button></div>`, (m2) => {
+            this.click('#cr-yes', () => { writeSave(save); location.replace(location.pathname + location.search); }, m2);
+          });
+        } catch (e) { msg.textContent = e.message; }
+      }, m);
+    });
+  }
+
   // Music room: play any track. The scene's music comes back on close.
   jukebox() {
     audio.unlock();
@@ -1128,7 +1184,8 @@ export class UI {
       ${row('Game speed', seg('speed', [['normal', 'Normal'], ['relaxed', 'Relaxed']]), 'Relaxed plays matches at 85% speed. Drills stay at full speed.')}
       ${row('Goal replays', onOff('replays'))}
       ${row('Goal clips', onOff('clips'), 'Record each replay as a short video you can share.')}
-      ${row('Online leaderboards', onOff('online'), 'Posts your best drill, shootout and daily scores with your club name and a random tag. Nothing else is sent.')}
+      ${row('Online features', onOff('online'), 'Leaderboards (your club name, a random tag and your best scores) and automatic cloud backups of your save. Nothing personal is sent.')}
+      ${row('Cloud save', '<span class="row" style="gap:6px"><button class="btn small ghost" id="s-code">Backup code</button><button class="btn small ghost" id="s-restore">Restore</button></span>', cloudStatus(s))}
       <div class="label">Comfort</div>
       ${row('Screen shake', seg('shake', [[1, 'Full'], [0.5, 'Low'], [0, 'Off']]))}
       ${row('Flashes', onOff('flashes'), 'Screen flashes and blinking goal lights.')}
@@ -1159,6 +1216,8 @@ export class UI {
         this.click('#s-install', async () => { await this.app.install(); m.innerHTML = body(); bind(); }, m);
         this.click('#s-close', () => { audio.sfx('back'); close(); }, m);
         this.click('#s-jukebox', () => { audio.sfx('click'); this.jukebox(); }, m);
+        this.click('#s-code', () => { audio.sfx('click'); this.cloudCode(); }, m);
+        this.click('#s-restore', () => { audio.sfx('click'); this.cloudRestore(); }, m);
         this.click('#s-reset', (el) => {
           if (el.dataset.armed) { clearSave(); close(); this.app.resetSave(); return; }
           el.dataset.armed = '1'; el.textContent = 'Tap again to erase'; el.classList.add('gold');

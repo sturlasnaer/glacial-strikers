@@ -54,5 +54,23 @@ const k1 = BigInt(rankKey('sniper', 2400, 1000)), k2 = BigInt(rankKey('sniper', 
 check('tie goes to earlier', k1 > k2 && k2 > k3);
 const t1 = BigInt(rankKey('cones', 15.5, 1000)), t2 = BigInt(rankKey('cones', 15.51, 0));
 check('lower time ranks higher', t1 > t2);
+// cloud saves
+const token = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+const call = (b, t = (clock += 30000)) => handle({ method: 'POST', query: {}, body: JSON.stringify(b) }, store, t);
+r = await call({ op: 'save_get', token });
+check('no save yet', r.status === 404);
+r = await call({ op: 'save_put', token, data: JSON.stringify({ v: 1, coins: 500 }) });
+check('save stored', r.status === 200 && r.body.at > 0, r);
+r = await call({ op: 'save_get', token });
+check('save read back', r.status === 200 && JSON.parse(r.body.data).coins === 500, r);
+check('wrong code finds nothing', (await call({ op: 'save_get', token: token.replace('A', 'B') })).status === 404);
+check('bad code', (await call({ op: 'save_get', token: 'abc' })).status === 400);
+check('not json', (await call({ op: 'save_put', token, data: 'hello' })).status === 400);
+await call({ op: 'save_put', token, data: '{"v":1,"coins":600}' });
+r = await handle({ method: 'POST', query: {}, body: JSON.stringify({ op: 'save_put', token, data: '{"v":1}' }) }, store, clock + 1000);
+check('save rate limit', r.status === 429, r);
+check('code never stored', ![...JSON.stringify(await store.top('_save', 10))].join('').includes(token));
+check('saves not on boards', (await get('_save')).status === 400);
+check('big score body refused', (await handle({ method: 'POST', query: {}, body: JSON.stringify({ board: 'sniper', player: id(9), score: 1, pad: 'x'.repeat(3000) }) }, store)).status === 413);
 console.log(`leaderboard: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

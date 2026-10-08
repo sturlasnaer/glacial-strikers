@@ -1,6 +1,8 @@
-# Online leaderboards server
+# Online leaderboards and cloud saves server
 
 A single AWS Lambda function with a public function URL, and one DynamoDB table. Region `eu-west-1`.
+
+**Cloud saves** live in the same table under board `_save`, keyed by a SHA-256 hash of the player's 32-character backup code. Requests are `POST {op: 'save_put' | 'save_get', token, data}`, saves are capped at 256 KB, and a slot accepts one write every 20 seconds. Save rows have no `rank`, so they never appear in the leaderboard index.
 
 | Piece | Name |
 |---|---|

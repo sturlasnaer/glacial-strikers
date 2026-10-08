@@ -8,7 +8,7 @@ import { Input, TouchControls, mergeInputs } from './input.js';
 import { audio } from './audio.js';
 import { PadNav } from './padnav.js';
 import { firstTime } from './guide.js';
-import { submit as submitScore, flush as flushScores, BOARD_INFO } from './online.js';
+import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as cloudBackup } from './online.js';
 import { ARENA_MUSIC } from './songs.js';
 import { UI, controlsHtml, crest } from './ui.js';
 import { HUD } from './hud.js';
@@ -106,6 +106,9 @@ class App {
     this.startAttract();
     this.loadingEl.remove();
     this.goTitle();
+    // a restore link from another device: #restore=<code>
+    const m = /#restore=([A-Za-z2-7-]+)/.exec(location.hash);
+    if (m) { history.replaceState(null, '', location.pathname + location.search); this.ui.cloudRestore(m[1]); }
     requestAnimationFrame((t) => this.loop(t));
   }
 
@@ -930,6 +933,7 @@ class App {
     if (!this.attract) this.startAttract();
     audio.setArena('menu');
     flushScores(this.save).then((n) => { if (n) writeSave(this.save); });
+    cloudBackup(this.save).then((t) => { if (t) writeSave(this.save); });
     this.ui.guideBudget = 1; // one new coach's tip per visit
     if (this.awardsNight()) return;
     this.ui.hub(tab);
