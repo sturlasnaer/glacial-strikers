@@ -1073,6 +1073,27 @@ export class Renderer {
     this.drawTinted(ctx, fr.id, pages, p.x, p.y, SKATER_SCALE * persp(g.y), fr.flip, 0, '#ffe066', 0.55 * (1 - g.t / g.life), true);
   }
 
+  // A race ghost (a recorded run): the skater's art, see-through with a frosty tint, and
+  // whose run it is above the head.
+  drawRaceGhost(ctx, s, match, alpha, label) {
+    const fr = this.skaterFrame(s, match);
+    const f = Assets.frame(fr.id);
+    if (!f) return;
+    const p = toScreen(s.x, s.y);
+    const k = SKATER_SCALE * persp(s.y);
+    const pages = s.look ? Assets.pagesFor(s.look) : Assets.clubPages();
+    Assets.draw(ctx, fr.id, p.x, p.y, k, { flip: fr.flip, pages, alpha: alpha * 0.5 });
+    this.drawTinted(ctx, fr.id, pages, p.x, p.y, k, fr.flip, 0, '#bff4ff', alpha * 0.35);
+    if (!label) return;
+    ctx.save();
+    ctx.globalAlpha = alpha * 0.85;
+    ctx.font = `bold 13px ${this.font}`; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(11,20,36,0.8)'; ctx.fillStyle = '#bff4ff';
+    const y = p.y - f[6] * (k / f[7]) - 6;
+    ctx.strokeText(label, p.x, y); ctx.fillText(label, p.x, y);
+    ctx.restore();
+  }
+
   aura(ctx, x, y, r, color, t) {
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';

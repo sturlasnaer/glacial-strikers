@@ -51,13 +51,14 @@ function request(method, params, body) {
     .finally(() => timer && clearTimeout(timer));
 }
 
-// Record a score: queue it (keeping only the best per board), then try to post it.
+// Record a score: queue it (keeping only the best per board), then try to post it. A Cone
+// Weave run can come along as a ghost ({ path, splits }), sent once the score is a best.
 // Resolves to the server's answer ({ best, rank, total, improved }) or null.
-export async function submit(save, board, score, char = '') {
+export async function submit(save, board, score, char = '', ghost = null) {
   if (!onlineOn(save) || !BOARD_INFO[board] || !Number.isFinite(score)) return null;
   const st = onlineState(save);
   const prev = st.pending[board];
-  if (!prev || isBetter(board, score, prev.score)) st.pending[board] = { score, char, played: Date.now() };
+  if (!prev || isBetter(board, score, prev.score)) st.pending[board] = { score, char, played: Date.now(), ...(ghost && ghost.path ? { ghost } : {}) };
   if (!configured()) return null;
   return post(save, board);
 }
@@ -69,6 +70,9 @@ async function post(save, board) {
   try {
     const res = await request('POST', null, { board, player: st.id, name: CLUB.name, tag: tagOf(st.id), score: entry.score, char: entry.char, played: entry.played, groups: groupsOf(save).map((g) => g.code) });
     if (st.pending[board] === entry) delete st.pending[board];
+    if (entry.ghost && (res.improved || (res.week && res.week.improved))) {
+      await request('POST', null, { op: 'ghost_put', board, player: st.id, score: entry.score, played: entry.played, ghost: { ...entry.ghost, char: entry.char } }).catch(() => {});
+    }
     return res;
   } catch (e) {
     if (e.status === 400) delete st.pending[board]; // the server won't ever take it
@@ -90,6 +94,13 @@ export async function flush(save) {
 export function fetchBoard(save, board, period = 'all', group = null) {
   if (!configured()) return Promise.reject(new Error('not configured'));
   return request('GET', { board, player: onlineState(save).id, ...(period === 'week' ? { period } : {}), ...(group ? { group } : {}) });
+}
+
+// The leader's run on a board (this week's, or a friends board's), to race as a ghost.
+// Resolves to { name, tag, char, score, path, splits } or null.
+export function fetchGhost(save, board, period = 'week', group = null) {
+  if (!configured()) return Promise.reject(new Error('not configured'));
+  return request('GET', { board, ghost: '1', ...(period === 'week' ? { period } : {}), ...(group ? { group } : {}) }).then((r) => r.ghost);
 }
 
 // ------------------------------------------------------------------ friends boards

@@ -840,3 +840,11 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .lb-rank i { position: relative; font-style: normal; }
 .lb-rank .rank-ico + i { color: var(--navy); font-weight: 700; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4); }
 .cup-big img { display: block; height: min(240px, 34vh); width: auto; margin: 0 auto; image-rendering: auto; }
+/* ghost runs (Cone Weave) */
+.ghost-row { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; margin: 2px 0 0; }
+.ghost-row .label { font-size: 12px; margin-right: 2px; }
+.ghost-row .chip { font-size: 12px; padding: 0 4px; }
+.ghost-msg { font-size: 12px; margin: 0; min-height: 0; }
+.ghost-msg:empty { display: none; }
+.ghost-vs { margin-top: 6px; font-family: var(--display); font-size: 18px; color: var(--ice); }
+.ghost-vs.won { color: var(--gold); }

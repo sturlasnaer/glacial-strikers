@@ -17,6 +17,11 @@ import { createHash, randomInt } from 'crypto';
 // '<board>@<week>#<CODE>'), kept up to date for the groups a score post names. Joining
 // copies the player's current bests in; leaving rewrites their rows without a rank, which
 // takes them out of the byRank index the boards are read and counted from.
+//
+// Ghost runs: a Cone Weave best can bring its run along (the skater's path, sampled 15
+// times a second, and the gate splits). It's stored beside the best it belongs to, as a
+// 'ghost:<board>' or 'ghost:<board>@<week>' row, and only while it matches that best.
+// GET ?board=cones&ghost=1 (with period=week and/or group=CODE) returns the leader's run.
 
 export const BOARDS = {
   cones: { better: 'lower', min: 8, max: 200, decimals: 2 }, // seconds
@@ -55,6 +60,9 @@ const GROUP_GAP_MS = 30000; // between new groups from one player
 const validCode = (c) => typeof c === 'string' && /^[A-HJ-NP-Z2-9]{6}$/.test(c);
 const groupKey = (key, code) => `${key}#${code}`;
 const validPlayer = (p) => typeof p === 'string' && /^[a-f0-9]{16,40}$/.test(p);
+export const GHOST_BOARDS = new Set(['cones']);
+const GHOST_HZ = 15;
+export const MAX_GHOST_PATH = 6000; // base64: a 4-byte start, then 3 bytes a sample (60 s at most)
 
 // Cloud saves are filed under a hash of the player's backup code, so the code itself is
 // never stored: knowing the table's contents doesn't let anyone read or overwrite a save.
@@ -136,6 +144,32 @@ async function groups(b, store, now) {
   return ok({ code });
 }
 
+// The played time a score counts for (a queued score can arrive late, but not from the future).
+const playedAt = (played, now) => { const p = Number(played); return Number.isFinite(p) && p <= now + 60000 && p > now - 8 * DAY ? Math.min(p, now) : now; };
+
+// Store a run with the best it belongs to (all-time and/or that week's).
+async function putGhost(b, store, now) {
+  if (!GHOST_BOARDS.has(b.board)) return bad('no ghosts for that board');
+  if (!validPlayer(b.player)) return bad('bad player');
+  const g = b.ghost || {};
+  const path = typeof g.path === 'string' && g.path.length <= MAX_GHOST_PATH && /^[A-Za-z0-9+/]+=*$/.test(g.path) ? g.path : null;
+  if (!path) return bad('bad ghost');
+  const bytes = Math.floor(path.replace(/=+$/, '').length * 3 / 4);
+  const secs = (bytes - 4) / 3 / GHOST_HZ;
+  const score = Number(b.score);
+  if (!(bytes >= 7 && (bytes - 4) % 3 === 0) || !Number.isFinite(score) || secs > score + 1) return bad('bad ghost');
+  const splits = Array.isArray(g.splits) ? g.splits.slice(0, 12).map(Number).filter(Number.isFinite) : [];
+  const char = String(g.char || '').replace(/[^a-z0-9_]/g, '').slice(0, 24);
+  const row = { player: b.player, score, path, splits, char, at: now };
+  let stored = 0;
+  const wb = weekBoard(b.board, weekOf(playedAt(b.played, now)).key);
+  for (const key of [b.board, ...(WEEKLY.has(b.board) ? [wb] : [])]) {
+    const best = await store.get(key, b.player);
+    if (live(best) && best.score === score) { await store.put({ board: 'ghost:' + key, ...row }); stored++; }
+  }
+  return stored ? ok({ stored }) : bad('not your best', 409);
+}
+
 // a small filter: clubs with these in the name post as "Anonymous Club"
 const BLOCK = ['fuck', 'shit', 'cunt', 'nigg', 'fag', 'rape', 'nazi', 'hitler', 'whore', 'slut', 'bitch', 'dick', 'cock', 'pussy', 'retard', 'kike', 'spic', 'chink'];
 export function cleanName(name, fallback = 'Anonymous Club') {
@@ -167,6 +201,13 @@ export async function handle(req, store, now = Date.now()) {
     const group = req.query.group;
     if (group !== undefined && !validCode(group)) return bad('bad code');
     const key = group ? groupKey(weekly ? weekBoard(board, week.key) : board, group) : weekly ? weekBoard(board, week.key) : board;
+    if (req.query.ghost !== undefined) {
+      // the leader's run, if it's stored with their best (ghost rows are filed under the main boards)
+      if (!GHOST_BOARDS.has(board)) return bad('no ghosts for that board');
+      const [lead] = await store.top(key, 1);
+      const g = lead && await store.get('ghost:' + (weekly ? weekBoard(board, week.key) : board), lead.player);
+      return ok({ board, ghost: g && g.score === lead.score ? { name: lead.name, tag: lead.tag, char: g.char, score: g.score, path: g.path, splits: g.splits || [] } : null });
+    }
     const top = await store.top(key, TOP);
     let me = null;
     const player = req.query.player;
@@ -183,6 +224,7 @@ export async function handle(req, store, now = Date.now()) {
     if (!b || typeof b !== 'object') return bad('bad body');
     if (b.op === 'save_put' || b.op === 'save_get') return cloudSave(b, store, now);
     if (b.op === 'group_new' || b.op === 'group_join' || b.op === 'group_leave') return groups(b, store, now);
+    if (b.op === 'ghost_put') return size > MAX_GHOST_PATH + 1024 ? bad('too big', 413) : putGhost(b, store, now);
     if (size > MAX_SCORE_BODY) return bad('too big', 413);
     const { board, player } = b;
     const def = BOARDS[board];

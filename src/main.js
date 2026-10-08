@@ -483,17 +483,24 @@ class App {
     if (c.drill === 'shootout') return this.finishShootout(res);
     const medal = medalFor(c.def, res.score);
     const rw = drillRewards(s, c.drill, c.char, res.score, medal, DRILL_REWARDS);
+    // your best run is kept, to race as a ghost
+    const run = res.ghost && res.ghost.path ? { ...res.ghost, char: c.char, score: res.score } : null;
+    s.ghosts ||= {};
+    if (run && !res.timeout && (!s.ghosts[c.drill] || res.score < s.ghosts[c.drill].score)) s.ghosts[c.drill] = run;
     this.ach.checkMeta();
     writeSave(s);
+    if (res.vs !== null && res.vs !== undefined) rw.ghostVs = { delta: res.vs, who: res.vsLabel };
+    // racing your own best again: the newest one
+    const again = c.opts.ghost && c.opts.ghost.mine && s.ghosts[c.drill] ? { ...c.opts, ghost: { ...c.opts.ghost, ...s.ghosts[c.drill] } } : c.opts;
     this.ui.drillResult(c.def, res.score, rw, c.char,
-      () => this.startDrill(c.drill, c.char, c.opts),
+      () => this.startDrill(c.drill, c.char, again),
       () => this.resolvePerks(() => { this.startAttract(); this.goHub('training'); }));
-    this.postScore(c.drill, res.score, c.char, '#d-online');
+    this.postScore(c.drill, res.score, c.char, '#d-online', res.timeout ? null : res.ghost);
   }
 
   // Post a best score to the online leaderboard; show the rank in `where` if given.
-  postScore(board, score, char = '', where = null) {
-    submitScore(this.save, board, score, char).then((r) => {
+  postScore(board, score, char = '', where = null, ghost = null) {
+    submitScore(this.save, board, score, char, ghost).then((r) => {
       writeSave(this.save);
       const el = where && document.querySelector(where);
       if (!el || !r) return;

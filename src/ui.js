@@ -15,7 +15,7 @@ import {
   expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave,
   chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups,
 } from './progress.js';
-import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave, resetsIn, groupsOf, createGroup, joinGroup, leaveGroup, inviteLink, MAX_GROUPS } from './online.js';
+import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave, resetsIn, groupsOf, createGroup, joinGroup, leaveGroup, inviteLink, MAX_GROUPS, fetchGhost } from './online.js';
 import { nextGuide, doneGuide, guideOff } from './guide.js';
 import { audio } from './audio.js';
 import { t } from './i18n.js';
@@ -1179,6 +1179,7 @@ export class UI {
               <div class="medal-row">${[1, 2, 3].map((mi) => `<span class="medal ${mi <= medal ? 'got' : ''}" style="--m:${MEDAL_COLORS[mi]}" title="${t(MEDAL_NAMES[mi])}: ${formatScore(d, d.medals[mi - 1])}">${badge(MEDAL_BADGES[mi <= medal ? mi : 0], 44, 'medal-ico')}${formatScore(d, d.medals[mi - 1])}</span>`).join('')}</div>
             </div></div>
           <p class="muted" style="margin:0;font-size:13px">${esc(t(d.text))}</p>
+          ${d.id === 'cones' ? this.ghostPicker(s) : ''}
           <div class="row" style="justify-content:space-between">
             <span style="font-size:13px">${t('Best: {score}', { score: `<b class="gold-t">${best === undefined || best === null ? '–' : formatScore(d, best)}</b>` })}</span>
             <span class="row" style="gap:6px"><button class="btn small ghost" data-lb="${d.id}" title="${t('Online leaderboard')}" aria-label="${t('{drill} online leaderboard', { drill: esc(t(d.name)) })}">${badge('cup_small', 48, 'btn-ico', '🏆')}</button>
@@ -1187,8 +1188,49 @@ export class UI {
         </div>`;
       }).join('')}</div>`;
     this.click('[data-char]', (el) => { this.drillChar = el.dataset.char; audio.sfx('click'); this.tabTraining(body); }, body);
-    this.click('[data-play]', (el) => { audio.sfx('confirm'); this.app.startDrill(el.dataset.play, this.drillChar); }, body);
+    this.click('[data-play]', (el) => {
+      if (el.dataset.play === 'cones') return this.startCones(el, body);
+      audio.sfx('confirm'); this.app.startDrill(el.dataset.play, this.drillChar);
+    }, body);
+    this.click('[data-ghost]', (el) => { s.settings.ghost = el.dataset.ghost; writeSave(s); audio.sfx('click'); this.tabTraining(body); }, body);
     this.click('[data-lb]', (el) => { audio.sfx('click'); this.leaderboard(el.dataset.lb); }, body);
+  }
+
+  // Cone Weave's ghost: none, your best run, this week's best, or a friends board's best.
+  ghostChoice(s) {
+    const pick = s.settings.ghost || 'off';
+    const online = onlineOn(s) && configured();
+    if (pick === 'mine') return s.ghosts && s.ghosts.cones ? pick : 'off';
+    if (pick === 'week') return online ? pick : 'off';
+    if (pick.startsWith('g:')) return online && groupsOf(s).some((g) => 'g:' + g.code === pick) ? pick : 'off';
+    return 'off';
+  }
+
+  ghostPicker(s) {
+    const pick = this.ghostChoice(s);
+    const mine = s.ghosts && s.ghosts.cones;
+    const opts = [['off', t('Off')], ...(mine ? [['mine', `${t('Your best')} ${formatScore(DRILLS.cones, mine.score)}`]] : []),
+      ...(onlineOn(s) && configured() ? [['week', t('Week\'s best')], ...groupsOf(s).map((g) => ['g:' + g.code, g.name])] : [])];
+    return `<div class="ghost-row"><span class="label">${t('Ghost')}</span>${opts.map(([v, label]) => `<button class="chip" data-ghost="${v}" aria-pressed="${v === pick}">${esc(label)}</button>`).join('')}</div>
+      <p class="muted ghost-msg" id="ghost-msg"></p>`;
+  }
+
+  // Start Cone Weave, fetching the ghost to race first when it's someone else's.
+  async startCones(btn, body) {
+    const s = this.app.save, pick = this.ghostChoice(s);
+    let ghost = null;
+    if (pick === 'mine') ghost = { ...s.ghosts.cones, label: t('Your best'), mine: true };
+    else if (pick !== 'off') {
+      const label = btn.textContent;
+      btn.textContent = t('Looking…');
+      const g = await fetchGhost(s, 'cones', 'week', pick.startsWith('g:') ? pick.slice(2) : null).catch(() => undefined);
+      btn.textContent = label;
+      const msg = body.querySelector('#ghost-msg');
+      if (!g) { audio.sfx('deny'); if (msg) msg.textContent = g === null ? t('No run to race on that board yet. Set one!') : t('Couldn\'t reach the server. Try again in a moment.'); return; }
+      ghost = { ...g, label: g.name };
+    }
+    audio.sfx('confirm');
+    this.app.startDrill('cones', this.drillChar, ghost ? { ghost } : {});
   }
 
   // An online leaderboard: the top 25, with you highlighted and your rank.
@@ -1304,6 +1346,7 @@ export class UI {
         ${badge(MEDAL_BADGES[medal], 192, 'medal-img')}
         <div class="medal-big" style="--m:${MEDAL_COLORS[medal]}">${t(MEDAL_NAMES[medal])}${rw.newBest && rw.prevBest !== undefined && rw.prevBest !== null ? ` · ${t('new best!')}` : ''}</div>
         <div class="muted" style="font-size:13px">${t('Bronze {bronze} · Silver {silver} · Gold {gold}', { bronze: formatScore(d, d.medals[0]), silver: formatScore(d, d.medals[1]), gold: formatScore(d, d.medals[2]) })}</div>
+        ${rw.ghostVs ? `<div class="ghost-vs ${rw.ghostVs.delta <= 0 ? 'won' : ''}">${esc(rw.ghostVs.who)}: ${t(rw.ghostVs.delta <= 0 ? '{seconds}s behind you' : '{seconds}s ahead of you', { seconds: Math.abs(rw.ghostVs.delta).toFixed(2) })}</div>` : ''}
       </div>
       ${lines.length ? `<div class="reward-lines">${lines.map(([a, b]) => `<div><span>${esc(a)}</span><span class="gold-t">${b}</span></div>`).join('')}</div>` : ''}
       ${ups}

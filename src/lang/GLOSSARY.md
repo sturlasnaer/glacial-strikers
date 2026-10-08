@@ -52,6 +52,7 @@ Terms the translation uses consistently. The tone is friendly, sporty and short;
 | daily challenge / streak | dagleg áskorun / runa |
 | leaderboard | stigatafla |
 | friends board / invite / join / leave | vinatafla / bjóða / vera með / hætta |
+| ghost (a recorded run to race) | draugur |
 | power puck | ofurpökkur |
 | arena rule | svellregla |
 | replay / goal clip | endursýning / markamyndband |

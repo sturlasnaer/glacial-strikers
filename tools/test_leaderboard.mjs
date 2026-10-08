@@ -156,5 +156,38 @@ check('Monday starts the next', weekOf(Date.UTC(2026, 9, 12)).key === '2026-W42'
   r = await fpost({ op: 'group_new', player: id(1), name: 'shit' }, madeAt + 60000);
   check('names are filtered', r.status === 200 && r.body.name === 'Friends' && r.body.code !== code, r.body);
 }
+// ghost runs: stored with the best they belong to; the leader's comes back on request
+{
+  const gs = memoryStore();
+  let now = Date.UTC(2026, 9, 7, 10);
+  const gpost = (b, at = (now += 5000)) => handle({ method: 'POST', query: {}, body: JSON.stringify(b) }, gs, at);
+  const gget = (query) => handle({ method: 'GET', query }, gs, now);
+  // a path: a 4-byte start, then 3 bytes a sample at 15 a second
+  const path = (secs) => Buffer.alloc(4 + Math.round(secs * 15) * 3, 1).toString('base64');
+  await gpost({ board: 'cones', player: id(1), name: 'Foxes', tag: 'AB12', score: 18.5, played: now, char: 'frost' });
+  await gpost({ board: 'cones', player: id(2), name: 'Owls', tag: 'CD34', score: 16.25, played: now, char: 'thunder' });
+  r = await gpost({ op: 'ghost_put', board: 'cones', player: id(2), score: 16.25, played: now, ghost: { path: path(14.2), splits: [1.1, 2.3], char: 'thunder' } });
+  check('ghost stored with the best', r.status === 200 && r.body.stored === 2, r.body);
+  r = await gget({ board: 'cones', period: 'week', ghost: '1' });
+  check('the week\'s leader\'s ghost', r.body.ghost && r.body.ghost.name === 'Owls' && r.body.ghost.score === 16.25 && r.body.ghost.splits.length === 2 && r.body.ghost.path === path(14.2), r.body);
+  r = await gget({ board: 'cones', ghost: '1' });
+  check('and all-time', r.body.ghost && r.body.ghost.char === 'thunder', r.body);
+  check('only for its best', (await gpost({ op: 'ghost_put', board: 'cones', player: id(1), score: 15, played: now, ghost: { path: path(12) } })).status === 409);
+  check('a run longer than its time', (await gpost({ op: 'ghost_put', board: 'cones', player: id(1), score: 18.5, played: now, ghost: { path: path(25) } })).status === 400);
+  check('not base64', (await gpost({ op: 'ghost_put', board: 'cones', player: id(1), score: 18.5, ghost: { path: 'not a path!' } })).status === 400);
+  check('cones only', (await gpost({ op: 'ghost_put', board: 'sniper', player: id(1), score: 5, ghost: { path: path(1) } })).status === 400);
+  check('too long a path', (await gpost({ op: 'ghost_put', board: 'cones', player: id(1), score: 18.5, ghost: { path: 'A'.repeat(7000) } })).status === 413);
+  // a better time without a run: the old run no longer matches, so there's no ghost
+  await gpost({ board: 'cones', player: id(1), name: 'Foxes', tag: 'AB12', score: 15.75, played: now });
+  r = await gget({ board: 'cones', period: 'week', ghost: '1' });
+  check('a leader without a run has no ghost', r.status === 200 && r.body.ghost === null, r.body);
+  r = await gpost({ op: 'ghost_put', board: 'cones', player: id(1), score: 15.75, played: now, ghost: { path: path(15.1), char: 'frost' } });
+  r = await gget({ board: 'cones', period: 'week', ghost: '1' });
+  check('the new leader\'s ghost', r.body.ghost && r.body.ghost.name === 'Foxes', r.body);
+  // friends boards: the group's leader's run
+  r = await gpost({ op: 'group_new', player: id(2), name: 'Owl Club' });
+  r = await gget({ board: 'cones', period: 'week', group: r.body.code, ghost: '1' });
+  check('a friends board\'s leader\'s ghost', r.body.ghost && r.body.ghost.name === 'Owls' && r.body.ghost.score === 16.25, r.body);
+}
 console.log(`leaderboard: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -10,6 +10,7 @@ import { toScreen, GOAL_X, MOUTH } from './rink.js';
 import { norm, clamp, makeRng } from './util.js';
 import { Skater } from './entities.js';
 import { t } from './i18n.js';
+import { GhostRecorder, decodeGhost, ghostAt } from './ghost.js';
 
 export const DRILLS = {
   cones: {
@@ -67,7 +68,7 @@ export function createDrill(id, save, charId, opts = {}) {
   const mates = line.filter((k) => k !== charId);
   let home = [charId], away = [], ctrl, awayTeam = 'lynx';
   switch (id) {
-    case 'cones': ctrl = new ConeDrill(); break;
+    case 'cones': ctrl = new ConeDrill(opts.ghost); break;
     case 'sniper': home = [charId, opts.feeder || mates[0]]; ctrl = new SniperDrill(); break;
     case 'rondo': home = [charId, ...mates]; away = ['frost', 'stone']; ctrl = new RondoDrill(); break;
     case 'breakaway': ctrl = new BreakawayDrill(); break;
@@ -135,7 +136,14 @@ class DrillBase {
 }
 
 // ----------------------------------------------------------- Cone Weave
+// Every run is recorded (a ghost to race later). With a ghost to race ({ path, splits,
+// label, char }), it skates alongside, see-through, and each gate shows the split.
 class ConeDrill extends DrillBase {
+  constructor(ghost = null) {
+    super();
+    const samples = ghost && decodeGhost(ghost.path);
+    this.ghost = samples && samples.length ? { ...ghost, samples, splits: ghost.splits || [] } : null;
+  }
   init(m) {
     this.hideGoalies(m);
     const s = m.controlled();
@@ -144,10 +152,19 @@ class ConeDrill extends DrillBase {
     this.gates = [];
     for (let i = 0; i < 9; i++) this.gates.push({ x: -400 + i * 108, y: (i % 2 ? -1 : 1) * 78, half: 34, state: 'todo' });
     this.next = 0; this.penalty = 0; this.lastX = s.x;
+    this.rec = new GhostRecorder(); this.splits = []; this.split = null;
+    if (this.ghost) {
+      const mem = member(this.ghost.char) || member('frost');
+      // a stand-in skater for the renderer's frame picking (no physics)
+      this.ghostS = { team: 0, def: mem.def, sprite: mem.recruit ? mem.recruit.sprite : mem.def.sprite, look: mem.recruit ? 'homekit' : null,
+        x: this.ghost.samples[0].x, y: this.ghost.samples[0].y, face: 0, speed: 0, animT: 0, stun: 0, celebrate: 0, ultWindup: 0,
+        charging: false, dashT: 0, state: 'skate', stopping: false, gliding: false, d: { maxSpeed: 330 } };
+    }
     this.startCountdown(m);
   }
   tick(m) {
     const s = m.controlled();
+    this.rec.update(this.t, s);
     while (this.next < this.gates.length) {
       const g = this.gates[this.next];
       if (!(this.lastX < g.x && s.x >= g.x)) break;
@@ -155,6 +172,10 @@ class ConeDrill extends DrillBase {
       g.state = ok ? 'ok' : 'miss';
       if (!ok) this.penalty += 2;
       m.emit(ok ? 'gate_ok' : 'gate_miss', { g, x: g.x, y: g.y });
+      const at = Math.round((this.t + this.penalty) * 100) / 100;
+      this.splits.push(at);
+      const theirs = this.ghost && this.ghost.splits[this.next];
+      if (theirs !== undefined) this.split = { delta: at - theirs, t: this.t };
       this.next++;
     }
     this.lastX = s.x;
@@ -164,7 +185,10 @@ class ConeDrill extends DrillBase {
     if (info.side !== 1) return;
     for (let i = this.next; i < this.gates.length; i++) { this.gates[i].state = 'miss'; this.penalty += 2; }
     this.next = this.gates.length;
-    this.finish(m, Math.round((this.t + this.penalty) * 100) / 100, { penalty: this.penalty });
+    const score = Math.round((this.t + this.penalty) * 100) / 100;
+    const ghost = { path: this.rec.encode(), splits: this.splits };
+    const vs = this.ghost ? Math.round((score - this.ghost.score) * 100) / 100 : null;
+    this.finish(m, score, { penalty: this.penalty, ghost, vs, vsLabel: this.ghost ? this.ghost.label : null });
   }
   hud() {
     const n = this.gates.length;
@@ -172,6 +196,8 @@ class ConeDrill extends DrillBase {
       title: t('Cone Weave'),
       main: t('{seconds}s', { seconds: (this.t + this.penalty).toFixed(2) }),
       sub: this.next < n ? `${t('Gate {n} of {total}', { n: this.next + 1, total: n })}${this.penalty ? ` · +${t('{seconds}s', { seconds: this.penalty })}` : ''}` : `${t('Score on the empty net!')}${this.penalty ? ` · +${t('{seconds}s', { seconds: this.penalty })}` : ''}`,
+      note: !this.ghost ? '' : this.split ? `${this.ghost.label}: ${t(this.split.delta <= 0 ? '{seconds}s behind you' : '{seconds}s ahead of you', { seconds: Math.abs(this.split.delta).toFixed(2) })}`
+        : t('Ghost: {who}', { who: this.ghost.label }),
     };
   }
   drawGround(ctx, R, m, fx) {
@@ -190,6 +216,17 @@ class ConeDrill extends DrillBase {
     for (const g of this.gates) for (const sgn of [-1, 1]) {
       const y = g.y + sgn * g.half;
       out.push({ y, f: (ctx) => { const p = toScreen(g.x, y); Assets.draw(ctx, 'rink_props/props/cone', p.x, p.y + 4, 0.15); } });
+    }
+    const gs = this.ghostS;
+    if (gs && R.drawRaceGhost) {
+      // it waits at the start through the countdown, and fades out where its run ended
+      const at = ghostAt(this.ghost.samples, m.state === 'countdown' ? 0 : this.t);
+      const prevX = gs.x, prevY = gs.y;
+      Object.assign(gs, { x: at.x, y: at.y, face: at.face, speed: at.speed });
+      gs.animT += Math.hypot(at.x - prevX, at.y - prevY) / 330; // strides follow the distance skated
+      if (at.done) gs.endT = gs.endT ?? this.t;
+      const alpha = at.done ? Math.max(0, 1 - (this.t - gs.endT) / 1.2) : 1;
+      if (alpha > 0) out.push({ y: gs.y - 0.5, f: (ctx) => R.drawRaceGhost(ctx, gs, m, alpha, this.ghost.label) });
     }
     return out;
   }
