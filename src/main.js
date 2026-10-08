@@ -7,6 +7,7 @@ import { FX } from './fx.js';
 import { Input, TouchControls, mergeInputs } from './input.js';
 import { audio } from './audio.js';
 import { PadNav } from './padnav.js';
+import { submit as submitScore, flush as flushScores, BOARD_INFO } from './online.js';
 import { ARENA_MUSIC } from './songs.js';
 import { UI, controlsHtml, crest } from './ui.js';
 import { HUD } from './hud.js';
@@ -18,7 +19,7 @@ import { AchievementTracker } from './achievements.js';
 import { createDrill, medalFor, DRILL_REWARDS } from './drills.js';
 import { recordRivalResult, rivalLines, rivalAfterLine } from './rivals.js';
 import { recordRealGame, computeAwards, AWARD_BY_ID } from './awards.js';
-import { dailyFor, dailyGoal, completeDaily, noteAttempt, dayKey } from './daily.js';
+import { dailyFor, dailyGoal, completeDaily, noteAttempt, dayKey, dailyState } from './daily.js';
 import { standings } from './league.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan } from './league.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
@@ -100,6 +101,7 @@ class App {
     this.input.onKey((code) => this.onKey(code));
     this.setupInstall();
 
+    flushScores(this.save).then((n) => { if (n) writeSave(this.save); });
     this.startAttract();
     this.loadingEl.remove();
     this.goTitle();
@@ -439,6 +441,18 @@ class App {
     this.ui.drillResult(c.def, res.score, rw, c.char,
       () => this.startDrill(c.drill, c.char, c.opts),
       () => this.resolvePerks(() => { this.startAttract(); this.goHub('training'); }));
+    this.postScore(c.drill, res.score, c.char, '#d-online');
+  }
+
+  // Post a best score to the online leaderboard; show the rank in `where` if given.
+  postScore(board, score, char = '', where = null) {
+    submitScore(this.save, board, score, char).then((r) => {
+      writeSave(this.save);
+      const el = where && document.querySelector(where);
+      if (!el || !r) return;
+      const info = BOARD_INFO[board];
+      el.innerHTML = `Online: <b>#${r.rank}</b> of ${r.total}${r.improved ? ' · new personal best posted' : ` · your best ${info.fmt(r.best)}`}`;
+    });
   }
 
   // Gamepad rumble for one team's player (or everyone when team is undefined).
@@ -460,9 +474,11 @@ class App {
     for (const id of lineupIds(s)) ups.push(...applyExp(s, id, won ? 20 : 10));
     applyGoalieExp(s, won ? 20 : 10);
     this.recordRival(c.teamId, res.goals[0], res.goals[1], won, true);
+    s.shootoutWins = (s.shootoutWins ?? (this.ach.has('shootout') ? 1 : 0)) + (won ? 1 : 0);
     if (won) this.ach.unlock('shootout');
     this.ach.checkMeta();
     writeSave(s);
+    if (won) this.postScore('shootout_wins', s.shootoutWins, lineupIds(s)[0]);
     audio.jingle(won ? 'win' : 'lose');
     this.music(won ? 'victory' : 'defeat');
     this.ui.modal(`
@@ -696,6 +712,7 @@ class App {
       if (done) {
         rewards.lines.push([`Daily challenge · ${done.streak}-day streak`, done.coins]);
         setTimeout(() => audio.jingle('daily'), 4200);
+        this.postScore('daily_streak', dailyState(s).best);
         rewards.coins += done.coins;
         this.ach.unlock('daily');
         if (done.streak >= 7) this.ach.unlock('daily-streak');
@@ -881,6 +898,7 @@ class App {
     this.rotateEl.hidden = true;
     if (!this.attract) this.startAttract();
     audio.setArena('menu');
+    flushScores(this.save).then((n) => { if (n) writeSave(this.save); });
     if (this.awardsNight()) return;
     this.ui.hub(tab);
     this.setHubBackground();

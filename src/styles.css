@@ -604,3 +604,13 @@ body.in-hub.hub-room #screen { background: linear-gradient(rgba(8, 14, 26, 0.82)
 /* controller navigation in menus: a clear highlight on the picked button */
 body.pad-nav :is(button, a, input, select, [tabindex="0"]):focus { outline: 3px solid var(--gold); outline-offset: 3px; box-shadow: 0 0 0 6px rgba(255, 212, 94, 0.25); }
 body.pad-nav .spot:focus { border-color: rgba(255, 242, 203, 0.9); background: rgba(255, 242, 203, 0.12); }
+
+/* online leaderboards */
+.lb-list { display: flex; flex-direction: column; gap: 3px; max-height: 50vh; overflow: auto; margin-top: 6px; }
+.lb-row { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 8px; align-items: baseline; padding: 5px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.04); font-size: 14px; }
+.lb-row.me { background: rgba(255, 212, 94, 0.18); outline: 2px solid var(--gold); }
+.lb-rank { font-family: var(--display); color: var(--ice); text-align: right; }
+.lb-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-tag { color: var(--ice); opacity: 0.75; font-size: 12px; }
+.lb-me { margin: 2px 0 4px; font-size: 14px; }
+.lb-result { text-align: center; font-size: 13px; min-height: 1.2em; margin: 6px 0 2px; }

@@ -61,6 +61,7 @@ Hold shoot while a pass is on its way to fire a **one-timer**. Your skates plant
 - **Game plans:** before each league match pick Balanced, Forecheck, Trap or Run-and-gun. They change how both teams' AI plays, and Forecheck beats Run-and-gun, which beats Trap, which beats Forecheck. Rivals have a usual style (scouting report shown) and the Royals counter whatever you used on them last time.
 - **Locker-room moments:** short scenes between league matches (tough losses, hat tricks, win streaks, playoff nerves, trash talk, scouting, Bram's stew and more). Each choice gives chemistry, EXP, coins or a buff for the next match.
 - **Training rink:** four mini-games with bronze, silver and gold medals: Cone Weave (skating time trial), Sniper (hit targets off feeds), Keep-Away (pass chains against chasers) and Breakaway (5 tries on a goalie). They give EXP to the skater you bring, with 2 rewarded sessions between matches and unlimited practice.
+- **Online leaderboards:** Cone Weave, Sniper, Keep-Away, Breakaway, shootout wins and the best daily streak. Your best scores post automatically under your club name and a random tag (no accounts, nothing personal), your online rank shows after each drill, and the boards are under 🏆 in Training and Trophies. Scores made offline wait in a queue. Settings can turn it off. The server is one small AWS Lambda function and a DynamoDB table (`server/`).
 - **Shootout:** five penalty shots each way against any rival. You shoot, then you play goalie, then sudden death.
 - **Rivalries:** head-to-head records per rival. Captains bring up past scores, streaks and who lit them up, and the bracket shows the record.
 - **Challenges:** exhibition modifiers (One-timers only, Giant goalies, Ice age, Lightning round, Heavy hitters, Next goal wins) with coin multipliers.
@@ -124,6 +125,12 @@ python3 -m venv ../.venv && ../.venv/bin/pip install pillow numpy   # once
 ../.venv/bin/python tools/build_assets.py ../assets/Glacial-Strikers-Expansion-v2 assets/gfx ../assets/Glacial-Strikers-v3-Arena-Add-On ../assets/Glacial-Strikers-v4-Batch-A ../assets/Glacial-Strikers-Gear-Masks ../assets/Glacial-Strikers-v5-Goalies
 ```
 Rebuilds the atlases from the complete v2 sprite pack (v1, P1 gameplay and the rival/story/arena art in one atlas) plus the v3 arena add-on (nets, near glass, scoreboard, banners, mascot) v4 Batch A (rival diagonals and hit reactions, Blaze and Horn expressions; merged by `tools/merge_batch_a.py`), gear masks when they exist, and v5 goalies (front, back, skating and puck handling for all seven goalie variants; merged by `tools/merge_goalies.py`). Every character is rescaled to the v1 skaters' height, stray fragments from neighbouring cells are erased, and poses are mapped onto the game's names. Pages are split into `home`, `away` and one `rival_<team>` group per rival; rival pages, arenas, cut-in banners and the locker room load in the background after startup.
+
+```bash
+node tools/test_leaderboard.mjs
+node tools/leaderboard_server.mjs 8790
+```
+Tests the leaderboard server, then runs it locally with scores kept in memory. Open the game with `?lb=http://127.0.0.1:8790` to use it. Deployment is described in `server/README.md`.
 
 ```bash
 node tools/test_music.mjs

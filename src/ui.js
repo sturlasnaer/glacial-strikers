@@ -15,6 +15,7 @@ import {
   expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave,
   chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups,
 } from './progress.js';
+import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn } from './online.js';
 import { audio } from './audio.js';
 const VOLUMES = [[0, 'Off'], [0.35, 'Low'], [0.7, 'Mid'], [1, 'Full']];
 // dialogue voices: each role speaks at its own pitch; rivals a little lower
@@ -406,7 +407,8 @@ export class UI {
     const earned = got.reduce((n, a) => n + a.coins, 0);
     body.innerHTML = `
       <div class="train-top"><div><div class="label">Trophy case</div>
-        <p style="margin:2px 0 0;font-size:13px">${got.length} of ${ACHIEVEMENTS.length} unlocked · ${earned} coins earned${s.cups ? ` · ${s.cups} cup${s.cups > 1 ? 's' : ''} won` : ''}</p></div></div>
+        <p style="margin:2px 0 0;font-size:13px">${got.length} of ${ACHIEVEMENTS.length} unlocked · ${earned} coins earned${s.cups ? ` · ${s.cups} cup${s.cups > 1 ? 's' : ''} won` : ''}</p></div>
+        <button class="btn small ghost" id="tr-lb">🏆 Online leaderboards</button></div>
       ${s.awards && s.awards.length ? `<div class="label" style="margin:4px 0 6px">Award cabinet</div>
       <div class="aw-list cabinet">${s.awards.slice().reverse().map((w) => `
         <div class="aw-row us"><img src="${rowFace({ ...w, team: 'home' }, 64)}" alt=""><div style="min-width:0"><small>Season ${w.season} · ${esc(AWARD_BY_ID[w.id].name)}</small><b>${esc(w.name)}</b><span class="muted">${esc(w.line)}</span></div><img class="cr" src="${ico(AWARD_BY_ID[w.id].icon, 64)}" alt=""></div>`).join('')}</div>
@@ -421,6 +423,7 @@ export class UI {
           <span class="tcoins">${done ? '✓' : `+${a.coins}`}</span>
         </div>`;
       }).join('')}</div>`;
+    this.click('#tr-lb', () => { audio.sfx('click'); this.leaderboard('cones'); }, body);
   }
 
   // The season's awards night, hosted by Kip Vance: one envelope at a time.
@@ -969,12 +972,51 @@ export class UI {
           <p class="muted" style="margin:0;font-size:13px">${esc(d.text)}</p>
           <div class="row" style="justify-content:space-between">
             <span style="font-size:13px">Best: <b class="gold-t">${best === undefined || best === null ? '–' : formatScore(d, best)}</b></span>
-            <button class="btn small ${tr.sessions > 0 ? 'gold' : ''}" data-play="${d.id}">${tr.sessions > 0 ? 'Train' : 'Practice'}</button>
+            <span class="row" style="gap:6px"><button class="btn small ghost" data-lb="${d.id}" title="Online leaderboard" aria-label="${esc(d.name)} online leaderboard">🏆</button>
+            <button class="btn small ${tr.sessions > 0 ? 'gold' : ''}" data-play="${d.id}">${tr.sessions > 0 ? 'Train' : 'Practice'}</button></span>
           </div>
         </div>`;
       }).join('')}</div>`;
     this.click('[data-char]', (el) => { this.drillChar = el.dataset.char; audio.sfx('click'); this.tabTraining(body); }, body);
     this.click('[data-play]', (el) => { audio.sfx('confirm'); this.app.startDrill(el.dataset.play, this.drillChar); }, body);
+    this.click('[data-lb]', (el) => { audio.sfx('click'); this.leaderboard(el.dataset.lb); }, body);
+  }
+
+  // An online leaderboard: the top 25, with you highlighted and your rank.
+  leaderboard(board) {
+    const s = this.app.save;
+    const info = BOARD_INFO[board];
+    const st = onlineState(s);
+    const myTag = tagOf(st.id);
+    const tabs = Object.entries(BOARD_INFO).map(([id, b]) => `<button class="chip" data-lbt="${id}" aria-pressed="${id === board}">${esc(b.name)}</button>`).join('');
+    const queued = st.pending[board];
+    const note = (t) => `<p class="muted" style="font-size:13px">${t}</p>`;
+    this.modal(`
+      <h2>Online leaderboards</h2>
+      <div class="jukebox" style="margin:4px 0 10px">${tabs}</div>
+      <div id="lb-body">${!onlineOn(s) ? note('Online leaderboards are off in Settings.')
+        : !configured() ? note(`The online leaderboards open soon. Your best scores are saved${queued ? ` (${esc(info.fmt(queued.score))} here)` : ''} and will be posted when they do.`)
+        : '<p class="muted">Loading…</p>'}</div>
+      <p class="muted" style="font-size:12px;margin:8px 0 0">You appear as <b>${esc(CLUB.name)}</b> <span class="lb-tag">#${myTag}</span>. Rename the club in Team › Club.</p>
+      <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>Close</button></div>`, (m, close) => {
+      this.click('[data-lbt]', (el) => { audio.sfx('click'); close(); this.leaderboard(el.dataset.lbt); }, m);
+      if (!onlineOn(s) || !configured()) return;
+      fetchBoard(s, board).then((r) => {
+        const out = m.querySelector('#lb-body');
+        if (!out) return;
+        const rows = r.top.map((row, i) => {
+          const me = row.tag === myTag && row.name === CLUB.name;
+          const who = row.char && member(row.char) ? ` <span class="muted">· ${esc(member(row.char).name)}</span>` : '';
+          return `<div class="lb-row ${me ? 'me' : ''}"><span class="lb-rank">${i + 1}</span><span class="lb-name">${esc(row.name)} <span class="lb-tag">#${esc(row.tag)}</span>${who}</span><b>${esc(info.fmt(row.score))}</b></div>`;
+        }).join('');
+        const mine = r.me ? `<div class="lb-me">You: <b>#${r.me.rank}</b> of ${r.total} · best ${esc(info.fmt(r.me.score))}</div>`
+          : `<div class="lb-me muted">${r.total ? `${r.total} on the board.` : 'Nobody yet.'} Play ${esc(info.name)} to get on it.</div>`;
+        out.innerHTML = `${mine}<div class="lb-list">${rows || ''}</div>`;
+      }).catch(() => {
+        const out = m.querySelector('#lb-body');
+        if (out) out.innerHTML = note('Couldn\'t reach the leaderboard. Your scores are saved and will be posted when you\'re back online.');
+      });
+    });
   }
 
   // Result card after a drill: score, medal, rewards; Retry or Done.
@@ -996,6 +1038,7 @@ export class UI {
       </div>
       ${lines.length ? `<div class="reward-lines">${lines.map(([a, b]) => `<div><span>${esc(a)}</span><span class="gold-t">${b}</span></div>`).join('')}</div>` : ''}
       ${ups}
+      <div class="lb-result muted" id="d-online"></div>
       <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="d-retry">Retry</button><button class="btn gold" id="d-done">Done</button></div>`, (m, close) => {
       m.querySelector('#d-retry').addEventListener('click', () => { close(); audio.sfx('confirm'); onRetry(); });
       m.querySelector('#d-done').addEventListener('click', () => { close(); audio.sfx('click'); onDone(); });
@@ -1052,6 +1095,7 @@ export class UI {
       ${row('Game speed', seg('speed', [['normal', 'Normal'], ['relaxed', 'Relaxed']]), 'Relaxed plays matches at 85% speed. Drills stay at full speed.')}
       ${row('Goal replays', onOff('replays'))}
       ${row('Goal clips', onOff('clips'), 'Record each replay as a short video you can share.')}
+      ${row('Online leaderboards', onOff('online'), 'Posts your best drill, shootout and daily scores with your club name and a random tag. Nothing else is sent.')}
       <div class="label">Comfort</div>
       ${row('Screen shake', seg('shake', [[1, 'Full'], [0.5, 'Low'], [0, 'Off']]))}
       ${row('Flashes', onOff('flashes'), 'Screen flashes and blinking goal lights.')}

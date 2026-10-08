@@ -1,0 +1,46 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "LeaderboardTable",
+      "Effect": "Allow",
+      "Action": ["dynamodb:CreateTable", "dynamodb:DescribeTable", "dynamodb:UpdateTable", "dynamodb:TagResource", "dynamodb:Query", "dynamodb:GetItem"],
+      "Resource": [
+        "arn:aws:dynamodb:eu-west-1:966187623392:table/puckbound-leaderboard",
+        "arn:aws:dynamodb:eu-west-1:966187623392:table/puckbound-leaderboard/index/*"
+      ]
+    },
+    {
+      "Sid": "LeaderboardFunction",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:CreateFunction", "lambda:GetFunction", "lambda:GetFunctionConfiguration", "lambda:UpdateFunctionCode",
+        "lambda:UpdateFunctionConfiguration", "lambda:CreateFunctionUrlConfig", "lambda:GetFunctionUrlConfig",
+        "lambda:UpdateFunctionUrlConfig", "lambda:AddPermission", "lambda:GetPolicy", "lambda:TagResource"
+      ],
+      "Resource": "arn:aws:lambda:eu-west-1:966187623392:function:puckbound-leaderboard"
+    },
+    {
+      "Sid": "LeaderboardRole",
+      "Effect": "Allow",
+      "Action": ["iam:CreateRole", "iam:GetRole", "iam:PutRolePolicy", "iam:GetRolePolicy", "iam:TagRole"],
+      "Resource": "arn:aws:iam::966187623392:role/puckbound-leaderboard-lambda"
+    },
+    {
+      "Sid": "PassLeaderboardRoleToLambda",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::966187623392:role/puckbound-leaderboard-lambda",
+      "Condition": { "StringEquals": { "iam:PassedToService": "lambda.amazonaws.com" } }
+    },
+    {
+      "Sid": "LeaderboardLogs",
+      "Effect": "Allow",
+      "Action": ["logs:CreateLogGroup", "logs:PutRetentionPolicy", "logs:DescribeLogStreams", "logs:GetLogEvents", "logs:FilterLogEvents"],
+      "Resource": [
+        "arn:aws:logs:eu-west-1:966187623392:log-group:/aws/lambda/puckbound-leaderboard",
+        "arn:aws:logs:eu-west-1:966187623392:log-group:/aws/lambda/puckbound-leaderboard:*"
+      ]
+    }
+  ]
+}

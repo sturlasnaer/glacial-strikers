@@ -36,7 +36,7 @@ export function newSave() {
     locker: { seen: [], seasonSeen: [], season: 1 }, // drill bests, medal tiers, rewarded sessions left
     seenIntro: false,
     settings: {
-      music: true, sfx: true, musicVol: 1, sfxVol: 1, audioQuality: 'auto', difficulty: 'normal', tips: true, replays: true, clips: true,
+      music: true, sfx: true, musicVol: 1, sfxVol: 1, audioQuality: 'auto', online: true, difficulty: 'normal', tips: true, replays: true, clips: true,
       assist: 'normal', autoSprint: false, speed: 'normal',
       shake: 1, flashes: true, particles: 'full',
       markers: 'color', textSize: 'normal', touchSize: 'normal', lefty: false,
