@@ -232,32 +232,44 @@ export class Renderer {
         // far stands: sprite fans facing the ice (and the camera)
         const up = cheer || (ex > 0.6 && Math.sin(t * 5 + f.phase) > 0.3);
         const list = sprites[f.team ? 'away' : 'home'][up ? 'cheering' : 'sitting'];
-        Assets.draw(ctx, list[f.fan], x, y - 3 * s, 0.125 * s, { pages: f.team ? this.awayPages : Assets.clubPages(), flip: f.phase > 3.14 });
+        Assets.draw(ctx, list[f.fan], x, y - 4 * s, 0.18 * s, { pages: f.team ? this.awayPages : Assets.clubPages(), flip: f.phase > 3.14 });
         continue;
       }
-      const body = f.team === 0 ? (f.phase > 3 ? '#71dce8' : '#fff2cb') : (f.phase > 3 ? awayColor : awayColor2);
-      // body
-      ctx.fillStyle = '#14233b';
-      ctx.fillRect(x - 5 * s, y - 2 * s, 10 * s, 11 * s);
-      ctx.fillStyle = body;
-      ctx.fillRect(x - 4 * s, y - 1 * s, 8 * s, 9 * s);
-      // arms up when cheering
-      if (cheer || (ex > 0.6 && Math.sin(t * 5 + f.phase) > 0.3)) {
-        ctx.fillStyle = body;
-        ctx.fillRect(x - 6 * s, y - 9 * s, 2 * s, 8 * s);
-        ctx.fillRect(x + 4 * s, y - 9 * s, 2 * s, 8 * s);
+      // near benches: fans seen from behind, watching the ice (drawn until there are sprites)
+      const home = f.team === 0;
+      const jersey = home ? (f.phase > 3 ? TEAMS.home.color : '#fff2cb') : (f.phase > 3 ? awayColor : awayColor2);
+      const trim = home ? (f.phase > 3 ? '#fff2cb' : TEAMS.home.color) : (f.phase > 3 ? awayColor2 : awayColor);
+      const NAVY = '#14233b';
+      ctx.lineWidth = 1.6; ctx.strokeStyle = NAVY; ctx.lineJoin = 'round';
+      const oval = (cx, cy, rx, ry, fill, from = 0, to = Math.PI * 2) => {
+        ctx.beginPath(); ctx.ellipse(x + cx * s, y + cy * s, rx * s, ry * s, 0, from, to); ctx.closePath();
+        ctx.fillStyle = fill; ctx.fill(); ctx.stroke();
+      };
+      const up = cheer || (ex > 0.6 && Math.sin(t * 5 + f.phase) > 0.3);
+      if (f.sign && ex > 0.35) { // the back of a cardboard sign on a stick
+        ctx.fillStyle = '#7a5a3a'; ctx.fillRect(x - 0.6 * s, y - 16 * s, 1.2 * s, 8 * s);
+        ctx.fillStyle = '#c9a878'; ctx.fillRect(x - 9 * s, y - 25 * s, 18 * s, 10 * s); ctx.strokeRect(x - 9 * s, y - 25 * s, 18 * s, 10 * s);
       }
-      // head
-      ctx.fillStyle = '#14233b';
-      ctx.fillRect(x - 4 * s, y - 9 * s, 8 * s, 8 * s);
-      ctx.fillStyle = f.back ? (f.hat || '#3a2a20') : f.skin;
-      ctx.fillRect(x - 3 * s, y - 8 * s, 6 * s, 6 * s);
-      if (f.hat) { ctx.fillStyle = f.hat; ctx.fillRect(x - 3.5 * s, y - 9 * s, 7 * s, 3 * s); }
-      if (f.sign && ex > 0.35) {
-        ctx.fillStyle = '#fff2cb';
-        ctx.fillRect(x - 9 * s, y - 22 * s, 18 * s, 10 * s);
-        ctx.fillStyle = f.team === 0 ? '#14233b' : awayColor;
-        ctx.fillRect(x - 7 * s, y - 19 * s, 14 * s, 3 * s);
+      if (up) { // arms in the air
+        for (const side of [-1, 1]) {
+          ctx.beginPath(); ctx.moveTo(x + side * 5 * s, y - 1 * s); ctx.lineTo(x + side * 7.5 * s, y - 12 * s);
+          ctx.lineWidth = 3.4 * s; ctx.strokeStyle = NAVY; ctx.stroke(); ctx.lineWidth = 2 * s; ctx.strokeStyle = jersey; ctx.stroke();
+          oval(side * 7.6, -12.5, 1.7, 1.7, f.skin);
+        }
+        ctx.lineWidth = 1.6; ctx.strokeStyle = NAVY;
+      }
+      // sloping shoulders and back, a stripe across the jersey
+      oval(0, 5, 8, 7.5, jersey, Math.PI, Math.PI * 2);
+      ctx.save(); ctx.beginPath(); ctx.ellipse(x, y + 5 * s, 8 * s, 7.5 * s, 0, Math.PI, Math.PI * 2); ctx.clip();
+      ctx.fillStyle = trim; ctx.fillRect(x - 8 * s, y + 0.5 * s, 16 * s, 1.8 * s); ctx.restore();
+      if (f.scarf) oval(0, -2.2, 4.6, 1.6, trim);
+      // the back of the head: hair, or a beanie with a pompom
+      if (!f.hat) { oval(-4.6, -6.5, 1.1, 1.6, f.skin); oval(4.6, -6.5, 1.1, 1.6, f.skin); }
+      oval(0, -7, 4.8, 5, f.hair);
+      if (f.hat) {
+        oval(0, -7.6, 5, 4.6, f.hat, Math.PI, Math.PI * 2);
+        ctx.fillStyle = trim; ctx.fillRect(x - 4.9 * s, y - 8.4 * s, 9.8 * s, 1.6 * s); ctx.strokeRect(x - 4.9 * s, y - 8.4 * s, 9.8 * s, 1.6 * s);
+        oval(0, -12.6, 1.5, 1.5, f.hat === '#fff2cb' ? TEAMS.home.color : '#fff2cb');
       }
     }
   }

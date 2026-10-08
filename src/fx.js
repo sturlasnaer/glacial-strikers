@@ -377,23 +377,25 @@ export class FX {
 function makeCrowd() {
   const fans = [];
   const r = makeRng(99);
+  // far stands (sprite fans facing the camera) and the near benches (seen from behind)
   const rows = [
-    { x0: 285, x1: 675, y: 18, back: false, scale: 0.85 },
-    { x0: 865, x1: 1262, y: 18, back: false, scale: 0.85 },
-    { x0: 290, x1: 670, y: 62, back: false, scale: 1 },
-    { x0: 870, x1: 1258, y: 62, back: false, scale: 1 },
-    { x0: 430, x1: 640, y: 880, back: true, scale: 1.05 },
-    { x0: 900, x1: 1110, y: 880, back: true, scale: 1.05 },
+    { x0: 288, x1: 672, y: 20, back: false, scale: 0.9, gap: [19, 26] },
+    { x0: 868, x1: 1258, y: 20, back: false, scale: 0.9, gap: [19, 26] },
+    { x0: 292, x1: 668, y: 64, back: false, scale: 1, gap: [21, 28] },
+    { x0: 872, x1: 1254, y: 64, back: false, scale: 1, gap: [21, 28] },
+    { x0: 362, x1: 640, y: 892, back: true, scale: 1.75, gap: [24, 31] },
+    { x0: 898, x1: 1176, y: 892, back: true, scale: 1.75, gap: [24, 31] },
   ];
   const skins = ['#f1c7a5', '#d9a07a', '#a8714e', '#7a4b31', '#ffd9b8'];
   const hats = ['#71dce8', '#fff2cb', '#14233b', '#e8f6ff', '#ffd45e', null, null];
+  const hair = ['#3a2a20', '#1d1a1f', '#6b4428', '#c9a15c', '#a8532e', '#e9e2d0'];
   for (const row of rows) {
-    for (let x = row.x0; x < row.x1; x += r.range(13, 19)) {
+    for (let x = row.x0; x < row.x1; x += r.range(row.gap[0], row.gap[1])) {
       if (r() < 0.12) continue;
       fans.push({
-        x, y: row.y + r.range(-2, 2), back: row.back, s: row.scale * r.range(0.9, 1.1),
-        team: r() < 0.6 ? 0 : 1, skin: r.pick(skins), hat: r.pick(hats), phase: r.range(0, 6.28),
-        sign: r() < 0.06, fan: Math.floor(r() * 8),
+        x, y: row.y + r.range(-2, 2), back: row.back, s: row.scale * r.range(0.92, 1.08),
+        team: r() < 0.6 ? 0 : 1, skin: r.pick(skins), hat: r.pick(hats), hair: r.pick(hair), phase: r.range(0, 6.28),
+        sign: r() < 0.06, scarf: r() < 0.3, fan: Math.floor(r() * 8),
       });
     }
   }

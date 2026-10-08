@@ -5,11 +5,12 @@ What the game needs next, in priority order. Everything delivered so far is in t
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **M**: gear masks, so equipped sticks and skates recolour on the players.
-2. **B**: atmosphere (two more arenas, fans at the glass).
-3. **H**: locker-room life.
-4. **I**: arena-rule art.
-5. **C**: polish.
+1. **M**: gear masks, so equipped sticks and skates recolour on the players (arriving).
+2. **N**: the near-side crowd, seen from behind.
+3. **B**: atmosphere (two more arenas, fans at the glass).
+4. **H**: locker-room life.
+5. **I**: arena-rule art.
+6. **C**: polish.
 
 ## Format notes
 
@@ -53,6 +54,21 @@ Equipped gear already shows on the ice through code effects: skate trails and co
 - v4: the 30 rival sheets `<team>_<role>_diagonals` and `<team>_<role>_hit_reactions`
 
 **Delivery:** a folder `Glacial-Strikers-Gear-Masks/sheets/` containing the 58 PNGs. No atlas is needed: the builder cuts masks with the existing frame rectangles. If that's too much at once, start with the three v1 sheets and the P1 sheets (13). Those cover Nix, Volta and Bram in every pose.
+
+---
+
+## Batch N: near-side crowd (next after M)
+
+The far stands use the v2 crowd sprites (now drawn bigger). The near stands at the bottom of the screen, on the two benches either side of the mascot's stairs, are still drawn in code. Those fans sit with their **backs to the camera**, watching the ice, so they need their own sprites.
+
+- **Fans from behind**, at the same 45° overhead camera: back of the head (hair, beanies, caps, hoods), shoulders and jersey backs. Some wear scarves, some have a number on the jersey. Chibi proportions like the far fans, sitting on a bench.
+- **8 different fans**, each in **2 poses**: sitting and cheering (arms up). Two of the eight hold up a sign (we see the cardboard back).
+- **Home colours** (teal/cream/navy) and **away colours** (coral/violet, recoloured at runtime like the rival casts). Keep coral and violet off skin and hair.
+- **Size:** about 200 px tall in the sheet, so they draw at about 50 px next to the near benches (the far fans are 190 px drawn at about 34 px).
+- Feet or seat on a consistent baseline, transparent background, wide gutters, an add-on `atlas.json` as in Batch A, keyed like `crowd_back/<home|away>/<sitting|cheering>/fan_<n>`.
+- **Total:** 8 fans × 2 poses × 2 colourways = **32 frames**.
+
+Optional, same set: **2 frames of a flag waver** from behind (a big team flag swinging left and right) for goals.
 
 ---
 
