@@ -335,10 +335,19 @@ export const GOALIE_RECRUITS = Object.fromEntries(Object.entries(GOALIE_PRICES).
   const t = TEAMS[team];
   return [`${team}_g`, { key: `${team}_g`, team, name: t.names.goalie, base: { ...t.goalie }, gstyle: t.gstyle, price, art: t.art, title: 'Goaltender' }];
 }));
-// Who a goalie is: Halla or a signing. { id, name, base, style, art }
+// Free-agent goalies signed from the market (agents.js), by id ('fa_g1'), from the save.
+export const FREE_GOALIES = {};
+export function setFreeGoalies(list = {}) {
+  for (const k of Object.keys(FREE_GOALIES)) delete FREE_GOALIES[k];
+  Object.assign(FREE_GOALIES, list);
+}
+// Who a goalie is: Halla, a rival's signed goalie or a free agent (in the newcomer goalie's
+// art, Batch AN). { id, name, base, style, art }
 export function goalieInfo(id) {
-  const g = GOALIE_RECRUITS[id];
-  return g ? { id, name: g.name, base: g.base, style: g.gstyle, art: g.art, recruit: g } : { id: 'halla', name: GOALIE.name, base: GOALIE.base, style: GOALIE.gstyle, art: null, recruit: null };
+  const g = GOALIE_RECRUITS[id], f = FREE_GOALIES[id];
+  if (g) return { id, name: g.name, base: g.base, style: g.gstyle, art: g.art, recruit: g };
+  if (f) return { id, name: f.name, base: f.base, style: f.style, art: 'newcomer', recruit: null, agent: f };
+  return { id: 'halla', name: GOALIE.name, base: GOALIE.base, style: GOALIE.gstyle, art: null, recruit: null };
 }
 
 // Legends: free agents who turn up in Scouting now and then (see legends.js). Fáfnir and
@@ -379,6 +388,7 @@ export function setRookies(list = {}) {
   Object.assign(ROOKIES, list);
 }
 export const ROOKIE_TITLE = { C: 'Rookie Centre', W: 'Rookie Winger', D: 'Rookie Defender' };
+export const AGENT_TITLE = { C: 'Veteran Centre', W: 'Veteran Winger', D: 'Veteran Defender' };
 
 // Everything about a member of our roster ('frost', 'thunder', 'stone', a recruit key or a
 // rookie's id). Signings and rookies are drawn from rival or newcomer art in home colours.
@@ -387,7 +397,8 @@ function memberBase(who) {
   if (k) {
     const c = CHARACTERS[k.kit];
     const body = bodySprite(k.parts); // drawn from parts once that art is in (Batch AJ)
-    return { who, kit: k.kit, def: makeDef(k.kit, k.arch, k.elem), name: k.name, title: ROOKIE_TITLE[c.role], base: k.base, role: c.role, blurb: k.blurb, recruit: null, rookie: k, hand: k.hand || 'L', sprite: body || `newcomer_${ROLE[k.kit]}`, parts: body ? k.parts : null, look: 'homekit' };
+    // (a free agent from the market is kept like a rookie, but a veteran: no potential to show)
+    return { who, kit: k.kit, def: makeDef(k.kit, k.arch, k.elem), name: k.name, title: k.agent ? AGENT_TITLE[c.role] : ROOKIE_TITLE[c.role], base: k.base, role: c.role, blurb: k.blurb, recruit: null, rookie: k.agent ? null : k, agent: k.agent ? k : null, hand: k.hand || 'L', sprite: body || `newcomer_${ROLE[k.kit]}`, parts: body ? k.parts : null, look: 'homekit' };
   }
   const L = LEGENDS[who];
   if (L) {

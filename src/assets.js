@@ -70,6 +70,7 @@ export const Assets = {
     const jobs = [];
     if (t && t.art) jobs.push(this.loadGroup('rival_' + t.art));
     if (t && t.art && this.needNewcomers) jobs.push(this.loadGroup('newcomers')); // (a signed slot's newcomer)
+    if (this.partsFor && this.partsFor(teamId)) jobs.push(this.loadGroup('parts')); // (a fill made from parts, in their colours)
     if (arena && arena !== 'home') jobs.push(this.ensureArena(arena));
     await Promise.all(jobs).catch(() => {});
     if (t) this.prepareTeam(t);
@@ -109,6 +110,7 @@ export const Assets = {
   get needLegends() { return !!(PALETTES.homekit.groups && PALETTES.homekit.groups.includes('legends_ice')); }, // (a twin on the roster)
   newcomerCheck: null, // the game's check: has the save signed a rival (skater or goalie) or drafted a rookie (newcomer art)?
   get needNewcomers() { return !!(this.newcomerCheck && this.newcomerCheck()); },
+  partsFor: null, // the game's check: does this rival field anyone made from parts?
 
   forget(file) { this.images.delete(file); this.loading.delete(file); },
 
@@ -120,6 +122,7 @@ export const Assets = {
     const groups = new Set([...CORE.filter((g) => g !== 'title'), ...(PALETTES.homekit.groups || []), ...(keep.groups || [])]);
     for (const id of keep.teams || []) { const t = TEAMS[id]; if (t && t.art) groups.add('rival_' + t.art); }
     if (this.needNewcomers && (keep.teams || []).length) groups.add('newcomers');
+    if (this.partsFor && (keep.teams || []).some(this.partsFor)) groups.add('parts');
     if (keep.gear) { groups.add('gearmask'); groups.add('legends_gearmask'); if (this.needNewcomers) groups.add('newcomer_gearmask'); }
     const released = new Set();
     a.pages.forEach((p, i) => { if (this.pages[i] && !groups.has(p.group)) { released.add(this.pages[i]); this.pages[i] = null; this.forget(p.file); } });
@@ -199,7 +202,7 @@ export const Assets = {
   // Recolour the away pages and this rival's roster pages into the team's colours
   // (or, for a palette with groups, just those pages).
   prepareTeam(team) {
-    const own = (g) => (team.groups ? team.groups.includes(g) : g === 'away' || g === 'newcomers' || (team.art && g === 'rival_' + team.art));
+    const own = (g) => (team.groups ? team.groups.includes(g) : g === 'away' || g === 'newcomers' || g === 'parts' || (team.art && g === 'rival_' + team.art));
     const loaded = this.pages.filter((img, i) => img && own(this.atlas.pages[i].group)).length + '|' + (team.groups || []).join(',');
     const r = this.recolored.get(team.id);
     if (r && r.loaded === loaded) return;

@@ -1,4 +1,4 @@
-// Trades: one of your signings or drafted rookies (not the cast, not the legends), plus coins
+// Trades: one of your signings, free agents or drafted rookies (not the cast, not the legends), plus coins
 // when it doesn't cover the price, for a rival's player who'll take your call. What you give
 // is worth what it cost (or a rookie's promise) plus a little for every level since, and
 // each rival values the styles it likes a quarter more. The player you give joins that
@@ -17,7 +17,7 @@ export const tradeable = (save) => rosterIds(save).filter((id) => (RECRUITS[id] 
 export function playerValue(save, id) {
   const r = save.roster[id], lv = r ? r.level - 1 : 0;
   if (RECRUITS[id]) return RECRUITS[id].price + lv * 20;
-  if (ROOKIES[id]) return 100 + ROOKIES[id].potential * 40 + lv * 20;
+  if (ROOKIES[id]) return ROOKIES[id].agent ? ROOKIES[id].price + lv * 20 : 100 + ROOKIES[id].potential * 40 + lv * 20; // (a free agent: what they cost)
   return 0;
 }
 

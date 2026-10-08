@@ -51,6 +51,7 @@ export const ACHIEVEMENTS = [
   { id: 'twins', name: 'Side by Side', text: 'Dress Fáfnir and Fenrir for the same match.', icon: 'achievements/in_sync', art: 'achievements/side_by_side', coins: 100 },
   { id: 'ragnarok', name: 'Ragnarök', text: 'Score with Ragnarök, the twins\' combo.', icon: 'hud_elements/ability/fire', art: 'achievements/ragnarok', coins: 150 },
   { id: 'elements', name: 'Six Elements', text: 'Score with skaters of all six elements.', icon: 'power_pucks/gravity/pickup_orb', art: 'achievements/six_elements', coins: 120, set: 'elemGoals', goal: 6 },
+  { id: 'veteran', name: 'Veteran Presence', text: 'Sign a free agent from the market.', icon: 'achievements/free_agent', art: 'achievements/veteran_presence', coins: 50 },
   { id: 'weekly-cup', name: 'Cup of the Week', text: 'Win a Weekly Cup on a friends board.', icon: 'badges/rank_1', art: 'achievements/cup_of_the_week', coins: 100 },
 ];
 // Batch AF: the achievements that borrowed a gear or HUD picture get their own.
@@ -69,6 +70,7 @@ export function useAchievementArt(frames) {
   }
 }
 const BY_ID = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a]));
+const RECRUITS_G = (k) => /^(lynx|comets|rams|ravens|royals)_g$/.test(k); // a rival's goalie (not a free agent)
 
 export class AchievementTracker {
   constructor(save, onUnlock) {
@@ -162,7 +164,8 @@ export class AchievementTracker {
     if (Object.keys(s.rookies || {}).length) this.unlock('first-pick');
     if (Object.values(s.roster).some((r) => r.camp) || [s.goalie, ...Object.values(s.goalies || {})].some((g) => g && g.camp)) this.unlock('new-tricks');
     if ((s.trades || []).length) this.unlock('dealmaker');
-    if (Object.keys(s.goalies || {}).length) this.unlock('second-keeper');
+    if (Object.keys(s.goalies || {}).some((k) => RECRUITS_G(k))) this.unlock('second-keeper');
+    if (Object.values(s.rookies || {}).some((k) => k.agent) || Object.keys(s.freeGoalies || {}).length) this.unlock('veteran');
     if (Object.keys(LEGENDS).some((k) => s.roster[k])) this.unlock('legend');
     if ((s.weeklyCups || []).some((w) => w.place === 1)) this.unlock('weekly-cup');
   }

@@ -5,6 +5,7 @@ import { CHARACTERS, RECRUITS, ARCHETYPES, ELEMENTS, STAT_KEYS, member, recruitK
 import { recruitStatus } from './progress.js';
 import { tradeable, playerValue, TEAM_LIKES, trade } from './trades.js';
 import { vacated, fillOf } from './slots.js';
+import { randomLook } from './modular.js';
 
 const RIVALS = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
 const KITS = ['frost', 'thunder', 'stone'];
@@ -29,7 +30,7 @@ export function rivalDraft(save, d) {
     const team = need || [d.rivals[n], ...RIVALS].find((tid) => !taken.has(tid));
     taken.add(team);
     if (need) {
-      fills(save)[`${team}:${p.kit}`] = { how: 'draft', name: p.name, kit: p.kit, arch: p.arch, elem: p.elem, hand: p.hand,
+      fills(save)[`${team}:${p.kit}`] = { how: 'draft', name: p.name, kit: p.kit, arch: p.arch, elem: p.elem, hand: p.hand, parts: p.parts || null,
         base: { ...p.base }, special: p.special, potential: p.potential, season: d.season };
     }
     return team;
@@ -57,7 +58,7 @@ function freeAgent(save, kit, rnd) {
   const role = CHARACTERS[kit].role;
   return { how: 'sign', name: pick(names.length ? names : AGENTS[kit], rnd), kit, base, potential: 1, season: save.season,
     arch: pick(Object.values(ARCHETYPES).filter((a) => a.roles.includes(role)).map((a) => a.id), rnd),
-    elem: pick(Object.keys(ELEMENTS), rnd), hand: rnd() < 0.6 ? 'L' : 'R' };
+    elem: pick(Object.keys(ELEMENTS), rnd), hand: rnd() < 0.6 ? 'L' : 'R', parts: randomLook(rnd, role) };
 }
 
 // After a league match: maybe a rival fills a hole. Returns { team, kit, name } or null.

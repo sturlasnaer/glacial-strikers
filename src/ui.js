@@ -4,7 +4,7 @@ import { Assets } from './assets.js';
 import {
   CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
-  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, GOALIE_STYLES, goalieInfo, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
+  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
 import { standings, classicOpponent, CLASSIC_AFTER, ALLSTAR_AFTER } from './league.js';
 import { BUFF_TEXT } from './lockerroom.js';
@@ -22,8 +22,9 @@ import { draftOpen, draftPick, otherPicks, POTENTIAL_GRADE, DRAFT_LINES } from '
 import { careerOf, careerRows, careerGoalies } from './career.js';
 import { legendState, legendLeft, signLegend } from './legends.js';
 import { tradeable, tradeQuote, trade, TEAM_LIKES } from './trades.js';
-import { rivalSub } from './slots.js';
+import { rivalSub, fillLook } from './slots.js';
 import { acceptOffer } from './moves.js';
+import { agentState, marketOpen, agentsLeft, signAgent } from './agents.js';
 import { audio } from './audio.js';
 import { t } from './i18n.js';
 const VOLUMES = () => [[0, t('Off')], [0.35, t('Low')], [0.7, t('Mid')], [1, t('Full')]];
@@ -57,6 +58,10 @@ const hexToHsvUI = (hex) => hexToHsv(hex);
 export const portrait = (id, team, teamId, size = 160, expr = null) => {
   const P = Assets.atlas.portraits || {};
   if (id === 'halla') id = 'goalie';
+  if (team === 0 && FREE_GOALIES[id]) { // a free-agent goalie: the newcomer goalie (Batch AN) in our colours
+    const p = P.newcomer_g, fid = p && ((expr && p[expr]) || p.neutral);
+    return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT.goalie}`, size, CLUB_PAGES());
+  }
   if (team === 0 && GOALIE_RECRUITS[id]) { // a signed rival goalie, in our colours
     const p = P[`${GOALIE_RECRUITS[id].art}_g`], fid = p && ((expr && p[expr]) || p.neutral_roster || p.neutral);
     return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT.goalie}`, size, CLUB_PAGES());
@@ -83,6 +88,10 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
   if (team !== 0 && id === 'sub_goalie') { // a backup in goal once theirs signed with us (a newcomer goalie, Batch AN)
     const p = P.newcomer_g, fid = p && ((expr && p[expr]) || p.neutral);
     return (fid && Assets.icon(fid, size, teamId)) || Assets.icon(`character_portraits/away/${PORTRAIT.goalie}`, size, teamId);
+  }
+  if (team !== 0 && id.startsWith('sub_') && fillLook(teamId, id.slice(4))) { // a fill made from parts, in the team's colours
+    const url = Assets.partsPortrait(fillLook(teamId, id.slice(4)), expr || 'neutral', size, teamId);
+    if (url) return url;
   }
   if (team !== 0 && id.startsWith('sub_')) { // a signed slot's newcomer (Batch AA), in the team's colours
     const p = P[`newcomer_${ROLE[id.slice(4)]}`], fid = p && ((expr && p[expr]) || p.neutral);
@@ -244,7 +253,7 @@ function logoHtml() {
 const rowFace = (r, size) => (r.team === 'home' ? portrait(r.face, 0, null, size) : portrait(r.face, 1, r.team, size));
 
 // Hub characters: a portrait and a line of chatter at the top of their tab.
-const NPC_NAMES = { coach: 'Coach Brekka', shopkeeper: 'Gearsmith Ottar', announcer: 'Kip Vance, PA' };
+const NPC_NAMES = { coach: 'Coach Brekka', shopkeeper: 'Gearsmith Ottar', announcer: 'Kip Vance, PA', agent: 'Vigga, the agent' };
 function npc(key, text) {
   const id = Assets.atlas.npcs && Assets.atlas.npcs[key];
   const img = id && Assets.icon(id, 128);
@@ -1151,7 +1160,7 @@ export class UI {
           <img src="${portrait(id, 0, null, 152)}" alt="">
           <div style="min-width:0">
             <h3>${esc(m.name)}</h3>
-            <div class="sub">${esc(t(m.title))}${m.recruit ? ` · ${t('signed')}` : ''}${m.legend ? ` · <span class="gold-t">${t('legend')}</span>` : ''}${m.rookie ? ` · ${smallIcon('icons/rookie', 40)}<span class="pot" title="${esc(t(POTENTIAL_GRADE[m.rookie.potential]))}">${stars(m.rookie.potential)}</span>` : ''}</div>
+            <div class="sub">${esc(t(m.title))}${m.recruit ? ` · ${t('signed')}` : ''}${m.agent ? ` · ${t('free agent')}` : ''}${m.legend ? ` · <span class="gold-t">${t('legend')}</span>` : ''}${m.rookie ? ` · ${smallIcon('icons/rookie', 40)}<span class="pot" title="${esc(t(POTENTIAL_GRADE[m.rookie.potential]))}">${stars(m.rookie.potential)}</span>` : ''}</div>
             <div class="lvl">${t('LV {n}', { n: r.level })}${r.points ? ` <span style="font-size:15px">· ${t(r.points > 1 ? '{n} points to spend' : '{n} point to spend', { n: r.points })}</span>` : ''}</div>
           </div>
         </div>
@@ -1222,6 +1231,7 @@ export class UI {
     this.click('[data-dress]', (el) => { setLineup(s, el.dataset.dress); writeSave(s); audio.sfx('confirm'); this.hub('team'); }, body);
     this.click('[data-start]', (el) => { setStarter(s, el.dataset.start); writeSave(s); audio.sfx('confirm'); Assets.ensureKit(homeKitGroups(s)).then(() => this.hub('team')); }, body);
     this.click('[data-gsign]', (el) => this.goalieOffer(el.dataset.gsign), body);
+    this.click('[data-agent]', (el) => this.agentOffer(+el.dataset.agent), body);
     this.click('[data-gcamp]', (el) => this.goalieCamp(el.dataset.gcamp), body);
     this.click('[data-sign]', (el) => this.signOffer(el.dataset.sign), body);
     this.click('[data-trade]', (el) => this.tradeOffer(el.dataset.trade), body);
@@ -1344,8 +1354,102 @@ export class UI {
     }).join('');
     return `<div class="label" style="margin:16px 0 4px">${t('Scouting')}</div>
       ${this.legendHtml(s)}
+      ${this.agentsHtml(s)}
       <p class="muted" style="margin:0 0 10px;font-size:13px">${t('Beat a rival and their skaters will take your call. Signings join a level below your line-up\'s average with points to spend and the perks they already had.')} ${t('Their goalie too: a signed goalie brings their own style, and you choose who starts.')}</p>
       <div class="scouting">${rows}</div>`;
+  }
+
+  // The free-agent market: a card per player the agent has this week (face, position, style,
+  // numbers against your starter, price).
+  agentsHtml(s) {
+    if (!marketOpen(s)) return '';
+    const st = agentState(s), list = st.list || [];
+    // their faces are made from parts: load them, then show the cards again
+    if (list.some((a) => a.parts) && !Assets.groupReady('parts') && !this.partsLoading) {
+      this.partsLoading = true;
+      Assets.loadGroup('parts').then(() => { this.partsLoading = false; if (this.tab === 'team') this.hub('team'); }).catch(() => { this.partsLoading = false; });
+    }
+    const P = Assets.atlas.portraits || {};
+    const face = (a) => (a.goalie ? (P.newcomer_g && Assets.icon(P.newcomer_g.neutral, 96)) || portrait('goalie', 1, null, 96)
+      : (a.parts && Assets.partsPortrait(a.parts, 'neutral', 96)) || (P[`newcomer_${ROLE[a.kit]}`] && Assets.icon(P[`newcomer_${ROLE[a.kit]}`].neutral, 96)) || portrait(a.kit, 1, null, 96));
+    const cards = list.map((a, i) => {
+      const what = a.goalie ? `${t('Goalie')} · ${esc(t(GOALIE_STYLES[a.style].name))}` : `${t(ROLE_NAME[CHARACTERS[a.kit].role])} · ${esc(t(ARCHETYPES[a.arch].name))} · ${esc(t(ELEMENTS[a.elem].name))}`;
+      const top = a.goalie ? `${t('Reflex')} ${a.base.rfx} · ${t('Angles')} ${a.base.pos}` : Object.entries(a.base).sort((x, y) => y[1] - x[1]).slice(0, 2).map(([k, v]) => `${t(STAT_NAMES[k])} ${v}`).join(' · ');
+      return `<div class="recruit open agent">
+        <img src="${face(a)}" alt="">
+        <div style="min-width:0"><b>${esc(a.name)}${a.star ? ` <span class="gold-t" title="${esc(t('A cut above'))}">★</span>` : ''}</b><span class="muted">${what} · ${t('LV {n}', { n: a.level })}</span><span class="muted">${esc(top)}</span></div>
+        <button class="btn small ${s.coins >= a.price ? 'gold' : 'ghost'}" data-agent="${i}"><img src="${ico('equipment_items/reward/coins', 40)}" alt="" width="16" height="16"> ${a.price}</button>
+      </div>`;
+    }).join('');
+    const left = agentsLeft(s);
+    const line = list.length ? t('These are this week\'s free agents. New faces in {n} matches.', { n: left }) : t('Nobody on my list right now. New faces in {n} matches.', { n: left });
+    return `<div class="scout-team agents">
+      <div class="scout-head">${smallIcon(Assets.atlas.frames['icons/free_agents'] ? 'icons/free_agents' : 'icons/contract', 48, 'rule-ico')}<b>${t('Free agents')}</b><span class="muted"> · ${esc(line)}</span></div>
+      ${npc('agent', list.length ? t(list[0].blurb) : line)}
+      <div class="recruits">${cards}</div>
+    </div>`;
+  }
+
+  // Signing a free agent: who they are, their numbers next to your starter's, the price.
+  agentOffer(i) {
+    const s = this.app.save, a = agentState(s).list[i];
+    if (!a) return;
+    const P = Assets.atlas.portraits || {};
+    let compare, joins, face;
+    if (a.goalie) {
+      const now = starterId(s), cur = goalieStats(s, now);
+      const theirs = { rfx: a.base.rfx + Math.floor((a.level - 1) / 2), pos: a.base.pos + Math.floor(a.level / 3) };
+      const row = (label, v, was) => `<div class="stat"><span>${label}</span><span class="pips">${Array.from({ length: 12 }, (_, j) => `<i class="${j < v ? 'b' : ''}"></i>`).join('')}</span><span class="v">${v}</span><span class="${v > was ? 'good' : v < was ? 'bad' : 'muted'}" style="font-size:12px">${v > was ? '+' : ''}${v - was || '='}</span></div>`;
+      compare = row(t('Reflex'), theirs.rfx, cur.rfx) + row(t('Angles'), theirs.pos, cur.pos);
+      joins = t('At level {lv}, compared with {name} (who starts now).', { lv: a.level, name: esc(goalieInfo(now).name) });
+      face = (P.newcomer_g && Assets.icon(P.newcomer_g.neutral, 152)) || portrait('goalie', 1, null, 152);
+    } else {
+      const role = CHARACTERS[a.kit].role, starter = member(s.lineup[role]);
+      compare = STAT_KEYS.map((k) => {
+        const diff = a.base[k] - starter.base[k];
+        return `<div class="stat"><span>${t(STAT_NAMES[k])}</span><span class="pips">${Array.from({ length: 12 }, (_, j) => `<i class="${j < a.base[k] ? 'b' : ''}"></i>`).join('')}</span><span class="v">${a.base[k]}</span><span class="${diff > 0 ? 'good' : diff < 0 ? 'bad' : 'muted'}" style="font-size:12px">${diff > 0 ? '+' : ''}${diff || '='}</span></div>`;
+      }).join('');
+      joins = `${t('Base stats, compared with {name}.', { name: esc(starter.name) })} ${t(a.level === 2 ? 'Joins at level {lv} with {n} point to spend.' : 'Joins at level {lv} with {n} points to spend.', { lv: a.level, n: a.level - 1 })}`;
+      face = (a.parts && Assets.partsPortrait(a.parts, 'determined', 152)) || (P[`newcomer_${ROLE[a.kit]}`] && Assets.icon(P[`newcomer_${ROLE[a.kit]}`].determined || P[`newcomer_${ROLE[a.kit]}`].neutral, 152)) || portrait(a.kit, 1, null, 152);
+    }
+    const what = a.goalie ? `<div class="abil" style="margin:4px 0 0">${goalieStyleIcon(a.style)}<div><b>${esc(t(GOALIE_STYLES[a.style].name))}</b>${esc(t(GOALIE_STYLES[a.style].text))}</div></div>`
+      : `<div class="style-row">${styleChips(makeDef(a.kit, a.arch, a.elem))}</div><div class="muted" style="font-size:12.5px">${shoots(a.hand)}</div>`;
+    audio.sfx('click');
+    this.modal(`
+      <h2>${t('Sign {name}?', { name: esc(a.name) })}</h2>
+      <div class="card-head" style="margin:0"><img src="${face}" alt="" style="width:76px;height:76px">
+        <div><div class="sub">${t('Free agent')} · ${a.goalie ? t('Goalie') : t(ROLE_NAME[CHARACTERS[a.kit].role])}</div>${what}<p style="margin:4px 0 0">${esc(t(a.blurb))}</p></div></div>
+      <div class="stats">${compare}</div>
+      <p class="muted" style="margin:0;font-size:13px">${joins} ${t('Free agents are veterans: they don\'t grow faster than anyone else, and they know what they\'re worth.')}</p>
+      <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Not now')}</button>
+        <button class="btn gold" id="agent-go" ${s.coins >= a.price ? '' : 'disabled'}>${t('Sign for {n}', { n: a.price })}</button></div>`, (mm, close) => {
+      this.click('#agent-go', () => {
+        const id = signAgent(s, i);
+        if (!id) return;
+        this.app.ach.unlock('veteran');
+        this.app.ach.checkMeta();
+        writeSave(s);
+        audio.jingle('sign');
+        close();
+        Assets.ensureKit(homeKitGroups(s)).then(() => {
+          this.hub('team');
+          if (a.goalie) {
+            this.modal(`<h2>${t('{name} signs!', { name: esc(a.name) })}</h2>
+              <p>${t('{name} joins the {club} in goal. Who starts?', { name: esc(a.name), club: esc(CLUB.nick) })}</p>
+              <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Keep {name}', { name: esc(goalieInfo(starterId(s)).name) })}</button><button class="btn gold" id="start-now">${t('Start {name}', { name: esc(a.name) })}</button></div>`, (m2, close2) => {
+              this.click('#start-now', () => { setStarter(s, id); writeSave(s); audio.sfx('confirm'); close2(); this.hub('team'); }, m2);
+            });
+            return;
+          }
+          const role = member(id).role;
+          this.modal(`<h2>${t('{name} signs!', { name: esc(a.name) })}</h2>
+            <p>${t('{name} joins the {club} on your bench.', { name: esc(a.name), club: esc(CLUB.nick) })} ${t('Dress {name} at {role} from the Team tab, or before a match.', { name: esc(a.name), role: t(ROLE_NAME[role]).toLowerCase() })}</p>
+            <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Later')}</button><button class="btn gold" id="dress-now">${t('Dress now')}</button></div>`, (m2, close2) => {
+            this.click('#dress-now', () => { setLineup(s, id); writeSave(s); audio.sfx('confirm'); close2(); this.hub('team'); }, m2);
+          });
+        });
+      }, mm);
+    });
   }
 
   // A legend visiting Scouting: who they are, their super, their numbers, and their price.

@@ -3,6 +3,15 @@
 // kept in save.rivalFills by 'team:kit'), or one of their reserves until then. They play in
 // the newcomer art (Batch AA) in the team's colours, under their own name and style.
 import { TEAMS, CHARACTERS, STAT_KEYS, recruitKey, makeDef, slotDef } from './data.js';
+import { bodySprite } from './modular.js';
+
+// The save's fills, for the portraits (which don't see the save): set when a save loads.
+export let RIVAL_FILLS = {};
+export const setFills = (save) => { RIVAL_FILLS = (save.rivalFills ||= {}); };
+// A fill made from parts (Batch AJ/AO): their look, or null.
+export const fillLook = (teamId, kit) => { const f = RIVAL_FILLS[`${teamId}:${kit}`]; return f && f.parts && bodySprite(f.parts) ? f.parts : null; };
+// Does a rival field anyone made from parts? (their pages then load and take the team's colours)
+export const teamHasParts = (teamId) => ['frost', 'thunder', 'stone'].some((k) => fillLook(teamId, k));
 
 export const vacated = (save, teamId, kit) => {
   const k = recruitKey(teamId, kit);
@@ -35,12 +44,15 @@ export function reserveStats(kit) {
 }
 
 // Who plays the slot, or null while their own player is still there:
-// { name, def, stats, hand, fill } (stats before the team's bonus).
+// { name, def, stats, hand, fill, sprite, parts } (stats before the team's bonus; a fill made
+// from parts wears their body and head, anyone else the newcomer art).
 export function rivalSub(save, teamId, kit) {
   if (!vacated(save, teamId, kit)) return null;
   const f = fillOf(save, teamId, kit);
-  if (!f) return { name: TEAMS[teamId].subs[kit], def: slotDef(teamId, kit), stats: reserveStats(kit), hand: undefined, fill: null };
-  return { name: f.name, def: makeDef(kit, f.arch, f.elem), stats: fillStats(save, f), hand: f.hand, fill: f };
+  const newcomer = `newcomer_${{ frost: 'c', thunder: 'w', stone: 'd' }[kit]}`;
+  if (!f) return { name: TEAMS[teamId].subs[kit], def: slotDef(teamId, kit), stats: reserveStats(kit), hand: undefined, fill: null, sprite: newcomer, parts: null };
+  const body = f.parts && bodySprite(f.parts);
+  return { name: f.name, def: makeDef(kit, f.arch, f.elem), stats: fillStats(save, f), hand: f.hand, fill: f, sprite: body || newcomer, parts: body ? f.parts : null };
 }
 
 // What a rival has lost to you, for their strength in simulated games: each emptied slot

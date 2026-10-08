@@ -3,12 +3,12 @@
 import { GUIDE } from './guide.js';
 import {
   CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE, CAST_PAIRS, makeDef, perkSlot,
-  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, goalieInfo, areTwins, setRookies, setStyles, ELEMENTS, ARCHETYPES, member, pairKey, recruitKey, slotDef, GOALIE_STYLES,
+  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, setFreeGoalies, goalieInfo, areTwins, setRookies, setStyles, ELEMENTS, ARCHETYPES, member, pairKey, recruitKey, slotDef, GOALIE_STYLES,
 } from './data.js';
 import { newLeague, migrateLeague } from './league.js';
 import { lookFor } from './modular.js';
 import { seasonStats } from './awards.js';
-import { rivalSub } from './slots.js';
+import { rivalSub, setFills } from './slots.js';
 import { t } from './i18n.js';
 
 const KEY = 'glacial-strikers-save-v1';
@@ -68,7 +68,9 @@ export function loadSave() {
     for (const k of Object.keys(base.settings)) if (s.settings[k] === undefined) s.settings[k] = base.settings[k];
     // rookies drafted before the parts art was in get a face of their own once it is
     for (const [id, k] of Object.entries(s.rookies || {})) if (!k.parts) { const l = lookFor(id); if (l) k.parts = l; }
-    setRookies(s.rookies); // drafted rookies, so member() knows them
+    setRookies(s.rookies); // drafted rookies (and signed free agents), so member() knows them
+    setFreeGoalies(s.freeGoalies); // free-agent goalies, so goalieInfo() knows them
+    setFills(s); // the rivals' fills, so their portraits know them
     setStyles(s.roster); // changes made at the training camp
     // perks are kept as text: a player whose super or archetype has changed since gets the
     // same choice from their new lists
@@ -220,7 +222,7 @@ export const homeKitGroups = (save) => {
   return [...new Set([
     ...ids.filter((id) => RECRUITS[id]).map((id) => 'rival_' + TEAMS[RECRUITS[id].team].art),
     ...Object.keys(save.goalies || {}).filter((k) => GOALIE_RECRUITS[k]).map((k) => 'rival_' + GOALIE_RECRUITS[k].art), // signed goalies
-    ...(ids.some((id) => ROOKIES[id] && !member(id).parts) || legends.some((id) => !LEGEND_ART.has(LEGENDS[id].art)) ? ['newcomers'] : []),
+    ...(ids.some((id) => ROOKIES[id] && !member(id).parts) || legends.some((id) => !LEGEND_ART.has(LEGENDS[id].art)) || Object.keys(save.goalies || {}).some((k) => FREE_GOALIES[k]) ? ['newcomers'] : []), // (a free-agent goalie wears the newcomer goalie)
     ...(ids.some((id) => member(id).parts) ? ['parts'] : []), // players from parts (Batch AJ: the 'parts' page group)
     ...(legends.some((id) => LEGEND_ART.has(LEGENDS[id].art) || LEGEND_FACES.has(LEGENDS[id].art)) ? ['legends'] : []),
     ...(legends.some((id) => LEGEND_ART.has(LEGENDS[id].art)) ? ['legends_ice'] : []), // their skating sets (Batch AI part 2)
@@ -238,7 +240,7 @@ export function effectiveStats(id, r) {
 export function perkNames(r) { return r.perks.map((p) => p.split(':')[0]); }
 
 // Goalies: Halla ('halla', save.goalie) and any rival goalies signed (save.goalies).
-export const goalieIds = (save) => ['halla', ...Object.keys(save.goalies || {}).filter((k) => GOALIE_RECRUITS[k])];
+export const goalieIds = (save) => ['halla', ...Object.keys(save.goalies || {}).filter((k) => GOALIE_RECRUITS[k] || FREE_GOALIES[k])];
 export const starterId = (save) => (goalieIds(save).includes(save.goalieStarter) ? save.goalieStarter : 'halla');
 export const goalieRec = (save, id) => (id === 'halla' ? save.goalie : save.goalies && save.goalies[id]);
 
@@ -322,7 +324,7 @@ export function matchConfig(save, teamId, stage, opts = {}) {
       for (const [k, v] of Object.entries(t.bonus || {})) stats[k] = Math.max(1, stats[k] + v);
       // a slot whose skater you signed: whoever they brought in, a newcomer in their colours
       const sub = rivalSub(save, teamId, id);
-      if (sub) return { def: sub.def, who: 'sub_' + id, stats: withBonus(sub.stats, t), name: sub.name, perks: [], sprite: `newcomer_${ROLE[id]}`, hand: sub.hand };
+      if (sub) return { def: sub.def, who: 'sub_' + id, stats: withBonus(sub.stats, t), name: sub.name, perks: [], sprite: sub.sprite, parts: sub.parts, hand: sub.hand };
       return { def: slotDef(teamId, id), stats, name: t.names[id], perks: [], sprite: t.art ? `${t.art}_${ROLE[id]}` : null, hand: RECRUITS[recruitKey(teamId, id)]?.hand };
     }),
     goalie: rivalGoalie(save, teamId),

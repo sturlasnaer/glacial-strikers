@@ -27,9 +27,11 @@ import { standings } from './league.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan, recordClassic, recordAllStar } from './league.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt } from './data.js';
+import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies } from './data.js';
 import { rollLegend, legendState, STAY, joinLegend, LEGEND_LINES, twinsFirstTogether } from './legends.js';
 import { rivalSigning, rivalOffer } from './moves.js';
+import { refreshAgents } from './agents.js';
+import { teamHasParts, setFills } from './slots.js';
 import { useModular } from './modular.js';
 import { Quality } from './quality.js';
 import { offerDraft } from './draft.js';
@@ -127,6 +129,7 @@ class App {
     this.input.onKey((code) => this.onKey(code));
     // newcomer art (Batch AA) is needed once a rival slot has been signed away, or for drafted rookies
     // (a signed goalie leaves a backup in their old net: the newcomer goalie, Batch AN)
+    Assets.partsFor = teamHasParts;
     Assets.newcomerCheck = () => Object.keys(this.save.roster).some((k) => RECRUITS[k] || ROOKIES[k]) || Object.keys(this.save.goalies || {}).length > 0;
     this.setupInstall();
 
@@ -869,6 +872,7 @@ class App {
     const chemUps = applyChem(s, rewards.chem);
     s.record.played++;
     s.record.goals += summary.score[0];
+    if (refreshAgents(s)) this.agentNews = true; // new faces on the free-agent market
     recordCareer(s, summary, rewards.won);
     // now and then a legend turns up in Scouting
     const legend = rollLegend(s, Math.random, (k) => LEGEND_ART.has(LEGENDS[k].art) || this.legendsPreview);
@@ -1059,6 +1063,8 @@ class App {
   resetSave() {
     this.save = newSave();
     setRookies({});
+    setFreeGoalies({});
+    setFills(this.save);
     this.ach = new AchievementTracker(this.save, (a) => this.toastAchievement(a));
     writeSave(this.save);
     this.goTitle();
@@ -1135,6 +1141,12 @@ class App {
         w.place === 1 ? t('You won the Weekly Cup!') : w.place === 2 ? t('Second in the Weekly Cup') : t('Third in the Weekly Cup'), t('{n} points last week', { n: w.points })), 800 + i * 2600));
     });
     this.ui.guideBudget = 1; // one new coach's tip per visit
+    if (refreshAgents(this.save)) { this.agentNews = true; writeSave(this.save); }
+    if (this.agentNews && !this.testRun) {
+      this.agentNews = false;
+      const fa = Assets.atlas.frames['icons/free_agents'] ? 'icons/free_agents' : 'icons/contract';
+      setTimeout(() => this.toast(Assets.icon(fa, 72), t('Free agents'), t('New faces on the market'), t('See them in Team › Scouting')), 1200);
+    }
     if (this.awardsNight()) return;
     if (offerDraft(this.save)) writeSave(this.save); // Draft Day opens once the awards are handed out
     if (this.pendingLegend) { // a legend turns up: Kip calls it over the reveal painting

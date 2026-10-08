@@ -81,7 +81,7 @@ export function createDrill(id, save, charId, opts = {}) {
     const sub = rivalSub(save, awayTeam, k);
     const stats = { ...(sub ? sub.stats : CHARACTERS[k].base) };
     for (const [s, v] of Object.entries(t.bonus || {})) stats[s] = Math.max(1, stats[s] + v);
-    if (sub) return { def: sub.def, who: 'sub_' + k, stats, name: sub.name, perks: [], sprite: `newcomer_${ROLE[k]}`, hand: sub.hand };
+    if (sub) return { def: sub.def, who: 'sub_' + k, stats, name: sub.name, perks: [], sprite: sub.sprite, parts: sub.parts, hand: sub.hand };
     return { def: slotDef(awayTeam, k), stats, name: t.names[k], perks: [], sprite: t.art ? `${t.art}_${ROLE[k]}` : null };
   };
   const cfg = {

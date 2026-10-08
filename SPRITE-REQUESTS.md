@@ -96,8 +96,9 @@ Next in the game: a **free-agent market**, players made from parts who aren't on
 - Standing art: `hub_fullbody/agent/idle_a`, `idle_b`, `talking`, and `offer` (holding a contract out). Same foot baseline as the others.
 - A portrait with the five dialogue expressions (neutral, determined, grin, shocked, defeated), in the style of the NPC portraits: `hub_npcs/portrait/agent` and `hub_npcs/agent/<expression>`.
 - A station icon, `icons/free_agents` (a folder of player cards with a paperclip), reward-icon size.
+- An achievement icon, `achievements/veteran_presence` (a worn captain's armband on a signed contract), in the style of `achievements/*`.
 
-8 frames.
+The market is in the game now: her name is **Vigga**. 9 frames.
 
 ## Batch AS: the linesman's penalty signals
 
