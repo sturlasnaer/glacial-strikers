@@ -1,2 +1,4 @@
 .DS_Store
 node_modules/
+# built by the Pages workflow (and locally by tools/build_offline.mjs)
+dist/
