@@ -2,8 +2,9 @@
 // real matches and filled in for the simulated ones, and an awards night when the
 // season ends.
 
-import { TEAMS, RECRUITS, GOALIE, recruitKey } from './data.js';
+import { TEAMS, RECRUITS, goalieInfo } from './data.js';
 import { t } from './i18n.js';
+import { rivalSub } from './slots.js';
 
 const KITS = ['frost', 'thunder', 'stone'];
 
@@ -26,10 +27,10 @@ function goalieRow(st, team, name) {
   return (st.goalies[team] ||= { team, name, gp: 0, sa: 0, sv: 0, so: 0 });
 }
 
-// Who plays a rival slot right now: the original, or a newcomer if we signed them.
+// Who plays a rival slot right now: the original, or whoever filled it if we signed them.
 function rivalSlot(save, teamId, kit) {
-  const t = TEAMS[teamId];
-  if (save.roster[recruitKey(teamId, kit)] || (save.tradedAway && save.tradedAway[recruitKey(teamId, kit)])) return { key: `${teamId}:sub_${kit}`, name: t.subs[kit], team: teamId, face: 'sub_' + kit, kit };
+  const t = TEAMS[teamId], sub = rivalSub(save, teamId, kit);
+  if (sub) return { key: `${teamId}:sub_${kit}`, name: sub.name, team: teamId, face: 'sub_' + kit, kit };
   return { key: `${teamId}:${kit}`, name: t.names[kit], team: teamId, face: kit, kit };
 }
 
@@ -43,7 +44,9 @@ export function recordRealGame(save, L, summary, teamId) {
     r.name = k.name;
     r.gp++; r.g += k.goals; r.a += k.assists; r.hits += k.hits; r.steals += k.steals; r.blocks += k.blocks || 0; r.shots += k.shots || 0;
   }
-  const ours = goalieRow(st, 'home', GOALIE.name), theirs = goalieRow(st, teamId, TEAMS[teamId].names.goalie);
+  // our net is one line, named for whoever played in it last (face: their goalie id)
+  const who = summary.goalie || 'halla';
+  const ours = Object.assign(goalieRow(st, 'home', ''), { name: goalieInfo(who).name, face: who }), theirs = goalieRow(st, teamId, TEAMS[teamId].names.goalie);
   ours.gp++; theirs.gp++;
   ours.sa += summary.shots[1]; ours.sv += summary.saves[0];
   theirs.sa += summary.shots[0]; theirs.sv += summary.saves[1];
@@ -102,7 +105,7 @@ export function computeAwards(save, L, order) {
   const gks = Object.values(st.goalies).filter((g) => g.sa >= 60);
   if (gks.length) {
     const g = [...gks].sort((x, y) => y.sv / y.sa - x.sv / x.sa)[0];
-    out.push({ id: 'iron_wall', key: 'goalie:' + g.team, name: g.name, team: g.team, face: 'goalie', line: `${t('{pct} save %', { pct: (g.sv / g.sa).toFixed(3).replace(/^0/, '') })} · ${t(g.sv === 1 ? '{n} save' : '{n} saves', { n: g.sv })}${g.so ? ` · ${t(g.so > 1 ? '{n} shutouts' : '{n} shutout', { n: g.so })}` : ''}` });
+    out.push({ id: 'iron_wall', key: 'goalie:' + g.team, name: g.name, team: g.team, face: g.team === 'home' && g.face && g.face !== 'halla' ? g.face : 'goalie', line: `${t('{pct} save %', { pct: (g.sv / g.sa).toFixed(3).replace(/^0/, '') })} · ${t(g.sv === 1 ? '{n} save' : '{n} saves', { n: g.sv })}${g.so ? ` · ${t(g.so > 1 ? '{n} shutouts' : '{n} shutout', { n: g.so })}` : ''}` });
   }
   const enf = best(rows, (r) => r.hits);
   add('enforcer', enf, `${t(enf.hits === 1 ? '{n} hit' : '{n} hits', { n: enf.hits })} · ${t(enf.steals === 1 ? '{n} steal' : '{n} steals', { n: enf.steals })}`);

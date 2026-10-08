@@ -4,9 +4,10 @@
 // physics but hands the rules to the controller: init(m), update(m, dt), onGoal(m, info),
 // hud(m) and optional draw hooks. No browser APIs here so drills run headless too.
 
-import { CHARACTERS, GOALIE, TEAMS, ROLE, member, recruitKey, slotDef } from './data.js';
-import { effectiveStats, perkNames, goalieStats, chemLevel, lineupIds, isSigned } from './progress.js';
+import { CHARACTERS, GOALIE, TEAMS, ROLE, member, slotDef } from './data.js';
+import { effectiveStats, perkNames, goalieStats, chemLevel, lineupIds, homeGoalie, rivalGoalie } from './progress.js';
 import { toScreen, GOAL_X, MOUTH } from './rink.js';
+import { rivalSub } from './slots.js';
 import { norm, clamp, makeRng } from './util.js';
 import { Skater } from './entities.js';
 import { t } from './i18n.js';
@@ -77,15 +78,16 @@ export function createDrill(id, save, charId, opts = {}) {
   }
   const t = TEAMS[awayTeam];
   const awaySkater = (k) => {
-    const stats = { ...CHARACTERS[k].base };
+    const sub = rivalSub(save, awayTeam, k);
+    const stats = { ...(sub && sub.stats ? sub.stats : CHARACTERS[k].base) };
     for (const [s, v] of Object.entries(t.bonus || {})) stats[s] = Math.max(1, stats[s] + v);
-    if (isSigned(save, recruitKey(awayTeam, k))) return { def: slotDef(awayTeam, k), who: 'sub_' + k, stats, name: t.subs[k], perks: [], sprite: `newcomer_${ROLE[k]}` };
+    if (sub) return { def: sub.def, who: 'sub_' + k, stats, name: sub.name, perks: [], sprite: `newcomer_${ROLE[k]}`, hand: sub.hand };
     return { def: slotDef(awayTeam, k), stats, name: t.names[k], perks: [], sprite: t.art ? `${t.art}_${ROLE[k]}` : null };
   };
   const cfg = {
     teams: [
-      { skaters: home.map((k, i) => (i === 0 && opts.skater ? opts.skater : skaterCfg(save, k))), goalie: { stats: goalieStats(save), name: GOALIE.name }, chem: homeChem(save) }, // (opts.skater: someone else skates it, like a Skills Night bot)
-      { skaters: away.map(awaySkater), goalie: { stats: id === 'shootout' ? { ...t.goalie } : opts.goalie || { rfx: 4, pos: 5 }, name: id === 'shootout' ? t.names.goalie : 'Coach Brekka', art: id === 'shootout' ? t.art : null }, chem: {} },
+      { skaters: home.map((k, i) => (i === 0 && opts.skater ? opts.skater : skaterCfg(save, k))), goalie: homeGoalie(save), chem: homeChem(save) }, // (opts.skater: someone else skates it, like a Skills Night bot)
+      { skaters: away.map(awaySkater), goalie: id === 'shootout' ? rivalGoalie(save, awayTeam) : { stats: opts.goalie || { rfx: 4, pos: 5 }, name: 'Coach Brekka', art: null }, chem: {} },
     ],
     humanTeam: 0,
     powers: [],

@@ -5,11 +5,12 @@
 import { CHARACTERS, ROOKIES, setRookies, KIT_OF_ROLE, TEAMS, STAT_KEYS, makeDef, ARCHETYPES, ELEMENTS } from './data.js';
 import { joinLevel, PERK_LEVELS, newMember } from './progress.js';
 import { randomLook } from './modular.js';
+import { rivalDraft } from './moves.js';
 
 const NAMES = {
-  C: ['Flick', 'Pivot', 'Quill', 'Marlo', 'Juno', 'Rook', 'Tinsel', 'Sly', 'Pippa', 'Kestrel'],
+  C: ['Flick', 'Pivot', 'Quill', 'Marlo', 'Juno', 'Quinn', 'Tinsel', 'Sly', 'Pippa', 'Kestrel'],
   W: ['Dash', 'Zip', 'Wisp', 'Skipper', 'Breeze', 'Spark', 'Flurry', 'Minnow', 'Swift', 'Jinx'],
-  D: ['Tank', 'Boulder', 'Moose', 'Anvil', 'Brick', 'Tor', 'Haddock', 'Bjorn', 'Bastion', 'Hulda'],
+  D: ['Tank', 'Boulder', 'Moose', 'Anvil', 'Brick', 'Tor', 'Haddock', 'Bjorn', 'Granite', 'Hulda'],
 };
 export const SCOUTING = {
   C: ['Sees passes nobody else sees. Needs a season to fill out.', 'Wins faceoffs in their sleep. The skating is a work in progress.', 'A playmaker from the outdoor rinks up north.'],
@@ -93,8 +94,12 @@ export function draftPick(save, i) {
   PERK_LEVELS.forEach((lv, k) => { if (m.level >= lv) m.perks.push(opts[k][p.perks[k]]); });
   save.roster[id] = m;
   d.picked = i;
+  rivalDraft(save, d); // the other two go to rivals, first to fill the holes you left
   return id;
 }
 
-// Who took the other two (for the line under the pick).
-export const otherPicks = (d) => d.prospects.map((p, i) => i).filter((i) => i !== d.picked).map((i, n) => ({ name: d.prospects[i].name, team: TEAMS[d.rivals[n]] }));
+// Who took the other two (for the line under the pick), and whether they fill a hole you left.
+export const otherPicks = (d, save = null) => d.prospects.map((p, i) => i).filter((i) => i !== d.picked).map((i, n) => {
+  const f = save && save.rivalFills && save.rivalFills[`${d.rivals[n]}:${d.prospects[i].kit}`];
+  return { name: d.prospects[i].name, team: TEAMS[d.rivals[n]], fills: !!(f && f.how === 'draft' && f.name === d.prospects[i].name && f.season === d.season) };
+});

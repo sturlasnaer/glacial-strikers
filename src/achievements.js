@@ -1,6 +1,6 @@
 // Achievements: tracked from match events and save progress, shown in the Trophies tab.
 
-import { TEAMS, GEAR, CHEM_LEVELS, RECRUITS, CAST_PAIRS } from './data.js';
+import { TEAMS, GEAR, CHEM_LEVELS, RECRUITS, CAST_PAIRS, LEGENDS, ELEMENTS } from './data.js';
 
 const TROPHY = 'equipment_items/reward/trophy', MEDAL = 'equipment_items/reward/medal', STAR = 'hud_elements/misc/level_star';
 
@@ -42,7 +42,19 @@ export const ACHIEVEMENTS = [
   { id: 'daily', name: 'Daily Grind', text: 'Beat a daily challenge.', icon: 'achievements/daily_grind', coins: 40 },
   { id: 'daily-streak', name: 'On a Roll', text: 'Beat the daily challenge seven days in a row.', icon: 'achievements/on_a_roll', coins: 200 },
   { id: 'versus', name: 'Couch Champion', text: 'Win a local versus match.', icon: 'hud_elements/misc/home_crest', coins: 30 },
+  // the newer systems (art: their own icon from Batch AN; icon: a stand-in until then)
+  { id: 'first-pick', name: 'First Pick', text: 'Draft a rookie on Draft Day.', icon: 'achievements/free_agent', art: 'achievements/first_pick', coins: 60 },
+  { id: 'new-tricks', name: 'New Tricks', text: 'Change a player\'s style or super at training camp.', icon: 'hud_elements/misc/level_star', art: 'achievements/new_tricks', coins: 50 },
+  { id: 'dealmaker', name: 'Dealmaker', text: 'Trade one of your players to a rival.', icon: 'achievements/talent_scout', art: 'achievements/dealmaker', coins: 60 },
+  { id: 'second-keeper', name: 'Pads for Hire', text: 'Sign a rival\'s goalie.', icon: 'icons/award_iron_wall', art: 'achievements/pads_for_hire', coins: 60 },
+  { id: 'legend', name: 'Legendary', text: 'Sign a legend who turned up in Scouting.', icon: 'achievements/most_valuable', art: 'achievements/legendary', coins: 120 },
+  { id: 'twins', name: 'Side by Side', text: 'Dress Fáfnir and Fenrir for the same match.', icon: 'achievements/in_sync', art: 'achievements/side_by_side', coins: 100 },
+  { id: 'ragnarok', name: 'Ragnarök', text: 'Score with Ragnarök, the twins\' combo.', icon: 'hud_elements/ability/fire', art: 'achievements/ragnarok', coins: 150 },
+  { id: 'elements', name: 'Six Elements', text: 'Score with skaters of all six elements.', icon: 'power_pucks/gravity/pickup_orb', art: 'achievements/six_elements', coins: 120, set: 'elemGoals', goal: 6 },
+  { id: 'weekly-cup', name: 'Cup of the Week', text: 'Win a Weekly Cup on a friends board.', icon: 'badges/rank_1', art: 'achievements/cup_of_the_week', coins: 100 },
 ];
+// Their own icons once they're in the pack.
+export function useAchievementArt(frames) { for (const a of ACHIEVEMENTS) if (a.art && frames[a.art]) a.icon = a.art; }
 const BY_ID = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a]));
 
 export class AchievementTracker {
@@ -83,12 +95,16 @@ export class AchievementTracker {
   // Watch a real match (not drills or versus) for in-game achievements.
   attachMatch(m) {
     this.minDiff = 0;
+    const ours = m.teamSkaters(0).map((k) => k.who);
+    if (Object.keys(LEGENDS).every((k) => ours.includes(k))) this.unlock('twins');
     m.on('goal', (g) => {
       this.minDiff = Math.min(this.minDiff, m.score[0] - m.score[1]);
       if (g.team !== 0 || !g.scorer) return;
       this.unlock('first-goal');
       if (g.kind === 'onetimer') this.bump('oneTimerGoals');
       if (g.special && CAST_PAIRS.includes(g.special.combo)) this.addToSet('comboGoals', g.special.combo); // (the three it names)
+      if (g.special && g.special.combo === 'ragnarok') this.unlock('ragnarok');
+      if (g.scorer.def && ELEMENTS[g.scorer.def.elem]) this.addToSet('elemGoals', g.scorer.def.elem);
       if (g.kind === 'zero' || g.kind === 'thunderclap') this.addToSet('ults', g.kind);
       if (g.power) this.addToSet('powerGoals', g.power);
       if (g.powerPlay) this.unlock('power-play');
@@ -130,5 +146,11 @@ export class AchievementTracker {
     const signed = Object.keys(RECRUITS).filter((k) => s.roster[k]);
     if (signed.length) this.unlock('signing');
     if (new Set(signed.map((k) => RECRUITS[k].team)).size >= 5) this.unlock('scout');
+    if (Object.keys(s.rookies || {}).length) this.unlock('first-pick');
+    if (Object.values(s.roster).some((r) => r.camp)) this.unlock('new-tricks');
+    if ((s.trades || []).length) this.unlock('dealmaker');
+    if (Object.keys(s.goalies || {}).length) this.unlock('second-keeper');
+    if (Object.keys(LEGENDS).some((k) => s.roster[k])) this.unlock('legend');
+    if ((s.weeklyCups || []).some((w) => w.place === 1)) this.unlock('weekly-cup');
   }
 }

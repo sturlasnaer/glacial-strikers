@@ -13,10 +13,11 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 4. **AK**: the other hand: our cast and the newcomers redrawn facing the other way, so every player keeps one stick hand when they turn.
 5. **AL**: art for the new supers (Ember, Gale and Shadow) and the seven archetypes: icons, ultimate effects and combo icons.
 6. **AM**: the training camp (element stones, Brekka's style camp) and an icon for trades.
-7. **AE**: the Friends Weekly Cup (a small cup, a podium, rosettes) and icons for the new career stats page.
-8. **AF**: the last 22 achievements that still borrow other icons.
-9. **AG**: a linesman who drops the puck at faceoffs and makes the calls.
-10. **AH**: a second rookie class, three more newcomers, so drafts don't repeat faces.
+7. **AN**: the goalie market and a living league: icons for the six goaltending styles, a backup goalie for the rivals, and icons for nine new achievements.
+8. **AE**: the Friends Weekly Cup (a small cup, a podium, rosettes) and icons for the new career stats page.
+9. **AF**: the last 22 achievements that still borrow other icons.
+10. **AG**: a linesman who drops the puck at faceoffs and makes the calls.
+11. **AH**: a second rookie class, three more newcomers, so drafts don't repeat faces.
 
 ## Format notes
 
@@ -166,6 +167,44 @@ Players can now change their super or their archetype once a season, for coins (
 - **Two locker-room poses**, matching the Batch H standing art and its scale: `hub_fullbody/shopkeeper/offer` (Ottar holding up a glowing stone in one hand) and `hub_fullbody/coach/whistle` (Brekka blowing the whistle, clipboard under one arm). One frame each, same foot position as their idle frames. 2 frames.
 
 11 frames.
+
+## Batch AN: the goalie market and a living league
+
+You can now sign a rival's goalie (each one has a **goaltending style**) and choose who starts in goal. The rivals fill the gaps your signings leave with Draft Day picks and free agents, and they call with trade offers after matches. Nine new achievements go with all this. Today they borrow other icons.
+
+- **Goaltending styles**, in the style and size of the archetype icons (about 200 px source), sheet `icons_an.png`, frame names `icons/gstyle_<style>`. Each shows a goalie silhouette or gear doing the thing:
+  - `gstyle_hybrid`: a goalie mask, half teal and half cream.
+  - `gstyle_scrambler`: a pad sliding sideways with speed lines.
+  - `gstyle_butterfly`: two pads flared flat on the ice, like wings.
+  - `gstyle_wall`: a big blocker in front of a brick-patterned net.
+  - `gstyle_reader`: a mask with one eye glinting, and a dotted puck path.
+  - `gstyle_puckhandler`: a goalie stick sweeping a puck behind the net.
+
+  6 frames.
+- **A contract**, same sheet: `icons/contract` (a rolled contract with a quill and a wax seal, no lettering). It goes next to rival signings in the league news. 1 frame.
+- **A backup goalie** for the rivals. When you sign a team's goalie, they play a backup, who wears the plain v1 away goalie today. Please draw one **newcomer goalie** in coral and violet like every rival goalie: younger and smaller than the starters, with a plain mask (no team motif) and a mismatched blocker. Keep coral and violet off skin and hair.
+  - Give them **exactly the list the rival goalies got**: the v5 side, front, back, skating and puck-handling sets, and the Batch L west profiles.
+  - Also a portrait with the five dialogue expressions (neutral, determined, grin, shocked, defeated).
+  - Name the sheets `newcomer_g_*`. In the add-on atlas, put the sets under the key `newcomer` in `goalies_side`, `goalies_front` and the rest, and the portrait under `portraits.newcomer_g`.
+
+  About 60 frames, like one rival goalie.
+- **Achievement icons**, in the style and size of `achievements/*` (about 200 px source), frame names `achievements/<name>`:
+
+| Frame | Achievement | Idea |
+| --- | --- | --- |
+| `first_pick` | First Pick (draft a rookie) | a jersey on a hanger under a spotlight, with a gold "1st" ribbon shape (no lettering) |
+| `new_tricks` | New Tricks (change a style or super at camp) | a glowing element stone and a whistle crossed |
+| `dealmaker` | Dealmaker (trade a player) | two gloves shaking hands over a puck |
+| `pads_for_hire` | Pads for Hire (sign a rival's goalie) | a pair of goalie pads with a price tag |
+| `legendary` | Legendary (sign a legend) | a gold star burst behind a horned helmet |
+| `side_by_side` | Side by Side (dress the twins together) | a dragon's head and a wolf's head back to back, one red-gold and one silver-blue |
+| `ragnarok` | Ragnarök (score with the twins' combo) | a puck on fire splitting a dark sky |
+| `six_elements` | Six Elements (score with all six) | six small orbs in a ring: ice blue, yellow, tan, orange, mint and violet |
+| `cup_of_the_week` | Cup of the Week (win a Weekly Cup) | the small Weekly Cup with a calendar page behind it |
+
+  9 frames.
+
+About 76 frames. The goalie is the big part: if time is short, send the icons first.
 
 ## Batch AE: Friends Weekly Cup and career stats icons
 

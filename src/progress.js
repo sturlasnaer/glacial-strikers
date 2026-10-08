@@ -3,11 +3,12 @@
 import { GUIDE } from './guide.js';
 import {
   CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE, CAST_PAIRS, makeDef, perkSlot,
-  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, areTwins, setRookies, setStyles, ELEMENTS, ARCHETYPES, member, pairKey, recruitKey, slotDef,
+  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, goalieInfo, areTwins, setRookies, setStyles, ELEMENTS, ARCHETYPES, member, pairKey, recruitKey, slotDef,
 } from './data.js';
 import { newLeague, migrateLeague } from './league.js';
 import { lookFor } from './modular.js';
 import { seasonStats } from './awards.js';
+import { rivalSub } from './slots.js';
 import { t } from './i18n.js';
 
 const KEY = 'glacial-strikers-save-v1';
@@ -47,6 +48,8 @@ export function newSave() {
     },
     record: { played: 0, wins: 0, goals: 0 },
     rookies: {}, // drafted rookies by roster id (rk1, rk2, …), see draft.js
+    goalies: {}, // signed rival goalies by key ('rams_g'): { level, exp, gear }; Halla is save.goalie
+    goalieStarter: 'halla', // who starts in goal
     draft: null, // this season's Draft Day once it's over
   };
 }
@@ -130,7 +133,7 @@ export function newMember() {
 export const lineupIds = (save) => [save.lineup.C, save.lineup.W, save.lineup.D];
 export const rosterIds = (save) => Object.keys(save.roster).filter((id) => member(id));
 // A rival's player gone from their club: signed by us, or traded on to another club's reserves.
-export const isSigned = (save, key) => !!save.roster[key] || !!(save.tradedAway && save.tradedAway[key]);
+export const isSigned = (save, key) => !!save.roster[key] || !!(save.goalies && save.goalies[key]) || !!(save.tradedAway && save.tradedAway[key]);
 
 // A rival's skaters can be signed once you've beaten that team.
 export function recruitStatus(save, key) {
@@ -216,6 +219,7 @@ export const homeKitGroups = (save) => {
   const ids = rosterIds(save), legends = ids.filter((id) => LEGENDS[id]);
   return [...new Set([
     ...ids.filter((id) => RECRUITS[id]).map((id) => 'rival_' + TEAMS[RECRUITS[id].team].art),
+    ...Object.keys(save.goalies || {}).filter((k) => GOALIE_RECRUITS[k]).map((k) => 'rival_' + GOALIE_RECRUITS[k].art), // signed goalies
     ...(ids.some((id) => ROOKIES[id] && !member(id).parts) || legends.some((id) => !LEGEND_ART.has(LEGENDS[id].art)) ? ['newcomers'] : []),
     ...(ids.some((id) => member(id).parts) ? ['parts'] : []), // players from parts (Batch AJ: the 'parts' page group)
     ...(legends.some((id) => LEGEND_ART.has(LEGENDS[id].art) || LEGEND_FACES.has(LEGENDS[id].art)) ? ['legends'] : []),
@@ -232,14 +236,52 @@ export function effectiveStats(id, r) {
 
 export function perkNames(r) { return r.perks.map((p) => p.split(':')[0]); }
 
-export function goalieStats(save) {
-  const g = save.goalie;
+// Goalies: Halla ('halla', save.goalie) and any rival goalies signed (save.goalies).
+export const goalieIds = (save) => ['halla', ...Object.keys(save.goalies || {}).filter((k) => GOALIE_RECRUITS[k])];
+export const starterId = (save) => (goalieIds(save).includes(save.goalieStarter) ? save.goalieStarter : 'halla');
+export const goalieRec = (save, id) => (id === 'halla' ? save.goalie : save.goalies && save.goalies[id]);
+
+export function goalieStats(save, id = starterId(save)) {
+  const g = goalieRec(save, id), base = goalieInfo(id).base;
   const gear = GEAR_BY_ID[g.gear];
-  const rfx = GOALIE.base.rfx + Math.floor((g.level - 1) / 2) + (gear?.mods.rfx || 0);
-  return { rfx, pos: GOALIE.base.pos + Math.floor(g.level / 3) };
+  const rfx = base.rfx + Math.floor((g.level - 1) / 2) + (gear?.mods.rfx || 0);
+  return { rfx, pos: base.pos + Math.floor(g.level / 3) };
+}
+
+// Our goalie in a match config: who starts, in their own art (our colours) and style.
+export function homeGoalie(save) {
+  const id = starterId(save), info = goalieInfo(id);
+  return { stats: goalieStats(save, id), name: info.name, art: info.art, look: info.art ? 'homekit' : null, style: info.style, who: id };
+}
+// A rival's goalie: their own, or a backup once you've signed theirs.
+export function rivalGoalie(save, teamId) {
+  const t = TEAMS[teamId];
+  if (isSigned(save, teamId + '_g')) return { stats: { rfx: Math.max(3, t.goalie.rfx - 1), pos: Math.max(3, t.goalie.pos - 1) }, name: t.subs.goalie || t.names.goalie, art: 'newcomer', style: 'hybrid', who: 'sub_goalie' }; // (the plain away goalie until the newcomer goalie, Batch AN)
+  return { stats: { ...t.goalie }, name: t.names.goalie, art: t.art || null, style: t.gstyle || 'hybrid' };
+}
+
+export function goalieStatus(save, key) {
+  if (save.goalies && save.goalies[key]) return 'signed';
+  const rec = save.rivals && save.rivals[GOALIE_RECRUITS[key].team];
+  return rec && rec.wins > 0 ? 'open' : 'locked';
+}
+// A rival goalie signs: a level below Halla's, with her gear's starter set.
+export function signGoalie(save, key) {
+  const g = GOALIE_RECRUITS[key];
+  if (!g || goalieStatus(save, key) !== 'open' || save.coins < g.price) return null;
+  save.coins -= g.price;
+  (save.goalies ||= {})[key] = { level: Math.max(1, save.goalie.level - 1), exp: 0, gear: 'g_start' };
+  return save.goalies[key];
+}
+export function setStarter(save, id) {
+  if (!goalieIds(save).includes(id)) return false;
+  save.goalieStarter = id;
+  return true;
 }
 
 const DIFF_OFFSET = { easy: -0.15, normal: 0, hard: 0.12 };
+// a rival's stat bonus on top of a skater's numbers
+const withBonus = (base, t) => { const st = { ...base }; for (const [k, v] of Object.entries(t.bonus || {})) st[k] = Math.max(1, st[k] + v); return st; };
 
 // Build the Match config for a game against `teamId`.
 export function matchConfig(save, teamId, stage, opts = {}) {
@@ -254,7 +296,7 @@ export function matchConfig(save, teamId, stage, opts = {}) {
         sprite: m.sprite, look: m.look, parts: m.parts, gear: { ...save.roster[who].gear }, twin: m.legend ? m.legend.twin : null, hand: m.hand,
       };
     }),
-    goalie: { stats: goalieStats(save), name: GOALIE.name },
+    goalie: homeGoalie(save),
     chem: lineChem(save, line),
   };
   const seasonBoost = (save.season - 1) * 0.08;
@@ -262,11 +304,12 @@ export function matchConfig(save, teamId, stage, opts = {}) {
     skaters: ids.map((id) => {
       const stats = { ...CHARACTERS[id].base };
       for (const [k, v] of Object.entries(t.bonus || {})) stats[k] = Math.max(1, stats[k] + v);
-      // a slot whose skater you signed is filled by a newcomer in their colours
-      if (isSigned(save, recruitKey(teamId, id))) return { def: slotDef(teamId, id), who: 'sub_' + id, stats, name: t.subs[id], perks: [], sprite: `newcomer_${ROLE[id]}` };
+      // a slot whose skater you signed: whoever they brought in, a newcomer in their colours
+      const sub = rivalSub(save, teamId, id);
+      if (sub) return { def: sub.def, who: 'sub_' + id, stats: sub.stats ? withBonus(sub.stats, t) : stats, name: sub.name, perks: [], sprite: `newcomer_${ROLE[id]}`, hand: sub.hand };
       return { def: slotDef(teamId, id), stats, name: t.names[id], perks: [], sprite: t.art ? `${t.art}_${ROLE[id]}` : null, hand: RECRUITS[recruitKey(teamId, id)]?.hand };
     }),
-    goalie: { stats: { ...t.goalie }, name: t.names.goalie, art: t.art || null },
+    goalie: rivalGoalie(save, teamId),
     chem: Object.fromEntries(CAST_PAIRS.map((k) => [k, Math.min(3, (t.chem || 0) + (save.season > 1 ? 1 : 0))])),
   };
   const diff = Math.min(1, Math.max(0, t.diff + (DIFF_OFFSET[save.settings.difficulty] || 0) + seasonBoost));
@@ -339,7 +382,7 @@ export function allStarConfig(save, vote, opts = {}) {
     plans: ['balanced', 'balanced'],
     buffs: {},
     teams: [
-      { skaters: vote.ours.map(ours), goalie: { stats: goalieStats(save), name: GOALIE.name }, chem: {} },
+      { skaters: vote.ours.map(ours), goalie: homeGoalie(save), chem: {} },
       { skaters: vote.theirs.map((w) => rival(w)), goalie: { stats: { rfx: g.goalie.rfx + 1, pos: g.goalie.pos + 1 }, name: g.names.goalie, art: g.art }, chem: {} },
     ],
     humanTeam: 0,
@@ -454,8 +497,8 @@ export function drillRewards(save, id, charId, score, medal, tables, opts = {}) 
   return { newBest, prevBest, exp, coins, bonus, rewarded, ups, medal, prevMedal };
 }
 
-export function applyGoalieExp(save, amount) {
-  const g = save.goalie;
+export function applyGoalieExp(save, amount, id = starterId(save)) {
+  const g = goalieRec(save, id) || save.goalie;
   g.exp += amount;
   let up = 0;
   while (g.level < MAX_LEVEL && g.exp >= expToNext(g.level)) { g.exp -= expToNext(g.level); g.level++; up++; }

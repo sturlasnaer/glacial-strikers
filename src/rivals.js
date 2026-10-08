@@ -2,6 +2,7 @@
 
 import { TEAMS, RECRUITS, member, recruitKey } from './data.js';
 import { t } from './i18n.js';
+import { rivalSub } from './slots.js';
 
 const pick = (arr, seed) => arr[Math.abs(seed) % arr.length];
 
@@ -36,7 +37,7 @@ export function rivalLines(save, teamId) {
   const L = r.last;
   const seed = r.played * 7 + r.gf * 3 + r.ga;
   const ours = (id) => (member(id) ? member(id).name : t('Somebody'));
-  const theirs = (id) => (id.startsWith('sub_') ? team.subs[id.slice(4)] : team.names[id]) || t('Somebody');
+  const theirs = (id) => (id.startsWith('sub_') ? (rivalSub(save, teamId, id.slice(4)) || { name: team.subs[id.slice(4)] }).name : team.names[id]) || t('Somebody');
   const lines = [];
   if (L.won) {
     const margin = L.gf - L.ga;

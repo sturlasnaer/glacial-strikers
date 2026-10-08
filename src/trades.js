@@ -28,9 +28,10 @@ export function tradeQuote(save, give, get) {
   return { value, likes, coins: Math.max(0, Math.ceil((RECRUITS[get].price - value) / 10) * 10) };
 }
 
-export function trade(save, give, get) {
+// (coins: a rival's own offer, which can pay you; otherwise the quote)
+export function trade(save, give, get, coins = null) {
   if (!RECRUITS[get] || recruitStatus(save, get) !== 'open' || !tradeable(save).includes(give)) return null;
-  const q = tradeQuote(save, give, get);
+  const q = coins === null ? tradeQuote(save, give, get) : { ...tradeQuote(save, give, get), coins };
   if (save.coins < q.coins) return null;
   save.coins -= q.coins;
   const team = RECRUITS[get].team, role = member(give).role;

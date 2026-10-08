@@ -4,7 +4,7 @@ import { Assets } from './assets.js';
 import {
   CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
-  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
+  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, GOALIE_STYLES, goalieInfo, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
 import { standings, classicOpponent, CLASSIC_AFTER, ALLSTAR_AFTER } from './league.js';
 import { BUFF_TEXT } from './lockerroom.js';
@@ -14,14 +14,16 @@ import { dailyFor, dailyGoal, dayKey, currentStreak, doneToday, dailyReward, dai
 import {
   expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave,
   chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups, capBonus,
-  CAMP, campOpen, campChoices, campChange,
+  CAMP, campOpen, campChoices, campChange, goalieIds, starterId, goalieRec, goalieStatus, signGoalie, setStarter,
 } from './progress.js';
 import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave, resetsIn, groupsOf, createGroup, joinGroup, leaveGroup, inviteLink, MAX_GROUPS, fetchCup, fetchGhost, CHALLENGE_BOARDS, createChallenge, fetchChallenge, challengeLink } from './online.js';
 import { nextGuide, doneGuide, guideOff } from './guide.js';
 import { draftOpen, draftPick, otherPicks, POTENTIAL_GRADE, DRAFT_LINES } from './draft.js';
-import { careerOf, careerRows } from './career.js';
+import { careerOf, careerRows, careerGoalies } from './career.js';
 import { legendState, legendLeft, signLegend } from './legends.js';
 import { tradeable, tradeQuote, trade, TEAM_LIKES } from './trades.js';
+import { rivalSub } from './slots.js';
+import { acceptOffer } from './moves.js';
 import { audio } from './audio.js';
 import { t } from './i18n.js';
 const VOLUMES = () => [[0, t('Off')], [0.35, t('Low')], [0.7, t('Mid')], [1, t('Full')]];
@@ -54,6 +56,11 @@ const hexToHsvUI = (hex) => hexToHsv(hex);
 
 export const portrait = (id, team, teamId, size = 160, expr = null) => {
   const P = Assets.atlas.portraits || {};
+  if (id === 'halla') id = 'goalie';
+  if (team === 0 && GOALIE_RECRUITS[id]) { // a signed rival goalie, in our colours
+    const p = P[`${GOALIE_RECRUITS[id].art}_g`], fid = p && ((expr && p[expr]) || p.neutral_roster || p.neutral);
+    return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT.goalie}`, size, CLUB_PAGES());
+  }
   if (team === 0 && RECRUITS[id]) {
     // a signing: their own portrait, in our colours
     const r = RECRUITS[id];
@@ -72,6 +79,10 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
   if (team === 0 && ROOKIES[id]) { // a drafted rookie: a newcomer (Batch AA) in our colours
     const p = P[`newcomer_${ROLE[ROOKIES[id].kit]}`], fid = p && ((expr && p[expr]) || p.neutral);
     return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT[ROOKIES[id].kit]}`, size);
+  }
+  if (team !== 0 && id === 'sub_goalie') { // a backup in goal once theirs signed with us (a newcomer goalie, Batch AN)
+    const p = P.newcomer_g, fid = p && ((expr && p[expr]) || p.neutral);
+    return (fid && Assets.icon(fid, size, teamId)) || Assets.icon(`character_portraits/away/${PORTRAIT.goalie}`, size, teamId);
   }
   if (team !== 0 && id.startsWith('sub_')) { // a signed slot's newcomer (Batch AA), in the team's colours
     const p = P[`newcomer_${ROLE[id.slice(4)]}`], fid = p && ((expr && p[expr]) || p.neutral);
@@ -190,6 +201,8 @@ const styleChips = (def) => {
 const stars = (n) => `<span class="stars" role="img" aria-label="${t('{n} of 5 stars', { n })}">${'★'.repeat(n)}<i>${'★'.repeat(5 - n)}</i></span>`;
 const smallIcon = (id, size = 40, cls = 'rule-ico') => { const src = id && Assets.icon(id, size); return src ? `<img class="${cls}" src="${src}" alt="">` : ''; };
 const btnIcon = (id) => smallIcon(id, 48, 'btn-ico'); // in front of a button's words
+// A goaltending style's icon (Batch AN), the Iron Wall until it's in.
+const goalieStyleIcon = (id, size = 68) => `<img src="${ico(Assets.atlas.frames['icons/gstyle_' + id] ? 'icons/gstyle_' + id : 'icons/award_iron_wall', size)}" alt="">`;
 function ruleIcon(twist, size = 40) {
   const src = ruleIconSrc(twist, size);
   return src ? `<img class="rule-ico" src="${src}" alt="">` : '';
@@ -200,7 +213,7 @@ function playAsHtml(s) {
   const goalie = s.settings.playAs === 'goalie';
   return `<div class="play-as"><span class="label" style="font-size:14px">${t('Play as')}</span>
     <button class="chip" data-playas="skaters" aria-pressed="${!goalie}">${t('Skaters')}</button>
-    <button class="chip" data-playas="goalie" aria-pressed="${goalie}" title="${esc(t('You play Halla in goal; the AI skates your line.'))}">${t('Goalie')}</button></div>`;
+    <button class="chip" data-playas="goalie" aria-pressed="${goalie}" title="${esc(t('You play your starting goalie; the AI skates your line.'))}">${t('Goalie')}</button></div>`;
 }
 
 // The painted logo for the title screen, or the lettering until its art has loaded.
@@ -447,10 +460,14 @@ export class UI {
         <span class="spot-label" style="left:${((ax - x) / w) * 100}%;top:${((ay - y) / h) * 100}%">${img ? `<img src="${img}" alt="">` : ''}<b>${esc(t(st.label))}</b>${b ? `<small class="${st.tab === 'trophies' ? '' : 'hot'}">${esc(b)}</small>` : ''}</span></button>`;
     }).join('');
     const line = lineupIds(s);
+    const keeper = goalieInfo(starterId(s));
     const crew = [...line, 'goalie'].map((id, i) => {
       const [x, y] = CREW_SPOTS[i];
       let src;
-      if (id === 'goalie') src = Assets.icon((Assets.atlas.goalies_front || {}).home?.idle_a || Assets.atlas.goalies_side.home.ready, 160, CLUB_PAGES());
+      if (id === 'goalie') {
+        const F = Assets.atlas.goalies_front || {}, own = keeper.art && F[keeper.art] && F[keeper.art].idle_a;
+        src = (own && Assets.icon(own, 160, 'homekit')) || Assets.icon(F.home?.idle_a || Assets.atlas.goalies_side.home.ready, 160, CLUB_PAGES());
+      }
       else {
         const m = member(id);
         const set = Assets.atlas.skaters[m.sprite || m.def.sprite];
@@ -459,7 +476,7 @@ export class UI {
         src = own ? Assets.icon(own, 160, 'homekit') : set && Assets.icon(set.home.south.frames.idle, 160, m.look || CLUB_PAGES());
         if (!src) src = Assets.icon(Assets.atlas.skaters[m.def.sprite].home.south.frames.idle, 160, CLUB_PAGES());
       }
-      const name = id === 'goalie' ? GOALIE.name : member(id).name;
+      const name = id === 'goalie' ? keeper.name : member(id).name;
       return `<button class="crew" data-crew="${id}" style="left:${x}%;top:${y}%;animation-delay:${-i * 0.7}s" aria-label="${esc(name)}"><img src="${src}" alt=""><span>${esc(name)}</span></button>`;
     }).join('');
     return `<img class="room-bg" src="${Assets.url(Assets.atlas.locker)}" alt=""><div class="room-props" id="room-props">${this.roomProps(s)}</div>${spots}${crew}`;
@@ -678,7 +695,7 @@ export class UI {
   // Career stats: the club's lifetime numbers, every skater's totals (most points first,
   // the leader of each column in gold) and Halla's in goal. Tap a skater for their seasons.
   careerPage() {
-    const s = this.app.save, c = careerOf(s), rows = careerRows(s, rosterIds(s)), g = c.goalie;
+    const s = this.app.save, rows = careerRows(s, rosterIds(s)), gks = careerGoalies(s, goalieIds(s));
     const cols = [['gp', t('GP'), t('Games played'), 'games'], ['w', t('W'), t('Wins'), 'wins'], ['g', t('G'), t('Goals'), 'goals'], ['a', t('A'), t('Assists'), 'assists'], ['pts', t('PTS'), t('Points'), null],
       ['shots', t('SH'), t('Shots'), 'shots'], ['hits', t('HIT'), t('Hits'), 'hits'], ['steals', t('STL'), t('Steals'), 'steals']];
     const best = Object.fromEntries(cols.map(([k]) => [k, Math.max(0, ...rows.map((r) => r[k]))]));
@@ -689,7 +706,7 @@ export class UI {
         ${cols.map(([k]) => `<td class="${r[k] && r[k] === best[k] && k !== 'gp' ? 'lead' : ''}">${r[k]}</td>`).join('')}</tr>`;
     }).join('');
     const tile = (icon, n, label) => `<div class="car-tile">${icon && Assets.atlas.frames[icon] ? smallIcon(icon, 64, 'h-ico') : ''}<b>${n}</b><small>${esc(label)}</small></div>`;
-    const sv = g.sa ? (g.sv / g.sa).toFixed(3).replace(/^0/, '') : '–';
+    const sv = (g) => (g.sa ? (g.sv / g.sa).toFixed(3).replace(/^0/, '') : '–');
     this.modal(`
       <h2>${smallIcon('icons/career', 96, 'h-ico')}${t('Career stats')}</h2>
       <div class="car-tiles">
@@ -700,8 +717,8 @@ export class UI {
       <div class="label" style="margin:8px 0 4px">${t('Skaters')}</div>
       <div class="car-wrap"><table class="car-table"><thead><tr><th></th>${head}</tr></thead><tbody>${body}</tbody></table></div>
       <div class="label" style="margin:10px 0 4px">${t('In goal')}</div>
-      <div class="car-goalie"><img src="${portrait('goalie', 0, null, 64)}" alt=""><b>${esc(GOALIE.name)}</b>
-        <span>${t('{n} games', { n: g.gp })} · ${t('{n} wins', { n: g.w })} · ${t('{n} saves', { n: g.sv })} · ${t('save % {n}', { n: sv })} · ${t('{n} shutouts', { n: g.so })}</span></div>
+      ${gks.map((g) => `<div class="car-goalie"><img src="${portrait(g.id, 0, null, 64)}" alt=""><b>${esc(goalieInfo(g.id).name)}</b>
+        <span>${t('{n} games', { n: g.gp })} · ${t('{n} wins', { n: g.w })} · ${t('{n} saves', { n: g.sv })} · ${t('save % {n}', { n: sv(g) })} · ${t('{n} shutouts', { n: g.so })}</span></div>`).join('')}
       <p class="muted" style="font-size:12px;margin:8px 0 0">${t('Every full match counts: league, playoffs, showcases, exhibitions and the daily challenge. Tap a skater for their seasons.')}</p>
       <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>${t('Done')}</button></div>`, (m) => {
       this.click('[data-car]', (el) => { audio.sfx('click'); this.careerOne(el.dataset.car); }, m);
@@ -774,6 +791,7 @@ export class UI {
         this.click('#dr-yes', async () => {
           const id = draftPick(s, +el.dataset.pick);
           if (!id) return;
+          this.app.ach.checkMeta();
           writeSave(s);
           audio.jingle('sign');
           close();
@@ -782,7 +800,7 @@ export class UI {
           const role = member(id).role;
           this.modal(`<h2>${t('{name} pulls on the {club} jersey!', { name: esc(p.name), club: esc(CLUB.nick) })}</h2>
             <div class="card-head" style="margin:0"><img src="${portrait(id, 0, null, 152, 'grin')}" alt="" style="width:76px;height:76px"><div>
-            ${otherPicks(d).map((o) => `<p style="margin:0 0 4px">${t('The {team} took {name}.', { team: esc(o.team.name), name: esc(o.name) })}</p>`).join('')}
+            ${otherPicks(d, s).map((o) => `<p style="margin:0 0 4px">${o.fills ? t('The {team} took {name} to fill the gap you left.', { team: esc(o.team.name), name: esc(o.name) }) : t('The {team} took {name}.', { team: esc(o.team.name), name: esc(o.name) })}</p>`).join('')}
             <p class="muted" style="margin:0;font-size:13px">${t('Dress {name} at {role} from the Team tab, or before a match.', { name: esc(p.name), role: t(ROLE_NAME[role]).toLowerCase() })}</p></div></div>
             <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Later')}</button><button class="btn gold" id="dress-now">${t('Dress now')}</button></div>`, (m2, close2) => {
             this.click('#dress-now', () => { setLineup(s, id); writeSave(s); audio.sfx('confirm'); close2(); this.hub('team'); }, m2);
@@ -839,7 +857,7 @@ export class UI {
       <p style="margin:0;font-size:13.5px">${t('The fans have voted! {name} leads the home bench, with two of the league\'s stars in your colours. The rest of the league\'s best wear the All-Star navy.', { name: `<b>${esc(member(vote.star).name)}</b>` })}</p>
       <div class="as-benches">
         <div class="as-bench us"><div class="label"><img src="${crest('home', 40)}" alt="" width="20" height="20"> ${t('{club} All-Stars', { club: esc(CLUB.nick) })}</div>${vote.ours.map((w) => row(w, 0)).join('')}
-          <div class="as-goalie muted">${t('In goal: {name}', { name: esc(GOALIE.name) })}</div></div>
+          <div class="as-goalie muted">${t('In goal: {name}', { name: esc(goalieInfo(starterId(s)).name) })}</div></div>
         <div class="as-bench them"><div class="label"><img src="${crest('allstar', 40)}" alt="" width="20" height="20"> ${t('League All-Stars')}</div>${vote.theirs.map((w) => row(w, 1)).join('')}
           <div class="as-goalie muted">${t('In goal: {name}', { name: `${esc(g.names.goalie)} (${esc(g.name)})` })}</div></div>
       </div>
@@ -1026,7 +1044,8 @@ export class UI {
     else if (out.phaseChange === 'playoffs') headline = t('Playoffs! You\'re the #{n} seed', { n: L.playoffs.seeds.indexOf('home') + 1 });
     else if (out.kind === 'semi' && out.won) headline = t('On to the Cup Final!');
     else if (L.phase === 'regular') headline = t(pos === 1 ? '{pos}st place after round {n}' : pos === 2 ? '{pos}nd place after round {n}' : pos === 3 ? '{pos}rd place after round {n}' : '{pos}th place after round {n}', { pos, n: L.round });
-    const games = out.simulated.map((g) => `<div>${g.stage ? `<span class="muted">${esc(t(g.stage))}:</span> ` : ''}${esc(short(g.a))} <b>${g.ga}–${g.gb}</b> ${esc(short(g.b))}</div>`).join('');
+    const games = out.simulated.map((g) => `<div>${g.stage ? `<span class="muted">${esc(t(g.stage))}:</span> ` : ''}${esc(short(g.a))} <b>${g.ga}–${g.gb}</b> ${esc(short(g.b))}</div>`).join('')
+      + (out.moves || []).map((mv) => `<div class="move">${smallIcon('icons/contract', 40)}${t('The {team} signed {name} ({role}) to fill the gap.', { team: esc(TEAMS[mv.team].name), name: esc(mv.name), role: t(ROLE_NAME[CHARACTERS[mv.kit].role]).toLowerCase() })}</div>`).join('');
     const top = rows.slice(0, 6).map((r, i) => `<div class="mini-row ${r.id === 'home' ? 'us' : ''}"><span>${i + 1}. ${esc(short(r.id))}</span><span>${r.w}–${r.l}</span><b>${r.pts}</b></div>`).join('');
     this.modal(`
       <h2>${esc(headline || t('League update'))}</h2>
@@ -1109,21 +1128,27 @@ export class UI {
         ${r.perks.length ? `<div class="perks">${r.perks.map((p) => `<span class="perk" title="${esc(t(p))}">${esc(t(p).split(':')[0])}</span>`).join('')}</div>` : ''}
       </div>`;
     };
-    const g = s.goalie;
-    const gs = goalieStats(s);
-    const gg = GEAR_BY_ID[g.gear];
-    const gpct = g.level >= MAX_LEVEL ? 100 : Math.round((g.exp / expToNext(g.level)) * 100);
-    const goalieCard = `<div class="card">
-      <div class="card-head"><img src="${portrait('goalie', 0, null, 152)}" alt="">
-        <div><h3>${esc(GOALIE.name)}</h3><div class="sub">${t('Goaltender (AI)')}</div><div class="lvl">${t('LV {n}', { n: g.level })}</div></div></div>
-      <div class="xpbar"><i style="width:${gpct}%"></i></div>
-      <div class="stats">
-        <div class="stat"><span>${t('Reflex')}</span><span class="pips">${Array.from({ length: 12 }, (_, i) => `<i class="${i < gs.rfx ? 'b' : ''}"></i>`).join('')}</span><span class="v">${gs.rfx}</span><span></span></div>
-        <div class="stat"><span>${t('Angles')}</span><span class="pips">${Array.from({ length: 12 }, (_, i) => `<i class="${i < gs.pos ? 'b' : ''}"></i>`).join('')}</span><span class="v">${gs.pos}</span><span></span></div>
-      </div>
-      <p class="muted" style="margin:0;font-size:12.5px">${t('Halla levels up from saves. Reflex rises every two levels.')}</p>
-      <div class="gear-row" style="grid-template-columns:1fr"><button class="slot" data-gear="goalie:goalie"><img src="${ico(gg.icon, 92)}" alt=""><span>${esc(t(gg.name))}</span></button></div>
-    </div>`;
+    const keepers = goalieIds(s), starting = starterId(s);
+    const goalieCard = (gid) => {
+      const g = goalieRec(s, gid), info = goalieInfo(gid), gs = goalieStats(s, gid), st = GOALIE_STYLES[info.style] || GOALIE_STYLES.hybrid;
+      const gg = GEAR_BY_ID[g.gear], on = gid === starting;
+      const gpct = g.level >= MAX_LEVEL ? 100 : Math.round((g.exp / expToNext(g.level)) * 100);
+      const pips = (n) => Array.from({ length: 12 }, (_, i) => `<i class="${i < n ? 'b' : ''}"></i>`).join('');
+      return `<div class="card ${on ? '' : 'benched'}">
+        <div class="card-head"><img src="${portrait(gid, 0, null, 152)}" alt="">
+          <div style="min-width:0"><h3>${esc(info.name)}</h3><div class="sub">${t('Goaltender (AI)')}${info.recruit ? ` · ${t('signed')}` : ''}</div><div class="lvl">${t('LV {n}', { n: g.level })}</div></div></div>
+        ${keepers.length < 2 ? '' : on ? `<div class="dress on">${t('In goal')}</div>` : `<button class="btn small dress" data-start="${gid}">${t('Start in goal (for {name})', { name: esc(goalieInfo(starting).name) })}</button>`}
+        <div class="xpbar"><i style="width:${gpct}%"></i></div>
+        <div class="stats">
+          <div class="stat"><span>${t('Reflex')}</span><span class="pips">${pips(gs.rfx)}</span><span class="v">${gs.rfx}</span><span></span></div>
+          <div class="stat"><span>${t('Angles')}</span><span class="pips">${pips(gs.pos)}</span><span class="v">${gs.pos}</span><span></span></div>
+        </div>
+        <div class="abil">${goalieStyleIcon(st.id)}<div><b>${esc(t(st.name))}</b>${esc(t(st.text))}</div></div>
+        <p class="muted" style="margin:0;font-size:12.5px">${gid === 'halla' ? t('Halla levels up from saves. Reflex rises every two levels.') : t('Levels up from saves made in goal. Reflex rises every two levels.')}</p>
+        <div class="gear-row" style="grid-template-columns:1fr"><button class="slot" data-gear="${gid}:goalie"><img src="${ico(gg.icon, 92)}" alt=""><span>${esc(t(gg.name))}</span></button></div>
+      </div>`;
+    };
+    const benchKeepers = keepers.filter((gid) => gid !== starting);
     const pairs = [];
     for (let i = 0; i < 3; i++) for (let j = i + 1; j < 3; j++) pairs.push(pairKey(line[i], line[j]));
     body.innerHTML = `
@@ -1131,10 +1156,10 @@ export class UI {
         <span class="club-sw" style="--a:${CLUB.trim};--b:${CLUB.jersey}"></span><button class="btn small ghost" id="club-edit">${t('Customise club')}</button></div>
       <div class="label" style="margin-bottom:4px">${t('Line-up')}</div>
       <p class="muted" style="margin:0 0 10px;font-size:13px">${t('A centre, a winger and a defender dress for every match. Every player brings a style and a super of their own.')} <button class="link-btn" id="t-supers">${t('How supers work')}</button></p>
-      <div class="roster">${line.map((id) => card(id, true)).join('')}${goalieCard}</div>
-      ${bench.length ? `<div class="label" style="margin:16px 0 4px">${t('Bench')}</div>
-      <p class="muted" style="margin:0 0 10px;font-size:13px">${t('Benched skaters don\'t earn match EXP, but you can bring them to training.')}</p>
-      <div class="roster">${bench.map((id) => card(id, false)).join('')}</div>` : ''}
+      <div class="roster">${line.map((id) => card(id, true)).join('')}${goalieCard(starting)}</div>
+      ${bench.length || benchKeepers.length ? `<div class="label" style="margin:16px 0 4px">${t('Bench')}</div>
+      <p class="muted" style="margin:0 0 10px;font-size:13px">${t('Benched skaters don\'t earn match EXP, but you can bring them to training.')}${benchKeepers.length ? ` ${t('Only the goalie who starts earns EXP from saves.')}` : ''}</p>
+      <div class="roster">${bench.map((id) => card(id, false)).join('')}${benchKeepers.map(goalieCard).join('')}</div>` : ''}
       <div class="label" style="margin:16px 0 4px">${t('Chemistry')}</div>
       <p class="muted" style="margin:0 0 10px;font-size:13px">${t('Bonds grow between the people in your line through passes, assists and combo goals. The combo a pair fires depends on their positions. From level 1, pass between the pair and shoot right away (a one-timer works) to fire it. A new signing starts with no chemistry.')}</p>
       <div class="chem-grid">${pairs.map((k) => chemCard(k, s.chem[k] || 0)).join('')}</div>
@@ -1153,6 +1178,8 @@ export class UI {
     this.click('#t-supers', () => this.supersHelp(), body);
     this.click('[data-gear]', (el) => { const [id, slot] = el.dataset.gear.split(':'); this.gearPicker(id, slot); }, body);
     this.click('[data-dress]', (el) => { setLineup(s, el.dataset.dress); writeSave(s); audio.sfx('confirm'); this.hub('team'); }, body);
+    this.click('[data-start]', (el) => { setStarter(s, el.dataset.start); writeSave(s); audio.sfx('confirm'); Assets.ensureKit(homeKitGroups(s)).then(() => this.hub('team')); }, body);
+    this.click('[data-gsign]', (el) => this.goalieOffer(el.dataset.gsign), body);
     this.click('[data-sign]', (el) => this.signOffer(el.dataset.sign), body);
     this.click('[data-trade]', (el) => this.tradeOffer(el.dataset.trade), body);
     this.click('[data-legend]', (el) => {
@@ -1250,7 +1277,8 @@ export class UI {
     const rows = teams.map((tid) => {
       const tm = TEAMS[tid];
       const keys = ['frost', 'thunder', 'stone'].map((kit) => recruitKey(tid, kit));
-      const open = recruitStatus(s, keys[0]) !== 'locked' || keys.some((k) => isSigned(s, k));
+      const gk = `${tid}_g`, G = GOALIE_RECRUITS[gk], gst = goalieStatus(s, gk);
+      const open = recruitStatus(s, keys[0]) !== 'locked' || keys.some((k) => isSigned(s, k)) || gst === 'signed';
       const players = keys.map((k) => {
         const r = RECRUITS[k];
         const st = recruitStatus(s, k);
@@ -1261,7 +1289,11 @@ export class UI {
           <div style="min-width:0"><b>${esc(r.name)}</b><span class="muted">${t(ROLE_NAME[r.role])} · ${esc(top)}</span></div>
           ${st === 'signed' ? `<span class="tag good">${t('Signed')}</span>` : st === 'traded' ? `<span class="tag">${t('With the {team}', { team: esc(TEAMS[s.tradedAway[k]].name.split(' ').slice(-1)[0]) })}</span>` : st === 'open' ? `<span class="row" style="gap:4px;margin:0;flex-wrap:nowrap"><button class="btn small ghost" data-trade="${k}" ${tradeable(s).length ? '' : 'disabled'} title="${esc(t('Trade one of your players for them'))}">${btnIcon('icons/trade')}${t('Trade')}</button><button class="btn small ${s.coins >= r.price ? 'gold' : 'ghost'}" data-sign="${k}"><img src="${ico('equipment_items/reward/coins', 40)}" alt="" width="16" height="16"> ${r.price}</button></span>` : `<span class="tag">${t('Locked')}</span>`}
         </div>`;
-      }).join('');
+      }).join('') + `<div class="recruit ${gst}">
+          <img src="${gst === 'signed' ? portrait(gk, 0, null, 96) : portrait('goalie', 1, tid, 96)}" alt="">
+          <div style="min-width:0"><b>${esc(G.name)}</b><span class="muted">${t('Goalie')} · ${esc(t(GOALIE_STYLES[G.gstyle].name))} · ${t('Reflex')} ${G.base.rfx}</span></div>
+          ${gst === 'signed' ? `<span class="tag good">${t('Signed')}</span>` : gst === 'open' ? `<button class="btn small ${s.coins >= G.price ? 'gold' : 'ghost'}" data-gsign="${gk}"><img src="${ico('equipment_items/reward/coins', 40)}" alt="" width="16" height="16"> ${G.price}</button>` : `<span class="tag">${t('Locked')}</span>`}
+        </div>`;
       return `<div class="scout-team ${open ? '' : 'locked'}">
         <div class="scout-head"><img src="${crest(tid, 48)}" alt="" width="28" height="28"><b>${esc(tm.name)}</b>${open ? '' : `<span class="muted"> · ${t('beat them to open talks')}</span>`}</div>
         <div class="recruits">${players}</div>
@@ -1269,7 +1301,7 @@ export class UI {
     }).join('');
     return `<div class="label" style="margin:16px 0 4px">${t('Scouting')}</div>
       ${this.legendHtml(s)}
-      <p class="muted" style="margin:0 0 10px;font-size:13px">${t('Beat a rival and their skaters will take your call. Signings join a level below your line-up\'s average with points to spend and the perks they already had.')}</p>
+      <p class="muted" style="margin:0 0 10px;font-size:13px">${t('Beat a rival and their skaters will take your call. Signings join a level below your line-up\'s average with points to spend and the perks they already had.')} ${t('Their goalie too: a signed goalie brings their own style, and you choose who starts.')}</p>
       <div class="scouting">${rows}</div>`;
   }
 
@@ -1290,6 +1322,40 @@ export class UI {
       <div class="row" style="justify-content:space-between;align-items:center;margin:0"><span class="muted" style="font-size:12.5px">${t(left === 1 ? 'Gone after {n} more match.' : 'Gone after {n} more matches.', { n: left })}</span>
         <button class="btn ${s.coins >= L.price ? 'gold' : 'ghost'}" data-legend="${key}" ${s.coins >= L.price ? '' : 'disabled'}><img src="${ico('equipment_items/reward/coins', 40)}" alt="" width="16" height="16"> ${L.price}</button></div>
     </div>`;
+  }
+
+  // Signing a rival's goalie: their style, their numbers next to whoever starts for us.
+  goalieOffer(key) {
+    const s = this.app.save, G = GOALIE_RECRUITS[key], st = GOALIE_STYLES[G.gstyle];
+    const now = starterId(s), cur = goalieStats(s, now), lv = Math.max(1, s.goalie.level - 1);
+    const row = (label, v, was) => `<div class="stat"><span>${label}</span><span class="pips">${Array.from({ length: 12 }, (_, i) => `<i class="${i < v ? 'b' : ''}"></i>`).join('')}</span><span class="v">${v}</span><span class="${v > was ? 'good' : v < was ? 'bad' : 'muted'}" style="font-size:12px">${v > was ? '+' : ''}${v - was || '='}</span></div>`;
+    const theirs = { rfx: G.base.rfx + Math.floor((lv - 1) / 2), pos: G.base.pos + Math.floor(lv / 3) };
+    audio.sfx('click');
+    this.modal(`
+      <h2>${t('Sign {name}?', { name: esc(G.name) })}</h2>
+      <div class="card-head" style="margin:0"><img src="${portrait('goalie', 1, G.team, 152)}" alt="" style="width:76px;height:76px">
+        <div><div class="sub">${esc(TEAMS[G.team].name)} · ${t('Goalie')}</div><div class="abil" style="margin:4px 0 0">${goalieStyleIcon(st.id)}<div><b>${esc(t(st.name))}</b>${esc(t(st.text))}</div></div></div></div>
+      <div class="stats">${row(t('Reflex'), theirs.rfx, cur.rfx)}${row(t('Angles'), theirs.pos, cur.pos)}</div>
+      <p class="muted" style="margin:0;font-size:13px">${t('At level {lv}, compared with {name} (who starts now).', { lv, name: esc(goalieInfo(now).name) })} ${t('Their old team plays a backup in goal from now on.')}</p>
+      <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Not now')}</button>
+        <button class="btn gold" id="gsign-go" ${s.coins >= G.price ? '' : 'disabled'}>${t('Sign for {n}', { n: G.price })}</button></div>`, (mm, close) => {
+      this.click('#gsign-go', () => {
+        if (!signGoalie(s, key)) return;
+        this.app.ach.unlock('second-keeper');
+        this.app.ach.checkMeta();
+        writeSave(s);
+        audio.jingle('sign');
+        close();
+        Assets.ensureKit(homeKitGroups(s)).then(() => {
+          this.hub('team');
+          this.modal(`<h2>${t('{name} signs!', { name: esc(G.name) })}</h2>
+            <p>${t('{name} joins the {club} in goal. Who starts?', { name: esc(G.name), club: esc(CLUB.nick) })}</p>
+            <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Keep {name}', { name: esc(goalieInfo(now).name) })}</button><button class="btn gold" id="start-now">${t('Start {name}', { name: esc(G.name) })}</button></div>`, (m2, close2) => {
+            this.click('#start-now', () => { setStarter(s, key); writeSave(s); audio.sfx('confirm'); close2(); this.hub('team'); }, m2);
+          });
+        });
+      }, mm);
+    });
   }
 
   signOffer(key) {
@@ -1363,6 +1429,7 @@ export class UI {
           return;
         }
         if (!campChange(s, id, kind, v)) return;
+        this.app.ach.checkMeta();
         writeSave(s);
         audio.jingle('sign');
         close();
@@ -1442,6 +1509,35 @@ export class UI {
     });
   }
 
+  // A rival rings after a match with an offer: one of yours for one of theirs, coins either way.
+  rivalCall(o, done) {
+    const s = this.app.save, team = TEAMS[o.team], r = RECRUITS[o.get], m = member(o.give), name = m.name;
+    const coin = (n) => `<img src="${ico('equipment_items/reward/coins', 40)}" alt="" width="14" height="14"> ${n}`;
+    const terms = o.coins > 0 ? t('You add {coins}.', { coins: coin(o.coins) }) : o.coins < 0 ? t('They add {coins}.', { coins: coin(-o.coins) }) : t('Straight up, no coins.');
+    audio.sfx('blip');
+    this.modal(`<div class="label">${btnIcon('icons/trade')}${t('Trade offer')}</div>
+      <h2>${t('The {team} are calling', { team: esc(team.name) })}</h2>
+      <div class="trade-call">
+        <div><img src="${portrait(o.give, 0, null, 152)}" alt=""><b>${esc(name)}</b><small>${t(ROLE_NAME[m.role])} · ${t('LV {n}', { n: s.roster[o.give].level })}</small></div>
+        <span class="tc-arrow" aria-hidden="true">⇄</span>
+        <div><img src="${portrait(r.kit, 1, r.team, 152)}" alt=""><b>${esc(r.name)}</b><small>${t(ROLE_NAME[r.role])} · ${esc(t(ARCHETYPES[member(o.get).def.arch].name))}</small></div>
+      </div>
+      <p style="margin:6px 0">${o.likes ? t('“We like how {name} plays. {name} for {theirs}?”', { name: esc(name), theirs: esc(r.name) }) : t('“{name} for {theirs}. Think it over.”', { name: esc(name), theirs: esc(r.name) })} ${terms}</p>
+      <p class="muted" style="margin:0;font-size:12.5px">${t('{name} would join their reserves. The offer goes when you leave this screen.', { name: esc(name) })}</p>
+      <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('No thanks')}</button>
+        <button class="btn gold" id="call-yes" ${s.coins >= o.coins ? '' : 'disabled'}>${t('Accept')}</button></div>`, (mm, close) => {
+      this.click('#call-yes', () => {
+        if (!acceptOffer(s, o)) return;
+        this.app.ach.unlock('dealmaker');
+        this.app.ach.checkMeta();
+        writeSave(s);
+        audio.jingle('sign');
+        close();
+        Assets.ensureKit(homeKitGroups(s));
+      }, mm);
+    }, false, done);
+  }
+
   // Quick line-up change, one row per position.
   lineupPicker(done) {
     const s = this.app.save;
@@ -1492,8 +1588,9 @@ export class UI {
   gearPicker(id, slot) {
     const s = this.app.save;
     const items = GEAR.filter((g) => g.slot === slot && s.owned.includes(g.id));
-    const cur = id === 'goalie' ? s.goalie.gear : s.roster[id].gear[slot];
-    const who = id === 'goalie' ? GOALIE.name : member(id).name;
+    const gid = slot === 'goalie' ? (id === 'goalie' ? 'halla' : id) : null;
+    const cur = gid ? goalieRec(s, gid).gear : s.roster[id].gear[slot];
+    const who = gid ? goalieInfo(gid).name : member(id).name;
     audio.sfx('click');
     this.modal(`
       <h2>${esc(who)} · ${t(SLOT_NAMES[slot])}</h2>
@@ -1505,7 +1602,7 @@ export class UI {
       <p class="muted" style="margin:0;font-size:12.5px">${t('Buy more gear in the shop. Owned gear can be shared by the whole team.')}</p>
       <button class="btn small ghost" data-close>${t('Done')}</button>`, (m, close) => {
       this.click('[data-eq]', (el) => {
-        if (id === 'goalie') s.goalie.gear = el.dataset.eq; else s.roster[id].gear[slot] = el.dataset.eq;
+        if (gid) goalieRec(s, gid).gear = el.dataset.eq; else s.roster[id].gear[slot] = el.dataset.eq;
         writeSave(s);
         audio.sfx('confirm');
         close();
@@ -1551,7 +1648,7 @@ export class UI {
       writeSave(s);
       audio.sfx('purchase');
       // offer to equip right away
-      if (g.slot === 'goalie') { s.goalie.gear = g.id; writeSave(s); this.hub('shop'); return; }
+      if (g.slot === 'goalie') { goalieRec(s, starterId(s)).gear = g.id; writeSave(s); this.hub('shop'); return; } // on whoever starts
       this.modal(`
         <h2>${t('{item} unlocked', { item: esc(t(g.name)) })}</h2>
         ${modsHtml(g.mods)}
@@ -2000,7 +2097,7 @@ export class UI {
       pl.src = side === 'kip' && kip ? kip : ours(lastUs || ['us', 'frost', '']);
       if (lastThem) { pr.src = theirs(lastThem); pr.hidden = false; } else pr.hidden = true;
       pl.classList.toggle('on', us); pr.classList.toggle('on', !us);
-      dn.textContent = side === 'kip' ? t(NPC_NAMES.announcer) : us ? member(id)?.name || GOALIE.name : gone(id) ? tm.subs[id] : tm.names[id];
+      dn.textContent = side === 'kip' ? t(NPC_NAMES.announcer) : us ? member(id)?.name || GOALIE.name : gone(id) ? rivalSub(this.app.save, teamId, id).name : tm.names[id];
       dn.className = 'dlg-name' + (us ? '' : ' them');
       shown = 0; dt.textContent = '';
       clearInterval(typing);
@@ -2074,7 +2171,7 @@ export class UI {
                   <div><div>${esc(cb ? t(cb.name) : t('Chemistry'))} <span class="muted">+${g.xp} · ${t('{n} passes', { n: g.passes })}${g.comboGoals ? ` · ${t(g.comboGoals > 1 ? '{n} combo goals' : '{n} combo goal', { n: g.comboGoals })}` : ''}</span> ${up ? `<span class="lvlup">${t('LEVEL {n}!', { n: up.level })}</span>` : ''}</div>
                   <div class="xpbar"><i data-w="${Math.round(chemProgress(s.chem[k]) * 100)}"></i></div></div><span class="lvl">${chemPips(chemLevel(s.chem[k]))}</span></div>`;
               }).join('')}` : ''}
-              <div class="xp-row"><img src="${portrait('goalie', 0, null, 88)}" alt=""><div><div>${GOALIE.name} <span class="muted">${t('+{n} EXP', { n: rewards.gExp })} · ${t('{n} saves', { n: summary.saves[0] })}</span>${data.gUp ? ` <span class="lvlup">${t('LEVEL UP!')}</span>` : ''}</div></div><span class="lvl">${t('LV {n}', { n: s.goalie.level })}</span></div>
+              <div class="xp-row"><img src="${portrait(summary.goalie || 'goalie', 0, null, 88)}" alt=""><div><div>${esc(goalieInfo(summary.goalie || 'halla').name)} <span class="muted">${t('+{n} EXP', { n: rewards.gExp })} · ${t('{n} saves', { n: summary.saves[0] })}</span>${data.gUp ? ` <span class="lvlup">${t('LEVEL UP!')}</span>` : ''}</div></div><span class="lvl">${t('LV {n}', { n: (goalieRec(s, summary.goalie || 'halla') || s.goalie).level })}</span></div>
             </div>
           </div>
         </div>

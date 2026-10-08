@@ -17,7 +17,7 @@ import { toScreen } from './rink.js';
 import { Replay } from './replay.js';
 import { Commentary } from './commentary.js';
 import { ClipRecorder } from './clips.js';
-import { AchievementTracker } from './achievements.js';
+import { AchievementTracker, useAchievementArt } from './achievements.js';
 import { createDrill, medalFor, DRILL_REWARDS } from './drills.js';
 import { makeSkills, recordSkills, SKILLS_EVENTS } from './skills.js';
 import { recordRivalResult, rivalLines, rivalAfterLine } from './rivals.js';
@@ -29,6 +29,7 @@ import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
 import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt } from './data.js';
 import { rollLegend, legendState, STAY, joinLegend, LEGEND_LINES, twinsFirstTogether } from './legends.js';
+import { rivalSigning, rivalOffer } from './moves.js';
 import { useModular } from './modular.js';
 import { Quality } from './quality.js';
 import { offerDraft } from './draft.js';
@@ -76,6 +77,7 @@ class App {
       }
       useNewArt((id) => !!Assets.atlas.frames[id]);
       useModular(Assets.atlas); // players from parts, once that art is in
+      useAchievementArt(Assets.atlas.frames); // the newer trophies' own icons (Batch AN)
       this.legendsPreview = new URLSearchParams(location.search).has('legends');
     } catch (e) {
       this.loadingEl.querySelector('.err').textContent = t('The game art did not load. Check your connection and reload the page.');
@@ -764,7 +766,7 @@ class App {
         if (this.match !== m || this.pullTipShown || this.cur.versus) return;
         if (m.canPullGoalie && m.score[0] < m.score[1] && m.score[1] >= m.winScore - 1) {
           this.pullTipShown = true;
-          this.hud.hint(this.isTouch ? t('Desperate? Tap PULL GOALIE for an extra attacker.') : t('Desperate? Press H (gamepad: Back) to pull Halla for an extra attacker.'), 6);
+          this.hud.hint(this.isTouch ? t('Desperate? Tap PULL GOALIE for an extra attacker.') : t('Desperate? Press H (gamepad: Back) to pull your goalie for an extra attacker.'), 6);
         }
       }, 4200);
     });
@@ -861,7 +863,7 @@ class App {
     s.coins += rewards.coins;
     const ups = [];
     for (const id of Object.keys(rewards.exp)) ups.push(...applyExp(s, id, rewards.exp[id]));
-    const gUp = applyGoalieExp(s, rewards.gExp);
+    const gUp = applyGoalieExp(s, rewards.gExp, summary.goalie);
     const chemUps = applyChem(s, rewards.chem);
     s.record.played++;
     s.record.goals += summary.score[0];
@@ -897,6 +899,10 @@ class App {
       leagueOut = recordOurGame(s.league, s, summary.score[0], summary.score[1]);
       leagueOut.kind = c.fixture ? c.fixture.kind : 'regular';
       leagueOut.won = rewards.won;
+      // the rivals live too: a hole filled now and then, and maybe a call with an offer
+      const move = rivalSigning(s);
+      if (move) leagueOut.moves = [move];
+      this.pendingOffer = rivalOffer(s);
       if (leagueOut.champion === 'home') { s.champion = true; becameChampion = true; s.cups = (s.cups || 0) + 1; }
       s.stage = s.league.round;
     }
@@ -928,10 +934,11 @@ class App {
       const finish = () => {
         if (becameChampion) { this.scene = 'results'; this.music('final'); audio.jingle('champion'); this.ui.champion(() => this.goHub('tournament')); } else this.goHub(rewards.won ? 'tournament' : 'team');
       };
-      const after = () => this.leagueUpdate(leagueOut, () => this.resolvePerks(() => this.ui.chemUnlocked(chemUps, () => {
+      const call = (next) => { const o = this.pendingOffer; this.pendingOffer = null; return o ? this.ui.rivalCall(o, next) : next(); };
+      const after = () => this.leagueUpdate(leagueOut, () => call(() => this.resolvePerks(() => this.ui.chemUnlocked(chemUps, () => {
         if (becameChampion || c.exhibition) return finish();
         this.lockerRoom(summary, rewards, finish);
-      })));
+      }))));
       const kind = c.fixture ? c.fixture.kind : 'regular';
       const script = kind === 'regular' ? DIALOGUE[c.teamId] : kind === 'final' && DIALOGUE[c.teamId].final ? { win: DIALOGUE[c.teamId].finalWin, loss: DIALOGUE[c.teamId].finalLoss } : PLAYOFF_LINES[kind];
       let lines = !c.exhibition && script ? [...(script[rewards.won ? 'win' : 'loss'] || [])] : null;
@@ -1119,6 +1126,7 @@ class App {
     // last week's friends-board cups: a top-three finish gets a toast and a place in the trophies
     settleCups(this.save).then((won) => {
       if (!won.length) return;
+      this.ach.checkMeta();
       writeSave(this.save);
       won.forEach((w, i) => setTimeout(() => this.toast(cupPlaceImg(w.place, 72), t('Weekly Cup · {name}', { name: w.name }),
         w.place === 1 ? t('You won the Weekly Cup!') : w.place === 2 ? t('Second in the Weekly Cup') : t('Third in the Weekly Cup'), t('{n} points last week', { n: w.points })), 800 + i * 2600));
@@ -1170,7 +1178,7 @@ class App {
       const a = AWARD_BY_ID[w.id];
       s.coins += a.coins;
       w.reward = { coins: a.coins, exp: a.exp };
-      if (w.face === 'goalie') applyGoalieExp(s, a.exp); else if (s.roster[w.face]) applyExp(s, w.face, a.exp);
+      if (w.id === 'iron_wall') applyGoalieExp(s, a.exp, w.face === 'goalie' ? 'halla' : w.face); else if (s.roster[w.face]) applyExp(s, w.face, a.exp);
       s.awards.push({ season: L.season, id: w.id, name: w.name, face: w.face, line: w.line });
       if (w.id === 'mvp') this.ach.unlock('mvp');
     }

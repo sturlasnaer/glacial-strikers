@@ -2,6 +2,7 @@
 
 import { clamp, norm, angDiff, segDist } from './util.js';
 import { constrainToRink, collideNets, RINK, GOAL_X, MOUTH, NET_DEPTH, POST_R, CROSSBAR, persp } from './rink.js';
+import { GOALIE_STYLES } from './data.js';
 
 export const SKATER_R = 15;
 export const PUCK_R = 6;
@@ -429,6 +430,9 @@ export class Goalie {
     this.goalSide = team === 0 ? -1 : 1; // which net we defend
     this.name = opts.name || 'Goalie';
     this.art = opts.art || null;
+    this.look = opts.look || null; // a signed rival goalie in our colours
+    this.who = opts.who || (team === 0 ? 'halla' : null);
+    this.style = (GOALIE_STYLES[opts.style] || GOALIE_STYLES.hybrid).mods; // how they play
     this.stats = stats; // { rfx, pos }
     this.r = GOALIE_R;
     this.x = this.goalSide * (GOAL_X - 28);
@@ -450,10 +454,11 @@ export class Goalie {
     this.ult = 0; this.wallT = 0; // goalie mode's ultimate, Wall of Ice
     this.id = `${team}-goalie`;
   }
-  get lat() { return (120 + this.stats.rfx * 11) * (this.slowT > 0 ? 0.45 : 1) * (this.wallT > 0 ? 1.2 : 1); }
+  get lat() { return (120 + this.stats.rfx * 11) * (this.slowT > 0 ? 0.45 : 1) * (this.wallT > 0 ? 1.2 : 1) * (this.style.lat || 1); }
 
   reach() {
-    let r = 5.5 + this.stats.rfx * 0.7;
+    let r = 5.5 + this.stats.rfx * 0.7 + (this.style.reach || 0);
+    if (this.state === 'butterfly' && (this.style.low || this.style.high)) r += this.match.puck.z > 14 ? (this.style.high || 0) : (this.style.low || 0);
     if (this.match.mods && this.match.mods.has('giant')) r *= 1.4;
     if (this.alert > 0) r += 5;
     if (this.state === 'butterfly') r += this.human && this.match.puck.z > 14 ? -8 : 5; // down low: the top's open
@@ -469,7 +474,7 @@ export class Goalie {
   // A shot was fired at our net: react after a short delay.
   onShot(shot) {
     this.shotsFaced++;
-    let delay = Math.max(0.08, 0.24 - this.stats.rfx * 0.012) + this.match.rng() * 0.06;
+    let delay = (Math.max(0.08, 0.24 - this.stats.rfx * 0.012) + this.match.rng() * 0.06) * (this.style.react || 1);
     const p = this.match.puck;
     if (this.match.twists && this.match.inShadow(p.x, p.y)) delay += 0.07; // a shot out of a raven's shadow is picked up late
     this.react = { t: delay, shot };
@@ -712,7 +717,7 @@ export class Goalie {
     const behind = (p.x - this.goalSide * GOAL_X) * this.goalSide;
     if (behind < 6 || Math.abs(p.y) > 240 || p.speed > 680) return false; // stopping a rim is fine
     const mine = pathLength(this.goalSide, this.x, this.y, p.x, p.y, this.r + 6) / ROAM_SPEED;
-    return mine + 0.2 < this.rivalTime();
+    return mine + (this.style.roam ?? 0.2) < this.rivalTime(); // (a puck-handler goes sooner, a wall stays home)
   }
 
   rivalTime() {

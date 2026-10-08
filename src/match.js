@@ -1526,6 +1526,7 @@ export class Match {
       shots: [...this.shotsOnGoal],
       skaters: this.skaters.filter((s) => !s.extraAttacker).map((s) => ({ id: s.who, kit: s.def.id, team: s.team, name: s.name, ...s.stats_ })),
       saves: this.goalies.map((g) => g.saves),
+      goalie: this.goalies[0].who || 'halla', // who was in our net
       time: this.time,
     };
   }

@@ -1262,9 +1262,12 @@ export class Renderer {
   // A goalie's art sets: their own rival art once it's loaded, otherwise home or away.
   // In the right-hand net they face left: real left-facing art (Batch L) when this
   // goalie has it, otherwise the right-facing art mirrored.
+  // A goalie's pages: ours in the club colours (a signed rival goalie in our kit), theirs in theirs.
+  goaliePages(g) { return g.team === 0 ? (g.look ? Assets.pagesFor(g.look) : Assets.clubPages()) : this.awayPages; }
+
   goalieSets(g) {
     const A = Assets.atlas, key = g.team === 0 ? 'home' : 'away';
-    const drawn = g.team === 0 ? Assets.clubPages() : this.awayPages || Assets.pages;
+    const drawn = g.team === 0 ? this.goaliePages(g) : this.awayPages || Assets.pages;
     const loaded = (set, probe) => { const f = set && Assets.frame(probe(set)); return f && (drawn[f[0]] || Assets.pages[f[0]]) ? set : null; };
     const pick = (all, probe) => (all && g.art && loaded(all[g.art], probe)) || (all && all[key]);
     const own = (all, probe) => all && loaded(all[g.art || key], probe); // never another goalie's art
@@ -1333,7 +1336,7 @@ export class Renderer {
       const { id, flip } = pose;
       const wx = g.disabled ? g.leaveX : g.x, wy = g.disabled ? g.leaveY : g.y;
       const p = toScreen(wx, wy);
-      const pages = g.team === 0 ? Assets.clubPages() : this.awayPages;
+      const pages = this.goaliePages(g);
       const k = GOALIE_SCALE * persp(wy) * (match.mods && match.mods.has('giant') ? 1.25 : 1);
       Assets.draw(ctx, id, p.x, p.y, k, { pages, flip });
       if (g.wallT > 0) this.drawTinted(ctx, id, pages, p.x, p.y, k, flip, 0, '#9fe8ff', 0.3 + Math.sin(match.time * 7) * 0.12); // Wall of Ice
@@ -1351,7 +1354,7 @@ export class Renderer {
     }
     const id = `goalies/${key}_south/${old}`;
     const p = toScreen(g.x, g.y);
-    const pages = g.team === 0 ? Assets.clubPages() : this.awayPages;
+    const pages = this.goaliePages(g);
     const flip = g.goalSide > 0;
     const k = GOALIE_SCALE * persp(g.y) * (match.mods && match.mods.has('giant') ? 1.25 : 1);
     const yOff = old === 'dive' ? -20 : 0;

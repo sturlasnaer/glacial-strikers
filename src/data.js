@@ -159,7 +159,19 @@ export function perkSlot(text) {
 }
 
 export const GOALIE = {
-  id: 'goalie', name: 'Halla', title: 'Goaltender', base: { rfx: 6, pos: 6 },
+  id: 'goalie', name: 'Halla', title: 'Goaltender', base: { rfx: 6, pos: 6 }, gstyle: 'hybrid',
+};
+
+// How a goalie plays. mods: reach (added), lat (side-to-side speed, x), react (reaction delay, x),
+// low/high (reach added in the butterfly for low and high shots), roam (how keen they are to
+// leave the crease for a puck: lower is keener; 0.2 for everyone else).
+export const GOALIE_STYLES = {
+  hybrid: { id: 'hybrid', name: 'Hybrid', text: 'Balanced: no weak spots, no tricks.', mods: {} },
+  scrambler: { id: 'scrambler', name: 'Scrambler', text: 'Quick side to side and quick to react, with a little less reach.', mods: { lat: 1.15, reach: -0.5, react: 0.92 } },
+  butterfly: { id: 'butterfly', name: 'Butterfly', text: 'Seals the ice when down, but the top of the net opens up.', mods: { low: 2.5, high: -1.5 } },
+  wall: { id: 'wall', name: 'Wall', text: 'Big and square: covers more net, slower to move, stays home.', mods: { reach: 0.7, lat: 0.82, react: 1.1, roam: 0.45 } },
+  reader: { id: 'reader', name: 'Reader', text: 'Reads the shot early, but slow to get across for a pass.', mods: { react: 0.88, lat: 0.85 } },
+  puckhandler: { id: 'puckhandler', name: 'Puck-handler', text: 'Leaves the crease to play pucks behind the net whenever it can.', mods: { roam: -0.15 } },
 };
 
 export const GEAR = [
@@ -226,7 +238,7 @@ export const TEAMS = {
     color: '#7fd16b', color2: '#2f6b3a', recolor: { h1: 118, h2: 95, sat: 0.9, val: 0.92, sat2: 0.8, val2: 0.55 },
     diff: 0.12, bonus: { spd: -1, chk: -1 }, goalie: { rfx: 4, pos: 4 },
     names: { frost: 'Fern', thunder: 'Pip', stone: 'Oakley', goalie: 'Moss' },
-    subs: { frost: 'Birch', thunder: 'Skip', stone: 'Stump' }, // who plays the slot after you sign its skater
+    gstyle: 'scrambler', subs: { goalie: 'Thistle', frost: 'Birch', thunder: 'Skip', stone: 'Stump' }, // who plays the slot after you sign its skater
     style: 'Young and eager. They chase the puck in a pack.',
   },
   comets: {
@@ -236,7 +248,7 @@ export const TEAMS = {
     color: '#ff6f7d', color2: '#8261bd',
     diff: 0.35, bonus: {}, goalie: { rfx: 5, pos: 5 },
     names: { frost: 'Cinder', thunder: 'Blaze', stone: 'Ash', goalie: 'Smolder' },
-    subs: { frost: 'Flint', thunder: 'Spark', stone: 'Coal' }, // who plays the slot after you sign its skater
+    gstyle: 'butterfly', subs: { goalie: 'Ashby', frost: 'Flint', thunder: 'Spark', stone: 'Coal' }, // who plays the slot after you sign its skater
     style: 'Hot-headed scorers who shoot from everywhere.',
   },
   rams: {
@@ -245,7 +257,7 @@ export const TEAMS = {
     color: '#ffd45e', color2: '#a86b1d', recolor: { h1: 44, h2: 22, sat: 1.0, val: 1.05, sat2: 0.9, val2: 0.65 },
     diff: 0.55, bonus: { sht: 1, chk: 1 }, goalie: { rfx: 6, pos: 6 },
     names: { frost: 'Aurum', thunder: 'Gilda', stone: 'Horn', goalie: 'Bulwark' },
-    subs: { frost: 'Bullion', thunder: 'Brass', stone: 'Crag' }, // who plays the slot after you sign its skater
+    gstyle: 'wall', subs: { goalie: 'Ingot', frost: 'Bullion', thunder: 'Brass', stone: 'Crag' }, // who plays the slot after you sign its skater
     style: 'Heavy hitters with heavier slapshots.',
   },
   ravens: {
@@ -255,7 +267,7 @@ export const TEAMS = {
     color: '#9aa3b5', color2: '#2a2f3d', recolor: { h1: 220, h2: 220, sat: 0.12, val: 0.66, sat2: 0.15, val2: 0.4 },
     diff: 0.72, bonus: { agi: 1, pas: 1, chk: 1 }, goalie: { rfx: 7, pos: 7 },
     names: { frost: 'Corvin', thunder: 'Nyx', stone: 'Basalt', goalie: 'Grim' },
-    subs: { frost: 'Rook', thunder: 'Shade', stone: 'Onyx' }, // who plays the slot after you sign its skater
+    gstyle: 'puckhandler', subs: { goalie: 'Murk', frost: 'Rook', thunder: 'Shade', stone: 'Onyx' }, // who plays the slot after you sign its skater
     style: 'Disciplined, fast passing, punishing on the forecheck.',
   },
   royals: {
@@ -264,7 +276,7 @@ export const TEAMS = {
     color: '#c58cff', color2: '#43207a', recolor: { h1: 284, h2: 46, sat: 0.95, val: 0.92, sat2: 1.0, val2: 1.0 },
     diff: 0.9, bonus: { spd: 1, sht: 1, pas: 1, chk: 1 }, goalie: { rfx: 8, pos: 8 },
     names: { frost: 'Solenne', thunder: 'Aurelio', stone: 'Regalia', goalie: 'Crown' },
-    subs: { frost: 'Regent', thunder: 'Herald', stone: 'Bastion' }, // who plays the slot after you sign its skater
+    gstyle: 'reader', subs: { goalie: 'Squire', frost: 'Regent', thunder: 'Herald', stone: 'Bastion' }, // who plays the slot after you sign its skater
     style: 'Defending champions. No weaknesses, plenty of swagger.',
   },
 };
@@ -315,6 +327,19 @@ export const recruitKey = (teamId, kit) => `${teamId}_${ROLE[kit]}`;
 // The kit a rival slot plays with: that player's archetype and the team's super for the slot.
 export const slotDef = (teamId, kit) => makeDef(kit, RECRUITS[recruitKey(teamId, kit)]?.arch, ((TEAMS[teamId] || {}).elems || {})[kit]);
 export const KIT_OF_ROLE = { C: 'frost', W: 'thunder', D: 'stone' };
+
+// Rival goalies you can sign once you've beaten their team ('<team>_g'). Their club then plays
+// a backup. Halla is 'halla'.
+const GOALIE_PRICES = { lynx: 220, comets: 300, rams: 380, ravens: 460, royals: 560 };
+export const GOALIE_RECRUITS = Object.fromEntries(Object.entries(GOALIE_PRICES).map(([team, price]) => {
+  const t = TEAMS[team];
+  return [`${team}_g`, { key: `${team}_g`, team, name: t.names.goalie, base: { ...t.goalie }, gstyle: t.gstyle, price, art: t.art, title: 'Goaltender' }];
+}));
+// Who a goalie is: Halla or a signing. { id, name, base, style, art }
+export function goalieInfo(id) {
+  const g = GOALIE_RECRUITS[id];
+  return g ? { id, name: g.name, base: g.base, style: g.gstyle, art: g.art, recruit: g } : { id: 'halla', name: GOALIE.name, base: GOALIE.base, style: GOALIE.gstyle, art: null, recruit: null };
+}
 
 // Legends: free agents who turn up in Scouting now and then (see legends.js). Fáfnir and
 // Fenrir are twins: dressed together they have a bond from day one and a combo of their own.

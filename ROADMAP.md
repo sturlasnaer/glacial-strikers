@@ -24,7 +24,7 @@ Friends boards are live too: share a six-character code and get every board with
 
 The All-Star Game is in too: after round 2, the fans vote two mixed benches of the league's stars, with Skills Night before it. Breakaway has ghosts now, and any run can be sent to a friend as a challenge link.
 
-Since then: **Draft Day** (three prospects at season's end; the pick joins as a rookie whose potential speeds up their growth), a **career stats** page, and the **Weekly Cup** on every friends board. Then **supers and archetypes** (three new elements, Ember, Gale and Shadow, seven archetypes, mixed per player, with combos for every pair), the **legends** Fáfnir and Fenrir with their twin combo Ragnarök, and a stick hand for every player.
+Since then: **Draft Day** (three prospects at season's end; the pick joins as a rookie whose potential speeds up their growth), a **career stats** page, and the **Weekly Cup** on every friends board. Then **supers and archetypes** (three new elements, Ember, Gale and Shadow, seven archetypes, mixed per player, with combos for every pair), the **legends** Fáfnir and Fenrir with their twin combo Ragnarök, and a stick hand for every player. Then **goalies for hire** with six goaltending styles, a **living league** (rival draft picks and signings fill the gaps you leave, and rivals call with trade offers), and nine new achievements.
 
 Ideas for later:
 1. **Ghosts for Sniper** (the shots and the lit targets), if the others catch on.

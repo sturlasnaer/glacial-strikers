@@ -66,7 +66,7 @@ export class HUD {
     this.el.querySelector('#pause-btn').addEventListener('click', (e) => { e.stopPropagation(); this.app.pause(); });
     for (const i of [0, 1]) paint(this.el.querySelector('#d' + i), digit(match.score[i]));
     // every cut-in banner this match can show, recoloured before play rather than at the first ultimate
-    const keys = [...match.skaters, ...match.goalies].map((k) => [this.bannerKey(k), k.team === 0 ? (RECRUITS[k.who] ? 'homekit' : null) : teamId]);
+    const keys = [...match.skaters, ...match.goalies].map((k) => [this.bannerKey(k), this.bannerPal(k, teamId)]);
     Assets.warmBanners(keys);
     const rp = this.el.querySelector('#replay');
     rp.addEventListener('pointerdown', (e) => { e.preventDefault(); this.app.skipReplay(); });
@@ -104,13 +104,13 @@ export class HUD {
     const color = us ? '#2a9fb0' : teamInfo(this.teamId).color;
     const el = document.createElement('div');
     el.className = 'cutin ' + (us ? 'us' : 'them');
-    const id = (k) => (k.isGoalie ? 'goalie' : k.who);
+    const id = (k) => (k.isGoalie ? k.who || 'goalie' : k.who); // (our goalie by id, a rival's backup as 'sub_goalie')
     // portraits are drawn onto canvases: turning them into images mid-match stalled the frame
     const pics = [];
     const img = (k) => { pics.push(k); return `<canvas width="200" height="200" data-pic="${pics.length - 1}"></canvas>`; };
     const who = partner ? `${partner.name} + ${s.name}` : s.name;
     const name = title || t(s.def.ult.name);
-    const art = Assets.bannerCanvas(this.bannerKey(s), us ? (RECRUITS[s.who] ? 'homekit' : null) : this.teamId);
+    const art = Assets.bannerCanvas(this.bannerKey(s), this.bannerPal(s, this.teamId));
     if (partner) el.classList.add('combo');
     if (art) {
       el.classList.add('art');
@@ -132,10 +132,14 @@ export class HUD {
     if (k.team === 0 && !k.isGoalie && RECRUITS[k.who]) return k.sprite; // a signing's own banner
     if (k.team === 0 && ROOKIES[k.who]) return null; // a rookie: no banner art, the portrait band
     if (k.team === 0 && LEGENDS[k.who]) return LEGEND_ART.has(k.sprite) ? k.sprite : null;
+    if (k.team === 0 && k.isGoalie && k.art) return `${k.art}_g`; // a signed rival goalie's own banner
     if (k.team === 0) return ART_NAME[k.isGoalie ? 'goalie' : k.def.id];
     if (k.isGoalie) return k.art ? `${k.art}_g` : null;
     return k.sprite !== k.def.sprite ? k.sprite : null;
   }
+
+  // ...and its colours: a signing (skater or goalie) in our kit, a rival in theirs.
+  bannerPal(k, teamId) { return k.team === 0 ? (RECRUITS[k.who] || (k.isGoalie && k.look) ? 'homekit' : null) : teamId; }
 
   replayMode(on) {
     const r = this.el.querySelector('#replay');
@@ -278,11 +282,11 @@ export class HUD {
     if (img.dataset.src !== src) { img.dataset.src = src; img.src = src; }
   }
 
-  // Goalie mode: Halla's card (Wall of Ice is her meter) and the touch buttons for goaltending.
+  // Goalie mode: our goalie's card (Wall of Ice is the meter) and the touch buttons for goaltending.
   updateGoalie(g, m) {
     if (this.last.ctrl !== g) {
       this.last.ctrl = g;
-      face(this.el.querySelector('#pc-img'), 'goalie', 0, null, 88);
+      face(this.el.querySelector('#pc-img'), g.who || 'goalie', 0, null, 88);
       this.el.querySelector('#pc-name').textContent = g.name;
       this.el.querySelector('#pc-sta').firstChild.style.transform = 'scaleX(1)';
       if (!this.touch.hidden) {

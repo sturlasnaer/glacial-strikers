@@ -69,14 +69,14 @@ recordCareer(s, sum(0), false);
 const c = careerOf(s);
 check('career totals', c.skaters.frost.gp === 2 && c.skaters.frost.g === 2 && c.skaters.frost.a === 2 && c.skaters.frost.w === 1 && c.skaters.rk1.g === 2, c.skaters);
 check('only our players', !c.skaters.lynx_c);
-check('goalie line', c.goalie.gp === 2 && c.goalie.sv === 16 && c.goalie.sa === 18 && c.goalie.so === 2, c.goalie);
+check('goalie line', c.goalies.halla.gp === 2 && c.goalies.halla.sv === 16 && c.goalies.halla.sa === 18 && c.goalies.halla.so === 2, c.goalies);
 check('per season', c.skaters.frost.seasons[1].gp === 2);
 const rows = careerRows(s, rosterIds(s));
 check('rows by points', rows[0].id === 'frost' && rows[0].pts === 4 && rows.some((r) => r.id === 'thunder' && r.gp === 0), rows.map((r) => r.id + r.pts));
 
 const old = newSave();
 old.league.stats = { skaters: { 'home:frost': { key: 'home:frost', team: 'home', face: 'frost', gp: 5, g: 3, a: 2, hits: 1, steals: 0, shots: 9 } }, goalies: { home: { gp: 5, sa: 60, sv: 54, so: 1 } } };
-check('an old save starts from this season', careerOf(old).skaters.frost.g === 3 && careerOf(old).goalie.sv === 54);
+check('an old save starts from this season', careerOf(old).skaters.frost.g === 3 && careerOf(old).goalies.halla.sv === 54);
 
 // players from parts (Batch AJ): looks, recolouring through masks, head placement
 {
