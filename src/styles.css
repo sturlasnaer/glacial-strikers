@@ -138,7 +138,8 @@ img { image-rendering: auto; max-width: 100%; }
 .league-table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
 .league-table th { color: var(--ice); font-weight: normal; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; padding: 3px 4px; }
 .league-table td { text-align: center; padding: 4px; border-bottom: 1px solid var(--navy-3); }
-.league-table td.tm { text-align: left; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.league-table td.tm { text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 0; width: 44%; } /* (a table cell, so long names cut off instead of running into the numbers) */
+.league-table td.tm img { vertical-align: middle; margin-right: 6px; }
 .league-table td.pts { font-family: var(--display); font-size: 19px; color: var(--gold); }
 .league-table tr.us td { background: rgba(113, 220, 232, 0.12); }
 .league-table tr.cut td { border-bottom: 2px dashed var(--gold); }
@@ -548,6 +549,8 @@ body.in-hub .hub-body { background: linear-gradient(180deg, rgba(20, 35, 59, 0.8
 .line-row .btn { margin-left: auto; }
 .recruit .btn img { width: 16px !important; height: 16px !important; border-radius: 0; background: none; }
 .scout-head .muted { font-size: 12px; }
+.scout-team.agents .scout-head { flex-wrap: wrap; }
+.scout-team.agents .scout-head .muted { flex: 1 1 220px; }
 
 /* ---- clickable locker room ---- */
 body.in-hub.hub-room #screen { background: linear-gradient(rgba(8, 14, 26, 0.82), rgba(8, 14, 26, 0.82)), var(--locker) center / cover no-repeat, #0b1424; }
@@ -1026,3 +1029,8 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .around .move { color: var(--gold); }
 .camp-head { display: flex; align-items: flex-end; gap: 8px; }
 .camp-npc { height: 72px; width: auto; margin-top: -8px; image-rendering: pixelated; flex: none; }
+/* short screens (phones held sideways): a smaller trade call, so its buttons fit */
+@media (max-height: 520px) {
+  .trade-call img { width: 48px; height: 48px; }
+  .trade-call .tc-arrow { font-size: 22px; }
+}
