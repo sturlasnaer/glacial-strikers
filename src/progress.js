@@ -7,8 +7,9 @@ import {
 import { newLeague, migrateLeague } from './league.js';
 import { lookFor } from './modular.js';
 import { seasonStats } from './awards.js';
-import { rivalSub, setFills } from './slots.js';
+import { rivalSub, setFills, agedStats } from './slots.js';
 import { t } from './i18n.js';
+import { addNews } from './news.js';
 
 const KEY = 'glacial-strikers-save-v1';
 export const MAX_LEVEL = 10;
@@ -140,6 +141,7 @@ export const isSigned = (save, key) => !!save.roster[key] || !!(save.goalies && 
 export function recruitStatus(save, key) {
   if (save.roster[key]) return 'signed';
   if (save.tradedAway && save.tradedAway[key]) return 'traded';
+  if (save.retired && save.retired[key]) return 'retired';
   const r = RECRUITS[key];
   const rec = save.rivals && save.rivals[r.team];
   return rec && rec.wins > 0 ? 'open' : 'locked';
@@ -190,6 +192,7 @@ export function signRecruit(save, key) {
   const r = RECRUITS[key];
   if (!r || recruitStatus(save, key) !== 'open' || save.coins < r.price) return null;
   save.coins -= r.price;
+  addNews(save, { k: 'weSign', name: r.name, team: r.team });
   return addRecruit(save, key);
 }
 
@@ -273,6 +276,7 @@ export function signGoalie(save, key) {
   if (!g || goalieStatus(save, key) !== 'open' || save.coins < g.price) return null;
   save.coins -= g.price;
   (save.goalies ||= {})[key] = { level: Math.max(1, save.goalie.level - 1), exp: 0, gear: 'g_start' };
+  addNews(save, { k: 'weGoalie', name: g.name, team: g.team });
   return save.goalies[key];
 }
 // Goalies go to camp too: a new goaltending style, once a season.
@@ -324,7 +328,7 @@ export function matchConfig(save, teamId, stage, opts = {}) {
       // a slot whose skater you signed: whoever they brought in, a newcomer in their colours
       const sub = rivalSub(save, teamId, id);
       if (sub) return { def: sub.def, who: 'sub_' + id, stats: withBonus(sub.stats, t), name: sub.name, perks: [], sprite: sub.sprite, parts: sub.parts, hand: sub.hand };
-      return { def: slotDef(teamId, id), stats, name: t.names[id], perks: [], sprite: slotSprite(teamId, id), parts: slotLook(teamId, id), hand: RECRUITS[recruitKey(teamId, id)]?.hand };
+      return { def: slotDef(teamId, id), stats: agedStats(save, teamId, id, stats), name: t.names[id], perks: [], sprite: slotSprite(teamId, id), parts: slotLook(teamId, id), hand: RECRUITS[recruitKey(teamId, id)]?.hand };
     }),
     goalie: rivalGoalie(save, teamId),
     chem: Object.fromEntries(CAST_PAIRS.map((k) => [k, Math.min(3, (t.chem || 0) + (save.season > 1 ? 1 : 0))])),

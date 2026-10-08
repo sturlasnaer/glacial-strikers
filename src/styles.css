@@ -153,6 +153,10 @@ img { image-rendering: auto; max-width: 100%; }
 .fixture .fx-name .muted { font-size: 11px; }
 .fixture .fx-res { font-family: var(--display); font-size: 18px; }
 .around { display: grid; gap: 2px; font-size: 13px; }
+/* Around the Frostline: the league's news, newest first */
+.news { display: grid; gap: 3px; font-size: 12.5px; max-height: 260px; overflow-y: auto; }
+.news-row { display: grid; grid-template-columns: 20px 1fr auto; gap: 6px; align-items: center; }
+.news-row small { font-size: 11px; }
 .bracket-po { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 @media (max-width: 560px) { .bracket-po { grid-template-columns: 1fr; } }
 .po-game { background: rgba(11, 20, 36, 0.55); border: 2px solid var(--navy-3); border-radius: 6px; padding: 6px 8px; display: grid; gap: 3px; }
@@ -1019,7 +1023,7 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .trade-row .tr-cost { font-family: var(--display); font-size: 16px; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
 .trade-row:disabled { opacity: 0.45; cursor: default; }
 .trade-row.armed { box-shadow: 0 0 0 3px var(--gold); }
-.recruit.traded { opacity: 0.6; }
+.recruit.traded, .recruit.retired { opacity: 0.6; }
 /* a rival's trade offer after a match: yours, the swap arrows, theirs */
 .trade-call { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; margin: 4px 0; }
 .trade-call > div { display: grid; justify-items: center; text-align: center; gap: 2px; min-width: 0; }

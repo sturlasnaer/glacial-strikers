@@ -2,7 +2,7 @@
 // rival brought in to fill the hole (a Draft Day pick, or a free agent signed mid-season,
 // kept in save.rivalFills by 'team:kit'), or one of their reserves until then. They play in
 // the newcomer art (Batch AA) in the team's colours, under their own name and style.
-import { TEAMS, CHARACTERS, STAT_KEYS, recruitKey, makeDef, slotDef, slotLook } from './data.js';
+import { TEAMS, CHARACTERS, STAT_KEYS, STAR_AGES, recruitKey, makeDef, slotDef, slotLook } from './data.js';
 import { bodySprite } from './modular.js';
 
 // The save's fills, for the portraits (which don't see the save): set when a save loads.
@@ -15,8 +15,46 @@ export const teamHasParts = (teamId) => ['frost', 'thunder', 'stone'].some((k) =
 
 export const vacated = (save, teamId, kit) => {
   const k = recruitKey(teamId, kit);
-  return !!(save.roster[k] || (save.tradedAway && save.tradedAway[k]));
+  return !!(save.roster[k] || (save.tradedAway && save.tradedAway[k]) || (save.retired && save.retired[k]));
 };
+
+// Rival careers: every rival star has an age (the same in every save), a year older each
+// season. The young improve, the old decline, and at RETIRE_AT they hang up their skates
+// after the season's awards; their slot then goes to a draft pick or a signing like any
+// other you've emptied. (Players on your roster don't age: they grow by levels.)
+export const RETIRE_AT = 34;
+export function startAge(key) {
+  if (STAR_AGES[key]) return STAR_AGES[key];
+  let h = 2166136261;
+  for (const ch of key) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  return 21 + ((h >>> 0) % 11); // (anyone else: 21 to 31 in their first season)
+}
+export const ageOf = (save, key) => startAge(key) + ((save.season || 1) - 1);
+const curve = (a) => (a <= 25 ? (a - 25) * 0.6 : a <= 30 ? 0 : -(a - 30) * 0.8);
+// How much better (+) or worse (-) they are than in the first season, on their best stats.
+export const formShift = (save, key) => Math.round(curve(ageOf(save, key)) - curve(startAge(key)));
+// A star's numbers now: the slot's numbers, their three best moved by their form.
+export function agedStats(save, teamId, kit, stats) {
+  const d = formShift(save, recruitKey(teamId, kit));
+  if (!d) return stats;
+  const out = { ...stats };
+  for (const k of [...STAT_KEYS].sort((a, b) => out[b] - out[a]).slice(0, 3)) out[k] = Math.max(1, Math.min(12, out[k] + d));
+  return out;
+}
+// After a season's awards: the stars old enough retire. Returns [{ key, team, kit }].
+export function retireRivals(save) {
+  const out = [];
+  for (const teamId of Object.keys(TEAMS)) {
+    if (teamId === 'home' || !TEAMS[teamId].names) continue;
+    for (const kit of ['frost', 'thunder', 'stone']) {
+      const key = recruitKey(teamId, kit);
+      if (vacated(save, teamId, kit) || ageOf(save, key) < RETIRE_AT) continue;
+      (save.retired ||= {})[key] = save.season;
+      out.push({ key, team: teamId, kit, seasons: save.season });
+    }
+  }
+  return out;
+}
 export const fillOf = (save, teamId, kit) => (save.rivalFills && save.rivalFills[`${teamId}:${kit}`]) || null;
 
 // A fill's stats now: a draft pick grows each season after their first (more the higher
@@ -63,7 +101,7 @@ export function rosterShift(save, teamId) {
   if (!TEAMS[teamId] || teamId === 'home') return 0;
   let d = 0;
   for (const kit of ['frost', 'thunder', 'stone']) {
-    if (!vacated(save, teamId, kit)) continue;
+    if (!vacated(save, teamId, kit)) { d += formShift(save, recruitKey(teamId, kit)) * 0.012; continue; } // (a star's form)
     const f = fillOf(save, teamId, kit);
     d += f ? Math.min(0, SUM(fillStats(save, f)) - SUM(CHARACTERS[kit].base)) * 0.01 - 0.01 : -0.05;
   }

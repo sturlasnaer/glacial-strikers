@@ -7,6 +7,7 @@
 import { CHARACTERS, KIT_OF_ROLE, STAT_KEYS, ARCHETYPES, ELEMENTS, GOALIE_STYLES, setRookies, setFreeGoalies, makeDef } from './data.js';
 import { joinLevel, PERK_LEVELS, newMember, rosterIds } from './progress.js';
 import { randomLook } from './modular.js';
+import { addNews } from './news.js';
 
 export const MARKET_FROM = 3; // matches played before the agent calls
 export const REFRESH = 5; // new faces every this many matches
@@ -89,6 +90,7 @@ export function signAgent(save, i) {
     (save.freeGoalies ||= {})[id] = { name: a.name, base: a.base, style: a.style, blurb: a.blurb, price: a.price };
     setFreeGoalies(save.freeGoalies);
     (save.goalies ||= {})[id] = { level: a.level, exp: 0, gear: 'g_start' };
+    addNews(save, { k: 'weAgent', name: a.name, kit: 'goalie' });
     return id;
   }
   save.rookieN = (save.rookieN || 0) + 1;
@@ -101,5 +103,6 @@ export function signAgent(save, i) {
   const opts = makeDef(a.kit, a.arch, a.elem).perks;
   PERK_LEVELS.forEach((lv, k) => { if (m.level >= lv) m.perks.push(opts[k][a.perks[k]]); });
   save.roster[id] = m;
+  addNews(save, { k: 'weAgent', name: a.name, kit: a.kit });
   return id;
 }

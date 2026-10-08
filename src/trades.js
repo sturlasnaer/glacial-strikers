@@ -6,6 +6,7 @@
 // club.
 import { RECRUITS, ROOKIES, LEGENDS, TEAMS, member, KIT_OF_ROLE } from './data.js';
 import { rosterIds, recruitStatus, addRecruit } from './progress.js';
+import { addNews } from './news.js';
 
 export const TEAM_LIKES = {
   lynx: ['speedster', 'grinder'], comets: ['sniper', 'blueliner'], rams: ['enforcer', 'grinder'],
@@ -34,11 +35,12 @@ export function trade(save, give, get, coins = null) {
   const q = coins === null ? tradeQuote(save, give, get) : { ...tradeQuote(save, give, get), coins };
   if (save.coins < q.coins) return null;
   save.coins -= q.coins;
-  const team = RECRUITS[get].team, role = member(give).role;
+  const team = RECRUITS[get].team, role = member(give).role, gaveName = member(give).name;
   delete save.roster[give];
   (save.tradedAway ||= {})[give] = team; // (with that club's reserves now)
   if (save.lineup[role] === give) save.lineup[role] = KIT_OF_ROLE[role];
   addRecruit(save, get);
   (save.trades ||= []).push({ season: save.season, give, get, team, coins: q.coins });
+  addNews(save, { k: 'trade', team, name: RECRUITS[get].name, gave: gaveName });
   return { ...q, team: TEAMS[team] };
 }

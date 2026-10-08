@@ -2,11 +2,12 @@
 // club, one per position. Pick one and they join the roster as a rookie in our colours (the
 // Batch AA newcomer art). Rookies start below the line-up and raw, but potential (two to five
 // stars) makes them learn faster and lets their stats grow further than anyone's.
-import { CHARACTERS, ROOKIES, setRookies, KIT_OF_ROLE, TEAMS, STAT_KEYS, makeDef, ARCHETYPES, ELEMENTS, RIVAL_IDS } from './data.js';
+import { CHARACTERS, ROOKIES, setRookies, KIT_OF_ROLE, TEAMS, STAT_KEYS, makeDef, ARCHETYPES, ELEMENTS, RIVAL_IDS, recruitKey, RECRUITS } from './data.js';
 import { joinLevel, PERK_LEVELS, newMember } from './progress.js';
 import { randomLook } from './modular.js';
 import { leagueRivals } from './league.js';
 import { rivalDraft } from './moves.js';
+import { addNews } from './news.js';
 
 const NAMES = {
   C: ['Flick', 'Pivot', 'Quill', 'Marlo', 'Juno', 'Quinn', 'Tinsel', 'Sly', 'Pippa', 'Kestrel'],
@@ -95,6 +96,7 @@ export function draftPick(save, i) {
   PERK_LEVELS.forEach((lv, k) => { if (m.level >= lv) m.perks.push(opts[k][p.perks[k]]); });
   save.roster[id] = m;
   d.picked = i;
+  addNews(save, { k: 'weDraft', name: p.name, kit: p.kit });
   rivalDraft(save, d); // the other two go to rivals, first to fill the holes you left
   return id;
 }
@@ -102,5 +104,6 @@ export function draftPick(save, i) {
 // Who took the other two (for the line under the pick), and whether they fill a hole you left.
 export const otherPicks = (d, save = null) => d.prospects.map((p, i) => i).filter((i) => i !== d.picked).map((i, n) => {
   const f = save && save.rivalFills && save.rivalFills[`${d.rivals[n]}:${d.prospects[i].kit}`];
-  return { name: d.prospects[i].name, team: TEAMS[d.rivals[n]], fills: !!(f && f.how === 'draft' && f.name === d.prospects[i].name && f.season === d.season) };
+  const gone = save && save.retired && save.retired[recruitKey(d.rivals[n], d.prospects[i].kit)];
+  return { name: d.prospects[i].name, team: TEAMS[d.rivals[n]], fills: !!(f && f.how === 'draft' && f.name === d.prospects[i].name && f.season === d.season), replaces: gone ? RECRUITS[recruitKey(d.rivals[n], d.prospects[i].kit)].name : null };
 });

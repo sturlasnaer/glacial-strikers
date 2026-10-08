@@ -363,6 +363,13 @@ for (const [key, r] of Object.entries(RECRUITS)) {
   Object.assign(r, { key, name: t.names[r.kit], role: c.role, title: `${t.name.split(' ').slice(-1)[0].replace(/s$/, '')} ${ROLE_TITLE[c.role]}`, sprite: t.art ? `${t.art}_${ROLE[r.kit]}` : `newcomer_${ROLE[r.kit]}`, parts: (t.looks || {})[r.kit] || null, elem: (t.elems || {})[r.kit] || c.elem });
 }
 export const recruitKey = (teamId, kit) => `${teamId}_${ROLE[kit]}`;
+// How old each rival star is in a save's first season (slots.js ages them): the young ones
+// still improving, the old monarch near the end.
+export const STAR_AGES = {
+  lynx_c: 22, lynx_w: 21, lynx_d: 26, comets_c: 25, comets_w: 23, comets_d: 29, rams_c: 27, rams_w: 26, rams_d: 30,
+  ravens_c: 28, ravens_w: 24, ravens_d: 29, royals_c: 27, royals_w: 25, royals_d: 32, owls_c: 26, owls_w: 24, owls_d: 31,
+  moose_c: 28, moose_w: 22, moose_d: 27,
+};
 // The kit a rival slot plays with: that player's archetype and the team's super for the slot.
 export const slotDef = (teamId, kit) => makeDef(kit, RECRUITS[recruitKey(teamId, kit)]?.arch, ((TEAMS[teamId] || {}).elems || {})[kit]);
 export const KIT_OF_ROLE = { C: 'frost', W: 'thunder', D: 'stone' };

@@ -18,6 +18,11 @@ export const GUIDE = [
   { id: 'challenge', when: (s, x) => x.online && !!(s.ghosts && (s.ghosts.cones || s.ghosts.breakaway)) && s.record.played >= 3, target: '[data-tab="training"]', text: 'After a Cone Weave or Breakaway run, tap Challenge a friend and send them the link. They race your ghost.' },
   { id: 'supers', when: (s) => s.record.played >= 2, target: '[data-tab="team"]', text: 'Every player brings a style, with a trait that\'s always on, and a super: a skill and an ultimate. Mix them at the training camp: Change… on a Team card.' },
   { id: 'mixcombos', when: (s, x) => x.newCombo, target: '[data-tab="team"]', text: 'Different supers make different combos. Build chemistry between two players and their elements fire a combo of their own.' },
+  { id: 'market', when: (s, x) => x.marketReady, target: '[data-tab="team"]', text: 'Vigga the agent has free agents on her list: veterans, ready to play. They\'re in Team › Scouting, and the faces change every few matches.' },
+  { id: 'goalies', when: (s, x) => x.goalieTalk, target: '[data-tab="team"]', text: 'Their goalie will take your call too. A new style in net changes how a match plays: look in Scouting.' },
+  { id: 'trades', when: (s, x) => x.tradeReady, target: '[data-tab="team"]', text: 'Got a signing or a rookie you don\'t need? Trade them for a rival\'s player: Trade, next to the price in Scouting.' },
+  { id: 'gcamp', when: (s) => s.record.played >= 8 && s.coins >= 200, target: '[data-tab="team"]', text: 'Goalies go to camp too. Change style… on a goalie\'s card teaches them a new way to play the net, once a season.' },
+  { id: 'expansion', when: (s, x) => x.expansion, target: '[data-tab="tournament"]', text: 'Two new clubs this season: the Owls wait for your mistakes, the Moose run you over. Seven rounds to the playoffs now.' },
   { id: 'friends', when: (s, x) => x.online && s.record.played >= 4 && !((s.online && s.online.groups) || []).length, target: '[data-tab="training"]', text: 'Make a friends board under the cup in Training and share its code: the same boards with just your friends, every week.' },
 ];
 

@@ -22,9 +22,10 @@ import { draftOpen, draftPick, otherPicks, POTENTIAL_GRADE, DRAFT_LINES } from '
 import { careerOf, careerRows, careerGoalies } from './career.js';
 import { legendState, legendLeft, signLegend } from './legends.js';
 import { tradeable, tradeQuote, trade, TEAM_LIKES } from './trades.js';
-import { rivalSub, fillLook } from './slots.js';
+import { rivalSub, fillLook, vacated, ageOf, RETIRE_AT } from './slots.js';
 import { acceptOffer } from './moves.js';
 import { agentState, marketOpen, agentsLeft, signAgent } from './agents.js';
+import { latestNews } from './news.js';
 import { audio } from './audio.js';
 import { t } from './i18n.js';
 const VOLUMES = () => [[0, t('Off')], [0.35, t('Low')], [0.7, t('Mid')], [1, t('Full')]];
@@ -464,6 +465,10 @@ export class UI {
       online: onlineOn(s) && configured(),
       draftOpen: draftOpen(s),
       legendVisiting: !!(legendState(s).visiting && !s.roster[legendState(s).visiting]),
+      marketReady: marketOpen(s) && agentState(s).list.some((a) => s.coins >= a.price),
+      goalieTalk: Object.keys(GOALIE_RECRUITS).some((k) => goalieStatus(s, k) === 'open'),
+      tradeReady: tradeable(s).length > 0 && Object.keys(RECRUITS).some((k) => recruitStatus(s, k) === 'open'),
+      expansion: !!(s.league && s.league.teams && s.league.teams.some((id) => TEAMS[id] && TEAMS[id].expansion)),
       newCombo: lineupIds(s).some((a, i, l) => l.some((b, j) => j > i && !CAST_PAIRS.includes(pairKey(member(a).def.elem, member(b).def.elem)) && COMBOS[pairKey(member(a).def.elem, member(b).def.elem)])),
     });
     this.roomFit?.disconnect();
@@ -675,10 +680,39 @@ export class UI {
           ${last.length ? `<div class="label" style="margin:12px 0 4px;font-size:14px">${t('Around the league · round {n}', { n: L.results.length })}</div>
           <div class="around">${last.map((g) => `<div>${esc(short(g.a))} <b>${g.ga}–${g.gb}</b> ${esc(short(g.b))}</div>`).join('')}</div>` : ''}
           ${bracket}
+          ${this.newsHtml(s)}
         </div>
         <div style="min-width:0"><div class="label" style="margin-bottom:6px;font-size:14px">${t('Your schedule')}</div><div class="schedule">${schedule}</div>
           ${this.leadersHtml(L)}</div>
       </div>`;
+  }
+
+  // Around the Frostline: signings, draft picks, trades, retirements and champions, newest first.
+  newsHtml(s) {
+    const items = latestNews(s, 14);
+    if (!items.length) return '';
+    const tn = (id) => esc(TEAMS[id] ? TEAMS[id].name : CLUB.name);
+    const role = (kit) => (kit === 'goalie' ? t('Goalie') : CHARACTERS[kit] ? t(ROLE_NAME[CHARACTERS[kit].role]) : '').toLowerCase();
+    const line = (n) => {
+      const name = `<b>${esc(n.name || '')}</b>`;
+      switch (n.k) {
+        case 'rivalSign': return t('The {team} signed {name} ({role}).', { team: tn(n.team), name, role: role(n.kit) });
+        case 'rivalDraft': return t('The {team} drafted {name} ({role}).', { team: tn(n.team), name, role: role(n.kit) });
+        case 'retire': return t(n.n === 1 ? '{name} of the {team} retires after {n} season.' : '{name} of the {team} retires after {n} seasons.', { team: tn(n.team), name, n: n.n });
+        case 'weSign': return t('The {club} signed {name} from the {team}.', { club: esc(CLUB.nick), name, team: tn(n.team) });
+        case 'weGoalie': return t('The {club} signed {name}, the {team}\'s goalie.', { club: esc(CLUB.nick), name, team: tn(n.team) });
+        case 'weAgent': return t('The {club} signed free agent {name} ({role}).', { club: esc(CLUB.nick), name, role: role(n.kit) });
+        case 'weLegend': return t('The {club} signed the legend {name}!', { club: esc(CLUB.nick), name });
+        case 'weDraft': return t('The {club} drafted {name} ({role}).', { club: esc(CLUB.nick), name, role: role(n.kit) });
+        case 'trade': return t('Trade: {gave} to the {team} for {name}.', { gave: `<b>${esc(n.gave || '')}</b>`, team: tn(n.team), name });
+        case 'champion': return n.team === 'home' ? t('The {club} win the Frostline Cup!', { club: esc(CLUB.nick) }) : t('{team} win the Frostline Cup.', { team: tn(n.team) });
+        case 'expansion': return t('The Glacier Owls and Thunder Moose join the Frostline.');
+        default: return '';
+      }
+    };
+    const pic = (n) => (n.team && (TEAMS[n.team] || n.team === 'home') ? crest(n.team, 40) : Assets.icon(Assets.atlas.frames['icons/free_agents'] ? 'icons/free_agents' : 'icons/contract', 40));
+    return `<div class="label" style="margin:14px 0 4px;font-size:14px">${t('Around the Frostline')}</div>
+      <div class="news">${items.map((n) => `<div class="news-row"><img src="${pic(n)}" alt="" width="20" height="20"><span>${line(n)}</span><small class="muted">${t('S{s}', { s: n.s })}</small></div>`).join('')}</div>`;
   }
 
   // Scoring leaders this season, and the award winners once it's over.
@@ -858,7 +892,7 @@ export class UI {
           this.modal(`<h2>${t('{name} pulls on the {club} jersey!', { name: esc(p.name), club: esc(CLUB.nick) })}</h2>
             ${moment ? `<div class="jersey-moment" style="aspect-ratio:${moment.w}/${moment.h}">${moment.urls.map((u, k) => `<img src="${u}" alt="" style="animation-delay:${k * 0.55}s"${k === moment.urls.length - 1 ? ' class="last"' : ''}>`).join('')}</div>` : ''}
             <div class="card-head" style="margin:0"><img src="${portrait(id, 0, null, 152, 'grin')}" alt="" style="width:76px;height:76px"><div>
-            ${otherPicks(d, s).map((o) => `<p style="margin:0 0 4px">${o.fills ? t('The {team} took {name} to fill the gap you left.', { team: esc(o.team.name), name: esc(o.name) }) : t('The {team} took {name}.', { team: esc(o.team.name), name: esc(o.name) })}</p>`).join('')}
+            ${otherPicks(d, s).map((o) => `<p style="margin:0 0 4px">${o.replaces ? t('The {team} took {name} to replace {old}, who retired.', { team: esc(o.team.name), name: esc(o.name), old: esc(o.replaces) }) : o.fills ? t('The {team} took {name} to fill the gap you left.', { team: esc(o.team.name), name: esc(o.name) }) : t('The {team} took {name}.', { team: esc(o.team.name), name: esc(o.name) })}</p>`).join('')}
             <p class="muted" style="margin:0;font-size:13px">${t('Dress {name} at {role} from the Team tab, or before a match.', { name: esc(p.name), role: t(ROLE_NAME[role]).toLowerCase() })}</p></div></div>
             <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Later')}</button><button class="btn gold" id="dress-now">${t('Dress now')}</button></div>`, (m2, close2) => {
             this.click('#dress-now', () => { setLineup(s, id); writeSave(s); audio.sfx('confirm'); close2(); this.hub('team'); }, m2);
@@ -1352,8 +1386,8 @@ export class UI {
         const face = st === 'signed' ? portrait(k, 0, null, 96) : portrait(r.kit, 1, tid, 96);
         return `<div class="recruit ${st}">
           <img src="${face}" alt="">
-          <div style="min-width:0"><b>${esc(r.name)}</b><span class="muted">${t(ROLE_NAME[r.role])} · ${esc(top)}</span></div>
-          ${st === 'signed' ? `<span class="tag good">${t('Signed')}</span>` : st === 'traded' ? `<span class="tag">${t('With the {team}', { team: esc(TEAMS[s.tradedAway[k]].name.split(' ').slice(-1)[0]) })}</span>` : st === 'open' ? `<span class="row" style="gap:4px;margin:0;flex-wrap:nowrap"><button class="btn small ghost" data-trade="${k}" ${tradeable(s).length ? '' : 'disabled'} title="${esc(t('Trade one of your players for them'))}">${btnIcon('icons/trade')}${t('Trade')}</button><button class="btn small ${s.coins >= r.price ? 'gold' : 'ghost'}" data-sign="${k}"><img src="${ico('equipment_items/reward/coins', 40)}" alt="" width="16" height="16"> ${r.price}</button></span>` : `<span class="tag">${t('Locked')}</span>`}
+          <div style="min-width:0"><b>${esc(r.name)}</b><span class="muted">${t(ROLE_NAME[r.role])} · ${esc(top)} · ${st === 'retired' ? t('retired') : ageOf(s, k) >= RETIRE_AT - 1 ? t('age {n}, last season', { n: ageOf(s, k) }) : t('age {n}', { n: ageOf(s, k) })}</span></div>
+          ${st === 'signed' ? `<span class="tag good">${t('Signed')}</span>` : st === 'retired' ? `<span class="tag">${t('Retired')}</span>` : st === 'traded' ? `<span class="tag">${t('With the {team}', { team: esc(TEAMS[s.tradedAway[k]].name.split(' ').slice(-1)[0]) })}</span>` : st === 'open' ? `<span class="row" style="gap:4px;margin:0;flex-wrap:nowrap"><button class="btn small ghost" data-trade="${k}" ${tradeable(s).length ? '' : 'disabled'} title="${esc(t('Trade one of your players for them'))}">${btnIcon('icons/trade')}${t('Trade')}</button><button class="btn small ${s.coins >= r.price ? 'gold' : 'ghost'}" data-sign="${k}"><img src="${ico('equipment_items/reward/coins', 40)}" alt="" width="16" height="16"> ${r.price}</button></span>` : `<span class="tag">${t('Locked')}</span>`}
         </div>`;
       }).join('') + `<div class="recruit ${gst}">
           <img src="${gst === 'signed' ? portrait(gk, 0, null, 96) : portrait('goalie', 1, tid, 96)}" alt="">
@@ -2275,7 +2309,7 @@ export class UI {
     const tm = teamInfo(teamId);
     let i = 0, typing = null, shown = 0;
     const ours = (l) => portrait(l[1], 0, null, 420, expression('us', l[2], mood));
-    const gone = (id) => isSigned(this.app.save, recruitKey(teamId, id));
+    const gone = (id) => TEAMS[teamId] && TEAMS[teamId].names && vacated(this.app.save, teamId, id); // (signed, traded or retired)
     const theirs = (l) => portrait(gone(l[1]) ? 'sub_' + l[1] : l[1], 1, teamId, 420, expression('them', l[2], mood));
     const kip = Assets.atlas.npcs && Assets.atlas.npcs.announcer ? Assets.icon(Assets.atlas.npcs.announcer, 420) : ''; // Kip Vance calls the big games
     const r = this.set(`

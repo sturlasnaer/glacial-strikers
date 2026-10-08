@@ -7,7 +7,7 @@
 import { CHARACTERS, GOALIE, TEAMS, ROLE, member, slotDef, slotSprite, slotLook } from './data.js';
 import { effectiveStats, perkNames, goalieStats, chemLevel, lineupIds, homeGoalie, rivalGoalie } from './progress.js';
 import { toScreen, GOAL_X, MOUTH } from './rink.js';
-import { rivalSub } from './slots.js';
+import { rivalSub, agedStats } from './slots.js';
 import { norm, clamp, makeRng } from './util.js';
 import { Skater } from './entities.js';
 import { t } from './i18n.js';
@@ -82,7 +82,7 @@ export function createDrill(id, save, charId, opts = {}) {
     const stats = { ...(sub ? sub.stats : CHARACTERS[k].base) };
     for (const [s, v] of Object.entries(t.bonus || {})) stats[s] = Math.max(1, stats[s] + v);
     if (sub) return { def: sub.def, who: 'sub_' + k, stats, name: sub.name, perks: [], sprite: sub.sprite, parts: sub.parts, hand: sub.hand };
-    return { def: slotDef(awayTeam, k), stats, name: t.names[k], perks: [], sprite: slotSprite(awayTeam, k), parts: slotLook(awayTeam, k) };
+    return { def: slotDef(awayTeam, k), stats: agedStats(save, awayTeam, k, stats), name: t.names[k], perks: [], sprite: slotSprite(awayTeam, k), parts: slotLook(awayTeam, k) };
   };
   const cfg = {
     teams: [

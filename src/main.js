@@ -31,7 +31,8 @@ import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS
 import { rollLegend, legendState, STAY, joinLegend, LEGEND_LINES, twinsFirstTogether } from './legends.js';
 import { rivalSigning, rivalOffer } from './moves.js';
 import { refreshAgents } from './agents.js';
-import { teamHasParts, setFills } from './slots.js';
+import { addNews } from './news.js';
+import { teamHasParts, setFills, retireRivals } from './slots.js';
 import { useModular } from './modular.js';
 import { Quality } from './quality.js';
 import { offerDraft } from './draft.js';
@@ -910,6 +911,7 @@ class App {
       if (move) leagueOut.moves = [move];
       this.pendingOffer = rivalOffer(s);
       if (leagueOut.champion === 'home') { s.champion = true; becameChampion = true; s.cups = (s.cups || 0) + 1; }
+      if (leagueOut.champion) addNews(s, { k: 'champion', team: leagueOut.champion });
       s.stage = s.league.round;
     }
     if (c.daily) {
@@ -1046,6 +1048,7 @@ class App {
     const fresh = s.league.teams.filter((id) => TEAMS[id] && TEAMS[id].expansion && !before.has(id));
     if (fresh.length && !s.expansionSeen) {
       s.expansionSeen = true;
+      addNews(s, { k: 'expansion', teams: fresh });
       writeSave(s);
       Promise.all(fresh.map((id) => Assets.ensureTeam(id))).then(() => {
         this.scene = 'dialogue';
@@ -1196,6 +1199,8 @@ class App {
     const order = standings(L).map((r) => r.id);
     const list = computeAwards(s, L, order);
     L.awards = list;
+    // the season's over: the oldest rival stars retire (Draft Day fills their places)
+    for (const r of retireRivals(s)) addNews(s, { k: 'retire', team: r.team, name: RECRUITS[r.key].name, kit: r.kit, n: r.seasons });
     if (!list.length) { writeSave(s); return false; }
     s.awards ||= [];
     let ours = 0;

@@ -3,6 +3,7 @@
 // sooner. They join at your line-up's level, with the perks for the levels they skipped.
 import { LEGENDS, member } from './data.js';
 import { joinLevel, newMember, PERK_LEVELS } from './progress.js';
+import { addNews } from './news.js';
 
 // What's said when a legend turns up (over the reveal painting), when the second twin comes
 // looking for the first, and before the twins' first game side by side.
@@ -76,6 +77,7 @@ export function signLegend(save, key) {
   if (!L || st.visiting !== key || save.roster[key] || save.coins < L.price) return null;
   save.coins -= L.price;
   st.visiting = null;
+  addNews(save, { k: 'weLegend', name: L.name });
   return joinLegend(save, key);
 }
 

@@ -6,6 +6,7 @@ import { recruitStatus } from './progress.js';
 import { tradeable, playerValue, TEAM_LIKES, trade } from './trades.js';
 import { vacated, fillOf } from './slots.js';
 import { randomLook } from './modular.js';
+import { addNews } from './news.js';
 
 const RIVALS = RIVAL_IDS;
 const KITS = ['frost', 'thunder', 'stone'];
@@ -29,6 +30,7 @@ export function rivalDraft(save, d) {
     const need = RIVALS.find((tid) => !taken.has(tid) && holes(save, tid, true).includes(p.kit));
     const team = need || [d.rivals[n], ...RIVALS].find((tid) => !taken.has(tid));
     taken.add(team);
+    addNews(save, { k: 'rivalDraft', team, name: p.name, kit: p.kit });
     if (need) {
       fills(save)[`${team}:${p.kit}`] = { how: 'draft', name: p.name, kit: p.kit, arch: p.arch, elem: p.elem, hand: p.hand, parts: p.parts || null,
         base: { ...p.base }, special: p.special, potential: p.potential, season: d.season };
@@ -68,6 +70,7 @@ export function rivalSigning(save, rnd = Math.random) {
   const [team, kit] = pick(open, rnd);
   const f = freeAgent(save, kit, rnd);
   fills(save)[`${team}:${kit}`] = f;
+  addNews(save, { k: 'rivalSign', team, name: f.name, kit });
   return { team, kit, name: f.name };
 }
 
