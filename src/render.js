@@ -135,6 +135,7 @@ export class Renderer {
     const lap = ui.lap; // the resurfacer's lap before the title screen's match: nobody on the ice
     if (lap) this.drawLapSheen(ctx, lap);
     this.drawTwists(ctx, match, fx);
+    if (!lap) this.warmUp(match); // (gear recolours and heads, built ahead of their first use)
     // the linesman (Batch AG): not in drills, replays or the resurfacer's lap
     const L = !lap && !match.drill && !ui.replay && Assets.atlas.linesman ? this.official(match, fx) : null;
     this.puckHeld = !!(L && L.holding(match)); // (in his hand: his art draws it)
@@ -1139,6 +1140,40 @@ export class Renderer {
   // True gear recolours, when the sprite pack has gear masks for this frame: red mask
   // pixels are the stick, green the boots, blue the blades. Each is reshaded in the
   // gear's colour by the original pixel's brightness, keeping the dark outlines.
+  // Everything a match will need drawn from pixels, built a little each frame (within about
+  // 2 ms) from the start: each geared skater's recoloured poses, and each head of a player made
+  // from parts. Built the first time a pose showed instead, it could cost a dropped frame.
+  warmUp(match) {
+    if (this.warmFor !== match) {
+      this.warmFor = match;
+      const q = [];
+      for (const s of match.skaters) {
+        const set = Assets.atlas.skaters[this.spriteOf(s)];
+        const kit = set && set[s.team === 0 ? 'home' : 'away'];
+        const pages = s.team === 0 ? (s.look ? Assets.pagesFor(s.look) : Assets.clubPages()) : this.awayPages;
+        if (kit && s.gear && (GEAR_LOOK[s.gear.stick] || GEAR_LOOK[s.gear.skates])) {
+          const ids = [];
+          for (const [k, v] of Object.entries(kit)) {
+            if (v && v.frames && !Array.isArray(v.frames)) ids.push(...Object.values(v.frames)); // the eight directions
+            else if (k.startsWith('stride') && v) ids.push(...v.frames, v.stop, v.glide);
+            else if (k === 'hit' && v) ids.push(...Object.values(v).flat());
+            else if (k === 'signature' && Array.isArray(v)) ids.push(...v);
+          }
+          for (const id of new Set(ids)) q.push(() => this.touch(this.gearFrame(id, pages, s.gear)));
+        }
+        const M = Assets.atlas.modular, views = s.parts && M && M.heads[s.parts.head];
+        if (views) for (const st of Object.values(views)) for (const id of Object.values(st)) q.push(() => this.touch(Assets.partsCanvas(id, s.parts)));
+      }
+      this.warmQueue = q;
+    }
+    const t0 = performance.now();
+    while (this.warmQueue.length && performance.now() - t0 < 2) this.warmQueue.shift()();
+  }
+
+  // Draw a new canvas once, tiny and off to the side, so its first real draw isn't also its
+  // upload to the GPU.
+  touch(c) { if (c && this.ctx) this.ctx.drawImage(c, 0, 0, 1, 1, -64, -64, 1, 1); return c; }
+
   gearFrame(id, pages, gear) {
     const st = GEAR_LOOK[gear.stick], sk = GEAR_LOOK[gear.skates];
     if (!st && !sk) return null;

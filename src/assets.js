@@ -11,8 +11,10 @@ import { recolorParts, headPlacement } from './modular.js';
 const BASE = new URL('assets/', document.baseURI).href;
 const INLINE = typeof window !== 'undefined' && window.__INLINE; // single-file offline build
 
-// Page groups loaded at start and kept through every scene.
-const CORE = ['home', 'away', 'title', 'icons_z', 'allstar', 'icons_ac', 'legends', 'abilities_al', 'linesman'];
+// Page groups loaded at start and kept through every scene; and the ones every match needs,
+// loaded with the rival's (the newer supers' effects, the linesman).
+const CORE = ['home', 'away', 'title', 'icons_z', 'allstar', 'icons_ac', 'legends'];
+const MATCH = ['abilities_al', 'linesman'];
 
 export const Assets = {
   atlas: null,
@@ -31,8 +33,7 @@ export const Assets = {
     const atlas = INLINE ? INLINE['gfx/atlas.json'] : await (await fetch(BASE + 'gfx/atlas.json')).json();
     this.atlas = atlas;
     this.pages = new Array(atlas.pages.length);
-    // (the icon pages are small and the menus use them everywhere: award, plan, challenge and online icons, the All-Star crest;
-    // the newer supers' effects and the linesman are in every match)
+    // (the icon pages are small and the menus use them everywhere: award, plan, challenge and online icons, the All-Star crest)
     const core = atlas.pages.map((p, i) => i).filter((i) => CORE.includes(atlas.pages[i].group));
     const glass = atlas.arena && atlas.arena.glass && atlas.arena.glass.file;
     const files = [...core.map((i) => atlas.pages[i].file), ...(glass ? [glass] : []), 'gfx/rink_backdrop.webp'];
@@ -69,6 +70,7 @@ export const Assets = {
     const t = TEAMS[teamId];
     const jobs = [];
     if (t && t.art) jobs.push(this.loadGroup('rival_' + t.art));
+    for (const g of MATCH) jobs.push(this.loadGroup(g));
     if (t && t.art && this.needNewcomers) jobs.push(this.loadGroup('newcomers')); // (a signed slot's newcomer)
     if (this.partsFor && this.partsFor(teamId)) jobs.push(this.loadGroup('parts')); // (a fill made from parts, in their colours)
     if (arena && arena !== 'home') jobs.push(this.ensureArena(arena));
@@ -123,6 +125,7 @@ export const Assets = {
     for (const id of keep.teams || []) { const t = TEAMS[id]; if (t && t.art) groups.add('rival_' + t.art); }
     if (this.needNewcomers && (keep.teams || []).length) groups.add('newcomers');
     if (this.partsFor && (keep.teams || []).some(this.partsFor)) groups.add('parts');
+    if ((keep.teams || []).length) for (const g of MATCH) groups.add(g); // (in a match)
     if (keep.gear) { groups.add('gearmask'); groups.add('legends_gearmask'); if (this.needNewcomers) groups.add('newcomer_gearmask'); }
     const released = new Set();
     a.pages.forEach((p, i) => { if (this.pages[i] && !groups.has(p.group)) { released.add(this.pages[i]); this.pages[i] = null; this.forget(p.file); } });
@@ -388,8 +391,8 @@ export const Assets = {
     const bf = body && this.atlas.frames[body.body], ff = faceId && this.atlas.frames[faceId];
     const page = bf && this.pagesFor(teamId)[bf[0]];
     if (!bf || !ff || !page) return '';
-    const key = `parts|${look.body}|${look.head}|${look.skin}|${look.hair}|${faceId}|${size}|${teamId}`;
-    if (this.iconCache.has(key)) return this.iconCache.get(key);
+    const key = `parts|${look.body}|${look.head}|${look.skin}|${look.hair}|${faceId}|${size}|${teamId}${this.canvasMode ? '|c' : ''}`;
+    if (this.iconCache.has(key)) return this.iconCache.get(key); // (as a canvas mid-match, as a PNG in menus)
     const face = this.partsCanvas(faceId, look);
     if (!face) return '';
     const c = document.createElement('canvas'); c.width = size; c.height = size;
@@ -402,7 +405,7 @@ export const Assets = {
     const ox = (size - fw * k) / 2, oy = (size - h * k) / 2 - top * k;
     ctx.drawImage(page, fx, fy, fw, fh, ox, oy, fw * k, fh * k);
     ctx.drawImage(face, ox + (a.x - ff[5]) * k, oy + (a.y - ff[6]) * k, ff[3] * k, ff[4] * k);
-    if (this.canvasMode) return c;
+    if (this.canvasMode) { this.iconCache.set(key, c); return c; }
     const url = c.toDataURL('image/png');
     this.iconCache.set(key, url);
     return url;
