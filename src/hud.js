@@ -2,10 +2,19 @@
 
 import { Assets } from './assets.js';
 import { POWER_INFO, TEAMS, ART_NAME, RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, teamInfo } from './data.js';
-import { portrait, crest, keyGlyphs } from './ui.js';
+import { portrait, crest, keyGlyphs, portraitCanvas } from './ui.js';
 import { t } from './i18n.js';
 
-const digit = (n) => Assets.icon(`hud_elements/score/${Math.min(5, n)}`, 96);
+// Everything the HUD shows mid-match is drawn onto canvases: turning a picture into a PNG
+// (toDataURL) makes the browser wait for the GPU, a visible stall on phones.
+const paint = (cv, src) => {
+  const x = cv && cv.getContext('2d');
+  if (!x) return;
+  x.clearRect(0, 0, cv.width, cv.height);
+  if (src) x.drawImage(src, 0, 0, cv.width, cv.height);
+};
+const digit = (n) => Assets.iconCanvas(`hud_elements/score/${Math.min(5, n)}`, 96);
+const face = (cv, ...args) => paint(cv, portraitCanvas(...args));
 
 export class HUD {
   constructor(app) {
@@ -29,16 +38,16 @@ export class HUD {
       <div class="scoreboard${match.bigGame ? ' gold' : ''}" ${drill ? 'hidden' : ''}>
         <img class="crest" src="${crest('home', 72)}" alt="">
         <span class="abbr" style="color:${TEAMS.home.color}">${TEAMS.home.short}</span>
-        <img class="digit" id="d0" src="${digit(0)}" alt="0">
+        <canvas class="digit" id="d0" width="96" height="96" aria-label="0"></canvas>
         <div class="mid">${t('FIRST{br}TO 5', { br: '<br>' })}</div>
-        <img class="digit" id="d1" src="${digit(0)}" alt="0">
+        <canvas class="digit" id="d1" width="96" height="96" aria-label="0"></canvas>
         <span class="abbr" style="color:${team.color}">${team.short}</span>
         <img class="crest" src="${crest(teamId, 72)}" alt="">
       </div>
-      <div class="pcard"><img id="pc-img" alt=""><div><div class="nm" id="pc-name"></div>
+      <div class="pcard"><canvas id="pc-img" width="88" height="88"></canvas><div><div class="nm" id="pc-name"></div>
         <div class="bars"><div class="bar" id="pc-sta"><i></i></div><div class="bar ult" id="pc-ult"><i></i></div></div></div></div>
       ${opts.versus ? `<div class="pcard p2"><div><div class="nm" id="pc2-name"></div>
-        <div class="bars"><div class="bar" id="pc2-sta"><i></i></div><div class="bar ult" id="pc2-ult"><i></i></div></div></div><img id="pc2-img" alt=""></div>` : ''}
+        <div class="bars"><div class="bar" id="pc2-sta"><i></i></div><div class="bar ult" id="pc2-ult"><i></i></div></div></div><canvas id="pc2-img" width="88" height="88"></canvas></div>` : ''}
       <div class="replay" id="replay" hidden>
         <div class="rp-bar top"><span class="rp-tag"><i></i>${t('REPLAY')}</span></div>
         <div class="rp-bar bottom"><button class="rp-skip" id="rp-skip">${t('Skip')} ▸</button></div>
@@ -55,6 +64,10 @@ export class HUD {
         : match.goalieMode ? `${keyGlyphs('J')} ${t('block / pass')} · ${keyGlyphs('K')} ${t('dive / clear')} · ${keyGlyphs('Shift')} ${t('quick feet')}<br>${keyGlyphs('U')} ${t('poke check')} · ${keyGlyphs('I')} ${t('Wall of Ice')} · ${keyGlyphs('Esc')} ${t('pause')}`
         : `${keyGlyphs('J')} ${t('shoot/check')} · ${keyGlyphs('K')} ${t('pass/switch')} · ${keyGlyphs('Shift')} ${t('sprint')}<br>${keyGlyphs('U')} ${t('skill')} · ${keyGlyphs('I')} ${t('ultimate')} · ${keyGlyphs('Esc')} ${t('pause')}`}</div>`;
     this.el.querySelector('#pause-btn').addEventListener('click', (e) => { e.stopPropagation(); this.app.pause(); });
+    for (const i of [0, 1]) paint(this.el.querySelector('#d' + i), digit(match.score[i]));
+    // every cut-in banner this match can show, recoloured before play rather than at the first ultimate
+    const keys = [...match.skaters, ...match.goalies].map((k) => [this.bannerKey(k), k.team === 0 ? (RECRUITS[k.who] ? 'homekit' : null) : teamId]);
+    Assets.warmBanners(keys);
     const rp = this.el.querySelector('#replay');
     rp.addEventListener('pointerdown', (e) => { e.preventDefault(); this.app.skipReplay(); });
     this.tickerT = 0;
@@ -92,16 +105,23 @@ export class HUD {
     const el = document.createElement('div');
     el.className = 'cutin ' + (us ? 'us' : 'them');
     const id = (k) => (k.isGoalie ? 'goalie' : k.who);
-    const img = (k) => `<img src="${portrait(id(k), k.team, this.teamId, 320)}" alt="">`;
+    // portraits are drawn onto canvases: turning them into images mid-match stalled the frame
+    const pics = [];
+    const img = (k) => { pics.push(k); return `<canvas width="200" height="200" data-pic="${pics.length - 1}"></canvas>`; };
     const who = partner ? `${partner.name} + ${s.name}` : s.name;
     const name = title || t(s.def.ult.name);
-    const art = Assets.banner(this.bannerKey(s), us ? (RECRUITS[s.who] ? 'homekit' : null) : this.teamId);
+    const art = Assets.bannerCanvas(this.bannerKey(s), us ? (RECRUITS[s.who] ? 'homekit' : null) : this.teamId);
     if (partner) el.classList.add('combo');
     if (art) {
       el.classList.add('art');
-      el.innerHTML = `<div class="band" style="--c:${color}"><img class="bn" src="${art}" alt="">${partner ? `<span class="pair">${img(partner)}</span>` : ''}<div class="txt"><small>${who}</small><b>${name}</b></div></div>`;
+      el.innerHTML = `<div class="band" style="--c:${color}"><canvas class="bn" width="${art.width}" height="${art.height}"></canvas>${partner ? `<span class="pair">${img(partner)}</span>` : ''}<div class="txt"><small>${who}</small><b>${name}</b></div></div>`;
     } else {
       el.innerHTML = `<div class="band" style="--c:${color}">${partner ? `<span class="pair">${img(partner)}${img(s)}</span>` : img(s)}<div class="txt"><small>${who}</small><b>${name}</b></div></div>`;
+    }
+    if (art) paint(el.querySelector('canvas.bn'), art);
+    for (const cv of el.querySelectorAll('canvas[data-pic]')) {
+      const k = pics[+cv.dataset.pic], src = portraitCanvas(id(k), k.team, this.teamId, 200);
+      if (src) cv.getContext('2d').drawImage(src, 0, 0);
     }
     box.appendChild(el);
     setTimeout(() => el.remove(), 1300);
@@ -148,10 +168,11 @@ export class HUD {
     let sub = '';
     if (s) {
       const assist = info.assists.length ? ` <span style="font-size:.7em;color:#c3d3ea">${t('from {names}', { names: info.assists.map((a) => a.name).join(' & ') })}</span>` : '';
-      sub = `<div class="sub"><img src="${portrait(s.who, s.team, this.teamId, 96)}" alt="">${s.name}${assist}</div>`;
+      sub = `<div class="sub"><canvas class="face" width="96" height="96"></canvas>${s.name}${assist}</div>`;
     }
     const kind = info.kind === 'onetimer' ? t('ONE-TIMER!') : info.kind === 'zero' ? t('ABSOLUTE ZERO!') : info.kind === 'thunderclap' ? t('THUNDERCLAP!') : info.power ? t(POWER_INFO[info.power].name).toUpperCase() + '!' : '';
     this.banner(`<div class="big" style="color:${color}">${t('GOAL!')}</div>${kind ? `<div class="small">${kind}</div>` : ''}${sub}`, 3);
+    if (s) face(this.bannerEl.querySelector('canvas.face'), s.who, s.team, this.teamId, 96);
   }
 
   update(dt) {
@@ -170,8 +191,8 @@ export class HUD {
       if (this.last['s' + i] !== m.score[i]) {
         this.last['s' + i] = m.score[i];
         const d = this.el.querySelector('#d' + i);
-        d.src = digit(m.score[i]);
-        d.alt = String(m.score[i]);
+        paint(d, digit(m.score[i]));
+        d.setAttribute('aria-label', String(m.score[i]));
         d.classList.remove('bump'); void d.offsetWidth; d.classList.add('bump');
       }
     }
@@ -180,7 +201,7 @@ export class HUD {
     if (c) {
       if (this.last.ctrl !== c) {
         this.last.ctrl = c;
-        this.el.querySelector('#pc-img').src = portrait(c.who, 0, null, 88);
+        face(this.el.querySelector('#pc-img'), c.who, 0, null, 88);
         this.el.querySelector('#pc-name').textContent = (this.versus ? 'P1 · ' : '') + c.name;
         this.updateTouchIcons(c);
       }
@@ -198,7 +219,7 @@ export class HUD {
       if (c2) {
         if (this.last.ctrl2 !== c2) {
           this.last.ctrl2 = c2;
-          this.el.querySelector('#pc2-img').src = portrait(c2.who, 1, this.teamId, 88);
+          face(this.el.querySelector('#pc2-img'), c2.who, 1, this.teamId, 88);
           this.el.querySelector('#pc2-name').textContent = 'P2 · ' + c2.name;
         }
         this.el.querySelector('#pc2-sta').firstChild.style.transform = `scaleX(${c2.stamina / c2.d.staminaMax})`;
@@ -261,7 +282,7 @@ export class HUD {
   updateGoalie(g, m) {
     if (this.last.ctrl !== g) {
       this.last.ctrl = g;
-      this.el.querySelector('#pc-img').src = portrait('goalie', 0, null, 88);
+      face(this.el.querySelector('#pc-img'), 'goalie', 0, null, 88);
       this.el.querySelector('#pc-name').textContent = g.name;
       this.el.querySelector('#pc-sta').firstChild.style.transform = 'scaleX(1)';
       if (!this.touch.hidden) {

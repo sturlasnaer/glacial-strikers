@@ -211,6 +211,30 @@ export const Assets = {
 
   // Cut-in banner image URL for a character key ('nix', 'ember_comets_c', ...), in the
   // team's colours. Returns null until the image has loaded.
+  // The same banner as something drawable (an image, or the recoloured canvas): no encoding,
+  // for the cut-ins mid-match. Null until it's loaded (warmBanners loads them ahead).
+  bannerCanvas(key, teamId) {
+    const file = key && this.atlas.banners && this.atlas.banners[key];
+    if (!file) return null;
+    const ck = key + '|' + (teamId || '');
+    this.bannerCanvasCache ||= new Map();
+    if (this.bannerCanvasCache.has(ck)) return this.bannerCanvasCache.get(ck);
+    const img = this.images.get(file);
+    if (!img) { this.image(file).catch(() => {}); return null; }
+    const t = teamId && (TEAMS[teamId] || PALETTES[teamId]);
+    const out = t && t.recolor ? recolorPage(img, t.recolor) : img;
+    if (this.bannerCanvasCache.size > 24) this.bannerCanvasCache.delete(this.bannerCanvasCache.keys().next().value);
+    this.bannerCanvasCache.set(ck, out);
+    return out;
+  },
+
+  // Load and recolour a match's cut-in banners ahead of time, one every few frames.
+  warmBanners(list) {
+    list.filter(([key]) => key && this.atlas.banners && this.atlas.banners[key]).forEach(([key, teamId], i) => {
+      this.image(this.atlas.banners[key]).then(() => setTimeout(() => this.bannerCanvas(key, teamId), 120 * i)).catch(() => {});
+    });
+  },
+
   banner(key, teamId) {
     const file = this.atlas.banners && this.atlas.banners[key];
     if (!file) return null;
@@ -244,6 +268,14 @@ export const Assets = {
     const pages = opts.pages || this.pages;
     if (!pages[pi]) return;
     const k = scale / s;
+    if (!opts.rot && opts.alpha === undefined && !opts.blend) {
+      // the common case (crowds, skaters, props): no save/restore, which phones feel when it's
+      // hundreds of sprites a frame. A mirror is two exact flips of the x axis.
+      const sq = opts.squash || 1, w = fw * k, h = fh * k * sq, top = y - py * k * sq;
+      if (opts.flip) { ctx.scale(-1, 1); ctx.drawImage(pages[pi], fx, fy, fw, fh, -x - px * k, top, w, h); ctx.scale(-1, 1); }
+      else ctx.drawImage(pages[pi], fx, fy, fw, fh, x - px * k, top, w, h);
+      return;
+    }
     ctx.save();
     ctx.translate(x, y);
     if (opts.rot) ctx.rotate(opts.rot);
@@ -340,19 +372,65 @@ export const Assets = {
     const ox = (size - fw * k) / 2, oy = (size - h * k) / 2 - top * k;
     ctx.drawImage(page, fx, fy, fw, fh, ox, oy, fw * k, fh * k);
     ctx.drawImage(face, ox + (a.x - ff[5]) * k, oy + (a.y - ff[6]) * k, ff[3] * k, ff[4] * k);
+    if (this.canvasMode) return c;
     const url = c.toDataURL('image/png');
     this.iconCache.set(key, url);
     return url;
   },
 
+  // A frame's pixels in the colours of a page set, on a CPU canvas for pixel work (the gear
+  // recolours). Read from the original page and recoloured here: reading a recoloured page
+  // back off the GPU would stall the frame.
+  framePixels(id, pages) {
+    const f = this.atlas.frames[id];
+    if (!f) return null;
+    const [pi, fx, fy, fw, fh] = f;
+    const orig = this.pages[pi];
+    let pal = null;
+    if (pages !== this.pages) for (const [pid, r] of this.recolored) if (r.pages === pages) pal = pid;
+    const src = pal && !orig ? pages[pi] : orig; // (an original that was let go: read the copy)
+    if (!src) return null;
+    const ctx = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+    ctx.canvas.width = fw; ctx.canvas.height = fh;
+    ctx.drawImage(src, fx, fy, fw, fh, 0, 0, fw, fh);
+    if (pal && src === orig) {
+      const rc = pal === 'club' ? PALETTES.club.recolor : (TEAMS[pal] || PALETTES[pal] || {}).recolor;
+      if (rc && pal === 'club') recolorHomeIn(ctx, rc, [[0, 0, fw, fh]]);
+      else if (rc) recolorPageIn(ctx, rc);
+    }
+    return ctx;
+  },
+
+  // A frame fitted in a square, as a canvas: for pictures shown mid-match (the ultimate
+  // cut-ins), where turning it into a PNG first would stall the frame. Cached.
+  iconCanvas(id, size = 96, teamId = null, opts = {}) {
+    const key = `${id}|${size}|${teamId}|${opts.flip ? 1 : 0}|${opts.crop || ''}`;
+    this.canvasCache ||= new Map();
+    if (this.canvasCache.has(key)) return this.canvasCache.get(key);
+    const c = this.iconDraw(id, size, teamId, opts);
+    if (!c) return null;
+    if (this.canvasCache.size > 60) this.canvasCache.delete(this.canvasCache.keys().next().value);
+    this.canvasCache.set(key, c);
+    return c;
+  },
+
   icon(id, size = 96, teamId = null, opts = {}) {
+    if (this.canvasMode) return this.iconCanvas(id, size, teamId, opts); // (see portraitCanvas in ui.js)
     const key = `${id}|${size}|${teamId}|${opts.flip ? 1 : 0}|${opts.crop || ''}`;
     if (this.iconCache.has(key)) return this.iconCache.get(key);
+    const c = this.iconDraw(id, size, teamId, opts);
+    if (!c) return '';
+    const url = c.toDataURL('image/png');
+    this.iconCache.set(key, url);
+    return url;
+  },
+
+  iconDraw(id, size, teamId, opts) {
     const f = this.atlas.frames[id];
-    if (!f) return '';
+    if (!f) return null;
     const [pi, fx, fy, fw, fh] = f;
     const page = this.pagesFor(teamId)[pi];
-    if (!page) return '';
+    if (!page) return null;
     const c = document.createElement('canvas');
     c.width = size; c.height = size;
     const ctx = c.getContext('2d');
@@ -362,9 +440,7 @@ export const Assets = {
     const k = size / Math.max(sw, sh);
     if (opts.flip) { ctx.translate(size, 0); ctx.scale(-1, 1); }
     ctx.drawImage(page, sx, sy, sw, sh, (size - sw * k) / 2, (size - sh * k) / 2, sw * k, sh * k);
-    const url = c.toDataURL('image/png');
-    this.iconCache.set(key, url);
-    return url;
+    return c;
   },
 };
 
@@ -393,11 +469,26 @@ function colorMemo() {
   };
 }
 
-function recolorHome(img, rc, rects) {
+// Recolouring works on a CPU-side canvas (pixel reads), but what's drawn every frame must be
+// an ordinary canvas: a willReadFrequently canvas used as a drawing source is uploaded to the
+// GPU on every draw, and a page is 2048 px square.
+function cpuCanvas(img, w = img.width, h = img.height) {
   const c = document.createElement('canvas');
-  c.width = img.width; c.height = img.height;
+  c.width = w; c.height = h;
   const ctx = c.getContext('2d', { willReadFrequently: true });
   ctx.drawImage(img, 0, 0);
+  return ctx;
+}
+function gpuCopy(c) {
+  const out = document.createElement('canvas');
+  out.width = c.width; out.height = c.height;
+  out.getContext('2d').drawImage(c, 0, 0);
+  return out;
+}
+const recolorHome = (img, rc, rects) => { const ctx = cpuCanvas(img); recolorHomeIn(ctx, rc, rects); return gpuCopy(ctx.canvas); };
+const recolorPage = (img, rc) => { const ctx = cpuCanvas(img); recolorPageIn(ctx, rc); return gpuCopy(ctx.canvas); };
+
+function recolorHomeIn(ctx, rc, rects) {
   const T = rc.trim, J = rc.jersey;
   const memo = colorMemo();
   for (const [x, y, w, h] of rects) {
@@ -428,17 +519,13 @@ function recolorHome(img, rc, rects) {
     }
     ctx.putImageData(data, x, y);
   }
-  return c;
 }
 
 // Shift the coral (primary) and violet (secondary) jersey colours of the away art.
 // recolor: { h1, h2, sat, val } — target hues in degrees, saturation/value multipliers.
-function recolorPage(img, rc) {
-  if (rc.mode === 'home') return recolorHome(img, rc, [[0, 0, img.width, img.height]]);
-  const c = document.createElement('canvas');
-  c.width = img.width; c.height = img.height;
-  const ctx = c.getContext('2d', { willReadFrequently: true });
-  ctx.drawImage(img, 0, 0);
+function recolorPageIn(ctx, rc) {
+  const c = ctx.canvas;
+  if (rc.mode === 'home') return recolorHomeIn(ctx, rc, [[0, 0, c.width, c.height]]);
   const data = ctx.getImageData(0, 0, c.width, c.height);
   const d = data.data;
   const h1 = rc.h1 / 360, h2 = (rc.h2 ?? rc.h1) / 360;
@@ -471,7 +558,6 @@ function recolorPage(img, rc) {
     memo.set(rgb, (d[i] << 16) | (d[i + 1] << 8) | d[i + 2]); // as stored (rounded)
   }
   ctx.putImageData(data, 0, 0);
-  return c;
 }
 
 function hsv2rgb(h, s, v) {

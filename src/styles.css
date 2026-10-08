@@ -354,14 +354,14 @@ img { image-rendering: auto; max-width: 100%; }
 .scoreboard { position: absolute; top: calc(6px + var(--safe-t)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 300px; min-height: 52px; padding: 0 8px; border: 8px solid transparent; border-image: url(../assets/gfx/hud-kit/images/scoreboard_frame.png) 24 / 8px stretch; background: #14233b padding-box; }
 .scoreboard.gold { border-image-source: url(../assets/gfx/hud-kit/images/scoreboard_frame_gold.png); }
 .scoreboard img.crest { width: 34px; height: 34px; }
-.scoreboard img.digit { height: 38px; width: auto; transition: transform 0.2s; }
-.scoreboard img.digit.bump { animation: bump 0.6s; }
+.scoreboard .digit { height: 38px; width: 38px; transition: transform 0.2s; }
+.scoreboard .digit.bump { animation: bump 0.6s; }
 @keyframes bump { 30% { transform: scale(1.5); } }
 .scoreboard .mid { font-family: var(--display); font-size: 13px; line-height: 0.95; text-align: center; color: var(--ice-2); letter-spacing: 0.06em; }
 .scoreboard .abbr { font-family: var(--display); font-size: 18px; }
 /* the player card: the portrait sits in the frame's slot on the left (Batch Y) */
 .pcard { position: absolute; left: calc(8px + var(--safe-l)); top: calc(6px + var(--safe-t)); display: flex; flex-direction: column; justify-content: center; min-width: 220px; min-height: 56px; padding: 0 8px 0 2px; border: 8px solid transparent; border-left-width: 60px; border-image: url(../assets/gfx/hud-kit/images/player_card_ice.png) 24 24 24 180 / 8px 8px 8px 60px stretch; background: #14233b padding-box; }
-.pcard img { position: absolute; left: -55px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; }
+.pcard img, .pcard canvas { position: absolute; left: -55px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; }
 .pcard.p2 { left: auto; right: calc(60px + var(--safe-r)); border-image-source: url(../assets/gfx/hud-kit/images/player_card_coral.png); }
 .pcard .nm { font-family: var(--display); font-size: 18px; line-height: 0.9; }
 .bars { display: grid; gap: 2px; width: 120px; margin-top: 2px; }
@@ -394,7 +394,7 @@ img { image-rendering: auto; max-width: 100%; }
 .banner .plate { display: inline-flex; flex-direction: column; align-items: center; max-width: 92vw; padding: 4px 26px 8px; border: solid transparent; border-width: 10px 12px; border-image: url(../assets/gfx/hud-kit/images/banner_plate.png) 30 36 / 10px 12px stretch; background: rgba(20, 35, 59, 0.9) padding-box; animation: plate-in 0.3s ease-out; }
 @keyframes plate-in { from { transform: scaleX(0.4); opacity: 0; } }
 .banner .sub { font-family: var(--display); font-size: clamp(20px, 3.4vw, 32px); color: var(--cream); text-shadow: 0 3px 0 var(--navy); display: inline-flex; align-items: center; gap: 10px; margin-top: 6px; }
-.banner .sub img { width: 48px; height: 48px; }
+.banner .sub img, .banner .sub canvas { width: 48px; height: 48px; }
 .banner .small { font-family: var(--display); font-size: clamp(30px, 6vw, 56px); color: var(--ice-2); text-shadow: 0 4px 0 var(--navy); }
 @keyframes slam { from { transform: scale(2.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
@@ -415,11 +415,11 @@ img { image-rendering: auto; max-width: 100%; }
   animation: cutin-l 0.95s cubic-bezier(.2, .9, .3, 1) forwards; transform: skewY(-3deg); }
 .cutin.them .band { flex-direction: row-reverse; animation-name: cutin-r; text-align: right; }
 .cutin .band::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.22) 0 3px, transparent 3px 46px); animation: lines 0.25s linear infinite; }
-.cutin img { position: relative; height: 140%; width: auto; align-self: flex-end; margin-bottom: -18%; filter: drop-shadow(0 4px 0 var(--navy)); }
-.cutin.them img { transform: scaleX(-1); }
+.cutin img, .cutin canvas { position: relative; height: 140%; width: auto; align-self: flex-end; margin-bottom: -18%; filter: drop-shadow(0 4px 0 var(--navy)); }
+.cutin.them img, .cutin.them canvas { transform: scaleX(-1); }
 .cutin .pair { display: flex; align-self: flex-end; height: 140%; margin-bottom: -18%; position: relative; }
-.cutin .pair img { height: 100%; margin-bottom: 0; }
-.cutin .pair img + img { margin-left: -12%; }
+.cutin .pair img, .cutin .pair canvas { height: 100%; margin-bottom: 0; }
+.cutin .pair img + img, .cutin .pair canvas + canvas { margin-left: -12%; }
 .cutin.combo { height: clamp(42px, 11vh, 84px); }
 .cutin.combo .band { border-color: var(--gold); }
 .cutin .txt { position: relative; display: flex; flex-direction: column; }
@@ -497,7 +497,7 @@ body.large-text .hub, body.large-text .modal, body.large-text .results, body.lar
   .hub-cta .next b { font-size: 18px; }
   .portraits { height: 44vh; }
   .dlg-box { min-height: 80px; padding: 18px 12px 8px; }
-  .scoreboard img.digit { height: 30px; }
+  .scoreboard .digit { height: 30px; width: 30px; }
   .scoreboard img.crest { width: 28px; height: 28px; }
   .powerchip { top: calc(50px + var(--safe-t)); }
   .hint { top: calc(80px + var(--safe-t)); font-size: 12px; }

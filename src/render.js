@@ -270,10 +270,10 @@ export class Renderer {
     const sprites = Assets.atlas.crowd;
     // in a rival's building most of the crowd wears their colours
     const swap = !!(this.arena && this.arena !== ARENAS.home);
-    for (const f0 of fx.crowd) {
-      const f = swap ? { ...f0, team: 1 - f0.team } : f0;
-      const chanting = ch && ch.team === f.team;
-      const cheer = fx.cheerTeam === f.team || (chanting && (onClap || onWord));
+    for (const f of fx.crowd) {
+      const side = swap ? 1 - f.team : f.team; // (no copy per fan per frame: the garbage collector felt it)
+      const chanting = ch && ch.team === side;
+      const cheer = fx.cheerTeam === side || (chanting && (onClap || onWord));
       const amp = cheer ? 7 : 1 + ex * 3;
       const sp = cheer ? 16 : 3 + ex * 6;
       const bob = chanting ? (onClap || onWord ? 6 : 0) : Math.max(0, Math.sin(t * sp + f.phase)) * amp;
@@ -282,28 +282,28 @@ export class Renderer {
       if (sprites && !f.back) {
         // far stands: sprite fans facing the ice (and the camera)
         const up = cheer || (ex > 0.6 && Math.sin(t * 5 + f.phase) > 0.3);
-        const list = sprites[f.team ? 'away' : 'home'][up ? 'cheering' : 'sitting'];
-        Assets.draw(ctx, list[f.fan], x, y - 4 * s, 0.18 * s, { pages: f.team ? this.awayPages : Assets.clubPages(), flip: f.phase > 3.14 });
+        const list = sprites[side ? 'away' : 'home'][up ? 'cheering' : 'sitting'];
+        Assets.draw(ctx, list[f.fan], x, y - 4 * s, 0.18 * s, { pages: side ? this.awayPages : Assets.clubPages(), flip: f.phase > 3.14 });
         continue;
       }
       // near benches: fans seen from behind (Batch N sprites)
-      const flag = f.flag && f.team === 0 && Assets.atlas.art_additions && Assets.atlas.art_additions.crowd_back_extras && Assets.atlas.art_additions.crowd_back_extras.home_flag;
+      const flag = f.flag && side === 0 && Assets.atlas.art_additions && Assets.atlas.art_additions.crowd_back_extras && Assets.atlas.art_additions.crowd_back_extras.home_flag;
       if (flag) { // a home fan waving the club flag
         Assets.draw(ctx, flag[Math.floor(t * (cheer ? 4 : 2) + f.phase) % 2], x, y + 5 * s, 0.155 * (s / 1.75), { pages: Assets.clubPages() });
         continue;
       }
       const backs = Assets.atlas.crowd_back;
-      if (backs && backs[f.team ? 'away' : 'home']) {
-        const team = f.team ? 'away' : 'home';
+      if (backs && backs[side ? 'away' : 'home']) {
+        const team = side ? 'away' : 'home';
         const up = cheer || (ex > 0.6 && Math.sin(t * 5 + f.phase) > 0.3);
         const index = ((f.fan || 0) % 8 + 8) % 8;
         const scale = Assets.atlas.crowd_back_scale?.[team]?.[index] || 0.25;
         // the same fan and body size in both poses, feet on the bench
-        Assets.draw(ctx, backs[team][up ? 'cheering' : 'sitting'][index], x, y + 5 * s, scale * (s / 1.75), { pages: f.team ? this.awayPages : Assets.clubPages() });
+        Assets.draw(ctx, backs[team][up ? 'cheering' : 'sitting'][index], x, y + 5 * s, scale * (s / 1.75), { pages: side ? this.awayPages : Assets.clubPages() });
         continue;
       }
       // (drawn fans, for builds without those sprites), cached per pose
-      const home = f.team === 0;
+      const home = side === 0;
       const jersey = home ? (f.phase > 3 ? TEAMS.home.color : '#fff2cb') : (f.phase > 3 ? awayColor : awayColor2);
       const trim = home ? (f.phase > 3 ? '#fff2cb' : TEAMS.home.color) : (f.phase > 3 ? awayColor2 : awayColor);
       const up = cheer || (ex > 0.6 && Math.sin(t * 5 + f.phase) > 0.3);
@@ -1109,10 +1109,10 @@ export class Renderer {
     const key = `${id}|${pages === Assets.pages ? 'h' : pages === this.awayPages ? 'a' : 'k'}|${gear.stick}|${gear.skates}`;
     let c = this.gearCache.get(key);
     if (c) { this.gearCache.delete(key); this.gearCache.set(key, c); return c; } // (most recently drawn last)
-    const [pi, fx, fy, fw, fh] = f;
-    c = document.createElement('canvas'); c.width = fw; c.height = fh;
-    const cx = c.getContext('2d', { willReadFrequently: true });
-    cx.drawImage(pages[pi], fx, fy, fw, fh, 0, 0, fw, fh);
+    const [, , , fw, fh] = f;
+    const cx = Assets.framePixels(id, pages); // (from the original page, not read back off the GPU)
+    if (!cx) return null;
+    c = cx.canvas;
     const m = document.createElement('canvas'); m.width = fw; m.height = fh;
     const mx = m.getContext('2d', { willReadFrequently: true });
     mx.drawImage(Assets.pages[mf[0]], mf[1], mf[2], mf[3], mf[4], mf[8] || 0, mf[9] || 0, mf[3], mf[4]); // masks are cropped; [8], [9] place them

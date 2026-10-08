@@ -101,6 +101,12 @@ export function cupPlaceImg(place, size = 64) {
   return id ? Assets.icon(id, size) : '';
 }
 
+// The same portrait as a canvas (no PNG to encode): for the ultimate cut-ins mid-match.
+export function portraitCanvas(id, team, teamId, size, expr) {
+  Assets.canvasMode = true;
+  try { return portrait(id, team, teamId, size, expr) || null; } finally { Assets.canvasMode = false; }
+}
+
 export const crest = (teamId, size = 96) => {
   if (teamId === 'home') return Assets.icon('hud_elements/misc/home_crest', size, CLUB_PAGES());
   if (teamId === 'allstar') return Assets.icon((Assets.atlas.allstar && Assets.atlas.allstar.crest) || 'hud_elements/misc/level_star', size); // the League All-Stars' crest
