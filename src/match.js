@@ -465,7 +465,7 @@ export class Match {
       // one-timer
       if (how === 'catch' && passInfo && passInfo.from.team === s.team && (s.oneTimerArmed > 0 || s.in.shoot) && this.inShootingRange(s)) {
         s.charging = false;
-        this.shoot(s, { kind: 'onetimer' });
+        this.shoot(s, { kind: 'onetimer', fore: this.forehand(s, passInfo.from) });
         return;
       }
       if (s.charging) s.charging = false;
@@ -509,7 +509,7 @@ export class Match {
     switch (kind) {
       case 'wrist': speed = s.d.wrist * (s.hasPerk('Quick Release') ? 1.1 : 1); break;
       case 'slap': speed = (s.d.slapBase + s.d.slapGain * charge) * (s.def.arch === 'blueliner' ? 1.06 : 1); break;
-      case 'onetimer': speed = (s.d.slapBase + s.d.slapGain * 0.55) * 1.05; break;
+      case 'onetimer': speed = (s.d.slapBase + s.d.slapGain * 0.55) * 1.05 * (opts.fore === undefined ? 1 : opts.fore ? 1.06 : 0.96); break;
       case 'zero': speed = 1120; break;
       case 'thunderclap': speed = 1750; break;
       case 'firestorm': speed = 1400 * (s.hasPerk('Inferno') ? 1.1 : 1); break;
@@ -519,7 +519,7 @@ export class Match {
     const distG = Math.hypot(gx - p.x, aimY - p.y);
     let err = s.d.aimErr * (0.45 + distG / 520);
     if (kind === 'slap') err *= 0.75 + 0.6 * charge;
-    if (kind === 'onetimer') err *= 0.85;
+    if (kind === 'onetimer') err *= opts.fore ? 0.78 : 0.85; // (a one-timer on the forehand is the clean one)
     if (ULT_SHOTS.has(kind)) err *= 0.7;
     if (s.hasPerk('Sniper')) err *= 0.85;
     if (s.def.arch === 'sniper') err *= 0.88; // (Pick a Corner)
@@ -606,6 +606,14 @@ export class Match {
       this.emit('combo', { s, from: combo.from, key: combo.key, level: combo.level });
       if (combo.key === 'stone+thunder') this.quake(s, combo.level);
     }
+  }
+
+  // Does a pass from `from` reach s on the forehand? A left shot's blade is on the left: the
+  // forehand side is the shooter's left as they face the net (y runs down the screen).
+  forehand(s, from) {
+    const fx = s.side * GOAL_X - s.x, fy = -s.y, l = Math.hypot(fx, fy) || 1;
+    const left = (fy / l) * (from.x - s.x) - (fx / l) * (from.y - s.y) > 0;
+    return (s.hand || 'L') === 'L' ? left : !left;
   }
 
   choosePassTarget(s) {

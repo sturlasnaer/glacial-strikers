@@ -8,6 +8,7 @@ import { ELEMENT_COLORS } from './fx.js';
 import { NetRenderer, SpriteNets } from './net.js';
 import { t } from './i18n.js';
 import { headPlacement } from './modular.js';
+import { handMirror } from './hands.js';
 
 const SKATER_SCALE = 0.5; // world px per source px
 const GOALIE_SCALE = 0.43;
@@ -890,6 +891,13 @@ export class Renderer {
     const set = Assets.atlas.skaters[this.spriteOf(s)][s.team === 0 ? 'home' : 'away'];
     // real time, so the hold also runs during replays (match time stands still then)
     const dir = this.skaterDir(s, !!set.northeast, performance.now() / 1000);
+    const md = handMirror(set.hands, dir, s.hand);
+    if (md) { const fr = this.poseFrame(s, match, set, md); return { ...fr, flip: !fr.flip }; }
+    return this.poseFrame(s, match, set, dir);
+  }
+
+  // The frame for a pose facing `dir` (skaterFrame mirrors the other facing for the other hand).
+  poseFrame(s, match, set, dir) {
     const map = set[dir];
     const side = dir.endsWith('east') ? 'east' : dir.endsWith('west') ? 'west' : null;
     const sp = s.speed;
@@ -899,11 +907,12 @@ export class Renderer {
     else if (!s._stunMax || s.stun > s._prevStun + 1e-4) s._stunMax = s.stun; // new or refreshed
     s._prevStun = s.stun;
     if (s.stun > 0 && set.hit) {
-      const seq = set.hit[side ? 'east' : 'south'];
+      const own = side === 'west' && set.hit.west; // drawn facing west (sets drawn both ways)
+      const seq = set.hit[own ? 'west' : side ? 'east' : 'south'];
       const t = s._stunMax - s.stun;
       let i = 0;
       if (s._stunMax >= 0.38) i = t < 0.1 ? 0 : s.stun > 0.14 ? 1 : 2;
-      return { id: seq[i], flip: side === 'west', pose: i === 1 ? 'down' : 'stagger' };
+      return { id: seq[i], flip: side === 'west' && !own, pose: i === 1 ? 'down' : 'stagger' };
     }
     let pose = 'idle';
     if (s.celebrate > 0 && (match.state === 'goal' || match.state === 'over') && set.signature && match.lastGoal && match.lastGoal.scorer === s) {
@@ -920,8 +929,8 @@ export class Renderer {
     else if (sp > 40) {
       // side-on skating has a 4-frame stride, a glide and a hockey stop
       if (set.stride && (dir === 'east' || dir === 'west')) {
-        const st = set.stride;
-        const flip = dir === 'west';
+        const st = (dir === 'west' && set.stride_west) || set.stride; // (drawn facing west, when it is)
+        const flip = dir === 'west' && !set.stride_west;
         if (s.stopping) return { id: st.stop, flip, pose: 'stop' };
         if (s.gliding && sp < s.d.maxSpeed * 1.05) return { id: st.glide, flip, pose: 'glide' };
         return { id: st.frames[Math.floor(s.animT * (3 + sp / 60)) % 4], flip, pose: 'stride' };

@@ -29,7 +29,7 @@ function goalieRow(st, team, name) {
 // Who plays a rival slot right now: the original, or a newcomer if we signed them.
 function rivalSlot(save, teamId, kit) {
   const t = TEAMS[teamId];
-  if (save.roster[recruitKey(teamId, kit)]) return { key: `${teamId}:sub_${kit}`, name: t.subs[kit], team: teamId, face: 'sub_' + kit, kit };
+  if (save.roster[recruitKey(teamId, kit)] || (save.tradedAway && save.tradedAway[recruitKey(teamId, kit)])) return { key: `${teamId}:sub_${kit}`, name: t.subs[kit], team: teamId, face: 'sub_' + kit, kit };
   return { key: `${teamId}:${kit}`, name: t.names[kit], team: teamId, face: kit, kit };
 }
 

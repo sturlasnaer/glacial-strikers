@@ -21,6 +21,7 @@ import { nextGuide, doneGuide, guideOff } from './guide.js';
 import { draftOpen, draftPick, otherPicks, POTENTIAL_GRADE, DRAFT_LINES } from './draft.js';
 import { careerOf, careerRows } from './career.js';
 import { legendState, legendLeft, signLegend } from './legends.js';
+import { tradeable, tradeQuote, trade, TEAM_LIKES } from './trades.js';
 import { audio } from './audio.js';
 import { t } from './i18n.js';
 const VOLUMES = () => [[0, t('Off')], [0.35, t('Low')], [0.7, t('Mid')], [1, t('Full')]];
@@ -1153,6 +1154,7 @@ export class UI {
     this.click('[data-gear]', (el) => { const [id, slot] = el.dataset.gear.split(':'); this.gearPicker(id, slot); }, body);
     this.click('[data-dress]', (el) => { setLineup(s, el.dataset.dress); writeSave(s); audio.sfx('confirm'); this.hub('team'); }, body);
     this.click('[data-sign]', (el) => this.signOffer(el.dataset.sign), body);
+    this.click('[data-trade]', (el) => this.tradeOffer(el.dataset.trade), body);
     this.click('[data-legend]', (el) => {
       const key = el.dataset.legend, L = LEGENDS[key];
       if (!signLegend(s, key)) return;
@@ -1257,7 +1259,7 @@ export class UI {
         return `<div class="recruit ${st}">
           <img src="${face}" alt="">
           <div style="min-width:0"><b>${esc(r.name)}</b><span class="muted">${t(ROLE_NAME[r.role])} · ${esc(top)}</span></div>
-          ${st === 'signed' ? `<span class="tag good">${t('Signed')}</span>` : st === 'open' ? `<button class="btn small ${s.coins >= r.price ? 'gold' : 'ghost'}" data-sign="${k}"><img src="${ico('equipment_items/reward/coins', 40)}" alt="" width="16" height="16"> ${r.price}</button>` : `<span class="tag">${t('Locked')}</span>`}
+          ${st === 'signed' ? `<span class="tag good">${t('Signed')}</span>` : st === 'traded' ? `<span class="tag">${t('With the {team}', { team: esc(TEAMS[s.tradedAway[k]].name.split(' ').slice(-1)[0]) })}</span>` : st === 'open' ? `<span class="row" style="gap:4px;margin:0;flex-wrap:nowrap"><button class="btn small ghost" data-trade="${k}" ${tradeable(s).length ? '' : 'disabled'} title="${esc(t('Trade one of your players for them'))}">${btnIcon('icons/trade')}${t('Trade')}</button><button class="btn small ${s.coins >= r.price ? 'gold' : 'ghost'}" data-sign="${k}"><img src="${ico('equipment_items/reward/coins', 40)}" alt="" width="16" height="16"> ${r.price}</button></span>` : `<span class="tag">${t('Locked')}</span>`}
         </div>`;
       }).join('');
       return `<div class="scout-team ${open ? '' : 'locked'}">
@@ -1392,6 +1394,53 @@ export class UI {
   }
 
   toastNote(text) { this.app.toast(Assets.icon(Assets.atlas.npcs && Assets.atlas.npcs.coach, 72) || '', t('Training camp'), text, ''); }
+
+  // A trade for a rival's player: pick one of yours to send; the rival tops up with nothing,
+  // you top up with coins if your player is worth less than their price. Two taps to confirm.
+  tradeOffer(key) {
+    const s = this.app.save, r = RECRUITS[key], team = TEAMS[r.team];
+    const likes = (TEAM_LIKES[r.team] || []).map((a) => t(ARCHETYPES[a].name)).join(t(' and '));
+    const rows = tradeable(s).map((id) => {
+      const m = member(id), q = tradeQuote(s, id, key), ok = s.coins >= q.coins;
+      return `<button class="trade-row" data-give="${id}" ${ok ? '' : 'disabled'}>
+        <img src="${portrait(id, 0, null, 64)}" alt=""><span class="tr-who"><b>${esc(m.name)}</b><small>${t(ROLE_NAME[m.role])} · ${t('LV {n}', { n: s.roster[id].level })} · ${esc(t(ARCHETYPES[m.def.arch].name))}${q.likes ? ` <span class="gold-t">★</span>` : ''}</small></span>
+        <span class="tr-cost">${q.coins ? `+ <img src="${ico('equipment_items/reward/coins', 40)}" alt="" width="14" height="14"> ${q.coins}` : t('Even swap')}</span></button>`;
+    }).join('');
+    audio.sfx('click');
+    this.modal(`<h2>${t('Trade for {name}', { name: esc(r.name) })}</h2>
+      <div class="card-head" style="margin:0"><img src="${portrait(r.kit, 1, r.team, 152)}" alt="" style="width:64px;height:64px">
+        <div><div class="sub">${esc(team.name)} · ${t(ROLE_NAME[r.role])} · ${t('price {n}', { n: r.price })}</div><div class="style-row">${styleChips(member(key).def)}</div></div></div>
+      <p class="muted" style="margin:6px 0;font-size:12.5px">${t('Send one of your signings or drafted rookies. The {team} like {styles} (★): they count those for a quarter more. Whoever you send joins their reserves.', { team: esc(team.name), styles: likes })}</p>
+      <div class="trade-list">${rows || `<p class="muted">${t('You need a signing or a drafted rookie to trade.')}</p>`}</div>
+      <p class="muted" id="tr-msg" style="min-height:1.2em;font-size:12.5px;margin:4px 0 0"></p>
+      <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Not now')}</button></div>`, (mm, close) => {
+      let armed = null;
+      this.click('[data-give]', (el) => {
+        const give = el.dataset.give;
+        if (armed !== el) {
+          mm.querySelectorAll('.trade-row.armed').forEach((b) => b.classList.remove('armed'));
+          armed = el; el.classList.add('armed'); audio.sfx('click');
+          mm.querySelector('#tr-msg').textContent = t('Tap again to send {name} to the {team}.', { name: member(give).name, team: team.name });
+          return;
+        }
+        const name = member(give).name;
+        const done = trade(s, give, key);
+        if (!done) return;
+        this.app.ach.checkMeta();
+        writeSave(s);
+        audio.jingle('sign');
+        close();
+        Assets.ensureKit(homeKitGroups(s)).then(() => {
+          this.hub('team');
+          this.modal(`<h2>${t('{name} signs!', { name: esc(r.name) })}</h2>
+            <p>${t('{name} heads to the {team}.', { name: esc(name), team: esc(team.name) })} ${t('Dress {name} at {role} from the Team tab, or before a match.', { name: esc(r.name), role: t(ROLE_NAME[r.role]).toLowerCase() })}</p>
+            <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Later')}</button><button class="btn gold" id="dress-now">${t('Dress now')}</button></div>`, (m2, close2) => {
+            this.click('#dress-now', () => { setLineup(s, key); writeSave(s); audio.sfx('confirm'); close2(); this.hub('team'); }, m2);
+          });
+        });
+      }, mm);
+    });
+  }
 
   // Quick line-up change, one row per position.
   lineupPicker(done) {
@@ -1925,7 +1974,8 @@ export class UI {
 
   // -------------------------------------------------------------- dialogue
   // lines: [side ('us'|'them'), charId, text]
-  dialogue(lines, teamId, header, onDone, mood = null) {
+  // (scene.bg: a painting behind the scene, like the legends' reveal)
+  dialogue(lines, teamId, header, onDone, mood = null, scene = null) {
     lines = lines.map((l) => [l[0], l[1], clubText(t(l[2]))]);
     const tm = teamInfo(teamId);
     let i = 0, typing = null, shown = 0;
@@ -1934,7 +1984,7 @@ export class UI {
     const theirs = (l) => portrait(gone(l[1]) ? 'sub_' + l[1] : l[1], 1, teamId, 420, expression('them', l[2], mood));
     const kip = Assets.atlas.npcs && Assets.atlas.npcs.announcer ? Assets.icon(Assets.atlas.npcs.announcer, 420) : ''; // Kip Vance calls the big games
     const r = this.set(`
-      <div class="dim"></div>
+      ${scene && scene.bg ? `<div class="dlg-scene" style="background-image:url(${scene.bg})"></div>` : ''}<div class="dim${scene && scene.bg ? ' light' : ''}"></div>
       <div class="dlg" id="dlg">
         <button class="btn small ghost dlg-skip" id="dlg-skip">${t('Skip')}</button>
         ${header ? `<div class="dlg-head"><div class="vs">${esc(CLUB.nick)}<em>${t('vs')}</em>${esc(tm.nick || tm.name.split(' ').slice(-1)[0])}</div>${header.sub ? `<div class="twist">${esc(header.sub)}</div>` : ''}</div>` : ''}

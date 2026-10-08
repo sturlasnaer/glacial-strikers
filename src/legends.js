@@ -4,6 +4,46 @@
 import { LEGENDS, member } from './data.js';
 import { joinLevel, newMember, PERK_LEVELS } from './progress.js';
 
+// What's said when a legend turns up (over the reveal painting), when the second twin comes
+// looking for the first, and before the twins' first game side by side.
+export const LEGEND_LINES = {
+  arrive: {
+    fafnir: [
+      ['kip', null, 'Folks, hold on to your seats: a legend is in town! The dragon of the blue line is looking for a team.'],
+      ['us', 'fafnir', 'Fast feet, a hot shot and a long tail. Got a jersey that fits?'],
+      ['kip', null, 'Find the dragon in Team › Scouting, but not for long: legends don\'t wait.'],
+    ],
+    fenrir: [
+      ['kip', null, 'Folks, hold on to your seats: a legend is in town! The wolf of the wing is looking for a team.'],
+      ['us', 'fenrir', 'Blink and the puck\'s gone. So am I. Who wants me?'],
+      ['kip', null, 'Find the wolf in Team › Scouting, but not for long: legends don\'t wait.'],
+    ],
+  },
+  twin: {
+    fafnir: [
+      ['kip', null, 'Now there\'s a sight: the dragon has come looking for the wolf!'],
+      ['us', 'fafnir', 'Where my twin plays, I play. Let\'s finish the set.'],
+    ],
+    fenrir: [
+      ['kip', null, 'Now there\'s a sight: the wolf has come looking for the dragon!'],
+      ['us', 'fenrir', 'Where my twin plays, I play. Room on the wing?'],
+    ],
+  },
+  together: [
+    ['kip', null, 'Ladies and gentlemen, for the first time: the twins take the ice together!'],
+    ['us', 'fenrir', 'Ready?'],
+    ['us', 'fafnir', 'Always. Pass it to me and duck.'],
+  ],
+};
+
+// The twins dressed side by side for the first time? (once; true marks it seen)
+export function twinsFirstTogether(save, line) {
+  const st = legendState(save);
+  if (st.together || !line.includes('fafnir') || !line.includes('fenrir')) return false;
+  st.together = true;
+  return true;
+}
+
 export const LEGEND_CHANCE = 0.08; // a match's chance that a legend turns up
 export const TWIN_CHANCE = 0.3; // once their twin is yours
 export const STAY = 3; // matches they wait for your call

@@ -61,7 +61,7 @@ export function rivalLines(save, teamId) {
 // When you've signed one of their skaters, they bring it up.
 export function poachedLine(save, teamId) {
   const team = TEAMS[teamId];
-  const gone = ['frost', 'thunder', 'stone'].filter((k) => save.roster[recruitKey(teamId, k)]);
+  const gone = ['frost', 'thunder', 'stone'].filter((k) => save.roster[recruitKey(teamId, k)] || (save.tradedAway && save.tradedAway[recruitKey(teamId, k)]));
   if (!team || !gone.length) return null;
   const speaker = ['frost', 'thunder', 'stone'].find((k) => !gone.includes(k)) || 'frost';
   const names = gone.map((k) => RECRUITS[recruitKey(teamId, k)].name);

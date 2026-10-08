@@ -28,7 +28,7 @@ import { nextFixture, recordOurGame, newLeague, rivalPlan, recordClassic, record
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
 import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt } from './data.js';
-import { rollLegend, legendState, STAY, joinLegend } from './legends.js';
+import { rollLegend, legendState, STAY, joinLegend, LEGEND_LINES, twinsFirstTogether } from './legends.js';
 import { useModular } from './modular.js';
 import { Quality } from './quality.js';
 import { offerDraft } from './draft.js';
@@ -632,6 +632,14 @@ class App {
 
   beginMatch(teamId, stage, exhibition, mods = [], extra = {}) {
     const s = this.save;
+    // the twins' first game side by side: Kip makes the most of it
+    if (!extra.twinsSeen && twinsFirstTogether(s, lineupIds(s))) {
+      writeSave(s);
+      const reveal = Assets.atlas.legends && Assets.atlas.legends.reveal;
+      this.scene = 'dialogue';
+      this.ui.dialogue(LEGEND_LINES.together, 'home', null, () => this.beginMatch(teamId, stage, exhibition, mods, { ...extra, twinsSeen: true }), null, reveal ? { bg: Assets.url(reveal.image) } : null);
+      return;
+    }
     const plan = extra.plan || 'balanced';
     const theirPlan = extra.theirPlan || (exhibition ? rivalPlan(s, teamId, GAME_PLANS) : 'balanced');
     let buffs = null;
@@ -860,7 +868,7 @@ class App {
     recordCareer(s, summary, rewards.won);
     // now and then a legend turns up in Scouting
     const legend = rollLegend(s, Math.random, (k) => LEGEND_ART.has(LEGENDS[k].art) || this.legendsPreview);
-    if (legend) setTimeout(() => this.toast(portrait(legend, 0, null, 96), t('A legend is in town!'), LEGENDS[legend].name, t('In Team › Scouting for {n} matches', { n: STAY })), 2400);
+    if (legend) this.pendingLegend = legend; // Kip announces them on the way back to the hub
     const scorers = (team) => Object.fromEntries(summary.skaters.filter((k) => k.team === team && k.goals).map((k) => [k.id, k.goals]));
     const allstar = !!(c.fixture && c.fixture.kind === 'allstar');
     const firstWin = rewards.won && !((s.rivals && s.rivals[c.teamId] && s.rivals[c.teamId].wins) > 0);
@@ -1118,6 +1126,16 @@ class App {
     this.ui.guideBudget = 1; // one new coach's tip per visit
     if (this.awardsNight()) return;
     if (offerDraft(this.save)) writeSave(this.save); // Draft Day opens once the awards are handed out
+    if (this.pendingLegend) { // a legend turns up: Kip calls it over the reveal painting
+      const key = this.pendingLegend, L = LEGENDS[key];
+      this.pendingLegend = null;
+      const lines = this.save.roster[L.twin] ? LEGEND_LINES.twin[key] : LEGEND_LINES.arrive[key];
+      const reveal = Assets.atlas.legends && Assets.atlas.legends.reveal;
+      this.scene = 'dialogue';
+      this.music('awards');
+      this.ui.dialogue(lines, 'home', null, () => this.goHub('team'), null, reveal ? { bg: Assets.url(reveal.image) } : null);
+      return;
+    }
     if (this.legendsPreview && !legendState(this.save).visiting) {
       const st = legendState(this.save), free = Object.keys(LEGENDS).filter((k) => !this.save.roster[k]);
       if (free.length) { st.visiting = free[0]; st.until = this.save.record.played + STAY; }

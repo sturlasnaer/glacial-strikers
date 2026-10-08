@@ -12,7 +12,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 3. **AJ**: a body-and-face pilot: one skater body drawn without a head, and four heads that fit it, so new players can be made from parts.
 4. **AK**: the other hand: our cast and the newcomers redrawn facing the other way, so every player keeps one stick hand when they turn.
 5. **AL**: art for the new supers (Ember, Gale and Shadow) and the seven archetypes: icons, ultimate effects and combo icons.
-6. **AM**: the training camp: element stones that change a player's super, and Brekka's style camp that changes their archetype.
+6. **AM**: the training camp (element stones, Brekka's style camp) and an icon for trades.
 7. **AE**: the Friends Weekly Cup (a small cup, a podium, rosettes) and icons for the new career stats page.
 8. **AF**: the last 22 achievements that still borrow other icons.
 9. **AG**: a linesman who drops the puck at faceoffs and makes the calls.
@@ -158,13 +158,14 @@ About 57 frames and strips.
 
 ## Batch AM: the training camp
 
-Players can now change their super or their archetype once a season, for coins: Gearsmith Ottar sells **element stones** (a stone sets the player's super to its element), and Coach Brekka runs a **style camp** (a week of drills that changes the player's archetype). Today these use stand-in icons.
+Players can now change their super or their archetype once a season, for coins (and trade players with rivals): Gearsmith Ottar sells **element stones** (a stone sets the player's super to its element), and Coach Brekka runs a **style camp** (a week of drills that changes the player's archetype). Today these use stand-in icons.
 
 - **Element stones**, in the style and size of the reward icons (about 200 px source), sheet `icons_am.png`, frame names `icons/stone_<element>`: a cut gem on a little iron setting, glowing in its element's colour, with a hint of its effect inside: `stone_frost` (ice blue, a snowflake frozen inside), `stone_thunder` (yellow, a crackle of lightning), `stone_stone` (tan granite, a cracked rune), `stone_ember` (orange, a flame), `stone_gale` (mint, a swirl of wind) and `stone_shadow` (violet-black, a crescent). 6 frames.
 - **Style camp**, same sheet: `icons/style_camp` (a whistle on a lanyard over a clipboard with an X-and-O play) and `icons/respec` (a hockey stick with a circular arrow around it, for the "change" buttons). 2 frames.
+- **Trades**, same sheet: `icons/trade` (two jerseys, one coral and one teal, with arrows swapping them), for the Trade buttons in Scouting. 1 frame.
 - **Two locker-room poses**, matching the Batch H standing art and its scale: `hub_fullbody/shopkeeper/offer` (Ottar holding up a glowing stone in one hand) and `hub_fullbody/coach/whistle` (Brekka blowing the whistle, clipboard under one arm). One frame each, same foot position as their idle frames. 2 frames.
 
-10 frames.
+11 frames.
 
 ## Batch AE: Friends Weekly Cup and career stats icons
 

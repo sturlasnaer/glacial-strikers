@@ -195,5 +195,45 @@ check('perks map across kits', perkSlot('Static: dash cooldown 2s shorter').tier
   check('styles belong to their save', member('thunder').def.elem === 'thunder');
 }
 
+// stick hands: mirroring the other facing for the other hand, and forehand one-timers
+{
+  const { handMirror } = await import('../src/hands.js');
+  const all = Object.fromEntries(['east', 'west', 'north', 'south', 'northeast', 'northwest', 'southeast', 'southwest'].map((d) => [d, 'L']));
+  check('a left-shot set mirrors for a right shot', handMirror(all, 'east', 'R') === 'west' && handMirror(all, 'southwest', 'R') === 'southeast' && handMirror(all, 'south', 'R') === 'south' && handMirror(all, 'east', 'L') === null);
+  check('a set that swaps hands when it turns is drawn as it is', handMirror({ east: 'R', west: 'L', south: 'L' }, 'east', 'L') === null && handMirror(undefined, 'east', 'R') === null);
+  check('the other hand drawn both ways', handMirror({ east: 'R', west: 'R', south: 'L' }, 'east', 'L') === 'west');
+  const m = mk(); const sh = m.skaters.find((k) => k.team === 0);
+  place(sh, GOAL_X - 300, 0);
+  const passer = { x: GOAL_X - 300, y: -150 }; // north of a shooter facing the net (east): their left
+  sh.hand = 'L'; const l = m.forehand(sh, passer);
+  sh.hand = 'R'; const r = m.forehand(sh, passer);
+  check('forehand: a left shot takes it from the left', l === true && r === false);
+  sh.side = -1; place(sh, -(GOAL_X - 300), 0); sh.hand = 'L';
+  check('facing the other net, left is the other way', m.forehand(sh, { x: -(GOAL_X - 300), y: 150 }) === true);
+}
+
+// trades: a signing or a rookie, plus coins, for a rival's player
+{
+  const P = await import('../src/progress.js');
+  const { trade, tradeQuote, tradeable } = await import('../src/trades.js');
+  const { setRookies } = await import('../src/data.js');
+  const s = P.newSave(); setRookies({});
+  s.rivals = { rams: { wins: 1 }, comets: { wins: 1 } }; s.coins = 2000;
+  check('nothing to trade at first', tradeable(s).length === 0);
+  P.signRecruit(s, 'comets_d');
+  s.lineup.D = 'comets_d';
+  const q = tradeQuote(s, 'comets_d', 'rams_d');
+  check('a quote: their price less what you send', q.coins === 80 && !q.likes, q);
+  s.roster.comets_d.level = 4;
+  check('levels add value', tradeQuote(s, 'comets_d', 'rams_d').coins === 20);
+  const coins = s.coins;
+  check('the trade', !!trade(s, 'comets_d', 'rams_d') && s.roster.rams_d && !s.roster.comets_d && s.coins === coins - 20);
+  check('they join the other club\'s reserves', P.recruitStatus(s, 'comets_d') === 'traded' && P.isSigned(s, 'comets_d') && s.tradedAway.comets_d === 'rams');
+  check('the line-up fills the gap', s.lineup.D === 'stone');
+  check('the old club plays a newcomer in that slot', P.matchConfig(s, 'comets', null).teams[1].skaters[2].who === 'sub_stone');
+  check('no trading for someone who\'s gone', !trade(s, 'rams_d', 'comets_d'));
+  check('the cast stays', !tradeable(s).includes('frost') && tradeable(s).includes('rams_d'));
+}
+
 console.log(`supers: ${ok} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

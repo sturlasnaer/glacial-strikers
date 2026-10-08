@@ -129,11 +129,13 @@ export function newMember() {
 // ---------------------------------------------------------------- roster and recruitment
 export const lineupIds = (save) => [save.lineup.C, save.lineup.W, save.lineup.D];
 export const rosterIds = (save) => Object.keys(save.roster).filter((id) => member(id));
-export const isSigned = (save, key) => !!save.roster[key];
+// A rival's player gone from their club: signed by us, or traded on to another club's reserves.
+export const isSigned = (save, key) => !!save.roster[key] || !!(save.tradedAway && save.tradedAway[key]);
 
 // A rival's skaters can be signed once you've beaten that team.
 export function recruitStatus(save, key) {
   if (save.roster[key]) return 'signed';
+  if (save.tradedAway && save.tradedAway[key]) return 'traded';
   const r = RECRUITS[key];
   const rec = save.rivals && save.rivals[r.team];
   return rec && rec.wins > 0 ? 'open' : 'locked';
@@ -184,6 +186,13 @@ export function signRecruit(save, key) {
   const r = RECRUITS[key];
   if (!r || recruitStatus(save, key) !== 'open' || save.coins < r.price) return null;
   save.coins -= r.price;
+  return addRecruit(save, key);
+}
+
+// A rival's player joins (signed, or in a trade): a level below the line-up, points to spend,
+// and the perks they already had.
+export function addRecruit(save, key) {
+  const r = RECRUITS[key];
   const m = newMember();
   const level = joinLevel(save);
   m.level = level;
@@ -292,7 +301,7 @@ export function allStarVote(save, L) {
   const pts = (key) => { const r = st.skaters[key]; return r ? r.g * 3 + r.a * 2 + (r.hits + r.steals) * 0.25 : 0; };
   const line = lineupIds(save);
   const star = [...line].sort((a, b) => pts(`home:${b}`) - pts(`home:${a}`) || line.indexOf(a) - line.indexOf(b))[0];
-  const stars = (team) => ['frost', 'thunder', 'stone'].filter((kit) => !save.roster[recruitKey(team, kit)])
+  const stars = (team) => ['frost', 'thunder', 'stone'].filter((kit) => !isSigned(save, recruitKey(team, kit)))
     .map((kit) => ({ team, kit, who: recruitKey(team, kit), pts: pts(`${team}:${kit}`) }))
     .sort((a, b) => b.pts - a.pts || a.kit.localeCompare(b.kit));
   const teams = RIVAL_IDS.map((team) => ({ team, list: stars(team) })).filter((x) => x.list.length >= 2)
