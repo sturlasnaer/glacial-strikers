@@ -1,13 +1,13 @@
 // A living league: the rivals fill the holes your signings leave, with their Draft Day picks
 // and now and then a free agent signed mid-season, and a rival who'll take your call may
 // ring after a match with a trade offer of their own.
-import { CHARACTERS, RECRUITS, ARCHETYPES, ELEMENTS, STAT_KEYS, member, recruitKey } from './data.js';
+import { CHARACTERS, RECRUITS, ARCHETYPES, ELEMENTS, STAT_KEYS, member, recruitKey, RIVAL_IDS } from './data.js';
 import { recruitStatus } from './progress.js';
 import { tradeable, playerValue, TEAM_LIKES, trade } from './trades.js';
 import { vacated, fillOf } from './slots.js';
 import { randomLook } from './modular.js';
 
-const RIVALS = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
+const RIVALS = RIVAL_IDS;
 const KITS = ['frost', 'thunder', 'stone'];
 const fills = (save) => (save.rivalFills ||= {});
 

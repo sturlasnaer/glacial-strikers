@@ -9,7 +9,7 @@ import { rosterIds, recruitStatus, addRecruit } from './progress.js';
 
 export const TEAM_LIKES = {
   lynx: ['speedster', 'grinder'], comets: ['sniper', 'blueliner'], rams: ['enforcer', 'grinder'],
-  ravens: ['dangler', 'playmaker'], royals: ['playmaker', 'sniper'],
+  ravens: ['dangler', 'playmaker'], royals: ['playmaker', 'sniper'], owls: ['playmaker', 'blueliner'], moose: ['enforcer', 'speedster'],
 };
 
 export const tradeable = (save) => rosterIds(save).filter((id) => (RECRUITS[id] || ROOKIES[id]) && !LEGENDS[id]);

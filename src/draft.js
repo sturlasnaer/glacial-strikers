@@ -2,9 +2,10 @@
 // club, one per position. Pick one and they join the roster as a rookie in our colours (the
 // Batch AA newcomer art). Rookies start below the line-up and raw, but potential (two to five
 // stars) makes them learn faster and lets their stats grow further than anyone's.
-import { CHARACTERS, ROOKIES, setRookies, KIT_OF_ROLE, TEAMS, STAT_KEYS, makeDef, ARCHETYPES, ELEMENTS } from './data.js';
+import { CHARACTERS, ROOKIES, setRookies, KIT_OF_ROLE, TEAMS, STAT_KEYS, makeDef, ARCHETYPES, ELEMENTS, RIVAL_IDS } from './data.js';
 import { joinLevel, PERK_LEVELS, newMember } from './progress.js';
 import { randomLook } from './modular.js';
+import { leagueRivals } from './league.js';
 import { rivalDraft } from './moves.js';
 
 const NAMES = {
@@ -19,7 +20,7 @@ export const SCOUTING = {
 };
 // what the scouts call each potential
 export const POTENTIAL_GRADE = { 2: 'Depth player', 3: 'Solid prospect', 4: 'High upside', 5: 'Franchise talent' };
-const RIVALS = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
+const RIVALS = RIVAL_IDS; // (the draw keeps to the league's clubs: see makeDraft)
 // Kip opens the first visit
 export const DRAFT_LINES = [
   ['kip', null, 'Welcome to Draft Day! Three rookies, one pick for the Foxes. Choose well.'],
@@ -62,7 +63,7 @@ function prospect(role, taken, rnd) {
 export function makeDraft(save, season, rnd = Math.random) {
   const taken = new Set(Object.values(ROOKIES).map((k) => k.name));
   const prospects = ['C', 'W', 'D'].map((role) => prospect(role, taken, rnd));
-  const rivals = [...RIVALS].sort(() => rnd() - 0.5).slice(0, 2);
+  const rivals = [...leagueRivals(save.league)].sort(() => rnd() - 0.5).slice(0, 2);
   return { season, prospects, rivals, picked: null };
 }
 

@@ -25,7 +25,7 @@ export const ACHIEVEMENTS = [
   { id: 'challenge', name: 'Up for a Challenge', text: 'Win an exhibition with 3 or more challenges on.', icon: 'equipment_items/hub/target', coins: 80 },
   { id: 'champion', name: 'Frostline Champions', text: 'Win the Frostline Cup.', icon: TROPHY, coins: 200 },
   { id: 'dynasty', name: 'Dynasty', text: 'Win the cup in two seasons.', icon: 'achievements/dynasty', coins: 250 },
-  { id: 'perfect', name: 'Perfect Season', text: 'Win all 5 regular-season games.', icon: 'achievements/perfect_season', coins: 150 },
+  { id: 'perfect', name: 'Perfect Season', text: 'Win every regular-season game.', icon: 'achievements/perfect_season', coins: 150 },
   { id: 'between-pipes', name: 'Between the Pipes', text: 'Win a match in goalie mode.', icon: 'goalie_actions/butterfly', coins: 80 },
   { id: 'winter-classic', name: 'Winter Classic', text: 'Win the Winter Classic on Pine Pond.', icon: 'achievements/winter_classic', coins: 120 },
   { id: 'all-star', name: 'All-Star', text: 'Win the All-Star Game.', icon: 'allstar/allstar_achievement', coins: 100 },
@@ -151,7 +151,7 @@ export class AchievementTracker {
     if (s.champion || (s.league && s.league.champion === 'home')) this.unlock('champion');
     if ((s.cups || 0) >= 2) this.unlock('dynasty');
     const L = s.league;
-    if (L && L.results.length >= 5 && L.results.slice(0, 5).every((r) => r[0].ga > r[0].gb)) this.unlock('perfect');
+    if (L && L.schedule && L.results.length >= L.schedule.length && L.results.slice(0, L.schedule.length).every((r) => r[0].ga > r[0].gb)) this.unlock('perfect');
     const rivals = Object.keys(TEAMS).filter((k) => k !== 'home');
     if (s.rivals && rivals.every((k) => s.rivals[k] && s.rivals[k].wins > 0)) this.unlock('rivals');
     if (Object.values(s.roster).some((r) => r.level >= 10)) this.unlock('max-level');

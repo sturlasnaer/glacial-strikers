@@ -2,7 +2,7 @@
 // an arena, a couple of modifiers and a goal. Beat the goal on consecutive days to build
 // a streak; the reward grows with it.
 
-import { TEAMS, ARENAS, CHALLENGES } from './data.js';
+import { TEAMS, ARENAS, CHALLENGES, RIVAL_IDS } from './data.js';
 import { makeRng } from './util.js';
 
 export const DAILY_GOALS = [
@@ -34,7 +34,7 @@ function hash(str) {
 export function dailyFor(date = dayKey()) {
   const rng = makeRng(hash('glacial-strikers-daily-' + date));
   const pick = (arr) => arr[Math.floor(rng() * arr.length)];
-  const teamId = pick(['lynx', 'comets', 'rams', 'ravens', 'royals']);
+  const teamId = pick(RIVAL_IDS);
   // usually their building; sometimes somewhere else
   const arena = rng() < 0.65 ? (TEAMS[teamId].arena || 'home') : pick(Object.keys(ARENAS));
   const pool = CHALLENGES.filter((c) => c.id !== 'sudden');

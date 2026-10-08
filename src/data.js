@@ -279,7 +279,39 @@ export const TEAMS = {
     gstyle: 'reader', subs: { goalie: 'Squire', frost: 'Regent', thunder: 'Herald', stone: 'Bastion' }, // who plays the slot after you sign its skater
     style: 'Defending champions. No weaknesses, plenty of swagger.',
   },
+  // The expansion clubs, from the second season of a save (league.js): no roster art of
+  // their own, so their players are made from parts (looks) in the team's colours, and
+  // their goalies wear the newcomer goalie. Batch AU brings their crests and buildings.
+  owls: {
+    elems: { thunder: 'gale', stone: 'frost' }, // supers other than the slot's own
+    id: 'owls', plan: 'counter', chem: 1, name: 'Glacier Owls', short: 'OWL', crest: 'hud_elements/misc/away_crest',
+    art: null, arena: 'home', expansion: true,
+    looks: { frost: { body: 'small', head: 'glasses', skin: 0, hair: 4 }, thunder: { body: 'std', head: 'visor', skin: 2, hair: 5 }, stone: { body: 'big', head: 'beard', skin: 1, hair: 7 } },
+    color: '#e8eef5', color2: '#4a5568', recolor: { h1: 210, h2: 215, sat: 0.08, val: 1.08, sat2: 0.25, val2: 0.5 },
+    diff: 0.45, bonus: { agi: 1, pas: 1, chk: -1 }, goalie: { rfx: 6, pos: 5 },
+    names: { frost: 'Talon', thunder: 'Strix', stone: 'Boreas', goalie: 'Hush' },
+    gstyle: 'hybrid', subs: { goalie: 'Hollow', frost: 'Plume', thunder: 'Feather', stone: 'Perch' }, // who plays the slot after you sign its skater
+    style: 'Patient and sharp-eyed. They wait for your mistake, then pounce.',
+  },
+  moose: {
+    elems: { frost: 'ember' }, // supers other than the slot's own
+    id: 'moose', plan: 'forecheck', chem: 2, name: 'Thunder Moose', short: 'MOO', crest: 'hud_elements/misc/away_crest',
+    art: null, arena: 'home', expansion: true,
+    looks: { frost: { body: 'std', head: 'moustache', skin: 3, hair: 1 }, thunder: { body: 'small', head: 'mohawk', skin: 4, hair: 6 }, stone: { body: 'big', head: 'cage', skin: 2, hair: 0 } },
+    color: '#2f7a4a', color2: '#f2a93b', recolor: { h1: 140, h2: 38, sat: 0.8, val: 0.62, sat2: 1.0, val2: 1.0 },
+    diff: 0.62, bonus: { chk: 1, sta: 1, spd: -1 }, goalie: { rfx: 6, pos: 7 },
+    names: { frost: 'Tamarack', thunder: 'Rumble', stone: 'Thorvald', goalie: 'Brakken' },
+    gstyle: 'wall', subs: { goalie: 'Tundra', frost: 'Spruce', thunder: 'Larch', stone: 'Bramble' }, // who plays the slot after you sign its skater
+    style: 'Big, loud and hard to move. Every shift feels like a stampede.',
+  },
 };
+// The rivals, easiest first. The first five are the league's founding clubs.
+export const RIVAL_IDS = ['lynx', 'comets', 'owls', 'rams', 'moose', 'ravens', 'royals'];
+export const FOUNDING_RIVALS = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
+// What plays a rival's roster slot: their own art, or a body from parts (an expansion club),
+// or null for our cast's art in their colours.
+export const slotLook = (teamId, kit) => { const t = TEAMS[teamId]; return t && t.looks && t.looks[kit] && bodySprite(t.looks[kit]) ? t.looks[kit] : null; };
+export const slotSprite = (teamId, kit) => { const t = TEAMS[teamId]; return t && t.art ? `${t.art}_${ROLE[kit]}` : (slotLook(teamId, kit) ? bodySprite(slotLook(teamId, kit)) : null); };
 
 // Sprite-pack names: each roster slot's role letter, and our cast's names in the art.
 export const ROLE = { frost: 'c', thunder: 'w', stone: 'd', goalie: 'g' };
@@ -316,12 +348,19 @@ export const RECRUITS = {
   royals_c: recruit('royals', 'frost', { spd: 7, agi: 8, sht: 8, pas: 8, chk: 4, sta: 6 }, [1, 0, 0], 520, 'Royals captain. Elegant, precise and very aware of it.', 'dangler', 'L'),
   royals_w: recruit('royals', 'thunder', { spd: 9, agi: 8, sht: 8, pas: 5, chk: 3, sta: 6 }, [0, 1, 0], 520, 'Flashy finisher with a release the crowd waits for.', 'sniper', 'R'),
   royals_d: recruit('royals', 'stone', { spd: 5, agi: 5, sht: 8, pas: 6, chk: 9, sta: 8 }, [1, 0, 0], 520, 'The old monarch of the blue line. Still has it.', 'blueliner', 'R'),
+  owls_c: recruit('owls', 'frost', { spd: 6, agi: 8, sht: 6, pas: 9, chk: 4, sta: 6 }, [0, 1, 1], 300, 'Sees the whole ice from behind those glasses. Never forces a pass.', 'playmaker', 'R'),
+  owls_w: recruit('owls', 'thunder', { spd: 8, agi: 9, sht: 7, pas: 6, chk: 3, sta: 6 }, [1, 0, 1], 300, 'Silent on the wing until the puck is already in the net.', 'dangler', 'L'),
+  owls_d: recruit('owls', 'stone', { spd: 5, agi: 6, sht: 6, pas: 7, chk: 7, sta: 8 }, [0, 0, 1], 300, 'A calm old hand on the blue line. Seen it all twice.', 'blueliner', 'L'),
+  moose_c: recruit('moose', 'frost', { spd: 5, agi: 5, sht: 8, pas: 7, chk: 8, sta: 8 }, [1, 1, 0], 380, 'Wins faceoffs by leaning on them. It works every time.', 'enforcer', 'L'),
+  moose_w: recruit('moose', 'thunder', { spd: 9, agi: 7, sht: 8, pas: 4, chk: 6, sta: 6 }, [0, 0, 0], 380, 'All engine, no brakes. Points the mohawk at the net and goes.', 'speedster', 'R'),
+  moose_d: recruit('moose', 'stone', { spd: 4, agi: 4, sht: 7, pas: 5, chk: 10, sta: 10 }, [1, 1, 1], 380, 'A wall in a cage mask. Forwards bounce off.', 'enforcer', 'R'),
 };
 const ROLE_TITLE = { C: 'Centre', W: 'Winger', D: 'Defender' };
 for (const [key, r] of Object.entries(RECRUITS)) {
   const t = TEAMS[r.team];
   const c = CHARACTERS[r.kit];
-  Object.assign(r, { key, name: t.names[r.kit], role: c.role, title: `${t.name.split(' ').slice(-1)[0].replace(/s$/, '')} ${ROLE_TITLE[c.role]}`, sprite: `${t.art}_${ROLE[r.kit]}`, elem: (t.elems || {})[r.kit] || c.elem });
+  // (an expansion club's player is made from parts: their look, and the newcomer art until it's in)
+  Object.assign(r, { key, name: t.names[r.kit], role: c.role, title: `${t.name.split(' ').slice(-1)[0].replace(/s$/, '')} ${ROLE_TITLE[c.role]}`, sprite: t.art ? `${t.art}_${ROLE[r.kit]}` : `newcomer_${ROLE[r.kit]}`, parts: (t.looks || {})[r.kit] || null, elem: (t.elems || {})[r.kit] || c.elem });
 }
 export const recruitKey = (teamId, kit) => `${teamId}_${ROLE[kit]}`;
 // The kit a rival slot plays with: that player's archetype and the team's super for the slot.
@@ -330,10 +369,10 @@ export const KIT_OF_ROLE = { C: 'frost', W: 'thunder', D: 'stone' };
 
 // Rival goalies you can sign once you've beaten their team ('<team>_g'). Their club then plays
 // a backup. Halla is 'halla'.
-const GOALIE_PRICES = { lynx: 220, comets: 300, rams: 380, ravens: 460, royals: 560 };
+const GOALIE_PRICES = { lynx: 220, comets: 300, owls: 400, rams: 380, moose: 480, ravens: 460, royals: 560 };
 export const GOALIE_RECRUITS = Object.fromEntries(Object.entries(GOALIE_PRICES).map(([team, price]) => {
   const t = TEAMS[team];
-  return [`${team}_g`, { key: `${team}_g`, team, name: t.names.goalie, base: { ...t.goalie }, gstyle: t.gstyle, price, art: t.art, title: 'Goaltender' }];
+  return [`${team}_g`, { key: `${team}_g`, team, name: t.names.goalie, base: { ...t.goalie }, gstyle: t.gstyle, price, art: t.art || 'newcomer', title: 'Goaltender' }]; // (an expansion club's goalie wears the newcomer goalie)
 }));
 // Free-agent goalies signed from the market (agents.js), by id ('fa_g1'), from the save.
 export const FREE_GOALIES = {};
@@ -409,6 +448,8 @@ function memberBase(who) {
   const c = CHARACTERS[r ? r.kit : who];
   if (!c) return null;
   if (!r) return { who, kit: who, def: c, name: c.name, title: c.title, base: c.base, role: c.role, blurb: c.blurb, recruit: null, hand: c.hand, sprite: null, look: null };
+  const rb = r.parts && bodySprite(r.parts); // (an expansion club's player: their body and head)
+  if (rb) return { who, kit: r.kit, def: makeDef(r.kit, r.arch, r.elem), name: r.name, title: r.title, base: r.base, role: c.role, blurb: r.blurb, recruit: r, hand: r.hand, sprite: rb, parts: r.parts, look: 'homekit' };
   return { who, kit: r.kit, def: makeDef(r.kit, r.arch, r.elem), name: r.name, title: r.title, base: r.base, role: c.role, blurb: r.blurb, recruit: r, hand: r.hand, sprite: r.sprite, look: 'homekit' };
 }
 
@@ -499,7 +540,9 @@ export const TOURNAMENT = {
   stages: [
     { team: 'lynx', round: 'Group Stage', powers: [], twist: 'none', reward: 120 },
     { team: 'comets', round: 'Group Stage', powers: ['fire', 'ice'], twist: 'none', reward: 160 },
+    { team: 'owls', round: 'Group Stage', powers: ['fire', 'ice', 'lightning'], twist: 'none', reward: 185 },
     { team: 'rams', round: 'Quarterfinal', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 210 },
+    { team: 'moose', round: 'Quarterfinal', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 240 },
     { team: 'ravens', round: 'Semifinal', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'speed_lanes', reward: 270 },
     { team: 'royals', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'cracked_ice', reward: 400 },
   ],
@@ -624,6 +667,14 @@ export const TWIST_INFO = {
 
 // Pre- and post-match scenes. speaker: 'us' (our captain), 'them' (their captain),
 // or a character id from our roster.
+// Kip, when the expansion clubs join the league (the second season)
+export const EXPANSION_LINES = [
+  ['kip', null, 'Big news, folks: the Frostline grows! Two new clubs join the league this season.'],
+  ['kip', null, 'From the north, the patient, sharp-eyed Glacier Owls. And from the timber country, the Thunder Moose. Mind your toes.'],
+  ['them', 'frost', 'New league, new rink, same old Foxes. We\'ve been watching your tapes.'],
+  ['us', 'frost', 'Seven rounds now. More games, more chances. Let\'s go.'],
+];
+
 export const DIALOGUE = {
   lynx: {
     pre: [
@@ -664,6 +715,26 @@ export const DIALOGUE = {
     ],
     win: [['them', 'frost', '...Unexpected. The Royals won\'t make the mistakes we did.']],
     loss: [['them', 'frost', 'As calculated.']],
+  },
+  owls: {
+    pre: [
+      ['them', 'frost', 'New league, new rink, same old Foxes. We\'ve been watching your tapes.'],
+      ['us', 'thunder', 'Watching tapes? Do they ever actually skate?'],
+      ['them', 'stone', 'We skate when it matters. Right after you make a mistake.'],
+      ['us', 'frost', 'Then no mistakes. Short passes, and keep your heads up.'],
+    ],
+    win: [['them', 'frost', 'Noted. We\'ll have an answer for that next time.']],
+    loss: [['them', 'thunder', 'Patience wins hockey games. You\'ll learn.']],
+  },
+  moose: {
+    pre: [
+      ['them', 'stone', 'Hear that rumble, Foxes? That\'s us coming down the ice.'],
+      ['us', 'stone', 'Big doesn\'t mean fast. Move the puck before they arrive.'],
+      ['them', 'thunder', 'We\'re big AND fast. Ask the boards.'],
+      ['us', 'frost', 'Keep your feet moving and your head up. We can outskate a stampede.'],
+    ],
+    win: [['them', 'stone', 'You got lucky. The boards will remember you.']],
+    loss: [['them', 'thunder', 'STAMPEDE! Sorry. We get excited.']],
   },
   royals: {
     pre: [

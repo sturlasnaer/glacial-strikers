@@ -1,20 +1,25 @@
-// The Frostline league: a 6-team round robin (5 rounds), then a top-4 playoff.
+// The Frostline league: a round robin, then a top-4 playoff. The first season has the six
+// founding clubs (5 rounds); from the second, the two expansion clubs join (8 teams, 7 rounds).
+// A league remembers its own teams, so a season in progress keeps them.
 // The player's games are real matches; every other game is simulated with a quick
 // strength model so standings move each round. After round 3 comes the Winter Classic,
 // an outdoor showcase on Pine Pond against the league leaders that doesn't count in the
 // standings. After round 2 comes the All-Star Game at home: the fans vote in the league's
 // stars, mixed across two benches (it doesn't count either).
 
-import { TEAMS, TOURNAMENT } from './data.js';
+import { TEAMS, TOURNAMENT, RIVAL_IDS, FOUNDING_RIVALS } from './data.js';
 import { makeRng } from './util.js';
 import { recordSimGame } from './awards.js';
 import { rosterShift } from './slots.js';
 import { t } from './i18n.js';
 
-export const LEAGUE_TEAMS = ['home', 'lynx', 'comets', 'rams', 'ravens', 'royals'];
+export const FOUNDING_TEAMS = ['home', ...FOUNDING_RIVALS];
+export const EXPANDED_TEAMS = ['home', ...RIVAL_IDS]; // (the rivals easiest first: the order we meet them)
+export const EXPANSION_SEASON = 2;
+export const leagueTeams = (L) => (L && L.teams) || FOUNDING_TEAMS;
+export const leagueRivals = (L) => leagueTeams(L).filter((id) => id !== 'home');
 export const CLASSIC_AFTER = 3; // the Winter Classic comes after this many rounds
 export const ALLSTAR_AFTER = 2; // and the All-Star Game after this many
-const OUR_ORDER = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
 
 // Rough team strength for simulated games (home strength follows the player's levels).
 export function strength(teamId, save) {
@@ -27,25 +32,27 @@ export function strength(teamId, save) {
   return 0.35 + t.diff * 0.75 + (save.season - 1) * 0.08 + rosterShift(save, teamId); // (weaker for the players you took)
 }
 
-// Round-robin schedule where our opponents come in tournament order.
-// Circle method: we sit at the centre and meet rival r in round r; the other four
-// pair up as (r+1, r-1) and (r+2, r-2) around the circle, so every pair meets once.
-function buildSchedule() {
-  const R = OUR_ORDER, n = R.length;
+// Round-robin schedule where our opponents come in order (an odd number of them).
+// Circle method: we sit at the centre and meet rival r in round r; the others pair up as
+// (r+1, r-1), (r+2, r-2)... around the circle, so every pair meets once.
+function buildSchedule(order) {
+  const R = order, n = R.length;
   const at = (i) => R[((i % n) + n) % n];
   return R.map((opp, r) => ({
-    games: [{ a: 'home', b: opp }, { a: at(r + 1), b: at(r - 1) }, { a: at(r + 2), b: at(r - 2) }],
+    games: [{ a: 'home', b: opp }, ...Array.from({ length: (n - 1) / 2 }, (_, k) => ({ a: at(r + k + 1), b: at(r - k - 1) }))],
   }));
 }
 
 export function newLeague(season) {
+  const teams = season >= EXPANSION_SEASON ? EXPANDED_TEAMS : FOUNDING_TEAMS;
   return {
     season,
+    teams: [...teams],
     phase: 'regular', // 'regular' | 'playoffs' | 'done'
     round: 0,
-    schedule: buildSchedule(),
+    schedule: buildSchedule(teams.slice(1)),
     results: [], // per round: [{ a, b, ga, gb }]
-    table: Object.fromEntries(LEAGUE_TEAMS.map((t) => [t, { gp: 0, w: 0, l: 0, gf: 0, ga: 0 }])),
+    table: Object.fromEntries(teams.map((t) => [t, { gp: 0, w: 0, l: 0, gf: 0, ga: 0 }])),
     playoffs: null, // { semis: [{ a, b, seedA, seedB, ga, gb, winner }], final: {...} }
     champion: null,
     seedRng: (season * 7919) >>> 0,
@@ -54,10 +61,12 @@ export function newLeague(season) {
 
 // Make sure every pair meets exactly once; fall back to a standard circle schedule if not.
 (function verify() {
-  const s = buildSchedule();
-  const seen = new Set();
-  for (const r of s) for (const g of r.games) seen.add([g.a, g.b].sort().join('-'));
-  if (seen.size !== 15) throw new Error('League schedule does not cover every pairing: ' + seen.size);
+  for (const teams of [FOUNDING_TEAMS, EXPANDED_TEAMS]) {
+    const s = buildSchedule(teams.slice(1)), n = teams.length;
+    const seen = new Set();
+    for (const r of s) for (const g of r.games) seen.add([g.a, g.b].sort().join('-'));
+    if (seen.size !== (n * (n - 1)) / 2) throw new Error('League schedule does not cover every pairing: ' + seen.size);
+  }
 })();
 
 // First-to-5 result from two strengths.
@@ -78,7 +87,7 @@ function addResult(L, g) {
 }
 
 export function standings(L) {
-  const rows = LEAGUE_TEAMS.map((id) => ({ id, ...L.table[id], pts: L.table[id].w * 2, diff: L.table[id].gf - L.table[id].ga }));
+  const rows = leagueTeams(L).map((id) => ({ id, ...L.table[id], pts: L.table[id].w * 2, diff: L.table[id].gf - L.table[id].ga }));
   rows.sort((x, y) => y.pts - x.pts || y.diff - x.diff || y.gf - x.gf || headToHead(L, y.id, x.id));
   return rows;
 }
@@ -104,7 +113,7 @@ export function nextFixture(L) {
   if (L.phase === 'regular') {
     const opp = L.schedule[L.round].games[0].b;
     const base = TOURNAMENT.stages.find((s) => s.team === opp);
-    return { kind: 'regular', opponent: opp, label: t('Round {n} of 5', { n: L.round + 1 }), stage: { ...base, round: 'League · round {n}', roundN: L.round + 1 } };
+    return { kind: 'regular', opponent: opp, label: t('Round {n} of {total}', { n: L.round + 1, total: L.schedule.length }), stage: { ...base, round: 'League · round {n}', roundN: L.round + 1 } };
   }
   if (L.phase === 'playoffs') {
     const po = L.playoffs;
@@ -156,7 +165,7 @@ export function recordOurGame(L, save, gf, ga) {
     }
     L.results.push(round);
     L.round++;
-    if (L.round >= 5) {
+    if (L.round >= L.schedule.length) {
       L.phase = 'playoffs';
       out.phaseChange = 'playoffs';
       seedPlayoffs(L);

@@ -2,7 +2,7 @@
 // rival brought in to fill the hole (a Draft Day pick, or a free agent signed mid-season,
 // kept in save.rivalFills by 'team:kit'), or one of their reserves until then. They play in
 // the newcomer art (Batch AA) in the team's colours, under their own name and style.
-import { TEAMS, CHARACTERS, STAT_KEYS, recruitKey, makeDef, slotDef } from './data.js';
+import { TEAMS, CHARACTERS, STAT_KEYS, recruitKey, makeDef, slotDef, slotLook } from './data.js';
 import { bodySprite } from './modular.js';
 
 // The save's fills, for the portraits (which don't see the save): set when a save loads.
@@ -11,7 +11,7 @@ export const setFills = (save) => { RIVAL_FILLS = (save.rivalFills ||= {}); };
 // A fill made from parts (Batch AJ/AO): their look, or null.
 export const fillLook = (teamId, kit) => { const f = RIVAL_FILLS[`${teamId}:${kit}`]; return f && f.parts && bodySprite(f.parts) ? f.parts : null; };
 // Does a rival field anyone made from parts? (their pages then load and take the team's colours)
-export const teamHasParts = (teamId) => ['frost', 'thunder', 'stone'].some((k) => fillLook(teamId, k));
+export const teamHasParts = (teamId) => ['frost', 'thunder', 'stone'].some((k) => fillLook(teamId, k) || slotLook(teamId, k)); // (an expansion club: all of them)
 
 export const vacated = (save, teamId, kit) => {
   const k = recruitKey(teamId, kit);

@@ -27,7 +27,7 @@ import { standings } from './league.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan, recordClassic, recordAllStar } from './league.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies } from './data.js';
+import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, RIVAL_IDS, slotSprite, slotLook, EXPANSION_LINES } from './data.js';
 import { rollLegend, legendState, STAY, joinLegend, LEGEND_LINES, twinsFirstTogether } from './legends.js';
 import { rivalSigning, rivalOffer } from './moves.js';
 import { refreshAgents } from './agents.js';
@@ -45,7 +45,7 @@ import { t, setLang, getLang, defaultLang } from './i18n.js';
 const STEP = 1 / 60;
 // Vibrate only once the player has interacted (browsers block it before that).
 const buzz = (p) => { if (navigator.userActivation?.hasBeenActive !== false) navigator.vibrate?.(p); };
-const RIVALS = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
+const RIVALS = RIVAL_IDS;
 const RULE_ART = ['meltwater', 'aurora_lanes', 'pond_cracks', 'cracked_ice', 'both', 'speed_lanes', 'rumble_strips', 'shadow_zones']; // rules drawn with the rule sprites
 
 const INTRO = [
@@ -469,7 +469,7 @@ class App {
     const cfg = {
       teams: [
         { skaters: ids.map((id) => ({ def: CHARACTERS[id], stats: { ...CHARACTERS[id].base }, name: CHARACTERS[id].name, perks: [] })), goalie: { stats: { rfx: 6, pos: 6 }, name: GOALIE.name }, chem },
-        { skaters: ids.map((id) => ({ def: slotDef(teamId, id), stats: { ...CHARACTERS[id].base }, name: team.names[id], perks: [], sprite: team.art ? `${team.art}_${ROLE[id]}` : null })), goalie: { stats: { rfx: 6, pos: 6 }, name: team.names.goalie, art: team.art }, chem },
+        { skaters: ids.map((id) => ({ def: slotDef(teamId, id), stats: { ...CHARACTERS[id].base }, name: team.names[id], perks: [], sprite: slotSprite(teamId, id), parts: slotLook(teamId, id) })), goalie: { stats: { rfx: 6, pos: 6 }, name: team.names.goalie, art: team.art || 'newcomer' }, chem },
       ],
       humanTeam: 0, humans: [0, 1],
       powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none',
@@ -881,7 +881,7 @@ class App {
     const allstar = !!(c.fixture && c.fixture.kind === 'allstar');
     const firstWin = rewards.won && !((s.rivals && s.rivals[c.teamId] && s.rivals[c.teamId].wins) > 0);
     if (!allstar) recordRivalResult(s, c.teamId, summary.score[0], summary.score[1], rewards.won, { ourScorers: scorers(0), theirScorers: scorers(1) });
-    if (firstWin && TEAMS[c.teamId] && TEAMS[c.teamId].art) {
+    if (firstWin && TEAMS[c.teamId] && TEAMS[c.teamId].names) {
       setTimeout(() => this.toast(crest(c.teamId, 72), t('Scouting'), t('{team} will take your call', { team: TEAMS[c.teamId].name }), t('Sign their skaters in Team › Scouting')), 1600);
     }
     let becameChampion = false, leagueOut = null;
@@ -1038,9 +1038,21 @@ class App {
     const s = this.save;
     s.season++;
     s.stage = 0; s.beaten = []; s.champion = false;
+    const before = new Set(Object.keys((s.rivals || {})));
     s.league = newLeague(s.season);
     s.buffs = [];
     writeSave(s);
+    // the league grows: Kip welcomes the new clubs (once)
+    const fresh = s.league.teams.filter((id) => TEAMS[id] && TEAMS[id].expansion && !before.has(id));
+    if (fresh.length && !s.expansionSeen) {
+      s.expansionSeen = true;
+      writeSave(s);
+      Promise.all(fresh.map((id) => Assets.ensureTeam(id))).then(() => {
+        this.scene = 'dialogue';
+        this.ui.dialogue(EXPANSION_LINES, fresh[0], null, () => this.goHub('tournament'));
+      });
+      return;
+    }
     this.goHub('tournament');
   }
 

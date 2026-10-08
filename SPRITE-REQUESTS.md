@@ -1,18 +1,17 @@
 # Sprite requests
 
-What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd), the remaining packs (Batches B, H, I, C and N-Extras), the new batches (P, R, S, K, T and M2) the D, U, Q, W, O, E, J and F delivery, V and X, the Y, Z, AA, AB and AC delivery, the twins' first look (AI part 1), Part 2 and the new additions (AD, AE, AF, AG, AI part 2, AJ, AK, AL and AM), and AN and AO. AH was skipped: the AJ pilot works, so new faces come from parts.
+What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd), the remaining packs (Batches B, H, I, C and N-Extras), the new batches (P, R, S, K, T and M2) the D, U, Q, W, O, E, J and F delivery, V and X, the Y, Z, AA, AB and AC delivery, the twins' first look (AI part 1), Part 2 and the new additions (AD, AE, AF, AG, AI part 2, AJ, AK, AL and AM), and AN, AO and AP. AH was skipped: the AJ pilot works, so new faces come from parts.
 
 The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes** (the Snow Fox is their mascot; colours unchanged). Packs can be named `Puckbound-...` from now on; older `Glacial-Strikers-...` folder names still work.
 
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **AP**: the jersey moment for the big and slim builds.
-2. **AQ**: cut-in banners for players made from parts, one backdrop per element.
-3. **AR**: an agent in the locker room, for a free-agent market.
-4. **AS**: the linesman's penalty signals.
-5. **AT**: goalies from parts: a goalie body and painted mask heads.
-6. **AU**: two expansion teams, if the league grows to seven.
+1. **AQ**: cut-in banners for players made from parts, one backdrop per element.
+2. **AR**: an agent in the locker room, for a free-agent market.
+3. **AS**: the linesman's penalty signals.
+4. **AT**: goalies from parts: a goalie body and painted mask heads.
+5. **AU**: the two expansion clubs (now in the game from the second season): crests, buildings, mascots.
 
 ## Format notes
 
@@ -25,6 +24,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - **Stick hand.** Players shoot left or right, and a player should keep the same hand whichever way they skate. A **left shot** holds the stick on the left side of the body (left hand lower on the shaft, blade on the player's left): facing the camera the blade is on the screen's right, facing away it's on the screen's left, facing right (east) it's on the far side of the body, and facing left (west) on the near side. Draw new skaters **left-shot in all eight directions** (west, northwest and southwest drawn, not mirrored); the game mirrors a left-shot set to make a right-shot player. Say the hand in the add-on atlas (`"hand": "L"`).
 - **Batch AN:** the goaltending-style icons on the goalie cards, the contract in the league news, icons for the nine newest achievements, and the backup goalie a rival plays once you've signed theirs (in their colours, with portraits).
 - **Batch AO:** two more builds (big and slim) and six more heads (cage, visor, mohawk, ponytail, moustache, glasses), with portrait shoulders per build, and the jersey moment for the parts body: drafted rookies now pull on our jersey with their own face.
+- **Batch AP:** big and slim rookies pull on our jersey too.
 
 ---
 
@@ -78,10 +78,6 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 ---
 
-## Batch AP: the jersey moment for the big and slim builds
-
-Batch AO's jersey moment (holding the jersey up, pulling it over the head, the fist pump) fits `body_std`, so a big or slim rookie skips it today. Please draw the same three poses for `body_big` and `body_small`, facing the camera, exactly as AO did for `body_std`: a head anchor on each frame (`"hide_head": true` on the pulling one), gear masks, and the sequence under `modular.jersey_moments.body_big` / `body_small`. 6 frames.
-
 ## Batch AQ: cut-in banners for players made from parts
 
 When a player uses their ultimate, a banner slides across the screen with their art (the cut-ins). The cast, the rivals and the twins have painted banners, but rookies and anyone else made from parts get a plain band. Please paint **one banner backdrop per element**, in the style and size of the existing cut-in banners (`cutins/*.webp`, 960 wide), with the left third left clear: the game drops the player's portrait (their own face and build) there and writes the super's name over the right side.
@@ -119,13 +115,13 @@ Signed rival goalies and the rivals' backups cover today's needs, but drafted an
 
 About 70 body frames and 6 × 12 mask views. If time is short, the body and two masks first.
 
-## Batch AU: two expansion teams
+## Batch AU: the two expansion clubs
 
-If the league grows from six teams to seven or eight, the new teams' players can be made from parts in their colours, but each club still needs its own identity. For each of **the Glacier Owls** (snowy white and slate) and **the Thunder Moose** (forest green and amber):
+The league grows to eight teams from a save's second season: **the Glacier Owls** (snowy white and slate) and **the Thunder Moose** (forest green and amber) are in the game now. Their players are made from parts in their colours, and their goalies wear the AN backup goalie. Today they use the generic away crest and play at the Frostline Rink. Each club needs its own identity:
 - **A crest** like `rival_crests` (ignore the team colours in the art; draw it coral and violet so the game recolours it).
 - **A home arena**, a 1536×1024 painting in the style of the Golden Hall and the Dark Aerie: an owl's frozen observatory, and a timber longhouse with antlers in the rafters.
 - **A mascot** dancing on the near stairs, like Batch R (idle, two dance frames, a cheer).
 - **A scoreboard** like Batch K, and an arena banner like v3's.
 - A captain's cut-in banner, painted like the rivals' (the captain can be made from parts, so any face you like that fits the team).
 
-About 20 images and frames per team. This is the biggest one and depends on growing the league, so it comes last.
+About 20 images and frames per team. Put the arenas in `arenas` as `owl_observatory` and `moose_longhouse`, the crests under `rival_crests/crest/glacier_owls` and `.../thunder_moose`, and the mascots as Batch R did.

@@ -18,7 +18,7 @@ function starCfg(who) {
   const m = member(who), t = TEAMS[m.recruit.team];
   const stats = { ...m.base };
   for (const [k, v] of Object.entries(t.bonus || {})) stats[k] = Math.max(1, stats[k] + v);
-  return { def: m.def, who, stats, name: m.name, perks: [], sprite: m.recruit.sprite, look: 'homekit' };
+  return { def: m.def, who, stats, name: m.name, perks: [], sprite: m.sprite || m.recruit.sprite, parts: m.parts || null, look: 'homekit' };
 }
 
 // A bot skates Cone Weave: through each gate on its line, then shoots on the empty net.

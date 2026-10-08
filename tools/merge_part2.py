@@ -11,7 +11,8 @@ from PIL import Image
 # Adapted from the pack's integration/compile_additions.py, with our compression: art pages
 # lossy like the rest, lossless only where exact channels matter (masks, the parts and the
 # newcomers, which are recoloured by hue).
-BATCHES = ('AD', 'AE', 'AF', 'AG', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO')
+BATCHES = ('AD', 'AE', 'AF', 'AG', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP')
+PARTS = ('AJ', 'AO', 'AP')  # the batches of players made from parts
 GOALIE_S = 0.5  # (as in build_assets.py)
 BACKUP_HEIGHT = 0.87  # the backup goalie stands this tall next to a starter
 ROLE_V1 = {'c': 'frost_captain', 'w': 'thunder_winger', 'd': 'stone_defender'}
@@ -40,7 +41,7 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
 
     def group_of(b, sh, meta):
         cat = meta['category']
-        if b in ('AJ', 'AO'):
+        if b in PARTS:
             return 'parts'
         if b == 'AN':  # the backup goalie with the newcomers (recoloured per rival), the icons with the rest
             return 'newcomer_goalie' if cat in ('goalie', 'portrait') else 'icons_new'
@@ -73,7 +74,7 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
 
     # heads and portrait faces turn on their necks: the anchors in the parts maps
     necks = {}
-    for b in ('AJ', 'AO'):
+    for b in PARTS:
         m = packs.get(b, {}).get('modular', {})
         for views in m.get('heads', {}).values():
             for states in views.values():
@@ -96,8 +97,9 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
             group = group_of(b, sh, meta)
             if group is None:
                 continue
-            cat, rrs = meta['category'], meta['recommended_render_scale']
-            body = cat in ('newcomer', 'legend', 'official') or (b in ('AJ', 'AO') and 'portrait' not in sh)
+            cat = meta['category']
+            rrs = meta.get('recommended_render_scale') or a['frames'][meta['frame_ids'][0]].get('source_scale', 0.722)  # (AP gives it per frame)
+            body = cat in ('newcomer', 'legend', 'official') or (b in PARTS and 'portrait' not in sh)
             # characters at the v1 skaters' scale; everything else at twice its draw scale
             k = 0.6 * rrs * v1_h[ROLE_V1[meta.get('role', 'c')]] / 152 if body else 2 * rrs
             s = 0.6 if body else k
@@ -227,7 +229,7 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
     # ---- AJ and AO: bodies drawn without a head, the heads that sit on them, and their
     # portrait pieces (AO adds two builds, six heads and the parts body's jersey moment)
     M = None
-    for b in ('AJ', 'AO'):
+    for b in PARTS:
         if b not in packs:
             continue
         m = packs[b]['modular']
@@ -237,6 +239,12 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
             kx, ky = factors[v['frame']]
             a = v['anchor']
             M['anchors'][v['frame']] = {**a, 'x': round(a['x'] * kx, 2), 'y': round(a['y'] * ky, 2), **({'front': v['front']} if v.get('front') else {})}
+        # (AP's layout: anchors and sequences straight under modular)
+        for fid, a in m.get('anchors', {}).items():
+            anchor({'frame': fid, 'anchor': a})
+        for name, seq in m.get('jersey_moments', {}).items():
+            M.setdefault('jersey_moments', {})[name] = list(seq['frames'])
+            atlas.setdefault('draft_animations', {})[name] = dict(seq)
         for name, body in m.get('bodies', {}).items():
             for v in body.get('jersey_moment') or []:
                 anchor(v)

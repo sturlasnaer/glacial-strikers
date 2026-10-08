@@ -4,9 +4,9 @@ import { Assets } from './assets.js';
 import {
   CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
-  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
+  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, RIVAL_IDS, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
-import { standings, classicOpponent, CLASSIC_AFTER, ALLSTAR_AFTER } from './league.js';
+import { standings, classicOpponent, CLASSIC_AFTER, ALLSTAR_AFTER, leagueRivals } from './league.js';
 import { BUFF_TEXT } from './lockerroom.js';
 import { ACHIEVEMENTS } from './achievements.js';
 import { AWARDS, AWARD_BY_ID, seasonStats } from './awards.js';
@@ -66,6 +66,10 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
     const p = P[`${GOALIE_RECRUITS[id].art}_g`], fid = p && ((expr && p[expr]) || p.neutral_roster || p.neutral);
     return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT.goalie}`, size, CLUB_PAGES());
   }
+  if (team === 0 && RECRUITS[id] && member(id).parts) { // a signing from an expansion club: made from parts, in our colours
+    const url = Assets.partsPortrait(member(id).parts, expr || 'neutral', size, 'homekit');
+    if (url) return url;
+  }
   if (team === 0 && RECRUITS[id]) {
     // a signing: their own portrait, in our colours
     const r = RECRUITS[id];
@@ -110,6 +114,14 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
     return Assets.icon(`character_portraits/home/${PORTRAIT[id]}`, size, CLUB_PAGES());
   }
   const t = TEAMS[teamId];
+  if (t && !t.art && id === 'goalie' && P.newcomer_g) { // an expansion club's goalie: the newcomer goalie in their colours
+    const fid = (expr && P.newcomer_g[expr]) || P.newcomer_g.neutral, url = fid && Assets.icon(fid, size, teamId);
+    if (url) return url;
+  }
+  if (t && !t.art && slotLook(teamId, id)) { // an expansion club's skater: made from parts, in their colours
+    const url = Assets.partsPortrait(slotLook(teamId, id), expr || 'neutral', size, teamId);
+    if (url) return url;
+  }
   const p = t && t.art && P[`${t.art}_${ROLE[id]}`];
   const fid = p && ((expr && p[expr]) || p.neutral_roster || p.neutral);
   const url = fid && Assets.icon(fid, size, teamId);
@@ -1326,7 +1338,8 @@ export class UI {
 
   // Rival skaters you can sign: every team you've beaten.
   scoutingHtml(s) {
-    const teams = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
+    // the league's clubs, and any other you've met
+    const teams = RIVAL_IDS.filter((tid) => leagueRivals(s.league).includes(tid) || (s.rivals && s.rivals[tid]));
     const rows = teams.map((tid) => {
       const tm = TEAMS[tid];
       const keys = ['frost', 'thunder', 'stone'].map((kit) => recruitKey(tid, kit));

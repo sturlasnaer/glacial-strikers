@@ -34,12 +34,11 @@ Ideas for later:
 
 Done: recruitment (sign rival skaters, pick a line-up), arena rules (meltwater, aurora lanes, pond cracks), the clickable locker room, visible gear on the ice, season awards, the daily challenge and custom club name and colours, goalie life from the v5 goalies (front and back views, skating to and from the bench, pass wind-ups and poke checks), the new name (Puckbound, with the Snowcrest Foxes as the home team), gear recolours on the sprites from the Batch M masks, true-profile goalies both ways (Batch L), near-side crowd sprites (Batch N), goalies who leave the crease to play pucks behind the net (with AI dump-ins), the remaining packs (the Rams' Golden Hall and the Ravens' Dark Aerie, glass-bangers, camera flashes and flag wavers, the volcanic scoreboard, Brekka, Ottar and Kip standing in the locker room with the chest and league board, sprite arena rules, rival side strides and captain celebrations, the title logo, the resurfacer's lap and championship fireworks), the new batches (penalty boxes, rival mascots, rumble strips in the Golden Hall and raven shadows in the Dark Aerie, themed scoreboards, Sniper targets and speed-lane tiles, gear masks for the rival strides), goalie mode (play Halla while the AI skates, with positioning help, butterfly, dive, poke, puck handling and the Wall of Ice ultimate), the Winter Classic (an outdoor showcase on Pine Pond after round 3, with Kip calling it, heavier snow, its own anthem and fireworks), the latest delivery (the pixel-art menu kit with controller highlights and PlayStation, Xbox and keyboard prompts, celebrations for every rival winger and defender, the Wall of Ice and goalie icons, the Winter Classic dressing, rule and achievement icons, the Awards Night stage and Pine Pond's log penalty box), Icelandic (every string, with a glossary and a checker), and the new soundtrack (16 tracks on a chiptune tracker engine, a theme for every arena, arena acoustics and horns, a voiced crowd, a Music room). Done from the v2 pack: rival casts, portraits and expressions, crests, banner cut-ins, signature celebrations, three arenas, sprite crowd, locker-room hub and hub characters.
 
-1. **The other builds' jersey moment** (Batch AP).
-2. **Cut-in banners for players made from parts** (Batch AQ): an element backdrop with their own portrait.
-3. **An agent for a free-agent market** (Batch AR): free agents made from parts, signed for coins.
-4. **The linesman's penalty signals** (Batch AS).
-5. **Goalies from parts** (Batch AT): a goalie body and painted masks, for drafted and free-agent goalies.
-6. **Two expansion teams** (Batch AU), if the league grows.
+1. **Cut-in banners for players made from parts** (Batch AQ): an element backdrop with their own portrait.
+2. **The agent** (Batch AR) for the free-agent market (the market itself is in).
+3. **The linesman's penalty signals** (Batch AS).
+4. **Goalies from parts** (Batch AT): a goalie body and painted masks, for drafted and free-agent goalies.
+5. **The expansion clubs' crests, buildings and mascots** (Batch AU); the clubs are in.
 
 Done since Part 2: the goaltending-style icons, the contract and the last nine achievement icons, and the rivals' backup goalie (Batch AN); two more builds, six more heads and the jersey moment for players from parts (Batch AO).
 

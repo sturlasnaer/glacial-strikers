@@ -3,8 +3,7 @@
 import { GUIDE } from './guide.js';
 import {
   CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE, CAST_PAIRS, makeDef, perkSlot,
-  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, setFreeGoalies, goalieInfo, areTwins, setRookies, setStyles, ELEMENTS, ARCHETYPES, member, pairKey, recruitKey, slotDef, GOALIE_STYLES,
-} from './data.js';
+  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, setFreeGoalies, goalieInfo, areTwins, setRookies, setStyles, ELEMENTS, ARCHETYPES, member, pairKey, recruitKey, slotDef, GOALIE_STYLES, RIVAL_IDS, slotSprite, slotLook } from './data.js';
 import { newLeague, migrateLeague } from './league.js';
 import { lookFor } from './modular.js';
 import { seasonStats } from './awards.js';
@@ -220,8 +219,8 @@ export function setLineup(save, who) {
 export const homeKitGroups = (save) => {
   const ids = rosterIds(save), legends = ids.filter((id) => LEGENDS[id]);
   return [...new Set([
-    ...ids.filter((id) => RECRUITS[id]).map((id) => 'rival_' + TEAMS[RECRUITS[id].team].art),
-    ...Object.keys(save.goalies || {}).filter((k) => GOALIE_RECRUITS[k]).map((k) => 'rival_' + GOALIE_RECRUITS[k].art), // signed goalies
+    ...ids.filter((id) => RECRUITS[id]).map((id) => (TEAMS[RECRUITS[id].team].art ? 'rival_' + TEAMS[RECRUITS[id].team].art : 'parts')), // (an expansion club's player: from parts)
+    ...Object.keys(save.goalies || {}).filter((k) => GOALIE_RECRUITS[k]).map((k) => (GOALIE_RECRUITS[k].art === 'newcomer' ? 'newcomers' : 'rival_' + GOALIE_RECRUITS[k].art)), // signed goalies
     ...(ids.some((id) => ROOKIES[id] && !member(id).parts) || legends.some((id) => !LEGEND_ART.has(LEGENDS[id].art)) || Object.keys(save.goalies || {}).some((k) => FREE_GOALIES[k]) ? ['newcomers'] : []), // (a free-agent goalie wears the newcomer goalie)
     ...(ids.some((id) => member(id).parts) ? ['parts'] : []), // players from parts (Batch AJ: the 'parts' page group)
     ...(legends.some((id) => LEGEND_ART.has(LEGENDS[id].art) || LEGEND_FACES.has(LEGENDS[id].art)) ? ['legends'] : []),
@@ -260,7 +259,7 @@ export function homeGoalie(save) {
 export function rivalGoalie(save, teamId) {
   const t = TEAMS[teamId];
   if (isSigned(save, teamId + '_g')) return { stats: { rfx: Math.max(3, t.goalie.rfx - 1), pos: Math.max(3, t.goalie.pos - 1) }, name: t.subs.goalie || t.names.goalie, art: 'newcomer', style: 'hybrid', who: 'sub_goalie' }; // (the plain away goalie until the newcomer goalie, Batch AN)
-  return { stats: { ...t.goalie }, name: t.names.goalie, art: t.art || null, style: t.gstyle || 'hybrid' };
+  return { stats: { ...t.goalie }, name: t.names.goalie, art: t.art || 'newcomer', style: t.gstyle || 'hybrid' }; // (an expansion club's goalie: the newcomer goalie)
 }
 
 export function goalieStatus(save, key) {
@@ -325,7 +324,7 @@ export function matchConfig(save, teamId, stage, opts = {}) {
       // a slot whose skater you signed: whoever they brought in, a newcomer in their colours
       const sub = rivalSub(save, teamId, id);
       if (sub) return { def: sub.def, who: 'sub_' + id, stats: withBonus(sub.stats, t), name: sub.name, perks: [], sprite: sub.sprite, parts: sub.parts, hand: sub.hand };
-      return { def: slotDef(teamId, id), stats, name: t.names[id], perks: [], sprite: t.art ? `${t.art}_${ROLE[id]}` : null, hand: RECRUITS[recruitKey(teamId, id)]?.hand };
+      return { def: slotDef(teamId, id), stats, name: t.names[id], perks: [], sprite: slotSprite(teamId, id), parts: slotLook(teamId, id), hand: RECRUITS[recruitKey(teamId, id)]?.hand };
     }),
     goalie: rivalGoalie(save, teamId),
     chem: Object.fromEntries(CAST_PAIRS.map((k) => [k, Math.min(3, (t.chem || 0) + (save.season > 1 ? 1 : 0))])),
@@ -356,7 +355,6 @@ export function matchConfig(save, teamId, stage, opts = {}) {
 // colours. The League All-Stars: those two teams' next three, and the better of their two
 // goalies. Two rival teams at most, so a phone holds the art. Signed players are ours and
 // newcomers aren't voted in; null when there aren't enough stars left.
-const RIVAL_IDS = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
 export function allStarVote(save, L) {
   const st = seasonStats(L);
   const pts = (key) => { const r = st.skaters[key]; return r ? r.g * 3 + r.a * 2 + (r.hits + r.steals) * 0.25 : 0; };
@@ -384,7 +382,7 @@ export function allStarConfig(save, vote, opts = {}) {
     const m = member(who), t = TEAMS[m.recruit.team];
     const stats = { ...m.base };
     for (const [k, v] of Object.entries(t.bonus || {})) stats[k] = Math.max(1, stats[k] + v);
-    return { def: m.def, who, stats, name: m.name, perks: [], sprite: m.recruit.sprite, ...(look ? { look } : {}) };
+    return { def: m.def, who, stats, name: m.name, perks: [], sprite: m.sprite || m.recruit.sprite, parts: m.parts || null, ...(look ? { look } : {}) };
   };
   const ours = (who) => {
     if (!save.roster[who]) return rival(who, 'homekit');
@@ -401,7 +399,7 @@ export function allStarConfig(save, vote, opts = {}) {
     buffs: {},
     teams: [
       { skaters: vote.ours.map(ours), goalie: homeGoalie(save), chem: {} },
-      { skaters: vote.theirs.map((w) => rival(w)), goalie: { stats: { rfx: g.goalie.rfx + 1, pos: g.goalie.pos + 1 }, name: g.names.goalie, art: g.art }, chem: {} },
+      { skaters: vote.theirs.map((w) => rival(w)), goalie: { stats: { rfx: g.goalie.rfx + 1, pos: g.goalie.pos + 1 }, name: g.names.goalie, art: g.art || 'newcomer' }, chem: {} },
     ],
     humanTeam: 0,
     goalieMode: !!opts.goalieMode,
