@@ -1,0 +1,100 @@
+{
+  "source_scale": 3,
+  "pieces": {
+    "bronze": {
+      "file": "images/prospect_bronze.png",
+      "frame_id": "draft_cards/prospect_bronze",
+      "logical_size": [
+        180,
+        250
+      ],
+      "source_size": [
+        540,
+        750
+      ],
+      "nine_slice": {
+        "left": 48,
+        "right": 48,
+        "top": 396,
+        "bottom": 36
+      },
+      "portrait_rect_logical": {
+        "x": 16,
+        "y": 12,
+        "w": 148,
+        "h": 108
+      },
+      "stats_rect_logical": {
+        "x": 20,
+        "y": 138,
+        "w": 140,
+        "h": 94
+      },
+      "background_color": "#14233b"
+    },
+    "silver": {
+      "file": "images/prospect_silver.png",
+      "frame_id": "draft_cards/prospect_silver",
+      "logical_size": [
+        180,
+        250
+      ],
+      "source_size": [
+        540,
+        750
+      ],
+      "nine_slice": {
+        "left": 48,
+        "right": 48,
+        "top": 396,
+        "bottom": 36
+      },
+      "portrait_rect_logical": {
+        "x": 16,
+        "y": 12,
+        "w": 148,
+        "h": 108
+      },
+      "stats_rect_logical": {
+        "x": 20,
+        "y": 138,
+        "w": 140,
+        "h": 94
+      },
+      "background_color": "#14233b"
+    },
+    "gold": {
+      "file": "images/prospect_gold.png",
+      "frame_id": "draft_cards/prospect_gold",
+      "logical_size": [
+        180,
+        250
+      ],
+      "source_size": [
+        540,
+        750
+      ],
+      "nine_slice": {
+        "left": 48,
+        "right": 48,
+        "top": 396,
+        "bottom": 36
+      },
+      "portrait_rect_logical": {
+        "x": 16,
+        "y": 12,
+        "w": 148,
+        "h": 108
+      },
+      "stats_rect_logical": {
+        "x": 20,
+        "y": 138,
+        "w": 140,
+        "h": 94
+      },
+      "background_color": "#14233b"
+    }
+  },
+  "manifest": "card-kit/card-kit.json",
+  "css": "card-kit/prospect-cards.css"
+}

@@ -53,8 +53,21 @@ export const ACHIEVEMENTS = [
   { id: 'elements', name: 'Six Elements', text: 'Score with skaters of all six elements.', icon: 'power_pucks/gravity/pickup_orb', art: 'achievements/six_elements', coins: 120, set: 'elemGoals', goal: 6 },
   { id: 'weekly-cup', name: 'Cup of the Week', text: 'Win a Weekly Cup on a friends board.', icon: 'badges/rank_1', art: 'achievements/cup_of_the_week', coins: 100 },
 ];
+// Batch AF: the achievements that borrowed a gear or HUD picture get their own.
+const AF_ART = {
+  shutout: 'brick_wall', blitz: 'blitz', 'one-timers': 'one_timer', 'tic-tac-toe': 'tic_tac_toe', combos: 'chemistry_class',
+  ultimates: 'ultimate_power', 'power-pucks': 'elemental', hitter: 'freight_train', pickpocket: 'pickpocket', 'power-play': 'power_play',
+  shorthanded: 'shorthanded', 'empty-net': 'empty_netter', 'extra-attacker': 'extra_attacker', clean: 'clean_game', challenge: 'up_for_a_challenge',
+  champion: 'frostline_champions', 'between-pipes': 'between_the_pipes', rivals: 'rival_slayer', 'max-level': 'fully_grown',
+  'gold-drills': 'gold_standard', kitted: 'fully_kitted', versus: 'couch_champion',
+};
 // Their own icons once they're in the pack.
-export function useAchievementArt(frames) { for (const a of ACHIEVEMENTS) if (a.art && frames[a.art]) a.icon = a.art; }
+export function useAchievementArt(frames) {
+  for (const a of ACHIEVEMENTS) {
+    const art = a.art || (AF_ART[a.id] && 'achievements/' + AF_ART[a.id]);
+    if (art && frames[art]) a.icon = art;
+  }
+}
 const BY_ID = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a]));
 
 export class AchievementTracker {

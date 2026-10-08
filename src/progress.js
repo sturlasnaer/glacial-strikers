@@ -223,6 +223,7 @@ export const homeKitGroups = (save) => {
     ...(ids.some((id) => ROOKIES[id] && !member(id).parts) || legends.some((id) => !LEGEND_ART.has(LEGENDS[id].art)) ? ['newcomers'] : []),
     ...(ids.some((id) => member(id).parts) ? ['parts'] : []), // players from parts (Batch AJ: the 'parts' page group)
     ...(legends.some((id) => LEGEND_ART.has(LEGENDS[id].art) || LEGEND_FACES.has(LEGENDS[id].art)) ? ['legends'] : []),
+    ...(legends.some((id) => LEGEND_ART.has(LEGENDS[id].art)) ? ['legends_ice'] : []), // their skating sets (Batch AI part 2)
   ])];
 };
 

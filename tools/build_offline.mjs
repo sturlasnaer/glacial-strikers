@@ -66,10 +66,13 @@ const images = [
   ...atlas.pages.map((p) => p.file), 'gfx/rink_backdrop.webp', atlas.locker, atlas.arena && atlas.arena.glass && atlas.arena.glass.file,
   ...Object.values(atlas.arenas || {}), ...Object.values(atlas.banners || {}),
   atlas.awards_stage && atlas.awards_stage.file, atlas.champions_painting && atlas.champions_painting.image, atlas.legends && atlas.legends.reveal && atlas.legends.reveal.image, atlas.awards_stage && atlas.awards_stage.podium_foreground && atlas.awards_stage.podium_foreground.file,
+  atlas.draft_hall && atlas.draft_hall.image, atlas.draft_hall && atlas.draft_hall.podium_foreground && atlas.draft_hall.podium_foreground.image,
 ].filter(Boolean);
 for (const f of images) inline[f] = `data:image/webp;base64,${b64('assets/' + f)}`;
 // the UI kit's button prompts and keycaps (the skin's own pieces are inlined in the stylesheet)
 for (const f of readdirSync(join(root, 'assets/gfx/ui-kit/images'))) if (/^(ps|xbox|key)_.*\.png$/.test(f)) inline[`gfx/ui-kit/images/${f}`] = `data:image/png;base64,${b64('assets/gfx/ui-kit/images/' + f)}`;
+// the prospect card rims (Batch AD), set on the cards at runtime
+if (atlas.prospect_card_kit) for (const tier of ['bronze', 'silver', 'gold']) inline[`gfx/prospect-cards/images/prospect_${tier}.png`] = `data:image/png;base64,${b64(`assets/gfx/prospect-cards/images/prospect_${tier}.png`)}`;
 // goalie mode's face-button icons (Batch V), picked at runtime
 for (const f of ['goalie_block.png', 'goalie_pass.png']) inline[`gfx/touch-kit/images/${f}`] = `data:image/png;base64,${b64('assets/gfx/touch-kit/images/' + f)}`;
 

@@ -1,0 +1,8 @@
+/* Three-times-source raster frames; logical border slices remain fixed. */
+.prospect-card { position:relative;box-sizing:border-box;width:180px;height:250px;background:#14233b;color:#fff2d8;border-style:solid;border-width:132px 16px 12px;border-image-slice:396 48 36 48;border-image-width:132px 16px 12px;border-image-repeat:stretch;image-rendering:pixelated;font-family:system-ui,sans-serif; }
+.prospect-card.bronze {border-image-source:url(images/prospect_bronze.png)}
+.prospect-card.silver {border-image-source:url(images/prospect_silver.png)}
+.prospect-card.gold {border-image-source:url(images/prospect_gold.png)}
+.prospect-card .portrait {position:absolute;left:0;top:-120px;width:148px;height:108px;object-fit:contain;image-rendering:pixelated}
+.prospect-card .stats {position:absolute;left:4px;top:6px;width:140px;height:94px;font-size:12px}
+.prospect-card .stats strong {display:block;margin-bottom:8px;font-size:14px}

@@ -4,7 +4,9 @@
 //   { body: 'std', head: 'braids', skin: 2, hair: 5 }
 // The atlas (built by the merge script) gives the body a skater set like any other
 // (`skaters.body_<id>`), and a `modular` section:
-//   anchors: { <body frame id>: { x, y, view: 's'|'se'|'e'|'ne'|'n', rot, state, front? } }
+//   anchors: { <body frame id>: { x, y, view: 's'|'se'|'e'|'ne'|'n', rot, state, flip_head?, hide_head?, front? } }
+//   (flip_head: the head view is drawn facing the other way on this frame; it combines with
+//   the body's own mirroring)
 //   heads:   { <name>: { <view>: { normal: <frame id>, effort: <frame id> } } }
 //   masks:   { <head or face frame id>: <mask frame id> }  (red = skin, green = hair)
 //   portraits: { body: <frame id>, anchor: { x, y }, faces: { <name>: { <expression>: <frame id> } } }
@@ -64,9 +66,10 @@ export function recolorParts(d, md, look) {
 }
 
 // Where the head goes for a body frame drawn at (x, y) at scale k (pivot px, py), mirrored or
-// not: the screen point, the head frame to use and its rotation.
+// not: the screen point, the head frame to use, whether to mirror it, and its rotation.
 export function headPlacement(modular, look, frameId, f, x, y, k, flip) {
   const a = modular.anchors && modular.anchors[frameId];
+  if (a && a.hide_head) return null; // (inside a jersey being pulled on)
   const views = a && modular.heads[look.head];
   if (!views) return null;
   const view = views[a.view] || views.s;
@@ -74,5 +77,5 @@ export function headPlacement(modular, look, frameId, f, x, y, k, flip) {
   if (!head) return null;
   const px = f[5], py = f[6], s = f[7] || 1;
   const dx = (a.x - px) * (k / s), dy = (a.y - py) * (k / s);
-  return { x: x + (flip ? -dx : dx), y: y + dy, head, rot: ((a.rot || 0) * Math.PI / 180) * (flip ? -1 : 1), front: a.front || null };
+  return { x: x + (flip ? -dx : dx), y: y + dy, head, flip: !!a.flip_head !== !!flip, rot: ((a.rot || 0) * Math.PI / 180) * (flip ? -1 : 1), front: a.front || null };
 }

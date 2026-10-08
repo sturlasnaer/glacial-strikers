@@ -9,6 +9,7 @@ import { NetRenderer, SpriteNets } from './net.js';
 import { t } from './i18n.js';
 import { headPlacement } from './modular.js';
 import { handMirror } from './hands.js';
+import { Linesman } from './linesman.js';
 
 const SKATER_SCALE = 0.5; // world px per source px
 const GOALIE_SCALE = 0.43;
@@ -134,6 +135,10 @@ export class Renderer {
     const lap = ui.lap; // the resurfacer's lap before the title screen's match: nobody on the ice
     if (lap) this.drawLapSheen(ctx, lap);
     this.drawTwists(ctx, match, fx);
+    // the linesman (Batch AG): not in drills, replays or the resurfacer's lap
+    const L = !lap && !match.drill && !ui.replay && Assets.atlas.linesman ? this.official(match, fx) : null;
+    this.puckHeld = !!(L && L.holding(match)); // (in his hand: his art draws it)
+    if (L) this.drawLinesmanShadow(ctx, L);
     if (!lap) {
       this.drawTrails(ctx, match);
       this.drawCyclones(ctx, match, fx);
@@ -173,6 +178,8 @@ export class Renderer {
     }
     if (match.drill && match.drill.sprites) for (const sp of match.drill.sprites(match, this, Assets)) list.push({ y: sp.y, f: () => sp.f(ctx) });
     if (!lap) list.push({ y: inNet ? NET_KEY - 0.25 : p.owner ? p.y + 0.5 : p.y, f: () => this.drawPuck(ctx, p, fx, match) });
+    const lf = L && L.frame(match, Assets.atlas.linesman);
+    if (lf) list.push({ y: L.y, f: () => { const q = toScreen(L.x, L.y); Assets.draw(ctx, lf.id, q.x, q.y, SKATER_SCALE * persp(L.y), { flip: lf.flip, pages: Assets.pages }); } });
     for (const b of lap ? [] : match.barriers) list.push({ y: b.y, f: () => this.drawBarrier(ctx, b) });
     for (const k of lap ? [] : match.pickups) list.push({ y: k.y, f: () => this.drawPickupOrb(ctx, k, fx) });
     for (const pt of fx.parts) if (pt.kind === 'ghost') list.push({ y: pt.s.y - 1, f: () => this.drawGhost(ctx, pt, match) });
@@ -784,6 +791,19 @@ export class Renderer {
     }
   }
 
+  // The linesman for this match, moved on to now (on the effects' clock: he's only for the look).
+  official(match, fx) {
+    if (this.lineFor !== match) { this.lineFor = match; this.linesman = new Linesman(); this.lineT = fx.time; }
+    this.linesman.update(Math.max(0, Math.min(0.05, fx.time - this.lineT)), match);
+    this.lineT = fx.time;
+    return this.linesman;
+  }
+  drawLinesmanShadow(ctx, L) {
+    const p = toScreen(L.x, L.y), k = persp(L.y);
+    ctx.fillStyle = 'rgba(20,35,59,0.28)';
+    ctx.beginPath(); ctx.ellipse(p.x, p.y, 20 * k, 7 * k, 0, 0, Math.PI * 2); ctx.fill();
+  }
+
   drawShadows(ctx, match) {
     ctx.fillStyle = 'rgba(20,35,59,0.28)';
     const box = this.penaltyBox();
@@ -798,7 +818,7 @@ export class Renderer {
       ctx.beginPath(); ctx.ellipse(p.x, p.y, 28, 9, 0, 0, Math.PI * 2); ctx.fill();
     }
     const pk = match.puck;
-    if (!match.inShadow(pk.x, pk.y)) {
+    if (!match.inShadow(pk.x, pk.y) && !this.puckHeld) {
       const p = toScreen(pk.x, pk.y);
       const zf = clamp(1 - pk.z / 80, 0.4, 1);
       ctx.fillStyle = `rgba(20,35,59,${0.35 * zf})`;
@@ -976,6 +996,14 @@ export class Renderer {
   }
 
   drawSkater(ctx, s, match, fx, at = null) {
+    // the twins' Ragnarök goal: one celebration for the two of them, where the scorer is (Batch AI)
+    const G = match.lastGoal, J = Assets.atlas.legends && Assets.atlas.legends.joint_celebration;
+    if (J && G && G.scorer && G.special && G.special.combo === 'ragnarok' && s.celebrate > 0 && (match.state === 'goal' || match.state === 'over') && !at) {
+      if (G.scorer !== s) { if (s.who === G.scorer.twin && Assets.frame(J.frames[0])) return; } else {
+        const q = toScreen(s.x, s.y), id = J.frames[Math.min(J.frames.length - 1, Math.floor((3 - s.celebrate) * J.fps))];
+        if (Assets.frame(id)) { Assets.draw(ctx, id, q.x, q.y, SKATER_SCALE * persp(s.y), { flip: Math.cos(s.face) < -0.3, pages: Assets.pagesFor(s.look) }); return; }
+      }
+    }
     const fr = this.skaterFrame(s, match);
     const p = at || toScreen(s.x, s.y);
     const k = SKATER_SCALE * persp(s.y);
@@ -1018,7 +1046,7 @@ export class Renderer {
     const hp = M && f && headPlacement(M, s.parts, fr.id, f, x, y, k, fr.flip);
     if (!hp) return;
     const hf = Assets.frame(hp.head), c = hf && Assets.partsCanvas(hp.head, s.parts);
-    if (c) this.drawFrameCanvas(ctx, c, hf, hp.x, hp.y, k, fr.flip, hp.rot);
+    if (c) this.drawFrameCanvas(ctx, c, hf, hp.x, hp.y, k, hp.flip, hp.rot);
     if (hp.front) Assets.draw(ctx, hp.front, x, y, k, { flip: fr.flip, pages });
   }
 
@@ -1373,6 +1401,7 @@ export class Renderer {
   }
 
   drawPuck(ctx, p, fx, match) {
+    if (this.puckHeld) return;
     if (p.owner && p.owner.isGoalie && this.goaliePoses && this.goaliePoses.get(p.owner)?.hidePuck) return;
     const dark = match.twists && match.twists.shadows.length && match.inShadow(p.x, p.y);
     ctx.save();

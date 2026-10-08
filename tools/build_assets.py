@@ -709,6 +709,10 @@ atlas = {
     'banners': banners,
     'arena': arena,
 }
+# Part 2 and new additions (Batches AD to AM): appended on pages of their own
+PART2 = sys.argv[15] if len(sys.argv) > 15 else '../assets/Puckbound-Part-2-and-New-Additions'
+from merge_part2 import merge_part2
+atlas = merge_part2(atlas, OUT, PART2, v1_h)
 with open(os.path.join(OUT, 'atlas.json'), 'w') as fh:
     json.dump(atlas, fh, separators=(',', ':'))
 

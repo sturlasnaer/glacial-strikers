@@ -114,6 +114,15 @@ export function cupPlaceImg(place, size = 64) {
   return id ? Assets.icon(id, size) : '';
 }
 
+// Last week's top three: on the podium art (Batch AE), each above their step, or plain columns.
+function podiumHtml(places) {
+  const B = Assets.atlas.badges || {}, P = Assets.atlas.weekly_podium, set = B.podium && P && P.portrait_baselines && Assets.spriteSet([B.podium], 280), art = set && set.urls[0];
+  if (!art) return `<div class="cup-podium">${places.map((x) => `<div class="pod p${x.place} ${x.me ? 'me' : ''}">${x.html}</div>`).join('')}</div>`;
+  const [w, h] = P.logical_size, top = 120, step = { 1: 'gold', 2: 'silver', 3: 'bronze' };
+  return `<div class="cup-podium art" style="aspect-ratio:${w}/${h + top}"><img class="pod-art" src="${art}" alt="" style="height:${(h / (h + top)) * 100}%">
+    ${places.map((x) => { const b = P.portrait_baselines[step[x.place]]; return `<div class="pod p${x.place} ${x.me ? 'me' : ''}" style="left:${(b.x / w) * 100}%;bottom:${((h - b.y) / (h + top)) * 100}%">${x.html}</div>`; }).join('')}</div>`;
+}
+
 // The same portrait as a canvas (no PNG to encode): for the ultimate cut-ins mid-match.
 export function portraitCanvas(id, team, teamId, size, expr) {
   Assets.canvasMode = true;
@@ -198,7 +207,15 @@ const styleChips = (def) => {
   return `<span class="chip style" title="${esc(t(A.trait))}">${smallIcon('icons/arch_' + A.id)}${esc(t(A.name))}</span><span class="chip super" style="--el:${E.color}"><img class="rule-ico" src="${Assets.icon(E.icon, 40)}" alt="">${esc(t(E.name))}</span>`;
 };
 // A rookie's potential, two to five stars out of five.
-const stars = (n) => `<span class="stars" role="img" aria-label="${t('{n} of 5 stars', { n })}">${'★'.repeat(n)}<i>${'★'.repeat(5 - n)}</i></span>`;
+const stars = (n) => {
+  const full = Assets.atlas.frames['icons/potential_full'] && Assets.icon('icons/potential_full', 40), empty = full && Assets.icon('icons/potential_empty', 40);
+  const label = `role="img" aria-label="${t('{n} of 5 stars', { n })}"`;
+  if (full && empty) return `<span class="stars pics" ${label}>${`<img src="${full}" alt="">`.repeat(n)}${`<img src="${empty}" alt="">`.repeat(5 - n)}</span>`; // (Batch AD)
+  return `<span class="stars" ${label}>${'★'.repeat(n)}<i>${'★'.repeat(5 - n)}</i></span>`;
+};
+// The prospect card rims (Batch AD), by potential: bronze, silver, gold.
+const CARD_RIMS = { bronze: 'gfx/prospect-cards/images/prospect_bronze.png', silver: 'gfx/prospect-cards/images/prospect_silver.png', gold: 'gfx/prospect-cards/images/prospect_gold.png' };
+const rimFor = (potential) => CARD_RIMS[potential >= 4 ? 'gold' : potential === 3 ? 'silver' : 'bronze'];
 const smallIcon = (id, size = 40, cls = 'rule-ico') => { const src = id && Assets.icon(id, size); return src ? `<img class="${cls}" src="${src}" alt="">` : ''; };
 const btnIcon = (id) => smallIcon(id, 48, 'btn-ico'); // in front of a button's words
 // A goaltending style's icon (Batch AN), the Iron Wall until it's in.
@@ -398,7 +415,7 @@ export class UI {
         <div class="hub-cta">
           ${nt ? `<div class="next">${esc(t(next.round, { n: next.roundN }))}<br><b>${t('vs {team}', { team: esc(nt.name) })}</b>${s.buffs && s.buffs.length ? `<span class="buffs">${s.buffs.map((b) => `<span class="buff">${esc(BUFF_TEXT(b))}</span>`).join('')}</span>` : ''}</div>
           <button class="btn gold" id="h-play">${t('Play match')}</button>` : `<div class="next"><b>${s.league && s.league.champion && s.league.champion !== 'home' ? t('{team} won the cup', { team: esc(TEAMS[s.league.champion].name) }) : t('Champions!')}</b><br>${t('Start a new season or play exhibitions.')}</div>
-          ${draftOpen(s) ? `<button class="btn gold" id="h-draft">${t('Draft Day')}</button>` : ''}<button class="btn ${draftOpen(s) ? 'ghost' : 'gold'}" id="h-season">${t('New season')}</button>`}
+          ${draftOpen(s) ? `<button class="btn gold" id="h-draft">${btnIcon('icons/draft')}${t('Draft Day')}</button>` : ''}<button class="btn ${draftOpen(s) ? 'ghost' : 'gold'}" id="h-season">${t('New season')}</button>`}
           <button class="btn ghost daily-btn" id="h-daily" title="${t('Today\'s daily challenge')}">${doneToday(s) ? badge('daily_done', 48, 'btn-ico', '✓') : badge('daily_star', 48, 'btn-ico', '★')} ${t('Daily')}${currentStreak(s) ? ` <span class="streak">${currentStreak(s)}${badge('streak_flame', 40, 'btn-ico', '🔥')}</span>` : ''}</button>
           <button class="btn ghost" id="h-title">${t('Title')}</button>
         </div>
@@ -409,7 +426,7 @@ export class UI {
       if (!draftOpen(s)) { audio.sfx('confirm'); this.app.newSeason(); return; }
       audio.sfx('click'); // the draft closes with the season
       this.modal(`<h2>${t('Draft Day isn\'t done')}</h2><p>${t('Three rookies are still waiting for your pick. Once the new season starts, they sign elsewhere.')}</p>
-        <div class="row" style="justify-content:flex-end"><button class="btn small ghost" id="ns-skip">${t('Skip the draft')}</button><button class="btn gold" id="ns-draft">${t('Draft Day')}</button></div>`, (m, close) => {
+        <div class="row" style="justify-content:flex-end"><button class="btn small ghost" id="ns-skip">${t('Skip the draft')}</button><button class="btn gold" id="ns-draft">${btnIcon('icons/draft')}${t('Draft Day')}</button></div>`, (m, close) => {
         this.click('#ns-draft', () => { close(); audio.sfx('confirm'); this.draftDay(); }, m);
         this.click('#ns-skip', () => { close(); s.draft.picked = -1; audio.sfx('confirm'); this.app.newSeason(); }, m);
       });
@@ -748,12 +765,14 @@ export class UI {
   async draftDay() {
     const s = this.app.save, d = s.draft;
     if (!draftOpen(s)) return;
-    await Assets.loadGroup('newcomers').catch(() => {}); // the prospects' faces
+    // the prospects' faces, and Kip for the hall
+    await Promise.all([Assets.loadGroup('newcomers'), d.prospects.some((p) => p.parts) && Assets.loadGroup('parts'), Assets.loadGroup('awards')].filter(Boolean)).catch(() => {});
     if (!d.met) {
       d.met = true; writeSave(s);
       this.dialogue(DRAFT_LINES, 'home', null, () => this.draftDay());
       return;
     }
+    const H = Assets.atlas.draft_hall; // the draft hall and the card rims (Batch AD)
     const cards = d.prospects.map((p, i) => {
       const m = { role: CHARACTERS[p.kit].role }, starter = member(s.lineup[m.role]);
       const P = (Assets.atlas.portraits || {})[`newcomer_${ROLE[p.kit]}`];
@@ -762,25 +781,37 @@ export class UI {
         const diff = p.base[k] - starter.base[k];
         return `<div class="stat"><span>${t(STAT_NAMES[k])}</span><span class="pips">${Array.from({ length: 12 }, (_, j) => `<i class="${j < p.base[k] ? 'b' : ''}"></i>`).join('')}</span><span class="v">${p.base[k]}</span><span class="${diff > 0 ? 'good' : diff < 0 ? 'bad' : 'muted'}" style="font-size:12px;width:2.2em">${diff > 0 ? '+' + diff : diff || ''}</span></div>`;
       }).join('');
-      return `<div class="card prospect pot-${p.potential}">
+      return `<div class="card prospect pot-${p.potential}${H ? ' rim' : ''}"${H ? ` style="border-image-source:url(${Assets.url(rimFor(p.potential))})"` : ''}>
         <div class="card-head"><img src="${face}" alt=""><div style="min-width:0"><h3>${esc(p.name)}</h3>
           <div class="sub">${t(ROLE_NAME[m.role])} · ${stars(p.potential)}</div><div class="muted" style="font-size:12.5px">${esc(t(POTENTIAL_GRADE[p.potential]))}</div></div></div>
         ${p.arch ? `<div class="style-row">${styleChips(makeDef(p.kit, p.arch, p.elem))}</div>
         <p class="muted" style="margin:0;font-size:12px">${esc(t(makeDef(p.kit, p.arch, p.elem).skill.name))} · ${esc(t(makeDef(p.kit, p.arch, p.elem).ult.name))}</p>` : ''}
-        <p class="scout-line">${esc(t(p.blurb))}</p>
+        <p class="scout-line">${smallIcon('icons/scout', 40)}${esc(t(p.blurb))}</p>
         <div class="stats">${pips}</div>
         <p class="muted" style="margin:0;font-size:12px">${t('Compared with {name}.', { name: esc(starter.name) })}</p>
         <button class="btn gold" data-pick="${i}">${t('Draft {name}', { name: esc(p.name) })}</button>
       </div>`;
     }).join('');
-    const r = this.set(`<div class="dim"></div>
-      <div class="results panel draft">
+    const pct = (v, of) => `${(v / of) * 100}%`, F = H && H.podium_foreground;
+    const r = this.set(`${H ? `<div class="aw-scene"><div class="aw-room" id="dr-room"><img class="aw-bg" src="${Assets.url(H.image)}" alt="">
+        <div class="aw-host" id="dr-host"></div>
+        ${F ? `<img class="aw-podium" src="${Assets.url(F.image)}" alt="" style="left:${pct(F.x, H.width)};top:${pct(F.y, H.height)};width:${pct(F.width, H.width)};height:${pct(F.height, H.height)}">` : ''}</div></div>` : '<div class="dim"></div>'}
+      <div class="results panel draft${H ? ' on-stage' : ''}">
         <div class="label">${t('Season {n}', { n: d.season })}</div>
         <h1 class="gold-t" style="font-family:var(--display);font-weight:normal;font-size:clamp(34px,6vw,54px);line-height:.9;margin:0">${t('Draft Day')}</h1>
         <p style="margin:0;font-size:13.5px">${t('One pick. Rookies start a couple of levels below your line-up, but the more stars of potential, the faster they learn and the further their stats can grow.')}</p>
         <div class="prospects">${cards}</div>
         <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="dr-later">${t('Decide later')}</button></div>
       </div>`);
+    if (H) {
+      this.coverRoom(r, r.querySelector('#dr-room'), H.width / H.height);
+      // Kip behind the podium, the foreground over his legs
+      const pose = (Assets.atlas.awards_host || {}).speaking, set = pose && Assets.spriteSet([pose], 420), box = r.querySelector('#dr-host'), P = H.podium_rect;
+      if (set && box && P) {
+        box.style.cssText = `left:${pct(P.x + P.w / 2, H.width)};top:${pct(P.y + P.h * 0.92, H.height)};height:${pct(P.h * 1.7, H.height)};aspect-ratio:${set.w}/${set.h};transform:translate(-${set.fx * 100}%,-${set.fy * 100}%)`;
+        box.innerHTML = `<img src="${set.urls[0]}" alt="">`;
+      }
+    }
     this.click('#dr-later', () => { audio.sfx('back'); this.app.goHub('tournament'); }, r);
     this.click('[data-pick]', (el) => {
       const p = d.prospects[+el.dataset.pick];
@@ -795,10 +826,13 @@ export class UI {
           writeSave(s);
           audio.jingle('sign');
           close();
-          await Assets.ensureKit(homeKitGroups(s)); // the rookie in our colours
+          const J = !member(id).parts && (Assets.atlas.draft_animations || {})[`newcomer_${ROLE[p.kit]}`];
+          await Assets.ensureKit([...homeKitGroups(s), ...(J ? ['draft_rookies'] : [])]); // the rookie in our colours
+          const moment = J && Assets.spriteSet(J.frames, 300, 'homekit');
           this.app.goHub('team');
           const role = member(id).role;
           this.modal(`<h2>${t('{name} pulls on the {club} jersey!', { name: esc(p.name), club: esc(CLUB.nick) })}</h2>
+            ${moment ? `<div class="jersey-moment" style="aspect-ratio:${moment.w}/${moment.h}">${moment.urls.map((u, k) => `<img src="${u}" alt="" style="animation-delay:${k * 0.55}s"${k === moment.urls.length - 1 ? ' class="last"' : ''}>`).join('')}</div>` : ''}
             <div class="card-head" style="margin:0"><img src="${portrait(id, 0, null, 152, 'grin')}" alt="" style="width:76px;height:76px"><div>
             ${otherPicks(d, s).map((o) => `<p style="margin:0 0 4px">${o.fills ? t('The {team} took {name} to fill the gap you left.', { team: esc(o.team.name), name: esc(o.name) }) : t('The {team} took {name}.', { team: esc(o.team.name), name: esc(o.name) })}</p>`).join('')}
             <p class="muted" style="margin:0;font-size:13px">${t('Dress {name} at {role} from the Team tab, or before a match.', { name: esc(p.name), role: t(ROLE_NAME[role]).toLowerCase() })}</p></div></div>
@@ -868,6 +902,16 @@ export class UI {
     audio.jingle('reveal');
   }
 
+  // Fit a painted room over the screen, keeping its shape (cover), and keep it fitted.
+  coverRoom(r, room, aspect = 16 / 9) {
+    const fit = () => {
+      const k = Math.max(r.clientWidth / aspect, r.clientHeight);
+      room.style.width = `${aspect * k}px`; room.style.height = `${k}px`;
+    };
+    fit();
+    if (typeof ResizeObserver !== 'undefined') { this.roomFit?.disconnect(); this.roomFit = new ResizeObserver(fit); this.roomFit.observe(r); }
+  }
+
   awardsNight(list, season, onDone) {
     const npc = Assets.atlas.npcs && Assets.atlas.npcs.announcer;
     const host = npc ? Assets.icon(npc, 128) : '';
@@ -889,13 +933,7 @@ export class UI {
     let pose = 'speaking';
     const setPose = (p) => { pose = p; r.querySelectorAll('[data-pose]').forEach((img) => { img.hidden = img.dataset.pose !== p; }); };
     if (onStage) {
-      const room = r.querySelector('#aw-room');
-      const fit = () => { // cover the screen, keeping the stage's 16:9
-        const k = Math.max(r.clientWidth / 16, r.clientHeight / 9);
-        room.style.width = `${16 * k}px`; room.style.height = `${9 * k}px`;
-      };
-      fit();
-      if (typeof ResizeObserver !== 'undefined') { this.roomFit?.disconnect(); this.roomFit = new ResizeObserver(fit); this.roomFit.observe(r); }
+      this.coverRoom(r, r.querySelector('#aw-room')); // (the stage's 16:9)
       const poses = Assets.atlas.awards_host || {};
       const ids = ['speaking', 'opening_envelope', 'applauding'].filter((p) => poses[p]);
       Assets.loadGroup('awards').then(() => {
@@ -1110,7 +1148,7 @@ export class UI {
           <img src="${portrait(id, 0, null, 152)}" alt="">
           <div style="min-width:0">
             <h3>${esc(m.name)}</h3>
-            <div class="sub">${esc(t(m.title))}${m.recruit ? ` · ${t('signed')}` : ''}${m.legend ? ` · <span class="gold-t">${t('legend')}</span>` : ''}${m.rookie ? ` · <span class="pot" title="${esc(t(POTENTIAL_GRADE[m.rookie.potential]))}">${stars(m.rookie.potential)}</span>` : ''}</div>
+            <div class="sub">${esc(t(m.title))}${m.recruit ? ` · ${t('signed')}` : ''}${m.legend ? ` · <span class="gold-t">${t('legend')}</span>` : ''}${m.rookie ? ` · ${smallIcon('icons/rookie', 40)}<span class="pot" title="${esc(t(POTENTIAL_GRADE[m.rookie.potential]))}">${stars(m.rookie.potential)}</span>` : ''}</div>
             <div class="lvl">${t('LV {n}', { n: r.level })}${r.points ? ` <span style="font-size:15px">· ${t(r.points > 1 ? '{n} points to spend' : '{n} point to spend', { n: r.points })}</span>` : ''}</div>
           </div>
         </div>
@@ -1396,7 +1434,8 @@ export class UI {
 
   // The training camp for one player: a new super from Ottar's element stones, or a new style
   // from Brekka's camp. Each once a season; the first tap on a choice arms it, the second buys.
-  campModal(id) {
+  async campModal(id) {
+    await Assets.loadGroup('hub').catch(() => {}); // (Ottar and Brekka)
     const s = this.app.save, m = member(id);
     const section = (kind) => {
       const open = campOpen(s, id, kind), price = CAMP[kind].price, afford = s.coins >= price;
@@ -1410,7 +1449,10 @@ export class UI {
       }).join('');
       const head = kind === 'elem' ? t('Super: an element stone from Ottar') : t('Style: a week of Brekka\'s camp');
       const note = !open ? t('Already changed this season.') : !afford ? t('Not enough coins.') : '';
-      return `<div class="label" style="margin:10px 0 4px">${head} · <img src="${ico('equipment_items/reward/coins', 40)}" alt="" width="14" height="14"> ${price}${note ? ` <span class="muted" style="text-transform:none;letter-spacing:0">${note}</span>` : ''}</div>
+      // Ottar holding up a stone, Brekka with the whistle (Batch AM)
+      const pose = kind === 'elem' ? 'hub_fullbody/shopkeeper/offer' : 'hub_fullbody/coach/whistle';
+      const who = Assets.atlas.frames[pose] && Assets.groupReady('hub') && Assets.spriteSet([pose], 200);
+      return `<div class="label camp-head" style="margin:10px 0 4px">${who ? `<img class="camp-npc" src="${who.urls[0]}" alt="">` : ''}<span>${head} · <img src="${ico('equipment_items/reward/coins', 40)}" alt="" width="14" height="14"> ${price}${note ? ` <span class="muted" style="text-transform:none;letter-spacing:0">${note}</span>` : ''}</span></div>
         <div class="camp-grid">${items}</div>`;
     };
     audio.sfx('click');
@@ -1878,7 +1920,7 @@ export class UI {
           <p style="font-size:13.5px;margin:0 0 8px">${t('Every drill this week counts: 5, 3 and 2 points for the top three on each board, 1 for taking part. Ends in {time}.', { time: resetsIn(r.resetsAt) })}</p>
           <div class="lb-list">${r.standings.length ? r.standings.map(row).join('') : `<p class="muted" style="font-size:13px">${t('No runs on this board yet this week. Play a drill to get on it.')}</p>`}</div>
           <div class="label" style="margin:12px 0 6px">${t('Last week')}</div>
-          ${podium.length >= 2 ? `<div class="cup-podium">${[1, 0, 2].map((i) => podium[i]).filter(Boolean).map((x) => `<div class="pod p${x.place} ${x.me ? 'me' : ''}"><img src="${cupPlaceImg(x.place, 96)}" alt=""><b>${esc(x.name)}</b><small>${t('{n} pts', { n: x.points })}</small></div>`).join('')}</div>`
+          ${podium.length >= 2 ? podiumHtml([1, 0, 2].map((i) => podium[i]).filter(Boolean).map((x) => ({ place: x.place, me: x.me, html: `<img src="${cupPlaceImg(x.place, 96)}" alt=""><b>${esc(x.name)}</b><small>${t('{n} pts', { n: x.points })}</small>` })))
             : `<p class="muted" style="font-size:13px">${t('No cup last week: it takes at least two players.')}</p>`}`;
       }).catch(() => { body.innerHTML = `<p class="muted">${t('Couldn\'t reach the server. Try again in a moment.')}</p>`; });
     }, true, () => back && back());

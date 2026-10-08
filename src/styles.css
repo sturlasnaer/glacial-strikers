@@ -906,6 +906,20 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .prospect.pot-5 { box-shadow: 0 0 14px rgba(255, 212, 94, 0.45); }
 .prospect .scout-line { margin: 0; font-size: 13px; font-style: italic; }
 .prospect .btn { justify-self: stretch; }
+/* the card rims (Batch AD): a 9-slice frame whose top holds the portrait window */
+.prospect.rim { position: relative; border-style: solid; border-width: 132px 16px 12px; border-image-slice: 396 48 36 48; border-image-width: 132px 16px 12px; border-image-repeat: stretch; border-radius: 0; background: #14233b; box-shadow: none; padding: 8px 6px 10px; image-rendering: pixelated; }
+.prospect.rim .card-head > img { position: absolute; left: 0; right: 0; top: -120px; width: 100%; height: 108px; object-fit: contain; border: 0; background: none; border-radius: 0; }
+.prospect.rim.pot-5 { filter: drop-shadow(0 0 10px rgba(255, 212, 94, 0.5)); }
+.draft.on-stage { background: rgba(20, 35, 59, 0.86); }
+.stars.pics { display: inline-flex; gap: 1px; vertical-align: -0.2em; }
+.stars.pics img { width: 1.05em; height: 1.05em; image-rendering: pixelated; }
+/* the jersey moment: holding it up, pulling it on, the fist pump (the last one stays) */
+.jersey-moment { position: relative; height: 150px; margin: 0 auto; }
+.jersey-moment img { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; animation: jersey-frame 0.55s steps(1) forwards; image-rendering: pixelated; }
+.jersey-moment img.last { animation-name: jersey-last; animation-duration: 1s; }
+@keyframes jersey-frame { 0% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes jersey-last { 0%, 100% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .jersey-moment img { animation: none; } .jersey-moment img.last { opacity: 1; } }
 .stars { font-family: var(--body); color: var(--gold); letter-spacing: 1px; font-size: 0.95em; white-space: nowrap; }
 .stars i { color: #4a5a78; font-style: normal; }
 @media (max-width: 760px) { .prospects { grid-template-columns: 1fr; } }
@@ -947,6 +961,9 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .pod img { width: 48px; height: 48px; }
 .pod.p1 img { width: 64px; height: 64px; }
 .pod small { font-size: 11.5px; color: #c3d3ea; }
+.cup-podium.art { position: relative; display: block; width: min(100%, 360px); margin: 0 auto; }
+.cup-podium.art .pod-art { position: absolute; left: 0; bottom: 0; width: 100%; image-rendering: pixelated; }
+.cup-podium.art .pod { position: absolute; transform: translateX(-50%); background: none; padding: 0; min-width: 0; width: 30%; }
 .cup-shelf { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
 .cup-won { display: grid; justify-items: center; width: 84px; text-align: center; font-size: 11.5px; line-height: 1.15; }
 .cup-won img { width: 44px; height: 44px; }
@@ -1007,3 +1024,5 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .trade-call small { font-size: 11.5px; color: #c3d3ea; }
 .trade-call .tc-arrow { font-family: var(--display); font-size: 28px; color: var(--gold); }
 .around .move { color: var(--gold); }
+.camp-head { display: flex; align-items: flex-end; gap: 8px; }
+.camp-npc { height: 72px; width: auto; margin-top: -8px; image-rendering: pixelated; flex: none; }
