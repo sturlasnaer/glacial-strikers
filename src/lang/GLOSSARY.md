@@ -57,6 +57,9 @@ Terms the translation uses consistently. The tone is friendly, sporty and short;
 | rookie / prospect | nýliði / efni |
 | potential (stars) | efniviður (stjörnur) |
 | career stats | ferilstölur |
+| super / element | ofurkraftur / frumefni (Frost, Þruma, Steinn, Glóð, Stormur, Skuggi) |
+| archetype | leikstíll (Leikstjórnandi, Spretthlaupari, Blálínumaður, Skytta, Töframaður, Vinnuþjarkur, Harðjaxl) |
+| context keys | `archetype::Sniper` has its own entry so it doesn't clash with the Sniper drill |
 | ghost (a recorded run to race) | draugur |
 | All-Star Game / All-Stars | Stjörnuleikurinn / stjörnulið |
 | Skills Night / challenge | hæfileikakvöld / áskorun |

@@ -1,6 +1,6 @@
 // Achievements: tracked from match events and save progress, shown in the Trophies tab.
 
-import { TEAMS, GEAR, CHEM_LEVELS, RECRUITS } from './data.js';
+import { TEAMS, GEAR, CHEM_LEVELS, RECRUITS, CAST_PAIRS } from './data.js';
 
 const TROPHY = 'equipment_items/reward/trophy', MEDAL = 'equipment_items/reward/medal', STAR = 'hud_elements/misc/level_star';
 
@@ -88,7 +88,7 @@ export class AchievementTracker {
       if (g.team !== 0 || !g.scorer) return;
       this.unlock('first-goal');
       if (g.kind === 'onetimer') this.bump('oneTimerGoals');
-      if (g.special && g.special.combo) this.addToSet('comboGoals', g.special.combo);
+      if (g.special && CAST_PAIRS.includes(g.special.combo)) this.addToSet('comboGoals', g.special.combo); // (the three it names)
       if (g.kind === 'zero' || g.kind === 'thunderclap') this.addToSet('ults', g.kind);
       if (g.power) this.addToSet('powerGoals', g.power);
       if (g.powerPlay) this.unlock('power-play');

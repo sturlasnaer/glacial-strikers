@@ -326,6 +326,8 @@ export class TeamAI {
         const n = norm(c.x + c.vx * 0.1 - s.x, c.y + c.vy * 0.1 - s.y);
         s.in.mx = n.x; s.in.my = n.y;
       }
+      // Cyclone on a carrier close by: blow them off the puck
+      if (s.def.ult.id === 'cyclone' && s.ult >= 100 && d < 110 && m.rng() < 0.4 * this.diff + 0.25) s.in.ult = true;
       // Stone wall in the shooting lane when they're near our net
       if (s.def.ult.id === 'monolith' && s.ult >= 100 && Math.abs(c.x - this.ownX) < 330 && m.rng() < 0.5 * this.diff + 0.2) {
         const n = norm(c.x - s.x, c.y - s.y);
@@ -391,7 +393,8 @@ export class TeamAI {
         const angle = Math.abs(s.y) / Math.max(dx, 1);
         let score = (1 - dG / 430) * 1.2 + lane * 0.6 - angle * 0.35 + (Math.abs(g.y - aimY) > 25 ? 0.25 : 0);
         if (m.puck.power && m.puck.power !== 'lightning') score += 0.3;
-        if (s.empowered > 0) score += 0.3;
+        if (s.empowered > 0 || s.igniteT > 0) score += 0.3;
+        if (s.def.arch === 'sniper') score += 0.12; // a sniper lets it go sooner
         const thresh = lerp(0.55, 0.75, this.diff) - (near < 60 ? 0.25 : 0) - (this.gamePlan === 'rungun' ? 0.14 : this.gamePlan === 'trap' ? -0.05 : 0);
         if (score > thresh) {
           inp.aimY = aimY / (MOUTH * 0.74);
@@ -434,7 +437,12 @@ export class TeamAI {
         if (id === 'dash' && nearFront < 90 && m.rng() < 0.3 + this.diff * 0.5) inp.skill = true;
         if (id === 'glide' && dx > 300 && m.rng() < 0.2 + this.diff * 0.4) inp.skill = true;
         if (id === 'bedrock' && near < 70 && m.rng() < 0.2 + this.diff * 0.3) inp.skill = true;
+        if (id === 'heat' && dx > 120 && dx < 520 && m.rng() < 0.25 + this.diff * 0.4) inp.skill = true; // light it up on the way in
+        if (id === 'tailwind' && dx > 420 && near > 90 && m.rng() < 0.2 + this.diff * 0.4) inp.skill = true; // a rush from deep
+        if (id === 'fade' && nearFront < 80 && m.rng() < 0.3 + this.diff * 0.4) inp.skill = true; // slip the check
       }
+      // a whirlwind to clear the way to the net
+      if (s.def.ult.id === 'cyclone' && s.ult >= 100 && near < 90 && dx < 520 && m.rng() < 0.35) inp.ult = true;
       if (s.def.ult.id === 'monolith' && s.ult >= 100 && near < 120 && m.rng() < 0.3) inp.ult = true;
       b.driveY = this.pickLane(s, nearOpp);
     }

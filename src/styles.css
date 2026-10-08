@@ -952,3 +952,14 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .cup-shelf { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
 .cup-won { display: grid; justify-items: center; width: 84px; text-align: center; font-size: 11.5px; line-height: 1.15; }
 .cup-won img { width: 44px; height: 44px; }
+
+/* a player's archetype and super */
+.style-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; margin: 2px 0; }
+.chip.style, .chip.super { pointer-events: none; font-size: 12px; padding: 1px 8px; }
+.chip.super { border-color: var(--el); color: var(--el); display: inline-flex; align-items: center; gap: 3px; }
+
+/* a legend visiting Scouting */
+.card.legend { display: grid; gap: 8px; border-color: var(--gold); box-shadow: 0 0 16px rgba(255, 212, 94, 0.35); margin-bottom: 12px; }
+.legend-stats { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; color: #c3d3ea; }
+.legend-stats b { color: var(--gold); }
+.style-row img, .card-head .style-row img { width: 16px; height: 16px; border: 0; background: none; padding: 0; margin: 0; border-radius: 0; box-shadow: none; flex: none; }

@@ -187,13 +187,22 @@ export class FX {
       }
       if (id === 'bedrock') { this.anim('ability_effects/stone_barrier/phase_', s.x, s.y + 6, 0.22, { fps: 16, frames: [1, 2, 3, 5, 6] }); this.shake(0.2); }
       if (id === 'glide') this.burst(s.x, s.y, 2, 16, ELEMENT_COLORS.ice, 160, 0.5);
+      if (id === 'heat') { this.burst(s.x, s.y, 24, 18, ELEMENT_COLORS.fire, 180, 0.6); this.ring(s.x, s.y, 50, '#ff7a3d', 0.4); }
+      if (id === 'tailwind') { this.ring(s.x, s.y, 180, '#bff0dc', 0.5); this.burst(s.x, s.y, 8, 22, ELEMENT_COLORS.snow, 260, 0.6); }
+      if (id === 'fade') { this.burst(s.x, s.y, 20, 18, ELEMENT_COLORS.gravity, 140, 0.7); for (let i = 0; i < 3; i++) this.ghost(s, i * 0.06); }
       this.text(s.x, s.y - 96, t(s.def.skill.name).toUpperCase(), '#ffffff', 0.9, 15);
     });
     on('ult', ({ s, id }) => {
       this.text(s.x, s.y - 110, t(s.def.ult.name).toUpperCase() + '!', '#ffd45e', 1.3, 24);
-      this.flashScreen(id === 'zero' ? '#bff4ff' : id === 'monolith' ? '#c9b79c' : '#fff7c2', 0.18);
+      this.flashScreen({ zero: '#bff4ff', monolith: '#c9b79c', firestorm: '#ffb38a', cyclone: '#e8fff6', eclipse: '#3a2a6e' }[id] || '#fff7c2', id === 'eclipse' ? 0.3 : 0.18);
+      if (id === 'firestorm') { this.burst(s.x, s.y, 30, 30, ELEMENT_COLORS.fire, 320, 0.7); this.anim('ability_effects/firestorm/phase_', s.x, s.y, 0.45, { follow: match.puck, fps: 14 }); } // (the drawn trail once Batch AL is in)
+      if (id === 'cyclone') this.burst(s.x, s.y, 10, 30, ELEMENT_COLORS.snow, 340, 0.8);
+      if (id === 'eclipse') { this.burst(s.x, s.y, 20, 26, ELEMENT_COLORS.gravity, 200, 0.8); this.anim('ability_effects/eclipse/phase_', s.x, s.y, 0.45, { fps: 12, frames: [1, 2, 3, 4, 5], z: 20 }); }
       this.shake(0.35);
     });
+    on('scorched', ({ s }) => this.burst(s.x, s.y, 20, 16, ELEMENT_COLORS.fire, 200, 0.5));
+    on('fumble', ({ s }) => this.text(s.x, s.y - 90, t('FUMBLE!'), '#bff0dc', 0.9, 16));
+    on('deke', ({ b }) => this.text(b.x, b.y - 90, t('DEKE!'), '#ffffff', 0.8, 15));
     on('ult_windup', ({ s, t }) => {
       this.anim('ability_effects/lightning_shot/phase_', s.x, s.y, 0.4, { fps: 6 / t, follow: s, z: 30, frames: [1, 2, 3, 4] });
       this.reticle = { side: s.side, t: 0, life: t + 0.3 };

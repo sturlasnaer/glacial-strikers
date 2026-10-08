@@ -137,6 +137,8 @@ export class Skater {
     this.who = opts.who || def.id; // roster member (recruits share a kit's def)
     this.look = opts.look || null; // palette for recruits in our colours
     this.gear = opts.gear || null; // equipped gear ids, for how it shows on the ice
+    this.twin = opts.twin || null; // a twin's roster id (Fáfnir and Fenrir)
+    this.hand = opts.hand || def.hand || 'L'; // which hand they shoot with (the art follows once it's drawn both ways)
     this.id = `${team}-${def.id}`;
     this.stats = stats;
     this.d = derive(stats);
@@ -164,6 +166,10 @@ export class Skater {
     this.dashT = 0;
     this.dashDir = { x: 1, y: 0 };
     this.bedrockT = 0;
+    this.igniteT = 0; // Heat Check: the next shot is ignited
+    this.fadeT = 0; // Fade: checks miss, passes can't be picked off
+    this.ambush = false; // Ambush perk: the first check out of Fade strips the puck
+    this.gustT = 0; // Tailwind at your back (for the look)
     this.empowered = 0; // lightning-pass shot boost (seconds)
     this.ultWindup = 0;
     this.checkCd = 0;
@@ -186,6 +192,8 @@ export class Skater {
   get hasPuck() { return this.match.puck.owner === this; }
   get speed() { return Math.hypot(this.vx, this.vy); }
   hasPerk(name) { return this.perks.includes(name); }
+  // the Grinder's motor and the Engine perk
+  get regenMul() { return (this.def.arch === 'grinder' ? 1.15 : 1) * (this.hasPerk('Engine') ? 1.2 : 1); }
 
   pressed(k) { return this.in[k] && !this.prevIn[k]; }
   released(k) { return !this.in[k] && this.prevIn[k]; }
@@ -193,7 +201,7 @@ export class Skater {
   maxSpeed() {
     let m = this.d.maxSpeed;
     const m2 = this.match;
-    if (this.in.sprint && !this.staminaLock && this.stamina > 0) m *= 1.3;
+    if (this.in.sprint && !this.staminaLock && this.stamina > 0) m *= this.def.arch === 'speedster' ? 1.365 : 1.3; // (Jets)
     if (this.hasPuck) m *= 0.94;
     if (this.charging) m *= 0.45;
     if (this.ultWindup > 0) m *= 0.3;
@@ -216,6 +224,9 @@ export class Skater {
     this.boostT = Math.max(0, this.boostT - dt);
     this.empowered = Math.max(0, this.empowered - dt);
     this.bedrockT = Math.max(0, this.bedrockT - dt);
+    this.igniteT = Math.max(0, this.igniteT - dt);
+    this.fadeT = Math.max(0, this.fadeT - dt);
+    this.gustT = Math.max(0, this.gustT - dt);
     this.oneTimerArmed = Math.max(0, this.oneTimerArmed - dt);
     if (this.comboT > 0) { this.comboT -= dt; if (this.comboT <= 0) this.comboFrom = null; }
 
@@ -289,7 +300,7 @@ export class Skater {
       if (this.stamina <= 0) { this.stamina = 0; this.staminaLock = true; }
     } else {
       this.regenDelay -= dt;
-      if (this.regenDelay <= 0) this.stamina = Math.min(this.d.staminaMax, this.stamina + this.d.regen * dt);
+      if (this.regenDelay <= 0) this.stamina = Math.min(this.d.staminaMax, this.stamina + this.d.regen * this.regenMul * dt);
     }
     if (this.staminaLock && this.stamina > this.d.staminaMax * 0.3) this.staminaLock = false;
 

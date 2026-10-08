@@ -9,12 +9,19 @@ import {
 import { Puck, Skater, Goalie, Barrier, collideBarrier, PUCK_R } from './entities.js';
 import { Abilities } from './abilities.js';
 import { TeamAI } from './ai.js';
-import { pairKey, GAME_PLANS } from './data.js';
+import { pairKey, GAME_PLANS, COMBOS, CAST_PAIRS } from './data.js';
 
 const CRACK_MAX = 72; // pond cracks stop spreading at this radius
 
 export const WIN_SCORE = 5;
 export const PENALTY_SECONDS = 15;
+
+// ultimate shots, and the perks that fill the meter faster
+const ULT_SHOTS = new Set(['zero', 'thunderclap', 'firestorm', 'eclipse']);
+const METER_PERKS = ['Captain', 'Storm Rider', 'Bulwark', 'Fuel', 'Squall', 'Dusk'];
+// the cast's three combos have their own effects; the newer pairs mix their elements' parts
+const BESPOKE_COMBOS = new Set(CAST_PAIRS);
+const lv3 = (level) => (level - 1) * 0.03;
 
 export class Match {
   // cfg: { teams: [teamCfg, teamCfg], humanTeam: 0|null, seed, powers: [], twist, diff: [d0, d1] }
@@ -31,6 +38,7 @@ export class Match {
     this.skaters = [];
     this.goalies = [];
     this.barriers = [];
+    this.cyclones = []; // Gale's whirlwinds
     this.trails = [];
     this.pickups = [];
     this.assist = cfg.assist || 'normal'; // aim assist for human players
@@ -134,6 +142,7 @@ export class Match {
     p.shot = null; p.pass = null; p.curve = null; p.touches = []; p.lastTouch = null;
     p.noPickup.clear(); p.rolled.clear(); p.trail.length = 0; p.inNet = null; p.power = null; p.powerT = 0;
     this.barriers.length = 0;
+    this.cyclones.length = 0;
     this.trails.length = 0;
     this.chain = [0, 0];
     for (const s of this.skaters) { s.comboT = 0; s.comboFrom = null; }
@@ -292,6 +301,7 @@ export class Match {
     this.updatePuck(dt);
     this.updateTrails(dt);
     this.updateBarriers(dt);
+    this.updateCyclones(dt);
     for (const s of this.skaters) s.prevIn = { ...s.in };
   }
 
@@ -345,7 +355,9 @@ export class Match {
 
   hit(a, b) {
     a.hitThisCheck = b;
-    if (b.dashT > 0) return;
+    if (b.dashT > 0 || b.fadeT > 0) return; // dashing through, or a shadow
+    // a Dangler with the puck: some checks slide right off
+    if (b.def.arch === 'dangler' && this.puck.owner === b && this.rng() < 0.2 + (b.hasPerk('Slippery') ? 0.15 : 0)) { this.emit('deke', { a, b }); return; }
     const hadPuck = this.puck.owner === b || this.time - (b.lastPuckT ?? -9) < 0.5;
     const puckDist = Math.hypot(this.puck.x - b.x, this.puck.y - b.y);
     const dir = norm(b.x - a.x, b.y - a.y);
@@ -353,10 +365,13 @@ export class Match {
     let power = a.d.checkPower * clamp(0.55 + rel / 480, 0.6, 1.45) * (this.mods.has('heavy') ? 1.5 : 1);
     if (a.bedrockT > 0) power *= 1.7;
     if (a.hasPerk('Aftershock')) power *= 1.2;
+    if (a.def.arch === 'enforcer') power *= 1.12; // (Heavy)
     const res = b.bedrockT > 0 ? 0.9 : b.d.resist;
-    const kb = power * (1 - res);
+    const kb = power * (1 - res) * (b.def.arch === 'enforcer' ? 0.88 : 1);
     b.vx += dir.x * kb; b.vy += dir.y * kb;
-    b.stun = b.bedrockT > 0 ? 0 : clamp(0.18 + kb / 1000, 0.2, 0.65);
+    b.stun = b.bedrockT > 0 ? 0 : clamp(0.18 + kb / 1000, 0.2, 0.65) * (b.hasPerk('Thick Skin') ? 0.7 : 1);
+    const ambush = a.ambush && a.fadeT <= 0;
+    if (a.ambush && a.fadeT <= 0) a.ambush = false;
     b.charging = false; b.ultWindup = 0;
     b.flash = 0.25;
     a.vx *= 0.45; a.vy *= 0.45;
@@ -364,7 +379,7 @@ export class Match {
     this.addUlt(a, 5);
     const p = this.puck;
     let stripped = false;
-    if (p.owner === b && (a.bedrockT > 0 || kb > 150 || this.rng() < 0.75)) {
+    if (p.owner === b && (a.bedrockT > 0 || ambush || kb > 150 || this.rng() < 0.75)) {
       stripped = true;
       this.loosePuck(b);
       const perp = this.rng.range(-1, 1);
@@ -387,7 +402,7 @@ export class Match {
       if (d.stun > 0 || d.parked) continue;
       const sp = d.stickPoint();
       if (Math.hypot(sp.x - p.x, sp.y - p.y) > 20) continue;
-      const rate = 0.8 * (1 + (d.stats.chk - c.stats.pas) * 0.06) * this.ai[d.team].stealMul();
+      const rate = 0.8 * (1 + (d.stats.chk - c.stats.pas) * 0.06) * this.ai[d.team].stealMul() * (d.def.arch === 'grinder' ? 1.08 : 1) * (d.hasPerk('Pickpocket') ? 1.1 : 1);
       if (this.rng() < rate * dt) {
         this.takePossession(d, 'steal');
         c.stun = 0.12;
@@ -399,7 +414,7 @@ export class Match {
 
   addUlt(s, amt) {
     if (!s || !s.isSkater) return;
-    let mult = ((s.hasPerk('Captain') || s.hasPerk('Storm Rider') || s.hasPerk('Bulwark')) ? 1.15 : 1) * this.ultRate;
+    let mult = (METER_PERKS.some((k) => s.hasPerk(k)) ? 1.15 : 1) * this.ultRate;
     if (this.hype.t > 0 && this.hype.team === s.team) mult *= 1.25;
     const before = s.ult;
     s.ult = Math.min(100, s.ult + amt * mult);
@@ -493,32 +508,38 @@ export class Match {
     let speed;
     switch (kind) {
       case 'wrist': speed = s.d.wrist * (s.hasPerk('Quick Release') ? 1.1 : 1); break;
-      case 'slap': speed = s.d.slapBase + s.d.slapGain * charge; break;
+      case 'slap': speed = (s.d.slapBase + s.d.slapGain * charge) * (s.def.arch === 'blueliner' ? 1.06 : 1); break;
       case 'onetimer': speed = (s.d.slapBase + s.d.slapGain * 0.55) * 1.05; break;
       case 'zero': speed = 1120; break;
       case 'thunderclap': speed = 1750; break;
+      case 'firestorm': speed = 1400 * (s.hasPerk('Inferno') ? 1.1 : 1); break;
+      case 'eclipse': speed = 1250; break;
       default: speed = s.d.wrist;
     }
     const distG = Math.hypot(gx - p.x, aimY - p.y);
     let err = s.d.aimErr * (0.45 + distG / 520);
     if (kind === 'slap') err *= 0.75 + 0.6 * charge;
     if (kind === 'onetimer') err *= 0.85;
-    if (kind === 'zero' || kind === 'thunderclap') err *= 0.7;
+    if (ULT_SHOTS.has(kind)) err *= 0.7;
     if (s.hasPerk('Sniper')) err *= 0.85;
+    if (s.def.arch === 'sniper') err *= 0.88; // (Pick a Corner)
     err *= this.ai[s.team].aimMul(s);
     aimY += this.rng.normal() * err;
 
     speed *= this.planShotMul(s.team);
-    const special = { zero: kind === 'zero', thunder: kind === 'thunderclap' };
+    const special = { zero: kind === 'zero', thunder: kind === 'thunderclap', firestorm: kind === 'firestorm', eclipse: kind === 'eclipse' };
+    // Heat Check: an ignited shot
+    if (s.igniteT > 0 && !ULT_SHOTS.has(kind)) { speed *= 1.2; special.ember = true; s.igniteT = 0; }
     // pass chain: each completed pass in a row adds a little power
     const chain = this.chain[s.team];
     if (chain >= 2) { speed *= 1 + Math.min(4, chain) * 0.03; special.chain = chain; }
     this.chain[s.team] = 0;
     // chemistry combo: quick shot right after a pass from a bonded teammate
     let combo = null;
-    if (s.comboT > 0 && s.comboFrom && !special.zero && !special.thunder) {
+    if (s.comboT > 0 && s.comboFrom && !ULT_SHOTS.has(kind)) {
       const level = this.chemLevel(s.comboFrom, s);
-      if (level > 0) combo = { key: pairKey(s.comboFrom.def.id, s.def.id), pair: pairKey(s.comboFrom.who, s.who), level, from: s.comboFrom };
+      const key = s.twin && s.comboFrom.who === s.twin ? 'ragnarok' : pairKey(s.comboFrom.def.elem, s.def.elem);
+      if (level > 0 && COMBOS[key]) combo = { key, pair: pairKey(s.comboFrom.who, s.who), level, from: s.comboFrom };
     }
     s.comboT = 0; s.comboFrom = null;
     if (combo) {
@@ -527,7 +548,21 @@ export class Match {
       if (combo.key === 'frost+stone') speed *= 1.06;
       if (combo.key === 'stone+thunder') speed *= 1.12 + (combo.level >= 3 ? 0.06 : 0);
       aimY = this.aimFor(s, opts.aimY);
-      aimY += this.rng.normal() * s.d.aimErr * 0.85;
+      if (combo.key === 'ragnarok') {
+        // the twins: out of the dark and on fire
+        speed *= 1.2 + lv3(combo.level);
+        Object.assign(special, { firestorm: true, ember: true, hidden: 0.3 });
+        aimY += this.rng.normal() * s.d.aimErr * 0.5;
+      } else if (!BESPOKE_COMBOS.has(combo.key)) {
+        // the newer pairs: each element brings its part
+        const parts = combo.key.split('+'), lv = combo.level;
+        if (parts.includes('thunder')) speed *= 1.1 + lv * 0.03;
+        if (parts.includes('ember')) special.ember = true;
+        if (parts.includes('shadow')) special.hidden = 0.2 + lv * 0.05;
+        if (parts.includes('frost')) special.chill = true;
+        if (parts.includes('gale')) { aimY = this.aimFor(s, null); aimY += this.rng.normal() * s.d.aimErr * 0.45; }
+        else aimY += this.rng.normal() * s.d.aimErr * 0.85;
+      } else aimY += this.rng.normal() * s.d.aimErr * 0.85;
     }
     let power = null;
     if (p.power) {
@@ -556,7 +591,7 @@ export class Match {
     p.vx = dir.x * speed; p.vy = dir.y * speed;
     p.vz = kind === 'slap' ? 40 + 120 * charge : kind === 'wrist' ? 70 : 30;
     p.shot = { by: s, team: s.team, kind, t: this.time, speed, power, special, frozen: new Set(), onNet: false,
-      plow: combo && combo.key === 'frost+stone' ? (combo.level >= 2 ? 2 : 1) : 0 };
+      plow: combo && combo.key === 'frost+stone' ? (combo.level >= 2 ? 2 : 1) : combo && !BESPOKE_COMBOS.has(combo.key) && combo.key.includes('stone') ? 1 : 0 };
     p.pass = null;
     p.noPickup.set(s, 0.35);
     p.rolled.clear();
@@ -616,7 +651,8 @@ export class Match {
     const p = this.puck;
     if (p.owner !== s) return;
     const target = toHint || this.choosePassTarget(s);
-    const speed = s.d.passSpeed * ((s.hasPerk('Vision') || s.hasPerk('Outlet')) ? 1.12 : 1);
+    const speed = s.d.passSpeed * ((s.hasPerk('Vision') || s.hasPerk('Outlet')) ? 1.12 : 1) * (s.def.arch === 'playmaker' ? 1.06 : 1)
+      * (target && s.twin && target.who === s.twin ? 1.15 : 1); // the twins' link
     s.setState('pass', 0.2);
     if (!target) return;
     if (p.power === 'lightning') {
@@ -898,6 +934,12 @@ export class Match {
     if (sh && sh.power === 'fire') reach *= 0.8;
     if (sh && sh.special && sh.special.combo === 'frost+thunder') reach *= 0.97;
     if (sh && sh.special && sh.special.thunder) reach *= 0.9;
+    if (sh && sh.special) {
+      if (sh.special.firestorm) reach *= 0.85;
+      if (sh.special.eclipse) reach *= 0.8; // read late
+      if (sh.special.hidden) reach *= 0.92;
+      if (sh.special.ember) reach *= 0.95;
+    }
     if (Math.abs(off) > reach + PUCK_R) return false;
     // saved
     if (sh) this.shotOnGoal(sh);
@@ -907,12 +949,17 @@ export class Match {
     const cb = sh && sh.special && sh.special.combo;
     if (cb === 'frost+thunder') catchP *= sh.special.comboLevel >= 3 ? 0 : 0.5;
     if (cb === 'frost+stone') catchP = 0;
+    if (sh && sh.special) {
+      if (sh.special.ember) catchP *= 0.4;
+      if (sh.special.eclipse) catchP *= sh.by.hasPerk('Total Eclipse') ? 0 : 0.3;
+      if (sh.special.firestorm) catchP = 0;
+    }
     if (g.state === 'dive') catchP *= 0.4;
     p.x = g.x - gs * 4; p.y = g.y + off;
     g.saves++;
     g.flash = 0.2;
     if (g.human) g.ult = Math.min(100, g.ult + 14); // Wall of Ice charges with saves
-    if (sh && (sh.kind === 'zero' || sh.kind === 'thunderclap' || (sh.special && sh.special.combo))) this.emit('big_save', { g, kind: sh.kind });
+    if (sh && (ULT_SHOTS.has(sh.kind) || (sh.special && sh.special.combo))) this.emit('big_save', { g, kind: sh.kind });
     for (const s of this.teamSkaters(g.team)) this.addUlt(s, 2);
     if (sh && sh.power === 'ice') { g.slowT = 1.3; this.emit('frozen', { g }); }
     if (this.rng() < catchP && (!sh || sh.power !== 'ice')) {
@@ -923,6 +970,7 @@ export class Match {
     const out = -gs;
     p.vx = out * Math.abs(p.vx) * this.rng.range(0.18, 0.34);
     p.vy = p.vy * 0.25 + this.rng.range(-1, 1) * 230;
+    if (sh && sh.special && sh.special.firestorm) { p.vx = out * Math.abs(speed) * 0.36; p.vy = this.rng.range(-1, 1) * 260; } // a nasty rebound
     if (cb === 'frost+stone' && sh.special.comboLevel >= 3) {
       // heavy rebound straight back into the slot
       p.vx = out * Math.abs(speed) * 0.42; p.vy = -p.y * 2 + this.rng.range(-60, 60);
@@ -978,6 +1026,8 @@ export class Match {
       if (s.stun > 0 || p.noPickup.has(s) || s.dashT > 0 || s.parked) { p.rolled.delete(s); continue; }
       // a pass sails past teammates it wasn't meant for
       if (p.pass && p.pass.from.team === s.team && p.pass.to !== s && p.pass.to) { p.rolled.delete(s); continue; }
+      // Fade: nobody picks off a pass to or from a shadow
+      if (p.pass && p.pass.from.team !== s.team && (p.pass.from.fadeT > 0 || (p.pass.to && p.pass.to.fadeT > 0))) { p.rolled.delete(s); continue; }
       const st = s.stickPoint();
       const ds = Math.hypot(st.x - p.x, st.y - p.y);
       const db = Math.hypot(s.x - p.x, s.y - p.y);
@@ -1015,6 +1065,7 @@ export class Match {
             s.stats_.blocks++;
             this.addUlt(s, 6);
             if (p.shot.power === 'ice' || p.shot.special?.zero) { s.slowT = 1.2; s.slowMul = 0.5; this.emit('frozen', { s }); }
+            if (p.shot.special?.ember && p.shot.by.hasPerk('Scorch')) { s.stun = Math.max(s.stun, 0.6); this.emit('scorched', { s }); }
             this.emit('block', { s });
             p.shot = null;
           }
@@ -1025,7 +1076,18 @@ export class Match {
     }
     // Absolute Zero: slow defenders the shot passes
     const sh = p.shot;
-    const bolt = sh && sh.special && sh.special.combo === 'frost+thunder';
+    const bolt = sh && sh.special && (sh.special.combo === 'frost+thunder' || sh.special.chill);
+    if (sh && sh.special && sh.special.firestorm) {
+      // Firestorm: knocks back anyone it passes
+      for (const s of this.skaters) {
+        if (s.team === sh.team || sh.frozen.has(s) || Math.hypot(s.x - p.x, s.y - p.y) > 60) continue;
+        sh.frozen.add(s);
+        const n = norm(-p.vy, p.vx), side = Math.sign((s.x - p.x) * n.x + (s.y - p.y) * n.y) || 1;
+        s.vx += n.x * side * 240; s.vy += n.y * side * 240;
+        s.stun = Math.max(s.stun, 0.3); s.flash = 0.25;
+        this.emit('scorched', { s });
+      }
+    }
     if (sh && sh.special && (sh.special.zero || bolt)) {
       for (const s of this.skaters) {
         if (s.team === sh.team || sh.frozen.has(s)) continue;
@@ -1253,6 +1315,35 @@ export class Match {
         if (tr.owner.hasPerk('Cold Snap')) { s.slowT = Math.max(s.slowT, 0.3); s.slowMul = 0.75; break; }
       }
     }
+  }
+
+  // Gale's Cyclone: follows its owner; opponents inside are blown outward (and a carrier may
+  // fumble once), and a loose puck inside is pulled to the owner's stick.
+  updateCyclones(dt) {
+    for (const c of this.cyclones) {
+      c.t += dt;
+      const o = c.owner;
+      if (o.parked) c.t = c.life;
+      c.x = o.x; c.y = o.y;
+      const fade = Math.min(1, (c.life - c.t) / 0.4);
+      for (const s of this.skaters) {
+        if (s.team === c.team || s.parked) continue;
+        const d = Math.hypot(s.x - c.x, s.y - c.y);
+        if (d > c.r || d < 1) continue;
+        const n = norm(s.x - c.x, s.y - c.y), k = (1 - d / c.r) * fade;
+        s.vx += (n.x * 900 - n.y * 300) * k * dt; s.vy += (n.y * 900 + n.x * 300) * k * dt; // out and around
+        if (this.puck.owner === s && !c.fumbled.has(s) && d < c.r * 0.75) {
+          c.fumbled.add(s);
+          if (this.rng() < 0.5) { this.loosePuck(s); this.puck.noPickup.set(s, 0.5); this.emit('fumble', { s }); }
+        }
+      }
+      const p = this.puck;
+      if (!p.owner && !p.inNet && p.z < 20) {
+        const d = Math.hypot(p.x - o.x, p.y - o.y);
+        if (d < c.r && d > 12) { const n = norm(o.x - p.x, o.y - p.y); p.vx += n.x * 700 * fade * dt; p.vy += n.y * 700 * fade * dt; }
+      }
+    }
+    this.cyclones = this.cyclones.filter((c) => c.t < c.life);
   }
 
   updateBarriers(dt) {

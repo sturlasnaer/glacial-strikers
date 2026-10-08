@@ -4,7 +4,7 @@ import { Assets } from './assets.js';
 import {
   CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
-  RECRUITS, ROOKIES, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
+  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
 import { standings, classicOpponent, CLASSIC_AFTER, ALLSTAR_AFTER } from './league.js';
 import { BUFF_TEXT } from './lockerroom.js';
@@ -19,6 +19,7 @@ import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloud
 import { nextGuide, doneGuide, guideOff } from './guide.js';
 import { draftOpen, draftPick, otherPicks, POTENTIAL_GRADE, DRAFT_LINES } from './draft.js';
 import { careerOf, careerRows } from './career.js';
+import { legendState, legendLeft, signLegend } from './legends.js';
 import { audio } from './audio.js';
 import { t } from './i18n.js';
 const VOLUMES = () => [[0, t('Off')], [0.35, t('Low')], [0.7, t('Mid')], [1, t('Full')]];
@@ -57,6 +58,10 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
     const p = P[`${TEAMS[r.team].art}_${ROLE[r.kit]}`];
     const fid = p && ((expr && p[expr]) || p.neutral_roster || p.neutral);
     return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT[r.kit]}`, size);
+  }
+  if (team === 0 && LEGENDS[id]) { // a legend: their own portrait once it's in, a newcomer's until then
+    const L = LEGENDS[id], p = P[LEGEND_ART.has(L.art) ? L.art : `newcomer_${ROLE[L.kit]}`], fid = p && ((expr && p[expr]) || p.neutral);
+    return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT[L.kit]}`, size);
   }
   if (team === 0 && ROOKIES[id]) { // a drafted rookie: a newcomer (Batch AA) in our colours
     const p = P[`newcomer_${ROLE[ROOKIES[id].kit]}`], fid = p && ((expr && p[expr]) || p.neutral);
@@ -162,6 +167,13 @@ export function ruleIconSrc(twist, size = 40) {
   return id ? Assets.icon(id, size) : '';
 }
 // A picture in front of a chip's words (challenges, combos), or nothing without the art.
+// Which hand a player shoots with.
+const shoots = (hand) => (hand === 'R' ? t('Shoots right') : t('Shoots left'));
+// How a player plays and their super, as two small chips.
+const styleChips = (def) => {
+  const E = ELEMENTS[def.elem], A = ARCHETYPES[def.arch];
+  return `<span class="chip style" title="${esc(t(A.trait))}">${smallIcon('icons/arch_' + A.id)}${esc(t(A.name))}</span><span class="chip super" style="--el:${E.color}"><img class="rule-ico" src="${Assets.icon(E.icon, 40)}" alt="">${esc(t(E.name))}</span>`;
+};
 // A rookie's potential, two to five stars out of five.
 const stars = (n) => `<span class="stars" role="img" aria-label="${t('{n} of 5 stars', { n })}">${'★'.repeat(n)}<i>${'★'.repeat(5 - n)}</i></span>`;
 const smallIcon = (id, size = 40, cls = 'rule-ico') => { const src = id && Assets.icon(id, size); return src ? `<img class="${cls}" src="${src}" alt="">` : ''; };
@@ -719,6 +731,8 @@ export class UI {
       return `<div class="card prospect pot-${p.potential}">
         <div class="card-head"><img src="${face}" alt=""><div style="min-width:0"><h3>${esc(p.name)}</h3>
           <div class="sub">${t(ROLE_NAME[m.role])} · ${stars(p.potential)}</div><div class="muted" style="font-size:12.5px">${esc(t(POTENTIAL_GRADE[p.potential]))}</div></div></div>
+        ${p.arch ? `<div class="style-row">${styleChips(makeDef(p.kit, p.arch, p.elem))}</div>
+        <p class="muted" style="margin:0;font-size:12px">${esc(t(makeDef(p.kit, p.arch, p.elem).skill.name))} · ${esc(t(makeDef(p.kit, p.arch, p.elem).ult.name))}</p>` : ''}
         <p class="scout-line">${esc(t(p.blurb))}</p>
         <div class="stats">${pips}</div>
         <p class="muted" style="margin:0;font-size:12px">${t('Compared with {name}.', { name: esc(starter.name) })}</p>
@@ -1060,7 +1074,7 @@ export class UI {
           <img src="${portrait(id, 0, null, 152)}" alt="">
           <div style="min-width:0">
             <h3>${esc(m.name)}</h3>
-            <div class="sub">${esc(t(m.title))}${m.recruit ? ` · ${t('signed')}` : ''}${m.rookie ? ` · <span class="pot" title="${esc(t(POTENTIAL_GRADE[m.rookie.potential]))}">${stars(m.rookie.potential)}</span>` : ''}</div>
+            <div class="sub">${esc(t(m.title))}${m.recruit ? ` · ${t('signed')}` : ''}${m.legend ? ` · <span class="gold-t">${t('legend')}</span>` : ''}${m.rookie ? ` · <span class="pot" title="${esc(t(POTENTIAL_GRADE[m.rookie.potential]))}">${stars(m.rookie.potential)}</span>` : ''}</div>
             <div class="lvl">${t('LV {n}', { n: r.level })}${r.points ? ` <span style="font-size:15px">· ${t(r.points > 1 ? '{n} points to spend' : '{n} point to spend', { n: r.points })}</span>` : ''}</div>
           </div>
         </div>
@@ -1072,6 +1086,7 @@ export class UI {
           const g = GEAR_BY_ID[r.gear[slot]];
           return `<button class="slot" data-gear="${id}:${slot}"><img src="${ico(g.icon, 92)}" alt=""><span>${esc(t(g.name))}</span></button>`;
         }).join('')}</div>
+        <div class="style-row">${styleChips(c)}<span class="muted">${shoots(m.hand)} · ${esc(t(ARCHETYPES[c.arch].trait))}</span></div>
         <div class="abil"><img src="${ico(c.skill.icon, 68)}" alt=""><div><b>${esc(t(c.skill.name))}</b>${esc(t(c.skill.text))} <span class="muted">(${c.skill.cd}s)</span></div></div>
         <div class="abil"><img src="${ico('hud_elements/misc/level_star', 68)}" alt=""><div><b>${esc(t(c.ult.name))}</b>${esc(t(c.ult.text))}</div></div>
         ${r.perks.length ? `<div class="perks">${r.perks.map((p) => `<span class="perk" title="${esc(t(p))}">${esc(t(p).split(':')[0])}</span>`).join('')}</div>` : ''}
@@ -1120,6 +1135,21 @@ export class UI {
     this.click('[data-gear]', (el) => { const [id, slot] = el.dataset.gear.split(':'); this.gearPicker(id, slot); }, body);
     this.click('[data-dress]', (el) => { setLineup(s, el.dataset.dress); writeSave(s); audio.sfx('confirm'); this.hub('team'); }, body);
     this.click('[data-sign]', (el) => this.signOffer(el.dataset.sign), body);
+    this.click('[data-legend]', (el) => {
+      const key = el.dataset.legend, L = LEGENDS[key];
+      if (!signLegend(s, key)) return;
+      this.app.ach.checkMeta();
+      writeSave(s);
+      audio.jingle('sign');
+      Assets.ensureKit(homeKitGroups(s)).then(() => {
+        this.hub('team');
+        this.modal(`<h2>${t('{name} signs!', { name: esc(L.name) })}</h2>
+          <p>${t('{name} joins the {club} on your bench.', { name: esc(L.name), club: esc(CLUB.nick) })} ${s.roster[L.twin] ? t('The twins are together: dress them both for Ragnarök.') : ''}</p>
+          <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Later')}</button><button class="btn gold" id="dress-now">${t('Dress now')}</button></div>`, (m2, close2) => {
+          this.click('#dress-now', () => { setLineup(s, key); writeSave(s); audio.sfx('confirm'); close2(); this.hub('team'); }, m2);
+        });
+      });
+    }, body);
     this.click('#club-edit', () => this.clubEditor(), body);
   }
 
@@ -1218,8 +1248,26 @@ export class UI {
       </div>`;
     }).join('');
     return `<div class="label" style="margin:16px 0 4px">${t('Scouting')}</div>
+      ${this.legendHtml(s)}
       <p class="muted" style="margin:0 0 10px;font-size:13px">${t('Beat a rival and their skaters will take your call. Signings join a level below your line-up\'s average with points to spend and the perks they already had.')}</p>
       <div class="scouting">${rows}</div>`;
+  }
+
+  // A legend visiting Scouting: who they are, their super, their numbers, and their price.
+  legendHtml(s) {
+    const key = legendState(s).visiting, L = LEGENDS[key];
+    if (!L || s.roster[key]) return '';
+    const m = member(key), left = legendLeft(s);
+    const twin = s.roster[L.twin] ? `<p class="gold-t" style="margin:0;font-size:12.5px">${t('{name} is already yours: the twins together get Ragnarök from day one.', { name: esc(LEGENDS[L.twin].name) })}</p>` : '';
+    return `<div class="card legend">
+      <div class="card-head"><img src="${portrait(key, 0, null, 152)}" alt=""><div style="min-width:0">
+        <div class="label" style="font-size:12px">${t('A legend is in town')}</div><h3>${esc(L.name)}</h3><div class="sub">${esc(t(L.title))} · ${shoots(m.hand)}</div>
+        <div class="style-row">${styleChips(m.def)}</div></div></div>
+      <p style="margin:0;font-size:13px">${esc(t(L.blurb))}</p>${twin}
+      <div class="legend-stats">${STAT_KEYS.map((k) => `<span>${t(STAT_NAMES[k])} <b>${L.base[k]}</b></span>`).join('')}</div>
+      <div class="row" style="justify-content:space-between;align-items:center;margin:0"><span class="muted" style="font-size:12.5px">${t(left === 1 ? 'Gone after {n} more match.' : 'Gone after {n} more matches.', { n: left })}</span>
+        <button class="btn ${s.coins >= L.price ? 'gold' : 'ghost'}" data-legend="${key}" ${s.coins >= L.price ? '' : 'disabled'}><img src="${ico('equipment_items/reward/coins', 40)}" alt="" width="16" height="16"> ${L.price}</button></div>
+    </div>`;
   }
 
   signOffer(key) {
@@ -1228,12 +1276,12 @@ export class UI {
     const m = member(key);
     const lv = joinLevel(s);
     const starter = member(s.lineup[r.role]);
-    const perks = CHARACTERS[r.kit].perks.filter((_, i) => lv >= [3, 5, 7][i]).map((opts, i) => t(opts[r.perks[i]]).split(':')[0]);
+    const perks = m.def.perks.filter((_, i) => lv >= [3, 5, 7][i]).map((opts, i) => t(opts[r.perks[i]]).split(':')[0]);
     audio.sfx('click');
     this.modal(`
       <h2>${t('Sign {name}?', { name: esc(r.name) })}</h2>
       <div class="card-head" style="margin:0"><img src="${portrait(r.kit, 1, r.team, 152)}" alt="" style="width:76px;height:76px">
-        <div><div class="sub">${esc(TEAMS[r.team].name)} · ${t(ROLE_NAME[r.role])}</div><p style="margin:4px 0 0">${esc(t(r.blurb))}</p></div></div>
+        <div><div class="sub">${esc(TEAMS[r.team].name)} · ${t(ROLE_NAME[r.role])}</div><div class="style-row">${styleChips(m.def)}</div><p style="margin:4px 0 0">${esc(t(r.blurb))}</p></div></div>
       <div class="stats">${STAT_KEYS.map((k) => {
         const diff = r.base[k] - starter.base[k];
         return `<div class="stat"><span>${t(STAT_NAMES[k])}</span><span class="pips">${Array.from({ length: 12 }, (_, i) => `<i class="${i < r.base[k] ? 'b' : ''}"></i>`).join('')}</span><span class="v">${r.base[k]}</span><span class="${diff > 0 ? 'good' : diff < 0 ? 'bad' : 'muted'}" style="font-size:12px">${diff > 0 ? '+' : ''}${diff || '='}</span></div>`;

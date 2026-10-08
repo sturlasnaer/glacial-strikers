@@ -134,6 +134,7 @@ export class Renderer {
     this.drawTwists(ctx, match, fx);
     if (!lap) {
       this.drawTrails(ctx, match);
+      this.drawCyclones(ctx, match, fx);
       this.drawPickupsGround(ctx, match, fx);
       this.drawShadows(ctx, match);
       this.drawGroundMarkers(ctx, match, fx);
@@ -974,6 +975,17 @@ export class Renderer {
     if (s.bedrockT > 0) this.aura(ctx, p.x, p.y - 30, 34, '#c9b79c', fx.time);
     if (s.boostT > 0 || s.trailT > 0) this.aura(ctx, p.x, p.y - 26, 28, '#71dce8', fx.time);
     if (s.empowered > 0) this.aura(ctx, p.x, p.y - 30, 30, '#ffe066', fx.time * 2);
+    // the newer supers: drawn effects once Batch AL is in, glows until then
+    const sfx = (name, n, on, color, r) => {
+      if (!on) return;
+      const art = this.loopFrame(`ability_effects/${name}/phase_`, n, fx.time, 10);
+      if (art) Assets.draw(ctx, art, p.x, p.y, 0.5 * k / SKATER_SCALE * 0.6); else this.aura(ctx, p.x, p.y - 26, r, color, fx.time * 2);
+    };
+    sfx('heat_check', 4, s.igniteT > 0, '#ff7a3d', 30 + Math.sin(fx.time * 23) * 3);
+    sfx('tailwind', 4, s.gustT > 0, '#bff0dc', 30);
+    sfx('fade', 4, s.fadeT > 0, '#6b4fd8', 34); // (see-through as well, below)
+    ctx.save();
+    if (s.fadeT > 0) ctx.globalAlpha *= 0.42 + Math.sin(fx.time * 9) * 0.06;
     const geared = s.gear && this.gearFrame(fr.id, pages, s.gear);
     if (geared) this.drawFrameCanvas(ctx, geared, Assets.frame(fr.id), p.x, y, k, fr.flip, rot);
     else Assets.draw(ctx, fr.id, p.x, y, k, { flip: fr.flip, rot, pages });
@@ -983,6 +995,34 @@ export class Renderer {
     else if (s.bedrockT > 0) tint = ['#b8a58c', 0.22];
     if (tint) this.drawTinted(ctx, fr.id, pages, p.x, y, k, fr.flip, rot, tint[0], tint[1]);
     if (s.gear) this.drawGearLook(ctx, s, fr, p, y, k, fx);
+    ctx.restore();
+  }
+
+  // A looping effect's frame id at time t, or null while its art isn't in the atlas.
+  loopFrame(prefix, n, t, fps) {
+    const id = prefix + (1 + (Math.floor(t * fps) % n));
+    return Assets.atlas.frames[id] ? id : null;
+  }
+
+  // Gale's Cyclone: wind rings swirling on the ice around its owner, fading as it ends.
+  drawCyclones(ctx, match, fx) {
+    for (const c of match.cyclones) {
+      const p = toScreen(c.x, c.y), k = persp(c.y);
+      const a = Math.min(1, c.t / 0.25, (c.life - c.t) / 0.4);
+      const art = this.loopFrame('ability_effects/cyclone/phase_', 6, c.t, 12);
+      if (art) { ctx.save(); ctx.globalAlpha *= a; Assets.draw(ctx, art, p.x, p.y, 0.5 * k); ctx.restore(); continue; } // (Batch AL)
+      ctx.save();
+      ctx.lineCap = 'round';
+      for (let i = 0; i < 5; i++) {
+        const rr = (0.35 + i * 0.16) * c.r * k, spin = fx.time * (5 - i * 0.6) + i * 1.3;
+        ctx.strokeStyle = hexA(i % 2 ? '#ffffff' : '#9fe3c8', 0.85 * a * (1 - i * 0.1));
+        ctx.lineWidth = 6 - i * 0.7;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y - 10, rr, rr * 0.45, 0, spin, spin + 2.2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
   }
 
   // Equipped gear on the ice: a glow at the blade for special sticks, a visor glint.
@@ -1310,11 +1350,15 @@ export class Renderer {
     const dark = match.twists && match.twists.shadows.length && match.inShadow(p.x, p.y);
     ctx.save();
     if (dark) ctx.globalAlpha = 0.2; // hard to see in a raven's shadow
+    // Eclipse (and a shadow combo) hides the puck for the start of its flight
+    const hid = p.shot && p.shot.special && (p.shot.special.eclipse ? 0.4 : p.shot.special.hidden || 0);
+    if (hid && match.time - p.shot.t < hid) ctx.globalAlpha = 0.07;
     // trail
     if (p.trail.length > 1) {
       const cb = p.shot && p.shot.special && p.shot.special.combo;
       const stick = p.shot && p.shot.by && p.shot.by.gear && GEAR_LOOK[p.shot.by.gear.stick];
-      const col = cb ? COMBOS[cb].colors[1] : p.shot && p.shot.power ? POWER_INFO[p.shot.power].color : p.power ? POWER_INFO[p.power].color : stick && p.shot ? stick.color : '#ffffff';
+      const sp = p.shot && p.shot.special;
+      const col = sp && (sp.firestorm || sp.ember) && !cb ? '#ff7a3d' : sp && sp.eclipse ? '#6b4fd8' : cb ? COMBOS[cb].colors[1] : p.shot && p.shot.power ? POWER_INFO[p.shot.power].color : p.power ? POWER_INFO[p.power].color : stick && p.shot ? stick.color : '#ffffff';
       ctx.lineCap = 'round';
       for (let i = 1; i < p.trail.length; i++) {
         const a = toScreen(p.trail[i - 1].x, p.trail[i - 1].y, p.trail[i - 1].z);

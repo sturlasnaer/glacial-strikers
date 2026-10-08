@@ -10,10 +10,12 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 1. **AD**: Draft Day: a draft-hall painting, prospect cards, the rookies pulling on our jersey, and a few icons.
 2. **AI**: Fáfnir and Fenrir, twin legends with a real dragon's head and a real wolf's head, who turn up in recruiting now and then.
 3. **AJ**: a body-and-face pilot: one skater body drawn without a head, and four heads that fit it, so new players can be made from parts.
-4. **AE**: the Friends Weekly Cup (a small cup, a podium, rosettes) and icons for the new career stats page.
-5. **AF**: the last 22 achievements that still borrow other icons.
-6. **AG**: a linesman who drops the puck at faceoffs and makes the calls.
-7. **AH**: a second rookie class, three more newcomers, so drafts don't repeat faces.
+4. **AK**: the other hand: our cast and the newcomers redrawn facing the other way, so every player keeps one stick hand when they turn.
+5. **AL**: art for the new supers (Ember, Gale and Shadow) and the seven archetypes: icons, ultimate effects and combo icons.
+6. **AE**: the Friends Weekly Cup (a small cup, a podium, rosettes) and icons for the new career stats page.
+7. **AF**: the last 22 achievements that still borrow other icons.
+8. **AG**: a linesman who drops the puck at faceoffs and makes the calls.
+9. **AH**: a second rookie class, three more newcomers, so drafts don't repeat faces.
 
 ## Format notes
 
@@ -23,6 +25,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - Goalies match `halla_side_goalies` scale (the ready pose is about 205 px tall in that sheet). The v5 goalie sheets got this right.
 - Side-view poses face **right**, and the game mirrors them for the other side. Goalies are the exception: Batch L asks for true-profile goalies drawn in both directions.
 - Home colours teal/cream/navy. Every rival is drawn in **coral + violet** and recoloured at runtime, so keep coral and violet off skin and hair.
+- **Stick hand.** Players shoot left or right, and a player should keep the same hand whichever way they skate. A **left shot** holds the stick on the left side of the body (left hand lower on the shaft, blade on the player's left): facing the camera the blade is on the screen's right, facing away it's on the screen's left, facing right (east) it's on the far side of the body, and facing left (west) on the near side. Draw new skaters **left-shot in all eight directions** (west, northwest and southwest drawn, not mirrored); the game mirrors a left-shot set to make a right-shot player. Say the hand in the add-on atlas (`"hand": "L"`).
 
 ---
 
@@ -86,6 +89,7 @@ Both have **real animal heads**, not masks or helmet paint: think of them like t
 - **Fáfnir**, a defender: very fast, with a cannon of a shot, and **a dragon's head**: a chibi dragon head (short snout, small curled horns, a frill at the jaw, scales), emerald green with a gold belly and gold eyes, horns poking out past the helmet. A long tail, tucked low so it doesn't read as a stick.
 - **Fenrir**, a winger and sniper: very fast and technical, with **a wolf's head**: a chibi wolf head (pointed ears through the helmet, a long muzzle, a ruff of fur at the collar), storm grey and silver with ice-blue eyes. A bushy tail.
 - They're twins: the same build and height (a little taller than our captains), a matching gold twin-star patch on the shoulder of both jerseys (no lettering), mirrored poses where it suits.
+- Mirror twins on the ice too: **Fáfnir shoots left, Fenrir shoots right.** Draw both in all eight directions with the stick in their own hand throughout (see the stick-hand rule in the format notes).
 - Jerseys in **coral and violet** like every rival, so the game recolours them into our kit when signed. Keep coral and violet off the scales, fur and eyes.
 
 **Part 1 first, so the look can be checked early:** both portraits with the five expressions (neutral, determined, grin, shocked, defeated) and one standing frame each (`south` idle), plus a 1536×864 **reveal painting** of the twins back to back on the ice for the moment they turn up in Scouting. About 13 images. Send part 1 as soon as it's ready, then carry on with part 2.
@@ -100,6 +104,7 @@ This batch is a pilot to prove the pipeline: **one body and four heads.** If it 
 
 **The body** (`body_std`): the standard build, the size of the Batch AA newcomers, in **coral and violet** like every rival (the game recolours it per team), drawn **from the neck down, with no head and no helmet**.
 - The full Batch AA pose list: the v2 skating set (`idle`, `skate_a`, `skate_b`, `pass`, `shot_windup`, `shot_release`, `check`, `celebrate`) in all eight directions, the hit reactions, the side strides, glides and stops, and a celebration, on the same baseline and scale.
+- **Left-shot in all eight directions**, west-facing ones drawn rather than mirrored (see the stick-hand rule in the format notes), so the same body makes right-shot players by mirroring.
 - For every frame, a **head anchor** in the add-on atlas: the neck point (`x`, `y` in frame pixels, where the bottom-centre of the head goes), the head `view` to use (`s`, `se`, `e`, `ne` or `n`; the game mirrors them for the west-facing directions), a `rot` in degrees for leans and hits, and `state` (`normal`, or `effort` for wind-ups, shots, checks and hits).
 - Where an arm or the stick passes **in front of the head** (stick raised in a celebration, some checks), a separate `_front` overlay frame with just those pixels, drawn after the head.
 - Gear masks for the stick and skates, like Batch M.
@@ -117,6 +122,34 @@ Draw every head with **mid-tone skin and mid-brown hair**, and for each head fra
 In the add-on atlas please add a `modular` section: the body's frames by direction and pose (like `skaters`), each with its anchor, the heads by name, view and state, and the portrait pieces.
 
 Roughly: the body set (about 80 frames plus overlays and gear masks), 40 head frames and 40 masks, and 21 portrait pieces and 20 masks.
+
+## Batch AK: the other hand
+
+Every skater today is drawn facing right and mirrored to face left, so a player switches hands when they turn around: Nix shoots right going right and left going left (and the camera-facing frames have their own hand again). We want each player to keep one hand: some shoot left, some right.
+
+The fix is to draw the **side and diagonal poses again, facing the other way** with the same hand as the frames that exist: the `west`, `northwest` and `southwest` versions of everything that's drawn facing `east`, `northeast` and `southeast` (the skating set, the side strides, glides and stops, the hit reactions, the shots and passes, the celebration), matching the existing frames in every other way. With both directions drawn in one hand, the game mirrors the set to make the other hand.
+
+Please start with our cast (Nix, Volta and Bram, home kit) and the three Batch AA newcomers, and in the add-on atlas say which hand each existing direction uses (`"hands": { "south": "L", "east": "R", … }`), since today it varies. Use the stick-hand rule in the format notes. The rival casts can follow in a later batch.
+
+About 30 frames per skater, for six skaters.
+
+## Batch AL: the new supers and archetypes
+
+Players now mix an **archetype** (how they play) with a **super** (an element's skill and ultimate). Three new elements are in the game, with stand-in icons and effects drawn in code: **Ember** (fire; the Comets' winger, Fáfnir), **Gale** (wind; the Lynx winger) and **Shadow** (the Ravens' winger, Fenrir), and seven archetypes: Playmaker, Speedster, Blueliner, Sniper, Dangler, Grinder and Enforcer.
+
+- **Ability icons**, in the style and size of `hud_elements/ability/*` (they show on the touch buttons and the Team cards), frame names `hud_elements/ability/<name>`: `ember` (a flame), `gale` (a swirl of wind), `shadow` (a dark crescent with a purple rim), and one per skill and ultimate: `heat_check` (a stick with its blade on fire), `firestorm` (a blazing puck), `tailwind` (a skate with wind lines behind it), `cyclone` (a small whirlwind), `fade` (a skater silhouette dissolving into smoke) and `eclipse` (a puck in front of a black sun with a purple ring). 9 frames.
+- **Archetype icons**, small (about 96 px source, read at 20 px on the chips), frame names `icons/arch_<id>`: `playmaker` (two arrows meeting at a puck), `speedster` (a winged skate), `blueliner` (a puck on the blue line with a power streak), `sniper` (crosshairs on a net corner), `dangler` (a puck on a curly trail around a cone), `grinder` (a gear with a stick through it) and `enforcer` (a gloved fist). 7 frames.
+- **Ultimate effects**, transparent animation strips drawn over the ice like `ability_effects/*`:
+  - `ability_effects/firestorm/phase_1..6`: a fireball trail behind the puck, flames licking backwards.
+  - `ability_effects/cyclone/phase_1..6`: a whirlwind about 260 px across at game size, seen at the 45° camera, snow and wind swirling, loopable.
+  - `ability_effects/eclipse/phase_1..5`: a burst of shadow as the shot leaves the stick, a dark ring with a violet rim that swallows the puck.
+  - `ability_effects/fade/phase_1..4`: wisps of shadow rising off a skater, loopable (the game draws them while Fade lasts).
+  - `ability_effects/heat_check/phase_1..4`: small flames on a stick blade, loopable.
+  - `ability_effects/tailwind/phase_1..4`: wind lines streaming past a skater, loopable.
+  About 29 frames.
+- **Combo icons** for the twelve new element pairs, in the style of `icons/combo_*`: `combo_steam_burst`, `combo_magma`, `combo_plasma`, `combo_wildfire`, `combo_smoke_screen`, `combo_blizzard`, `combo_black_ice`, `combo_hurricane`, `combo_dark_bolt`, `combo_sandstorm`, `combo_obsidian` and `combo_night_wind` (each mixes its two elements' colours: Ember orange, Gale mint, Shadow violet, Frost ice blue, Thunder yellow, Stone tan). 12 frames.
+
+About 57 frames and strips.
 
 ## Batch AE: Friends Weekly Cup and career stats icons
 

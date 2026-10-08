@@ -28,6 +28,24 @@ export class Abilities {
       case 'bedrock':
         s.bedrockT = 4 + (s.hasPerk('Landslide') ? 2 : 0);
         break;
+      case 'heat': // Ember: the next shot is ignited
+        s.igniteT = 4;
+        if (s.hasPerk('Kindling')) cd -= 3;
+        break;
+      case 'tailwind': { // Gale: a gust for you and the teammates near you
+        const dur = 2 + (s.hasPerk('Jet Stream') ? 1 : 0);
+        for (const o of m.teamSkaters(s.team)) {
+          if (o !== s && Math.hypot(o.x - s.x, o.y - s.y) > 180) continue;
+          o.boostT = Math.max(o.boostT, dur);
+          o.gustT = Math.max(o.gustT, dur);
+          if (s.hasPerk('Updraft')) o.stamina = Math.min(o.d.staminaMax, o.stamina + 15);
+        }
+        break;
+      }
+      case 'fade': // Shadow: checks miss you, passes to and from you can't be picked off
+        s.fadeT = 3 + (s.hasPerk('Nightfall') ? 1.5 : 0);
+        if (s.hasPerk('Ambush')) s.ambush = true;
+        break;
       default: return;
     }
     s.skillCd = cd;
@@ -60,6 +78,16 @@ export class Abilities {
         g.alert = s.ultWindup + 0.3;
         m.emit('ult', { s, id: u.id });
         m.emit('ult_windup', { s, t: s.ultWindup });
+        break;
+      }
+      case 'firestorm':
+      case 'eclipse':
+        m.emit('ult', { s, id: u.id });
+        m.shoot(s, { kind: u.id });
+        break;
+      case 'cyclone': { // a whirlwind that follows you: opponents blown out, the loose puck pulled in
+        m.cyclones.push({ owner: s, team: s.team, x: s.x, y: s.y, t: 0, life: 2.5 + (s.hasPerk('Eye of the Storm') ? 1 : 0), r: 130, fumbled: new Set() });
+        m.emit('ult', { s, id: u.id });
         break;
       }
       case 'monolith': {

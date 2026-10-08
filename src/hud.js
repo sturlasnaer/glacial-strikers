@@ -1,7 +1,7 @@
 // In-match HUD (scoreboard, player card, power puck chip, banners) and touch button state.
 
 import { Assets } from './assets.js';
-import { POWER_INFO, TEAMS, ART_NAME, RECRUITS, ROOKIES, teamInfo } from './data.js';
+import { POWER_INFO, TEAMS, ART_NAME, RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, teamInfo } from './data.js';
 import { portrait, crest, keyGlyphs } from './ui.js';
 import { t } from './i18n.js';
 
@@ -111,6 +111,7 @@ export class HUD {
   bannerKey(k) {
     if (k.team === 0 && !k.isGoalie && RECRUITS[k.who]) return k.sprite; // a signing's own banner
     if (k.team === 0 && ROOKIES[k.who]) return null; // a rookie: no banner art, the portrait band
+    if (k.team === 0 && LEGENDS[k.who]) return LEGEND_ART.has(k.sprite) ? k.sprite : null;
     if (k.team === 0) return ART_NAME[k.isGoalie ? 'goalie' : k.def.id];
     if (k.isGoalie) return k.art ? `${k.art}_g` : null;
     return k.sprite !== k.def.sprite ? k.sprite : null;

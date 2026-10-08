@@ -18,7 +18,7 @@ export const STAT_HINT = {
 // Sprite ids match the atlas skater keys.
 export const CHARACTERS = {
   frost: {
-    id: 'frost', sprite: 'frost_captain', name: 'Nix', title: 'Frost Captain', role: 'C',
+    id: 'frost', sprite: 'frost_captain', name: 'Nix', title: 'Frost Captain', role: 'C', hand: 'L', arch: 'playmaker', elem: 'frost',
     blurb: 'Calm playmaker. Lays down ice trails that speed up the whole line.',
     base: { spd: 6, agi: 7, sht: 7, pas: 8, chk: 4, sta: 6 },
     skill: { id: 'glide', name: 'Glacier Glide', icon: 'hud_elements/ability/frost', cd: 12,
@@ -32,7 +32,7 @@ export const CHARACTERS = {
     ],
   },
   thunder: {
-    id: 'thunder', sprite: 'thunder_winger', name: 'Volta', title: 'Thunder Winger', role: 'W',
+    id: 'thunder', sprite: 'thunder_winger', name: 'Volta', title: 'Thunder Winger', role: 'W', hand: 'R', arch: 'speedster', elem: 'thunder',
     blurb: 'Fastest skater on the ice. Blinks through gaps with a lightning dash.',
     base: { spd: 9, agi: 8, sht: 6, pas: 5, chk: 3, sta: 5 },
     skill: { id: 'dash', name: 'Bolt Dash', icon: 'hud_elements/ability/lightning', cd: 7,
@@ -46,7 +46,7 @@ export const CHARACTERS = {
     ],
   },
   stone: {
-    id: 'stone', sprite: 'stone_defender', name: 'Bram', title: 'Stone Defender', role: 'D',
+    id: 'stone', sprite: 'stone_defender', name: 'Bram', title: 'Stone Defender', role: 'D', hand: 'L', arch: 'blueliner', elem: 'stone',
     blurb: 'Immovable blueliner with a cannon slapshot and bone-rattling checks.',
     base: { spd: 4, agi: 4, sht: 8, pas: 5, chk: 9, sta: 8 },
     skill: { id: 'bedrock', name: 'Bedrock', icon: 'hud_elements/ability/stone', cd: 13,
@@ -60,6 +60,102 @@ export const CHARACTERS = {
     ],
   },
 };
+
+// Supers: each element brings a skill and an ultimate, with the perks that go with them (the
+// first and third perk choices). Frost, Thunder and Stone are our cast's; the rest turn up on
+// rivals, rookies and free agents.
+const cast = (k) => ({ skill: CHARACTERS[k].skill, ult: CHARACTERS[k].ult, perks: [CHARACTERS[k].perks[0], CHARACTERS[k].perks[2]] });
+export const ELEMENTS = {
+  frost: { id: 'frost', name: 'Frost', color: '#7fe3ff', icon: 'hud_elements/ability/frost', ...cast('frost') },
+  thunder: { id: 'thunder', name: 'Thunder', color: '#ffe066', icon: 'hud_elements/ability/lightning', ...cast('thunder') },
+  stone: { id: 'stone', name: 'Stone', color: '#c9b79c', icon: 'hud_elements/ability/stone', ...cast('stone') },
+  ember: {
+    id: 'ember', name: 'Ember', color: '#ff7a3d', icon: 'hud_elements/ability/fire',
+    skill: { id: 'heat', name: 'Heat Check', icon: 'hud_elements/ability/fire', cd: 10,
+      text: 'Light up your stick: your next shot in the next 4s flies 20% faster and goalies can hardly hold it.' },
+    ult: { id: 'firestorm', name: 'Firestorm', icon: 'hud_elements/ability/fire', needsPuck: true,
+      text: 'A blazing shot that knocks back anyone it passes and leaves the goalie a nasty rebound.' },
+    perks: [
+      ['Kindling: Heat Check cooldown 3s shorter', 'Scorch: an ignited shot stuns anyone who blocks it'],
+      ['Inferno: Firestorm flies 10% faster', 'Fuel: ultimate meter fills 15% faster'],
+    ],
+  },
+  gale: {
+    id: 'gale', name: 'Gale', color: '#bff0dc', icon: 'hud_elements/ability/stamina',
+    skill: { id: 'tailwind', name: 'Tailwind', icon: 'hud_elements/ability/stamina', cd: 11,
+      text: 'A gust at your back: you and teammates nearby skate 30% faster for 2s.' },
+    ult: { id: 'cyclone', name: 'Cyclone', icon: 'hud_elements/ability/stamina', needsPuck: false,
+      text: 'A whirlwind around you for 2.5s: opponents are blown out of it and a loose puck is pulled to your stick.' },
+    perks: [
+      ['Jet Stream: Tailwind lasts 1s longer', 'Updraft: Tailwind refills 15 stamina for everyone it touches'],
+      ['Eye of the Storm: Cyclone lasts 1s longer', 'Squall: ultimate meter fills 15% faster'],
+    ],
+  },
+  shadow: {
+    id: 'shadow', name: 'Shadow', color: '#9b8cff', icon: 'hud_elements/ability/gravity',
+    skill: { id: 'fade', name: 'Fade', icon: 'hud_elements/ability/gravity', cd: 12,
+      text: 'Melt into the shadows for 3s: checks miss you and nobody can pick off a pass to or from you.' },
+    ult: { id: 'eclipse', name: 'Eclipse', icon: 'hud_elements/ability/gravity', needsPuck: true,
+      text: 'The puck vanishes into shadow as you shoot, and the goalie reads it late.' },
+    perks: [
+      ['Nightfall: Fade lasts 1.5s longer', 'Ambush: your first check out of Fade always strips the puck'],
+      ['Total Eclipse: goalies can never hold an Eclipse', 'Dusk: ultimate meter fills 15% faster'],
+    ],
+  },
+};
+
+// Art on its way (Batch AL): once these frames are in the atlas, the newer supers and the
+// combos of the newer pairs use them instead of the stand-ins.
+const AL_ICONS = { heat: 'heat_check', tailwind: 'tailwind', fade: 'fade', firestorm: 'firestorm', cyclone: 'cyclone', eclipse: 'eclipse' };
+export function useNewArt(has) {
+  for (const E of [ELEMENTS.ember, ELEMENTS.gale, ELEMENTS.shadow]) {
+    if (has('hud_elements/ability/' + E.id)) E.icon = 'hud_elements/ability/' + E.id;
+    for (const a of [E.skill, E.ult]) if (has('hud_elements/ability/' + AL_ICONS[a.id])) a.icon = 'hud_elements/ability/' + AL_ICONS[a.id];
+  }
+  for (const c of Object.values(COMBOS)) {
+    const id = 'icons/combo_' + c.name.toLowerCase().replace(/ö/g, 'o').replace(/[^a-z]+/g, '_');
+    if (!c.icon && has(id)) c.icon = id;
+  }
+}
+
+// Archetypes: how a player plays. Each brings a trait that's always on, the middle perk
+// choice, and what the AI leans toward with them.
+export const ARCHETYPES = {
+  playmaker: { id: 'playmaker', name: 'archetype::Playmaker', roles: 'CW', trait: 'Passes travel 6% faster.', perks: CHARACTERS.frost.perks[1], ai: { pass: 1.25 } },
+  speedster: { id: 'speedster', name: 'archetype::Speedster', roles: 'CW', trait: 'Sprints 5% faster.', perks: CHARACTERS.thunder.perks[1], ai: { rush: 1.25 } },
+  blueliner: { id: 'blueliner', name: 'archetype::Blueliner', roles: 'D', trait: 'Slapshots fly 6% faster.', perks: CHARACTERS.stone.perks[1], ai: { slap: 1.3 } },
+  sniper: { id: 'sniper', name: 'archetype::Sniper', roles: 'CW', trait: 'Shots are 12% more accurate.', ai: { shoot: 1.3 },
+    perks: ['Quick Release: wrist shots 10% faster', 'Sniper: shots 15% more accurate'] },
+  dangler: { id: 'dangler', name: 'archetype::Dangler', roles: 'CW', trait: 'With the puck, one check in five slides right off.', ai: { rush: 1.15 },
+    perks: ['Slippery: 15% more checks slide off you', 'Vision: passes travel 12% faster'] },
+  grinder: { id: 'grinder', name: 'archetype::Grinder', roles: 'CWD', trait: 'Stamina comes back 15% faster and steals come 8% easier.', ai: { chase: 1.2 },
+    perks: ['Engine: stamina comes back 20% faster', 'Pickpocket: steals come 10% easier'] },
+  enforcer: { id: 'enforcer', name: 'archetype::Enforcer', roles: 'CWD', trait: 'Checks hit 12% harder, and hits move you 12% less.', ai: {},
+    perks: ['Thick Skin: shrug off hits 30% faster', 'Cannon: slapshots charge 25% faster'] },
+};
+
+// A player's full kit: the position's art and cast data, the archetype's trait and perks, the
+// element's skill, ultimate and perks. Cached, so the same mix is the same object.
+const DEFS = new Map();
+export function makeDef(kit, arch, elem) {
+  const c = CHARACTERS[kit];
+  arch = ARCHETYPES[arch] ? arch : c.arch; elem = ELEMENTS[elem] ? elem : c.elem;
+  if (arch === c.arch && elem === c.elem) return c;
+  const key = `${kit}|${arch}|${elem}`;
+  if (!DEFS.has(key)) {
+    const E = ELEMENTS[elem], A = ARCHETYPES[arch];
+    DEFS.set(key, { ...c, arch, elem, skill: E.skill, ult: E.ult, perks: [E.perks[0], A.perks, E.perks[1]] });
+  }
+  return DEFS.get(key);
+}
+
+// Which tier and choice a perk is, in any kit (old saves keep perks as text; a player whose
+// element or archetype changed gets the same choice from their new lists).
+export function perkSlot(text) {
+  const lists = [...Object.values(ELEMENTS).flatMap((e) => [[0, e.perks[0]], [2, e.perks[1]]]), ...Object.values(ARCHETYPES).map((a) => [1, a.perks])];
+  for (const [tier, opts] of lists) { const i = opts.indexOf(text); if (i >= 0) return { tier, i }; }
+  return null;
+}
 
 export const GOALIE = {
   id: 'goalie', name: 'Halla', title: 'Goaltender', base: { rfx: 6, pos: 6 },
@@ -123,6 +219,7 @@ export const TEAMS = {
     color: '#71dce8', color2: '#fff2cb',
   },
   lynx: {
+    elems: { thunder: 'gale' }, // supers other than the slot's own
     id: 'lynx', plan: 'forecheck', chem: 0, name: 'Pinewood Lynx', short: 'PIN', crest: 'hud_elements/misc/away_crest',
     art: 'pinewood_lynx', arena: 'pine_pond',
     color: '#7fd16b', color2: '#2f6b3a', recolor: { h1: 118, h2: 95, sat: 0.9, val: 0.92, sat2: 0.8, val2: 0.55 },
@@ -132,6 +229,7 @@ export const TEAMS = {
     style: 'Young and eager. They chase the puck in a pack.',
   },
   comets: {
+    elems: { thunder: 'ember' }, // supers other than the slot's own
     id: 'comets', plan: 'rungun', chem: 1, name: 'Ember Comets', short: 'EMB', crest: 'hud_elements/misc/away_crest',
     art: 'ember_comets', arena: 'ember_dome',
     color: '#ff6f7d', color2: '#8261bd',
@@ -150,6 +248,7 @@ export const TEAMS = {
     style: 'Heavy hitters with heavier slapshots.',
   },
   ravens: {
+    elems: { thunder: 'shadow' }, // supers other than the slot's own
     id: 'ravens', plan: 'trap', chem: 2, name: 'Obsidian Ravens', short: 'RAV', crest: 'hud_elements/misc/away_crest',
     art: 'obsidian_ravens', arena: 'dark_aerie',
     color: '#9aa3b5', color2: '#2a2f3d', recolor: { h1: 220, h2: 220, sat: 0.12, val: 0.66, sat2: 0.15, val2: 0.4 },
@@ -187,32 +286,53 @@ export const ARENAS = {
 // kit (C: Nix's frost kit, W: Volta's thunder kit, D: Bram's stone kit) with their own
 // stats, a few perks they arrive with, and no chemistry with your line yet.
 // perks: which option they took at each perk level (levels 3, 5, 7) before joining.
-const recruit = (team, kit, base, perks, price, blurb) => ({ team, kit, base, perks, price, blurb });
+const recruit = (team, kit, base, perks, price, blurb, arch, hand) => ({ team, kit, base, perks, price, blurb, arch, hand });
 export const RECRUITS = {
-  lynx_c: recruit('lynx', 'frost', { spd: 7, agi: 8, sht: 6, pas: 8, chk: 4, sta: 6 }, [1, 1, 1], 180, 'Pinewood\'s eager captain. Quick feet, quicker hands, never stops smiling.'),
-  lynx_w: recruit('lynx', 'thunder', { spd: 9, agi: 9, sht: 5, pas: 5, chk: 2, sta: 7 }, [0, 0, 1], 180, 'Tiny, tireless and somehow everywhere at once.'),
-  lynx_d: recruit('lynx', 'stone', { spd: 5, agi: 5, sht: 6, pas: 6, chk: 8, sta: 9 }, [0, 1, 0], 180, 'Plays like a pine in a blizzard: bends, never breaks.'),
-  comets_c: recruit('comets', 'frost', { spd: 6, agi: 6, sht: 9, pas: 7, chk: 5, sta: 6 }, [1, 0, 0], 260, 'Shoot-first centre with a temper to match.'),
-  comets_w: recruit('comets', 'thunder', { spd: 8, agi: 7, sht: 9, pas: 4, chk: 4, sta: 5 }, [1, 1, 0], 260, 'Fire-starter. Never met a shot worth passing up.'),
-  comets_d: recruit('comets', 'stone', { spd: 5, agi: 5, sht: 9, pas: 4, chk: 8, sta: 8 }, [1, 0, 1], 260, 'Booming point shot. Defends when the mood strikes.'),
-  rams_c: recruit('rams', 'frost', { spd: 5, agi: 6, sht: 8, pas: 8, chk: 7, sta: 6 }, [1, 0, 1], 340, 'Big-bodied centre who wins every battle along the boards.'),
-  rams_w: recruit('rams', 'thunder', { spd: 8, agi: 7, sht: 8, pas: 5, chk: 5, sta: 5 }, [0, 1, 0], 340, 'Power winger with a wrist shot like a falling anvil.'),
-  rams_d: recruit('rams', 'stone', { spd: 4, agi: 4, sht: 8, pas: 4, chk: 10, sta: 10 }, [1, 0, 0], 340, 'The hardest hitter in the Frostline. Ask anyone. Carefully.'),
-  ravens_c: recruit('ravens', 'frost', { spd: 7, agi: 8, sht: 6, pas: 9, chk: 5, sta: 5 }, [0, 1, 1], 420, 'Reads the play two passes ahead and never wastes a touch.'),
-  ravens_w: recruit('ravens', 'thunder', { spd: 9, agi: 9, sht: 7, pas: 6, chk: 3, sta: 4 }, [1, 0, 0], 420, 'Silent, slippery, gone before you turn around.'),
-  ravens_d: recruit('ravens', 'stone', { spd: 5, agi: 6, sht: 6, pas: 7, chk: 9, sta: 7 }, [0, 1, 0], 420, 'Positionally perfect. Never out of place, never rattled.'),
-  royals_c: recruit('royals', 'frost', { spd: 7, agi: 8, sht: 8, pas: 8, chk: 4, sta: 6 }, [1, 0, 0], 520, 'Royals captain. Elegant, precise and very aware of it.'),
-  royals_w: recruit('royals', 'thunder', { spd: 9, agi: 8, sht: 8, pas: 5, chk: 3, sta: 6 }, [0, 1, 0], 520, 'Flashy finisher with a release the crowd waits for.'),
-  royals_d: recruit('royals', 'stone', { spd: 5, agi: 5, sht: 8, pas: 6, chk: 9, sta: 8 }, [1, 0, 0], 520, 'The old monarch of the blue line. Still has it.'),
+  lynx_c: recruit('lynx', 'frost', { spd: 7, agi: 8, sht: 6, pas: 8, chk: 4, sta: 6 }, [1, 1, 1], 180, 'Pinewood\'s eager captain. Quick feet, quicker hands, never stops smiling.', 'playmaker', 'L'),
+  lynx_w: recruit('lynx', 'thunder', { spd: 9, agi: 9, sht: 5, pas: 5, chk: 2, sta: 7 }, [0, 0, 1], 180, 'Tiny, tireless and somehow everywhere at once.', 'grinder', 'R'),
+  lynx_d: recruit('lynx', 'stone', { spd: 5, agi: 5, sht: 6, pas: 6, chk: 8, sta: 9 }, [0, 1, 0], 180, 'Plays like a pine in a blizzard: bends, never breaks.', 'grinder', 'L'),
+  comets_c: recruit('comets', 'frost', { spd: 6, agi: 6, sht: 9, pas: 7, chk: 5, sta: 6 }, [1, 0, 0], 260, 'Shoot-first centre with a temper to match.', 'sniper', 'R'),
+  comets_w: recruit('comets', 'thunder', { spd: 8, agi: 7, sht: 9, pas: 4, chk: 4, sta: 5 }, [1, 1, 0], 260, 'Fire-starter. Never met a shot worth passing up.', 'sniper', 'L'),
+  comets_d: recruit('comets', 'stone', { spd: 5, agi: 5, sht: 9, pas: 4, chk: 8, sta: 8 }, [1, 0, 1], 260, 'Booming point shot. Defends when the mood strikes.', 'blueliner', 'R'),
+  rams_c: recruit('rams', 'frost', { spd: 5, agi: 6, sht: 8, pas: 8, chk: 7, sta: 6 }, [1, 0, 1], 340, 'Big-bodied centre who wins every battle along the boards.', 'enforcer', 'L'),
+  rams_w: recruit('rams', 'thunder', { spd: 8, agi: 7, sht: 8, pas: 5, chk: 5, sta: 5 }, [0, 1, 0], 340, 'Power winger with a wrist shot like a falling anvil.', 'sniper', 'R'),
+  rams_d: recruit('rams', 'stone', { spd: 4, agi: 4, sht: 8, pas: 4, chk: 10, sta: 10 }, [1, 0, 0], 340, 'The hardest hitter in the Frostline. Ask anyone. Carefully.', 'enforcer', 'L'),
+  ravens_c: recruit('ravens', 'frost', { spd: 7, agi: 8, sht: 6, pas: 9, chk: 5, sta: 5 }, [0, 1, 1], 420, 'Reads the play two passes ahead and never wastes a touch.', 'playmaker', 'R'),
+  ravens_w: recruit('ravens', 'thunder', { spd: 9, agi: 9, sht: 7, pas: 6, chk: 3, sta: 4 }, [1, 0, 0], 420, 'Silent, slippery, gone before you turn around.', 'dangler', 'L'),
+  ravens_d: recruit('ravens', 'stone', { spd: 5, agi: 6, sht: 6, pas: 7, chk: 9, sta: 7 }, [0, 1, 0], 420, 'Positionally perfect. Never out of place, never rattled.', 'grinder', 'L'),
+  royals_c: recruit('royals', 'frost', { spd: 7, agi: 8, sht: 8, pas: 8, chk: 4, sta: 6 }, [1, 0, 0], 520, 'Royals captain. Elegant, precise and very aware of it.', 'dangler', 'L'),
+  royals_w: recruit('royals', 'thunder', { spd: 9, agi: 8, sht: 8, pas: 5, chk: 3, sta: 6 }, [0, 1, 0], 520, 'Flashy finisher with a release the crowd waits for.', 'sniper', 'R'),
+  royals_d: recruit('royals', 'stone', { spd: 5, agi: 5, sht: 8, pas: 6, chk: 9, sta: 8 }, [1, 0, 0], 520, 'The old monarch of the blue line. Still has it.', 'blueliner', 'R'),
 };
 const ROLE_TITLE = { C: 'Centre', W: 'Winger', D: 'Defender' };
 for (const [key, r] of Object.entries(RECRUITS)) {
   const t = TEAMS[r.team];
   const c = CHARACTERS[r.kit];
-  Object.assign(r, { key, name: t.names[r.kit], role: c.role, title: `${t.name.split(' ').slice(-1)[0].replace(/s$/, '')} ${ROLE_TITLE[c.role]}`, sprite: `${t.art}_${ROLE[r.kit]}` });
+  Object.assign(r, { key, name: t.names[r.kit], role: c.role, title: `${t.name.split(' ').slice(-1)[0].replace(/s$/, '')} ${ROLE_TITLE[c.role]}`, sprite: `${t.art}_${ROLE[r.kit]}`, elem: (t.elems || {})[r.kit] || c.elem });
 }
 export const recruitKey = (teamId, kit) => `${teamId}_${ROLE[kit]}`;
+// The kit a rival slot plays with: that player's archetype and the team's super for the slot.
+export const slotDef = (teamId, kit) => makeDef(kit, RECRUITS[recruitKey(teamId, kit)]?.arch, ((TEAMS[teamId] || {}).elems || {})[kit]);
 export const KIT_OF_ROLE = { C: 'frost', W: 'thunder', D: 'stone' };
+
+// Legends: free agents who turn up in Scouting now and then (see legends.js). Fáfnir and
+// Fenrir are twins: dressed together they have a bond from day one and a combo of their own.
+export const LEGENDS = {
+  fafnir: {
+    key: 'fafnir', name: 'Fáfnir', kit: 'stone', hand: 'L', arch: 'blueliner', elem: 'ember', twin: 'fenrir', price: 850, art: 'fafnir',
+    title: 'Dragon Defender', base: { spd: 10, agi: 8, sht: 11, pas: 7, chk: 8, sta: 9 },
+    blurb: 'A dragon on skates: faster than any defender has a right to be, with a shot like dragonfire.',
+  },
+  fenrir: {
+    key: 'fenrir', name: 'Fenrir', kit: 'thunder', hand: 'R', arch: 'sniper', elem: 'shadow', twin: 'fafnir', price: 850, art: 'fenrir',
+    title: 'Wolf Winger', base: { spd: 11, agi: 11, sht: 11, pas: 8, chk: 4, sta: 8 },
+    blurb: 'A wolf with silk hands. Gone before anyone sees it coming, and so is the puck.',
+  },
+};
+// The legends' own art once it's in the atlas (main.js sets it); until then they wear the
+// newcomer art.
+export const LEGEND_ART = new Set();
+export const areTwins = (a, b) => !!(LEGENDS[a] && LEGENDS[a].twin === b);
 
 // Drafted rookies (Draft Day), by roster id. They live in the save; loadSave and draftPick
 // register them here so member() knows them.
@@ -229,19 +349,26 @@ export function member(who) {
   const k = ROOKIES[who];
   if (k) {
     const c = CHARACTERS[k.kit];
-    return { who, kit: k.kit, def: c, name: k.name, title: ROOKIE_TITLE[c.role], base: k.base, role: c.role, blurb: k.blurb, recruit: null, rookie: k, sprite: `newcomer_${ROLE[k.kit]}`, look: 'homekit' };
+    return { who, kit: k.kit, def: makeDef(k.kit, k.arch, k.elem), name: k.name, title: ROOKIE_TITLE[c.role], base: k.base, role: c.role, blurb: k.blurb, recruit: null, rookie: k, hand: k.hand || 'L', sprite: `newcomer_${ROLE[k.kit]}`, look: 'homekit' };
+  }
+  const L = LEGENDS[who];
+  if (L) {
+    const c = CHARACTERS[L.kit];
+    return { who, kit: L.kit, def: makeDef(L.kit, L.arch, L.elem), name: L.name, title: L.title, base: L.base, role: c.role, blurb: L.blurb, recruit: null, legend: L, hand: L.hand, sprite: LEGEND_ART.has(L.art) ? L.art : `newcomer_${ROLE[L.kit]}`, look: 'homekit' };
   }
   const r = RECRUITS[who];
   const c = CHARACTERS[r ? r.kit : who];
   if (!c) return null;
-  if (!r) return { who, kit: who, def: c, name: c.name, title: c.title, base: c.base, role: c.role, blurb: c.blurb, recruit: null, sprite: null, look: null };
-  return { who, kit: r.kit, def: c, name: r.name, title: r.title, base: r.base, role: c.role, blurb: r.blurb, recruit: r, sprite: r.sprite, look: 'homekit' };
+  if (!r) return { who, kit: who, def: c, name: c.name, title: c.title, base: c.base, role: c.role, blurb: c.blurb, recruit: null, hand: c.hand, sprite: null, look: null };
+  return { who, kit: r.kit, def: makeDef(r.kit, r.arch, r.elem), name: r.name, title: r.title, base: r.base, role: c.role, blurb: r.blurb, recruit: r, hand: r.hand, sprite: r.sprite, look: 'homekit' };
 }
 
 // The combo two members fire comes from their kits; the bond itself is between them.
 export function comboFor(pair) {
-  const [a, b] = pair.split('+').map(member);
-  return a && b ? COMBOS[pairKey(a.kit, b.kit)] : null;
+  const [ka, kb] = pair.split('+');
+  if (areTwins(ka, kb)) return COMBOS.ragnarok;
+  const [a, b] = [ka, kb].map(member);
+  return a && b ? COMBOS[pairKey(a.def.elem, b.def.elem)] || null : null;
 }
 
 // Recruits on our side wear home colours: coral becomes cream, violet becomes teal.
@@ -326,7 +453,14 @@ export const TOURNAMENT = {
 // pass between the pair followed by a quick shot (or one-timer) fires their combo shot.
 export const CHEM_LEVELS = [12, 50, 120]; // total chemistry XP needed for levels 1, 2, 3
 export const pairKey = (a, b) => [a, b].sort().join('+');
+const GENERIC_LEVELS = ['Unlocks the combo', 'Stronger effects', 'Strongest effects'];
 export const COMBOS = {
+  // the twins' own: Fáfnir and Fenrir passing to each other
+  ragnarok: {
+    name: 'Ragnarök', colors: ['#ff7a3d', '#9b8cff'], icon: 'icons/combo_twins',
+    text: 'The twins\' combo: a shot out of the dark and on fire. It flies faster, knocks back anyone in its way, and no goalie can hold it.',
+    levels: ['The twins\' bond: from their first game together', 'Stronger effects', 'Strongest effects'],
+  },
   'frost+thunder': {
     name: 'Frostbolt', colors: ['#bff4ff', '#ffe066'], icon: 'icons/combo_frostbolt',
     text: 'A crackling ice shot that slows every defender it passes and is hard to hold.',
@@ -342,7 +476,58 @@ export const COMBOS = {
     text: 'The release sends a shockwave that knocks nearby defenders off their feet.',
     levels: ['Unlocks Thunderquake', 'Wider shockwave', 'Even faster shot'],
   },
+  // the newer elements' pairs: each element brings its part of the shot (see Match.shoot)
+  'ember+frost': {
+    name: 'Steam Burst', colors: ['#ffb38a', '#bff4ff'], icon: null,
+    text: 'A hissing shot that slows defenders it passes and is hard to hold.', levels: GENERIC_LEVELS,
+  },
+  'ember+stone': {
+    name: 'Magma', colors: ['#ff7a3d', '#c9b79c'], icon: null,
+    text: 'A molten shot that plows through a blocker and burns the goalie\'s glove.', levels: GENERIC_LEVELS,
+  },
+  'ember+thunder': {
+    name: 'Plasma', colors: ['#ff7a3d', '#ffe066'], icon: null,
+    text: 'A white-hot rocket: faster than anything, and hard to hold.', levels: GENERIC_LEVELS,
+  },
+  'ember+gale': {
+    name: 'Wildfire', colors: ['#ff7a3d', '#bff0dc'], icon: null,
+    text: 'Fanned flames that find the open corner and are hard to hold.', levels: GENERIC_LEVELS,
+  },
+  'ember+shadow': {
+    name: 'Smoke Screen', colors: ['#ff7a3d', '#9b8cff'], icon: null,
+    text: 'A shot out of the smoke: hidden at first, then too hot to hold.', levels: GENERIC_LEVELS,
+  },
+  'frost+gale': {
+    name: 'Blizzard', colors: ['#bff4ff', '#bff0dc'], icon: null,
+    text: 'A whiteout shot that finds the open corner and slows defenders.', levels: GENERIC_LEVELS,
+  },
+  'frost+shadow': {
+    name: 'Black Ice', colors: ['#bff4ff', '#9b8cff'], icon: null,
+    text: 'A shot nobody sees coming that slows anyone it passes.', levels: GENERIC_LEVELS,
+  },
+  'gale+thunder': {
+    name: 'Hurricane', colors: ['#bff0dc', '#ffe066'], icon: null,
+    text: 'A howling shot: faster, and steered to the open corner.', levels: GENERIC_LEVELS,
+  },
+  'shadow+thunder': {
+    name: 'Dark Bolt', colors: ['#9b8cff', '#ffe066'], icon: null,
+    text: 'A lightning shot out of nowhere: fast, and hidden at first.', levels: GENERIC_LEVELS,
+  },
+  'gale+stone': {
+    name: 'Sandstorm', colors: ['#bff0dc', '#c9b79c'], icon: null,
+    text: 'A grinding shot that plows a blocker aside and finds the corner.', levels: GENERIC_LEVELS,
+  },
+  'shadow+stone': {
+    name: 'Obsidian', colors: ['#9b8cff', '#c9b79c'], icon: null,
+    text: 'A heavy shot out of the dark that plows through a blocker.', levels: GENERIC_LEVELS,
+  },
+  'gale+shadow': {
+    name: 'Night Wind', colors: ['#bff0dc', '#9b8cff'], icon: null,
+    text: 'A silent shot that drifts to the open corner unseen.', levels: GENERIC_LEVELS,
+  },
 };
+// the cast's three pairs, whose bonds every save starts with
+export const CAST_PAIRS = ['frost+thunder', 'frost+stone', 'stone+thunder'];
 
 // Game plans picked before league matches. Each one beats one other plan.
 export const GAME_PLANS = {

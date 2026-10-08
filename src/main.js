@@ -11,7 +11,7 @@ import { firstTime } from './guide.js';
 import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as cloudBackup, settleCups } from './online.js';
 import { ARENA_MUSIC } from './songs.js';
 import { ResurfacerLap } from './scenery.js';
-import { UI, controlsHtml, crest, ruleIconSrc, cupPlaceImg } from './ui.js';
+import { UI, controlsHtml, crest, ruleIconSrc, cupPlaceImg, portrait } from './ui.js';
 import { HUD } from './hud.js';
 import { toScreen } from './rink.js';
 import { Replay } from './replay.js';
@@ -27,7 +27,8 @@ import { standings } from './league.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan, recordClassic, recordAllStar } from './league.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo } from './data.js';
+import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, useNewArt } from './data.js';
+import { rollLegend, legendState, STAY } from './legends.js';
 import { offerDraft } from './draft.js';
 import { recordCareer } from './career.js';
 import {
@@ -66,6 +67,10 @@ class App {
     try {
       await Assets.load((f) => { bar.style.width = Math.round(f * 100) + '%'; });
       setTimeout(() => Assets.prefetch(), 1200);
+      // the legends wear their own art once it's in (?legends=1 previews them before it is)
+      for (const L of Object.values(LEGENDS)) if (Assets.atlas.skaters && Assets.atlas.skaters[L.art]) LEGEND_ART.add(L.art);
+      useNewArt((id) => !!Assets.atlas.frames[id]);
+      this.legendsPreview = new URLSearchParams(location.search).has('legends');
     } catch (e) {
       this.loadingEl.querySelector('.err').textContent = t('The game art did not load. Check your connection and reload the page.');
       throw e;
@@ -447,7 +452,7 @@ class App {
     const cfg = {
       teams: [
         { skaters: ids.map((id) => ({ def: CHARACTERS[id], stats: { ...CHARACTERS[id].base }, name: CHARACTERS[id].name, perks: [] })), goalie: { stats: { rfx: 6, pos: 6 }, name: GOALIE.name }, chem },
-        { skaters: ids.map((id) => ({ def: CHARACTERS[id], stats: { ...CHARACTERS[id].base }, name: team.names[id], perks: [], sprite: team.art ? `${team.art}_${ROLE[id]}` : null })), goalie: { stats: { rfx: 6, pos: 6 }, name: team.names.goalie, art: team.art }, chem },
+        { skaters: ids.map((id) => ({ def: slotDef(teamId, id), stats: { ...CHARACTERS[id].base }, name: team.names[id], perks: [], sprite: team.art ? `${team.art}_${ROLE[id]}` : null })), goalie: { stats: { rfx: 6, pos: 6 }, name: team.names.goalie, art: team.art }, chem },
       ],
       humanTeam: 0, humans: [0, 1],
       powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none',
@@ -705,7 +710,7 @@ class App {
       return { vol: k * vol(x, y), pan: Math.max(-0.8, Math.min(0.8, (s.x - cam().x) / 700)) };
     };
     m.on('shot', (e) => {
-      audio.sfx(e.kind === 'thunderclap' ? 'thunder' : ['slap', 'onetimer', 'zero'].includes(e.kind) ? 'slap' : 'stick', at(e.s.x, e.s.y));
+      audio.sfx(e.kind === 'thunderclap' ? 'thunder' : ['slap', 'onetimer', 'zero', 'firestorm', 'eclipse'].includes(e.kind) ? 'slap' : 'stick', at(e.s.x, e.s.y));
       if (e.s.controlled && e.kind !== 'wrist') this.rumble(0.35, 0.6, 90, e.s.team);
     });
     m.on('pass', (e) => audio.sfx('pass', at(e.s.x, e.s.y)));
@@ -790,7 +795,7 @@ class App {
       if (this.tutorial >= 0 && !this.powerTipShown) { this.powerTipShown = true; this.hud.hint(this.isTouch ? t('A power orb! Skate the puck through it to charge the puck.') : t('A power orb! Skate or shoot the puck through it to charge the puck.'), 5); }
     });
     m.on('power_get', (e) => { audio.sfx('power', { type: e.type }); if (e.by && e.by.team === 0) this.hud.hint(t(POWER_INFO[e.type].text), 3.5); });
-    m.on('skill', (e) => audio.sfx({ dash: 'dash', glide: 'glide', bedrock: 'bedrock' }[e.id], at(e.s.x, e.s.y)));
+    m.on('skill', (e) => (e.id === 'heat' ? audio.sfx('power', { type: 'fire', ...at(e.s.x, e.s.y) }) : audio.sfx({ dash: 'dash', glide: 'glide', bedrock: 'bedrock', tailwind: 'whoosh', fade: 'shimmer' }[e.id], at(e.s.x, e.s.y))));
     m.on('ult', (e) => {
       audio.sfx(e.id === 'monolith' ? 'stone' : 'ult');
       audio.sfx('whoosh', { vol: 0.8 });
@@ -843,6 +848,9 @@ class App {
     s.record.played++;
     s.record.goals += summary.score[0];
     recordCareer(s, summary, rewards.won);
+    // now and then a legend turns up in Scouting
+    const legend = rollLegend(s, Math.random, (k) => LEGEND_ART.has(LEGENDS[k].art) || this.legendsPreview);
+    if (legend) setTimeout(() => this.toast(portrait(legend, 0, null, 96), t('A legend is in town!'), LEGENDS[legend].name, t('In Team › Scouting for {n} matches', { n: STAY })), 2400);
     const scorers = (team) => Object.fromEntries(summary.skaters.filter((k) => k.team === team && k.goals).map((k) => [k.id, k.goals]));
     const allstar = !!(c.fixture && c.fixture.kind === 'allstar');
     const firstWin = rewards.won && !((s.rivals && s.rivals[c.teamId] && s.rivals[c.teamId].wins) > 0);
@@ -1085,6 +1093,10 @@ class App {
     this.ui.guideBudget = 1; // one new coach's tip per visit
     if (this.awardsNight()) return;
     if (offerDraft(this.save)) writeSave(this.save); // Draft Day opens once the awards are handed out
+    if (this.legendsPreview && !legendState(this.save).visiting) {
+      const st = legendState(this.save), free = Object.keys(LEGENDS).filter((k) => !this.save.roster[k]);
+      if (free.length) { st.visiting = free[0]; st.until = this.save.record.played + STAY; }
+    }
     this.ui.hub(tab);
     this.setHubBackground();
     this.music('hub');

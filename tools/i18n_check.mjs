@@ -30,7 +30,7 @@ for (const f of readdirSync(join(root, 'src'))) {
 for (const m of readFileSync(join(root, 'index.html'), 'utf8').matchAll(/data-i18n(?:-aria)?="([^"]+)"/g)) add(m[1], 'index.html');
 
 // 2. story and data text (shown through t() at the display site)
-const FIELDS = new Set(['name', 'text', 'desc', 'blurb', 'title', 'label', 'fx', 'reply', 'trains', 'tip', 'rule', 'round', 'sub', 'hint', 'line', 'short', 'say', 'style']);
+const FIELDS = new Set(['name', 'text', 'desc', 'blurb', 'title', 'label', 'fx', 'reply', 'trains', 'tip', 'rule', 'round', 'sub', 'hint', 'line', 'short', 'say', 'style', 'trait']);
 const LIST_FIELDS = new Set(['levels']); // lists of display lines
 const SKIP_NAMES = new Set(['GOALIE', 'CLUB', 'CLUB_DEFAULT', 'NPC_NAMES', 'PALETTES']); // (people's and team names are removed below)
 function walk(v, path, where, depth = 0) {
@@ -82,6 +82,7 @@ const data = await import(join(root, 'src', 'data.js'));
 const people = new Set();
 for (const c of Object.values(data.CHARACTERS || {})) people.add(c.name);
 for (const r of Object.values(data.RECRUITS || {})) people.add(r.name);
+for (const l of Object.values(data.LEGENDS || {})) people.add(l.name);
 for (const ar of Object.values(data.ARENAS || {})) people.add(ar.name);
 for (const tm of Object.values(data.TEAMS || {})) { people.add(tm.name); people.add(tm.short); for (const n of Object.values(tm.names || {})) people.add(n); for (const n of Object.values(tm.subs || {})) people.add(n); }
 for (const p of people) if (!coded.has(p)) keys.delete(p);
@@ -92,6 +93,8 @@ for (const m of main.matchAll(/\[\s*'(?:us|them)'\s*,\s*'[a-z_]+'\s*,\s*'((?:\\.
 // character perks: 'Name: what it does', split on the colon where they're shown
 const perkKeys = new Set();
 for (const c of Object.values(data.CHARACTERS || {})) for (const opts of c.perks || []) for (const p of opts) { perkKeys.add(p); add(p, 'data.js:perks'); }
+for (const e of Object.values(data.ELEMENTS || {})) for (const opts of e.perks || []) for (const p of opts) { perkKeys.add(p); add(p, 'data.js:perks'); }
+for (const a of Object.values(data.ARCHETYPES || {})) for (const p of a.perks || []) { perkKeys.add(p); add(p, 'data.js:perks'); }
 
 // 3. compare with the catalogue
 const cat = (await import(join(root, 'src', 'lang', `${lang}.js`)))[lang.toUpperCase()];

@@ -2,8 +2,8 @@
 
 import { GUIDE } from './guide.js';
 import {
-  CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE,
-  RECRUITS, ROOKIES, setRookies, member, pairKey, recruitKey,
+  CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE, CAST_PAIRS, makeDef, perkSlot,
+  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, areTwins, setRookies, member, pairKey, recruitKey, slotDef,
 } from './data.js';
 import { newLeague, migrateLeague } from './league.js';
 import { seasonStats } from './awards.js';
@@ -25,7 +25,7 @@ export function newSave() {
     club: null, // custom name and colours, see applyClub in data.js
     goalie: { level: 1, exp: 0, gear: 'g_start' },
     owned: ['stick_wood', 'skate_start', 'arm_none', 'g_start'],
-    chem: Object.fromEntries(Object.keys(COMBOS).map((k) => [k, 0])), // chemistry XP per pair
+    chem: Object.fromEntries(CAST_PAIRS.map((k) => [k, 0])), // chemistry XP per pair of members
     stage: 0,
     beaten: [],
     champion: false,
@@ -63,12 +63,23 @@ export function loadSave() {
     for (const k of Object.keys(base)) if (s[k] === undefined) s[k] = base[k];
     for (const k of Object.keys(base.settings)) if (s.settings[k] === undefined) s.settings[k] = base.settings[k];
     setRookies(s.rookies); // drafted rookies, so member() knows them
+    // perks are kept as text: a player whose super or archetype has changed since gets the
+    // same choice from their new lists
+    for (const [id, r] of Object.entries(s.roster)) {
+      const m = member(id);
+      if (!m) continue;
+      r.perks = r.perks.map((p, i) => {
+        if (!m.def.perks[i] || m.def.perks[i].includes(p)) return p;
+        const slot = perkSlot(p);
+        return slot ? m.def.perks[i][slot.i] : p;
+      });
+    }
     for (const id of Object.keys(CHARACTERS)) if (!s.roster[id]) s.roster[id] = base.roster[id];
     for (const [role, who] of Object.entries(s.lineup)) {
       const m = member(who);
       if (!s.roster[who] || !m || m.role !== role) s.lineup[role] = base.lineup[role];
     }
-    for (const k of Object.keys(COMBOS)) if (typeof s.chem[k] !== 'number') s.chem[k] = 0;
+    for (const k of CAST_PAIRS) if (typeof s.chem[k] !== 'number') s.chem[k] = 0;
     if (!s.league || !s.league.schedule) s.league = migrateLeague(s);
     return s;
   } catch { return null; }
@@ -140,7 +151,7 @@ export function signRecruit(save, key) {
   const level = joinLevel(save);
   m.level = level;
   m.points = level - 1; // yours to spend
-  const opts = CHARACTERS[r.kit].perks;
+  const opts = member(key).def.perks;
   PERK_LEVELS.forEach((lv, i) => { if (level >= lv) m.perks.push(opts[i][r.perks[i]]); });
   save.roster[key] = m;
   return m;
@@ -155,7 +166,14 @@ export function setLineup(save, who) {
 }
 
 // Rival roster pages to show our recruits in home colours.
-export const homeKitGroups = (save) => [...new Set([...rosterIds(save).filter((id) => RECRUITS[id]).map((id) => 'rival_' + TEAMS[RECRUITS[id].team].art), ...(rosterIds(save).some((id) => ROOKIES[id]) ? ['newcomers'] : [])])];
+export const homeKitGroups = (save) => {
+  const ids = rosterIds(save), legends = ids.filter((id) => LEGENDS[id]);
+  return [...new Set([
+    ...ids.filter((id) => RECRUITS[id]).map((id) => 'rival_' + TEAMS[RECRUITS[id].team].art),
+    ...(ids.some((id) => ROOKIES[id]) || legends.some((id) => !LEGEND_ART.has(LEGENDS[id].art)) ? ['newcomers'] : []),
+    ...(legends.some((id) => LEGEND_ART.has(LEGENDS[id].art)) ? ['legends'] : []),
+  ])];
+};
 
 export function effectiveStats(id, r) {
   const base = member(id).base;
@@ -186,7 +204,7 @@ export function matchConfig(save, teamId, stage, opts = {}) {
       const m = member(who);
       return {
         def: m.def, who, stats: effectiveStats(who, save.roster[who]), name: m.name, perks: perkNames(save.roster[who]),
-        sprite: m.sprite, look: m.look, gear: { ...save.roster[who].gear },
+        sprite: m.sprite, look: m.look, gear: { ...save.roster[who].gear }, twin: m.legend ? m.legend.twin : null, hand: m.hand,
       };
     }),
     goalie: { stats: goalieStats(save), name: GOALIE.name },
@@ -198,11 +216,11 @@ export function matchConfig(save, teamId, stage, opts = {}) {
       const stats = { ...CHARACTERS[id].base };
       for (const [k, v] of Object.entries(t.bonus || {})) stats[k] = Math.max(1, stats[k] + v);
       // a slot whose skater you signed is filled by a newcomer in their colours
-      if (isSigned(save, recruitKey(teamId, id))) return { def: CHARACTERS[id], who: 'sub_' + id, stats, name: t.subs[id], perks: [], sprite: `newcomer_${ROLE[id]}` };
-      return { def: CHARACTERS[id], stats, name: t.names[id], perks: [], sprite: t.art ? `${t.art}_${ROLE[id]}` : null };
+      if (isSigned(save, recruitKey(teamId, id))) return { def: slotDef(teamId, id), who: 'sub_' + id, stats, name: t.subs[id], perks: [], sprite: `newcomer_${ROLE[id]}` };
+      return { def: slotDef(teamId, id), stats, name: t.names[id], perks: [], sprite: t.art ? `${t.art}_${ROLE[id]}` : null, hand: RECRUITS[recruitKey(teamId, id)]?.hand };
     }),
     goalie: { stats: { ...t.goalie }, name: t.names.goalie, art: t.art || null },
-    chem: Object.fromEntries(Object.keys(COMBOS).map((k) => [k, Math.min(3, (t.chem || 0) + (save.season > 1 ? 1 : 0))])),
+    chem: Object.fromEntries(CAST_PAIRS.map((k) => [k, Math.min(3, (t.chem || 0) + (save.season > 1 ? 1 : 0))])),
   };
   const diff = Math.min(1, Math.max(0, t.diff + (DIFF_OFFSET[save.settings.difficulty] || 0) + seasonBoost));
   // locker-room buffs: stat bumps and goalie reflex land here, the rest goes to the match
@@ -410,7 +428,7 @@ export function lineChem(save, line) {
   const out = {};
   for (let i = 0; i < line.length; i++) for (let j = i + 1; j < line.length; j++) {
     const k = pairKey(line[i], line[j]);
-    out[k] = chemLevel(save.chem[k] || 0);
+    out[k] = areTwins(line[i], line[j]) ? 3 : chemLevel(save.chem[k] || 0); // twins: a bond from day one
   }
   return out;
 }

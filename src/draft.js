@@ -2,7 +2,7 @@
 // club, one per position. Pick one and they join the roster as a rookie in our colours (the
 // Batch AA newcomer art). Rookies start below the line-up and raw, but potential (two to five
 // stars) makes them learn faster and lets their stats grow further than anyone's.
-import { CHARACTERS, ROOKIES, setRookies, KIT_OF_ROLE, TEAMS, STAT_KEYS } from './data.js';
+import { CHARACTERS, ROOKIES, setRookies, KIT_OF_ROLE, TEAMS, STAT_KEYS, makeDef, ARCHETYPES, ELEMENTS } from './data.js';
 import { joinLevel, PERK_LEVELS, newMember } from './progress.js';
 
 const NAMES = {
@@ -48,7 +48,11 @@ function prospect(role, taken, rnd) {
   const names = NAMES[role].filter((nm) => !taken.has(nm));
   const name = pick(names.length ? names : NAMES[role], rnd);
   taken.add(name);
-  return { name, kit, base, potential, special, blurb: pick(SCOUTING[role], rnd), perks: PERK_LEVELS.map(() => (rnd() < 0.5 ? 0 : 1)) };
+  // how they play and their super: any archetype that fits the position, any element
+  const arch = pick(Object.values(ARCHETYPES).filter((a) => a.roles.includes(role)).map((a) => a.id), rnd);
+  const elem = pick(Object.keys(ELEMENTS), rnd);
+  const hand = rnd() < 0.6 ? 'L' : 'R'; // (most players shoot left)
+  return { name, kit, base, potential, special, arch, elem, hand, blurb: pick(SCOUTING[role], rnd), perks: PERK_LEVELS.map(() => (rnd() < 0.5 ? 0 : 1)) };
 }
 
 // The season's three prospects, and the two rivals who pick after you.
@@ -78,12 +82,12 @@ export function draftPick(save, i) {
   save.rookieN = (save.rookieN || 0) + 1;
   const id = 'rk' + save.rookieN;
   save.rookies ||= {};
-  save.rookies[id] = { name: p.name, kit: p.kit, base: p.base, potential: p.potential, blurb: p.blurb, season: d.season };
+  save.rookies[id] = { name: p.name, kit: p.kit, arch: p.arch, elem: p.elem, hand: p.hand, base: p.base, potential: p.potential, blurb: p.blurb, season: d.season };
   setRookies(save.rookies);
   const m = newMember();
   m.level = Math.max(1, joinLevel(save) - 2);
   m.points = m.level - 1;
-  const opts = CHARACTERS[p.kit].perks;
+  const opts = makeDef(p.kit, p.arch, p.elem).perks;
   PERK_LEVELS.forEach((lv, k) => { if (m.level >= lv) m.perks.push(opts[k][p.perks[k]]); });
   save.roster[id] = m;
   d.picked = i;

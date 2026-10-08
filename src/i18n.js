@@ -3,6 +3,8 @@
 //   t('Round {n} of 5', { n: 3 })
 // Plurals: pick the English form first, then translate it:
 //   t(n === 1 ? '{n} win' : '{n} wins', { n })
+// A key can carry a context when the same English means two things: 'archetype::Sniper'
+// shows as 'Sniper' in English and has its own translation.
 // Catalogues live in src/lang/<code>.js; tools/i18n_check.mjs lists what's missing.
 
 import { IS } from './lang/is.js';
@@ -41,6 +43,7 @@ export function t(text, params) {
       if (!translated.has(text)) missing.add(text);
     }
   }
+  if (out === text) { const c = text.indexOf('::'); if (c > 0) out = text.slice(c + 2); }
   if (params) out = out.replace(/\{(\w+)\}/g, (m, k) => (params[k] !== undefined ? params[k] : m));
   return out;
 }

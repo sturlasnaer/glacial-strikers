@@ -4,7 +4,7 @@
 // physics but hands the rules to the controller: init(m), update(m, dt), onGoal(m, info),
 // hud(m) and optional draw hooks. No browser APIs here so drills run headless too.
 
-import { CHARACTERS, GOALIE, TEAMS, ROLE, member, recruitKey } from './data.js';
+import { CHARACTERS, GOALIE, TEAMS, ROLE, member, recruitKey, slotDef } from './data.js';
 import { effectiveStats, perkNames, goalieStats, chemLevel, lineupIds, isSigned } from './progress.js';
 import { toScreen, GOAL_X, MOUTH } from './rink.js';
 import { norm, clamp, makeRng } from './util.js';
@@ -79,8 +79,8 @@ export function createDrill(id, save, charId, opts = {}) {
   const awaySkater = (k) => {
     const stats = { ...CHARACTERS[k].base };
     for (const [s, v] of Object.entries(t.bonus || {})) stats[s] = Math.max(1, stats[s] + v);
-    if (isSigned(save, recruitKey(awayTeam, k))) return { def: CHARACTERS[k], who: 'sub_' + k, stats, name: t.subs[k], perks: [], sprite: `newcomer_${ROLE[k]}` };
-    return { def: CHARACTERS[k], stats, name: t.names[k], perks: [], sprite: t.art ? `${t.art}_${ROLE[k]}` : null };
+    if (isSigned(save, recruitKey(awayTeam, k))) return { def: slotDef(awayTeam, k), who: 'sub_' + k, stats, name: t.subs[k], perks: [], sprite: `newcomer_${ROLE[k]}` };
+    return { def: slotDef(awayTeam, k), stats, name: t.names[k], perks: [], sprite: t.art ? `${t.art}_${ROLE[k]}` : null };
   };
   const cfg = {
     teams: [
