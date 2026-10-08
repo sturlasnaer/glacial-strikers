@@ -273,6 +273,98 @@ export const SONGS = {
     order: ['intro', 'A', 'B', 'A'], loop: 1,
   },
 
+  // ---------------------------------------------------------------- Golden Hall (Rams): a stomping march
+  hall: {
+    name: 'Golden Hall', bpm: 136, key: 'Dm', gain: 1.3,
+    inst: { lead: 'brass', horn: 'lead50', comp: 'organ', bass: 'sbass', bells: 'bell' },
+    pan: { horn: 0.3, comp: -0.25 },
+    sections: {
+      intro: {
+        bars: 2, chords: 'Dm A',
+        lead: 'D4:3 A3 D4:2 E4:2 F4:4 A4:4 | A4:12 .:4',
+        bass: { oct: 2, pat: '1:16' },
+        drums: { T: 'x...x...x...x...', fill: { T: 'x...x...x.x.xxxx', s: '............xXXX' } },
+      },
+      A: {
+        bars: 8, chords: 'Dm Bb C Dm Dm Bb Gm A',
+        lead: `D5:3 A4 D5:2 E5:2 F5:4 A5:4 | Bb5:6 A5 G5 F5:4 D5:4 | C6:3 G5 C6:2 D6:2 E6:4 G6:4 | F6:3 E6 D6:4 A5:8 |
+               D5:3 A4 D5:2 E5:2 F5:4 D6:4 | D6:6 C6 Bb5 F5:4 Bb5:4 | G5:3 A5 Bb5:2 C6:2 D6:4 G6:4 | A6:4 E6:2 C#6:2 A5:4 .:4`,
+        bass: { oct: 2, pat: '1:4 1:4 5:2 1:2 8:4' },
+        comp: { pad: true, oct: 4, rhythm: '!x:2 .:2 x:2 .:2 x:4 .:4' },
+        drums: { k: 'x...x...x...x...', p: '....x.......x...', h: '..x...x...x...x.', start: { c: 'x', T: 'x' }, fill: { k: 'x...x...x...x...', s: '........x.x.xXXX', T: '....x...x.......' } },
+        hype: { horn: { follow: 'lead' }, drums: { o: '..x...x...x...x.', T: 'x.......x.......' } },
+      },
+      B: {
+        bars: 8, chords: 'Gm Dm Bb A Gm Dm Bb A',
+        lead: `G4:6 Bb4:2 D5:8 | F5:6 E5:2 D5:8 | Bb4:6 C5:2 D5:4 F5:4 | E5:12 C#5:2 E5:2 |
+               G5:6 A5:2 Bb5:4 D6:4 | A5:6 G5:2 F5:4 A5:4 | F5:4 Bb5:4 D6:4 F6:4 | E6:8 C#6:4 A5:4`,
+        horn: { oct: 4, pat: '1:2 5:2 8:2 5:2 1:2 5:2 8:2 5:2' },
+        bass: { oct: 2, pat: '1:6 1:2 5:4 8:4' },
+        comp: { pad: true, oct: 4 },
+        bells: { oct: 5, pat: '1:8 5:8' },
+        drums: { T: 'x.......x.......', s: '....x.......x...', h: 'x.x.x.x.x.x.x.x.', start: { c: 'x' }, fill: { T: 'x...x...x.x.x.x.', s: '........xxxxXXXX' } },
+        hype: { drums: { k: 'x.......x.......' } },
+      },
+      C: {
+        bars: 8, chords: 'Bb:32 C:32 Dm:32 A:32',
+        lead: `D6:12 C6 Bb5 A5 Bb5 | F6:8 D6:4 Bb5:4 | E6:12 D6 C6 B5 C6 | G6:8 E6:4 C6:4 |
+               F6:12 E6 D6 C6 D6 | A6:8 F6:4 D6:4 | E6:4 C#6:4 A5:4 C#6:4 | E6:8 .:8`,
+        bass: { oct: 2, pat: '1:4 1:4 5:4 8:4' },
+        comp: { pad: true, oct: 4, rhythm: '!x:2 .:2 x:2 .:2 x:4 .:4' },
+        bells: { oct: 5, pat: '1:4 3:4 5:4 8:4' },
+        drums: { k: 'x...x...x...x...', p: '....x.......x...', T: 'x.......x.......', start: { c: 'x' }, fill: { T: 'x.x.x.x.xxxxXXXX', c: '............x...' } },
+        hype: { horn: { follow: 'lead' }, drums: { o: '..x...x...x...x.' } },
+      },
+    },
+    order: ['intro', 'A', 'B', 'A', 'C'], loop: 1,
+  },
+
+  // ---------------------------------------------------------------- Dark Aerie (Ravens): gothic, with trap hats
+  aerie: {
+    name: 'Dark Aerie', bpm: 126, key: 'Em harmonic', gain: 1.45,
+    inst: { lead: 'lead12', arp: 'arp', organ: 'organ', bass: 'pbass', bells: 'celesta', choir: 'strings' },
+    pan: { arp: 0.35, organ: -0.3 },
+    sections: {
+      intro: {
+        bars: 2, chords: 'Em B7',
+        arp: { oct: 4, pat: '1 5 8 5 3 5 8 5 1 5 8 5 3 5 8 5' },
+        drums: { l: 'x..x............', fill: { l: 'x..x....x..x....', x: '............xxxx' } },
+      },
+      A: {
+        bars: 8, chords: 'Em C Am B7 Em C Am B7',
+        lead: `E5:3 B4 E5:2 F#5:2 G5:4 B5:4 | C6:6 B5 A5 G5:4 E5:4 | A5:3 E5 A5:2 B5:2 C6:4 E6:4 | D#6:3 C6 B5:4 F#5:4 .:4 |
+               E5:3 B4 E5:2 F#5:2 G5:4 E6:4 | E6:6 D6 C6 G5:4 C6:4 | A5:4 C6:4 E6:4 A6:4 | B6:6 A6 F#6 D#6:4 B5:4`,
+        arp: { oct: 4, pat: '1 5 8 5 3 5 8 5 1 5 8 5 3 5 8 5' },
+        bass: { oct: 2, pat: '1:3 1:3 1:2 1:3 5:3 8:2' },
+        organ: { pad: true, oct: 4, rhythm: 'x:2 .:6 x:2 .:6' },
+        drums: { k: 'x......x..x.....', s: '....x.......x...', h: 'x.xxx.x.x.xxx.x.', start: { c: 'x' }, fill: { k: 'x......x........', s: '....x...x.x.xXXX', h: 'x.x.x.x.xxxxxxxx' } },
+        hype: { harm: { follow: 'lead' }, drums: { o: '..x...x...x...x.' } },
+      },
+      B: {
+        bars: 8, chords: 'Am Em C B Am Em F B7',
+        lead: `A5:8 C6:4 E6:4 | B5:8 G5:4 E5:4 | C6:8 E6:4 G6:4 | F#6:12 D#6:2 B5:2 |
+               A5:6 B5:2 C6:4 E6:4 | G6:6 F#6:2 E6:4 B5:4 | F6:6 E6:2 C6:4 A5:4 | D#6:8 B5:4 A5:4`,
+        choir: { pad: true, oct: 4 },
+        arp: { oct: 5, pat: '1 3 5 8 5 3 1 3 5 8 5 3 1 3 5 3' },
+        bass: { oct: 2, pat: '1:8 5:8' },
+        bells: { oct: 5, pat: '8:4 5:4 3:4 5:4' },
+        drums: { k: 'x.........x.....', s: '........x.......', h: 'x.x.x.x.x.x.x.x.', start: { c: 'x' }, fill: { k: 'x.........x.....', s: '........x.x.xXXX', l: 'x...x...x...x...' } },
+        hype: { harm: { follow: 'lead' }, drums: { o: '..x...x...x...x.' } },
+      },
+      C: {
+        bars: 8, chords: 'C:32 Am:32 F:32 B7:32',
+        lead: `G5:4 E5:4 G5:4 C6:4 | E6:8 .:8 | A5:4 C6:4 E6:4 A6:4 | G6:8 .:8 |
+               F6:4 C6:4 A5:4 F5:4 | A5:8 .:8 | F#5:4 A5:4 B5:4 D#6:4 | F#6:12 .:4`,
+        arp: { oct: 4, pat: '1 5 8 5 3 5 8 5 1 5 8 5 3 5 8 5' },
+        organ: { pad: true, oct: 4 },
+        bass: { oct: 2, pat: '1:2 1:2 8:2 1:2 5:2 1:2 8:2 5:2' },
+        drums: { k: 'x.......x.......', x: '....x.......x...', z: 'x.x.x.x.x.x.x.x.', l: 'x..x............', start: { c: 'x' }, fill: { l: 'x..x..x.x.x.x.x.', s: '............xXXX' } },
+        hype: { harm: { follow: 'lead' }, drums: { s: '....x.......x...' } },
+      },
+    },
+    order: ['intro', 'A', 'B', 'A', 'C'], loop: 1,
+  },
+
   // ---------------------------------------------------------------- Cup Final
   final: {
     name: 'The Cup Final', bpm: 150, key: 'D', gain: 1.2,
@@ -527,4 +619,4 @@ export const JINGLES = {
 };
 
 // Which track plays where.
-export const ARENA_MUSIC = { home: 'frostline', ember_dome: 'ember', aurora_palace: 'aurora', pine_pond: 'pine' };
+export const ARENA_MUSIC = { home: 'frostline', ember_dome: 'ember', aurora_palace: 'aurora', pine_pond: 'pine', golden_hall: 'hall', dark_aerie: 'aerie' };
