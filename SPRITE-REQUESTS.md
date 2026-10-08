@@ -8,11 +8,12 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 **Next batches:**
 1. **AD**: Draft Day: a draft-hall painting, prospect cards, the rookies pulling on our jersey, and a few icons.
-2. **AI**: Fáfnir and Fenrir, twin legends who turn up in recruiting now and then: a look check first (portraits and one standing frame each), then their full pose sets.
-3. **AE**: the Friends Weekly Cup (a small cup, a podium, rosettes) and icons for the new career stats page.
-4. **AF**: the last 22 achievements that still borrow other icons.
-5. **AG**: a linesman who drops the puck at faceoffs and makes the calls.
-6. **AH**: a second rookie class, three more newcomers, so drafts don't repeat faces.
+2. **AI**: Fáfnir and Fenrir, twin legends with a real dragon's head and a real wolf's head, who turn up in recruiting now and then.
+3. **AJ**: a body-and-face pilot: one skater body drawn without a head, and four heads that fit it, so new players can be made from parts.
+4. **AE**: the Friends Weekly Cup (a small cup, a podium, rosettes) and icons for the new career stats page.
+5. **AF**: the last 22 achievements that still borrow other icons.
+6. **AG**: a linesman who drops the puck at faceoffs and makes the calls.
+7. **AH**: a second rookie class, three more newcomers, so drafts don't repeat faces.
 
 ## Format notes
 
@@ -80,14 +81,42 @@ At the end of each season, after Awards Night, the league holds a draft. Three p
 
 Two hidden legends who now and then turn up in Scouting as free agents, rare and very good. They're twins, and when they dress together they get a twin synergy of their own. They're special, so they deserve the best art in the game.
 
-- **Fáfnir**, a defender: very fast, with a cannon of a shot, and **a dragon's face**: a chibi dragon head (short snout, small curled horns, a frill at the jaw, scales), emerald green with a gold belly and gold eyes, horns poking out past the helmet. A long tail, tucked low so it doesn't read as a stick.
-- **Fenrir**, a winger and sniper: very fast and technical, with **a wolf's face**: a chibi wolf head (pointed ears through the helmet, a long muzzle, a ruff of fur at the collar), storm grey and silver with ice-blue eyes. A bushy tail.
+Both have **real animal heads**, not masks or helmet paint: think of them like the Snow Fox, but hockey players.
+
+- **Fáfnir**, a defender: very fast, with a cannon of a shot, and **a dragon's head**: a chibi dragon head (short snout, small curled horns, a frill at the jaw, scales), emerald green with a gold belly and gold eyes, horns poking out past the helmet. A long tail, tucked low so it doesn't read as a stick.
+- **Fenrir**, a winger and sniper: very fast and technical, with **a wolf's head**: a chibi wolf head (pointed ears through the helmet, a long muzzle, a ruff of fur at the collar), storm grey and silver with ice-blue eyes. A bushy tail.
 - They're twins: the same build and height (a little taller than our captains), a matching gold twin-star patch on the shoulder of both jerseys (no lettering), mirrored poses where it suits.
 - Jerseys in **coral and violet** like every rival, so the game recolours them into our kit when signed. Keep coral and violet off the scales, fur and eyes.
 
-**Part 1 first, so the look can be approved:** both portraits with the five expressions (neutral, determined, grin, shocked, defeated) and one standing frame each (`south` idle), plus a 1536×864 **reveal painting** of the twins back to back on the ice for the moment they turn up in Scouting. About 13 images. Please stop there and send it.
+**Part 1 first, so the look can be checked early:** both portraits with the five expressions (neutral, determined, grin, shocked, defeated) and one standing frame each (`south` idle), plus a 1536×864 **reveal painting** of the twins back to back on the ice for the moment they turn up in Scouting. About 13 images. Send part 1 as soon as it's ready, then carry on with part 2.
 
-**Part 2, once the look is approved:** each twin with exactly the Batch AA pose list (the v2 skating set, the Batch A diagonals and hit reactions, the Batch C side strides, glides and stops, a signature celebration and gear masks like Batch M), a cut-in banner each like the rivals' `banners`, **a joint celebration** (the two of them leaping into a chest bump, 4 frames, drawn as one pair), and a combo icon `icons/combo_twins` (a dragon's head and a wolf's head facing each other in a ring, reward-icon size). Sheet names `fafnir_*` and `fenrir_*`.
+**Part 2:** each twin with exactly the Batch AA pose list (the v2 skating set, the Batch A diagonals and hit reactions, the Batch C side strides, glides and stops, a signature celebration and gear masks like Batch M), a cut-in banner each like the rivals' `banners`, **a joint celebration** (the two of them leaping into a chest bump, 4 frames, drawn as one pair), and a combo icon `icons/combo_twins` (a dragon's head and a wolf's head facing each other in a ring, reward-icon size). Sheet names `fafnir_*` and `fenrir_*`.
+
+## Batch AJ: a body-and-face pilot
+
+Every player today is a full hand-drawn set, about 80 frames per skater plus portraits, so a new face costs a whole batch. We want to build players from parts instead: **bodies** drawn once without a head, and **heads** that sit on any body, with skin and hair recoloured by the game. Then a new player is a new head (about 15 frames), and a handful of heads and colours gives hundreds of different rookies, free agents and, later, whole teams. Our cast, the rival captains and the twins stay hand-drawn; this is for everyone else.
+
+This batch is a pilot to prove the pipeline: **one body and four heads.** If it works, the next batches add three more builds (small and quick, tall and lanky, big and stocky) and more heads.
+
+**The body** (`body_std`): the standard build, the size of the Batch AA newcomers, in **coral and violet** like every rival (the game recolours it per team), drawn **from the neck down, with no head and no helmet**.
+- The full Batch AA pose list: the v2 skating set (`idle`, `skate_a`, `skate_b`, `pass`, `shot_windup`, `shot_release`, `check`, `celebrate`) in all eight directions, the hit reactions, the side strides, glides and stops, and a celebration, on the same baseline and scale.
+- For every frame, a **head anchor** in the add-on atlas: the neck point (`x`, `y` in frame pixels, where the bottom-centre of the head goes), the head `view` to use (`s`, `se`, `e`, `ne` or `n`; the game mirrors them for the west-facing directions), a `rot` in degrees for leans and hits, and `state` (`normal`, or `effort` for wind-ups, shots, checks and hits).
+- Where an arm or the stick passes **in front of the head** (stick raised in a celebration, some checks), a separate `_front` overlay frame with just those pixels, drawn after the head.
+- Gear masks for the stick and skates, like Batch M.
+
+**The heads** (`head_<name>`): each one a **helmeted head**, navy helmet (the same on every head) with the face and whatever hair shows below it, in 5 views (`s`, `se`, `e`, `ne`, `n`) × 2 states (`normal`, `effort`): 10 frames, sized to sit on the body's neck point. Please make four:
+1. `head_c`: the Batch AA newcomer centre's face, redrawn as a head, so we can compare the composite against the hand-drawn newcomer.
+2. `head_freckles`: a freckled kid with a gap-toothed grin.
+3. `head_braids`: long braids out the back of the helmet.
+4. `head_beard`: an older free agent with a short beard and a scar on the chin.
+
+Draw every head with **mid-tone skin and mid-brown hair**, and for each head frame a **mask** frame (`_mask`) in pure colours: red where the skin is, green where the hair (and beard) is, nothing elsewhere. The game recolours skin and hair through the masks, keeping your shading, so one head can be any skin tone and hair colour. Keep coral and violet off skin, hair and the helmet.
+
+**Portraits, the same way:** one portrait body (`portrait_std`: shoulders and jersey, coral and violet, no head) and, for each head, a portrait face in the five dialogue expressions (`neutral`, `determined`, `grin`, `shocked`, `defeated`) with its `_mask`, plus a neck anchor for the portrait body. 1 + 4 × 5 faces, with masks.
+
+In the add-on atlas please add a `modular` section: the body's frames by direction and pose (like `skaters`), each with its anchor, the heads by name, view and state, and the portrait pieces.
+
+Roughly: the body set (about 80 frames plus overlays and gear masks), 40 head frames and 40 masks, and 21 portrait pieces and 20 masks.
 
 ## Batch AE: Friends Weekly Cup and career stats icons
 
@@ -154,4 +183,4 @@ With Draft Day every season, the three Batch AA newcomers will start repeating. 
 
 Each needs **exactly the Batch AA list**: the v2 skating set, the Batch A diagonals and hit reactions, the Batch C side strides, glides and stops, the Batch D celebration, a portrait with the five dialogue expressions (neutral, determined, grin, shocked, defeated), gear masks for the stick and skates like Batch M, and the Batch AD jersey moment. Name the sheets `newcomer2_c_*`, `newcomer2_w_*` and `newcomer2_d_*`.
 
-This is the biggest batch, so it can come last.
+This is the biggest batch, so it can come last. **If the AJ pilot works out, skip this one:** more heads and bodies will do the job better.
