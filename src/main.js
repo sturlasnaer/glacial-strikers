@@ -27,13 +27,14 @@ import { standings } from './league.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan, recordClassic, recordAllStar } from './league.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, useNewArt } from './data.js';
-import { rollLegend, legendState, STAY } from './legends.js';
+import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt } from './data.js';
+import { rollLegend, legendState, STAY, joinLegend } from './legends.js';
 import { useModular } from './modular.js';
+import { Quality } from './quality.js';
 import { offerDraft } from './draft.js';
 import { recordCareer } from './career.js';
 import {
-  loadSave, newSave, writeSave, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards,
+  loadSave, newSave, writeSave, setSaveOff, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards,
   lineupIds, homeKitGroups, allStarVote, allStarConfig,
 } from './progress.js';
 import { t, setLang, getLang, defaultLang } from './i18n.js';
@@ -69,7 +70,10 @@ class App {
       await Assets.load((f) => { bar.style.width = Math.round(f * 100) + '%'; });
       setTimeout(() => Assets.prefetch(), 1200);
       // the legends wear their own art once it's in (?legends=1 previews them before it is)
-      for (const L of Object.values(LEGENDS)) if (Assets.atlas.skaters && Assets.atlas.skaters[L.art]) LEGEND_ART.add(L.art);
+      for (const L of Object.values(LEGENDS)) {
+        if (Assets.atlas.skaters && Assets.atlas.skaters[L.art]) LEGEND_ART.add(L.art);
+        if (Assets.atlas.portraits && Assets.atlas.portraits[L.art]) LEGEND_FACES.add(L.art);
+      }
       useNewArt((id) => !!Assets.atlas.frames[id]);
       useModular(Assets.atlas); // players from parts, once that art is in
       this.legendsPreview = new URLSearchParams(location.search).has('legends');
@@ -84,6 +88,7 @@ class App {
       ]);
     }
     this.save = loadSave() || newSave();
+    if (new URLSearchParams(location.search).has('twins')) this.twinsTest();
     setLang(defaultLang(this.save.settings.lang)); this.save.settings.lang = getLang();
     document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
     document.querySelectorAll('[data-i18n-aria]').forEach((el) => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
@@ -94,7 +99,9 @@ class App {
     if (kit.length) await Promise.race([Assets.ensureKit(kit), new Promise((r) => setTimeout(r, 2500))]);
     this.ach = new AchievementTracker(this.save, (a) => this.toastAchievement(a));
     this.renderer = new Renderer(this.canvas);
+    this.quality = new Quality();
     this.fx = new FX();
+    this.applyQuality(); // where this device settled last time
     this.input = new Input();
     this.touch = new TouchControls(document.getElementById('touch'), this.input);
     this.ui = new UI(this);
@@ -221,18 +228,19 @@ class App {
     }
   }
 
-  // Slow device? If matches run under ~45 fps for two seconds, render at a lower
-  // resolution (2x, 1.75x, 1.5x, 1.25x). It only steps down, for the rest of the session.
+  // Slow device? quality.js steps the detail down (resolution, then effects, crowd and snow)
+  // while matches run under ~45 fps, and back up when there's headroom.
   watchFrameRate(dt) {
-    if (this.scene !== 'match' || document.hidden || !(dt > 0) || dt > 0.25) { this.slowT = 0; return; }
-    this.fpsAvg = this.fpsAvg ? this.fpsAvg * 0.95 + dt * 0.05 : dt;
-    this.slowT = this.fpsAvg > 1 / 45 ? (this.slowT || 0) + dt : 0;
-    const r = this.renderer;
-    const cur = r.maxDpr || 2;
-    if (this.slowT > 2 && cur > 1.25 && (window.devicePixelRatio || 1) > 1.25) {
-      r.maxDpr = cur - 0.25; r.resize(); r.clearCaches?.();
-      this.slowT = 0; this.fpsAvg = 1 / 60;
-    }
+    if (this.scene !== 'match' || document.hidden) return;
+    if (this.quality.update(dt, performance.now() / 1000)) this.applyQuality();
+  }
+
+  applyQuality() {
+    const q = this.quality.step, r = this.renderer;
+    if ((r.maxDpr || 2) !== q.dpr) { r.maxDpr = q.dpr; r.resize(); r.clearCaches?.(); }
+    this.fx.qualityMul = q.fx;
+    r.crowdShare = q.crowd;
+    r.snowShare = q.snow;
   }
 
   // A controller press counts as the first touch: wake the audio (Chrome may still want a click).
@@ -1013,6 +1021,21 @@ class App {
     s.buffs = [];
     writeSave(s);
     this.goHub('tournament');
+  }
+
+  // ?twins=1: a test run with Fáfnir and Fenrir dressed (Fenrir on the wing, Fáfnir on
+  // defence). It plays on a copy of the save: nothing is written and nothing goes online.
+  twinsTest() {
+    setSaveOff(true);
+    const s = this.save;
+    s.settings.online = false;
+    for (const k of ['fafnir', 'fenrir']) if (!s.roster[k]) joinLegend(s, k);
+    s.lineup.W = 'fenrir'; s.lineup.D = 'fafnir';
+    s.seenIntro = true;
+    const badge = document.createElement('div');
+    badge.className = 'test-badge';
+    badge.textContent = t('Test run: Fáfnir and Fenrir. Nothing is saved.');
+    document.getElementById('app').appendChild(badge);
   }
 
   resetSave() {

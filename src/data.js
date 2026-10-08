@@ -333,7 +333,18 @@ export const LEGENDS = {
 // The legends' own art once it's in the atlas (main.js sets it); until then they wear the
 // newcomer art.
 export const LEGEND_ART = new Set();
+// Their portraits come first (Batch AI part 1): faces wherever portraits show.
+export const LEGEND_FACES = new Set();
 export const areTwins = (a, b) => !!(LEGENDS[a] && LEGENDS[a].twin === b);
+
+// Players whose super or style was changed at the training camp, by roster id:
+// { elem?, arch? } over their own. Kept in the save (roster[id].elem / .arch) and registered
+// here at load and after a change, so member() knows them.
+export const STYLES = {};
+export function setStyles(roster = {}) {
+  for (const k of Object.keys(STYLES)) delete STYLES[k];
+  for (const [id, r] of Object.entries(roster)) if (r && (r.elem || r.arch)) STYLES[id] = { elem: r.elem, arch: r.arch };
+}
 
 // Drafted rookies (Draft Day), by roster id. They live in the save; loadSave and draftPick
 // register them here so member() knows them.
@@ -346,7 +357,7 @@ export const ROOKIE_TITLE = { C: 'Rookie Centre', W: 'Rookie Winger', D: 'Rookie
 
 // Everything about a member of our roster ('frost', 'thunder', 'stone', a recruit key or a
 // rookie's id). Signings and rookies are drawn from rival or newcomer art in home colours.
-export function member(who) {
+function memberBase(who) {
   const k = ROOKIES[who];
   if (k) {
     const c = CHARACTERS[k.kit];
@@ -363,6 +374,13 @@ export function member(who) {
   if (!c) return null;
   if (!r) return { who, kit: who, def: c, name: c.name, title: c.title, base: c.base, role: c.role, blurb: c.blurb, recruit: null, hand: c.hand, sprite: null, look: null };
   return { who, kit: r.kit, def: makeDef(r.kit, r.arch, r.elem), name: r.name, title: r.title, base: r.base, role: c.role, blurb: r.blurb, recruit: r, hand: r.hand, sprite: r.sprite, look: 'homekit' };
+}
+
+// Everything about a member, with any change made at the training camp.
+export function member(who) {
+  const m = memberBase(who), o = STYLES[who];
+  if (!m || !o) return m;
+  return { ...m, def: makeDef(m.kit, o.arch || m.def.arch, o.elem || m.def.elem) };
 }
 
 // The combo two members fire comes from their kits; the bond itself is between them.

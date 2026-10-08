@@ -270,7 +270,10 @@ export class Renderer {
     const sprites = Assets.atlas.crowd;
     // in a rival's building most of the crowd wears their colours
     const swap = !!(this.arena && this.arena !== ARENAS.home);
+    const every = this.crowdShare < 1 ? Math.round(1 / this.crowdShare) : 1; // auto-quality: fewer fans
+    let n = 0;
     for (const f of fx.crowd) {
+      if (every > 1 && n++ % every) continue;
       const side = swap ? 1 - f.team : f.team; // (no copy per fan per frame: the garbage collector felt it)
       const chanting = ch && ch.team === side;
       const cheer = fx.cheerTeam === side || (chanting && (onClap || onWord));
@@ -1570,11 +1573,15 @@ export class Renderer {
   }
 
   drawSnow(ctx, fx) {
+    const share = this.snowShare ?? 1; // auto-quality
+    if (share <= 0) return;
+    const every = Math.round(1 / share);
     ctx.fillStyle = 'rgba(255,255,255,0.75)';
     const ox = (this.cam.x / BACKDROP.w) * 0.3, oy = (this.cam.y / BACKDROP.h) * 0.2;
     // the Winter Classic gets a second, nearer layer of big slow flakes
     for (const layer of fx.heavySnow ? [0, 1] : [0]) {
-      for (const f of fx.snow) {
+      for (let i = 0; i < fx.snow.length; i += every) {
+        const f = fx.snow[i];
         const fx0 = layer ? (f.x + 0.37) % 1 : f.x, fy0 = layer ? (f.y * 0.8 + fx.time * 0.012 * f.s) % 1 : f.y;
         const x = ((((fx0 - ox * f.s * (layer ? 1.6 : 1)) % 1) + 1) % 1) * this.w;
         const y = ((((fy0 - oy * f.s) % 1) + 1) % 1) * this.h;

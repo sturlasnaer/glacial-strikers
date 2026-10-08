@@ -252,7 +252,8 @@ export class FX {
   // ---------------------------------------------------------------- spawners
   part(x, y, z, vx, vy, vz, life, color, size, kind = 'dot', extra = null) {
     if (this.parts.length > 600) return;
-    if (this.particleMul < 1 && rnd() > this.particleMul) return;
+    const share = this.particleMul * (this.qualityMul ?? 1); // the effects setting, and auto-quality
+    if (share < 1 && rnd() > share) return;
     this.parts.push({ x, y, z, vx, vy, vz, life, t: 0, color, size, kind, rot: rnd.range(0, 6.28), ...extra });
   }
   burst(x, y, z, n, colors, speed, life) {

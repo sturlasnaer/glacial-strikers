@@ -175,5 +175,25 @@ check('perks map across kits', perkSlot('Static: dash cooldown 2s shorter').tier
   check('Ragnarök', combo && combo.key === 'ragnarok' && m.puck.shot.special.firestorm && m.puck.shot.special.hidden, combo);
 }
 
+// the training camp: a new super or style once a season each, perks carried over
+{
+  const { newSave, campChange, campOpen, campChoices, CAMP } = await import('../src/progress.js');
+  const { setStyles } = await import('../src/data.js');
+  const s = newSave(); setStyles({});
+  s.coins = CAMP.elem.price + CAMP.arch.price;
+  s.roster.thunder.perks = ['Static: dash cooldown 2s shorter', 'Sniper: shots 15% more accurate'];
+  check('a winger can\'t be a blueliner', !campChoices('thunder', 'arch').includes('blueliner') && campChoices('stone', 'arch').includes('blueliner'));
+  check('no change to what they have', !campChange(s, 'thunder', 'elem', 'thunder'));
+  check('a new super', campChange(s, 'thunder', 'elem', 'shadow') && member('thunder').def.ult.id === 'eclipse' && s.coins === CAMP.arch.price);
+  check('perks follow it', s.roster.thunder.perks[0] === 'Ambush: your first check out of Fade always strips the puck', s.roster.thunder.perks);
+  check('once a season', !campOpen(s, 'thunder', 'elem') && !campChange(s, 'thunder', 'elem', 'gale') && campOpen(s, 'thunder', 'arch'));
+  check('a new style', campChange(s, 'thunder', 'arch', 'dangler') && member('thunder').def.arch === 'dangler' && s.coins === 0 && s.roster.thunder.perks[1] === 'Vision: passes travel 12% faster', s.roster.thunder.perks);
+  check('not without coins', (s.season = 2, !campChange(s, 'thunder', 'elem', 'gale')));
+  s.coins = 999;
+  check('next season it\'s open again', campChange(s, 'thunder', 'elem', 'gale') && member('thunder').def.elem === 'gale');
+  setStyles({});
+  check('styles belong to their save', member('thunder').def.elem === 'thunder');
+}
+
 console.log(`supers: ${ok} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

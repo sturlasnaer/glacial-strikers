@@ -35,12 +35,17 @@ export function signLegend(save, key) {
   const L = LEGENDS[key], st = legendState(save);
   if (!L || st.visiting !== key || save.roster[key] || save.coins < L.price) return null;
   save.coins -= L.price;
+  st.visiting = null;
+  return joinLegend(save, key);
+}
+
+// A legend joins the roster (signed, or for a test run).
+export function joinLegend(save, key) {
   const m = newMember();
   m.level = joinLevel(save) + 1; // (joinLevel is a level below the line-up)
   m.points = m.level - 1;
   const opts = member(key).def.perks;
   PERK_LEVELS.forEach((lv, i) => { if (m.level >= lv) m.perks.push(opts[i][0]); });
   save.roster[key] = m;
-  st.visiting = null;
   return m;
 }

@@ -144,6 +144,12 @@ src, yza_roots, yza_mappings = merge_yzaa(src, YZA)
 art_roots.update(yza_roots)
 for section, values in yza_mappings.items():
     art_mappings.setdefault(section, {}).update(values)
+TWINS = sys.argv[14] if len(sys.argv) > 14 else '../assets/Puckbound-Twins-AI-Part-1'
+from merge_twins import merge_twins
+src, twin_roots, twin_mappings = merge_twins(src, TWINS)
+art_roots.update(twin_roots)
+for section, values in twin_mappings.items():
+    art_mappings.setdefault(section, {}).update(values)
 frames = src['frames']
 info = src['sheets']
 os.makedirs(os.path.join(OUT, 'cutins'), exist_ok=True)
@@ -253,6 +259,8 @@ def group_of(fid):
         return 'icons_ac' if fid in art_mappings.get('icons_ac', {}).values() else 'icons_z'
     if fid.startswith('newcomer_'):
         return 'newcomers'
+    if fid.startswith('fafnir_') or fid.startswith('fenrir_'):
+        return 'legends'
     if fid.startswith('touch/'):
         return 'touch'
     if fid.startswith('badges/'):
@@ -371,6 +379,11 @@ for fid, f in frames.items():
             s = SKATER_S
             k = SKATER_S * meta['recommended_render_scale'] * v1_h[ROLE_V1[role]] / 152
             foot = True
+        elif meta['category'] == 'legend':  # the twins: a little taller than the cast (their art says by how much)
+            role = {'fafnir': 'd', 'fenrir': 'w'}[sh.split('_')[0]]
+            s = SKATER_S
+            k = SKATER_S * meta['recommended_render_scale'] * v1_h[ROLE_V1[role]] / 152
+            foot = True
         elif meta['category'] in ('stride', 'celebration'):
             role = fid.split('/')[2]
             calibration = meta.get('per_role_scale', {}).get(role, meta['recommended_render_scale'])
@@ -399,7 +412,7 @@ for fid, f in frames.items():
     r = f['frame']
     img = crop(fid)
     nw, nh = max(1, round(r['w'] * k)), max(1, round(r['h'] * k))
-    img = img.convert('RGBa').resize((nw, nh), Image.NEAREST if sh in vx_roots or sh in yza_roots else Image.LANCZOS).convert('RGBA')
+    img = img.convert('RGBa').resize((nw, nh), Image.NEAREST if sh in vx_roots or sh in yza_roots or sh in twin_roots else Image.LANCZOS).convert('RGBA')
     if cleanup:
         img = drop_fragments(img)
     if foot:
@@ -551,7 +564,7 @@ crowd = {team: {pose: [f'crowd_fans/{team}/{pose}/fan_{i}' for i in range(1, 9)]
 # ---------------------------------------------------------------- packing
 out_frames = {}
 pages = []
-groups = ['home', 'away'] + ['rival_' + t for t in RIVALS] + ['gearmask'] + sorted(set(SCENE_GROUPS.values())) + (['touch', 'badges'] if vx_roots else []) + (['hud','icons_z','newcomers','newcomer_gearmask','allstar','icons_ac'] if yza_roots else [])
+groups = ['home', 'away'] + ['rival_' + t for t in RIVALS] + ['gearmask'] + sorted(set(SCENE_GROUPS.values())) + (['touch', 'badges'] if vx_roots else []) + (['hud','icons_z','newcomers','newcomer_gearmask','allstar','icons_ac'] if yza_roots else []) + (['legends'] if twin_roots else [])
 for group in groups:
     group_items = sorted([i for i in items if i['group'] == group], key=lambda i: -i['img'].height)
     page_imgs = []
@@ -577,7 +590,7 @@ for group in groups:
         rows = np.nonzero(a.any(axis=1))[0]
         p = p.crop((0, 0, PAGE, int(rows.max()) + PAD + 1))
         name = f'{group}_{idx}.webp'
-        if group in ('gearmask', 'touch', 'badges', 'hud', 'icons_z', 'newcomers', 'newcomer_gearmask', 'allstar', 'icons_ac'):
+        if group in ('gearmask', 'touch', 'badges', 'hud', 'icons_z', 'newcomers', 'newcomer_gearmask', 'allstar', 'icons_ac', 'legends'):
             p.save(os.path.join(OUT, name), 'WEBP', lossless=True, method=6)  # exact channels
         else:
             p.save(os.path.join(OUT, name), 'WEBP', quality=90, method=6, alpha_quality=100)
@@ -645,12 +658,17 @@ if os.path.exists(os.path.join(ac_root, 'loading')):
     shutil.copytree(os.path.join(ac_root, 'loading'), os.path.join(OUT, 'loading'), dirs_exist_ok=True)
 if os.path.exists(os.path.join(ac_root, 'images', 'champions.png')):
     Image.open(os.path.join(ac_root, 'images', 'champions.png')).convert('RGB').save(os.path.join(OUT, 'champions.webp'), 'WEBP', quality=94, method=6)
+legends = dict(art_mappings.get('legends', {}))
+if legends.get('reveal') and os.path.exists(os.path.join(TWINS, legends['reveal']['image'])):
+    Image.open(os.path.join(TWINS, legends['reveal']['image'])).convert('RGB').save(os.path.join(OUT, 'twins_reveal.webp'), 'WEBP', quality=94, method=6)
+    legends['reveal'] = {**legends['reveal'], 'image': 'gfx/twins_reveal.webp'}
 atlas = {
     'hud_kit': {**art_mappings.get('hud_kit', {}), 'manifest':'gfx/hud-kit/hud-kit.json','css':'gfx/hud-kit/puckbound-hud.css'},
     'icons_z': art_mappings.get('icons_z', {}),
     'icons_ac': art_mappings.get('icons_ac', {}),
     'loading_snowfox': {**art_mappings.get('loading_snowfox', {}), 'image':'gfx/loading/snow_fox_loading.png','css':'gfx/loading/snow-fox-loading.css'},
     'champions_painting': {**art_mappings.get('champions_painting', {}), 'image':'gfx/champions.webp'},
+    'legends': legends,
     'newcomer_portraits': art_mappings.get('newcomer_portraits', {}),
     'allstar': art_mappings.get('allstar', {}),
     'allstar_animations': {key: value for key, value in src.get('animations', {}).items() if key.startswith('allstar_')},

@@ -65,7 +65,7 @@ const inline = { 'gfx/atlas.json': atlas };
 const images = [
   ...atlas.pages.map((p) => p.file), 'gfx/rink_backdrop.webp', atlas.locker, atlas.arena && atlas.arena.glass && atlas.arena.glass.file,
   ...Object.values(atlas.arenas || {}), ...Object.values(atlas.banners || {}),
-  atlas.awards_stage && atlas.awards_stage.file, atlas.champions_painting && atlas.champions_painting.image, atlas.awards_stage && atlas.awards_stage.podium_foreground && atlas.awards_stage.podium_foreground.file,
+  atlas.awards_stage && atlas.awards_stage.file, atlas.champions_painting && atlas.champions_painting.image, atlas.legends && atlas.legends.reveal && atlas.legends.reveal.image, atlas.awards_stage && atlas.awards_stage.podium_foreground && atlas.awards_stage.podium_foreground.file,
 ].filter(Boolean);
 for (const f of images) inline[f] = `data:image/webp;base64,${b64('assets/' + f)}`;
 // the UI kit's button prompts and keycaps (the skin's own pieces are inlined in the stylesheet)

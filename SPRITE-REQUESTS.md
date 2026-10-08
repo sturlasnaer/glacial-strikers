@@ -162,7 +162,7 @@ Players can now change their super or their archetype once a season, for coins: 
 
 - **Element stones**, in the style and size of the reward icons (about 200 px source), sheet `icons_am.png`, frame names `icons/stone_<element>`: a cut gem on a little iron setting, glowing in its element's colour, with a hint of its effect inside: `stone_frost` (ice blue, a snowflake frozen inside), `stone_thunder` (yellow, a crackle of lightning), `stone_stone` (tan granite, a cracked rune), `stone_ember` (orange, a flame), `stone_gale` (mint, a swirl of wind) and `stone_shadow` (violet-black, a crescent). 6 frames.
 - **Style camp**, same sheet: `icons/style_camp` (a whistle on a lanyard over a clipboard with an X-and-O play) and `icons/respec` (a hockey stick with a circular arrow around it, for the "change" buttons). 2 frames.
-- **Two locker-room poses**, matching the Batch H standing art and its scale: `hub_fullbody/shopkeeper/offer` (Ottar holding up a glowing stone in one hand) and `hub_fullbody/coach/whistle` (Brekka blowing her whistle, clipboard under her arm). One frame each, same foot position as their idle frames. 2 frames.
+- **Two locker-room poses**, matching the Batch H standing art and its scale: `hub_fullbody/shopkeeper/offer` (Ottar holding up a glowing stone in one hand) and `hub_fullbody/coach/whistle` (Brekka blowing the whistle, clipboard under one arm). One frame each, same foot position as their idle frames. 2 frames.
 
 10 frames.
 

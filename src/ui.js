@@ -4,7 +4,7 @@ import { Assets } from './assets.js';
 import {
   CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
-  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
+  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
 import { standings, classicOpponent, CLASSIC_AFTER, ALLSTAR_AFTER } from './league.js';
 import { BUFF_TEXT } from './lockerroom.js';
@@ -14,6 +14,7 @@ import { dailyFor, dailyGoal, dayKey, currentStreak, doneToday, dailyReward, dai
 import {
   expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave,
   chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups, capBonus,
+  CAMP, campOpen, campChoices, campChange,
 } from './progress.js';
 import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave, resetsIn, groupsOf, createGroup, joinGroup, leaveGroup, inviteLink, MAX_GROUPS, fetchCup, fetchGhost, CHALLENGE_BOARDS, createChallenge, fetchChallenge, challengeLink } from './online.js';
 import { nextGuide, doneGuide, guideOff } from './guide.js';
@@ -60,7 +61,7 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
     return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT[r.kit]}`, size);
   }
   if (team === 0 && LEGENDS[id]) { // a legend: their own portrait once it's in, a newcomer's until then
-    const L = LEGENDS[id], p = P[LEGEND_ART.has(L.art) ? L.art : `newcomer_${ROLE[L.kit]}`], fid = p && ((expr && p[expr]) || p.neutral);
+    const L = LEGENDS[id], p = P[LEGEND_FACES.has(L.art) || LEGEND_ART.has(L.art) ? L.art : `newcomer_${ROLE[L.kit]}`], fid = p && ((expr && p[expr]) || p.neutral);
     return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT[L.kit]}`, size);
   }
   if (team === 0 && ROOKIES[id] && member(id).parts) { // a rookie from parts (Batch AJ)
@@ -410,6 +411,8 @@ export class UI {
       allstarNext: !!(this.app.fixture && this.app.fixture() && this.app.fixture().kind === 'allstar'),
       online: onlineOn(s) && configured(),
       draftOpen: draftOpen(s),
+      legendVisiting: !!(legendState(s).visiting && !s.roster[legendState(s).visiting]),
+      newCombo: lineupIds(s).some((a, i, l) => l.some((b, j) => j > i && !CAST_PAIRS.includes(pairKey(member(a).def.elem, member(b).def.elem)) && COMBOS[pairKey(member(a).def.elem, member(b).def.elem)])),
     });
     this.roomFit?.disconnect();
     if (room) {
@@ -450,7 +453,9 @@ export class UI {
       else {
         const m = member(id);
         const set = Assets.atlas.skaters[m.sprite || m.def.sprite];
-        src = set && Assets.icon(set.home.south.frames.idle, 160, m.look || CLUB_PAGES());
+        // a legend stands in their own art before their skating sets are in (Batch AI part 1)
+        const own = m.legend && Assets.atlas.legends && Assets.atlas.legends[m.legend.art] && Assets.atlas.legends[m.legend.art].idle;
+        src = own ? Assets.icon(own, 160, 'homekit') : set && Assets.icon(set.home.south.frames.idle, 160, m.look || CLUB_PAGES());
         if (!src) src = Assets.icon(Assets.atlas.skaters[m.def.sprite].home.south.frames.idle, 160, CLUB_PAGES());
       }
       const name = id === 'goalie' ? GOALIE.name : member(id).name;
@@ -481,11 +486,12 @@ export class UI {
     }
     for (const n of NPC_SPOTS) {
       const m = A.hub_fullbody[n.who];
-      const set = m && Assets.spriteSet([...m.idle, m.talking], 150);
+      // idle a, idle b and talking in one strip: one element steps through it, so the
+      // character never blinks out between frames (two toggled images could both be hidden)
+      const set = m && Assets.spriteStrip([...m.idle, m.talking], 150);
       if (!set) continue;
       const [x, y] = n.at;
-      html += `<div class="npc-body" data-for="${n.tab}" style="left:${x}%;top:${y}%;aspect-ratio:${set.w}/${set.h};transform:translate(-${set.fx * 100}%,-${set.fy * 100}%)">
-        <img class="a" src="${set.urls[0]}" alt=""><img class="b" src="${set.urls[1]}" alt=""><img class="tk" src="${set.urls[2]}" alt=""></div>`;
+      html += `<div class="npc-body" data-for="${n.tab}" style="left:${x}%;top:${y}%;aspect-ratio:${set.w}/${set.h};transform:translate(-${set.fx * 100}%,-${set.fy * 100}%);background-image:url(${set.url})"></div>`;
     }
     return html;
   }
@@ -1096,7 +1102,7 @@ export class UI {
           const g = GEAR_BY_ID[r.gear[slot]];
           return `<button class="slot" data-gear="${id}:${slot}"><img src="${ico(g.icon, 92)}" alt=""><span>${esc(t(g.name))}</span></button>`;
         }).join('')}</div>
-        <div class="style-row">${styleChips(c)}<span class="muted">${shoots(m.hand)} · ${esc(t(ARCHETYPES[c.arch].trait))}</span></div>
+        <div class="style-row">${styleChips(c)}<span class="muted">${shoots(m.hand)} · ${esc(t(ARCHETYPES[c.arch].trait))}</span><button class="btn small ghost camp-btn" data-camp="${id}">${smallIcon('icons/respec', 40, 'btn-ico')}${t('Change…')}</button></div>
         <div class="abil"><img src="${ico(c.skill.icon, 68)}" alt=""><div><b>${esc(t(c.skill.name))}</b>${esc(t(c.skill.text))} <span class="muted">(${c.skill.cd}s)</span></div></div>
         <div class="abil"><img src="${ico('hud_elements/misc/level_star', 68)}" alt=""><div><b>${esc(t(c.ult.name))}</b>${esc(t(c.ult.text))}</div></div>
         ${r.perks.length ? `<div class="perks">${r.perks.map((p) => `<span class="perk" title="${esc(t(p))}">${esc(t(p).split(':')[0])}</span>`).join('')}</div>` : ''}
@@ -1123,7 +1129,7 @@ export class UI {
       <div class="club-bar"><img src="${crest('home', 96)}" alt="" width="40" height="40"><div style="min-width:0"><b>${esc(CLUB.name)}</b><span class="muted">${esc(CLUB.short)} · ${t('the {club}', { club: esc(CLUB.nick) })}</span></div>
         <span class="club-sw" style="--a:${CLUB.trim};--b:${CLUB.jersey}"></span><button class="btn small ghost" id="club-edit">${t('Customise club')}</button></div>
       <div class="label" style="margin-bottom:4px">${t('Line-up')}</div>
-      <p class="muted" style="margin:0 0 10px;font-size:13px">${t('A centre, a winger and a defender dress for every match. Each position brings its kit: centres play Nix\'s frost kit, wingers Volta\'s thunder kit, defenders Bram\'s stone kit.')}</p>
+      <p class="muted" style="margin:0 0 10px;font-size:13px">${t('A centre, a winger and a defender dress for every match. Every player brings a style and a super of their own.')} <button class="link-btn" id="t-supers">${t('How supers work')}</button></p>
       <div class="roster">${line.map((id) => card(id, true)).join('')}${goalieCard}</div>
       ${bench.length ? `<div class="label" style="margin:16px 0 4px">${t('Bench')}</div>
       <p class="muted" style="margin:0 0 10px;font-size:13px">${t('Benched skaters don\'t earn match EXP, but you can bring them to training.')}</p>
@@ -1142,6 +1148,8 @@ export class UI {
       this.hub('team');
     }, body);
     this.click('[data-perk]', (el) => this.perkChoice(el.dataset.perk, () => this.hub('team')), body);
+    this.click('[data-camp]', (el) => this.campModal(el.dataset.camp), body);
+    this.click('#t-supers', () => this.supersHelp(), body);
     this.click('[data-gear]', (el) => { const [id, slot] = el.dataset.gear.split(':'); this.gearPicker(id, slot); }, body);
     this.click('[data-dress]', (el) => { setLineup(s, el.dataset.dress); writeSave(s); audio.sfx('confirm'); this.hub('team'); }, body);
     this.click('[data-sign]', (el) => this.signOffer(el.dataset.sign), body);
@@ -1269,7 +1277,9 @@ export class UI {
     if (!L || s.roster[key]) return '';
     const m = member(key), left = legendLeft(s);
     const twin = s.roster[L.twin] ? `<p class="gold-t" style="margin:0;font-size:12.5px">${t('{name} is already yours: the twins together get Ragnarök from day one.', { name: esc(LEGENDS[L.twin].name) })}</p>` : '';
+    const reveal = Assets.atlas.legends && Assets.atlas.legends.reveal;
     return `<div class="card legend">
+      ${reveal ? `<div class="legend-reveal" style="background-image:url(${Assets.url(reveal.image)})"></div>` : ''}
       <div class="card-head"><img src="${portrait(key, 0, null, 152)}" alt=""><div style="min-width:0">
         <div class="label" style="font-size:12px">${t('A legend is in town')}</div><h3>${esc(L.name)}</h3><div class="sub">${esc(t(L.title))} · ${shoots(m.hand)}</div>
         <div class="style-row">${styleChips(m.def)}</div></div></div>
@@ -1315,6 +1325,73 @@ export class UI {
       }, mm);
     });
   }
+
+  // The training camp for one player: a new super from Ottar's element stones, or a new style
+  // from Brekka's camp. Each once a season; the first tap on a choice arms it, the second buys.
+  campModal(id) {
+    const s = this.app.save, m = member(id);
+    const section = (kind) => {
+      const open = campOpen(s, id, kind), price = CAMP[kind].price, afford = s.coins >= price;
+      const items = campChoices(id, kind).map((v) => {
+        const cur = m.def[kind] === v;
+        const pic = kind === 'elem' ? (smallIcon('icons/stone_' + v, 80, 'camp-ico') || smallIcon(ELEMENTS[v].icon, 80, 'camp-ico')) : smallIcon('icons/arch_' + v, 80, 'camp-ico');
+        const line = kind === 'elem' ? `${esc(t(ELEMENTS[v].skill.name))} · ${esc(t(ELEMENTS[v].ult.name))}` : esc(t(ARCHETYPES[v].trait));
+        const name = kind === 'elem' ? t(ELEMENTS[v].name) : t(ARCHETYPES[v].name);
+        return `<button class="camp-choice${cur ? ' cur' : ''}" data-pick="${kind}:${v}" ${cur || !open || !afford ? 'disabled' : ''} ${kind === 'elem' ? `style="--el:${ELEMENTS[v].color}"` : ''}>
+          ${pic}<b>${esc(name)}${cur ? ` <small>${t('now')}</small>` : ''}</b><span>${line}</span></button>`;
+      }).join('');
+      const head = kind === 'elem' ? t('Super: an element stone from Ottar') : t('Style: a week of Brekka\'s camp');
+      const note = !open ? t('Already changed this season.') : !afford ? t('Not enough coins.') : '';
+      return `<div class="label" style="margin:10px 0 4px">${head} · <img src="${ico('equipment_items/reward/coins', 40)}" alt="" width="14" height="14"> ${price}${note ? ` <span class="muted" style="text-transform:none;letter-spacing:0">${note}</span>` : ''}</div>
+        <div class="camp-grid">${items}</div>`;
+    };
+    audio.sfx('click');
+    this.modal(`<h2>${t('{name}: training camp', { name: esc(m.name) })}</h2>
+      <p class="muted" style="margin:0;font-size:13px">${t('Each can change once a season. Perks carry over: the same choice on the new list.')}</p>
+      ${section('elem')}${section('arch')}
+      <p class="muted" id="camp-msg" style="min-height:1.2em;font-size:12.5px;margin:6px 0 0"></p>
+      <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>${t('Done')}</button></div>`, (mm, close) => {
+      let armed = null;
+      this.click('[data-pick]', (el) => {
+        const [kind, v] = el.dataset.pick.split(':');
+        if (armed !== el) {
+          mm.querySelectorAll('.camp-choice.armed').forEach((b) => b.classList.remove('armed'));
+          armed = el; el.classList.add('armed'); audio.sfx('click');
+          mm.querySelector('#camp-msg').textContent = t('Tap again to pay {n} coins.', { n: CAMP[kind].price });
+          return;
+        }
+        if (!campChange(s, id, kind, v)) return;
+        writeSave(s);
+        audio.jingle('sign');
+        close();
+        this.hub('team');
+        this.toastNote(t('{name} now plays {what}.', { name: m.name, what: kind === 'elem' ? t(ELEMENTS[v].name) : t(ARCHETYPES[v].name) }));
+      }, mm);
+    });
+  }
+
+  // How supers work: styles, the six elements' skills and ultimates, and which pairs make
+  // which combo. From the Team tab.
+  supersHelp() {
+    const els = Object.values(ELEMENTS), arch = Object.values(ARCHETYPES);
+    const pair = (a, b) => COMBOS[pairKey(a, b)];
+    audio.sfx('click');
+    this.modal(`<h2>${t('How supers work')}</h2>
+      <p style="margin:0;font-size:13.5px">${t('Every player has a position, a style and a super. The style is how they play: a trait that\'s always on, and their middle perk choice. The super comes from their element: a skill on U, an ultimate on I when the meter is full, and the first and last perk choices.')}</p>
+      <div class="label" style="margin:10px 0 4px">${t('Styles')}</div>
+      <div class="help-grid">${arch.map((a) => `<div>${smallIcon('icons/arch_' + a.id)}<b>${esc(t(a.name))}</b><span>${esc(t(a.trait))}</span></div>`).join('')}</div>
+      <div class="label" style="margin:10px 0 4px">${t('Supers')}</div>
+      <div class="help-grid supers">${els.map((e) => `<div style="--el:${e.color}"><b class="el">${smallIcon(e.icon)}${esc(t(e.name))}</b>
+        <span><b>${esc(t(e.skill.name))}</b> ${esc(t(e.skill.text))}</span><span><b>${esc(t(e.ult.name))}</b> ${esc(t(e.ult.text))}</span></div>`).join('')}</div>
+      <div class="label" style="margin:10px 0 4px">${t('Combos')}</div>
+      <p class="muted" style="margin:0 0 6px;font-size:12.5px">${t('Two players with chemistry fire a combo when one passes and the other shoots right away. Which combo depends on their two elements.')}</p>
+      <div class="car-wrap"><table class="car-table combo-table"><thead><tr><th></th>${els.map((e) => `<th style="color:${e.color}">${esc(t(e.name))}</th>`).join('')}</tr></thead>
+        <tbody>${els.map((a) => `<tr><td style="color:${a.color};text-align:left">${esc(t(a.name))}</td>${els.map((b) => `<td>${a === b ? '–' : esc(t(pair(a.id, b.id).name))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+      <p class="muted" style="font-size:12.5px;margin:8px 0 0">${t('Change a player\'s super or style once a season at the training camp: Change… on their Team card.')}</p>
+      <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>${t('Done')}</button></div>`);
+  }
+
+  toastNote(text) { this.app.toast(Assets.icon(Assets.atlas.npcs && Assets.atlas.npcs.coach, 72) || '', t('Training camp'), text, ''); }
 
   // Quick line-up change, one row per position.
   lineupPicker(done) {

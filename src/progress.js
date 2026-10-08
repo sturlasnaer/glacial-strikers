@@ -3,7 +3,7 @@
 import { GUIDE } from './guide.js';
 import {
   CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE, CAST_PAIRS, makeDef, perkSlot,
-  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, areTwins, setRookies, member, pairKey, recruitKey, slotDef,
+  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, areTwins, setRookies, setStyles, ELEMENTS, ARCHETYPES, member, pairKey, recruitKey, slotDef,
 } from './data.js';
 import { newLeague, migrateLeague } from './league.js';
 import { lookFor } from './modular.js';
@@ -66,17 +66,10 @@ export function loadSave() {
     // rookies drafted before the parts art was in get a face of their own once it is
     for (const [id, k] of Object.entries(s.rookies || {})) if (!k.parts) { const l = lookFor(id); if (l) k.parts = l; }
     setRookies(s.rookies); // drafted rookies, so member() knows them
+    setStyles(s.roster); // changes made at the training camp
     // perks are kept as text: a player whose super or archetype has changed since gets the
     // same choice from their new lists
-    for (const [id, r] of Object.entries(s.roster)) {
-      const m = member(id);
-      if (!m) continue;
-      r.perks = r.perks.map((p, i) => {
-        if (!m.def.perks[i] || m.def.perks[i].includes(p)) return p;
-        const slot = perkSlot(p);
-        return slot ? m.def.perks[i][slot.i] : p;
-      });
-    }
+    for (const [id, r] of Object.entries(s.roster)) { const m = member(id); if (m) remapPerks(r, m.def); }
     for (const id of Object.keys(CHARACTERS)) if (!s.roster[id]) s.roster[id] = base.roster[id];
     for (const [role, who] of Object.entries(s.lineup)) {
       const m = member(who);
@@ -88,11 +81,18 @@ export function loadSave() {
   } catch { return null; }
 }
 
+// A test run (?twins=1) plays on a copy: nothing is written.
+let saveOff = false;
+export const setSaveOff = (on) => { saveOff = on; };
+export const savesOff = () => saveOff;
+
 export function writeSave(s) {
+  if (saveOff) return;
   try { localStorage.setItem(KEY, JSON.stringify(s)); return true; } catch { return false; }
 }
 
 export function clearSave() {
+  if (saveOff) return; // (a test run never touches the real save)
   try { localStorage.removeItem(KEY); } catch { /* storage unavailable */ }
 }
 
@@ -146,6 +146,40 @@ export function joinLevel(save) {
   return Math.max(1, Math.min(MAX_LEVEL - 1, Math.round(avg) - 1));
 }
 
+// Perks are kept as text, by tier: after a change of super or style, each one becomes the same
+// choice (first or second) on the player's new lists.
+export function remapPerks(r, def) {
+  r.perks = r.perks.map((p, i) => {
+    if (!def.perks[i] || def.perks[i].includes(p)) return p;
+    const slot = perkSlot(p);
+    return slot ? def.perks[i][slot.i] : p;
+  });
+}
+
+// The training camp: once a season each, a player can take an element stone (a new super,
+// from Ottar) or a week of Brekka's style camp (a new archetype).
+export const CAMP = { elem: { price: 220 }, arch: { price: 180 } };
+export function campOpen(save, id, kind) {
+  const r = save.roster[id];
+  return !!r && !(r.camp && r.camp[kind] === save.season);
+}
+export function campChoices(id, kind) {
+  const m = member(id);
+  if (!m) return [];
+  return kind === 'elem' ? Object.keys(ELEMENTS) : Object.values(ARCHETYPES).filter((a) => a.roles.includes(m.role)).map((a) => a.id);
+}
+export function campChange(save, id, kind, value) {
+  const r = save.roster[id], m = member(id);
+  if (!r || !m || !campOpen(save, id, kind) || save.coins < CAMP[kind].price) return false;
+  if (!campChoices(id, kind).includes(value) || m.def[kind] === value) return false;
+  save.coins -= CAMP[kind].price;
+  r[kind] = value;
+  r.camp = { ...(r.camp || {}), [kind]: save.season };
+  setStyles(save.roster);
+  remapPerks(r, member(id).def);
+  return true;
+}
+
 export function signRecruit(save, key) {
   const r = RECRUITS[key];
   if (!r || recruitStatus(save, key) !== 'open' || save.coins < r.price) return null;
@@ -175,7 +209,7 @@ export const homeKitGroups = (save) => {
     ...ids.filter((id) => RECRUITS[id]).map((id) => 'rival_' + TEAMS[RECRUITS[id].team].art),
     ...(ids.some((id) => ROOKIES[id] && !member(id).parts) || legends.some((id) => !LEGEND_ART.has(LEGENDS[id].art)) ? ['newcomers'] : []),
     ...(ids.some((id) => member(id).parts) ? ['parts'] : []), // players from parts (Batch AJ: the 'parts' page group)
-    ...(legends.some((id) => LEGEND_ART.has(LEGENDS[id].art)) ? ['legends'] : []),
+    ...(legends.some((id) => LEGEND_ART.has(LEGENDS[id].art) || LEGEND_FACES.has(LEGENDS[id].art)) ? ['legends'] : []),
   ])];
 };
 

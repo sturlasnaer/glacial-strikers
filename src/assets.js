@@ -29,7 +29,7 @@ export const Assets = {
     this.atlas = atlas;
     this.pages = new Array(atlas.pages.length);
     // (the icon pages are small and the menus use them everywhere: award, plan, challenge and online icons, the All-Star crest)
-    const core = atlas.pages.map((p, i) => i).filter((i) => ['home', 'away', 'title', 'icons_z', 'allstar', 'icons_ac'].includes(atlas.pages[i].group));
+    const core = atlas.pages.map((p, i) => i).filter((i) => ['home', 'away', 'title', 'icons_z', 'allstar', 'icons_ac', 'legends'].includes(atlas.pages[i].group));
     const glass = atlas.arena && atlas.arena.glass && atlas.arena.glass.file;
     const files = [...core.map((i) => atlas.pages[i].file), ...(glass ? [glass] : []), 'gfx/rink_backdrop.webp'];
     let done = 0;
@@ -112,7 +112,7 @@ export const Assets = {
   // club colours stay.
   trim(keep = {}) {
     const a = this.atlas;
-    const groups = new Set(['home', 'away', 'icons_z', 'allstar', 'icons_ac', ...(PALETTES.homekit.groups || []), ...(keep.groups || [])]);
+    const groups = new Set(['home', 'away', 'icons_z', 'allstar', 'icons_ac', 'legends', ...(PALETTES.homekit.groups || []), ...(keep.groups || [])]);
     for (const id of keep.teams || []) { const t = TEAMS[id]; if (t && t.art) groups.add('rival_' + t.art); }
     if (this.needNewcomers && (keep.teams || []).length) groups.add('newcomers');
     if (keep.gear) { groups.add('gearmask'); if (this.needNewcomers) groups.add('newcomer_gearmask'); }
@@ -298,6 +298,27 @@ export const Assets = {
   // Animation frames for <img> tags: each drawn at the same scale with its pivot at the same
   // spot, so swapping images doesn't jump. Returns { urls, w, h, fx, fy } (fx, fy: where the
   // pivot sits, as fractions of the image), or null until the pages are loaded.
+  // The same frames side by side in one image, for CSS animations that step through it
+  // (one element, so there's never a moment with no frame showing). { url, n, w, h, fx, fy }
+  spriteStrip(ids, height, teamId = null) {
+    const key = `strip|${ids.join(',')}|${height}|${teamId}`;
+    if (this.iconCache.has(key)) return this.iconCache.get(key);
+    const pages = this.pagesFor(teamId);
+    const fr = ids.map((id) => this.atlas.frames[id]);
+    if (!fr.length || fr.some((f) => !f || !pages[f[0]])) return null;
+    let l = 0, r = 0, t = 0, b = 0;
+    for (const [, , , fw, fh, px, py, s] of fr) { l = Math.max(l, px / s); r = Math.max(r, (fw - px) / s); t = Math.max(t, py / s); b = Math.max(b, (fh - py) / s); }
+    const k = height / (t + b), w = Math.ceil((l + r) * k);
+    const c = document.createElement('canvas');
+    c.width = w * fr.length; c.height = height;
+    const ctx = c.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    fr.forEach(([pi, fx, fy, fw, fh, px, py, s], i) => ctx.drawImage(pages[pi], fx, fy, fw, fh, i * w + (l - px / s) * k, (t - py / s) * k, (fw / s) * k, (fh / s) * k));
+    const strip = { url: c.toDataURL('image/png'), n: fr.length, w, h: height, fx: l / (l + r), fy: t / (t + b) };
+    this.iconCache.set(key, strip);
+    return strip;
+  },
+
   spriteSet(ids, height, teamId = null) {
     const key = `set|${ids.join(',')}|${height}|${teamId}`;
     if (this.iconCache.has(key)) return this.iconCache.get(key);
