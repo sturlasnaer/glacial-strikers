@@ -35,7 +35,7 @@ export class Renderer {
 
   resize() {
     const r = this.c.getBoundingClientRect();
-    this.dpr = Math.min(2, window.devicePixelRatio || 1);
+    this.dpr = Math.min(this.maxDpr || 2, window.devicePixelRatio || 1);
     this.w = Math.max(1, r.width); this.h = Math.max(1, r.height);
     this.c.width = Math.round(this.w * this.dpr);
     this.c.height = Math.round(this.h * this.dpr);
@@ -236,42 +236,61 @@ export class Renderer {
         Assets.draw(ctx, list[f.fan], x, y - 4 * s, 0.18 * s, { pages: f.team ? this.awayPages : Assets.clubPages(), flip: f.phase > 3.14 });
         continue;
       }
-      // near benches: fans seen from behind, watching the ice (drawn until there are sprites)
+      // near benches: fans seen from behind (drawn until there are sprites), cached per pose
       const home = f.team === 0;
       const jersey = home ? (f.phase > 3 ? TEAMS.home.color : '#fff2cb') : (f.phase > 3 ? awayColor : awayColor2);
       const trim = home ? (f.phase > 3 ? '#fff2cb' : TEAMS.home.color) : (f.phase > 3 ? awayColor2 : awayColor);
-      const NAVY = '#14233b';
-      ctx.lineWidth = 1.6; ctx.strokeStyle = NAVY; ctx.lineJoin = 'round';
-      const oval = (cx, cy, rx, ry, fill, from = 0, to = Math.PI * 2) => {
-        ctx.beginPath(); ctx.ellipse(x + cx * s, y + cy * s, rx * s, ry * s, 0, from, to); ctx.closePath();
-        ctx.fillStyle = fill; ctx.fill(); ctx.stroke();
-      };
       const up = cheer || (ex > 0.6 && Math.sin(t * 5 + f.phase) > 0.3);
-      if (f.sign && ex > 0.35) { // the back of a cardboard sign on a stick
-        ctx.fillStyle = '#7a5a3a'; ctx.fillRect(x - 0.6 * s, y - 16 * s, 1.2 * s, 8 * s);
-        ctx.fillStyle = '#c9a878'; ctx.fillRect(x - 9 * s, y - 25 * s, 18 * s, 10 * s); ctx.strokeRect(x - 9 * s, y - 25 * s, 18 * s, 10 * s);
+      const sign = !!(f.sign && ex > 0.35);
+      const K = Math.max(1, Math.min(4, Math.round(this.cam.zoom * this.dpr * 2) / 2)); // pixels per world unit
+      const key = `${f.x}|${up}|${sign}|${jersey}|${trim}|${K}`;
+      this.fanCache ||= new Map();
+      let spr = this.fanCache.get(key);
+      if (!spr) {
+        spr = document.createElement('canvas');
+        spr.width = Math.ceil(26 * s * K); spr.height = Math.ceil(42 * s * K);
+        const c2 = spr.getContext('2d');
+        c2.scale(K, K);
+        this.drawNearFan(c2, f, 13 * s, 30 * s, s, jersey, trim, up, sign);
+        if (this.fanCache.size > 300) this.fanCache.delete(this.fanCache.keys().next().value);
+        this.fanCache.set(key, spr);
       }
-      if (up) { // arms in the air
-        for (const side of [-1, 1]) {
-          ctx.beginPath(); ctx.moveTo(x + side * 5 * s, y - 1 * s); ctx.lineTo(x + side * 7.5 * s, y - 12 * s);
-          ctx.lineWidth = 3.4 * s; ctx.strokeStyle = NAVY; ctx.stroke(); ctx.lineWidth = 2 * s; ctx.strokeStyle = jersey; ctx.stroke();
-          oval(side * 7.6, -12.5, 1.7, 1.7, f.skin);
-        }
-        ctx.lineWidth = 1.6; ctx.strokeStyle = NAVY;
+      ctx.drawImage(spr, x - 13 * s, y - 30 * s, spr.width / K, spr.height / K);
+    }
+  }
+
+  // One fan seen from behind, at (x, y) = the middle of the shoulders.
+  drawNearFan(ctx, f, x, y, s, jersey, trim, up, sign) {
+    const NAVY = '#14233b';
+    ctx.lineWidth = 1.6; ctx.strokeStyle = NAVY; ctx.lineJoin = 'round';
+    const oval = (cx, cy, rx, ry, fill, from = 0, to = Math.PI * 2) => {
+      ctx.beginPath(); ctx.ellipse(x + cx * s, y + cy * s, rx * s, ry * s, 0, from, to); ctx.closePath();
+      ctx.fillStyle = fill; ctx.fill(); ctx.stroke();
+    };
+    if (sign) { // the back of a cardboard sign on a stick
+      ctx.fillStyle = '#7a5a3a'; ctx.fillRect(x - 0.6 * s, y - 16 * s, 1.2 * s, 8 * s);
+      ctx.fillStyle = '#c9a878'; ctx.fillRect(x - 9 * s, y - 25 * s, 18 * s, 10 * s); ctx.strokeRect(x - 9 * s, y - 25 * s, 18 * s, 10 * s);
+    }
+    if (up) { // arms in the air
+      for (const side of [-1, 1]) {
+        ctx.beginPath(); ctx.moveTo(x + side * 5 * s, y - 1 * s); ctx.lineTo(x + side * 7.5 * s, y - 12 * s);
+        ctx.lineWidth = 3.4 * s; ctx.strokeStyle = NAVY; ctx.stroke(); ctx.lineWidth = 2 * s; ctx.strokeStyle = jersey; ctx.stroke();
+        oval(side * 7.6, -12.5, 1.7, 1.7, f.skin);
       }
-      // sloping shoulders and back, a stripe across the jersey
-      oval(0, 5, 8, 7.5, jersey, Math.PI, Math.PI * 2);
-      ctx.save(); ctx.beginPath(); ctx.ellipse(x, y + 5 * s, 8 * s, 7.5 * s, 0, Math.PI, Math.PI * 2); ctx.clip();
-      ctx.fillStyle = trim; ctx.fillRect(x - 8 * s, y + 0.5 * s, 16 * s, 1.8 * s); ctx.restore();
-      if (f.scarf) oval(0, -2.2, 4.6, 1.6, trim);
-      // the back of the head: hair, or a beanie with a pompom
-      if (!f.hat) { oval(-4.6, -6.5, 1.1, 1.6, f.skin); oval(4.6, -6.5, 1.1, 1.6, f.skin); }
-      oval(0, -7, 4.8, 5, f.hair);
-      if (f.hat) {
-        oval(0, -7.6, 5, 4.6, f.hat, Math.PI, Math.PI * 2);
-        ctx.fillStyle = trim; ctx.fillRect(x - 4.9 * s, y - 8.4 * s, 9.8 * s, 1.6 * s); ctx.strokeRect(x - 4.9 * s, y - 8.4 * s, 9.8 * s, 1.6 * s);
-        oval(0, -12.6, 1.5, 1.5, f.hat === '#fff2cb' ? TEAMS.home.color : '#fff2cb');
-      }
+      ctx.lineWidth = 1.6; ctx.strokeStyle = NAVY;
+    }
+    // sloping shoulders and back, a stripe across the jersey
+    oval(0, 5, 8, 7.5, jersey, Math.PI, Math.PI * 2);
+    ctx.save(); ctx.beginPath(); ctx.ellipse(x, y + 5 * s, 8 * s, 7.5 * s, 0, Math.PI, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = trim; ctx.fillRect(x - 8 * s, y + 0.5 * s, 16 * s, 1.8 * s); ctx.restore();
+    if (f.scarf) oval(0, -2.2, 4.6, 1.6, trim);
+    // the back of the head: hair, or a beanie with a pompom
+    if (!f.hat) { oval(-4.6, -6.5, 1.1, 1.6, f.skin); oval(4.6, -6.5, 1.1, 1.6, f.skin); }
+    oval(0, -7, 4.8, 5, f.hair);
+    if (f.hat) {
+      oval(0, -7.6, 5, 4.6, f.hat, Math.PI, Math.PI * 2);
+      ctx.fillStyle = trim; ctx.fillRect(x - 4.9 * s, y - 8.4 * s, 9.8 * s, 1.6 * s); ctx.strokeRect(x - 4.9 * s, y - 8.4 * s, 9.8 * s, 1.6 * s);
+      oval(0, -12.6, 1.5, 1.5, f.hat === '#fff2cb' ? TEAMS.home.color : '#fff2cb');
     }
   }
 
@@ -719,7 +738,7 @@ export class Renderer {
     cx.drawImage(pages[pi], fx, fy, fw, fh, 0, 0, fw, fh);
     const m = document.createElement('canvas'); m.width = fw; m.height = fh;
     const mx = m.getContext('2d', { willReadFrequently: true });
-    mx.drawImage(Assets.pages[mf[0]], mf[1], mf[2], mf[3], mf[4], 0, 0, mf[3], mf[4]);
+    mx.drawImage(Assets.pages[mf[0]], mf[1], mf[2], mf[3], mf[4], mf[8] || 0, mf[9] || 0, mf[3], mf[4]); // masks are cropped; [8], [9] place them
     const img = cx.getImageData(0, 0, fw, fh), d = img.data, md = mx.getImageData(0, 0, fw, fh).data;
     const rgb = (hex) => [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
     const stick = st && rgb(st.color), boot = sk && rgb(sk.color).map((v) => v * 0.8), blade = sk && rgb(sk.color);

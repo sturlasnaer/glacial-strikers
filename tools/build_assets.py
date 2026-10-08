@@ -251,7 +251,10 @@ def add_item(fid, img, px, py, s, group, mask=None):
         py -= y0
     items.append({'id': fid, 'img': img, 'px': round(px, 1), 'py': round(py, 1), 'scale': s, 'group': group})
     if mask is not None and np.array(mask)[..., :3].any():
-        items.append({'id': 'gm:' + fid, 'img': mask, 'px': round(px, 1), 'py': round(py, 1), 'scale': s, 'group': 'gearmask'})
+        # keep only the painted part; the offset puts it back in place over the frame
+        box = mask.getbbox()
+        if box:
+            items.append({'id': 'gm:' + fid, 'img': mask.crop(box), 'px': round(px, 1), 'py': round(py, 1), 'scale': s, 'group': 'gearmask', 'off': box[:2]})
 
 
 mask_sheets = {}
@@ -481,7 +484,7 @@ for group in groups:
         pages.append({'file': 'gfx/' + name, 'group': group, 'w': p.width, 'h': p.height})
     for it in group_items:
         pi, fx, fy, fw, fh = it['rect']
-        out_frames[it['id']] = [pi, fx, fy, fw, fh, it['px'], it['py'], it['scale']]
+        out_frames[it['id']] = [pi, fx, fy, fw, fh, it['px'], it['py'], it['scale']] + (list(it['off']) if 'off' in it else [])
 
 # ---------------------------------------------------------------- images
 Image.open(os.path.join(PACK, 'sheets', 'rink_backdrop.png')).convert('RGB').save(

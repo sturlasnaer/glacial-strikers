@@ -24,7 +24,7 @@ import { standings } from './league.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan } from './league.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub } from './data.js';
+import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS } from './data.js';
 import {
   loadSave, newSave, writeSave, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards,
   lineupIds, homeKitGroups,
@@ -191,6 +191,20 @@ class App {
     }
   }
 
+  // Slow device? If matches run under ~45 fps for two seconds, render at a lower
+  // resolution (2x, 1.75x, 1.5x, 1.25x). It only steps down, for the rest of the session.
+  watchFrameRate(dt) {
+    if (this.scene !== 'match' || document.hidden || !(dt > 0) || dt > 0.25) { this.slowT = 0; return; }
+    this.fpsAvg = this.fpsAvg ? this.fpsAvg * 0.95 + dt * 0.05 : dt;
+    this.slowT = this.fpsAvg > 1 / 45 ? (this.slowT || 0) + dt : 0;
+    const r = this.renderer;
+    const cur = r.maxDpr || 2;
+    if (this.slowT > 2 && cur > 1.25 && (window.devicePixelRatio || 1) > 1.25) {
+      r.maxDpr = cur - 0.25; r.resize(); r.clearCaches?.();
+      this.slowT = 0; this.fpsAvg = 1 / 60;
+    }
+  }
+
   // A controller press counts as the first touch: wake the audio (Chrome may still want a click).
   onPadPress() {
     if (this.padWoke) return;
@@ -210,11 +224,19 @@ class App {
 
   // ------------------------------------------------------------- matches
   makeMatch(cfg, teamId, arena = 'home') {
+    // keep only the art this match uses decoded (phones have little image memory)
+    const geared = cfg.teams.some((t) => t.skaters.some((k) => k.gear && (GEAR_LOOK[k.gear.stick] || GEAR_LOOK[k.gear.skates])));
+    Assets.trim({ teams: [teamId], arena, gear: geared });
+    if (geared) Assets.ensureGear();
     Assets.prepareTeam(TEAMS[teamId]);
     this.awayTeamId = teamId;
     this.arena = arena;
     const m = new Match(cfg);
     this.match = m;
+    if (!this.attract) { // the title screen's match shows no cut-ins
+      const pairs = [...m.skaters, ...m.goalies].map((k) => [this.hud.bannerKey(k), k.team === 0 ? (RECRUITS[k.who] ? 'homekit' : null) : teamId]);
+      Assets.warmBanners(pairs);
+    }
     this.acc = 0;
     this.fx.attach(m, TEAMS.home.color, TEAMS[teamId].color);
     this.renderer.snapCamera(m);
@@ -967,8 +989,10 @@ class App {
 
   // ----------------------------------------------------------------- loop
   loop(now) {
-    const realDt = Math.max(0, Math.min(0.05, (now - this.last) / 1000 || 0));
+    const rawDt = (now - this.last) / 1000;
+    const realDt = Math.max(0, Math.min(0.05, rawDt || 0));
     this.last = now;
+    this.watchFrameRate(rawDt);
     const versus = !!(this.cur && this.cur.versus) && (this.scene === 'match' || this.scene === 'paused');
     const raw = this.input.read();
     if (versus) {

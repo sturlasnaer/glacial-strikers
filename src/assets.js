@@ -26,7 +26,7 @@ export const Assets = {
     const atlas = INLINE ? INLINE['gfx/atlas.json'] : await (await fetch(BASE + 'gfx/atlas.json')).json();
     this.atlas = atlas;
     this.pages = new Array(atlas.pages.length);
-    const core = atlas.pages.map((p, i) => i).filter((i) => ['home', 'away', 'gearmask'].includes(atlas.pages[i].group)); // masks are tiny: load them up front
+    const core = atlas.pages.map((p, i) => i).filter((i) => atlas.pages[i].group === 'home' || atlas.pages[i].group === 'away');
     const glass = atlas.arena && atlas.arena.glass && atlas.arena.glass.file;
     const files = [...core.map((i) => atlas.pages[i].file), ...(glass ? [glass] : []), 'gfx/rink_backdrop.webp'];
     let done = 0;
@@ -70,20 +70,43 @@ export const Assets = {
 
   backdropFor(key) { return this.backdrops.get(key) || this.backdrop; },
 
-  // Fetch the rest in the background, one file at a time, so play isn't slowed.
+  // Warm the browser cache with the rest, one file at a time, without decoding anything:
+  // decoded art is what fills a phone's memory, so it only happens when a scene needs it.
   async prefetch() {
+    if (INLINE) return; // the single-file build already has everything
     const a = this.atlas;
     const files = [
       ...a.pages.filter((p, i) => !this.pages[i]).map((p) => p.file),
       a.locker, ...Object.values(a.arenas || {}), ...Object.values(a.banners || {}),
     ].filter(Boolean);
     for (const f of files) {
-      try {
-        const img = await this.image(f);
-        a.pages.forEach((p, i) => { if (p.file === f) this.pages[i] = img; });
-        for (const [k, v] of Object.entries(a.arenas || {})) if (v === f) this.backdrops.set(k, img);
-      } catch { /* offline and not cached: fine, it loads when needed */ }
+      try { await fetch(this.url(f)); } catch { /* offline and not cached: fine, it loads when needed */ }
     }
+  },
+
+  // Equipped gear recolours from the masks; load them only when someone wears special gear.
+  ensureGear() { return this.loadGroup('gearmask').catch(() => {}); },
+
+  forget(file) { this.images.delete(file); this.loading.delete(file); },
+
+  // Free decoded art the current scene doesn't use. keep: { teams: [team ids], arena }.
+  // Home and away art, the home rink, our signings' pages and the club colours stay.
+  trim(keep = {}) {
+    const a = this.atlas;
+    const groups = new Set(['home', 'away', ...(PALETTES.homekit.groups || [])]);
+    for (const id of keep.teams || []) { const t = TEAMS[id]; if (t && t.art) groups.add('rival_' + t.art); }
+    if (keep.gear) groups.add('gearmask');
+    const released = new Set();
+    a.pages.forEach((p, i) => { if (this.pages[i] && !groups.has(p.group)) { released.add(this.pages[i]); this.pages[i] = null; this.forget(p.file); } });
+    // recoloured page sets keep references to the original pages they didn't change: drop those too
+    for (const r of this.recolored.values()) r.pages = r.pages.map((pg) => (released.has(pg) ? null : pg));
+    for (const [k, img] of [...this.backdrops]) {
+      if (k === 'home' || k === keep.arena) continue;
+      this.backdrops.delete(k); if (a.arenas && a.arenas[k]) this.forget(a.arenas[k]);
+    }
+    for (const k of [...this.recolored.keys()]) if (k !== 'club' && k !== 'homekit' && !(keep.teams || []).includes(k)) this.recolored.delete(k);
+    // cut-in banners live on as image URLs; the decoded copies were only needed for recolouring
+    for (const f of Object.values(a.banners || {})) this.forget(f);
   },
 
   frame(id) { return this.atlas.frames[id]; },
@@ -176,6 +199,15 @@ export const Assets = {
 
   async ensureBanners(keys) { await Promise.all(keys.map((k) => this.atlas.banners && this.atlas.banners[k] && this.image(this.atlas.banners[k]).catch(() => {}))); },
 
+  // Make the cut-in banners a match can show ([key, team] pairs) ready ahead of time, then
+  // let go of the decoded pictures: the recoloured ones are kept as small image URLs.
+  async warmBanners(pairs) {
+    const list = pairs.filter(([k]) => k && this.atlas.banners && this.atlas.banners[k]);
+    await this.ensureBanners([...new Set(list.map(([k]) => k))]);
+    for (const [k, team] of list) this.banner(k, team);
+    for (const [k] of list) this.forget(this.atlas.banners[k]);
+  },
+
   // Draw a frame with its pivot at (x, y). scale = world px per *source* px.
   draw(ctx, id, x, y, scale, opts = {}) {
     const f = this.atlas.frames[id];
@@ -240,17 +272,34 @@ function loadImage(src) {
 // Club colours on our own art: the teal trim and cream jersey take the club's colours,
 // shaded by the original pixel. Only inside `rects` (our team's frames) so effects and
 // UI icons on the same page keep their colours.
+// Remember what each source colour turned into: pixel art reuses a small palette, so the
+// colour maths runs once per colour instead of once per pixel (about 5x faster).
+function colorMemo() {
+  const keys = new Int32Array(1 << 16).fill(-1), vals = new Int32Array(1 << 16);
+  return {
+    // returns the packed result (0xRRGGBB), -2 for "leave it", or -1 if not seen yet
+    get(rgb) { const k = Math.imul(rgb, 2654435761) >>> 16; return keys[k] === rgb ? vals[k] : -1; },
+    set(rgb, v) { const k = Math.imul(rgb, 2654435761) >>> 16; keys[k] = rgb; vals[k] = v; },
+  };
+}
+
 function recolorHome(img, rc, rects) {
   const c = document.createElement('canvas');
   c.width = img.width; c.height = img.height;
   const ctx = c.getContext('2d', { willReadFrequently: true });
   ctx.drawImage(img, 0, 0);
   const T = rc.trim, J = rc.jersey;
+  const memo = colorMemo();
   for (const [x, y, w, h] of rects) {
     const data = ctx.getImageData(x, y, w, h);
     const d = data.data;
     for (let i = 0; i < d.length; i += 4) {
       if (d[i + 3] < 8) continue;
+      const rgb = (d[i] << 16) | (d[i + 1] << 8) | d[i + 2];
+      const known = memo.get(rgb);
+      if (known === -2) continue;
+      if (known >= 0) { d[i] = known >> 16; d[i + 1] = (known >> 8) & 255; d[i + 2] = known & 255; continue; }
+      memo.set(rgb, -2);
       const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
       const mx = Math.max(r, g, b), mn = Math.min(r, g, b), dl = mx - mn;
       if (dl < 0.03 || mx < 0.3) continue;
@@ -265,6 +314,7 @@ function recolorHome(img, rc, rects) {
       else if ((hh >= 37 && hh <= 62 && s >= 0.06 && s <= 0.46 && mx > 0.74) || (hh >= 28 && hh < 37 && s >= 0.37 && s <= 0.5 && mx > 0.74 && mx < 0.95)) out = hsv2rgb(J.h / 360, Math.min(1, s * (J.s / 0.2) * 0.6 + J.s * 0.55), Math.min(1, J.v * (0.55 + mx * 0.45)));
       else continue;
       d[i] = out[0]; d[i + 1] = out[1]; d[i + 2] = out[2];
+      memo.set(rgb, (d[i] << 16) | (d[i + 1] << 8) | d[i + 2]); // as stored (rounded)
     }
     ctx.putImageData(data, x, y);
   }
@@ -284,8 +334,14 @@ function recolorPage(img, rc) {
   const h1 = rc.h1 / 360, h2 = (rc.h2 ?? rc.h1) / 360;
   const sm = rc.sat ?? 1, vm = rc.val ?? 1;
   const sm2 = rc.sat2 ?? sm, vm2 = rc.val2 ?? vm;
+  const memo = colorMemo();
   for (let i = 0; i < d.length; i += 4) {
     if (d[i + 3] < 8) continue;
+    const rgb = (d[i] << 16) | (d[i + 1] << 8) | d[i + 2];
+    const known = memo.get(rgb);
+    if (known === -2) continue;
+    if (known >= 0) { d[i] = known >> 16; d[i + 1] = (known >> 8) & 255; d[i + 2] = known & 255; continue; }
+    memo.set(rgb, -2);
     const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
     const mx = Math.max(r, g, b), mn = Math.min(r, g, b), dl = mx - mn;
     if (dl < 0.08 || mx < 0.12) continue;
@@ -302,6 +358,7 @@ function recolorPage(img, rc) {
     // keep each pixel's shading offset relative to the base hue band
     const [nr, ng, nb] = hsv2rgb(nh, Math.min(1, ns), Math.min(1, nv));
     d[i] = nr; d[i + 1] = ng; d[i + 2] = nb;
+    memo.set(rgb, (d[i] << 16) | (d[i + 1] << 8) | d[i + 2]); // as stored (rounded)
   }
   ctx.putImageData(data, 0, 0);
   return c;
