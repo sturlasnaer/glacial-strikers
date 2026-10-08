@@ -1,14 +1,18 @@
 # Sprite requests
 
-What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd), the remaining packs (Batches B, H, I, C and N-Extras), the new batches (P, R, S, K, T and M2) the D, U, Q, W, O, E, J and F delivery, V and X, the Y, Z, AA, AB and AC delivery, the twins' first look (AI part 1), and Part 2 and the new additions (AD, AE, AF, AG, AI part 2, AJ, AK, AL and AM). AH was skipped: the AJ pilot works, so new faces come from parts.
+What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd), the remaining packs (Batches B, H, I, C and N-Extras), the new batches (P, R, S, K, T and M2) the D, U, Q, W, O, E, J and F delivery, V and X, the Y, Z, AA, AB and AC delivery, the twins' first look (AI part 1), Part 2 and the new additions (AD, AE, AF, AG, AI part 2, AJ, AK, AL and AM), and AN and AO. AH was skipped: the AJ pilot works, so new faces come from parts.
 
 The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes** (the Snow Fox is their mascot; colours unchanged). Packs can be named `Puckbound-...` from now on; older `Glacial-Strikers-...` folder names still work.
 
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **AN**: the goalie market and a living league: icons for the six goaltending styles, a backup goalie for the rivals, and icons for nine new achievements.
-2. **AO**: players from parts, round two: the jersey moment for the parts body, six more heads and two more bodies.
+1. **AP**: the jersey moment for the big and slim builds.
+2. **AQ**: cut-in banners for players made from parts, one backdrop per element.
+3. **AR**: an agent in the locker room, for a free-agent market.
+4. **AS**: the linesman's penalty signals.
+5. **AT**: goalies from parts: a goalie body and painted mask heads.
+6. **AU**: two expansion teams, if the league grows to seven.
 
 ## Format notes
 
@@ -19,6 +23,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - Side-view poses face **right**, and the game mirrors them for the other side. Goalies are the exception: Batch L asks for true-profile goalies drawn in both directions.
 - Home colours teal/cream/navy. Every rival is drawn in **coral + violet** and recoloured at runtime, so keep coral and violet off skin and hair.
 - **Stick hand.** Players shoot left or right, and a player should keep the same hand whichever way they skate. A **left shot** holds the stick on the left side of the body (left hand lower on the shaft, blade on the player's left): facing the camera the blade is on the screen's right, facing away it's on the screen's left, facing right (east) it's on the far side of the body, and facing left (west) on the near side. Draw new skaters **left-shot in all eight directions** (west, northwest and southwest drawn, not mirrored); the game mirrors a left-shot set to make a right-shot player. Say the hand in the add-on atlas (`"hand": "L"`).
+- **Batch AN:** the goaltending-style icons on the goalie cards, the contract in the league news, icons for the nine newest achievements, and the backup goalie a rival plays once you've signed theirs (in their colours, with portraits).
+- **Batch AO:** two more builds (big and slim) and six more heads (cage, visor, mohawk, ponytail, moustache, glasses), with portrait shoulders per build, and the jersey moment for the parts body: drafted rookies now pull on our jersey with their own face.
 
 ---
 
@@ -72,62 +78,53 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 ---
 
-## Batch AN: the goalie market and a living league
+## Batch AP: the jersey moment for the big and slim builds
 
-You can now sign a rival's goalie (each one has a **goaltending style**) and choose who starts in goal. The rivals fill the gaps your signings leave with Draft Day picks and free agents, and they call with trade offers after matches. Nine new achievements go with all this. Today they borrow other icons.
+Batch AO's jersey moment (holding the jersey up, pulling it over the head, the fist pump) fits `body_std`, so a big or slim rookie skips it today. Please draw the same three poses for `body_big` and `body_small`, facing the camera, exactly as AO did for `body_std`: a head anchor on each frame (`"hide_head": true` on the pulling one), gear masks, and the sequence under `modular.jersey_moments.body_big` / `body_small`. 6 frames.
 
-- **Goaltending styles**, in the style and size of the archetype icons (about 200 px source), sheet `icons_an.png`, frame names `icons/gstyle_<style>`. Each shows a goalie silhouette or gear doing the thing:
-  - `gstyle_hybrid`: a goalie mask, half teal and half cream.
-  - `gstyle_scrambler`: a pad sliding sideways with speed lines.
-  - `gstyle_butterfly`: two pads flared flat on the ice, like wings.
-  - `gstyle_wall`: a big blocker in front of a brick-patterned net.
-  - `gstyle_reader`: a mask with one eye glinting, and a dotted puck path.
-  - `gstyle_puckhandler`: a goalie stick sweeping a puck behind the net.
+## Batch AQ: cut-in banners for players made from parts
 
-  6 frames.
-- **A contract**, same sheet: `icons/contract` (a rolled contract with a quill and a wax seal, no lettering). It goes next to rival signings in the league news. 1 frame.
-- **A backup goalie** for the rivals. When you sign a team's goalie, they play a backup, who wears the plain v1 away goalie today. Please draw one **newcomer goalie** in coral and violet like every rival goalie: younger and smaller than the starters, with a plain mask (no team motif) and a mismatched blocker. Keep coral and violet off skin and hair.
-  - Give them **exactly the list the rival goalies got**: the v5 side, front, back, skating and puck-handling sets, and the Batch L west profiles.
-  - Also a portrait with the five dialogue expressions (neutral, determined, grin, shocked, defeated).
-  - Name the sheets `newcomer_g_*`. In the add-on atlas, put the sets under the key `newcomer` in `goalies_side`, `goalies_front` and the rest, and the portrait under `portraits.newcomer_g`.
+When a player uses their ultimate, a banner slides across the screen with their art (the cut-ins). The cast, the rivals and the twins have painted banners, but rookies and anyone else made from parts get a plain band. Please paint **one banner backdrop per element**, in the style and size of the existing cut-in banners (`cutins/*.webp`, 960 wide), with the left third left clear: the game drops the player's portrait (their own face and build) there and writes the super's name over the right side.
+- `frost` (ice blue, a blizzard), `thunder` (yellow, lightning across a storm), `stone` (tan, a rockslide), `ember` (orange, a wall of flame), `gale` (mint, a whirlwind), `shadow` (violet-black, an eclipse).
+- Frame names `cutin_bg/<element>`, plus a soft-edged vignette PNG `cutin_bg/portrait_glow` the game puts behind the portrait.
 
-  About 60 frames, like one rival goalie.
-- **Achievement icons**, in the style and size of `achievements/*` (about 200 px source), frame names `achievements/<name>`:
+7 images.
 
-| Frame | Achievement | Idea |
-| --- | --- | --- |
-| `first_pick` | First Pick (draft a rookie) | a jersey on a hanger under a spotlight, with a gold "1st" ribbon shape (no lettering) |
-| `new_tricks` | New Tricks (change a style or super at camp) | a glowing element stone and a whistle crossed |
-| `dealmaker` | Dealmaker (trade a player) | two gloves shaking hands over a puck |
-| `pads_for_hire` | Pads for Hire (sign a rival's goalie) | a pair of goalie pads with a price tag |
-| `legendary` | Legendary (sign a legend) | a gold star burst behind a horned helmet |
-| `side_by_side` | Side by Side (dress the twins together) | a dragon's head and a wolf's head back to back, one red-gold and one silver-blue |
-| `ragnarok` | Ragnarök (score with the twins' combo) | a puck on fire splitting a dark sky |
-| `six_elements` | Six Elements (score with all six) | six small orbs in a ring: ice blue, yellow, tan, orange, mint and violet |
-| `cup_of_the_week` | Cup of the Week (win a Weekly Cup) | the small Weekly Cup with a calendar page behind it |
+## Batch AR: an agent in the locker room
 
-  9 frames.
+Next in the game: a **free-agent market**, players made from parts who aren't on any team and can be signed for coins, refreshed every few matches. They need someone to pitch them. Please draw **an agent** in the Batch H style and scale (Brekka, Ottar and Kip): a sharp coat over a hockey hoodie, a phone in one hand and a folder of contracts under the other arm. Adult, any look you like, distinct from the three NPCs.
+- Standing art: `hub_fullbody/agent/idle_a`, `idle_b`, `talking`, and `offer` (holding a contract out). Same foot baseline as the others.
+- A portrait with the five dialogue expressions (neutral, determined, grin, shocked, defeated), in the style of the NPC portraits: `hub_npcs/portrait/agent` and `hub_npcs/agent/<expression>`.
+- A station icon, `icons/free_agents` (a folder of player cards with a paperclip), reward-icon size.
 
-About 76 frames. The goalie is the big part: if time is short, send the icons first.
+8 frames.
 
-## Batch AO: players from parts, round two
+## Batch AS: the linesman's penalty signals
 
-The AJ pilot works: every drafted rookie is now made from the body and a head, with their own skin and hair. Three things would round it out.
+The linesman (Batch AG) raises an arm for every penalty. The game calls three kinds: **interference**, **charging** and **boarding**. Please add the real hockey signal for each, facing the camera, two frames each so it can loop for a second:
+- `interference`: arms crossed and held in front of the chest.
+- `charging`: clenched fists rotating around each other in front of the chest.
+- `boarding`: one clenched fist striking the open palm of the other hand.
+- `washout`: both arms swept out to the sides at shoulder height, for a goal that doesn't count.
 
-- **The jersey moment for the parts body.** Batch AD's jersey moment (holding the jersey up, pulling it over the head, the fist pump) only fits the three AA newcomers, so a rookie made from parts skips it today. Please draw it for `body_std`, facing the camera, with a head anchor on each frame like the other body frames. On the pulling frame the head is inside the jersey, so add `"hide_head": true` to that anchor. Include gear masks like the rest of the body. 3 frames.
-- **Six more heads** in the AJ format: each needs the five views (s, se, e, ne, n) with normal and effort states, skin and hair masks, and the five portrait faces (neutral, determined, grin, shocked, defeated). Ideas:
-  - `cage`: a full wire cage over the face.
-  - `visor`: a tinted half visor and a headband.
-  - `mohawk`: a strip of hair out of the back of the helmet.
-  - `ponytail`: a long ponytail.
-  - `moustache`: a big moustache.
-  - `glasses`: sports glasses under the helmet.
+Same character, scale and foot baseline as Batch AG, under `linesman.calls`. 8 frames.
 
-  Keep coral and violet off skin and hair. About 150 frames.
-- **Two more bodies**, with the full `body_std` list (eight directions, hits, side strides, the signature, the portrait shoulders, anchors and gear masks), so rookies aren't all one build:
-  - `body_big`: broad and heavy, a defender's build.
-  - `body_small`: light and quick.
+## Batch AT: goalies from parts
 
-  Same left-shot rule, same scale as `body_std`. About 170 frames each.
+Signed rival goalies and the rivals' backups cover today's needs, but drafted and free-agent goalies would need faces of their own. Goalie masks hide the face, so a goalie's look is **a body and a painted mask**:
+- **A goalie body** with exactly the list the backup goalie got in Batch AN: the side sets both ways, front, back, skating and puck handling, in coral and violet, **drawn without the mask and helmet**, with an anchor for the mask on every frame like the AJ bodies (x, y, view, rotation; views s, se, e, ne, n and the side views).
+- **Six masks**, each in all those views: `classic` (plain with a cage), `flame`, `wolf_teeth`, `stars`, `stripes`, `skull`. Paint each design's art in pure red on a separate mask layer (like the AJ skin and hair masks) so the game can recolour it per player.
+- A portrait: the shoulders plus each mask facing the camera, with the five expressions showing through the cage (eyes and brows only).
 
-About 490 frames. The jersey moment is the small one: if time is short, send it first.
+About 70 body frames and 6 × 12 mask views. If time is short, the body and two masks first.
+
+## Batch AU: two expansion teams
+
+If the league grows from six teams to seven or eight, the new teams' players can be made from parts in their colours, but each club still needs its own identity. For each of **the Glacier Owls** (snowy white and slate) and **the Thunder Moose** (forest green and amber):
+- **A crest** like `rival_crests` (ignore the team colours in the art; draw it coral and violet so the game recolours it).
+- **A home arena**, a 1536×1024 painting in the style of the Golden Hall and the Dark Aerie: an owl's frozen observatory, and a timber longhouse with antlers in the rafters.
+- **A mascot** dancing on the near stairs, like Batch R (idle, two dance frames, a cheer).
+- **A scoreboard** like Batch K, and an arena banner like v3's.
+- A captain's cut-in banner, painted like the rivals' (the captain can be made from parts, so any face you like that fits the team).
+
+About 20 images and frames per team. This is the biggest one and depends on growing the league, so it comes last.
