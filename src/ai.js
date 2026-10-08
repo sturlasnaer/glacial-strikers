@@ -22,7 +22,7 @@ export class TeamAI {
   catchMul(s) { return s.controlled ? 1 : lerp(0.72, 1, this.diff); }
   stealMul() {
     const plan = this.gamePlan;
-    return lerp(0.55, 1.1, this.diff) * (plan === 'forecheck' ? 1.2 : 1) * (this.m.planEdge && this.m.planEdge(this.team) > 0 ? 1.15 : 1)
+    return lerp(0.5, 0.9, this.diff) * (plan === 'forecheck' ? 1.2 : 1) * (this.m.planEdge && this.m.planEdge(this.team) > 0 ? 1.15 : 1)
       * (this.team === 0 && this.m.buffs ? this.m.buffs.stealMul || 1 : 1);
   }
   get gamePlan() { return (this.m.plans && this.m.plans[this.team]) || 'balanced'; }
@@ -60,6 +60,7 @@ export class TeamAI {
       if (m.state !== 'play') { inp.mx = inp.my = 0; continue; }
 
       b.t -= dt;
+      if (b.checkRest > 0) b.checkRest -= dt;
       const decide = b.t <= 0;
       if (decide) b.t = this.interval * (0.7 + m.rng() * 0.6);
 
@@ -305,14 +306,21 @@ export class TeamAI {
 
   pressure(s, b, decide, role) {
     const m = this.m, c = role.target;
+    const plan = this.gamePlan;
     const g = norm(this.ownX - c.x, -c.y);
-    const tx = c.x + c.vx * 0.22 + g.x * 14, ty = c.y + c.vy * 0.22 + g.y * 14;
+    // contain the carrier from a gap goal-side, closing in only near our net or on the
+    // forecheck: the stick still pokes at the puck, but nobody runs straight through them
+    const tight = Math.abs(c.x - this.ownX) < 260 || plan === 'forecheck';
+    const gap = tight ? lerp(24, 14, this.diff) : lerp(48, 28, this.diff);
+    const tx = c.x + c.vx * 0.22 + g.x * gap, ty = c.y + c.vy * 0.22 + g.y * gap;
     this.seek(s, tx, ty, true, 8);
     const d = Math.hypot(c.x - s.x, c.y - s.y);
     if (decide) {
-      const plan = this.gamePlan;
-      const aggression = lerp(0.06, 0.22, this.diff) * (plan === 'forecheck' ? 1.35 : plan === 'trap' ? 0.6 : 1);
-      if (d < 62 && s.checkCd <= 0 && s.stamina > 25 && m.rng() < aggression) {
+      // checks are picked moments, with a breather after each one: a chance per second in
+      // reach (sharper AIs decide more often, so it's spread over their decisions)
+      const aggression = lerp(0.1, 0.28, this.diff) * this.interval * (plan === 'forecheck' ? 1.3 : plan === 'trap' ? 0.6 : 1);
+      if (d < 62 && s.checkCd <= 0 && !(b.checkRest > 0) && s.stamina > 35 && m.rng() < aggression) {
+        b.checkRest = lerp(3, 1.8, this.diff);
         if (s.def.skill.id === 'bedrock' && s.skillCd <= 0 && m.rng() < this.diff) s.in.skill = true;
         s.in.check = true;
         const n = norm(c.x + c.vx * 0.1 - s.x, c.y + c.vy * 0.1 - s.y);

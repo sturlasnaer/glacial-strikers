@@ -40,4 +40,4 @@ Done recently: **sprite touch controls** (Batch V): the stick and the action but
 
 ## Balance knobs
 
-`node tools/sim.mjs` reports goals, save percentage, match length and ability use for AI vs AI. Current targets are about 92% save rate, 4–6 minute matches and 1–2 ultimates per skater per match. Change one number at a time in `src/match.js` (shots, saves), `src/entities.js` (skating, goalie reach) or `src/ai.js` (decisions), then re-run the sim.
+`node tools/sim.mjs` reports goals, save percentage, match length and ability use for AI vs AI. Current targets are about 92% save rate, 4–6 minute matches and 1–2 ultimates per skater per match. Change one number at a time in `src/match.js` (shots, saves), `src/entities.js` (skating, goalie reach) or `src/ai.js` (decisions), then re-run the sim. `node tools/pressure.mjs` measures the AI from the player's side: a bot carries the puck at each rival, and it reports how long it keeps the puck and how often it's hit or stripped (since 8 October 2026 about 2.4–3.4 s, 3.6–6.2 hits and 2–3 steals a minute, weakest to strongest rival; it was 0.9–2.7 s and 6–21 hits a minute before the AI was calmed down).
