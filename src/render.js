@@ -1396,12 +1396,16 @@ export class Renderer {
   drawSnow(ctx, fx) {
     ctx.fillStyle = 'rgba(255,255,255,0.75)';
     const ox = (this.cam.x / BACKDROP.w) * 0.3, oy = (this.cam.y / BACKDROP.h) * 0.2;
-    for (const f of fx.snow) {
-      const x = ((((f.x - ox * f.s) % 1) + 1) % 1) * this.w;
-      const y = ((((f.y - oy * f.s) % 1) + 1) % 1) * this.h;
-      const s = f.s * 1.6;
-      ctx.globalAlpha = 0.35 + f.s * 0.3;
-      ctx.fillRect(x, y, s, s);
+    // the Winter Classic gets a second, nearer layer of big slow flakes
+    for (const layer of fx.heavySnow ? [0, 1] : [0]) {
+      for (const f of fx.snow) {
+        const fx0 = layer ? (f.x + 0.37) % 1 : f.x, fy0 = layer ? (f.y * 0.8 + fx.time * 0.012 * f.s) % 1 : f.y;
+        const x = ((((fx0 - ox * f.s * (layer ? 1.6 : 1)) % 1) + 1) % 1) * this.w;
+        const y = ((((fy0 - oy * f.s) % 1) + 1) % 1) * this.h;
+        const s = f.s * (layer ? 3 : 1.6);
+        ctx.globalAlpha = (0.35 + f.s * 0.3) * (layer ? 0.8 : 1);
+        ctx.fillRect(x, y, s, s);
+      }
     }
     ctx.globalAlpha = 1;
   }

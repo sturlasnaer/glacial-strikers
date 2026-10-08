@@ -129,6 +129,8 @@ img { image-rendering: auto; max-width: 100%; }
 .schedule { display: grid; gap: 6px; }
 .fixture { display: grid; grid-template-columns: 26px 26px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 8px; background: rgba(11, 20, 36, 0.55); border: 2px solid var(--navy-3); border-radius: 6px; font-size: 13px; }
 .fixture.next { border-color: var(--gold); }
+.fixture.classic { background: linear-gradient(90deg, rgba(113, 220, 232, 0.18), rgba(11, 20, 36, 0.55)); border-color: var(--ice); }
+.fixture.classic.next { border-color: var(--gold); }
 .fixture .fx-name { display: flex; flex-direction: column; min-width: 0; }
 .fixture .fx-name b { font-family: var(--display); font-weight: normal; font-size: 19px; line-height: 1; }
 .fixture .fx-name .muted { font-size: 11px; }

@@ -1,6 +1,8 @@
 // The Frostline league: a 6-team round robin (5 rounds), then a top-4 playoff.
 // The player's games are real matches; every other game is simulated with a quick
-// strength model so standings move each round.
+// strength model so standings move each round. After round 3 comes the Winter Classic,
+// an outdoor showcase on Pine Pond against the league leaders that doesn't count in the
+// standings.
 
 import { TEAMS, TOURNAMENT } from './data.js';
 import { makeRng } from './util.js';
@@ -8,6 +10,7 @@ import { recordSimGame } from './awards.js';
 import { t } from './i18n.js';
 
 export const LEAGUE_TEAMS = ['home', 'lynx', 'comets', 'rams', 'ravens', 'royals'];
+export const CLASSIC_AFTER = 3; // the Winter Classic comes after this many rounds
 const OUR_ORDER = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
 
 // Rough team strength for simulated games (home strength follows the player's levels).
@@ -87,6 +90,11 @@ function headToHead(L, a, b) {
 
 // What the player plays next: { kind: 'regular'|'semi'|'final', opponent, round label, stage cfg }.
 export function nextFixture(L) {
+  if (L.phase === 'regular' && L.round === CLASSIC_AFTER && !L.classic) {
+    const opp = classicOpponent(L);
+    const base = TOURNAMENT.stages.find((s) => s.team === opp);
+    return { kind: 'classic', opponent: opp, label: t('Winter Classic'), stage: { ...base, powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', round: 'Winter Classic', reward: 320, arena: 'pine_pond' } };
+  }
   if (L.phase === 'regular') {
     const opp = L.schedule[L.round].games[0].b;
     const base = TOURNAMENT.stages.find((s) => s.team === opp);
@@ -106,6 +114,16 @@ export function nextFixture(L) {
     }
   }
   return null;
+}
+
+// The Winter Classic's opponent: the league leaders (or the runners-up if that's us).
+export function classicOpponent(L) {
+  return standings(L).find((r) => r.id !== 'home').id;
+}
+
+// The Winter Classic is played: remember the result (the standings don't change).
+export function recordClassic(L, gf, ga, opp) {
+  L.classic = { opp, gf, ga, won: gf > ga };
 }
 
 // Record the player's game, simulate everything else up to the next player game.

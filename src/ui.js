@@ -6,7 +6,7 @@ import {
   POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
   RECRUITS, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, PALETTES, clubText, applyClub, hexToHsv,
 } from './data.js';
-import { standings } from './league.js';
+import { standings, classicOpponent, CLASSIC_AFTER } from './league.js';
 import { BUFF_TEXT } from './lockerroom.js';
 import { ACHIEVEMENTS } from './achievements.js';
 import { AWARDS, AWARD_BY_ID, seasonStats } from './awards.js';
@@ -453,15 +453,23 @@ export class UI {
         <td>${r.gp}</td><td>${r.w}</td><td>${r.l}</td><td>${r.gf}</td><td>${r.ga}</td><td>${r.diff > 0 ? '+' : ''}${r.diff}</td><td class="pts">${r.pts}</td></tr>`).join('')}</tbody>
     </table>
     <div class="muted" style="font-size:12px;margin-top:4px">${t('Top 4 make the playoffs: 1 plays 4, 2 plays 3, winners meet in the Cup Final.')}</div>`;
+    // the Winter Classic, between rounds 3 and 4
+    const cl = L.classic, clNext = !cl && L.phase === 'regular' && L.round === CLASSIC_AFTER;
+    const clOpp = cl ? cl.opp : L.phase === 'regular' && L.round <= CLASSIC_AFTER ? classicOpponent(L) : null;
+    const classicRow = clOpp ? `<div class="fixture classic ${clNext ? 'next' : ''}">
+        <span class="muted">❄</span><img src="${crest(clOpp, 48)}" alt="" width="26" height="26">
+        <span class="fx-name"><b>${t('Winter Classic')}</b><span class="muted">${esc(TEAMS[clOpp].name)} · ${esc(ARENAS.pine_pond.name)}${cl ? '' : ` · ${standings(L)[0].id === 'home' ? t('the runners-up') : t('the league leaders')}`}</span></span>
+        <span class="fx-res">${cl ? (cl.won ? `<span class="good">${t('W {a}–{b}', { a: cl.gf, b: cl.ga })}</span>` : `<span class="bad">${t('L {a}–{b}', { a: cl.gf, b: cl.ga })}</span>`) : clNext ? `<span class="gold-t">${t('NEXT')}</span>` : '<span class="muted">—</span>'}</span></div>` : '';
     const schedule = L.schedule.map((rd, i) => {
       const opp = rd.games[0].b;
       const res = L.results[i] && L.results[i][0];
       const tm = TEAMS[opp];
-      const status = res ? (res.ga > res.gb ? `<span class="good">${t('W {a}–{b}', { a: res.ga, b: res.gb })}</span>` : `<span class="bad">${t('L {a}–{b}', { a: res.ga, b: res.gb })}</span>`) : i === L.round && L.phase === 'regular' ? `<span class="gold-t">${t('NEXT')}</span>` : '<span class="muted">—</span>';
-      return `<div class="fixture ${i === L.round && L.phase === 'regular' ? 'next' : ''}">
+      const isNext = i === L.round && L.phase === 'regular' && !clNext;
+      const status = res ? (res.ga > res.gb ? `<span class="good">${t('W {a}–{b}', { a: res.ga, b: res.gb })}</span>` : `<span class="bad">${t('L {a}–{b}', { a: res.ga, b: res.gb })}</span>`) : isNext ? `<span class="gold-t">${t('NEXT')}</span>` : '<span class="muted">—</span>';
+      return `<div class="fixture ${isNext ? 'next' : ''}">
         <span class="muted">${t('R{n}', { n: i + 1 })}</span><img src="${crest(opp, 48)}" alt="" width="26" height="26">
         <span class="fx-name"><b>${esc(tm.name)}</b><span class="muted">${esc(t(GAME_PLANS[tm.plan === 'counter' ? 'balanced' : tm.plan].name))}${tm.plan === 'counter' ? ` ${t('(adapts)')}` : ''}${record(opp) ? ` · ${t('record {rec}', { rec: record(opp) })}` : ''}</span></span>
-        <span class="fx-res">${status}</span></div>`;
+        <span class="fx-res">${status}</span></div>${i === CLASSIC_AFTER - 1 ? classicRow : ''}`;
     }).join('');
     let bracket = '';
     if (L.playoffs) {
@@ -475,7 +483,8 @@ export class UI {
     const last = L.results.length ? L.results[L.results.length - 1].slice(1) : [];
     const next = this.app.fixture && this.app.fixture();
     const nt = next && TEAMS[next.opponent];
-    const venue = nt && nt.arena ? ARENAS[nt.arena].name : 'Frostline Rink';
+    const venueKey = next && next.stage.arena ? next.stage.arena : nt && nt.arena;
+    const venue = venueKey ? ARENAS[venueKey].name : 'Frostline Rink';
     const call = L.champion ? (L.champion === 'home' ? t('Champions! Ladies and gentlemen, your {club}!', { club: CLUB.name }) : t('What a season. The ice goes quiet until next year.'))
       : nt ? pick([t('Next up: the {team} at {venue}! Get loud!', { team: nt.name, venue }), `${t('{team} at {venue}.', { team: nt.name, venue })} ${t(nt.style)}`, t('Tonight at {venue}: {club} versus {team}. You won\'t want to miss it.', { venue, club: CLUB.nick, team: nt.name })])
         : t('Welcome to the Frostline league!');
@@ -515,10 +524,11 @@ export class UI {
     const tr = this.app.ach;
     const got = ACHIEVEMENTS.filter((a) => tr.has(a.id));
     const earned = got.reduce((n, a) => n + a.coins, 0);
+    const classicWins = (s.classics || []).filter((c) => c.gf > c.ga).length;
     if ((s.trophiesSeen || 0) !== got.length) { s.trophiesSeen = got.length; writeSave(s); } // the chest in the room stops glowing
     body.innerHTML = `
       <div class="train-top"><div><div class="label">${t('Trophy case')}</div>
-        <p style="margin:2px 0 0;font-size:13px">${t('{n} of {total} unlocked', { n: got.length, total: ACHIEVEMENTS.length })} · ${t('{n} coins earned', { n: earned })}${s.cups ? ` · ${t(s.cups > 1 ? '{n} cups won' : '{n} cup won', { n: s.cups })}` : ''}</p></div>
+        <p style="margin:2px 0 0;font-size:13px">${t('{n} of {total} unlocked', { n: got.length, total: ACHIEVEMENTS.length })} · ${t('{n} coins earned', { n: earned })}${s.cups ? ` · ${t(s.cups > 1 ? '{n} cups won' : '{n} cup won', { n: s.cups })}` : ''}${classicWins ? ` · ${t(classicWins > 1 ? '{n} Winter Classics won' : '{n} Winter Classic won', { n: classicWins })}` : ''}</p></div>
         <button class="btn small ghost" id="tr-lb">🏆 ${t('Online leaderboards')}</button></div>
       ${s.awards && s.awards.length ? `<div class="label" style="margin:4px 0 6px">${t('Award cabinet')}</div>
       <div class="aw-list cabinet">${s.awards.slice().reverse().map((w) => `
@@ -1309,6 +1319,7 @@ export class UI {
     const ours = (l) => portrait(l[1], 0, null, 420, expression('us', l[2], mood));
     const gone = (id) => isSigned(this.app.save, recruitKey(teamId, id));
     const theirs = (l) => portrait(gone(l[1]) ? 'sub_' + l[1] : l[1], 1, teamId, 420, expression('them', l[2], mood));
+    const kip = Assets.atlas.npcs && Assets.atlas.npcs.announcer ? Assets.icon(Assets.atlas.npcs.announcer, 420) : ''; // Kip Vance calls the big games
     const r = this.set(`
       <div class="dim"></div>
       <div class="dlg" id="dlg">
@@ -1320,13 +1331,13 @@ export class UI {
     const pl = r.querySelector('#pl'), pr = r.querySelector('#pr'), dn = r.querySelector('#dn'), dt = r.querySelector('#dt');
     const show = () => {
       const [side, id, text] = lines[i];
-      const us = side === 'us';
+      const us = side === 'us' || side === 'kip';
       const lastUs = [...lines.slice(0, i + 1)].reverse().find((l) => l[0] === 'us');
       const lastThem = [...lines.slice(0, i + 1)].reverse().find((l) => l[0] === 'them') || lines.find((l) => l[0] === 'them');
-      pl.src = ours(lastUs || ['us', 'frost', '']);
+      pl.src = side === 'kip' && kip ? kip : ours(lastUs || ['us', 'frost', '']);
       if (lastThem) { pr.src = theirs(lastThem); pr.hidden = false; } else pr.hidden = true;
       pl.classList.toggle('on', us); pr.classList.toggle('on', !us);
-      dn.textContent = us ? member(id)?.name || GOALIE.name : gone(id) ? tm.subs[id] : tm.names[id];
+      dn.textContent = side === 'kip' ? t(NPC_NAMES.announcer) : us ? member(id)?.name || GOALIE.name : gone(id) ? tm.subs[id] : tm.names[id];
       dn.className = 'dlg-name' + (us ? '' : ' them');
       shown = 0; dt.textContent = '';
       clearInterval(typing);

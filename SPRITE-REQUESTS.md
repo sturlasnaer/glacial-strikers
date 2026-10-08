@@ -9,10 +9,11 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Next batches:**
 1. **U**: a pixel-art UI kit for the menus (if D is already underway, finish it first).
 2. **D**: celebrations for the rival wingers and defenders.
-3. **O**: arena-rule icons.
-4. **E**: achievement icons.
-5. **J**: the Awards Night stage.
-6. **F**: a penalty box for Pine Pond.
+3. **W**: Winter Classic dressing for Pine Pond.
+4. **O**: arena-rule icons.
+5. **E**: achievement icons.
+6. **J**: the Awards Night stage.
+7. **F**: a penalty box for Pine Pond.
 
 ## Format notes
 
@@ -88,6 +89,17 @@ Only the five rival captains have a goal celebration (Batch C). When a rival win
 
 40 frames.
 
+## Batch W: Winter Classic dressing for Pine Pond
+
+Once a season, after league round 3, the Foxes play the Winter Classic: an outdoor showcase on Pine Pond against the league leaders, in heavier snow, with its own anthem and fireworks for a win. Pine Pond should look dressed up for it. Everything goes on the existing `arena_pine_pond` backdrop (1536×1024) and must not cover the ice:
+
+- **A banner** strung between two poles above the far snowbank, about 420×110 px at game size: a big snowflake crest with crossed sticks and pine boughs, in navy, cream and ice blue. **No lettering** (the game is in English and Icelandic), so the emblem has to carry it. 2 frames of it swaying.
+- **String lights:** a tileable strip, about 64×20 px at game size, of warm bulbs on a wire that sags a little, to run along the far and near snowbanks. 2 frames (bulbs alternating bright and dim).
+- **Fire barrels:** an old oil drum with a fire in it, about 48×70 px at game size, as a 4-frame flicker loop. The game puts one in each corner behind the snowbank.
+- **Fans in winter gear:** 4 extra far-stand fans in toques, scarves and blankets, sitting and cheering (8 frames), in the far-stand fans' size and layout (`crowd/*`) with home and away versions like them.
+
+Say in the README where you'd hang the banner and run the lights; the game will place them from that. 16 frames.
+
 ## Batch O: arena-rule icons
 
 The arena rules show as plain text on the quick-play arena chips, on the daily challenge card and in the rule announcement. Please draw one small icon for each, in the style of the ability icons (`hud_elements/ability/*`, about 210 px source, shown at 32–64 px): **meltwater** (a steaming pool), **aurora lanes** (a green-violet chevron), **pond cracks** (a cracked circle), **rumble strips** (gold ridges with a hopping puck), **raven shadows** (a raven over a dark wing shadow), **speed lanes** (a cyan chevron) and **cracked ice** (a rough patch). 7 frames, on one sheet named `rule_icons.png`.
@@ -109,8 +121,9 @@ The arena rules show as plain text on the quick-play arena chips, on the daily c
 - **Most Valuable**: a star medal on a ribbon.
 - **Awards Sweep**: a fan of award envelopes.
 - **Free Agent**: a contract and a pen.
+- **Winter Classic**: a cup with a snow cap and a pine sprig.
 
-13 frames, on one sheet named `achievement_icons.png`, with frame names `achievements/<name>`.
+14 frames, on one sheet named `achievement_icons.png`, with frame names `achievements/<name>`.
 
 ## Batch J: Awards Night stage
 

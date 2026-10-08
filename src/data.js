@@ -435,6 +435,17 @@ export const PLAYOFF_LINES = {
     win: [['them', 'frost', 'The cup is yours. You earned every inch of it.']],
     loss: [['them', 'frost', 'Champions. Come back next season and try again.']],
   },
+  // the Winter Classic, outdoors on Pine Pond (Kip Vance calls it)
+  classic: {
+    pre: [
+      ['kip', 'announcer', 'Welcome to the Winter Classic! Outdoor hockey on Pine Pond, snow coming down, and the whole league watching.'],
+      ['them', 'frost', 'No roof out here, Foxes. Nowhere to hide.'],
+      ['us', 'frost', 'We all learned to skate on a pond like this. Let\'s play.'],
+      ['us', 'stone', 'I brought a thermos of cocoa. For after.'],
+    ],
+    win: [['kip', 'announcer', 'The Foxes win the Winter Classic! Light up the sky over Pine Pond!'], ['them', 'frost', 'Fine. You earned the cocoa.']],
+    loss: [['kip', 'announcer', 'The visitors take the Winter Classic. What a night on the pond.'], ['them', 'frost', 'Pond hockey suits us. See you in the spring.']],
+  },
 };
 
 export const TUTORIAL_TIPS = [

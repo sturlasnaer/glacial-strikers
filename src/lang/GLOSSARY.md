@@ -57,5 +57,8 @@ Terms the translation uses consistently. The tone is friendly, sporty and short;
 | settings / music / sound effects | stillingar / tónlist / hljóðbrellur |
 | pause / resume | hlé / halda áfram |
 | backup code / cloud save | afritunarkóði / skýjavistun |
+| rumble strips / shadow zones | hristrendur / skuggasvæði |
+| Winter Classic | Vetrarklassíkin |
+| Coach Brekka / Gearsmith Ottar / Kip Vance, PA | Brekka þjálfari / Ottar búðarmaður / Kip Vance, vallarþulur |
 
-Names stay as they are: people (Nix, Volta, Bram, Halla, Coach Brekka, Gearsmith Ottar, Kip Vance), teams (Snowcrest Foxes, Pinewood Lynx, Ember Comets, Gilded Rams, Obsidian Ravens, Aurora Royals), the Frostline league, arenas (Ember Dome, Aurora Palace, Pine Pond), Puckbound. Club names aren't declined. The tokens "Snowcrest Foxes" and "Foxes" in a sentence are replaced with the player's own club name, so keep them unchanged in the translation.
+Names stay as they are: people (Nix, Volta, Bram, Halla, Brekka, Ottar, Kip Vance; their job titles are translated, above), teams (Snowcrest Foxes, Pinewood Lynx, Ember Comets, Gilded Rams, Obsidian Ravens, Aurora Royals), the Frostline league, arenas (Ember Dome, Aurora Palace, Pine Pond, Golden Hall, Dark Aerie), Puckbound. Club names aren't declined. The tokens "Snowcrest Foxes" and "Foxes" in a sentence are replaced with the player's own club name, so keep them unchanged in the translation.

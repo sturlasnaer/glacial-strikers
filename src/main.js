@@ -23,7 +23,7 @@ import { recordRivalResult, rivalLines, rivalAfterLine } from './rivals.js';
 import { recordRealGame, computeAwards, AWARD_BY_ID } from './awards.js';
 import { dailyFor, dailyGoal, completeDaily, noteAttempt, dayKey, dailyState } from './daily.js';
 import { standings } from './league.js';
-import { nextFixture, recordOurGame, newLeague, rivalPlan } from './league.js';
+import { nextFixture, recordOurGame, newLeague, rivalPlan, recordClassic } from './league.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
 import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS } from './data.js';
@@ -243,6 +243,7 @@ class App {
     if (geared) Assets.ensureGear();
     if (rules) Assets.loadGroup('rules').catch(() => {});
     this.lap = null;
+    this.fx.heavySnow = false;
     Assets.prepareTeam(TEAMS[teamId]);
     this.awayTeamId = teamId;
     this.arena = arena;
@@ -303,11 +304,12 @@ class App {
     const stage = f.stage;
     const team = TEAMS[f.opponent];
     const powers = stage.powers.length ? t('Power pucks: {list}.', { list: stage.powers.map((p) => t(POWER_INFO[p].name)).join(', ') }) : t('No power pucks this match.');
-    const twist = TWIST_INFO[this.twistFor(this.arenaFor(team.id), stage)];
+    const arena = stage.arena || this.arenaFor(team.id); // the Winter Classic is on Pine Pond
+    const twist = TWIST_INFO[this.twistFor(arena, stage)];
     const sub = `${t(stage.round, { n: stage.roundN })} · ${powers} ${twist ? t(twist) : ''}`;
     this.scene = 'dialogue';
     this.music('story');
-    Assets.ensureTeam(team.id, this.arenaFor(team.id)).then(() => this.showStageDialogue(f, team, sub));
+    Assets.ensureTeam(team.id, arena).then(() => this.showStageDialogue(f, team, sub));
   }
 
   // Rivals with their own building host you there.
@@ -553,10 +555,12 @@ class App {
     this.cur = { teamId, stage, exhibition, stageIndex: exhibition ? -1 : s.stage, mods, plan, theirPlan, fixture: extra.fixture, daily: extra.daily || null };
     const cfg = matchConfig(s, teamId, stage, { plans: [plan, theirPlan], buffs });
     cfg.mods = mods;
-    const arena = extra.arena || this.arenaFor(teamId);
+    const arena = extra.arena || stage.arena || this.arenaFor(teamId);
     cfg.twist = this.twistFor(arena, stage, extra.rules !== false);
     this.attract = false;
     const m = this.makeMatch(cfg, teamId, arena);
+    const classic = !!(extra.fixture && extra.fixture.kind === 'classic');
+    this.fx.heavySnow = classic;
     this.hookMatch(m);
     this.replay.clear();
     this.clips.clear();
@@ -567,10 +571,11 @@ class App {
     this.ui.clear();
     this.scene = 'match';
     this.hud.show(m, teamId);
+    if (classic) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t('The Winter Classic! Outdoor hockey under the snow, and the whole league is watching.')); }, 500);
     this.announceRule(cfg.twist, arena);
     if (this.cur.daily) setTimeout(() => { if (this.scene === 'match') this.hud.banner(`<div class="small">${t('Daily challenge')}</div><div class="sub" style="font-size:clamp(16px,3vw,24px)">${t(dailyGoal(this.cur.daily.goal).text)}</div>`, 3); }, 300);
     this.touch.reset();
-    this.music(/\bFinal$/.test(stage.round || '') ? 'final' : ARENA_MUSIC[arena] || 'frostline');
+    this.music(classic ? 'classic' : /\bFinal$/.test(stage.round || '') ? 'final' : ARENA_MUSIC[arena] || 'frostline');
     audio.setArena(arena);
     const edge = m.planEdge(0);
     const plans = { a: t(GAME_PLANS[plan].name), b: t(GAME_PLANS[theirPlan].name) };
@@ -749,7 +754,13 @@ class App {
     }
     let becameChampion = false, leagueOut = null;
     if (rewards.won) s.record.wins++;
-    if (!c.exhibition && s.league) {
+    const classic = !!(c.fixture && c.fixture.kind === 'classic');
+    if (!c.exhibition && s.league && classic) {
+      // a showcase: on the record and in the trophy case, not in the standings
+      recordClassic(s.league, summary.score[0], summary.score[1], c.teamId);
+      (s.classics ||= []).push({ season: s.season, opp: c.teamId, gf: summary.score[0], ga: summary.score[1] });
+      if (rewards.won) this.ach.unlock('winter-classic');
+    } else if (!c.exhibition && s.league) {
       recordRealGame(s, s.league, summary, c.teamId);
       leagueOut = recordOurGame(s.league, s, summary.score[0], summary.score[1]);
       leagueOut.kind = c.fixture ? c.fixture.kind : 'regular';
@@ -780,6 +791,7 @@ class App {
     this.music(rewards.won ? 'victory' : 'defeat');
     if (ups.length) setTimeout(() => audio.jingle('level'), 2600);
     this.ui.results({ summary, rewards, ups, chemUps, teamId: c.teamId, exhibition: c.exhibition, round: c.stage.round, roundN: c.stage.roundN, gUp, clips: this.clips }, () => {
+      this.fx.heavySnow = false;
       const finish = () => {
         if (becameChampion) { this.scene = 'results'; this.music('final'); audio.jingle('champion'); this.ui.champion(() => this.goHub('tournament')); } else this.goHub(rewards.won ? 'tournament' : 'team');
       };
@@ -794,6 +806,7 @@ class App {
       if (extra) lines = [...(lines || []), extra];
       if (lines) { this.scene = 'dialogue'; this.ui.dialogue(lines, c.teamId, null, after, rewards.won ? 'won' : 'lost'); } else after();
     });
+    if (classic && rewards.won) this.ui.fireworks();
   }
 
   resolvePerks(done) {

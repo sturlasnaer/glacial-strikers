@@ -37,7 +37,7 @@ function walk(v, path, where, depth = 0) {
   if (v == null || depth > 7) return;
   if (Array.isArray(v)) {
     // dialogue lines: [side, speaker, text]
-    if (v.length >= 3 && (v[0] === 'us' || v[0] === 'them') && typeof v[2] === 'string') { add(v[2], where); return; }
+    if (v.length >= 3 && (v[0] === 'us' || v[0] === 'them' || v[0] === 'kip') && typeof v[2] === 'string') { add(v[2], where); return; }
     v.forEach((x, i) => walk(x, path.concat(i), where, depth + 1));
     return;
   }

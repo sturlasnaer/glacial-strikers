@@ -365,6 +365,52 @@ export const SONGS = {
     order: ['intro', 'A', 'B', 'A', 'C'], loop: 1,
   },
 
+  // ---------------------------------------------------------------- Winter Classic: an outdoor anthem
+  classic: {
+    name: 'Winter Classic', bpm: 112, key: 'G', gain: 1.15,
+    inst: { lead: 'brass', flute: 'flute', bells: 'celesta', comp: 'organ', bass: 'bass' },
+    pan: { flute: 0.3, comp: -0.25 },
+    sections: {
+      intro: {
+        bars: 2, chords: 'G D',
+        bells: { oct: 5, pat: '1:2 5:2 8:2 5:2 1:2 5:2 8:2 5:2' },
+        drums: { z: 'x.x.x.x.x.x.x.x.', T: 'x...............', fill: { z: 'x.x.x.x.x.x.x.x.', T: 'x.......x.x.xxxx' } },
+      },
+      A: {
+        bars: 8, chords: 'G D Em C G D C D',
+        lead: `G4:3 D4 G4:2 A4:2 B4:4 D5:4 | D5:6 C5 B4 A4:4 F#4:4 | E5:3 B4 E5:2 F#5:2 G5:4 B5:4 | C6:6 B5 A5 G5:4 E5:4 |
+               G5:3 D5 G5:2 A5:2 B5:4 D6:4 | F#5:4 A5:4 D6:4 F#6:4 | E6:6 D6 C6 G5:4 C6:4 | D6:8 A5:4 F#5:4`,
+        bells: { oct: 5, pat: '1:2 5:2 8:2 5:2 1:2 5:2 8:2 5:2' },
+        bass: { oct: 2, pat: '1:4 5:4 1:4 5:4' },
+        comp: { pad: true, oct: 4, rhythm: 'x:4 x:4 x:4 x:4' },
+        drums: { k: 'x.......x.......', s: '....x.......x...', z: 'x.x.x.x.x.x.x.x.', start: { c: 'x', T: 'x' }, fill: { k: 'x.......x.......', s: '....x...x.x.xXXX', z: 'x.x.x.x.........', T: '........x.x.x.x.' } },
+        hype: { harm: { follow: 'lead' }, drums: { o: '..x...x...x...x.' } },
+      },
+      B: {
+        bars: 8, chords: 'Em C G D Em C Am D',
+        flute: `B4:8 E5:4 G5:4 | G5:6 E5:2 C5:8 | D5:6 G5:2 B5:8 | A5:12 F#5:2 A5:2 |
+                G5:6 F#5:2 E5:4 B4:4 | E5:6 G5:2 C6:8 | C6:6 B5:2 A5:4 E5:4 | D5:4 F#5:4 A5:4 D6:4`,
+        bells: { oct: 6, pat: '1:4 5:4 3:4 5:4' },
+        bass: { oct: 2, pat: '1:8 5:8' },
+        comp: { pad: true, oct: 4 },
+        drums: { k: 'x...............', z: 'x.x.x.x.x.x.x.x.', T: 'x.......x.......', start: { c: 'x' }, fill: { T: 'x...x...x.x.x.x.', s: '............xXXX' } },
+        hype: { harm: { follow: 'flute' } },
+      },
+      C: {
+        bars: 8, chords: 'C:32 G:32 Am:16 D:16 G:32',
+        lead: `E5:4 G5:4 C6:8 | C6:4 D6:4 E6:8 | D6:4 B5:4 G5:8 | A5:4 B5:4 D6:8 |
+               C6:4 E6:4 A5:8 | D6:4 F#6:4 A6:8 | G6:8 D6:4 B5:4 | G5:16`,
+        flute: { follow: 'lead' },
+        bells: { oct: 5, pat: '1:2 5:2 8:2 5:2 1:2 5:2 8:2 5:2' },
+        bass: { oct: 2, pat: '1:4 1:4 5:4 8:4' },
+        comp: { pad: true, oct: 4, rhythm: 'x:4 x:4 x:4 x:4' },
+        drums: { k: 'x...x...x...x...', s: '....x.......x...', z: 'x.x.x.x.x.x.x.x.', T: 'x.......x.......', start: { c: 'x' }, fill: { T: 'x.x.x.x.xxxxXXXX', c: '............x...' } },
+        hype: { harm: { follow: 'lead' }, drums: { o: '..x...x...x...x.' } },
+      },
+    },
+    order: ['intro', 'A', 'B', 'A', 'C'], loop: 1,
+  },
+
   // ---------------------------------------------------------------- Cup Final
   final: {
     name: 'The Cup Final', bpm: 150, key: 'D', gain: 1.2,
