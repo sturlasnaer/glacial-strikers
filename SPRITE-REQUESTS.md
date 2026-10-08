@@ -7,11 +7,12 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **D**: celebrations for the rival wingers and defenders.
-2. **O**: arena-rule icons.
-3. **E**: achievement icons.
-4. **J**: the Awards Night stage.
-5. **F**: a penalty box for Pine Pond.
+1. **U**: a pixel-art UI kit for the menus (if D is already underway, finish it first).
+2. **D**: celebrations for the rival wingers and defenders.
+3. **O**: arena-rule icons.
+4. **E**: achievement icons.
+5. **J**: the Awards Night stage.
+6. **F**: a penalty box for Pine Pond.
 
 ## Format notes
 
@@ -46,6 +47,32 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - **Batch K scoreboards:** Pine Pond's wooden board, the Golden Hall's stone and gold, and the Dark Aerie's black stone.
 - **Batch T training props:** Sniper target boards (unlit, lit, hit) and the speed-lane tile for the Frostline twist.
 - **Batch M2 gear masks:** signed rival skaters' special sticks and skates now recolour in their side strides too.
+
+---
+
+## Batch U: a pixel-art UI kit for the menus
+
+The menus are HTML styled in CSS: flat navy panels with an ice-blue rim, rounded buttons and chips, and a plain gold outline for the controller highlight. They should look as hand-made as the game. The menus stay HTML (that keeps text wrapping, Icelandic, phone layouts and screen readers working), skinned with these sprites through CSS `border-image`, so:
+
+- **Deliver every piece as its own transparent PNG** (CSS needs a file per image), drawn at 2× or 3× and nearest-neighbour clean. Add a small JSON listing each file and its **9-slice margins** (left/top/right/bottom, in source pixels).
+- **Centres must stretch or tile cleanly**: flat or very subtly dithered fills, with all the detail in the corners and edges.
+- Navy outlines and the game palette: navy `#14233b`, ice `#71dce8`, cream `#fff2cb`, gold `#ffd45e`, coral `#ff6f7d`.
+
+**Pieces:**
+
+- **Panels (9-slice):** `panel` (the main menu panel, navy with an ice rim and small riveted corners), `panel_modal` (pop-ups, a heavier frame), `card` (shop items, list rows, a lighter inner frame), and `card_focus` (the same card with a gold rim).
+- **Buttons (9-slice, about 48 px tall in game, `normal` and `pressed` each):** `btn_gold` (main actions), `btn_ice` (default), `btn_cream`, `btn_ghost` (outlined) and `btn_disabled`. 10 images.
+- **Tabs:** `tab` and `tab_active`. **Filter chips:** `chip` and `chip_on`.
+- **Controller highlight:** four gold corner brackets drawn around the highlighted button, two frames for a gentle pulse (`focus_corner_a`, `focus_corner_b`; the game mirrors one corner for the other three).
+- **Button prompts, about 32 px:**
+  - PlayStation: ✕ ○ □ △, L1 R1 L2 R2, Options, Create and the D-pad.
+  - Xbox: A B X Y, LB RB LT RT, Menu, View.
+  - Keyboard keycaps: Enter, Esc, Shift, Space, the arrow keys, W A S D and the letters H J K L O P U I.
+
+  They go on menu buttons ("✕ Buy", "○ Back"), the tab bar (L1/R1) and the controls help.
+- **Small parts:** a coin price tag (9-slice), an `OWNED` stamp, a `NEW` badge, a red notification dot, a scrollbar track and thumb, and a dialogue box frame (9-slice) with a name plate.
+
+About 60 images.
 
 ---
 

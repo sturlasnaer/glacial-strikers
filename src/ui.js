@@ -1019,7 +1019,7 @@ export class UI {
         const owned = s.owned.includes(g.id);
         const price = Math.round(g.price * (1 - (s.discount || 0)));
         const afford = s.coins >= price;
-        return `<div class="item">
+        return `<div class="item" tabindex="0" data-card="${g.id}" data-pad-press="[data-buy]" aria-label="${esc(t(g.name))}">
           <img src="${ico(g.icon, 128)}" alt="">
           <div style="min-width:0">
             <div class="label" style="font-size:13px">${t(SLOT_NAMES[g.slot])}</div>

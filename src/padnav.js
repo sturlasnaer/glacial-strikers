@@ -1,9 +1,24 @@
 // Gamepad control of the menus. Outside a live match the D-pad or left stick moves a
 // highlight between buttons, Cross/A presses, Circle/B goes back or closes the pop-up,
 // L1/R1 switch hub tabs and the right stick scrolls long panels.
+//
+// Each screen and pop-up remembers its highlighted button, so redrawing a screen (a filter,
+// a purchase) or closing a pop-up puts the highlight back where it was. Inside a scrolling
+// panel the highlight walks the whole list before it leaves for the buttons outside it.
+// A card marked data-pad-press="<selector>" is one stop: A presses the button inside it.
+
+import { audio } from './audio.js';
 
 const PICKABLE = 'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), [tabindex="0"]';
 const BACK = '[data-close], #s-close, #dlg-skip';
+
+// A selector that finds the same button again after its screen is redrawn.
+function keyOf(el) {
+  if (el.id) return '#' + CSS.escape(el.id);
+  const d = Object.keys(el.dataset)[0];
+  if (!d) return null;
+  return `[data-${d.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase())}="${CSS.escape(el.dataset[d])}"]`;
+}
 
 const visible = (el) => {
   if (el.closest('[hidden]')) return false;
@@ -17,6 +32,13 @@ export class PadNav {
     this.prev = new Set(); // buttons held last frame
     this.held = null; // { dir, t } for auto-repeat
     this.used = false;
+    this.keys = new WeakMap(); // screen or pop-up -> selector of its highlighted button
+    this.lastLayer = null;
+    // Enter or Space on a focused card presses its button, as A does
+    document.addEventListener('keydown', (e) => {
+      const el = document.activeElement;
+      if ((e.key === 'Enter' || e.key === ' ') && el && el.dataset && el.dataset.padPress) { e.preventDefault(); this.press(el); }
+    });
   }
 
   // The layer the pad drives: the topmost pop-up, else the menu screen.
@@ -25,7 +47,8 @@ export class PadNav {
     return modals.length ? modals[modals.length - 1] : document.getElementById('screen');
   }
 
-  items(root) { return [...root.querySelectorAll(PICKABLE)].filter(visible); }
+  // buttons inside a one-stop card aren't stops of their own
+  items(root) { return [...root.querySelectorAll(PICKABLE)].filter((el) => visible(el) && (!el.parentElement.closest('[data-pad-press]'))); }
 
   // Should the pad drive the menus right now? Not while a match is being played.
   active() {
@@ -49,6 +72,7 @@ export class PadNav {
     this.prev = down;
     if (any) this.app.onPadPress?.(); // wakes the audio, like a click would
     if (!this.active()) { this.held = null; return; }
+    if (this.used) this.keepFocus();
 
     // direction with auto-repeat
     let dir = null;
@@ -84,9 +108,35 @@ export class PadNav {
     this.mark();
     el.focus({ preventScroll: true });
     el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    const key = keyOf(el);
+    if (key) this.keys.set(this.layer(), key);
   }
 
-  // Move to the nearest button in that direction (measured from the current one).
+  // Keep a highlight on screen: after a redraw, the button that had it; on a new screen or
+  // pop-up, its main button.
+  keepFocus() {
+    const root = this.layer();
+    const fresh = root !== this.lastLayer;
+    this.lastLayer = root;
+    if (this.focused(root)) return;
+    const key = this.keys.get(root);
+    let el = key ? root.querySelector(key) : null;
+    if (el && !visible(el)) el = null;
+    if (!el && fresh) el = this.main(root) || (root.classList.contains('modal-bg') ? this.items(root)[0] : null);
+    if (el) this.focus(el);
+  }
+
+  // The scrolling panel an element sits in (a hub tab's body, a long pop-up), if any.
+  scroller(el) {
+    for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+      const o = getComputedStyle(p).overflowY;
+      if ((o === 'auto' || o === 'scroll') && p.scrollHeight > p.clientHeight + 2) return p;
+    }
+    return null;
+  }
+
+  // Move to the nearest button in that direction (measured from the current one), staying
+  // inside the current scrolling panel while it has one that way.
   move(dir) {
     const root = this.layer();
     const list = this.items(root);
@@ -95,19 +145,32 @@ export class PadNav {
     if (!cur) { this.focus(this.main(root) || list[0]); return; }
     const a = cur.getBoundingClientRect();
     const ax = a.left + a.width / 2, ay = a.top + a.height / 2;
-    let best = null, bestScore = Infinity;
-    for (const el of list) {
-      if (el === cur) continue;
-      const b = el.getBoundingClientRect();
-      const bx = b.left + b.width / 2, by = b.top + b.height / 2;
-      const dx = bx - ax, dy = by - ay;
-      const along = dir === 'up' ? -dy : dir === 'down' ? dy : dir === 'left' ? -dx : dx;
-      const across = dir === 'up' || dir === 'down' ? Math.abs(dx) : Math.abs(dy);
-      if (along <= 4) continue;
-      const score = along + across * 2.2;
-      if (score < bestScore) { bestScore = score; best = el; }
-    }
-    if (best) this.focus(best);
+    const nearest = (pool) => {
+      let best = null, bestScore = Infinity;
+      for (const el of pool) {
+        if (el === cur) continue;
+        const b = el.getBoundingClientRect();
+        const bx = b.left + b.width / 2, by = b.top + b.height / 2;
+        const dx = bx - ax, dy = by - ay;
+        const along = dir === 'up' ? -dy : dir === 'down' ? dy : dir === 'left' ? -dx : dx;
+        const across = dir === 'up' || dir === 'down' ? Math.abs(dx) : Math.abs(dy);
+        if (along <= 4) continue;
+        const score = along + across * 2.2;
+        if (score < bestScore) { bestScore = score; best = el; }
+      }
+      return best;
+    };
+    const box = this.scroller(cur);
+    const next = (box && nearest(list.filter((el) => box.contains(el)))) || nearest(list);
+    if (next) this.focus(next);
+  }
+
+  // A on a button presses it; on a one-stop card, the card's button (or a no if it's off).
+  press(el) {
+    const sel = el.dataset && el.dataset.padPress;
+    if (!sel) { el.click(); return; }
+    const inner = el.querySelector(sel);
+    if (inner && !inner.disabled) inner.click(); else audio.sfx('deny');
   }
 
   confirm() {
@@ -115,17 +178,20 @@ export class PadNav {
     if (app.scene === 'dialogue' && app.ui.dialogueAdvance && !document.querySelector('.modal-bg')) { app.ui.dialogueAdvance(); return; }
     const root = this.layer();
     const cur = this.focused(root);
-    if (cur) { cur.click(); return; }
+    if (cur) { this.press(cur); return; }
     // nothing highlighted yet: the screen's main action, else the first button
     const main = this.main(root);
     if (main) main.click();
     else this.focus(this.items(root)[0]);
   }
 
-  // the screen's main action: start, play, continue
+  // the screen's main action: start, play, continue (in that order of preference)
   main(root) {
-    const el = root.querySelector('#t-start, #h-play, #h-season, #r-go, .btn.gold:not([disabled])');
-    return el && visible(el) ? el : null;
+    for (const sel of ['#t-start', '#h-play', '#h-season', '#r-go', '.btn.gold:not([disabled])']) {
+      const el = [...root.querySelectorAll(sel)].find((e) => visible(e) && !e.parentElement.closest('[data-pad-press]'));
+      if (el) return el;
+    }
+    return null;
   }
 
   back() {
