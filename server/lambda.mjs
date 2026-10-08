@@ -1,4 +1,4 @@
-// AWS Lambda entry point for the online leaderboards (Function URL, Node.js 20).
+// AWS Lambda entry point for the online leaderboards and cloud saves (Function URL, Node.js 22).
 // Table: puckbound-leaderboard, key (board, player); index byRank on (board, rank).
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand, NumberValue } from '@aws-sdk/lib-dynamodb';

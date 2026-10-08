@@ -4,6 +4,8 @@ A single AWS Lambda function with a public function URL, and one DynamoDB table,
 
 `https://vivkdhbjjsajnazmoijsbim3gq0tjzox.lambda-url.eu-west-1.on.aws/`
 
+**Weekly boards:** the four drill boards also keep one board per ISO week (UTC, Monday to Monday), stored as `<board>@<week>` (for example `sniper@2026-W41`) in the same table. A score post updates the all-time best and that week's best, and answers with both ranks. The client sends `played` (when the score was set), so a score queued offline lands in its own week; times more than 8 days old, or in the future, count as now. `GET ?board=sniper&period=week` reads the current week's board and adds `week` and `resetsAt`. Old weeks stay in the table: a few bytes per player per board per week.
+
 **Cloud saves** live in the same table under board `_save`, keyed by a SHA-256 hash of the player's 32-character backup code. Requests are `POST {op: 'save_put' | 'save_get', token, data}`, saves are capped at 256 KB, and a slot accepts one write every 20 seconds. Save rows have no `rank`, so they never appear in the leaderboard index.
 
 | Piece | Name |

@@ -1,6 +1,8 @@
 // Online leaderboards. Each save gets a random player id; posts carry the club's name, a
 // short tag from that id, and the score. Best scores wait in a queue until they're posted,
-// so playing offline (or before the server is set up) loses nothing.
+// so playing offline (or before the server is set up) loses nothing. The drill boards also
+// have weekly boards (Monday to Monday, UTC); a queued score keeps the time it was played,
+// so it counts for that week.
 
 import { CLUB } from './data.js';
 import { t } from './i18n.js';
@@ -11,10 +13,10 @@ const query = typeof location !== 'undefined' ? new URLSearchParams(location.sea
 export const LB_URL = query || DEFAULT_URL;
 
 export const BOARD_INFO = {
-  cones: { name: 'Cone Weave', better: 'lower', fmt: (v) => t('{seconds}s', { seconds: v.toFixed(2) }) },
-  sniper: { name: 'Sniper', better: 'higher', fmt: (v) => t('{n} pts', { n: v }) },
-  rondo: { name: 'Keep-Away', better: 'higher', fmt: (v) => t('{n} pts', { n: v }) },
-  breakaway: { name: 'Breakaway', better: 'higher', fmt: (v) => `${v}/5` },
+  cones: { name: 'Cone Weave', better: 'lower', weekly: true, fmt: (v) => t('{seconds}s', { seconds: v.toFixed(2) }) },
+  sniper: { name: 'Sniper', better: 'higher', weekly: true, fmt: (v) => t('{n} pts', { n: v }) },
+  rondo: { name: 'Keep-Away', better: 'higher', weekly: true, fmt: (v) => t('{n} pts', { n: v }) },
+  breakaway: { name: 'Breakaway', better: 'higher', weekly: true, fmt: (v) => `${v}/5` },
   shootout_wins: { name: 'Shootout wins', better: 'higher', fmt: (v) => t(v === 1 ? '{n} win' : '{n} wins', { n: v }) },
   daily_streak: { name: 'Daily streak', better: 'higher', fmt: (v) => t(v === 1 ? '{n} day' : '{n} days', { n: v }) },
 };
@@ -52,7 +54,7 @@ export async function submit(save, board, score, char = '') {
   if (!onlineOn(save) || !BOARD_INFO[board] || !Number.isFinite(score)) return null;
   const st = onlineState(save);
   const prev = st.pending[board];
-  if (!prev || isBetter(board, score, prev.score)) st.pending[board] = { score, char };
+  if (!prev || isBetter(board, score, prev.score)) st.pending[board] = { score, char, played: Date.now() };
   if (!configured()) return null;
   return post(save, board);
 }
@@ -62,7 +64,7 @@ async function post(save, board) {
   const entry = st.pending[board];
   if (!entry) return null;
   try {
-    const res = await request('POST', null, { board, player: st.id, name: CLUB.name, tag: tagOf(st.id), score: entry.score, char: entry.char });
+    const res = await request('POST', null, { board, player: st.id, name: CLUB.name, tag: tagOf(st.id), score: entry.score, char: entry.char, played: entry.played });
     if (st.pending[board] === entry) delete st.pending[board];
     return res;
   } catch (e) {
@@ -81,9 +83,17 @@ export async function flush(save) {
   return sent;
 }
 
-export function fetchBoard(save, board) {
+// period: 'all' or 'week' (the drill boards)
+export function fetchBoard(save, board, period = 'all') {
   if (!configured()) return Promise.reject(new Error('not configured'));
-  return request('GET', { board, player: onlineState(save).id });
+  return request('GET', { board, player: onlineState(save).id, ...(period === 'week' ? { period } : {}) });
+}
+
+// "3d 4h" / "5h 20m" until the weekly boards reset
+export function resetsIn(at, now = Date.now()) {
+  const m = Math.max(0, Math.round((at - now) / 60000));
+  const d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60);
+  return d ? t('{d}d {h}h', { d, h }) : t('{h}h {m}m', { h, m: m % 60 });
 }
 
 // ------------------------------------------------------------------ cloud saves

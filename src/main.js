@@ -493,9 +493,11 @@ class App {
       const el = where && document.querySelector(where);
       if (!el || !r) return;
       const info = BOARD_INFO[board];
-      el.innerHTML = r.improved
+      const all = r.improved
         ? t('Online: {rank} of {total} · new personal best posted', { rank: `<b>#${r.rank}</b>`, total: r.total })
         : t('Online: {rank} of {total} · your best {best}', { rank: `<b>#${r.rank}</b>`, total: r.total, best: info.fmt(r.best) });
+      const wk = r.week ? t(r.week.improved ? 'This week: {rank} of {total} · new weekly best' : 'This week: {rank} of {total} · your best {best}', { rank: `<b>#${r.week.rank}</b>`, total: r.week.total, best: info.fmt(r.week.best) }) : '';
+      el.innerHTML = wk ? `${wk}<br>${all}` : all;
     });
   }
 

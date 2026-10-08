@@ -18,10 +18,10 @@ Ideas beyond the blueprint, roughly in the order they'd pay off. "Art" marks ite
 
 Everything on the original list is done: chemistry, rivalries, training mini-games, shootouts, local versus, gamepad rumble, challenges, the league with playoffs, game plans, locker-room moments, penalties, pulling the goalie, offline install, accessibility settings, goal clips and achievements.
 
-Online leaderboards (drills, shootout wins, daily streaks) and cloud saves are live on AWS (one Lambda function and a DynamoDB table in eu-west-1).
+Online leaderboards (drills, with weekly boards that reset on Mondays, shootout wins, daily streaks) and cloud saves are live on AWS (one Lambda function and a DynamoDB table in eu-west-1).
 
 Ideas for later:
-1. **Weekly boards** that reset, and friends-only boards via a shared code.
+1. **Friends-only boards** via a shared code (the weekly drill boards are done).
 2. **Replay checks** on the server if faked scores become a problem.
 
 ## Next, with art

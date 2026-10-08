@@ -15,7 +15,7 @@ import {
   expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave,
   chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups,
 } from './progress.js';
-import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave } from './online.js';
+import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave, resetsIn } from './online.js';
 import { nextGuide, doneGuide, guideOff } from './guide.js';
 import { audio } from './audio.js';
 import { t } from './i18n.js';
@@ -1104,25 +1104,30 @@ export class UI {
   }
 
   // An online leaderboard: the top 25, with you highlighted and your rank.
-  leaderboard(board) {
+  // The online boards. The drill boards open on this week's (it remembers your pick).
+  leaderboard(board, period = this.lbPeriod || 'week') {
     const s = this.app.save;
     const info = BOARD_INFO[board];
+    if (!info.weekly) period = 'all';
     const st = onlineState(s);
     const myTag = tagOf(st.id);
     const tabs = Object.entries(BOARD_INFO).map(([id, b]) => `<button class="chip" data-lbt="${id}" aria-pressed="${id === board}">${esc(t(b.name))}</button>`).join('');
+    const periods = info.weekly ? `<div class="filters" style="margin:0 0 8px">${[['week', t('This week')], ['all', t('All time')]].map(([p, label]) => `<button class="chip" data-lbp="${p}" aria-pressed="${p === period}">${label}</button>`).join('')}</div>` : '';
     const queued = st.pending[board];
     const note = (t) => `<p class="muted" style="font-size:13px">${t}</p>`;
     this.modal(`
       <h2>${t('Online leaderboards')}</h2>
       <div class="jukebox" style="margin:4px 0 10px">${tabs}</div>
+      ${periods}
       <div id="lb-body">${!onlineOn(s) ? note(t('Online leaderboards are off in Settings.'))
         : !configured() ? note(queued ? t('The online leaderboards open soon. Your best scores are saved ({score} here) and will be posted when they do.', { score: esc(info.fmt(queued.score)) }) : t('The online leaderboards open soon. Your best scores are saved and will be posted when they do.'))
         : `<p class="muted">${t('Loading…')}</p>`}</div>
       <p class="muted" style="font-size:12px;margin:8px 0 0">${t('You appear as {name}. Rename the club in Team › Club.', { name: `<b>${esc(CLUB.name)}</b> <span class="lb-tag">#${myTag}</span>` })}</p>
       <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>${t('Close')}</button></div>`, (m, close) => {
       this.click('[data-lbt]', (el) => { audio.sfx('click'); close(); this.leaderboard(el.dataset.lbt); }, m);
+      this.click('[data-lbp]', (el) => { audio.sfx('click'); this.lbPeriod = el.dataset.lbp; close(); this.leaderboard(board, el.dataset.lbp); }, m);
       if (!onlineOn(s) || !configured()) return;
-      fetchBoard(s, board).then((r) => {
+      fetchBoard(s, board, period).then((r) => {
         const out = m.querySelector('#lb-body');
         if (!out) return;
         const rows = r.top.map((row, i) => {
@@ -1130,9 +1135,10 @@ export class UI {
           const who = row.char && member(row.char) ? ` <span class="muted">· ${esc(member(row.char).name)}</span>` : '';
           return `<div class="lb-row ${me ? 'me' : ''}"><span class="lb-rank">${i + 1}</span><span class="lb-name">${esc(row.name)} <span class="lb-tag">#${esc(row.tag)}</span>${who}</span><b>${esc(info.fmt(row.score))}</b></div>`;
         }).join('');
-        const mine = r.me ? `<div class="lb-me">${t('You: {rank} of {total} · best {score}', { rank: `<b>#${r.me.rank}</b>`, total: r.total, score: esc(info.fmt(r.me.score)) })}</div>`
-          : `<div class="lb-me muted">${r.total ? t('{n} on the board.', { n: r.total }) : t('Nobody yet.')} ${t('Play {board} to get on it.', { board: esc(t(info.name)) })}</div>`;
-        out.innerHTML = `${mine}<div class="lb-list">${rows || ''}</div>`;
+        const mine = r.me ? `<div class="lb-me">${t(r.week ? 'You this week: {rank} of {total} · best {score}' : 'You: {rank} of {total} · best {score}', { rank: `<b>#${r.me.rank}</b>`, total: r.total, score: esc(info.fmt(r.me.score)) })}</div>`
+          : `<div class="lb-me muted">${r.total ? t('{n} on the board.', { n: r.total }) : r.week ? t('Nobody yet this week.') : t('Nobody yet.')} ${t('Play {board} to get on it.', { board: esc(t(info.name)) })}</div>`;
+        const reset = r.week && r.resetsAt ? `<p class="muted" style="font-size:12px;margin:6px 0 0">${t('The weekly board starts again in {time} (Monday, 00:00 UTC).', { time: resetsIn(r.resetsAt) })}</p>` : '';
+        out.innerHTML = `${mine}<div class="lb-list">${rows || ''}</div>${reset}`;
       }).catch(() => {
         const out = m.querySelector('#lb-body');
         if (out) out.innerHTML = note(t('Couldn\'t reach the leaderboard. Your scores are saved and will be posted when you\'re back online.'));

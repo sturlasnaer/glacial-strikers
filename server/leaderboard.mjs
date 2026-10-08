@@ -6,6 +6,11 @@ import { createHash } from 'crypto';
 // One record per player per board holds their best score. Boards rank by a sortable key
 // (better scores first, earlier on ties). Scores come from a browser game, so they can be
 // faked by anyone determined; the checks here keep out nonsense and spam, not cheaters.
+//
+// The drill boards also have a weekly board, stored as '<board>@<ISO week>' (for example
+// 'sniper@2026-W41'), that starts empty every Monday at 00:00 UTC. A score counts for the
+// week it was set in: the client sends when it was played, so a score queued offline
+// still lands in the right week.
 
 export const BOARDS = {
   cones: { better: 'lower', min: 8, max: 200, decimals: 2 }, // seconds
@@ -15,6 +20,21 @@ export const BOARDS = {
   shootout_wins: { better: 'higher', min: 0, max: 100000, decimals: 0 },
   daily_streak: { better: 'higher', min: 0, max: 10000, decimals: 0 },
 };
+
+export const WEEKLY = new Set(['cones', 'sniper', 'rondo', 'breakaway']);
+const DAY = 86400000;
+
+// The ISO week (UTC) a time falls in, e.g. '2026-W41', and when that week ends.
+export function weekOf(ms) {
+  const d = new Date(ms);
+  const monday = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - ((d.getUTCDay() + 6) % 7) * DAY;
+  const year = new Date(monday + 3 * DAY).getUTCFullYear(); // the week's Thursday decides its year
+  const jan4 = Date.UTC(year, 0, 4);
+  const week1 = jan4 - ((new Date(jan4).getUTCDay() + 6) % 7) * DAY;
+  const n = Math.round((monday - week1) / (7 * DAY)) + 1;
+  return { key: `${year}-W${String(n).padStart(2, '0')}`, ends: monday + 7 * DAY };
+}
+const weekBoard = (board, key) => `${board}@${key}`;
 
 const TOP = 25;
 const MIN_GAP_MS = 2000; // per player and board
@@ -68,14 +88,18 @@ export async function handle(req, store, now = Date.now()) {
   if (req.method === 'GET') {
     const board = req.query.board;
     if (!BOARDS[board]) return bad('unknown board'); // (saves aren't readable this way)
-    const top = await store.top(board, TOP);
+    const weekly = req.query.period === 'week';
+    if (weekly && !WEEKLY.has(board)) return bad('no weekly board');
+    const week = weekOf(now);
+    const key = weekly ? weekBoard(board, week.key) : board;
+    const top = await store.top(key, TOP);
     let me = null;
     const player = req.query.player;
     if (player && /^[a-f0-9]{16,40}$/.test(player)) {
-      const mine = await store.get(board, player);
-      if (mine) me = { rank: (await store.countAbove(board, mine.rank)) + 1, score: mine.score };
+      const mine = await store.get(key, player);
+      if (mine) me = { rank: (await store.countAbove(key, mine.rank)) + 1, score: mine.score };
     }
-    return ok({ board, top: top.map(publicRow), me, total: await store.count(board) });
+    return ok({ board, top: top.map(publicRow), me, total: await store.count(key), ...(weekly ? { week: week.key, resetsAt: week.ends } : {}) });
   }
   if (req.method === 'POST') {
     let b;
@@ -103,7 +127,19 @@ export async function handle(req, store, now = Date.now()) {
       : { ...prev, name, tag, last: now }; // keep the best; refresh the name (club renamed)
     await store.put(row);
     const rank = (await store.countAbove(board, row.rank)) + 1;
-    return ok({ board, best: row.score, improved: better, rank, total: await store.count(board) });
+    const out = { board, best: row.score, improved: better, rank, total: await store.count(board) };
+    if (WEEKLY.has(board)) {
+      // the week the score was set in (a queued score can arrive late, but not from the future)
+      const played = Number(b.played);
+      const when = Number.isFinite(played) && played <= now + 60000 && played > now - 8 * DAY ? Math.min(played, now) : now;
+      const wk = weekOf(when), wb = weekBoard(board, wk.key);
+      const prevW = await store.get(wb, player);
+      const betterW = !prevW || (def.better === 'higher' ? score > prevW.score : score < prevW.score);
+      const rowW = betterW ? { board: wb, player, name, tag, char, score, at: when, rank: rankKey(board, score, when), last: now } : prevW;
+      if (betterW || prevW.name !== name || prevW.tag !== tag) await store.put(betterW ? rowW : { ...prevW, name, tag });
+      out.week = { key: wk.key, best: rowW.score, improved: betterW, rank: (await store.countAbove(wb, rowW.rank)) + 1, total: await store.count(wb), resetsAt: wk.ends };
+    }
+    return ok(out);
   }
   return bad('method not allowed', 405);
 }

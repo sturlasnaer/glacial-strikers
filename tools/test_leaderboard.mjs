@@ -1,6 +1,7 @@
-// Leaderboard server tests: ranking, ties, only-better updates, validation, rate limit.
+// Leaderboard server tests: ranking, ties, only-better updates, validation, rate limit,
+// cloud saves and the weekly boards.
 //   node tools/test_leaderboard.mjs
-import { handle, memoryStore, rankKey, cleanName } from '../server/leaderboard.mjs';
+import { handle, memoryStore, rankKey, cleanName, weekOf } from '../server/leaderboard.mjs';
 
 let pass = 0, fail = 0;
 const check = (name, cond, info) => { if (cond) pass++; else { fail++; console.log('✗', name, info ?? ''); } };
@@ -72,5 +73,40 @@ check('save rate limit', r.status === 429, r);
 check('code never stored', ![...JSON.stringify(await store.top('_save', 10))].join('').includes(token));
 check('saves not on boards', (await get('_save')).status === 400);
 check('big score body refused', (await handle({ method: 'POST', query: {}, body: JSON.stringify({ board: 'sniper', player: id(9), score: 1, pad: 'x'.repeat(3000) }) }, store)).status === 413);
+// weekly boards: ISO weeks in UTC, Monday to Monday
+check('week of 2026-10-08', weekOf(Date.UTC(2026, 9, 8, 12)).key === '2026-W41', weekOf(Date.UTC(2026, 9, 8, 12)));
+check('week ends Monday 00:00 UTC', weekOf(Date.UTC(2026, 9, 8, 12)).ends === Date.UTC(2026, 9, 12));
+check('new year 2027-01-01 is 2026-W53', weekOf(Date.UTC(2027, 0, 1)).key === '2026-W53', weekOf(Date.UTC(2027, 0, 1)).key);
+check('2024-12-30 is 2025-W01', weekOf(Date.UTC(2024, 11, 30)).key === '2025-W01', weekOf(Date.UTC(2024, 11, 30)).key);
+check('Sunday night is still that week', weekOf(Date.UTC(2026, 9, 11, 23, 59)).key === '2026-W41');
+check('Monday starts the next', weekOf(Date.UTC(2026, 9, 12)).key === '2026-W42');
+{
+  const ws = memoryStore();
+  let now = Date.UTC(2026, 9, 5, 10); // Monday, week 41
+  const wpost = (b, at = (now += 5000)) => handle({ method: 'POST', query: {}, body: JSON.stringify(b) }, ws, at);
+  const wget = (query) => handle({ method: 'GET', query }, ws, now);
+  r = await wpost({ board: 'sniper', player: id(1), name: 'Foxes', tag: 'AB12', score: 500, played: now });
+  check('weekly rank in the answer', r.body.week && r.body.week.key === '2026-W41' && r.body.week.rank === 1 && r.body.week.improved, r.body);
+  r = await wget({ board: 'sniper', period: 'week', player: id(1) });
+  check('weekly board has it', r.body.top.length === 1 && r.body.me.rank === 1 && r.body.week === '2026-W41' && r.body.resetsAt === Date.UTC(2026, 9, 12), r.body);
+  now += 7 * 86400000; // next Monday
+  r = await wget({ board: 'sniper', period: 'week', player: id(1) });
+  check('a new week starts empty', r.body.top.length === 0 && r.body.me === null && r.body.week === '2026-W42', r.body);
+  r = await wget({ board: 'sniper' });
+  check('all-time keeps it', r.body.top.length === 1, r.body);
+  r = await wpost({ board: 'sniper', player: id(1), name: 'Foxes', tag: 'AB12', score: 300, played: now });
+  check('a lower score is this week\'s best', r.body.week.best === 300 && r.body.week.improved && r.body.best === 500 && !r.body.improved, r.body);
+  r = await wpost({ board: 'sniper', player: id(2), name: 'Owls', tag: 'CD34', score: 900, played: now - 3 * 86400000 });
+  check('a score queued last week lands in last week', r.body.week.key === '2026-W41', r.body.week);
+  r = await wpost({ board: 'sniper', player: id(3), name: 'Bears', tag: 'EF56', score: 100, played: now + 3600000 });
+  check('a score from the future counts now', r.body.week.key === '2026-W42', r.body.week);
+  r = await wpost({ board: 'sniper', player: id(4), name: 'Elk', tag: 'GH78', score: 100, played: now - 30 * 86400000 });
+  check('a very old played time counts now', r.body.week.key === '2026-W42', r.body.week);
+  r = await wget({ board: 'sniper', period: 'week' });
+  check('this week ranks its own scores', r.body.top.map((x) => x.name).join() === 'Foxes,Bears,Elk', r.body.top);
+  check('no weekly daily streak', (await wget({ board: 'daily_streak', period: 'week' })).status === 400);
+  r = await wpost({ board: 'daily_streak', player: id(1), name: 'Foxes', score: 3 });
+  check('streaks have no weekly part', r.status === 200 && !r.body.week, r.body);
+}
 console.log(`leaderboard: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
