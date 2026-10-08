@@ -1,4 +1,4 @@
-/* Glacial Strikers — single dark arcade look, palette taken from the sprite pack. */
+/* Puckbound — single dark arcade look, palette taken from the sprite pack. */
 /* Layout: full-screen canvas; HUD + touch controls float above; menus are panels over a dimmed live rink. */
 :root {
   --ink: #0b1424;

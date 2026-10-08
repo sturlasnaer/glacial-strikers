@@ -117,7 +117,7 @@ export const GEAR_LOOK = {
 // Rival teams use the away sprites. recolor shifts the coral/violet jersey hues.
 export const TEAMS = {
   home: {
-    id: 'home', name: 'Glacial Strikers', short: 'GLA', crest: 'hud_elements/misc/home_crest',
+    id: 'home', name: 'Snowcrest Foxes', short: 'FOX', crest: 'hud_elements/misc/home_crest',
     color: '#71dce8', color2: '#fff2cb',
   },
   lynx: {
@@ -233,11 +233,11 @@ export const PALETTES = {
 };
 
 // ---------------------------------------------------------------- your club
-// Name, nickname, short code and colours (trim, jersey). Defaults are the Glacial Strikers.
-export const CLUB_DEFAULT = { name: 'Glacial Strikers', nick: 'Strikers', short: 'GLA', trim: '#71dce8', jersey: '#fff2cb' };
+// Name, nickname, short code and colours (trim, jersey). Defaults are the Snowcrest Foxes.
+export const CLUB_DEFAULT = { name: 'Snowcrest Foxes', nick: 'Foxes', short: 'FOX', trim: '#71dce8', jersey: '#fff2cb' };
 export const CLUB = { ...CLUB_DEFAULT, custom: false };
 export const CLUB_PRESETS = [
-  { id: 'glacial', name: 'Glacial', trim: '#71dce8', jersey: '#fff2cb' },
+  { id: 'glacial', name: 'Snowcrest', trim: '#71dce8', jersey: '#fff2cb' },
   { id: 'crimson', name: 'Crimson', trim: '#e0303c', jersey: '#f6f1e9' },
   { id: 'forest', name: 'Forest', trim: '#2fae5a', jersey: '#f3efe0' },
   { id: 'royal', name: 'Royal', trim: '#3d6bff', jersey: '#e9eef8' },
@@ -276,7 +276,7 @@ export function applyClub(club) {
 // Swap the default club name into a line of text.
 export function clubText(str) {
   if (!CLUB.custom || !str) return str;
-  return String(str).replace(/Glacial Strikers/g, CLUB.name).replace(/\bStrikers\b/g, CLUB.nick);
+  return String(str).replace(/Snowcrest Foxes/g, CLUB.name).replace(/\bFoxes\b/g, CLUB.nick);
 }
 
 // Twists: 'none' | 'speed_lanes' | 'cracked_ice' | 'both'
@@ -353,7 +353,7 @@ export const TWIST_INFO = {
 export const DIALOGUE = {
   lynx: {
     pre: [
-      ['them', 'frost', 'Are you the Glacial Strikers? Coach says you\'re the team to watch this year!'],
+      ['them', 'frost', 'Are you the Snowcrest Foxes? Coach says you\'re the team to watch this year!'],
       ['us', 'frost', 'We\'re just getting started. Good luck out there, Fern.'],
       ['us', 'thunder', 'Nix, they\'re practically puppies. Can I go full speed?'],
       ['us', 'stone', 'Pass the puck, Volta. That\'s how we win this cup.'],
@@ -363,7 +363,7 @@ export const DIALOGUE = {
   },
   comets: {
     pre: [
-      ['them', 'thunder', 'Glacial Strikers. Cute name. Ever played against fire?'],
+      ['them', 'thunder', 'Snowcrest Foxes. Cute name. Ever played against fire?'],
       ['us', 'thunder', 'Ever tried to catch lightning, Blaze?'],
       ['them', 'stone', 'Watch for the power orbs. Grab one and that puck burns hot.'],
       ['us', 'frost', 'Stay calm and move the puck. Their tempers are their weakness.'],
@@ -383,7 +383,7 @@ export const DIALOGUE = {
   },
   ravens: {
     pre: [
-      ['them', 'frost', 'The Strikers. You play with your hearts. We play with structure.'],
+      ['them', 'frost', 'The Foxes. You play with your hearts. We play with structure.'],
       ['us', 'frost', 'Structure breaks, Corvin. Ice cracks.'],
       ['them', 'thunder', 'Ride the speed lanes if you can keep up. We practise on them every day.'],
       ['us', 'thunder', 'Arrows on the ice? Sounds like a fast track to your net.'],
@@ -393,21 +393,21 @@ export const DIALOGUE = {
   },
   royals: {
     pre: [
-      ['them', 'frost', 'The Strikers. Cute little team. See you in the playoffs... if you make it.'],
+      ['them', 'frost', 'The Foxes. Cute little team. See you in the playoffs... if you make it.'],
       ['us', 'frost', 'We\'ll be there, Solenne. Count on it.'],
       ['them', 'thunder', 'Watch the lights. When the aurora shifts, so does the ice under you.'],
       ['us', 'stone', 'Everybody, together. Show them who we are.'],
     ],
     win: [['them', 'frost', 'A regular-season win. Don\'t get used to it.']],
-    loss: [['them', 'frost', 'Long live the Royals. Try again, little Strikers.']],
+    loss: [['them', 'frost', 'Long live the Royals. Try again, little Foxes.']],
     final: [
       ['them', 'frost', 'So the frozen underdogs reached the final. How charming.'],
       ['us', 'frost', 'We didn\'t come here for charm, Solenne. We came for the cup.'],
       ['them', 'thunder', 'Watch the lights. When the aurora shifts, so does the ice under you.'],
       ['us', 'stone', 'Everybody, together. One more win.'],
     ],
-    finalWin: [['them', 'frost', 'The cup is yours, Strikers. Enjoy it while it lasts.']],
-    finalLoss: [['them', 'frost', 'Champions again. Come back when you\'re ready, Strikers.']],
+    finalWin: [['them', 'frost', 'The cup is yours, Foxes. Enjoy it while it lasts.']],
+    finalLoss: [['them', 'frost', 'Champions again. Come back when you\'re ready, Foxes.']],
   },
 };
 
@@ -415,12 +415,12 @@ export const DIALOGUE = {
 export const PLAYOFF_LINES = {
   semi: {
     pre: [
-      ['them', 'frost', 'Semifinal. Win or go home, Strikers.'],
+      ['them', 'frost', 'Semifinal. Win or go home, Foxes.'],
       ['us', 'frost', 'Then we\'re not going home.'],
       ['us', 'thunder', 'Fast and loud, everybody. Let\'s go.'],
     ],
     win: [['them', 'frost', 'Go win the whole thing. Don\'t make us look bad.']],
-    loss: [['them', 'frost', 'Good season, Strikers. Not good enough.']],
+    loss: [['them', 'frost', 'Good season, Foxes. Not good enough.']],
   },
   final: {
     pre: [

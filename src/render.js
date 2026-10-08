@@ -1139,7 +1139,7 @@ export class Renderer {
     const big = Math.round(bar * 0.55);
     ctx.font = `${big}px ${this.font}`;
     ctx.textAlign = 'left';
-    ctx.fillStyle = '#71dce8'; ctx.fillText('GLACIAL STRIKERS', 14, bar / 2);
+    ctx.fillStyle = '#71dce8'; ctx.fillText('PUCKBOUND', 14, bar / 2);
     ctx.textAlign = 'right';
     ctx.fillStyle = Math.sin(fx.time * 6) > 0 ? '#ff3b3b' : '#7a1d1d';
     ctx.beginPath(); ctx.arc(w - 14 - ctx.measureText('REPLAY').width - 12, bar / 2, big * 0.22, 0, Math.PI * 2); ctx.fill();

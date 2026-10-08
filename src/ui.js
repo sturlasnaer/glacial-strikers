@@ -132,7 +132,7 @@ export class UI {
       <div class="dim"></div>
       <div class="title-wrap">
         <div class="title-crests"><img src="${crest('home', 128)}" alt=""></div>
-        <div class="title-logo">Glacial<span>Strikers</span></div>
+        <div class="title-logo">Puck<span>bound</span></div>
         <div class="title-sub">3-on-3 arcade hockey RPG</div>
         <div class="title-buttons">
           <button class="btn gold" id="t-start">${hasSave ? 'Continue' : 'New Season'}</button>
@@ -437,7 +437,7 @@ export class UI {
       const a = AWARD_BY_ID[w.id];
       const t = w.team === 'home' ? TEAMS.home : TEAMS[w.team];
       return `<div class="aw-card ${opened ? 'open' : ''} ${w.team === 'home' ? 'us' : ''}">
-        <div class="aw-face aw-back"><img src="${ico(a.icon, 160)}" alt=""><b>${esc(a.name)}</b><span>${esc(a.blurb)}</span></div>
+        <div class="aw-face aw-back"><img src="${ico(a.icon, 160)}" alt=""><b>${esc(a.name)}</b><span>${esc(clubText(a.blurb))}</span></div>
         <div class="aw-face aw-front">
           <img class="aw-portrait" src="${rowFace(w, 220)}" alt="">
           <div style="min-width:0"><small>${esc(a.name)}</small><b>${esc(w.name)}</b>
@@ -713,7 +713,7 @@ export class UI {
         <label class="color-pick">Jersey <input type="color" id="club-jersey" value="${draft.jersey}"></label>
       </div>
       <div class="row" style="justify-content:space-between">
-        <button class="btn small ghost" id="club-reset">Reset to Glacial Strikers</button>
+        <button class="btn small ghost" id="club-reset">Reset to ${esc(CLUB_DEFAULT.name)}</button>
         <span class="row" style="gap:8px"><button class="btn small ghost" data-close>Cancel</button><button class="btn gold" id="club-save">Save club</button></span>
       </div>`, (m, close) => {
       const $ = (sel) => m.querySelector(sel);

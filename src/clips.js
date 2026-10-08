@@ -68,7 +68,7 @@ export class ClipRecorder {
 
   fileFor(c, i) {
     const who = (c.meta.scorer || 'goal').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    return new File([c.blob], `glacial-strikers-${who}-${i + 1}.${c.ext}`, { type: c.blob.type });
+    return new File([c.blob], `puckbound-${who}-${i + 1}.${c.ext}`, { type: c.blob.type });
   }
 
   canShare(c) {
@@ -77,6 +77,6 @@ export class ClipRecorder {
 
   async share(c, i) {
     const file = this.fileFor(c, i);
-    await navigator.share({ files: [file], title: 'Glacial Strikers goal', text: c.meta.line || 'Goal!' });
+    await navigator.share({ files: [file], title: 'Puckbound goal', text: c.meta.line || 'Goal!' });
   }
 }

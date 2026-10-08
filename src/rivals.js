@@ -43,15 +43,15 @@ export function rivalLines(save, teamId) {
     else if (L.top) lines.push(['them', 'stone', pick([`${ours(L.top.id)} put ${L.top.goals} past us last time. We've drilled for that all week.`, `Somebody keep an eye on ${ours(L.top.id)}. ${L.top.goals} goals on us last game. Never again.`], seed)]);
     else if (margin >= 3) lines.push(['them', 'frost', pick([`${L.gf}–${L.ga}. We haven't forgotten. Not for a second.`, `Still hearing about that ${L.gf}–${L.ga} loss back home. Today we fix it.`], seed)]);
     else lines.push(['them', 'thunder', pick([`${L.gf}–${L.ga} last time. One lucky bounce, that's all you had.`, `You squeaked by us ${L.gf}–${L.ga}. Enjoyed it? It won't happen twice.`], seed)]);
-    if (r.streak >= 2) lines.push(['them', 'stone', `${r.streak} straight losses to the Strikers. Coach made us skate laps until midnight.`]);
+    if (r.streak >= 2) lines.push(['them', 'stone', `${r.streak} straight losses to the Foxes. Coach made us skate laps until midnight.`]);
     else if (seed % 3 === 0) lines.push(['us', 'thunder', `They remember us. Good. Let's give them something new to remember.`]);
   } else {
     if (L.theirTop) lines.push(['us', 'stone', `${theirs(L.theirTop.id)} scored ${L.theirTop.goals} on us last time. I'm on them all game.`]);
     else lines.push(['us', 'frost', `They beat us ${L.ga}–${L.gf} last time. Remember how that felt.`]);
-    lines.push(['them', 'thunder', pick([`Back for another lesson, Strikers?`, `Didn't you learn anything last time?`, `Oh good, the Strikers. Easy points.`], seed)]);
+    lines.push(['them', 'thunder', pick([`Back for another lesson, Foxes?`, `Didn't you learn anything last time?`, `Oh good, the Foxes. Easy points.`], seed)]);
     if (r.streak <= -2) lines.push(['us', 'thunder', `${-r.streak} losses in a row to these guys. That ends today.`]);
   }
-  if (save.season > 1 && L.season < save.season && seed % 2 === 0) lines.push(['them', 'frost', `New season, same Strikers? We'll see.`]);
+  if (save.season > 1 && L.season < save.season && seed % 2 === 0) lines.push(['them', 'frost', `New season, same Foxes? We'll see.`]);
   const poached = poachedLine(save, teamId);
   if (poached) lines.unshift(poached);
   return lines.slice(0, 3);
@@ -66,14 +66,14 @@ export function poachedLine(save, teamId) {
   const names = gone.map((k) => RECRUITS[recruitKey(teamId, k)].name);
   const who = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
   const seed = (save.rivals && save.rivals[teamId] && save.rivals[teamId].played) || 0;
-  return ['them', speaker, pick([`You took ${who} from us. Let's see who regrets it.`, `Nice jersey, ${names[0]}. It'll look even better after we beat you.`, `Signing ${who} won't save you, Strikers.`], seed)];
+  return ['them', speaker, pick([`You took ${who} from us. Let's see who regrets it.`, `Nice jersey, ${names[0]}. It'll look even better after we beat you.`, `Signing ${who} won't save you, Foxes.`], seed)];
 }
 
 // One extra line after the match, from the rival captain.
 export function rivalAfterLine(save, teamId, won, gf, ga) {
   const r = save.rivals && save.rivals[teamId];
   if (!r || r.played < 2) return null;
-  if (won && r.streak >= 3) return ['them', 'frost', `${r.streak} in a row. You've got our number, Strikers.`];
+  if (won && r.streak >= 3) return ['them', 'frost', `${r.streak} in a row. You've got our number, Foxes.`];
   if (won && r.streak === 1 && r.losses > 0) return ['them', 'thunder', `So you finally beat us. The series is ${r.wins}–${r.losses}.`];
   if (!won && r.streak <= -2) return ['them', 'stone', `${-r.streak} straight. Maybe this is our building now.`];
   return null;

@@ -13,7 +13,7 @@ export const AWARDS = [
   { id: 'playmaker', name: 'Playmaker', blurb: 'Most assists this season.', icon: 'equipment_items/stick/passing', coins: 120, exp: 50 },
   { id: 'iron_wall', name: 'Iron Wall', blurb: 'Best save percentage (60+ shots faced).', icon: 'equipment_items/armor/goalie_gloves', coins: 120, exp: 60, goalie: true },
   { id: 'enforcer', name: 'Enforcer', blurb: 'Most hits this season.', icon: 'equipment_items/armor/shoulders', coins: 100, exp: 40 },
-  { id: 'signing', name: 'Signing of the Year', blurb: 'The best season by a Strikers signing.', icon: MEDAL, coins: 100, exp: 50, ours: true },
+  { id: 'signing', name: 'Signing of the Year', blurb: 'The best season by a Foxes signing.', icon: MEDAL, coins: 100, exp: 50, ours: true },
 ];
 export const AWARD_BY_ID = Object.fromEntries(AWARDS.map((a) => [a.id, a]));
 

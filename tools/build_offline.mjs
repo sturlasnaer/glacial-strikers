@@ -1,4 +1,4 @@
-// Builds dist/glacial-strikers-offline.html: one self-contained file with every script,
+// Builds dist/puckbound-offline.html: one self-contained file with every script,
 // style, font and image embedded. Double-click it to play with no server or internet.
 //   node tools/build_offline.mjs
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -77,6 +77,6 @@ html = html.replace(/<link rel="manifest"[^>]*>\n?/, '')
   .replace(/<script type="module" src="src\/main.js"><\/script>/, `<script>window.__INLINE = ${JSON.stringify(inline)};</script>\n<script>\n${bundle}</script>`);
 
 mkdirSync(join(root, 'dist'), { recursive: true });
-const out = join(root, 'dist/glacial-strikers-offline.html');
+const out = join(root, 'dist/puckbound-offline.html');
 writeFileSync(out, html);
-console.log(`dist/glacial-strikers-offline.html  ${(html.length / 1e6).toFixed(2)} MB  (${order.length} modules)`);
+console.log(`dist/puckbound-offline.html  ${(html.length / 1e6).toFixed(2)} MB  (${order.length} modules)`);

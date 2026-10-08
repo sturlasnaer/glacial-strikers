@@ -1,4 +1,4 @@
-// Glacial Strikers — boot, game loop and scene flow.
+// Puckbound — boot, game loop and scene flow.
 
 import { Assets } from './assets.js';
 import { Match, PENALTY_SECONDS } from './match.js';
@@ -34,7 +34,7 @@ const buzz = (p) => { if (navigator.userActivation?.hasBeenActive !== false) nav
 const RIVALS = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
 
 const INTRO = [
-  ['us', 'frost', 'Welcome to the Frostline Regional Cup, Strikers. Five wins and the cup comes home.'],
+  ['us', 'frost', 'Welcome to the Frostline Regional Cup, Foxes. Five wins and the cup comes home.'],
   ['us', 'thunder', 'Five wins? I\'ll score five goals in the first match alone.'],
   ['us', 'stone', 'You\'ll score five because I\'m clearing the way. Pass to the open player, Volta.'],
   ['us', 'frost', 'Win matches, earn coins and EXP, then upgrade our gear in the hub. Let\'s go.'],
@@ -318,7 +318,7 @@ class App {
 
   startShootout(teamId) { Assets.ensureTeam(teamId).then(() => this.startDrill('shootout', lineupIds(this.save)[0], { teamId })); }
 
-  // Local versus: player 1 is the Strikers, player 2 picks a rival. Both use base stats.
+  // Local versus: player 1 is our club, player 2 picks a rival. Both use base stats.
   startVersus(teamId) {
     audio.unlock();
     const arena = this.arenaFor(teamId);
@@ -759,7 +759,7 @@ class App {
     this.fx.chant = { team, t: 0 };
     m.hype = { team, t: 7 };
     const t = TEAMS[this.awayTeamId];
-    const name = team === 0 ? 'STRIKERS' : t.name.split(' ').slice(-1)[0].toUpperCase();
+    const name = team === 0 ? CLUB.nick.toUpperCase() : t.name.split(' ').slice(-1)[0].toUpperCase();
     audio.chant(team === 0 ? 0.9 : 0.6);
     this.fx.text(0, -420, `LET'S GO ${name}!`, team === 0 ? '#71dce8' : t.color, 4, 24);
     this.hud.ticker(team === 0 ? `The crowd is on its feet! ${CLUB.nick} ultimates charge faster.` : `${t.name.split(' ').slice(-1)[0]} fans are loud. Their ultimates charge faster.`);

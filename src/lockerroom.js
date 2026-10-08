@@ -1,7 +1,7 @@
 // Locker-room moments: short scenes between league matches with a choice. Choices give
 // chemistry, EXP, coins, or a buff that lasts for the next league match.
 
-import { CHARACTERS, TEAMS } from './data.js';
+import { CHARACTERS, TEAMS, CLUB } from './data.js';
 import { applyExp, applyGoalieExp } from './progress.js';
 
 const ALL_PAIRS = ['frost+thunder', 'frost+stone', 'stone+thunder'];
@@ -144,7 +144,7 @@ export const MOMENTS = [
   {
     id: 'deal', who: [], weight: 3, when: () => true,
     title: 'A deal at the pro shop',
-    text: () => 'The pro shop owner leans over the counter. "For the Strikers? I can do you a favour."',
+    text: () => 'The pro shop owner leans over the counter. "For the Foxes? I can do you a favour."',
     choices: [
       { label: 'Take the discount', fx: '25% off your next shop purchase', apply: (save) => { save.discount = 0.25; return null; }, reply: '"Just tell your friends where you got your gear."' },
       { label: 'Free tape job for Nix', fx: 'Next match: Nix +1 Shooting', apply: buff({ id: 'nix-sht', type: 'stat', who: 'frost', stat: 'sht', v: 1 }), reply: 'Fresh tape, perfect curl. Nix twirls the stick like a baton.' },
@@ -153,7 +153,7 @@ export const MOMENTS = [
   {
     id: 'blowout', who: ['thunder'], weight: 5, when: (c) => c.won && c.gf - c.ga >= 3,
     title: 'Front page',
-    text: (c) => `The morning paper: "STRIKERS ROLL ${c.gf}–${c.ga}." Volta has already framed it.`,
+    text: (c) => `The morning paper: "${CLUB.nick.toUpperCase()} ROLL ${c.gf}–${c.ga}." Volta has already framed it.`,
     choices: [
       { label: 'Enjoy it', fx: 'Next match: the crowd is ready to chant', apply: buff({ id: 'hype', type: 'hype' }), reply: 'Fans line up outside the rink for autographs.' },
       { label: 'Stay humble', fx: 'Every skater +10 EXP', apply: exp(['frost', 'thunder', 'stone'], 10), reply: 'Nix flips the paper over. "One game at a time."' },

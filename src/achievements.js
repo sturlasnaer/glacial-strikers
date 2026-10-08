@@ -34,7 +34,7 @@ export const ACHIEVEMENTS = [
   { id: 'kitted', name: 'Fully Kitted', text: 'Own every piece of gear in the shop.', icon: 'equipment_items/hub/shop', coins: 150 },
   { id: 'signing', name: 'Free Agent', text: 'Sign a skater from a rival.', icon: 'equipment_items/hub/shop', coins: 40 },
   { id: 'scout', name: 'Talent Scout', text: 'Sign a skater from every rival.', icon: 'equipment_items/hub/target', coins: 150 },
-  { id: 'mvp', name: 'Most Valuable', text: 'A Strikers skater wins League MVP.', icon: TROPHY, coins: 150 },
+  { id: 'mvp', name: 'Most Valuable', text: 'A Foxes skater wins League MVP.', icon: TROPHY, coins: 150 },
   { id: 'sweep', name: 'Awards Sweep', text: 'Win three or more season awards in one season.', icon: TROPHY, coins: 200 },
   { id: 'daily', name: 'Daily Grind', text: 'Beat a daily challenge.', icon: 'hud_elements/misc/level_star', coins: 40 },
   { id: 'daily-streak', name: 'On a Roll', text: 'Beat the daily challenge seven days in a row.', icon: MEDAL, coins: 200 },

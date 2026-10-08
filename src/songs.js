@@ -1,6 +1,6 @@
-// The Glacial Strikers soundtrack. Every track is written for the music engine in
+// The Puckbound soundtrack. Every track is written for the music engine in
 // music.js: sections of 16th-note steps (12 eighth-note steps per bar for the jig) over
-// a chord progression. Most tracks borrow the Strikers motif (root, fifth below, root,
+// a chord progression. Most tracks borrow the Puckbound motif (root, fifth below, root,
 // second, third, fifth: "D A D E F# A" in the title theme).
 //
 // Lines:  C5:4 = a quarter note, .:4 = a quarter rest, '|' separates bars.
@@ -43,7 +43,7 @@ const TITLE_B = {
 
 export const SONGS = {
   title: {
-    name: 'Glacial Strikers (title)', bpm: 140, key: 'D', gain: 1.25,
+    name: 'Puckbound (title)', bpm: 140, key: 'D', gain: 1.25,
     inst: { pad: 'strings', arp: 'arp', counter: 'celesta' },
     sections: {
       intro: {

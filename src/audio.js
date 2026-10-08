@@ -375,7 +375,7 @@ export class Audio {
     }
   }
 
-  // "Let's go Strikers!" — two bars of voices plus the clap-clap-clapclapclap reply.
+  // "Let's go Foxes!" (or your club) — two bars of voices plus the clap-clap-clapclapclap reply.
   chant(vol = 1) {
     if (!this.ctx || !this.sfxOn) return;
     const t0 = this.now() + 0.05;
