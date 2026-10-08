@@ -1,5 +1,6 @@
 // Save data, stats, levelling, rewards and match setup.
 
+import { GUIDE } from './guide.js';
 import {
   CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE,
   RECRUITS, member, pairKey, recruitKey,
@@ -51,6 +52,8 @@ export function loadSave() {
     if (!raw) return null;
     const s = JSON.parse(raw);
     if (!s || s.v !== 1) return null;
+    // players who already know their way around don't need the coach's first-time tips
+    if (!s.guide && s.record && s.record.played >= 3) s.guide = { done: GUIDE.map((g) => g.id), off: false, hints: ['ult', 'combo'] };
     // fill fields added later
     const base = newSave();
     for (const k of Object.keys(base)) if (s[k] === undefined) s[k] = base[k];

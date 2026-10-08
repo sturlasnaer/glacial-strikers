@@ -16,6 +16,7 @@ import {
   chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups,
 } from './progress.js';
 import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn } from './online.js';
+import { nextGuide, doneGuide, guideOff } from './guide.js';
 import { audio } from './audio.js';
 const VOLUMES = [[0, 'Off'], [0.35, 'Low'], [0.7, 'Mid'], [1, 'Full']];
 // dialogue voices: each role speaks at its own pitch; rivals a little lower
@@ -267,6 +268,11 @@ export class UI {
     this.click('#h-title', () => { audio.sfx('back'); this.app.goTitle(); });
     this.click('#h-daily', () => this.dailyCard());
     this.click('#h-settings', () => { audio.sfx('click'); this.settings(); });
+    this.showGuide(r, s, {
+      anyPoints,
+      shopNew: GEAR.some((g) => g.price > 0 && !s.owned.includes(g.id) && Math.round(g.price * (1 - (s.discount || 0))) <= s.coins),
+      scoutOpen: Object.keys(RECRUITS).some((k) => recruitStatus(s, k) === 'open' && s.coins >= RECRUITS[k].price),
+    });
     this.roomFit?.disconnect();
     if (room) {
       this.bindRoom(r);
@@ -313,6 +319,33 @@ export class UI {
       return `<button class="crew" data-crew="${id}" style="left:${x}%;top:${y}%;animation-delay:${-i * 0.7}s" aria-label="${esc(name)}"><img src="${src}" alt=""><span>${esc(name)}</span></button>`;
     }).join('');
     return `<img class="room-bg" src="${Assets.url(Assets.atlas.locker)}" alt="">${spots}${crew}`;
+  }
+
+  // Coach Brekka's tip for this moment, pointing at the station or button it's about.
+  // At most one new tip per visit to the hub; it stays until it's used or dismissed.
+  showGuide(r, s, ctx) {
+    let step = this.guideStep;
+    if (!step && (this.guideBudget || 0) > 0) { step = nextGuide(s, ctx); if (step) { this.guideBudget--; this.guideStep = step; } }
+    if (!step) return;
+    const targets = [...r.querySelectorAll(step.target)];
+    const finish = (off) => {
+      if (off) guideOff(s); else doneGuide(s, step.id);
+      writeSave(s);
+      this.guideStep = null;
+      r.querySelector('.guide-bubble')?.remove();
+      targets.forEach((t) => t.classList.remove('guide-pulse'));
+    };
+    targets.forEach((t) => { t.classList.add('guide-pulse'); t.addEventListener('click', () => finish(false), { capture: true, once: true }); });
+    const id = Assets.atlas.npcs && Assets.atlas.npcs.coach;
+    const face = id ? Assets.icon(id, 96) : '';
+    const el = document.createElement('div');
+    el.className = 'guide-bubble';
+    el.setAttribute('role', 'status');
+    el.innerHTML = `${face ? `<img src="${face}" alt="">` : ''}<div><b>Coach Brekka</b><p>${esc(step.text)}</p>
+      <div class="row"><button class="btn small cream" data-g="ok">Got it</button><button class="btn small ghost" data-g="off">No more tips</button></div></div>`;
+    el.querySelector('[data-g="ok"]').addEventListener('click', (e) => { e.stopPropagation(); audio.sfx('click'); finish(false); });
+    el.querySelector('[data-g="off"]').addEventListener('click', (e) => { e.stopPropagation(); audio.sfx('back'); finish(true); });
+    (r.querySelector('.hub') || r).appendChild(el);
   }
 
   bindRoom(r) {

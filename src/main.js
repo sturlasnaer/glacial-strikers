@@ -7,6 +7,7 @@ import { FX } from './fx.js';
 import { Input, TouchControls, mergeInputs } from './input.js';
 import { audio } from './audio.js';
 import { PadNav } from './padnav.js';
+import { firstTime } from './guide.js';
 import { submit as submitScore, flush as flushScores, BOARD_INFO } from './online.js';
 import { ARENA_MUSIC } from './songs.js';
 import { UI, controlsHtml, crest } from './ui.js';
@@ -678,7 +679,11 @@ class App {
     m.on('frozen', () => audio.sfx('freeze', { vol: 0.7 }));
     m.on('barrier_block', () => audio.sfx('stone', { vol: 0.8 }));
     m.on('ult_denied', (e) => { if (e.s.controlled) { audio.sfx('deny'); this.hud.hint(`${e.s.def.ult.name} needs the puck.`, 2); } });
-    m.on('ult_ready', (e) => { if (e.s.controlled) audio.sfx('pickup', { vol: 0.8 }); });
+    m.on('ult_ready', (e) => {
+      if (!e.s.controlled) return;
+      audio.sfx('pickup', { vol: 0.8 });
+      if (!this.attract && e.s.team === 0 && firstTime(this.save, 'ult')) this.hud.hint(this.isTouch ? 'Your ultimate is charged! Tap the glowing star.' : 'Your ultimate is charged! Press I (gamepad: Y / △).', 5);
+    });
     m.on('steal', (e) => audio.sfx('stick', at(e.s.x, e.s.y, 0.6)));
     m.on('lightning_pass', () => audio.sfx('dash'));
     m.on('combo', (e) => {
@@ -690,7 +695,11 @@ class App {
     });
     m.on('quake', () => audio.sfx('thunder', { vol: 0.7 }));
     m.on('plow', () => audio.sfx('check', { vol: 0.8 }));
-    m.on('combo_ready', (e) => { if (e.s.controlled) audio.sfx('pickup', { vol: 0.5 }); });
+    m.on('combo_ready', (e) => {
+      if (!e.s.controlled) return;
+      audio.sfx('pickup', { vol: 0.5 });
+      if (!this.attract && e.s.team === 0 && firstTime(this.save, 'combo')) this.hud.hint('Chemistry! Shoot right away after a bonded teammate\'s pass for a combo shot.', 5);
+    });
     m.on('chain', (e) => { if (e.team === 0) audio.sfx('coin', { vol: 0.5 }); });
     m.on('final', () => {
       audio.sfx('whistle');
@@ -921,6 +930,7 @@ class App {
     if (!this.attract) this.startAttract();
     audio.setArena('menu');
     flushScores(this.save).then((n) => { if (n) writeSave(this.save); });
+    this.ui.guideBudget = 1; // one new coach's tip per visit
     if (this.awardsNight()) return;
     this.ui.hub(tab);
     this.setHubBackground();
