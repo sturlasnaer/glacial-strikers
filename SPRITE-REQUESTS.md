@@ -11,6 +11,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 2. **Z**: icons for the six season awards, two gear items that share art, the three chemistry combos, the six challenges and the four game plans.
 3. **AB**: All-Star Game dressing: a crest for the League All-Stars, an achievement icon and banners for the home rink.
 4. **AA**: three newcomer skaters, who fill a rival's slot when you sign one of their players (today they're drawn as our own cast in rival colours).
+5. **AC**: icons for the online features and Skills Night, a loading-screen Snow Fox, and a champions painting.
 
 ## Format notes
 
@@ -93,6 +94,25 @@ Once a season, after league round 2, the All-Star Game is played at the Frostlin
 - **Home-rink dressing for the night** (on the `arena_home` backdrop, 1536×1024, never over the ice): a long **star banner** over the far glass, about 420×90 px at game size, navy with gold stars and our snowflake (no lettering), 2 frames of it swaying; and **star bunting**, a tileable strip about 64×24 px at game size of little gold and ice-blue star pennants on a string, for the far and near boards, 2 frames. Say in the README where you'd hang the banner and run the bunting.
 
 8 frames.
+
+## Batch AC: online and Skills Night icons, loading screen, champions painting
+
+New features that are still text-only, and two screens that deserve art:
+
+- **Small icons**, in the style and size of the reward icons (`equipment_items/reward/*`, about 200 px source), one sheet `icons_ac.png`, frame names `icons/<name>`:
+  - `friends` (two little helmets side by side, for the Friends boards button),
+  - `ghost` (a frosted, see-through skater silhouette with a puck, for the Ghost picker on the Cone Weave and Breakaway cards),
+  - `challenge` (two sticks crossed with a spark, for "Challenge a friend" and the challenge screen),
+  - `share` (a puck with a curved arrow, for invite and share buttons),
+  - `skills_fastest` (a stopwatch with a skate blade, Skills Night's Fastest Skater),
+  - `skills_sharp` (a target board with a puck in the bullseye, Skills Night's Sharpshooter),
+  - `skills_night` (a gold star over two crossed sticks, the Skills Night title).
+
+  7 frames.
+- **Loading screen:** the Snow Fox mascot skating with a puck, a 4-frame loop, about 120 px tall at game size, as **its own small transparent PNG strip** (it shows before the atlas has loaded, so it can't be on an atlas page; keep it under 30 KB). Today the loading screen is the word "Puckbound" and a bar. 4 frames.
+- **Champions painting:** a 1536×864 painting for the championship screen: Nix lifting the Frostline Cup (the Batch X cup) at centre ice with Volta skating a lap behind and Bram carrying Halla on his shoulders, confetti and the crowd on its feet, our teal and cream. It sits behind the "Champions!" text, so keep the middle third calm. 1 image.
+
+12 images.
 
 ## Batch AA: newcomer skaters
 

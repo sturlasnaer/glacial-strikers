@@ -863,3 +863,14 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .as-pts { font-family: var(--display); font-size: 15px; color: var(--ice); white-space: nowrap; }
 .as-goalie { font-size: 12px; }
 .fixture.allstar .fx-name b { color: var(--gold); }
+/* All-Star Skills Night */
+.results.skills { max-width: 760px; gap: 10px; }
+.sk-events { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 620px) { .sk-events { grid-template-columns: 1fr; } }
+.sk-event { display: grid; gap: 8px; align-content: start; }
+.sk-field { display: grid; gap: 3px; }
+.sk-row { display: grid; grid-template-columns: 18px 18px 1fr auto; gap: 6px; align-items: center; font-size: 13px; padding: 2px 6px; border-radius: 4px; background: rgba(13, 24, 42, 0.45); }
+.sk-row.me { background: rgba(30, 90, 102, 0.55); outline: 2px solid var(--ice); }
+.sk-rank { font-family: var(--display); color: var(--ice); text-align: right; }
+.sk-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sk-row b { font-family: var(--display); font-weight: normal; font-size: 15px; }

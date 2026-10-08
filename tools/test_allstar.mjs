@@ -7,6 +7,8 @@ import { newSave, allStarVote, allStarConfig, matchConfig, computeRewards } from
 import { nextFixture, recordOurGame, recordAllStar, standings, ALLSTAR_AFTER } from '../src/league.js';
 import { recordRealGame } from '../src/awards.js';
 import { RECRUITS, TEAMS, recruitKey } from '../src/data.js';
+import { makeSkills, recordSkills, placeIn } from '../src/skills.js';
+import { decodeGhost } from '../src/ghost.js';
 
 let ok = 0, fail = 0;
 const check = (name, cond, info) => { if (cond) ok++; else { fail++; console.log('FAIL', name, info ?? ''); } };
@@ -53,6 +55,21 @@ check('their goalie from one of the two', v.teams.includes(v.goalie));
   // sign nearly everyone: no game
   for (const k of Object.keys(RECRUITS)) if (!['lynx', 'comets'].includes(RECRUITS[k].team) || RECRUITS[k].kit !== 'frost') s2.roster[k] ||= { level: 1, exp: 0, points: 0, perks: [], gear: {}, pendingPerk: null };
   check('no stars left: no vote', allStarVote(s2, s2.league) === null);
+}
+
+// Skills Night: the other five All-Stars in each event, the fastest one's run as a ghost
+{
+  const sk = makeSkills(s, v, 77), again = makeSkills(s, v, 77);
+  const fast = sk.events.fastest, sharp = sk.events.sharp;
+  check('the same field when you come back', JSON.stringify(sk) === JSON.stringify(again));
+  check('five rivals in each event', fast.field.length === 5 && sharp.field.length === 5 && !fast.field.some((f) => f.who === v.star), fast.field);
+  check('fastest first, sharpest first', fast.field.every((f, i) => !i || f.score >= fast.field[i - 1].score) && sharp.field.every((f, i) => !i || f.score <= sharp.field[i - 1].score));
+  check('the fastest star\'s run is the ghost', fast.ghost && fast.ghost.score === fast.field[0].score && fast.ghost.name === fast.field[0].name && decodeGhost(fast.ghost.path).length > 30, fast.ghost && [fast.ghost.score, fast.field[0].score]);
+  check('star times are believable', fast.field.every((f) => f.score >= 8 && f.score <= 26) && sharp.field.every((f) => f.score >= 600 && f.score <= 3000), [fast.field.map((f) => f.score), sharp.field.map((f) => f.score)]);
+  check('a slow run doesn\'t win', !recordSkills(sk, 'fastest', fast.field[4].score + 1) && placeIn(fast, true) === 6);
+  check('a quick run wins once', recordSkills(sk, 'fastest', fast.field[0].score - 0.5) && placeIn(fast, true) === 1 && !recordSkills(sk, 'fastest', fast.field[0].score - 1));
+  check('a worse retry keeps the best', (recordSkills(sk, 'fastest', 25), sk.events.fastest.mine === fast.field[0].score - 1));
+  check('sharpshooter: more is better', !recordSkills(sk, 'sharp', sharp.field[0].score) && recordSkills(sk, 'sharp', sharp.field[0].score + 10) && placeIn(sharp, false) === 1);
 }
 
 // the match: All-Star rules, both benches mixed, plays to the end

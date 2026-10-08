@@ -15,7 +15,7 @@ import {
   expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave,
   chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups,
 } from './progress.js';
-import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave, resetsIn, groupsOf, createGroup, joinGroup, leaveGroup, inviteLink, MAX_GROUPS, fetchGhost } from './online.js';
+import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave, resetsIn, groupsOf, createGroup, joinGroup, leaveGroup, inviteLink, MAX_GROUPS, fetchGhost, CHALLENGE_BOARDS, createChallenge, fetchChallenge, challengeLink } from './online.js';
 import { nextGuide, doneGuide, guideOff } from './guide.js';
 import { audio } from './audio.js';
 import { t } from './i18n.js';
@@ -35,6 +35,7 @@ function cloudStatus(save) {
 const padList = () => [...(navigator.getGamepads ? navigator.getGamepads() : [])].filter(Boolean);
 const psPad = () => padList().some((p) => /dualsense|dualshock|playstation|054c/i.test(p.id));
 import { DRILLS, MEDAL_NAMES, MEDAL_COLORS, formatScore } from './drills.js';
+import { SKILLS_EVENTS, placeIn } from './skills.js';
 
 const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
 const ROLE_NAME = { C: 'Centre', W: 'Winger', D: 'Defender' };
@@ -603,6 +604,36 @@ export class UI {
   }
 
   // The season's awards night, hosted by Kip Vance: one envelope at a time.
+  // Skills Night: two events before the All-Star Game. Your All-Star against the other five;
+  // compete (again) in either, or go on to the game.
+  skillsNight(sk, onEvent, onGame) {
+    const star = member(sk.star);
+    const events = SKILLS_EVENTS.map((e) => {
+      const ev = sk.events[e.id], d = DRILLS[e.drill], lower = e.id === 'fastest';
+      const rows = [...ev.field, ...(ev.mine !== null ? [{ name: star.name, team: 'home', score: ev.mine, me: true }] : [])]
+        .sort((a, b) => (lower ? a.score - b.score : b.score - a.score) || (b.me ? 1 : 0) - (a.me ? 1 : 0));
+      const place = placeIn(ev, lower);
+      const note = place === 1 ? `<b class="gold-t">${t('You won it!')}</b>` : place ? t('You placed {n} of {total}.', { n: place, total: rows.length })
+        : ev.ghost ? t('Race {name}\'s ghost.', { name: esc(ev.ghost.name) }) : t('Beat {score} to win.', { score: esc(formatScore(d, ev.field[0].score)) });
+      return `<div class="card sk-event">
+        <div class="card-head"><img src="${ico(d.icon, 96)}" alt="" style="border:0;background:none"><div style="min-width:0"><h3>${esc(t(e.name))}</h3><div class="sub">${esc(t(d.name))} · ${t('win it: +{n} coins', { n: e.coins })}</div></div></div>
+        <div class="sk-field">${rows.map((r, i) => `<div class="sk-row ${r.me ? 'me' : ''}"><span class="sk-rank">${i + 1}</span><img src="${crest(r.team, 40)}" alt="" width="18" height="18"><span class="sk-name">${esc(r.name)}</span><b>${esc(formatScore(d, r.score))}</b></div>`).join('')}</div>
+        <div class="row" style="justify-content:space-between;align-items:center;margin:0"><span class="muted" style="font-size:12.5px">${note}</span>
+          <button class="btn small ${ev.mine === null ? 'gold' : ''}" data-sk="${e.id}">${ev.mine === null ? t('Compete') : t('Try again')}</button></div>
+      </div>`;
+    }).join('');
+    const r = this.set(`<div class="dim"></div>
+      <div class="results panel skills">
+        <div class="label">${t('All-Star Game')}</div>
+        <h1 class="gold-t" style="font-family:var(--display);font-weight:normal;font-size:clamp(34px,6vw,54px);line-height:.9;margin:0">${t('Skills Night')}</h1>
+        <p style="margin:0;font-size:13.5px">${t('Before the game, the stars show off. {name} competes for the {club} against the other five All-Stars. These runs don\'t use a training session.', { name: `<b>${esc(star.name)}</b>`, club: esc(CLUB.name) })}</p>
+        <div class="sk-events">${events}</div>
+        <div class="row" style="justify-content:flex-end"><button class="btn gold" id="sk-game">${t('To the All-Star Game')}</button></div>
+      </div>`);
+    this.click('[data-sk]', (el) => { audio.sfx('confirm'); onEvent(el.dataset.sk); }, r);
+    this.click('#sk-game', () => { audio.sfx('confirm'); onGame(); }, r);
+  }
+
   // The All-Star Game's fan vote: both benches with this season's numbers, then Kip.
   allStarVote(vote, onGo) {
     const s = this.app.save, st = s.league && seasonStats(s.league);
@@ -627,7 +658,7 @@ export class UI {
           <div class="as-goalie muted">${t('In goal: {name}', { name: `${esc(g.names.goalie)} (${esc(g.name)})` })}</div></div>
       </div>
       <p class="muted" style="margin:0;font-size:12.5px">${t('A showcase: no penalties, ultimates charge twice as fast, and the standings don\'t change. Only your own players earn EXP.')}</p>
-      <div class="row" style="justify-content:flex-end"><button class="btn gold" id="as-go">${t('To the ice')}</button></div>`, (m, close) => {
+      <div class="row" style="justify-content:flex-end"><button class="btn gold" id="as-go">${t('On to Skills Night')}</button></div>`, (m, close) => {
       this.click('#as-go', () => { audio.sfx('confirm'); close(); onGo(); }, m);
     }, false);
     audio.jingle('reveal');
@@ -1218,7 +1249,7 @@ export class UI {
               <div class="medal-row">${[1, 2, 3].map((mi) => `<span class="medal ${mi <= medal ? 'got' : ''}" style="--m:${MEDAL_COLORS[mi]}" title="${t(MEDAL_NAMES[mi])}: ${formatScore(d, d.medals[mi - 1])}">${badge(MEDAL_BADGES[mi <= medal ? mi : 0], 44, 'medal-ico')}${formatScore(d, d.medals[mi - 1])}</span>`).join('')}</div>
             </div></div>
           <p class="muted" style="margin:0;font-size:13px">${esc(t(d.text))}</p>
-          ${d.id === 'cones' ? this.ghostPicker(s) : ''}
+          ${CHALLENGE_BOARDS.includes(d.id) ? this.ghostPicker(s, d.id) : ''}
           <div class="row" style="justify-content:space-between">
             <span style="font-size:13px">${t('Best: {score}', { score: `<b class="gold-t">${best === undefined || best === null ? '–' : formatScore(d, best)}</b>` })}</span>
             <span class="row" style="gap:6px"><button class="btn small ghost" data-lb="${d.id}" title="${t('Online leaderboard')}" aria-label="${t('{drill} online leaderboard', { drill: esc(t(d.name)) })}">${badge('cup_small', 48, 'btn-ico', '🏆')}</button>
@@ -1228,48 +1259,71 @@ export class UI {
       }).join('')}</div>`;
     this.click('[data-char]', (el) => { this.drillChar = el.dataset.char; audio.sfx('click'); this.tabTraining(body); }, body);
     this.click('[data-play]', (el) => {
-      if (el.dataset.play === 'cones') return this.startCones(el, body);
+      if (CHALLENGE_BOARDS.includes(el.dataset.play)) return this.startGhostDrill(el.dataset.play, el, body);
       audio.sfx('confirm'); this.app.startDrill(el.dataset.play, this.drillChar);
     }, body);
-    this.click('[data-ghost]', (el) => { s.settings.ghost = el.dataset.ghost; writeSave(s); audio.sfx('click'); this.tabTraining(body); }, body);
+    this.click('[data-ghost]', (el) => { (s.settings.ghosts ||= {})[el.dataset.drill] = el.dataset.ghost; writeSave(s); audio.sfx('click'); this.tabTraining(body); }, body);
     this.click('[data-lb]', (el) => { audio.sfx('click'); this.leaderboard(el.dataset.lb); }, body);
   }
 
-  // Cone Weave's ghost: none, your best run, this week's best, or a friends board's best.
-  ghostChoice(s) {
-    const pick = s.settings.ghost || 'off';
+  // A drill's ghost (Cone Weave, Breakaway): none, your best run, this week's best, or a
+  // friends board's best.
+  ghostChoice(s, id) {
+    const pick = (s.settings.ghosts && s.settings.ghosts[id]) || (id === 'cones' && s.settings.ghost) || 'off';
     const online = onlineOn(s) && configured();
-    if (pick === 'mine') return s.ghosts && s.ghosts.cones ? pick : 'off';
+    if (pick === 'mine') return s.ghosts && s.ghosts[id] ? pick : 'off';
     if (pick === 'week') return online ? pick : 'off';
     if (pick.startsWith('g:')) return online && groupsOf(s).some((g) => 'g:' + g.code === pick) ? pick : 'off';
     return 'off';
   }
 
-  ghostPicker(s) {
-    const pick = this.ghostChoice(s);
-    const mine = s.ghosts && s.ghosts.cones;
-    const opts = [['off', t('Off')], ...(mine ? [['mine', `${t('Your best')} ${formatScore(DRILLS.cones, mine.score)}`]] : []),
+  ghostPicker(s, id) {
+    const pick = this.ghostChoice(s, id);
+    const mine = s.ghosts && s.ghosts[id];
+    const opts = [['off', t('Off')], ...(mine ? [['mine', `${t('Your best')} ${formatScore(DRILLS[id], mine.score)}`]] : []),
       ...(onlineOn(s) && configured() ? [['week', t('Week\'s best')], ...groupsOf(s).map((g) => ['g:' + g.code, g.name])] : [])];
-    return `<div class="ghost-row"><span class="label">${t('Ghost')}</span>${opts.map(([v, label]) => `<button class="chip" data-ghost="${v}" aria-pressed="${v === pick}">${esc(label)}</button>`).join('')}</div>
-      <p class="muted ghost-msg" id="ghost-msg"></p>`;
+    return `<div class="ghost-row"><span class="label">${t('Ghost')}</span>${opts.map(([v, label]) => `<button class="chip" data-drill="${id}" data-ghost="${v}" aria-pressed="${v === pick}">${esc(label)}</button>`).join('')}</div>
+      <p class="muted ghost-msg" id="ghost-msg-${id}"></p>`;
   }
 
-  // Start Cone Weave, fetching the ghost to race first when it's someone else's.
-  async startCones(btn, body) {
-    const s = this.app.save, pick = this.ghostChoice(s);
+  // Start a ghost drill, fetching the ghost to race first when it's someone else's.
+  async startGhostDrill(id, btn, body) {
+    const s = this.app.save, pick = this.ghostChoice(s, id);
     let ghost = null;
-    if (pick === 'mine') ghost = { ...s.ghosts.cones, label: t('Your best'), mine: true };
+    if (pick === 'mine') ghost = { ...s.ghosts[id], label: t('Your best'), mine: true };
     else if (pick !== 'off') {
       const label = btn.textContent;
       btn.textContent = t('Looking…');
-      const g = await fetchGhost(s, 'cones', 'week', pick.startsWith('g:') ? pick.slice(2) : null).catch(() => undefined);
+      const g = await fetchGhost(s, id, 'week', pick.startsWith('g:') ? pick.slice(2) : null).catch(() => undefined);
       btn.textContent = label;
-      const msg = body.querySelector('#ghost-msg');
+      const msg = body.querySelector('#ghost-msg-' + id);
       if (!g) { audio.sfx('deny'); if (msg) msg.textContent = g === null ? t('No run to race on that board yet. Set one!') : t('Couldn\'t reach the server. Try again in a moment.'); return; }
       ghost = { ...g, label: g.name };
     }
     audio.sfx('confirm');
-    this.app.startDrill('cones', this.drillChar, ghost ? { ghost } : {});
+    this.app.startDrill(id, this.drillChar, ghost ? { ghost } : {});
+  }
+
+  // A friend's challenge from a #race= link: their run, raced as a ghost with a skater you pick.
+  challengeInvite(code) {
+    const s = this.app.save;
+    this.modal(`<h2>${t('Challenge')}</h2><div id="ch-body"><p class="muted">${t('Looking…')}</p></div>
+      <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Not now')}</button><button class="btn gold" id="ch-go" disabled>${t('Race')}</button></div>`, (m, close) => {
+      fetchChallenge(code).then((c) => {
+        const d = DRILLS[c.board];
+        let who = this.drillChar || lineupIds(s)[0];
+        const body = m.querySelector('#ch-body');
+        const draw = () => {
+          body.innerHTML = `<p>${t('{name} challenges you to {drill}: {score}. Their ghost skates beside you; beat it.', { name: `<b>${esc(c.name)}</b>`, drill: esc(t(d.name)), score: `<b class="gold-t">${esc(formatScore(d, c.score))}</b>` })}</p>
+            <div class="row" style="gap:6px;flex-wrap:wrap"><span class="label" style="font-size:14px">${t('Skater:')}</span>${rosterIds(s).map((id) => `<button class="btn small ${who === id ? 'cream' : 'ghost'}" data-chr="${id}">${esc(member(id).name)}</button>`).join('')}</div>`;
+          this.click('[data-chr]', (el) => { who = el.dataset.chr; audio.sfx('click'); draw(); }, body);
+        };
+        draw();
+        const go = m.querySelector('#ch-go');
+        go.disabled = false;
+        this.click('#ch-go', () => { audio.sfx('confirm'); close(); this.drillChar = who; this.app.startDrill(c.board, who, { ghost: { ...c, label: c.name } }); }, m);
+      }).catch((e) => { const b = m.querySelector('#ch-body'); if (b) b.innerHTML = `<p class="muted">${esc(e.message)}</p>`; });
+    });
   }
 
   // An online leaderboard: the top 25, with you highlighted and your rank.
@@ -1376,7 +1430,8 @@ export class UI {
     if (rw.exp) lines.push([t('{name} +{n} EXP', { name, n: rw.exp }), '']);
     if (rw.coins - rw.bonus > 0) lines.push([t('Session coins'), `+${rw.coins - rw.bonus}`]);
     if (rw.bonus) lines.push([t('First {medal} medal', { medal: t(MEDAL_NAMES[medal]).toLowerCase() }), `+${rw.bonus}`]);
-    if (!rw.rewarded) lines.push([t('Practice run (no sessions left)'), '']);
+    if (!rw.rewarded && !rw.extra && !rw.skills) lines.push([t('Practice run (no sessions left)'), '']);
+    if (rw.extra) lines.push(...rw.extra);
     const ups = rw.ups.length ? `<div class="lvlup">${t('{name} reached level {n}!', { name, n: rw.ups[rw.ups.length - 1].level })}</div>` : '';
     this.modal(`
       <div style="text-align:center">
@@ -1385,12 +1440,24 @@ export class UI {
         ${badge(MEDAL_BADGES[medal], 192, 'medal-img')}
         <div class="medal-big" style="--m:${MEDAL_COLORS[medal]}">${t(MEDAL_NAMES[medal])}${rw.newBest && rw.prevBest !== undefined && rw.prevBest !== null ? ` · ${t('new best!')}` : ''}</div>
         <div class="muted" style="font-size:13px">${t('Bronze {bronze} · Silver {silver} · Gold {gold}', { bronze: formatScore(d, d.medals[0]), silver: formatScore(d, d.medals[1]), gold: formatScore(d, d.medals[2]) })}</div>
-        ${rw.ghostVs ? `<div class="ghost-vs ${rw.ghostVs.delta <= 0 ? 'won' : ''}">${esc(rw.ghostVs.who)}: ${t(rw.ghostVs.delta <= 0 ? '{seconds}s behind you' : '{seconds}s ahead of you', { seconds: Math.abs(rw.ghostVs.delta).toFixed(2) })}</div>` : ''}
+        ${rw.ghostVs ? `<div class="ghost-vs ${rw.ghostVs.won ? 'won' : ''}">${esc(rw.ghostVs.line)}</div>` : ''}
       </div>
       ${lines.length ? `<div class="reward-lines">${lines.map(([a, b]) => `<div><span>${esc(a)}</span><span class="gold-t">${b}</span></div>`).join('')}</div>` : ''}
       ${ups}
       <div class="lb-result muted" id="d-online"></div>
+      ${rw.run && onlineOn(this.app.save) && configured() ? `<div class="row" style="justify-content:space-between;align-items:center"><span class="muted" id="d-ch-msg" style="font-size:12.5px"></span><button class="btn small ghost" id="d-challenge">${t('Challenge a friend')}</button></div>` : ''}
       <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="d-retry">${t('Retry')}</button><button class="btn gold" id="d-done">${t('Done')}</button></div>`, (m, close) => {
+      this.click('#d-challenge', async (el) => {
+        const msg = m.querySelector('#d-ch-msg');
+        el.disabled = true; msg.textContent = t('Looking…');
+        try {
+          const code = await createChallenge(this.app.save, d.id, score, rw.run.char, rw.run.ghost);
+          const link = challengeLink(code), text = t('Can you beat my {drill}? {score}', { drill: t(d.name), score: formatScore(d, score) });
+          if (navigator.share) { msg.textContent = ''; await navigator.share({ title: t('Challenge'), text, url: link }).catch(() => {}); }
+          else { await navigator.clipboard?.writeText(`${text}\n${link}`); msg.textContent = t('Link copied: send it to a friend.'); }
+        } catch (e) { msg.textContent = e.message; }
+        el.disabled = false;
+      }, m);
       m.querySelector('#d-retry').addEventListener('click', () => { close(); audio.sfx('confirm'); onRetry(); });
       m.querySelector('#d-done').addEventListener('click', () => { close(); audio.sfx('click'); onDone(); });
     }, false);

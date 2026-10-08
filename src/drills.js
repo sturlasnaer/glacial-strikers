@@ -66,12 +66,12 @@ export function createDrill(id, save, charId, opts = {}) {
   // your line-up, with the skater you bring in their position's slot
   const line = lineupIds(save).map((w) => (member(w).role === member(charId).role ? charId : w));
   const mates = line.filter((k) => k !== charId);
-  let home = [charId], away = [], ctrl, awayTeam = 'lynx';
+  let home = [charId], away = [], ctrl, awayTeam = opts.awayTeam || 'lynx'; // (a ghost's team, so its art stays loaded)
   switch (id) {
     case 'cones': ctrl = new ConeDrill(opts.ghost); break;
     case 'sniper': home = [charId, opts.feeder || mates[0]]; ctrl = new SniperDrill(); break;
     case 'rondo': home = [charId, ...mates]; away = ['frost', 'stone']; ctrl = new RondoDrill(); break;
-    case 'breakaway': ctrl = new BreakawayDrill(); break;
+    case 'breakaway': ctrl = new BreakawayDrill(opts.ghost); break;
     case 'shootout': home = line; awayTeam = opts.teamId || 'comets'; away = ids; ctrl = new ShootoutDrill(opts.teamId); break;
     default: throw new Error('Unknown drill ' + id);
   }
@@ -84,7 +84,7 @@ export function createDrill(id, save, charId, opts = {}) {
   };
   const cfg = {
     teams: [
-      { skaters: home.map((k) => skaterCfg(save, k)), goalie: { stats: goalieStats(save), name: GOALIE.name }, chem: homeChem(save) },
+      { skaters: home.map((k, i) => (i === 0 && opts.skater ? opts.skater : skaterCfg(save, k))), goalie: { stats: goalieStats(save), name: GOALIE.name }, chem: homeChem(save) }, // (opts.skater: someone else skates it, like a Skills Night bot)
       { skaters: away.map(awaySkater), goalie: { stats: id === 'shootout' ? { ...t.goalie } : opts.goalie || { rfx: 4, pos: 5 }, name: id === 'shootout' ? t.names.goalie : 'Coach Brekka', art: id === 'shootout' ? t.art : null }, chem: {} },
     ],
     humanTeam: 0,
@@ -135,6 +135,22 @@ class DrillBase {
   }
 }
 
+// A stand-in skater for drawing a ghost (the renderer picks its frames; no physics).
+function ghostSkater(char, at) {
+  const mem = member(char) || member('frost');
+  return { team: 0, def: mem.def, sprite: mem.recruit ? mem.recruit.sprite : mem.def.sprite, look: mem.recruit ? 'homekit' : null,
+    x: at.x, y: at.y, face: 0, speed: 0, animT: 0, stun: 0, celebrate: 0, ultWindup: 0,
+    charging: false, dashT: 0, state: 'skate', stopping: false, gliding: false, d: { maxSpeed: 330 } };
+}
+// Move a ghost's stand-in to time t of its samples; true once its run is over.
+function moveGhost(gs, samples, t) {
+  const at = ghostAt(samples, t);
+  const prevX = gs.x, prevY = gs.y;
+  Object.assign(gs, { x: at.x, y: at.y, face: at.face, speed: at.speed });
+  gs.animT += Math.hypot(at.x - prevX, at.y - prevY) / 330; // strides follow the distance skated
+  return at.done;
+}
+
 // ----------------------------------------------------------- Cone Weave
 // Every run is recorded (a ghost to race later). With a ghost to race ({ path, splits,
 // label, char }), it skates alongside, see-through, and each gate shows the split.
@@ -153,13 +169,7 @@ class ConeDrill extends DrillBase {
     for (let i = 0; i < 9; i++) this.gates.push({ x: -400 + i * 108, y: (i % 2 ? -1 : 1) * 78, half: 34, state: 'todo' });
     this.next = 0; this.penalty = 0; this.lastX = s.x;
     this.rec = new GhostRecorder(); this.splits = []; this.split = null;
-    if (this.ghost) {
-      const mem = member(this.ghost.char) || member('frost');
-      // a stand-in skater for the renderer's frame picking (no physics)
-      this.ghostS = { team: 0, def: mem.def, sprite: mem.recruit ? mem.recruit.sprite : mem.def.sprite, look: mem.recruit ? 'homekit' : null,
-        x: this.ghost.samples[0].x, y: this.ghost.samples[0].y, face: 0, speed: 0, animT: 0, stun: 0, celebrate: 0, ultWindup: 0,
-        charging: false, dashT: 0, state: 'skate', stopping: false, gliding: false, d: { maxSpeed: 330 } };
-    }
+    if (this.ghost) this.ghostS = ghostSkater(this.ghost.char, this.ghost.samples[0]);
     this.startCountdown(m);
   }
   tick(m) {
@@ -188,7 +198,8 @@ class ConeDrill extends DrillBase {
     const score = Math.round((this.t + this.penalty) * 100) / 100;
     const ghost = { path: this.rec.encode(), splits: this.splits };
     const vs = this.ghost ? Math.round((score - this.ghost.score) * 100) / 100 : null;
-    this.finish(m, score, { penalty: this.penalty, ghost, vs, vsLabel: this.ghost ? this.ghost.label : null });
+    const vsLine = this.ghost ? `${this.ghost.label}: ${t(vs <= 0 ? '{seconds}s behind you' : '{seconds}s ahead of you', { seconds: Math.abs(vs).toFixed(2) })}` : null;
+    this.finish(m, score, { penalty: this.penalty, ghost, vs, vsLabel: this.ghost ? this.ghost.label : null, vsLine, vsWon: vs !== null ? vs <= 0 : null });
   }
   hud() {
     const n = this.gates.length;
@@ -220,12 +231,9 @@ class ConeDrill extends DrillBase {
     const gs = this.ghostS;
     if (gs && R.drawRaceGhost) {
       // it waits at the start through the countdown, and fades out where its run ended
-      const at = ghostAt(this.ghost.samples, m.state === 'countdown' ? 0 : this.t);
-      const prevX = gs.x, prevY = gs.y;
-      Object.assign(gs, { x: at.x, y: at.y, face: at.face, speed: at.speed });
-      gs.animT += Math.hypot(at.x - prevX, at.y - prevY) / 330; // strides follow the distance skated
-      if (at.done) gs.endT = gs.endT ?? this.t;
-      const alpha = at.done ? Math.max(0, 1 - (this.t - gs.endT) / 1.2) : 1;
+      const done = moveGhost(gs, this.ghost.samples, m.state === 'countdown' ? 0 : this.t);
+      if (done) gs.endT = gs.endT ?? this.t;
+      const alpha = done ? Math.max(0, 1 - (this.t - gs.endT) / 1.2) : 1;
       if (alpha > 0) out.push({ y: gs.y - 0.5, f: (ctx) => R.drawRaceGhost(ctx, gs, m, alpha, this.ghost.label) });
     }
     return out;
@@ -383,11 +391,18 @@ class RondoDrill extends DrillBase {
 }
 
 // ------------------------------------------------------------ Breakaway
+// Every attempt is recorded (the skater's path, the puck's, how it ended), and a ghost's
+// attempt plays alongside yours: same start, its shot, then GOAL or SAVED over its head.
 class BreakawayDrill extends DrillBase {
+  constructor(ghost = null) {
+    super();
+    const att = ghost && Array.isArray(ghost.attempts) ? ghost.attempts.map((a) => ({ result: a.result, path: decodeGhost(a.path), puck: decodeGhost(a.puck) })) : [];
+    this.ghost = att.length && att.every((a) => a.path && a.path.length && a.puck && a.puck.length) ? { ...ghost, att } : null;
+  }
   init(m) {
     this.hideGoalies(m, true);
     this.rng = makeRng(11);
-    this.attempt = 0; this.goals = 0; this.results = []; this.phase = 'run';
+    this.attempt = 0; this.goals = 0; this.results = []; this.phase = 'run'; this.runs = [];
     m.on('save', () => { if (this.phase === 'run') this.saved = true; });
     this.startAttempt(m);
     this.startCountdown(m);
@@ -399,18 +414,27 @@ class BreakawayDrill extends DrillBase {
     p.inNet = null; p.shot = null; p.pass = null;
     m.takePossession(s, 'drill');
     this.attT = 0; this.phase = 'run'; this.idle = 0; this.saved = false;
+    this.rec = new GhostRecorder(); this.recPuck = new GhostRecorder();
+    const ga = this.ghost && this.ghost.att[this.attempt];
+    this.ghostS = ga ? ghostSkater(this.ghost.char, ga.path[0]) : null;
   }
   tick(m, dt) {
     const p = m.puck, g = m.goalieAt(1);
     if (this.phase === 'between') {
       this.pauseT -= dt;
       if (this.pauseT <= 0) {
-        if (this.attempt >= 5) this.finish(m, this.goals, { results: this.results });
+        if (this.attempt >= 5) {
+          const g = this.ghost ? this.ghost.att.filter((a) => a.result === 'goal').length : 0;
+          const vsLine = this.ghost ? `${this.ghost.label}: ${t(g === 1 ? '{n} goal' : '{n} goals', { n: g })} · ${this.goals > g ? t('you win') : this.goals < g ? t('they win') : t('a tie')}` : null;
+          this.finish(m, this.goals, { results: this.results, ghost: { attempts: this.runs }, vs: this.ghost ? g - this.goals : null, vsLabel: this.ghost ? this.ghost.label : null, vsLine, vsWon: this.ghost ? this.goals >= g : null });
+        }
         else this.startAttempt(m);
       }
       return;
     }
     this.attT += dt;
+    this.rec.update(this.attT, m.controlled());
+    this.recPuck.update(this.attT, { x: p.x, y: p.y, face: 0 });
     if (p.owner === g) return this.end(m, 'save');
     if (!p.owner) {
       const stopped = p.speed < 60 || p.x > GOAL_X + 4 || (p.vx < 0 && p.x > 300 && !p.shot);
@@ -422,6 +446,7 @@ class BreakawayDrill extends DrillBase {
   end(m, kind) {
     if (this.phase !== 'run') return;
     this.results.push(kind);
+    this.runs.push({ path: this.rec.encode(), puck: this.recPuck.encode(), result: kind });
     this.attempt++;
     this.phase = 'between'; this.pauseT = 1.4;
     m.emit('breakaway_result', { kind, n: this.attempt });
@@ -429,7 +454,28 @@ class BreakawayDrill extends DrillBase {
   onGoal(m) { if (this.phase === 'run') { this.goals++; this.end(m, 'goal'); } }
   hud() {
     const dots = Array.from({ length: 5 }, (_, i) => (this.results[i] === 'goal' ? '●' : this.results[i] ? '○' : '·')).join(' ');
-    return { title: t('Breakaway'), main: t(this.goals === 1 ? '{n} goal' : '{n} goals', { n: this.goals }), sub: `${t('Attempt {n} of 5', { n: Math.min(5, this.attempt + 1) })}  ${dots}` };
+    // the ghost's record so far: attempts before this one, and this one once its shot is done
+    let note = '';
+    if (this.ghost) {
+      const ga = this.ghost.att, cur = ga[this.attempt];
+      const shown = this.attempt + (cur && this.phase === 'run' && this.attT * 15 >= cur.path.length - 1 ? 1 : 0);
+      note = `${this.ghost.label}: ${ga.map((a, i) => (i >= shown ? '·' : a.result === 'goal' ? '●' : '○')).join(' ')}`;
+    }
+    return { title: t('Breakaway'), main: t(this.goals === 1 ? '{n} goal' : '{n} goals', { n: this.goals }), sub: `${t('Attempt {n} of 5', { n: Math.min(5, this.attempt + 1) })}  ${dots}`, note };
+  }
+  sprites(m, R) {
+    const gs = this.ghostS, ga = this.ghost && this.ghost.att[this.attempt - (this.phase === 'between' ? 1 : 0)];
+    if (!gs || !ga || !R.drawRaceGhost) return [];
+    // the attempt plays from its start; after it ends the ghost lingers with its result
+    const t0 = m.state === 'countdown' ? 0 : this.phase === 'between' ? 99 : this.attT;
+    const done = moveGhost(gs, ga.path, t0);
+    const puck = ghostAt(ga.puck, t0);
+    const fade = this.phase === 'between' ? Math.max(0, this.pauseT / 1.4) : 1;
+    const label = done ? (ga.result === 'goal' ? t('GOAL') : ga.result === 'save' ? t('SAVED') : t('MISSED')) : this.ghost.label;
+    return [
+      { y: gs.y - 0.5, f: (ctx) => R.drawRaceGhost(ctx, gs, m, fade, label) },
+      { y: puck.y, f: (ctx) => R.drawGhostPuck(ctx, puck.x, puck.y, fade) },
+    ];
   }
 }
 

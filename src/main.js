@@ -19,6 +19,7 @@ import { Commentary } from './commentary.js';
 import { ClipRecorder } from './clips.js';
 import { AchievementTracker } from './achievements.js';
 import { createDrill, medalFor, DRILL_REWARDS } from './drills.js';
+import { makeSkills, recordSkills, SKILLS_EVENTS } from './skills.js';
 import { recordRivalResult, rivalLines, rivalAfterLine } from './rivals.js';
 import { recordRealGame, computeAwards, AWARD_BY_ID } from './awards.js';
 import { dailyFor, dailyGoal, completeDaily, noteAttempt, dayKey, dailyState } from './daily.js';
@@ -117,6 +118,9 @@ class App {
     // a restore link from another device: #restore=<code>
     const m = /#restore=([A-Za-z2-7-]+)/.exec(location.hash);
     if (m) { history.replaceState(null, '', location.pathname + location.search); this.ui.cloudRestore(m[1]); }
+    // a friend's challenge: #race=<code>
+    const rc = /#race=([A-Za-z0-9]{7})/.exec(location.hash);
+    if (rc) { history.replaceState(null, '', location.pathname + location.search); this.ui.challengeInvite(rc[1].toUpperCase()); }
     // an invite to a friends board: #join=<code>
     const j = /#join=([A-Za-z0-9]{6})/.exec(location.hash);
     if (j) { history.replaceState(null, '', location.pathname + location.search); this.ui.friendsBoards(j[1].toUpperCase()); }
@@ -323,17 +327,41 @@ class App {
   // colours (like signings) and the League All-Stars the All-Star kit, so both rival teams'
   // pages load and get recoloured first.
   startAllStar(f) {
-    const s = this.save;
-    const vote = allStarVote(s, s.league);
-    if (!vote) { recordAllStar(s.league, { skipped: true }); writeSave(s); return this.goHub('tournament'); }
-    ALLSTAR.groups = vote.teams.map((id) => 'rival_' + TEAMS[id].art);
+    const s = this.save, L = s.league;
+    const vote = L.allstarVote || (L.allstarVote = allStarVote(s, L)); // (kept: the same benches if you come back)
+    if (!vote) { recordAllStar(L, { skipped: true }); writeSave(s); return this.goHub('tournament'); }
+    this.allStarFixture = f;
     this.scene = 'dialogue';
     this.music('story');
-    Promise.all([Assets.ensureKit([...new Set([...homeKitGroups(s), ...ALLSTAR.groups])]), ...ALLSTAR.groups.map((g) => Assets.loadGroup(g))]).catch(() => {}).then(() => {
-      Assets.prepareTeam(ALLSTAR);
-      this.ui.allStarVote(vote, () => this.ui.dialogue(PLAYOFF_LINES.allstar.pre, 'allstar', { sub: t('No penalties, and ultimates charge twice as fast.') },
-        () => this.beginMatch('allstar', f.stage, false, [], { fixture: f, allstar: vote })));
-    });
+    this.prepAllStar(vote).then(() => this.ui.allStarVote(vote, () => this.openSkills()));
+  }
+
+  // Both rival teams' art, recoloured for both benches.
+  prepAllStar(vote) {
+    ALLSTAR.groups = vote.teams.map((id) => 'rival_' + TEAMS[id].art);
+    return Promise.all([Assets.ensureKit([...new Set([...homeKitGroups(this.save), ...ALLSTAR.groups])]), ...ALLSTAR.groups.map((g) => Assets.loadGroup(g))])
+      .catch(() => {}).then(() => Assets.prepareTeam(ALLSTAR));
+  }
+
+  // Skills Night before the All-Star Game (made once a season, kept in the league).
+  openSkills() {
+    const s = this.save, L = s.league;
+    L.skills ||= makeSkills(s, L.allstarVote, (s.season * 7919 + 13) >>> 0);
+    writeSave(s);
+    this.scene = 'results';
+    this.music('hub');
+    this.ui.skillsNight(L.skills, (id) => {
+      const ev = SKILLS_EVENTS.find((e) => e.id === id), g = L.skills.events[id].ghost;
+      this.startDrill(ev.drill, L.skills.star, { skills: id, ...(g ? { ghost: { ...g, label: g.name } } : {}) });
+    }, () => this.toAllStarGame());
+  }
+
+  toAllStarGame() {
+    const vote = this.save.league.allstarVote, f = this.allStarFixture || this.fixture();
+    this.scene = 'dialogue';
+    this.music('story');
+    this.prepAllStar(vote).then(() => this.ui.dialogue(PLAYOFF_LINES.allstar.pre, 'allstar', { sub: t('No penalties, and ultimates charge twice as fast.') },
+      () => this.beginMatch('allstar', f.stage, false, [], { fixture: f, allstar: vote })));
   }
 
   // Rivals with their own building host you there.
@@ -378,6 +406,8 @@ class App {
   // Training drills and the shootout run on the match engine with a drill controller.
   startDrill(id, charId, opts = {}) {
     audio.unlock();
+    const ghostTeam = opts.ghost && RECRUITS[opts.ghost.char] && id !== 'shootout' ? RECRUITS[opts.ghost.char].team : null;
+    if (ghostTeam && !opts.awayTeam) return Assets.ensureTeam(ghostTeam).catch(() => {}).then(() => this.startDrill(id, charId, { ...opts, awayTeam: ghostTeam }));
     const { cfg, ctrl, def, awayTeam } = createDrill(id, this.save, charId, opts);
     this.cur = { drill: id, char: charId, teamId: awayTeam, ctrl, def, opts };
     this.attract = false;
@@ -501,19 +531,28 @@ class App {
     this.scene = 'results';
     if (c.drill === 'shootout') return this.finishShootout(res);
     const medal = medalFor(c.def, res.score);
-    const rw = drillRewards(s, c.drill, c.char, res.score, medal, DRILL_REWARDS);
+    const skills = c.opts.skills && s.league && s.league.skills;
+    const rw = drillRewards(s, c.drill, c.char, res.score, medal, DRILL_REWARDS, { practice: !!skills });
+    if (skills) {
+      rw.skills = true;
+      const ev = SKILLS_EVENTS.find((e) => e.id === c.opts.skills);
+      if (recordSkills(skills, ev.id, res.score)) { s.coins += ev.coins; rw.extra = [[t('Skills Night: {event} won!', { event: t(ev.name) }), `+${ev.coins}`]]; audio.jingle('win'); }
+    }
     // your best run is kept, to race as a ghost
-    const run = res.ghost && res.ghost.path ? { ...res.ghost, char: c.char, score: res.score } : null;
+    const run = res.ghost && (res.ghost.path || res.ghost.attempts) ? { ...res.ghost, char: c.char, score: res.score } : null;
     s.ghosts ||= {};
-    if (run && !res.timeout && (!s.ghosts[c.drill] || res.score < s.ghosts[c.drill].score)) s.ghosts[c.drill] = run;
+    const prev = s.ghosts[c.drill];
+    const better = !prev || (c.def.unit === 'time' ? res.score < prev.score : res.score > prev.score);
+    if (run && !res.timeout && better) s.ghosts[c.drill] = run;
     this.ach.checkMeta();
     writeSave(s);
-    if (res.vs !== null && res.vs !== undefined) rw.ghostVs = { delta: res.vs, who: res.vsLabel };
+    if (res.vsLine) rw.ghostVs = { line: res.vsLine, won: res.vsWon };
+    if (run && !res.timeout) rw.run = { ghost: res.ghost, char: c.char }; // (to challenge a friend with)
     // racing your own best again: the newest one
     const again = c.opts.ghost && c.opts.ghost.mine && s.ghosts[c.drill] ? { ...c.opts, ghost: { ...c.opts.ghost, ...s.ghosts[c.drill] } } : c.opts;
     this.ui.drillResult(c.def, res.score, rw, c.char,
       () => this.startDrill(c.drill, c.char, again),
-      () => this.resolvePerks(() => { this.startAttract(); this.goHub('training'); }));
+      () => this.resolvePerks(() => { this.startAttract(); if (skills) this.openSkills(); else this.goHub('training'); }));
     this.postScore(c.drill, res.score, c.char, '#d-online', res.timeout ? null : res.ghost);
   }
 

@@ -367,7 +367,7 @@ export function applyChem(save, gains) {
 }
 
 // Rewards for a finished training drill. Uses a session if one is left.
-export function drillRewards(save, id, charId, score, medal, tables) {
+export function drillRewards(save, id, charId, score, medal, tables, opts = {}) {
   const tr = save.training;
   const prevBest = tr.best[id];
   const lowerBetter = id === 'cones';
@@ -377,7 +377,7 @@ export function drillRewards(save, id, charId, score, medal, tables) {
   let bonus = 0;
   for (let t = prevMedal + 1; t <= medal; t++) bonus += tables.firstMedal[t];
   if (medal > prevMedal) tr.medals[id] = medal;
-  const rewarded = tr.sessions > 0;
+  const rewarded = !opts.practice && tr.sessions > 0; // (Skills Night runs don't use a session)
   const exp = rewarded ? tables.exp[medal] : 0;
   const coins = (rewarded ? tables.coins[medal] : 0) + bonus;
   if (rewarded) tr.sessions--;

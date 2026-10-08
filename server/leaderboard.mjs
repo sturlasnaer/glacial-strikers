@@ -22,6 +22,10 @@ import { createHash, randomInt } from 'crypto';
 // times a second, and the gate splits). It's stored beside the best it belongs to, as a
 // 'ghost:<board>' or 'ghost:<board>@<week>' row, and only while it matches that best.
 // GET ?board=cones&ghost=1 (with period=week and/or group=CODE) returns the leader's run.
+// Breakaway runs are five attempts, each the skater's path, the puck's and how it ended.
+//
+// Challenges: any run (not just a best) can be filed under a short code for a friend to
+// race: POST {op: 'challenge_put'} returns the code, GET ?challenge=CODE the run.
 
 export const BOARDS = {
   cones: { better: 'lower', min: 8, max: 200, decimals: 2 }, // seconds
@@ -60,9 +64,15 @@ const GROUP_GAP_MS = 30000; // between new groups from one player
 const validCode = (c) => typeof c === 'string' && /^[A-HJ-NP-Z2-9]{6}$/.test(c);
 const groupKey = (key, code) => `${key}#${code}`;
 const validPlayer = (p) => typeof p === 'string' && /^[a-f0-9]{16,40}$/.test(p);
-export const GHOST_BOARDS = new Set(['cones']);
+export const GHOST_BOARDS = new Set(['cones', 'breakaway']);
 const GHOST_HZ = 15;
 export const MAX_GHOST_PATH = 6000; // base64: a 4-byte start, then 3 bytes a sample (60 s at most)
+const MAX_ATTEMPT_PATH = 1500; // a breakaway attempt is 8 s at most
+const MAX_GHOST_BODY = 14000;
+const CHALLENGE_BOARD = '_challenge';
+const CHALLENGE_GAP_MS = 15000; // between challenges from one player
+const validChallenge = (c) => typeof c === 'string' && /^[A-HJ-NP-Z2-9]{7}$/.test(c);
+const RESULTS = new Set(['goal', 'save', 'miss', 'time']);
 
 // Cloud saves are filed under a hash of the player's backup code, so the code itself is
 // never stored: knowing the table's contents doesn't let anyone read or overwrite a save.
@@ -147,20 +157,43 @@ async function groups(b, store, now) {
 // The played time a score counts for (a queued score can arrive late, but not from the future).
 const playedAt = (played, now) => { const p = Number(played); return Number.isFinite(p) && p <= now + 60000 && p > now - 8 * DAY ? Math.min(p, now) : now; };
 
+// A packed path: base64 of a 4-byte start and 3 bytes a sample. Its length in seconds, or -1.
+const pathSecs = (p, max) => {
+  if (typeof p !== 'string' || p.length > max || !/^[A-Za-z0-9+/]+=*$/.test(p)) return -1;
+  const bytes = Math.floor(p.replace(/=+$/, '').length * 3 / 4);
+  return bytes >= 7 && (bytes - 4) % 3 === 0 ? (bytes - 4) / 3 / GHOST_HZ : -1;
+};
+
+// Check a run for a board and keep only its known parts; null if it isn't one.
+// Cone Weave: { path, splits } (no longer than its time). Breakaway: { attempts: [{ path,
+// puck, result }] } (up to five, as many goals as the score).
+export function cleanRun(board, g, score) {
+  if (!GHOST_BOARDS.has(board) || !g || typeof g !== 'object' || !Number.isFinite(score)) return null;
+  const char = String(g.char || '').replace(/[^a-z0-9_]/g, '').slice(0, 24);
+  if (board === 'cones') {
+    const secs = pathSecs(g.path, MAX_GHOST_PATH);
+    if (secs < 0 || secs > score + 1) return null;
+    const splits = Array.isArray(g.splits) ? g.splits.slice(0, 12).map(Number).filter(Number.isFinite) : [];
+    return { path: g.path, splits, char };
+  }
+  if (!Array.isArray(g.attempts) || !g.attempts.length || g.attempts.length > 5) return null;
+  const attempts = [];
+  for (const a of g.attempts) {
+    if (!a || !RESULTS.has(a.result) || pathSecs(a.path, MAX_ATTEMPT_PATH) < 0 || pathSecs(a.puck, MAX_ATTEMPT_PATH) < 0) return null;
+    attempts.push({ path: a.path, puck: a.puck, result: a.result });
+  }
+  if (attempts.filter((a) => a.result === 'goal').length !== score) return null;
+  return { attempts, char };
+}
+
 // Store a run with the best it belongs to (all-time and/or that week's).
 async function putGhost(b, store, now) {
   if (!GHOST_BOARDS.has(b.board)) return bad('no ghosts for that board');
   if (!validPlayer(b.player)) return bad('bad player');
-  const g = b.ghost || {};
-  const path = typeof g.path === 'string' && g.path.length <= MAX_GHOST_PATH && /^[A-Za-z0-9+/]+=*$/.test(g.path) ? g.path : null;
-  if (!path) return bad('bad ghost');
-  const bytes = Math.floor(path.replace(/=+$/, '').length * 3 / 4);
-  const secs = (bytes - 4) / 3 / GHOST_HZ;
   const score = Number(b.score);
-  if (!(bytes >= 7 && (bytes - 4) % 3 === 0) || !Number.isFinite(score) || secs > score + 1) return bad('bad ghost');
-  const splits = Array.isArray(g.splits) ? g.splits.slice(0, 12).map(Number).filter(Number.isFinite) : [];
-  const char = String(g.char || '').replace(/[^a-z0-9_]/g, '').slice(0, 24);
-  const row = { player: b.player, score, path, splits, char, at: now };
+  const run = cleanRun(b.board, b.ghost, score);
+  if (!run) return bad('bad ghost');
+  const row = { player: b.player, score, ...run, at: now };
   let stored = 0;
   const wb = weekBoard(b.board, weekOf(playedAt(b.played, now)).key);
   for (const key of [b.board, ...(WEEKLY.has(b.board) ? [wb] : [])]) {
@@ -168,6 +201,27 @@ async function putGhost(b, store, now) {
     if (live(best) && best.score === score) { await store.put({ board: 'ghost:' + key, ...row }); stored++; }
   }
   return stored ? ok({ stored }) : bad('not your best', 409);
+}
+
+// File a run under a new challenge code (one a player every 15 seconds).
+async function putChallenge(b, store, now) {
+  if (!validPlayer(b.player)) return bad('bad player');
+  const score = Number(b.score);
+  const def = BOARDS[b.board];
+  if (!def || !Number.isFinite(score) || score < def.min || score > def.max) return bad('bad score');
+  const run = cleanRun(b.board, b.ghost, score);
+  if (!run) return bad('bad ghost');
+  const mark = await store.get(CHALLENGE_BOARD, 'by:' + b.player);
+  if (mark && now - (mark.at || 0) < CHALLENGE_GAP_MS) return bad('slow down', 429);
+  let code = null;
+  for (let i = 0; i < 6 && !code; i++) {
+    const c = Array.from({ length: 7 }, () => CODE_CHARS[randomInt(CODE_CHARS.length)]).join('');
+    if (!(await store.get(CHALLENGE_BOARD, c))) code = c;
+  }
+  if (!code) return bad('try again', 503);
+  await store.put({ board: CHALLENGE_BOARD, player: code, b: b.board, score, name: cleanName(b.name), tag: String(b.tag || '').replace(/[^A-Z0-9]/g, '').slice(0, 4), ...run, at: now });
+  await store.put({ board: CHALLENGE_BOARD, player: 'by:' + b.player, at: now });
+  return ok({ code });
 }
 
 // a small filter: clubs with these in the name post as "Anonymous Club"
@@ -193,6 +247,13 @@ const bad = (msg, status = 400) => ({ status, body: { error: msg } });
 export async function handle(req, store, now = Date.now()) {
   if (req.method === 'OPTIONS') return ok({});
   if (req.method === 'GET') {
+    if (req.query.challenge !== undefined) {
+      const code = String(req.query.challenge).toUpperCase();
+      if (!validChallenge(code)) return bad('bad code');
+      const c = await store.get(CHALLENGE_BOARD, code);
+      if (!c) return bad('not found', 404);
+      return ok({ challenge: { board: c.b, name: c.name, tag: c.tag, char: c.char, score: c.score, path: c.path, splits: c.splits, attempts: c.attempts, at: c.at } });
+    }
     const board = req.query.board;
     if (!BOARDS[board]) return bad('unknown board'); // (saves aren't readable this way)
     const weekly = req.query.period === 'week';
@@ -206,7 +267,7 @@ export async function handle(req, store, now = Date.now()) {
       if (!GHOST_BOARDS.has(board)) return bad('no ghosts for that board');
       const [lead] = await store.top(key, 1);
       const g = lead && await store.get('ghost:' + (weekly ? weekBoard(board, week.key) : board), lead.player);
-      return ok({ board, ghost: g && g.score === lead.score ? { name: lead.name, tag: lead.tag, char: g.char, score: g.score, path: g.path, splits: g.splits || [] } : null });
+      return ok({ board, ghost: g && g.score === lead.score ? { name: lead.name, tag: lead.tag, char: g.char, score: g.score, path: g.path, splits: g.splits || [], attempts: g.attempts } : null });
     }
     const top = await store.top(key, TOP);
     let me = null;
@@ -224,7 +285,8 @@ export async function handle(req, store, now = Date.now()) {
     if (!b || typeof b !== 'object') return bad('bad body');
     if (b.op === 'save_put' || b.op === 'save_get') return cloudSave(b, store, now);
     if (b.op === 'group_new' || b.op === 'group_join' || b.op === 'group_leave') return groups(b, store, now);
-    if (b.op === 'ghost_put') return size > MAX_GHOST_PATH + 1024 ? bad('too big', 413) : putGhost(b, store, now);
+    if (b.op === 'ghost_put') return size > MAX_GHOST_BODY ? bad('too big', 413) : putGhost(b, store, now);
+    if (b.op === 'challenge_put') return size > MAX_GHOST_BODY ? bad('too big', 413) : putChallenge(b, store, now);
     if (size > MAX_SCORE_BODY) return bad('too big', 413);
     const { board, player } = b;
     const def = BOARDS[board];

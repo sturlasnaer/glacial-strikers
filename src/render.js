@@ -1094,6 +1094,12 @@ export class Renderer {
     ctx.restore();
   }
 
+  // A race ghost's puck (Breakaway ghosts shoot too).
+  drawGhostPuck(ctx, x, y, alpha) {
+    const s = toScreen(x, y);
+    Assets.draw(ctx, 'power_pucks/plain/phase_1', s.x, s.y - 2, PUCK_SCALE * persp(y), { alpha: alpha * 0.5 });
+  }
+
   aura(ctx, x, y, r, color, t) {
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';

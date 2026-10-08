@@ -58,7 +58,7 @@ export async function submit(save, board, score, char = '', ghost = null) {
   if (!onlineOn(save) || !BOARD_INFO[board] || !Number.isFinite(score)) return null;
   const st = onlineState(save);
   const prev = st.pending[board];
-  if (!prev || isBetter(board, score, prev.score)) st.pending[board] = { score, char, played: Date.now(), ...(ghost && ghost.path ? { ghost } : {}) };
+  if (!prev || isBetter(board, score, prev.score)) st.pending[board] = { score, char, played: Date.now(), ...(ghost && (ghost.path || ghost.attempts) ? { ghost } : {}) };
   if (!configured()) return null;
   return post(save, board);
 }
@@ -101,6 +101,28 @@ export function fetchBoard(save, board, period = 'all', group = null) {
 export function fetchGhost(save, board, period = 'week', group = null) {
   if (!configured()) return Promise.reject(new Error('not configured'));
   return request('GET', { board, ghost: '1', ...(period === 'week' ? { period } : {}), ...(group ? { group } : {}) }).then((r) => r.ghost);
+}
+
+// ------------------------------------------------------------------ challenges
+// Any Cone Weave or Breakaway run can be filed under a code for a friend to race; the link
+// opens the game at #race=CODE.
+export const CHALLENGE_BOARDS = ['cones', 'breakaway'];
+export const challengeLink = (code) => `${location.origin}${location.pathname}#race=${code}`;
+const serverError = () => new Error(t('Couldn\'t reach the server. Try again in a moment.'));
+
+export async function createChallenge(save, board, score, char, ghost) {
+  if (!configured()) throw serverError();
+  const st = onlineState(save);
+  const r = await request('POST', null, { op: 'challenge_put', board, player: st.id, name: CLUB.name, tag: tagOf(st.id), score, ghost: { ...ghost, char } })
+    .catch((e) => { throw e.status === 429 ? new Error(t('One challenge at a time: try again in a few seconds.')) : serverError(); });
+  return r.code;
+}
+
+// Resolves to { board, name, tag, char, score, path, splits, attempts }, or rejects.
+export function fetchChallenge(code) {
+  if (!configured()) return Promise.reject(serverError());
+  return request('GET', { challenge: code }).then((r) => r.challenge)
+    .catch((e) => { throw e.status === 404 || e.status === 400 ? new Error(t('No challenge with that code. It may be mistyped.')) : serverError(); });
 }
 
 // ------------------------------------------------------------------ friends boards

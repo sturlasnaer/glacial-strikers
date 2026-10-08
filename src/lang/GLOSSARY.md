@@ -54,6 +54,7 @@ Terms the translation uses consistently. The tone is friendly, sporty and short;
 | friends board / invite / join / leave | vinatafla / bjóða / vera með / hætta |
 | ghost (a recorded run to race) | draugur |
 | All-Star Game / All-Stars | Stjörnuleikurinn / stjörnulið |
+| Skills Night / challenge | hæfileikakvöld / áskorun |
 | power puck | ofurpökkur |
 | arena rule | svellregla |
 | replay / goal clip | endursýning / markamyndband |

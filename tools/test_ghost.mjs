@@ -5,6 +5,8 @@ import { Match } from '../src/match.js';
 import { createDrill } from '../src/drills.js';
 import { newSave } from '../src/progress.js';
 import { GhostRecorder, decodeGhost, ghostAt, GHOST_HZ } from '../src/ghost.js';
+import { cleanRun } from '../server/leaderboard.mjs';
+import { GOAL_X } from '../src/rink.js';
 
 let ok = 0, fail = 0;
 const check = (name, cond, info) => { if (cond) ok++; else { fail++; console.log('FAIL', name, info ?? ''); } };
@@ -60,6 +62,33 @@ check('and loses to it', b.res.vs > 0 && Math.abs(b.res.vs - (b.res.score - a.re
 check('the HUD says so', /behind you|ahead of you/.test(b.ctrl.hud(b.m).note), b.ctrl.hud(b.m).note);
 const c = run({ ghost });
 check('the same run ties it', Math.abs(c.res.vs) < 0.05, c.res.vs);
+check('the server takes the run', cleanRun('cones', { ...a.res.ghost, char: 'thunder' }, a.res.score) !== null);
+check('the result line', /behind you|ahead of you/.test(b.res.vsLine) && b.res.vsWon === false, b.res);
 
-console.log(`ghosts: ${ok} passed, ${fail} failed  (run ${a.res.score}s, ${samples.length} samples, ${path.length} chars)`);
+// Breakaway: five attempts, each a skater path, a puck path and how it ended
+function breakaway(opts = {}, aimY = 22) {
+  const { cfg, ctrl } = createDrill('breakaway', save, 'frost', { seed: 9, ...opts });
+  const m = new Match(cfg);
+  for (let i = 0; i < 60 * 80 && m.state !== 'drill_over'; i++) {
+    const s = m.controlled();
+    const close = s.x > GOAL_X - 190;
+    const t = toward(s, GOAL_X - 120, aimY * Math.sign(s.y || 1));
+    m.setHumanInput(raw({ mx: close ? 0.3 : t.mx, my: close ? (s.y > 0 ? -1 : 1) : t.my, a: close && ctrl.phase === 'run' && i % 8 === 0 }));
+    m.update(1 / 60);
+  }
+  return { m, ctrl, res: ctrl.result };
+}
+const ba = breakaway();
+const runB = ba.res && ba.res.ghost;
+check('breakaway finished with five attempts', runB && runB.attempts.length === 5, ba.res);
+check('goals match the attempts', runB.attempts.filter((x) => x.result === 'goal').length === ba.res.score, [ba.res.score, runB.attempts.map((x) => x.result)]);
+check('each attempt has both paths', runB.attempts.every((x) => decodeGhost(x.path).length > 3 && decodeGhost(x.puck).length > 3));
+check('the server takes the breakaway run', cleanRun('breakaway', { ...runB, char: 'frost' }, ba.res.score) !== null);
+const bb = breakaway({ ghost: { ...runB, char: 'frost', score: ba.res.score, label: 'Best' } }, 70);
+check('raced the breakaway ghost', bb.ctrl.ghost && bb.ctrl.ghost.att.length === 5);
+check('its record in the HUD', /^Best: [●○·]( [●○·]){4}$/.test(bb.ctrl.hud(bb.m).note), bb.ctrl.hud(bb.m).note);
+check('the result line', typeof bb.res.vsLine === 'string' && /Best: \d goals? · (you win|they win|a tie)/.test(bb.res.vsLine), bb.res.vsLine);
+check('ghost sprites draw', bb.ctrl.sprites(bb.m, { drawRaceGhost() {}, drawGhostPuck() {} }).length === 2);
+
+console.log(`ghosts: ${ok} passed, ${fail} failed  (run ${a.res.score}s, ${samples.length} samples, ${path.length} chars; breakaway ${ba.res.score}/5 vs ${bb.res.score}/5)`);
 process.exit(fail ? 1 : 0);
