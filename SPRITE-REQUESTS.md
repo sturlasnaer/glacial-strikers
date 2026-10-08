@@ -12,10 +12,11 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 3. **AJ**: a body-and-face pilot: one skater body drawn without a head, and four heads that fit it, so new players can be made from parts.
 4. **AK**: the other hand: our cast and the newcomers redrawn facing the other way, so every player keeps one stick hand when they turn.
 5. **AL**: art for the new supers (Ember, Gale and Shadow) and the seven archetypes: icons, ultimate effects and combo icons.
-6. **AE**: the Friends Weekly Cup (a small cup, a podium, rosettes) and icons for the new career stats page.
-7. **AF**: the last 22 achievements that still borrow other icons.
-8. **AG**: a linesman who drops the puck at faceoffs and makes the calls.
-9. **AH**: a second rookie class, three more newcomers, so drafts don't repeat faces.
+6. **AM**: the training camp: element stones that change a player's super, and Brekka's style camp that changes their archetype.
+7. **AE**: the Friends Weekly Cup (a small cup, a podium, rosettes) and icons for the new career stats page.
+8. **AF**: the last 22 achievements that still borrow other icons.
+9. **AG**: a linesman who drops the puck at faceoffs and makes the calls.
+10. **AH**: a second rookie class, three more newcomers, so drafts don't repeat faces.
 
 ## Format notes
 
@@ -94,6 +95,10 @@ Both have **real animal heads**, not masks or helmet paint: think of them like t
 
 **Part 1 first, so the look can be checked early:** both portraits with the five expressions (neutral, determined, grin, shocked, defeated) and one standing frame each (`south` idle), plus a 1536×864 **reveal painting** of the twins back to back on the ice for the moment they turn up in Scouting. About 13 images. Send part 1 as soon as it's ready, then carry on with part 2.
 
+**Part 1 is in the game ✓** (thank you, they look wonderful): the portraits show in Scouting, the Team cards, dialogue and the cut-ins, and the reveal painting heads their Scouting card.
+
+**For Part 2:** Fenrir's standing frame in Part 1 shoots left, like Fáfnir's. That's fine: **keep both of them left-shot in all eight directions** (west-facing frames drawn, not mirrored), and the game mirrors Fenrir's whole set to make him the right-handed twin.
+
 **Part 2:** each twin with exactly the Batch AA pose list (the v2 skating set, the Batch A diagonals and hit reactions, the Batch C side strides, glides and stops, a signature celebration and gear masks like Batch M), a cut-in banner each like the rivals' `banners`, **a joint celebration** (the two of them leaping into a chest bump, 4 frames, drawn as one pair), and a combo icon `icons/combo_twins` (a dragon's head and a wolf's head facing each other in a ring, reward-icon size). Sheet names `fafnir_*` and `fenrir_*`.
 
 ## Batch AJ: a body-and-face pilot
@@ -150,6 +155,16 @@ Players now mix an **archetype** (how they play) with a **super** (an element's 
 - **Combo icons** for the twelve new element pairs, in the style of `icons/combo_*`: `combo_steam_burst`, `combo_magma`, `combo_plasma`, `combo_wildfire`, `combo_smoke_screen`, `combo_blizzard`, `combo_black_ice`, `combo_hurricane`, `combo_dark_bolt`, `combo_sandstorm`, `combo_obsidian` and `combo_night_wind` (each mixes its two elements' colours: Ember orange, Gale mint, Shadow violet, Frost ice blue, Thunder yellow, Stone tan). 12 frames.
 
 About 57 frames and strips.
+
+## Batch AM: the training camp
+
+Players can now change their super or their archetype once a season, for coins: Gearsmith Ottar sells **element stones** (a stone sets the player's super to its element), and Coach Brekka runs a **style camp** (a week of drills that changes the player's archetype). Today these use stand-in icons.
+
+- **Element stones**, in the style and size of the reward icons (about 200 px source), sheet `icons_am.png`, frame names `icons/stone_<element>`: a cut gem on a little iron setting, glowing in its element's colour, with a hint of its effect inside: `stone_frost` (ice blue, a snowflake frozen inside), `stone_thunder` (yellow, a crackle of lightning), `stone_stone` (tan granite, a cracked rune), `stone_ember` (orange, a flame), `stone_gale` (mint, a swirl of wind) and `stone_shadow` (violet-black, a crescent). 6 frames.
+- **Style camp**, same sheet: `icons/style_camp` (a whistle on a lanyard over a clipboard with an X-and-O play) and `icons/respec` (a hockey stick with a circular arrow around it, for the "change" buttons). 2 frames.
+- **Two locker-room poses**, matching the Batch H standing art and its scale: `hub_fullbody/shopkeeper/offer` (Ottar holding up a glowing stone in one hand) and `hub_fullbody/coach/whistle` (Brekka blowing her whistle, clipboard under her arm). One frame each, same foot position as their idle frames. 2 frames.
+
+10 frames.
 
 ## Batch AE: Friends Weekly Cup and career stats icons
 
