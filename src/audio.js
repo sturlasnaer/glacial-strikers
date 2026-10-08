@@ -2,11 +2,20 @@
 // plays the soundtrack in songs.js). Everything is generated with WebAudio, so there
 // are no audio files to download.
 
-import { MusicEngine, midi, freq } from './music.js';
+import { MusicEngine, midi, freq, makePulse } from './music.js';
 import { SONGS, JINGLES } from './songs.js';
 
 // Sounds that belong to the menus rather than the rink: no arena reverb, no panning.
 const UI_SFX = new Set(['click', 'confirm', 'back', 'blip', 'coin', 'deny', 'purchase', 'equip']);
+
+// Most sound effects are synthesized once into a short sample and played back from then
+// on (one node instead of five or six). These stay live: they're rare or vary each time.
+const LIVE_SFX = new Set(['combo', 'horn', 'blip']);
+const SFX_LEN = { ooh: 1.25, whistle: 0.5, thunder: 1, stone: 0.7, ult: 0.7, bedrock: 0.6, post: 1, shimmer: 0.95, crack: 0.6, splash: 0.45, buzzer: 0.9,
+  purchase: 0.65, whoosh: 0.5, freeze: 0.35, glide: 0.5, pickup: 0.3, power: 0.5, boards: 0.4, check: 0.3, stop: 0.35, equip: 0.4, coin: 0.32 };
+const WARM_SFX = ['stick', 'slap', 'pass', 'receive', 'boards', 'boards!', 'stop', 'save', 'catch', 'check', 'whistle', 'drop', 'net', 'poke',
+  'stride:0', 'stride:1', 'stride:2', 'pickup', 'dash', 'glide', 'bedrock', 'ult', 'whoosh', 'thunder', 'freeze', 'stone', 'post', 'splash',
+  'crack', 'shimmer', 'buzzer', 'ooh:0', 'ooh:1', 'ooh:2', 'power:fire', 'power:ice', 'power:lightning', 'power:gravity', 'click', 'confirm', 'back', 'coin', 'purchase', 'equip', 'deny'];
 
 // Arena acoustics: reverb length and level, and how big the crowd is.
 const ROOMS = {
@@ -26,6 +35,15 @@ export class Audio {
     this.lastStride = 0;
     this.arena = 'home';
     this.intensity = 0;
+    this.quality = 'auto';
+  }
+
+  // 'full' or 'light' ('auto' picks light on low-memory phones). The sample rate is set
+  // when the audio starts, so a change there needs a reload; the rest applies at once.
+  setQuality(q) {
+    this.quality = q;
+    this.light = q === 'light' || (q === 'auto' && navigator.deviceMemory && navigator.deviceMemory <= 3);
+    if (this.music) this.music.lite = this.light;
   }
 
   // Must be called from a user gesture.
@@ -33,7 +51,11 @@ export class Audio {
     if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
-    const ctx = (this.ctx = new AC());
+    // 32 kHz, the SNES's own rate: plenty for chiptune, and a third less work than 48 kHz
+    let ctx;
+    this.setQuality(this.quality);
+    try { ctx = new AC({ sampleRate: this.light ? 24000 : 32000, latencyHint: 'interactive' }); } catch { ctx = new AC(); }
+    this.ctx = ctx;
     this.master = ctx.createGain(); this.master.gain.value = 0.8;
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.2;
@@ -56,6 +78,10 @@ export class Audio {
     for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
     this.noise = buf;
     this.music = new MusicEngine(ctx, this.musicBus, buf);
+    this.music.lite = this.light;
+    this.sfxCache = new Map();
+    this.sfxPending = new Set();
+    this.ready = Promise.all([this.music.prepareDrums(), this.warmSfx()]);
     this.setArena(this.arena, true);
     this.startCrowd();
     if (this.pendingSong) { this.play(this.pendingSong); this.pendingSong = null; }
@@ -190,9 +216,62 @@ export class Audio {
   now() { return this.ctx ? this.ctx.currentTime : 0; }
   sfx(name, opt = {}) {
     if (!this.ctx || !this.sfxOn) return;
+    if (name === 'stride') { const t = this.now(); if (t - this.lastStride < 0.07) return; this.lastStride = t; }
+    if (name === 'post') this.crowdOoh(0.8);
+    const out = this.dest(name, opt);
+    const key = this.sfxKey(name, opt);
+    const hit = key && this.sfxCache.get(key);
+    if (hit) { this.playSample(hit, opt.vol ?? 1, out); return; }
+    if (key) this.cacheSfx(key);
+    this.sfxLive(name, opt, out);
+  }
+
+  // which cached sample stands for this call (null: always synthesize)
+  sfxKey(name, opt) {
+    if (LIVE_SFX.has(name)) return null;
+    if (name === 'boards') return (opt.vol ?? 1) > 0.55 ? 'boards!' : 'boards'; // hard hits rattle the glass
+    if (name === 'power') return 'power:' + (opt.type || '');
+    if (name === 'stride') return 'stride:' + Math.floor(Math.random() * 3);
+    return name;
+  }
+
+  playSample(entry, v, out) {
+    const src = this.ctx.createBufferSource(); src.buffer = entry.buf;
+    const g = this.ctx.createGain(); g.gain.value = v / entry.ref;
+    src.connect(g).connect(out);
+    src.start(this.now() + 0.005);
+  }
+
+  // Render one sound effect into a sample, in the background.
+  cacheSfx(key) {
+    if (this.sfxPending.has(key) || this.sfxCache.has(key)) return Promise.resolve();
+    this.sfxPending.add(key);
+    const [name, param] = key.replace('!', '').split(':');
+    const ref = key === 'boards' ? 0.5 : 1;
+    const opt = { vol: ref, type: name === 'power' ? param : undefined };
+    const sr = this.ctx.sampleRate;
+    const off = new OfflineAudioContext(1, Math.ceil(sr * (SFX_LEN[name] || 0.3)), sr);
+    const r = Object.create(Audio.prototype);
+    r.ctx = off; r.noise = this.noise; r.sfxOn = true; r.lastStride = -1;
+    r.music = { waves: { pulse12: makePulse(off, 0.125), pulse25: makePulse(off, 0.25), pulse50: makePulse(off, 0.5) } };
+    r.worldBus = r.sfxBus = r.crowdOut = off.destination;
+    r.now = () => 0;
+    r.light = this.light;
+    if (name === 'ooh') r.crowdVowel(0, 1.2, 0.09, 330, 820, 170, 250, 9);
+    else r.sfxLive(name, opt, off.destination);
+    return off.startRendering().then((buf) => { this.sfxCache.set(key, { buf, ref }); }).catch(() => {}).finally(() => this.sfxPending.delete(key));
+  }
+
+  warmSfx() {
+    let chain = Promise.resolve();
+    for (const key of WARM_SFX) chain = chain.then(() => this.cacheSfx(key));
+    return chain;
+  }
+
+  // the synthesized sound effects
+  sfxLive(name, opt, out) {
     const t = this.now() + 0.005;
     const v = opt.vol ?? 1;
-    const out = this.dest(name, opt);
     switch (name) {
       // ---- puck and sticks
       case 'stick': // wrist shot / stick on puck
@@ -224,7 +303,6 @@ export class Audio {
       case 'post':
         this.ring(t, 940, 0.9, 0.35 * v, out, [1, 1.99, 2.97, 4.3]);
         this.noiseBurst(t, 0.02, 0.3 * v, 'highpass', 4000, 0.7, out);
-        this.crowdOoh(0.8);
         break;
       case 'net': this.noiseBurst(t, 0.35, 0.12 * v, 'highpass', 3000, 0.6, out, 0.01); this.noiseBurst(t, 0.12, 0.1 * v, 'lowpass', 400, 0.8, out); break;
       // ---- bodies
@@ -266,12 +344,7 @@ export class Audio {
         }
         break;
       // ---- skating
-      case 'stride': {
-        if (t - this.lastStride < 0.07) return;
-        this.lastStride = t;
-        this.noiseBurst(t, 0.1, 0.06 * v, 'bandpass', 4800 + Math.random() * 900, 1.2, out, 0.03);
-        break;
-      }
+      case 'stride': this.noiseBurst(t, 0.1, 0.06 * v, 'bandpass', 4800 + Math.random() * 900, 1.2, out, 0.03); break;
       case 'stop': this.noiseBurst(t, 0.3, 0.34 * v, 'bandpass', 4200, 0.9, out, 0.01, 2600); this.noiseBurst(t, 0.2, 0.1 * v, 'highpass', 7000, 0.7, out, 0.02); break;
       // ---- arena rules
       case 'splash':
@@ -396,6 +469,7 @@ export class Audio {
   // A crowd vowel: a chorus of slightly different voices through two formants.
   crowdVowel(t, dur, vol, f1, f2, p0, p1, n = 7) {
     if (!(vol > 0.0005)) return; // no crowd in the menus
+    if (this.light) n = Math.max(1, Math.ceil(n / 2));
     const ctx = this.ctx;
     const out = ctx.createGain();
     out.gain.setValueAtTime(0.0001, t);
@@ -442,7 +516,7 @@ export class Audio {
     const size = this.room ? this.room.crowd : 1;
     this.crowdGain.gain.setTargetAtTime(size * (level > 0 ? 0.025 + level * 0.07 : 0), this.ctx.currentTime, 0.4);
     // now and then somebody shouts
-    if (level > 0.15 && this.sfxOn && Math.random() < 0.05 * level * size) {
+    if (level > 0.15 && this.sfxOn && !this.light && Math.random() < 0.05 * level * size) {
       const shouts = [[650, 1700], [350, 2000], [500, 900], [700, 1200]];
       const [f1, f2] = shouts[Math.floor(Math.random() * shouts.length)];
       const p = 150 + Math.random() * 180;
@@ -471,6 +545,12 @@ export class Audio {
   crowdOoh(amount) {
     if (!this.ctx || !this.sfxOn) return;
     const size = this.room ? this.room.crowd : 1;
+    if (!(amount * size > 0)) return;
+    // three recorded takes, picked at random (it's the most frequent crowd sound)
+    const key = 'ooh:' + Math.floor(Math.random() * 3);
+    const hit = this.sfxCache && this.sfxCache.get(key);
+    if (hit) { this.playSample(hit, amount * size, this.crowdOut); return; }
+    if (this.sfxCache && !this.sfxPending.has(key)) this.cacheSfx(key);
     this.crowdVowel(this.now(), 1.2, 0.09 * amount * size, 330, 820, 170, 250, 9);
   }
   // groan when the visitors score in our building

@@ -1043,6 +1043,7 @@ export class UI {
       <div class="label">Sound</div>
       ${row('Music', seg('musicVol', VOLUMES))}
       ${row('Sound effects', seg('sfxVol', VOLUMES))}
+      ${row('Audio quality', seg('audioQuality', [['auto', 'Auto'], ['full', 'Full'], ['light', 'Light']]), 'Light leaves out the backing layers and crowd voices for slower phones. Auto picks it on low-memory devices.')}
       ${row('Music room', '<button class="btn small ghost" id="s-jukebox">Listen</button>', 'Every track in the game, from the title theme to the Cup Final.')}
       <div class="label">Gameplay</div>
       ${row('Rival difficulty', seg('difficulty', [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']]))}

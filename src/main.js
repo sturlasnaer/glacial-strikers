@@ -129,6 +129,7 @@ class App {
   applySettings() {
     const st = this.save.settings;
     audio.setMusic(st.music !== false && (st.musicVol ?? 1) > 0, st.musicVol ?? 1); audio.setSfx(st.sfx !== false && (st.sfxVol ?? 1) > 0, st.sfxVol ?? 1);
+    audio.setQuality(st.audioQuality || 'auto');
     this.fx.shakeMul = st.shake ?? 1;
     this.fx.flashes = st.flashes !== false;
     this.fx.particleMul = st.particles === 'reduced' ? 0.35 : 1;

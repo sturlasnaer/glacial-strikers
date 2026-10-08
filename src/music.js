@@ -309,10 +309,13 @@ export const INST = {
   drums: { gain: 1, echo: 0.08 },
 };
 
+// backing parts left out in light mode
+const LITE_SKIP = new Set(['pad', 'counter', 'bells', 'strings']);
+
 // default stereo placement per channel name (SNES-ish width)
 const PAN = { lead: 0, harm: -0.35, counter: 0.3, arp: 0.4, pad: -0.2, comp: -0.25, bass: 0, drums: 0, bells: 0.35, strings: -0.3 };
 
-function makePulse(ctx, duty) {
+export function makePulse(ctx, duty) {
   const n = 48;
   const real = new Float32Array(n), imag = new Float32Array(n);
   for (let k = 1; k < n; k++) {
@@ -343,6 +346,7 @@ export class MusicEngine {
     this.song = null;
     this.intensity = 0;
     this.chans = {};
+    this.lite = false; // slow devices: no backing layers, single oscillators, no vibrato or FM
   }
 
   load(name, def) {
@@ -466,6 +470,7 @@ export class MusicEngine {
     const inst = this.instOf(this.song, sec, chan);
     const c = this.chan(chan, inst);
     if (c.hype && this.intensity < 1) return; // silent layer: don't spend voices
+    if (this.lite && LITE_SKIP.has(chan.replace(/^hype\./, ''))) return;
     if (e.drum) { this.drum(e.drum, t, e.vel, c.gain, this.song.drumVol ?? 1); return; }
     const dur = e.len * stepDur * (inst.legato ?? 0.94);
     const from = e.glide ? this.lastNote[chan] : null;
@@ -484,6 +489,7 @@ export class MusicEngine {
 
   voice(inst, notes, t, dur, vel, dest, glideFrom) {
     const ctx = this.ctx;
+    if (this.lite) inst = { ...inst, detune: 0, vib: null, fm: null };
     const peak = inst.gain * vel;
     const end = t + dur;
     const stop = end + inst.r + 0.05;
@@ -574,8 +580,38 @@ export class MusicEngine {
     o.start(t); o.stop(t + dur + 0.02);
   }
 
-  // synthesized drum kit
+  // Drums are synthesized once into short samples, then played back: one node per hit
+  // instead of several oscillators and filters (the SNES way). Until the samples are
+  // ready, hits are synthesized live.
+  prepareDrums() {
+    const sr = this.ctx.sampleRate;
+    const LEN = { k: 0.4, s: 0.24, h: 0.07, o: 0.34, c: 1.6, r: 0.5, t: 0.34, m: 0.38, l: 0.44, T: 0.95, p: 0.2, x: 0.05, b: 0.34, z: 0.1 };
+    this.drumBufs = this.drumBufs || {};
+    let chain = Promise.resolve();
+    for (const [d, len] of Object.entries(LEN)) {
+      chain = chain.then(() => {
+        const off = new OfflineAudioContext(1, Math.ceil(sr * len), sr);
+        const synth = Object.create(MusicEngine.prototype);
+        synth.ctx = off; synth.noise = this.noise;
+        synth.waves = { pulse12: makePulse(off, 0.125), pulse25: makePulse(off, 0.25), pulse50: makePulse(off, 0.5) };
+        synth.drumSynth(d, 0, 1, off.destination, 1);
+        return off.startRendering().then((buf) => { this.drumBufs[d] = buf; });
+      });
+    }
+    return chain.catch(() => {});
+  }
+
   drum(d, t, vel, dest, drumVol = 1) {
+    const buf = this.drumBufs && this.drumBufs[d];
+    if (!buf) return this.drumSynth(d, t, vel, dest, drumVol);
+    const src = this.ctx.createBufferSource(); src.buffer = buf;
+    const g = this.ctx.createGain(); g.gain.value = vel * drumVol;
+    src.connect(g).connect(dest);
+    src.start(t);
+  }
+
+  // the synthesized drum kit
+  drumSynth(d, t, vel, dest, drumVol = 1) {
     const v = vel * drumVol * 0.75;
     switch (d) {
       case 'k': this.sweep(t, 160, 42, 0.32, 0.55 * v, dest, 'sine', 0.35); this.noiseHit(t, 0.012, 0.12 * v, 'highpass', 3000, 0.7, dest); break;
