@@ -8,9 +8,12 @@ import { CLUB } from './data.js';
 import { t } from './i18n.js';
 
 // The leaderboard server (an AWS Lambda function URL). ?lb=<url> overrides it for testing.
+// A copy served from this computer (localhost) stays off the live server, so test saves and
+// scores don't land on the real boards; ?online=1 turns it back on.
 const DEFAULT_URL = 'https://vivkdhbjjsajnazmoijsbim3gq0tjzox.lambda-url.eu-west-1.on.aws/';
-const query = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('lb') : null;
-export const LB_URL = query || DEFAULT_URL;
+const params = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
+const local = typeof location !== 'undefined' && /^(localhost|127\.0\.0\.1|\[::1\])$|\.localhost$/.test(location.hostname) && params.get('online') !== '1';
+export const LB_URL = (params && params.get('lb')) || (local ? '' : DEFAULT_URL);
 
 export const BOARD_INFO = {
   cones: { name: 'Cone Weave', better: 'lower', weekly: true, fmt: (v) => t('{seconds}s', { seconds: v.toFixed(2) }) },
@@ -64,7 +67,7 @@ async function post(save, board) {
   const entry = st.pending[board];
   if (!entry) return null;
   try {
-    const res = await request('POST', null, { board, player: st.id, name: CLUB.name, tag: tagOf(st.id), score: entry.score, char: entry.char, played: entry.played });
+    const res = await request('POST', null, { board, player: st.id, name: CLUB.name, tag: tagOf(st.id), score: entry.score, char: entry.char, played: entry.played, groups: groupsOf(save).map((g) => g.code) });
     if (st.pending[board] === entry) delete st.pending[board];
     return res;
   } catch (e) {
@@ -83,10 +86,53 @@ export async function flush(save) {
   return sent;
 }
 
-// period: 'all' or 'week' (the drill boards)
-export function fetchBoard(save, board, period = 'all') {
+// period: 'all' or 'week' (the drill boards); group: a friends code, or null for everyone
+export function fetchBoard(save, board, period = 'all', group = null) {
   if (!configured()) return Promise.reject(new Error('not configured'));
-  return request('GET', { board, player: onlineState(save).id, ...(period === 'week' ? { period } : {}) });
+  return request('GET', { board, player: onlineState(save).id, ...(period === 'week' ? { period } : {}), ...(group ? { group } : {}) });
+}
+
+// ------------------------------------------------------------------ friends boards
+// A friends group is a six-character code with a name. The boards have a copy for each
+// group with just its members; scores posted from here go onto the player's groups too.
+export const MAX_GROUPS = 3;
+export const groupsOf = (save) => (onlineState(save).groups ||= []);
+export const parseGroupCode = (text) => {
+  const c = String(text || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return /^[A-HJ-NP-Z2-9]{6}$/.test(c) ? c : null;
+};
+export const inviteLink = (code) => `${location.origin}${location.pathname}#join=${code}`;
+const groupError = (e) => new Error(e.status === 404 ? t('No friends board with that code.') : e.status === 429 ? t('One new board at a time: try again in half a minute.') : t('Couldn\'t reach the server. Try again in a moment.'));
+
+// Start a new group (and join it). Resolves to { code, name }.
+export async function createGroup(save, name) {
+  if (!configured()) throw new Error(t('Couldn\'t reach the server. Try again in a moment.'));
+  if (groupsOf(save).length >= MAX_GROUPS) throw new Error(t('You\'re on {n} friends boards already. Leave one to make room.', { n: MAX_GROUPS }));
+  await flush(save); // so the bests copied in are the latest
+  const r = await request('POST', null, { op: 'group_new', player: onlineState(save).id, name }).catch((e) => { throw groupError(e); });
+  groupsOf(save).push({ code: r.code, name: r.name });
+  return r;
+}
+
+export async function joinGroup(save, text) {
+  const code = parseGroupCode(text);
+  if (!code) throw new Error(t('That code doesn\'t look right: it has 6 letters and digits.'));
+  const mine = groupsOf(save);
+  const had = mine.find((g) => g.code === code);
+  if (had) return had;
+  if (mine.length >= MAX_GROUPS) throw new Error(t('You\'re on {n} friends boards already. Leave one to make room.', { n: MAX_GROUPS }));
+  if (!configured()) throw new Error(t('Couldn\'t reach the server. Try again in a moment.'));
+  await flush(save);
+  const r = await request('POST', null, { op: 'group_join', player: onlineState(save).id, group: code }).catch((e) => { throw groupError(e); });
+  const g = { code: r.code, name: r.name };
+  mine.push(g);
+  return g;
+}
+
+export async function leaveGroup(save, code) {
+  if (configured()) await request('POST', null, { op: 'group_leave', player: onlineState(save).id, group: code }).catch((e) => { if (e.status !== 404) throw groupError(e); });
+  const st = onlineState(save);
+  st.groups = groupsOf(save).filter((g) => g.code !== code);
 }
 
 // "3d 4h" / "5h 20m" until the weekly boards reset

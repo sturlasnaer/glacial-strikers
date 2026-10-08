@@ -15,10 +15,10 @@ import {
   expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave,
   chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups,
 } from './progress.js';
-import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave, resetsIn } from './online.js';
+import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave, resetsIn, groupsOf, createGroup, joinGroup, leaveGroup, inviteLink, MAX_GROUPS } from './online.js';
 import { nextGuide, doneGuide, guideOff } from './guide.js';
 import { audio } from './audio.js';
-import { t, getLang } from './i18n.js';
+import { t } from './i18n.js';
 const VOLUMES = () => [[0, t('Off')], [0.35, t('Low')], [0.7, t('Mid')], [1, t('Full')]];
 // dialogue voices: each role speaks at its own pitch; rivals a little lower
 const VOICE = { frost: 660, thunder: 800, stone: 470, goalie: 590 };
@@ -108,8 +108,16 @@ const PAD_PROMPT = { '✕': 'ps_cross', '○': 'ps_circle', '□': 'ps_square', 
 const KEYS = ['a', 'd', 'enter', 'esc', 'h', 'i', 'j', 'k', 'l', 'o', 'p', 's', 'shift', 'space', 'u', 'w'];
 const promptImg = (name, alt) => `<img class="pb-prompt" src="${Assets.url(`gfx/ui-kit/images/${name}.png`)}" alt="${esc(alt)}">`;
 // controller buttons named in a (translated) sentence
-// the OWNED stamp has English lettering, so other languages keep the text
-const ownedStamp = () => getLang() === 'en' ? `<img class="owned-stamp" src="${Assets.url('gfx/ui-kit/images/owned_stamp.png')}" alt="${t('OWNED')}" width="96" height="48">` : `<span class="good" style="font-family:var(--display);font-size:20px">${t('OWNED')}</span>`;
+// the OWNED stamp (Batch V's blank frame, so the word can be in either language)
+const ownedStamp = () => `<span class="pb-owned-blank owned-stamp">${t('OWNED')}</span>`;
+// Batch X badges (their own page group, loaded at start and kept): an <img>, or the
+// fallback until it has loaded
+const MEDAL_BADGES = ['medal_empty', 'medal_bronze', 'medal_silver', 'medal_gold'];
+function badge(name, size, cls = 'badge', fallback = '') {
+  const id = Assets.atlas.badges && Assets.atlas.badges[name];
+  const src = id && Assets.groupReady('badges') ? Assets.icon(id, size) : '';
+  return src ? `<img class="${cls}" src="${src}" alt="">` : fallback;
+}
 const padGlyphs = (text) => text.replace(/✕|○|□|△|\b(?:L1|R1|L2|R2|LB|RB|LT|RT|Options|Create|Start|Back|[ABXY])\b/g, (m) => promptImg(PAD_PROMPT[m], m));
 // a keyboard label like 'J / Space' or 'WASD / Arrows' as keycaps (keys without art stay text)
 export function keyGlyphs(label) {
@@ -323,7 +331,7 @@ export class UI {
           ${nt ? `<div class="next">${esc(t(next.round, { n: next.roundN }))}<br><b>${t('vs {team}', { team: esc(nt.name) })}</b>${s.buffs && s.buffs.length ? `<span class="buffs">${s.buffs.map((b) => `<span class="buff">${esc(BUFF_TEXT(b))}</span>`).join('')}</span>` : ''}</div>
           <button class="btn gold" id="h-play">${t('Play match')}</button>` : `<div class="next"><b>${s.league && s.league.champion && s.league.champion !== 'home' ? t('{team} won the cup', { team: esc(TEAMS[s.league.champion].name) }) : t('Champions!')}</b><br>${t('Start a new season or play exhibitions.')}</div>
           <button class="btn gold" id="h-season">${t('New season')}</button>`}
-          <button class="btn ghost daily-btn" id="h-daily" title="${t('Today\'s daily challenge')}">${doneToday(s) ? '✓' : '★'} ${t('Daily')}${currentStreak(s) ? ` <span class="streak">${currentStreak(s)}🔥</span>` : ''}</button>
+          <button class="btn ghost daily-btn" id="h-daily" title="${t('Today\'s daily challenge')}">${doneToday(s) ? badge('daily_done', 48, 'btn-ico', '✓') : badge('daily_star', 48, 'btn-ico', '★')} ${t('Daily')}${currentStreak(s) ? ` <span class="streak">${currentStreak(s)}${badge('streak_flame', 40, 'btn-ico', '🔥')}</span>` : ''}</button>
           <button class="btn ghost" id="h-title">${t('Title')}</button>
         </div>
       </div>`);
@@ -495,7 +503,7 @@ export class UI {
     const cl = L.classic, clNext = !cl && L.phase === 'regular' && L.round === CLASSIC_AFTER;
     const clOpp = cl ? cl.opp : L.phase === 'regular' && L.round <= CLASSIC_AFTER ? classicOpponent(L) : null;
     const classicRow = clOpp ? `<div class="fixture classic ${clNext ? 'next' : ''}">
-        <span class="muted">❄</span><img src="${crest(clOpp, 48)}" alt="" width="26" height="26">
+        ${badge('snowflake', 48, 'row-ico', '<span class="muted">❄</span>')}<img src="${crest(clOpp, 48)}" alt="" width="26" height="26">
         <span class="fx-name"><b>${t('Winter Classic')}</b><span class="muted">${esc(TEAMS[clOpp].name)} · ${esc(ARENAS.pine_pond.name)}${cl ? '' : ` · ${standings(L)[0].id === 'home' ? t('the runners-up') : t('the league leaders')}`}</span></span>
         <span class="fx-res">${cl ? (cl.won ? `<span class="good">${t('W {a}–{b}', { a: cl.gf, b: cl.ga })}</span>` : `<span class="bad">${t('L {a}–{b}', { a: cl.gf, b: cl.ga })}</span>`) : clNext ? `<span class="gold-t">${t('NEXT')}</span>` : '<span class="muted">—</span>'}</span></div>` : '';
     const schedule = L.schedule.map((rd, i) => {
@@ -567,7 +575,7 @@ export class UI {
     body.innerHTML = `
       <div class="train-top"><div><div class="label">${t('Trophy case')}</div>
         <p style="margin:2px 0 0;font-size:13px">${t('{n} of {total} unlocked', { n: got.length, total: ACHIEVEMENTS.length })} · ${t('{n} coins earned', { n: earned })}${s.cups ? ` · ${t(s.cups > 1 ? '{n} cups won' : '{n} cup won', { n: s.cups })}` : ''}${classicWins ? ` · ${t(classicWins > 1 ? '{n} Winter Classics won' : '{n} Winter Classic won', { n: classicWins })}` : ''}</p></div>
-        <button class="btn small ghost" id="tr-lb">🏆 ${t('Online leaderboards')}</button></div>
+        <button class="btn small ghost" id="tr-lb">${badge('cup_small', 48, 'btn-ico', '🏆')} ${t('Online leaderboards')}</button></div>
       ${s.awards && s.awards.length ? `<div class="label" style="margin:4px 0 6px">${t('Award cabinet')}</div>
       <div class="aw-list cabinet">${s.awards.slice().reverse().map((w) => `
         <div class="aw-row us"><img src="${rowFace({ ...w, team: 'home' }, 64)}" alt=""><div style="min-width:0"><small>${t('Season {n}', { n: w.season })} · ${esc(t(AWARD_BY_ID[w.id].name))}</small><b>${esc(w.name)}</b><span class="muted">${esc(w.line)}</span></div><img class="cr" src="${ico(AWARD_BY_ID[w.id].icon, 64)}" alt=""></div>`).join('')}</div>
@@ -1168,12 +1176,12 @@ export class UI {
         return `<div class="card drill">
           <div class="card-head"><img src="${ico(d.icon, 128)}" alt="" style="border:0;background:none">
             <div style="min-width:0"><h3>${esc(t(d.name))}</h3><div class="sub">${t('Trains {skill}', { skill: esc(t(d.trains)) })}</div>
-              <div class="medal-row">${[1, 2, 3].map((mi) => `<span class="medal ${mi <= medal ? 'got' : ''}" style="--m:${MEDAL_COLORS[mi]}" title="${t(MEDAL_NAMES[mi])}: ${formatScore(d, d.medals[mi - 1])}">${formatScore(d, d.medals[mi - 1])}</span>`).join('')}</div>
+              <div class="medal-row">${[1, 2, 3].map((mi) => `<span class="medal ${mi <= medal ? 'got' : ''}" style="--m:${MEDAL_COLORS[mi]}" title="${t(MEDAL_NAMES[mi])}: ${formatScore(d, d.medals[mi - 1])}">${badge(MEDAL_BADGES[mi <= medal ? mi : 0], 44, 'medal-ico')}${formatScore(d, d.medals[mi - 1])}</span>`).join('')}</div>
             </div></div>
           <p class="muted" style="margin:0;font-size:13px">${esc(t(d.text))}</p>
           <div class="row" style="justify-content:space-between">
             <span style="font-size:13px">${t('Best: {score}', { score: `<b class="gold-t">${best === undefined || best === null ? '–' : formatScore(d, best)}</b>` })}</span>
-            <span class="row" style="gap:6px"><button class="btn small ghost" data-lb="${d.id}" title="${t('Online leaderboard')}" aria-label="${t('{drill} online leaderboard', { drill: esc(t(d.name)) })}">🏆</button>
+            <span class="row" style="gap:6px"><button class="btn small ghost" data-lb="${d.id}" title="${t('Online leaderboard')}" aria-label="${t('{drill} online leaderboard', { drill: esc(t(d.name)) })}">${badge('cup_small', 48, 'btn-ico', '🏆')}</button>
             <button class="btn small ${tr.sessions > 0 ? 'gold' : ''}" data-play="${d.id}">${tr.sessions > 0 ? t('Train') : t('Practice')}</button></span>
           </div>
         </div>`;
@@ -1193,12 +1201,17 @@ export class UI {
     const myTag = tagOf(st.id);
     const tabs = Object.entries(BOARD_INFO).map(([id, b]) => `<button class="chip" data-lbt="${id}" aria-pressed="${id === board}">${esc(t(b.name))}</button>`).join('');
     const periods = info.weekly ? `<div class="filters" style="margin:0 0 8px">${[['week', t('This week')], ['all', t('All time')]].map(([p, label]) => `<button class="chip" data-lbp="${p}" aria-pressed="${p === period}">${label}</button>`).join('')}</div>` : '';
+    // everyone, or one of your friends boards
+    const groups = groupsOf(s);
+    if (!groups.some((g) => g.code === this.lbGroup)) this.lbGroup = null;
+    const group = this.lbGroup;
+    const scope = onlineOn(s) && configured() ? `<div class="filters" style="margin:0 0 8px">${[[null, t('Everyone')], ...groups.map((g) => [g.code, g.name])].map(([code, label]) => `<button class="chip" data-lbg="${code || ''}" aria-pressed="${code === group}">${esc(label)}</button>`).join('')}<button class="btn small ghost" id="lb-friends">${t('Friends boards')}</button></div>` : '';
     const queued = st.pending[board];
     const note = (t) => `<p class="muted" style="font-size:13px">${t}</p>`;
     this.modal(`
       <h2>${t('Online leaderboards')}</h2>
       <div class="jukebox" style="margin:4px 0 10px">${tabs}</div>
-      ${periods}
+      ${scope}${periods}
       <div id="lb-body">${!onlineOn(s) ? note(t('Online leaderboards are off in Settings.'))
         : !configured() ? note(queued ? t('The online leaderboards open soon. Your best scores are saved ({score} here) and will be posted when they do.', { score: esc(info.fmt(queued.score)) }) : t('The online leaderboards open soon. Your best scores are saved and will be posted when they do.'))
         : `<p class="muted">${t('Loading…')}</p>`}</div>
@@ -1206,24 +1219,72 @@ export class UI {
       <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>${t('Close')}</button></div>`, (m, close) => {
       this.click('[data-lbt]', (el) => { audio.sfx('click'); close(); this.leaderboard(el.dataset.lbt); }, m);
       this.click('[data-lbp]', (el) => { audio.sfx('click'); this.lbPeriod = el.dataset.lbp; close(); this.leaderboard(board, el.dataset.lbp); }, m);
+      this.click('[data-lbg]', (el) => { audio.sfx('click'); this.lbGroup = el.dataset.lbg || null; close(); this.leaderboard(board, period); }, m);
+      this.click('#lb-friends', () => { audio.sfx('click'); close(); this.friendsBoards('', () => this.leaderboard(board, period)); }, m);
       if (!onlineOn(s) || !configured()) return;
-      fetchBoard(s, board, period).then((r) => {
+      fetchBoard(s, board, period, group).then((r) => {
         const out = m.querySelector('#lb-body');
         if (!out) return;
         const rows = r.top.map((row, i) => {
           const me = row.tag === myTag && row.name === CLUB.name;
           const who = row.char && member(row.char) ? ` <span class="muted">· ${esc(member(row.char).name)}</span>` : '';
-          return `<div class="lb-row ${me ? 'me' : ''}"><span class="lb-rank">${i + 1}</span><span class="lb-name">${esc(row.name)} <span class="lb-tag">#${esc(row.tag)}</span>${who}</span><b>${esc(info.fmt(row.score))}</b></div>`;
+          return `<div class="lb-row ${me ? 'me' : ''}"><span class="lb-rank">${i < 3 ? badge('rank_' + (i + 1), 56, 'rank-ico') : ''}<i>${i + 1}</i></span><span class="lb-name">${esc(row.name)} <span class="lb-tag">#${esc(row.tag)}</span>${who}</span><b>${esc(info.fmt(row.score))}</b></div>`;
         }).join('');
         const mine = r.me ? `<div class="lb-me">${t(r.week ? 'You this week: {rank} of {total} · best {score}' : 'You: {rank} of {total} · best {score}', { rank: `<b>#${r.me.rank}</b>`, total: r.total, score: esc(info.fmt(r.me.score)) })}</div>`
           : `<div class="lb-me muted">${r.total ? t('{n} on the board.', { n: r.total }) : r.week ? t('Nobody yet this week.') : t('Nobody yet.')} ${t('Play {board} to get on it.', { board: esc(t(info.name)) })}</div>`;
+        const solo = group && r.total < 2 ? `<p class="muted" style="font-size:12px;margin:6px 0 0">${t('Share the code {code} so friends can join this board.', { code: `<b>${esc(group)}</b>` })}</p>` : '';
         const reset = r.week && r.resetsAt ? `<p class="muted" style="font-size:12px;margin:6px 0 0">${t('The weekly board starts again in {time} (Monday, 00:00 UTC).', { time: resetsIn(r.resetsAt) })}</p>` : '';
-        out.innerHTML = `${mine}<div class="lb-list">${rows || ''}</div>${reset}`;
+        out.innerHTML = `${mine}<div class="lb-list">${rows || ''}</div>${reset}${solo}`;
       }).catch(() => {
         const out = m.querySelector('#lb-body');
         if (out) out.innerHTML = note(t('Couldn\'t reach the leaderboard. Your scores are saved and will be posted when you\'re back online.'));
       });
     });
+  }
+
+  // Friends boards: your groups (copy the code, invite, leave), make a new one or join by code.
+  friendsBoards(prefill = '', back = null) {
+    const s = this.app.save;
+    const groups = groupsOf(s);
+    const off = !onlineOn(s) ? t('Online leaderboards are off in Settings.') : !configured() ? t('Couldn\'t reach the server. Try again in a moment.') : '';
+    const list = groups.length ? groups.map((g) => `<div class="lb-row fb-row"><span class="lb-name">${esc(g.name)} <span class="lb-tag">${esc(g.code)}</span></span>
+        <span class="row" style="gap:6px;margin:0"><button class="btn small ghost" data-invite="${g.code}">${navigator.share ? t('Invite') : t('Copy link')}</button><button class="btn small ghost" data-leave="${g.code}">${t('Leave')}</button></span></div>`).join('')
+      : `<p class="muted" style="font-size:13px">${t('Not on any friends boards yet.')}</p>`;
+    const full = groups.length >= MAX_GROUPS;
+    this.modal(`
+      <h2>${t('Friends boards')}</h2>
+      <p style="font-size:13.5px">${t('A board for just you and your friends: the same drills, shootout wins and daily streaks, this week and all time. Make one and share its code, or join with a friend\'s code. You can be on up to {n}.', { n: MAX_GROUPS })}</p>
+      <div class="lb-list">${list}</div>
+      ${off ? `<p class="muted" style="font-size:13px">${off}</p>` : `
+      <div class="fb-form">
+        <input class="cloud-input" id="fb-code" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="7" placeholder="${t('Code')}" value="${esc(prefill)}" ${full ? 'disabled' : ''}>
+        <button class="btn small ${prefill ? 'gold' : ''}" id="fb-join" ${full ? 'disabled' : ''}>${t('Join')}</button>
+      </div>
+      <div class="fb-form">
+        <input class="cloud-input fb-name" id="fb-name" autocomplete="off" maxlength="24" placeholder="${t('Board name')}" ${full ? 'disabled' : ''}>
+        <button class="btn small ${prefill ? '' : 'gold'}" id="fb-new" ${full ? 'disabled' : ''}>${t('Make a board')}</button>
+      </div>`}
+      <p class="muted" id="fb-msg" style="min-height:1.3em;font-size:13px">${full ? t('You\'re on {n} friends boards already. Leave one to make room.', { n: MAX_GROUPS }) : ''}</p>
+      <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>${t('Back')}</button></div>`, (m, close) => {
+      const msg = m.querySelector('#fb-msg');
+      const reopen = (note) => { close(); this.friendsBoards('', back); const el = document.querySelector('#fb-msg'); if (el && note) el.textContent = note; };
+      const busy = async (fn) => {
+        msg.textContent = t('Looking…');
+        try { const note = await fn(); writeSave(s); audio.sfx('confirm'); reopen(note); } catch (e) { msg.textContent = e.message; audio.sfx('deny'); }
+      };
+      this.click('#fb-join', () => busy(async () => { const g = await joinGroup(s, m.querySelector('#fb-code').value); this.lbGroup = g.code; return t('You\'re on {name}.', { name: g.name }); }), m);
+      this.click('#fb-new', () => busy(async () => { const g = await createGroup(s, m.querySelector('#fb-name').value.trim() || t('Friends')); this.lbGroup = g.code; return t('{name} is ready. Share the code {code} with your friends.', { name: g.name, code: g.code }); }), m);
+      this.click('[data-leave]', (el) => {
+        const g = groups.find((x) => x.code === el.dataset.leave);
+        busy(async () => { await leaveGroup(s, g.code); return t('You left {name}.', { name: g.name }); });
+      }, m);
+      this.click('[data-invite]', (el) => {
+        const g = groups.find((x) => x.code === el.dataset.invite);
+        const link = inviteLink(g.code), text = t('Join my Puckbound friends board, {name}: code {code}', { name: g.name, code: g.code });
+        if (navigator.share) navigator.share({ title: t('Friends boards'), text, url: link }).catch(() => {});
+        else navigator.clipboard?.writeText(`${text}\n${link}`).then(() => { msg.textContent = t('Copied!'); }, () => { msg.textContent = t('Copy failed'); });
+      }, m);
+    }, true, () => back && back());
   }
 
   // Result card after a drill: score, medal, rewards; Retry or Done.
@@ -1240,6 +1301,7 @@ export class UI {
       <div style="text-align:center">
         <div class="label">${esc(t(d.name))}</div>
         <div class="drill-score">${formatScore(d, score)}</div>
+        ${badge(MEDAL_BADGES[medal], 192, 'medal-img')}
         <div class="medal-big" style="--m:${MEDAL_COLORS[medal]}">${t(MEDAL_NAMES[medal])}${rw.newBest && rw.prevBest !== undefined && rw.prevBest !== null ? ` · ${t('new best!')}` : ''}</div>
         <div class="muted" style="font-size:13px">${t('Bronze {bronze} · Silver {silver} · Gold {gold}', { bronze: formatScore(d, d.medals[0]), silver: formatScore(d, d.medals[1]), gold: formatScore(d, d.medals[2]) })}</div>
       </div>
@@ -1543,7 +1605,7 @@ export class UI {
     this.set(`
       <div class="dim"></div>
       <div class="results panel" style="text-align:center;align-items:center">
-        <img src="${ico('equipment_items/reward/trophy', 256)}" alt="" width="150" height="150">
+        <div class="cup-big" id="c-cup">${Assets.groupReady('badges') ? '' : `<img src="${ico('equipment_items/reward/trophy', 256)}" alt="" width="150" height="150">`}</div>
         <h1 class="gold-t" style="font-family:var(--display);font-weight:normal;font-size:clamp(44px,9vw,80px);line-height:.85;margin:0">${t('Champions!')}</h1>
         <p style="max-width:46ch">${s.season > 1 ? t('The {club} win the {cup} (season {n}).', { club: esc(CLUB.name), cup: esc(t(TOURNAMENT.name)), n: s.season }) : t('The {club} win the {cup}.', { club: esc(CLUB.name), cup: esc(t(TOURNAMENT.name)) })} ${t('Nix lifts the cup while Volta does laps and Bram carries Halla around on his shoulders.')}</p>
         <p class="muted" style="max-width:46ch">${t('Start a new season to face every rival again with sharper AI, keeping your levels and gear.')}</p>
@@ -1551,7 +1613,26 @@ export class UI {
       </div>`);
     audio.jingle('win');
     this.click('#c-go', () => { audio.sfx('confirm'); onDone(); });
+    this.cupShine();
     this.fireworks();
+  }
+
+  // The big Frostline Cup (Batch X): it rests, then a glint runs across it.
+  cupShine() {
+    const box = this.root.querySelector('#c-cup');
+    const anim = Assets.atlas.badge_animations && Assets.atlas.badge_animations.frostline_cup_shine;
+    if (!box || !anim || !Assets.groupReady('badges')) return;
+    const set = Assets.spriteSet(anim.frames, 300);
+    if (!set) return;
+    box.innerHTML = `<img src="${set.urls[0]}" alt="" style="aspect-ratio:${set.w}/${set.h}">`;
+    const img = box.firstChild;
+    const seq = [0, 0, 0, 0, 0, 0, 1, 2]; // about two seconds still, then the glint at 3 fps
+    let k = 0;
+    const timer = setInterval(() => {
+      if (!img.isConnected) { clearInterval(timer); return; }
+      k = (k + 1) % seq.length;
+      img.src = set.urls[seq[k]];
+    }, 1000 / (anim.fps || 3));
   }
 
   // Fireworks over the championship screen (title art, loaded on demand).

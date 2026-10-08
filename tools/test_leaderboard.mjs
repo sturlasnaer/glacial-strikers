@@ -108,5 +108,53 @@ check('Monday starts the next', weekOf(Date.UTC(2026, 9, 12)).key === '2026-W42'
   r = await wpost({ board: 'daily_streak', player: id(1), name: 'Foxes', score: 3 });
   check('streaks have no weekly part', r.status === 200 && !r.body.week, r.body);
 }
+// friends boards: create a group, join it, post into it, leave it
+{
+  const fs = memoryStore();
+  let now = Date.UTC(2026, 9, 6, 10); // week 41
+  const fpost = (b, at = (now += 5000)) => handle({ method: 'POST', query: {}, body: JSON.stringify(b) }, fs, at);
+  const fget = (query) => handle({ method: 'GET', query }, fs, now);
+  await fpost({ board: 'sniper', player: id(1), name: 'Foxes', tag: 'AB12', score: 700, played: now, char: 'frost' });
+  await fpost({ board: 'cones', player: id(1), name: 'Foxes', tag: 'AB12', score: 19.5, played: now });
+  await fpost({ board: 'sniper', player: id(2), name: 'Owls', tag: 'CD34', score: 900, played: now });
+  await fpost({ board: 'sniper', player: id(3), name: 'Bears', tag: 'EF56', score: 1500, played: now }); // not a friend
+  r = await fpost({ op: 'group_new', player: id(1), name: '  Office   League ' });
+  const code = r.body.code, madeAt = now;
+  check('group made', r.status === 200 && /^[A-HJ-NP-Z2-9]{6}$/.test(code) && r.body.name === 'Office League', r.body);
+  r = await fget({ board: 'sniper', group: code, player: id(1) });
+  check('creator\'s best copied in', r.body.top.length === 1 && r.body.top[0].name === 'Foxes' && r.body.top[0].char === 'frost' && r.body.me.rank === 1 && r.body.total === 1, r.body);
+  r = await fget({ board: 'cones', group: code, period: 'week' });
+  check('this week\'s best copied in too', r.body.top.length === 1 && r.body.top[0].score === 19.5 && r.body.week === '2026-W41', r.body);
+  r = await fpost({ op: 'group_join', player: id(2), group: code.toLowerCase() });
+  check('join (any case)', r.status === 200 && r.body.code === code && r.body.name === 'Office League', r.body);
+  r = await fget({ board: 'sniper', group: code, player: id(1) });
+  check('friends only, ranked', r.body.top.map((x) => x.name).join() === 'Owls,Foxes' && r.body.me.rank === 2 && r.body.total === 2, r.body);
+  check('unknown code', (await fpost({ op: 'group_join', player: id(3), group: 'ZZZZZZ' })).status === 404);
+  check('bad code', (await fpost({ op: 'group_join', player: id(3), group: 'O0O0' })).status === 400);
+  check('bad code on read', (await fget({ board: 'sniper', group: 'nope' })).status === 400);
+  check('join needs a player', (await fpost({ op: 'group_join', player: 'x', group: code })).status === 400);
+  r = await fpost({ board: 'sniper', player: id(1), name: 'Foxes', tag: 'AB12', score: 1200, played: now, groups: [code, code, 'ZZZZZZ', 'bad'] });
+  check('a post still answers for the main boards', r.status === 200 && r.body.rank === 2 && r.body.week.rank === 2, r.body);
+  r = await fget({ board: 'sniper', group: code, period: 'week' });
+  check('posts update the group\'s weekly board', r.body.top.map((x) => `${x.name}:${x.score}`).join() === 'Foxes:1200,Owls:900', r.body.top);
+  r = await fget({ board: 'sniper', group: code });
+  check('and its all-time board', r.body.top[0].score === 1200 && r.body.total === 2, r.body);
+  check('unknown codes make no board', (await fs.count('sniper#ZZZZZZ')) === 0);
+  await fpost({ board: 'sniper', player: id(1), name: 'Fox Den', tag: 'AB12', score: 100, played: now, groups: [code] });
+  r = await fget({ board: 'sniper', group: code });
+  check('a worse score keeps the best, takes the new club name', r.body.top[0].score === 1200 && r.body.top[0].name === 'Fox Den', r.body.top);
+  r = await fpost({ op: 'group_leave', player: id(2), group: code });
+  r = await fget({ board: 'sniper', group: code, player: id(2) });
+  check('leaving takes you off', r.body.top.length === 1 && r.body.total === 1 && r.body.me === null, r.body);
+  r = await fget({ board: 'sniper', player: id(2) });
+  check('the main board keeps everyone', r.body.total === 3 && r.body.me.rank === 3, r.body);
+  r = await fpost({ op: 'group_join', player: id(2), group: code });
+  r = await fget({ board: 'sniper', group: code });
+  check('joining again puts you back', r.body.total === 2, r.body);
+  r = await fpost({ op: 'group_new', player: id(1), name: 'Second' }, madeAt + 10000);
+  check('one new group at a time', r.status === 429, r);
+  r = await fpost({ op: 'group_new', player: id(1), name: 'shit' }, madeAt + 60000);
+  check('names are filtered', r.status === 200 && r.body.name === 'Friends' && r.body.code !== code, r.body);
+}
 console.log(`leaderboard: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

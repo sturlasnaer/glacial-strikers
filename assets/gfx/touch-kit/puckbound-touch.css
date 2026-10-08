@@ -1,0 +1,30 @@
+/* Load after the game stylesheet. All positions and hit areas remain game-owned. */
+#touch .stick { border:0; background:transparent url(images/stick_base_idle.png) center/100% 100% no-repeat; opacity:.75; image-rendering:pixelated; }
+#touch .stick.active { background-image:url(images/stick_base_active.png); opacity:1; }
+#touch .stick-knob { border:0; background:transparent url(images/stick_knob_idle.png) center/100% 100% no-repeat; image-rendering:pixelated; }
+#touch .stick.active .stick-knob { background-image:url(images/stick_knob_active.png); }
+#touch .tbtn { border:0; box-shadow:none; background-color:transparent; background-size:100% 100%; background-position:center; background-repeat:no-repeat; image-rendering:pixelated; isolation:isolate; }
+#touch .tbtn.down { transform:none; filter:none; }
+#touch .t-a { background-image:url(images/btn_round_coral_normal.png); }
+#touch .t-a.down { background-image:url(images/btn_round_coral_pressed.png); }
+#touch .t-b { background-image:url(images/btn_round_ice_normal.png); }
+#touch .t-b.down { background-image:url(images/btn_round_ice_pressed.png); }
+#touch .t-sprint { background-image:url(images/btn_round_cream_normal.png); }
+#touch .t-sprint.down { background-image:url(images/btn_round_cream_pressed.png); }
+#touch .t-skill { background-image:url(images/btn_round_navy_normal.png); }
+#touch .t-skill.down { background-image:url(images/btn_round_navy_pressed.png); }
+#touch .t-ult { background-image:url(images/btn_round_navy_normal.png); }
+#touch .t-ult.down { background-image:url(images/btn_round_navy_pressed.png); }
+#touch .tbtn > img, #touch .tbtn > span { position:relative; z-index:2; }
+#touch .tbtn > .lbl { position:absolute; }
+#touch .tbtn > .cd { z-index:1; }
+#touch .t-skill::after, #touch .t-ult::after { content:""; position:absolute; inset:0; background:url(images/cooldown_ring.png) center/100% 100% no-repeat; pointer-events:none; z-index:2; }
+#touch .t-skill.ready, #touch .t-ult.ready { border:0; box-shadow:none; }
+#touch .t-skill.ready::before, #touch .t-ult.ready::before { content:""; position:absolute; inset:-25%; background:url(images/ready_ring_1.png) center/100% 100% no-repeat; pointer-events:none; z-index:3; animation:puckbound-ready .8s steps(1,end) infinite; }
+@keyframes puckbound-ready { 50% { background-image:url(images/ready_ring_2.png); } }
+@media(prefers-reduced-motion:reduce) { #touch .ready::before { animation:none; } }
+#touch .t-pull { border:10px solid transparent; border-radius:0; border-image:url(images/pull_goalie_normal.png) 30 / 10px / 0 stretch; background:#ff6f7d; box-shadow:none; image-rendering:pixelated; }
+#touch .t-pull.down, #touch .t-pull:active { border-image-source:url(images/pull_goalie_pressed.png); background:#cf475c; }
+.pb-owned-blank, .pb-new-blank { display:inline-grid; place-items:center; width:64px; height:32px; background:center/100% 100% no-repeat; image-rendering:pixelated; font-weight:900; }
+.pb-owned-blank { background-image:url(images/owned_stamp_blank.png); color:#fff2cb; }
+.pb-new-blank { background-image:url(images/new_badge_blank.png); color:#fff2cb; }

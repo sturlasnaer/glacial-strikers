@@ -234,7 +234,8 @@ img { image-rendering: auto; max-width: 100%; }
 /* chemistry */
 .chem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
 .chem-head { display: flex; align-items: center; gap: 10px; }
-.chem-head h3 { margin: 0; font-family: var(--display); font-weight: normal; font-size: 28px; line-height: 0.9; }
+.chem-head > div { min-width: 0; }
+.chem-head h3 { margin: 0; font-family: var(--display); font-weight: normal; font-size: clamp(20px, 3.3vw, 28px); line-height: 0.9; overflow-wrap: anywhere; }
 .chem-head .sub { font-size: 12px; color: var(--ice); text-transform: uppercase; letter-spacing: 0.08em; }
 .chem-head .pips3 { margin-left: auto; }
 .card.chem.locked { opacity: 0.75; }
@@ -790,3 +791,52 @@ body.pad-nav .tabs::before, body.pad-nav .tabs::after {
 body.pad-nav .tabs::after { background-image: url(../assets/gfx/ui-kit/images/xbox_rb.png); }
 body.pad-nav.pad-ps .tabs::before { background-image: url(../assets/gfx/ui-kit/images/ps_l1.png); }
 body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/images/ps_r1.png); }
+/* friends boards */
+.modal > .lb-list { flex-shrink: 0; } /* (a scrolling list would otherwise collapse in a short pop-up) */
+.fb-form { display: flex; gap: 8px; align-items: center; margin: 8px 0 0; }
+.fb-form .cloud-input { flex: 1; min-width: 0; padding: 7px 10px; }
+.fb-form .fb-name { text-transform: none; font-family: inherit; }
+.fb-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+/* ---------- Batch V: sprite touch controls (positions, sizes and hit areas stay as above) ---------- */
+#touch .stick { border: 0; background: transparent url(../assets/gfx/touch-kit/images/stick_base_idle.png) center / 100% 100% no-repeat; opacity: 0.75; image-rendering: pixelated; }
+#touch .stick.active { background-image: url(../assets/gfx/touch-kit/images/stick_base_active.png); opacity: 1; }
+#touch .stick-knob { border: 0; background: transparent url(../assets/gfx/touch-kit/images/stick_knob_idle.png) center / 100% 100% no-repeat; image-rendering: pixelated; }
+#touch .stick.active .stick-knob { background-image: url(../assets/gfx/touch-kit/images/stick_knob_active.png); }
+#touch .tbtn { border: 0; box-shadow: none; background-color: transparent; background-size: 100% 100%; background-position: center; background-repeat: no-repeat; image-rendering: pixelated; isolation: isolate; }
+#touch .tbtn.down { transform: none; filter: none; }
+#touch .t-a { background-image: url(../assets/gfx/touch-kit/images/btn_round_coral_normal.png); }
+#touch .t-a.down { background-image: url(../assets/gfx/touch-kit/images/btn_round_coral_pressed.png); }
+#touch .t-b { background-image: url(../assets/gfx/touch-kit/images/btn_round_ice_normal.png); }
+#touch .t-b.down { background-image: url(../assets/gfx/touch-kit/images/btn_round_ice_pressed.png); }
+#touch .t-sprint { background-image: url(../assets/gfx/touch-kit/images/btn_round_cream_normal.png); }
+#touch .t-sprint.down { background-image: url(../assets/gfx/touch-kit/images/btn_round_cream_pressed.png); }
+#touch .t-skill, #touch .t-ult { background-image: url(../assets/gfx/touch-kit/images/btn_round_navy_normal.png); }
+#touch .t-skill.down, #touch .t-ult.down { background-image: url(../assets/gfx/touch-kit/images/btn_round_navy_pressed.png); }
+#touch .tbtn > img, #touch .tbtn > span { position: relative; z-index: 2; }
+#touch .tbtn > .lbl { position: absolute; }
+#touch .tbtn > .cd { z-index: 1; }
+#touch .t-skill::after, #touch .t-ult::after { content: ''; position: absolute; inset: 0; background: url(../assets/gfx/touch-kit/images/cooldown_ring.png) center / 100% 100% no-repeat; pointer-events: none; z-index: 2; }
+#touch .t-skill.ready, #touch .t-ult.ready { border: 0; box-shadow: none; }
+#touch .t-skill.ready::before, #touch .t-ult.ready::before { content: ''; position: absolute; inset: -25%; background: url(../assets/gfx/touch-kit/images/ready_ring_1.png) center / 100% 100% no-repeat; pointer-events: none; z-index: 3; animation: pb-ready 0.8s steps(1, end) infinite; }
+@keyframes pb-ready { 50% { background-image: url(../assets/gfx/touch-kit/images/ready_ring_2.png); } }
+@media (prefers-reduced-motion: reduce) { #touch .ready::before { animation: none; } }
+#touch .t-pull { border: 10px solid transparent; border-radius: 0; border-image: url(../assets/gfx/touch-kit/images/pull_goalie_normal.png) 30 / 10px stretch; background: #ff6f7d padding-box; box-shadow: none; image-rendering: pixelated; }
+#touch .t-pull.down, #touch .t-pull:active { border-image-source: url(../assets/gfx/touch-kit/images/pull_goalie_pressed.png); background-color: #cf475c; }
+/* goalie mode: block / pass and dive icons on the face buttons, the word underneath */
+#touch.gk .t-a, #touch.gk .t-b { grid-template-rows: auto auto; align-content: center; gap: 0; }
+#touch .tbtn > .gk-ico { width: 52%; height: auto; aspect-ratio: 1; image-rendering: pixelated; }
+#touch.gk .t-a > span, #touch.gk .t-b > span { font-size: 11px; }
+/* the OWNED stamp: a blank frame with the word in the game's language */
+.pb-owned-blank { display: inline-grid; place-items: center; width: 96px; height: 48px; background: url(../assets/gfx/touch-kit/images/owned_stamp_blank.png) center / 100% 100% no-repeat; image-rendering: pixelated; color: var(--cream); font-family: var(--display); font-size: 20px; padding-top: 2px; }
+.owned-stamp { transform: rotate(-4deg); }
+/* ---------- Batch X badges ---------- */
+.btn-ico { width: 20px; height: 20px; vertical-align: -4px; image-rendering: auto; }
+.streak .btn-ico { width: 16px; height: 16px; margin-left: 1px; }
+.row-ico { width: 22px; height: 22px; flex: none; }
+.medal .medal-ico { width: 18px; height: 18px; vertical-align: -4px; margin: 0 3px 0 -3px; }
+.medal-img { width: 96px; height: 96px; margin: 0 auto -6px; display: block; }
+.lb-rank { position: relative; display: inline-grid; place-items: center; }
+.lb-rank .rank-ico { position: absolute; inset: 50% auto auto 50%; width: 26px; height: 26px; transform: translate(-50%, -50%); }
+.lb-rank i { position: relative; font-style: normal; }
+.lb-rank .rank-ico + i { color: var(--navy); font-weight: 700; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4); }
+.cup-big img { display: block; height: min(240px, 34vh); width: auto; margin: 0 auto; image-rendering: auto; }

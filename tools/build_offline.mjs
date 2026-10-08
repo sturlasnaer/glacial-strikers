@@ -57,7 +57,7 @@ bundle = bundle.replace(/<\/script/gi, '<\\/script');
 // ---- styles with fonts inlined
 const fonts = read('src/fonts.css').replace(/url\(\.\.\/assets\/fonts\/([^)]+)\)/g, (_, f) => `url(data:font/woff2;base64,${b64('assets/fonts/' + f)})`);
 // the UI kit's skin images go into the stylesheet as data URIs
-const styles = read('src/styles.css').replace(/url\(\.\.\/assets\/gfx\/(ui-kit\/images\/[^)]+\.png)\)/g, (_, f) => `url(data:image/png;base64,${b64('assets/gfx/' + f)})`);
+const styles = read('src/styles.css').replace(/url\(\.\.\/assets\/gfx\/((?:ui|touch)-kit\/images\/[^)]+\.png)\)/g, (_, f) => `url(data:image/png;base64,${b64('assets/gfx/' + f)})`);
 
 // ---- art
 const atlas = JSON.parse(read('assets/gfx/atlas.json'));
@@ -69,7 +69,9 @@ const images = [
 ].filter(Boolean);
 for (const f of images) inline[f] = `data:image/webp;base64,${b64('assets/' + f)}`;
 // the UI kit's button prompts and keycaps (the skin's own pieces are inlined in the stylesheet)
-for (const f of readdirSync(join(root, 'assets/gfx/ui-kit/images'))) if (/^((ps|xbox|key)_.*|owned_stamp)\.png$/.test(f)) inline[`gfx/ui-kit/images/${f}`] = `data:image/png;base64,${b64('assets/gfx/ui-kit/images/' + f)}`;
+for (const f of readdirSync(join(root, 'assets/gfx/ui-kit/images'))) if (/^(ps|xbox|key)_.*\.png$/.test(f)) inline[`gfx/ui-kit/images/${f}`] = `data:image/png;base64,${b64('assets/gfx/ui-kit/images/' + f)}`;
+// goalie mode's face-button icons (Batch V), picked at runtime
+for (const f of ['goalie_block.png', 'goalie_pass.png']) inline[`gfx/touch-kit/images/${f}`] = `data:image/png;base64,${b64('assets/gfx/touch-kit/images/' + f)}`;
 
 // ---- page
 let html = read('index.html');

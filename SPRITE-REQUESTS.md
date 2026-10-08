@@ -1,14 +1,15 @@
 # Sprite requests
 
-What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd), the remaining packs (Batches B, H, I, C and N-Extras), the new batches (P, R, S, K, T and M2) and the latest delivery (D, U, Q, W, O, E, J and F).
+What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd), the remaining packs (Batches B, H, I, C and N-Extras), the new batches (P, R, S, K, T and M2) the D, U, Q, W, O, E, J and F delivery, and the latest batches (V and X).
 
 The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes** (the Snow Fox is their mascot; colours unchanged). Packs can be named `Puckbound-...` from now on; older `Glacial-Strikers-...` folder names still work.
 
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **V**: touch controls for phones, to match the new menu kit.
-2. **X**: cups, medals and small badges, replacing the last emoji and CSS circles.
+1. **Y**: an in-match HUD kit (scoreboard, player card, meters, ticker), to match the menu and touch kits.
+2. **Z**: icons for the six season awards, two gear items that share art, the three chemistry combos, the six challenges and the four game plans.
+3. **AA**: three newcomer skaters, who fill a rival's slot when you sign one of their players (today they're drawn as our own cast in rival colours).
 
 ## Format notes
 
@@ -51,32 +52,42 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - **Batch E achievement icons:** 14 achievements now have icons of their own.
 - **Batch J Awards Night:** the stage opens the season awards, with Kip at the podium speaking, opening the envelope and applauding.
 - **Batch F:** Pine Pond's log penalty box with the lantern.
+- **Batch V touch controls:** the stick, the four round button colours (normal and pressed), the gold ready ring that pulses around Skill and Ultimate, the cooldown rim, the Pull Goalie button, block and pass icons for goalie mode, and blank OWNED and NEW frames (the OWNED stamp is now in both languages).
+- **Batch X cups and badges:** the Frostline Cup with its glint on the championship screen, training medals in the drill list and on the result card, gold, silver and bronze rank shields on the online boards, the daily star, tick and streak flame, and the small cup and snowflake that replaced the last emoji.
 
 ---
 
-## Batch V: touch controls
+## Batch Y: an in-match HUD kit
 
-On phones the stick and the five action buttons are still CSS circles (`#touch` in `src/styles.css`): a translucent ring with an ice-blue knob, and flat coloured discs for Shoot/Check (coral, 84 px), Pass/Steal (ice, 66 px), Sprint (cream, 56 px), Skill and Ultimate (navy, 58 px) and a small rounded Pull Goalie button. They should match the Batch U menu kit. As with U, **one transparent PNG per piece**, drawn at 3× and nearest-neighbour clean, in the game palette with navy outlines:
+The HUD during matches is still CSS: a navy box with an ice rim for the scoreboard, a box for the player card, plain bars for stamina and the ultimate, and a dark strip for the commentary ticker. With the menus (U) and touch controls (V) in pixel art, the HUD is the last plain part. Same rules as U and V: **one transparent PNG per piece**, drawn at 3× and nearest-neighbour clean, 9-slice margins in a small JSON, navy outlines and the game palette, centres flat so they stretch.
 
-- **Stick:** the base ring (about 124 px in game; it must read on both white ice and the dark arenas, so a translucent navy disc with an ice rim works), and the knob (about 56 px), `idle` and `active` (brighter rim while it's held).
-- **Round buttons, `normal` and `pressed`:** `btn_round_coral`, `btn_round_ice`, `btn_round_cream` and `btn_round_navy`, each drawn at about 96 px in game and **without an icon or text**: the game puts the label or ability icon on top and scales the button down for the smaller slots. A clear centre area, with the detail in the rim. 8 images.
-- **Ready ring:** a gold ring with a soft glow that goes around Skill and Ultimate when they're charged, 2 frames for a pulse.
-- **Cooldown:** the game darkens the button with a pie sweep; a thin **ring overlay** that sits on top of the sweep (ice blue, with 12 small tick marks) would give it a clean edge. 1 image.
-- **Pull Goalie:** a 9-slice rounded rectangle button in coral, `normal` and `pressed`, like `btn_gold` in U but coral (the game writes PULL GOALIE on it).
-- **Goalie mode icons** for the two face buttons, in the Q style: **block** (the glove catching a puck) and **pass** (a puck leaving the goalie's stick). 2 frames.
+- **Scoreboard frame** (9-slice, about 300×52 px in game): the score digits (already sprites), the two crests and a small centre panel for the period text sit on top. A heavier gold-rimmed variant for the final and the Winter Classic. 2 images.
+- **Player card frame** (9-slice, about 220×56 px): a square portrait slot on the left. Ours in ice blue, and a coral one for player 2 in local versus. 2 images.
+- **Meters:** a stamina bar frame and fill, and an ultimate bar frame and fill (the fill is stretched; a gold `full` fill that the game pulses when the ultimate is ready). 5 images.
+- **Ticker frame** (9-slice, about 420×30 px) with a red `LIVE` lamp at its left end (no lettering; the game writes LIVE). 1 image.
+- **Power-puck chip frame** (9-slice, about 120×36 px) for the power you're carrying. 1 image.
+- **Pause button**, round, about 40 px: `normal` and `pressed`, with the two pause bars drawn in. 2 images.
+- **Banner plate** (9-slice, wide): the dark plate behind FACEOFF, GOAL and the period banners (the words stay HTML). 1 image.
 
-- **Two blanks from Batch U:** `owned_stamp_blank` and `new_badge_blank`, the same frames with **no lettering** (the game writes the word, so it also works in Icelandic: KEYPT, NÝTT). The lettered versions stay for English. 2 images.
+About 14 images.
 
-About 20 images.
+## Batch Z: award, gear, combo, challenge and plan icons
 
-## Batch X: cups, medals and small badges
+In the style and size of the reward icons (`equipment_items/reward/*`, about 200 px source), one sheet named `icons_z.png` with frame names `icons/<name>`:
 
-A few things are still emoji or CSS shapes. In the style and size of the reward icons (`equipment_items/reward/*`, about 200 px source), one sheet named `badges.png` with frame names `badges/<name>`:
+- **Season awards** (Awards Night cards and the award cabinet; today they borrow gear icons): `award_mvp` (a tall star trophy), `award_golden_stick` (a gold stick on a plinth), `award_playmaker` (two sticks crossed with a puck between them, silver), `award_iron_wall` (a goalie mask on a shield), `award_enforcer` (a shoulder pad on a plinth, bronze) and `award_signing` (a contract under a small trophy). 6 frames.
+- **Gear that shares a picture:** `gear_padded_vest` (the Padded Vest; it shares the Practice Jersey's chest piece) and `gear_pro_mitts` (Halla's Pro Set, a sleek teal glove and blocker; it shares the Old Mitts). 2 frames.
+- **Chemistry combos** (the combo cards in Team and the combo pop-ups; Avalanche and Thunderquake share one icon now): `combo_frostbolt` (an ice shard crackling with yellow lightning), `combo_avalanche` (a puck pushing a wall of snow) and `combo_thunderquake` (a puck landing with a gold shockwave ring). 3 frames.
+- **Exhibition challenges** (chips in quick play and the daily card): `ch_onetimers` (a puck meeting a stick mid-swing), `ch_giant_goalies` (a goalie towering over a tiny net), `ch_ice_age` (an ice power orb), `ch_lightning_round` (a skate with speed lines), `ch_heavy_hitters` (two shoulder pads colliding) and `ch_next_goal_wins` (a single goal lamp with a "1" shape made of light, no lettering). 6 frames.
+- **Game plans** (the plan picker before league matches): `plan_balanced` (a level scale), `plan_forecheck` (arrows pressing forward), `plan_trap` (a closing net of lines) and `plan_rungun` (a puck with a long speed trail). 4 frames.
 
-- **The Frostline Cup**, large: the league trophy for the championship screen, about 480 px tall source, silver and ice blue with a navy base band and a small snowflake crest (no lettering). 1 frame, plus 2 frames of a light glint travelling across it for a shine loop.
-- **Training medals:** `medal_bronze`, `medal_silver`, `medal_gold` (round medals on a ribbon) and `medal_empty` (a dim navy outline for medals not yet won). The training list shows three in a row at about 22 px, and the drill result shows the one you won at about 96 px. 4 frames.
-- **Leaderboard ranks:** `rank_1`, `rank_2`, `rank_3` (small gold, silver and bronze shields that can take a number on top) for the online boards. 3 frames.
-- **Daily challenge:** `daily_star` (a gold star, shown on the Daily button), `daily_done` (the star with a tick) and `streak_flame` (a small flame for the daily streak count). 3 frames.
-- **Hub badges:** `cup_small` (the cup count in the trophy case and the online-leaderboard buttons in training, replacing the 🏆 emoji) and `snowflake` (a small crest-style snowflake used on the Winter Classic row of the schedule, replacing ❄). 2 frames.
+21 frames.
 
-15 frames.
+## Batch AA: newcomer skaters
+
+When you sign a rival's skater, a newcomer takes their slot on that team. Right now the newcomer is drawn as one of our own cast (Nix, Volta or Bram) in the rival's colours, which looks like our players changed teams. Please draw **three newcomers**, one per position (centre, winger, defender), in **coral + violet** like every rival, so the game can recolour them for any team. They should look like hungry rookies: a little smaller and scrappier than the captains, with distinct silhouettes (for example a lanky centre with a long reach, a quick winger with a ponytail or a mohawk, and a stocky defender).
+
+Each needs **the same pose list as one rival skater**, the way `gilded_rams_w` has them: the v2 skating set, the Batch A diagonals and hit reactions, the Batch C side strides, glides and stops, and the Batch D celebration, plus a portrait with the five expressions the dialogue uses (neutral, determined, grin, shocked, defeated). Same scale, foot baseline and sheet naming (`newcomer_c_*`, `newcomer_w_*`, `newcomer_d_*`), with gear masks for the stick and skates like Batch M.
+
+This is the biggest of the three, so it can come after Y and Z.
+

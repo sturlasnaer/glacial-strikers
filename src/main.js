@@ -109,12 +109,17 @@ class App {
     this.setupInstall();
 
     flushScores(this.save).then((n) => { if (n) writeSave(this.save); });
+    // the Batch X badges (medals, ranks, the daily star, the big cup) show all over the menus
+    Assets.loadGroup('badges').then(() => { if (this.scene === 'hub') this.ui.hub(); }).catch(() => {});
     this.startAttract();
     this.loadingEl.remove();
     this.goTitle();
     // a restore link from another device: #restore=<code>
     const m = /#restore=([A-Za-z2-7-]+)/.exec(location.hash);
     if (m) { history.replaceState(null, '', location.pathname + location.search); this.ui.cloudRestore(m[1]); }
+    // an invite to a friends board: #join=<code>
+    const j = /#join=([A-Za-z0-9]{6})/.exec(location.hash);
+    if (j) { history.replaceState(null, '', location.pathname + location.search); this.ui.friendsBoards(j[1].toUpperCase()); }
     requestAnimationFrame((t) => this.loop(t));
   }
 
@@ -239,7 +244,7 @@ class App {
     const rules = RULE_ART.includes(cfg.twist);
     // the title and hub scenes show over the demo match, so their art stays with it
     const host = Object.values(TEAMS).find((tm) => tm.arena === arena); // its mascot dances in the stands
-    Assets.trim({ teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: [...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : [])] });
+    Assets.trim({ teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : [])] });
     if (geared) Assets.ensureGear();
     if (rules) Assets.loadGroup('rules').catch(() => {});
     this.lap = null;

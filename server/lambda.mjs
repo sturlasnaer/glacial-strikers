@@ -48,11 +48,11 @@ const store = {
     } while (start);
     return count;
   },
-  async count(board) {
+  async count(board) { // (from the index: rows without a rank, like players who left a friends board, don't count)
     let count = 0, start;
     do {
       const r = await db.send(new QueryCommand({
-        TableName: TABLE, KeyConditionExpression: 'board = :b', ExpressionAttributeValues: { ':b': board },
+        TableName: TABLE, IndexName: 'byRank', KeyConditionExpression: 'board = :b', ExpressionAttributeValues: { ':b': board },
         Select: 'COUNT', ExclusiveStartKey: start,
       }));
       count += r.Count || 0; start = r.LastEvaluatedKey;

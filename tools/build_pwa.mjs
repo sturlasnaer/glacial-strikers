@@ -17,8 +17,8 @@ const walk = (p) => {
 };
 include.forEach(walk);
 const named = readFileSync(join(root, 'assets/gfx/atlas.json'), 'utf8') + readdirSync(join(root, 'src')).map((f) => (/\.(js|css)$/.test(f) ? readFileSync(join(root, 'src', f), 'utf8') : '')).join('');
-// (button prompts are picked by name at runtime: promptImg('ps_' + ...))
-const dynamic = (f) => /^assets\/gfx\/ui-kit\/images\/(ps|xbox|key)_.*\.png$/.test(f);
+// (button prompts and goalie mode's face-button icons are picked by name at runtime)
+const dynamic = (f) => /^assets\/gfx\/(ui-kit\/images\/(ps|xbox|key)_|touch-kit\/images\/goalie_).*\.png$/.test(f);
 const unused = files.filter((f) => f.startsWith('assets/gfx/') && !f.endsWith('atlas.json') && !dynamic(f) && !named.includes(f.slice('assets/'.length)));
 if (unused.length) console.log(`not shipped (nothing uses them): ${unused.join(', ')}`);
 files.splice(0, files.length, ...files.filter((f) => !unused.includes(f)));

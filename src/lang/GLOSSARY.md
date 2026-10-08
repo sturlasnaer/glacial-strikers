@@ -51,6 +51,7 @@ Terms the translation uses consistently. The tone is friendly, sporty and short;
 | award / MVP | verðlaun / mikilvægasti leikmaðurinn |
 | daily challenge / streak | dagleg áskorun / runa |
 | leaderboard | stigatafla |
+| friends board / invite / join / leave | vinatafla / bjóða / vera með / hætta |
 | power puck | ofurpökkur |
 | arena rule | svellregla |
 | replay / goal clip | endursýning / markamyndband |

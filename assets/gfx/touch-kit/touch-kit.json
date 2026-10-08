@@ -1,0 +1,318 @@
+{
+  "manifest": "touch-kit/touch-kit.json",
+  "css": "touch-kit/puckbound-touch.css",
+  "source_scale": 3,
+  "pieces": {
+    "stick_base_idle": {
+      "file": "images/stick_base_idle.png",
+      "frame_id": "touch/stick_base_idle",
+      "source_size": [
+        372,
+        372
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        124,
+        124
+      ],
+      "recommended_opacity": 0.55
+    },
+    "stick_base_active": {
+      "file": "images/stick_base_active.png",
+      "frame_id": "touch/stick_base_active",
+      "source_size": [
+        372,
+        372
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        124,
+        124
+      ],
+      "recommended_opacity": 0.55
+    },
+    "stick_knob_idle": {
+      "file": "images/stick_knob_idle.png",
+      "frame_id": "touch/stick_knob_idle",
+      "source_size": [
+        168,
+        168
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        56,
+        56
+      ]
+    },
+    "stick_knob_active": {
+      "file": "images/stick_knob_active.png",
+      "frame_id": "touch/stick_knob_active",
+      "source_size": [
+        168,
+        168
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        56,
+        56
+      ]
+    },
+    "btn_round_coral_normal": {
+      "file": "images/btn_round_coral_normal.png",
+      "frame_id": "touch/btn_round_coral_normal",
+      "source_size": [
+        288,
+        288
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        96,
+        96
+      ]
+    },
+    "btn_round_ice_normal": {
+      "file": "images/btn_round_ice_normal.png",
+      "frame_id": "touch/btn_round_ice_normal",
+      "source_size": [
+        288,
+        288
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        96,
+        96
+      ]
+    },
+    "btn_round_cream_normal": {
+      "file": "images/btn_round_cream_normal.png",
+      "frame_id": "touch/btn_round_cream_normal",
+      "source_size": [
+        288,
+        288
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        96,
+        96
+      ]
+    },
+    "btn_round_navy_normal": {
+      "file": "images/btn_round_navy_normal.png",
+      "frame_id": "touch/btn_round_navy_normal",
+      "source_size": [
+        288,
+        288
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        96,
+        96
+      ]
+    },
+    "btn_round_coral_pressed": {
+      "file": "images/btn_round_coral_pressed.png",
+      "frame_id": "touch/btn_round_coral_pressed",
+      "source_size": [
+        288,
+        288
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        96,
+        96
+      ]
+    },
+    "btn_round_ice_pressed": {
+      "file": "images/btn_round_ice_pressed.png",
+      "frame_id": "touch/btn_round_ice_pressed",
+      "source_size": [
+        288,
+        288
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        96,
+        96
+      ]
+    },
+    "btn_round_cream_pressed": {
+      "file": "images/btn_round_cream_pressed.png",
+      "frame_id": "touch/btn_round_cream_pressed",
+      "source_size": [
+        288,
+        288
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        96,
+        96
+      ]
+    },
+    "btn_round_navy_pressed": {
+      "file": "images/btn_round_navy_pressed.png",
+      "frame_id": "touch/btn_round_navy_pressed",
+      "source_size": [
+        288,
+        288
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        96,
+        96
+      ]
+    },
+    "ready_ring_1": {
+      "file": "images/ready_ring_1.png",
+      "frame_id": "touch/ready_ring_1",
+      "source_size": [
+        432,
+        432
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        144,
+        144
+      ],
+      "overlay_scale_relative_to_button": 1.5
+    },
+    "ready_ring_2": {
+      "file": "images/ready_ring_2.png",
+      "frame_id": "touch/ready_ring_2",
+      "source_size": [
+        432,
+        432
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        144,
+        144
+      ],
+      "overlay_scale_relative_to_button": 1.5
+    },
+    "cooldown_ring": {
+      "file": "images/cooldown_ring.png",
+      "frame_id": "touch/cooldown_ring",
+      "source_size": [
+        288,
+        288
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        96,
+        96
+      ]
+    },
+    "pull_goalie_normal": {
+      "file": "images/pull_goalie_normal.png",
+      "frame_id": "touch/pull_goalie_normal",
+      "source_size": [
+        288,
+        144
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        96,
+        48
+      ],
+      "nine_slice": {
+        "left": 30,
+        "top": 30,
+        "right": 30,
+        "bottom": 30
+      },
+      "stretch_center": true,
+      "background_color": "#ff6f7d"
+    },
+    "pull_goalie_pressed": {
+      "file": "images/pull_goalie_pressed.png",
+      "frame_id": "touch/pull_goalie_pressed",
+      "source_size": [
+        288,
+        144
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        96,
+        48
+      ],
+      "nine_slice": {
+        "left": 30,
+        "top": 30,
+        "right": 30,
+        "bottom": 30
+      },
+      "stretch_center": true,
+      "background_color": "#cf475c"
+    },
+    "goalie_block": {
+      "file": "images/goalie_block.png",
+      "frame_id": "touch/goalie_block",
+      "source_size": [
+        192,
+        192
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        64,
+        64
+      ]
+    },
+    "goalie_pass": {
+      "file": "images/goalie_pass.png",
+      "frame_id": "touch/goalie_pass",
+      "source_size": [
+        192,
+        192
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        64,
+        64
+      ]
+    },
+    "owned_stamp_blank": {
+      "file": "images/owned_stamp_blank.png",
+      "frame_id": "touch/owned_stamp_blank",
+      "source_size": [
+        192,
+        96
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        64,
+        32
+      ],
+      "frame_preserved_from_batch_u": true,
+      "generated_blank_centre_xywh": [
+        21,
+        24,
+        150,
+        48
+      ]
+    },
+    "new_badge_blank": {
+      "file": "images/new_badge_blank.png",
+      "frame_id": "touch/new_badge_blank",
+      "source_size": [
+        192,
+        96
+      ],
+      "source_scale": 3,
+      "logical_size": [
+        64,
+        32
+      ],
+      "frame_preserved_from_batch_u": true,
+      "generated_blank_centre_xywh": [
+        21,
+        24,
+        150,
+        48
+      ]
+    }
+  },
+  "goalie_icons": {
+    "block": "touch/goalie_block",
+    "pass": "touch/goalie_pass"
+  }
+}

@@ -60,6 +60,8 @@ export class HUD {
     this.tickerT = 0;
     this.last = { s0: 0, s1: 0 };
     this.touch.hidden = !this.app.isTouch || this.versus;
+    this.touch.classList.toggle('gk', !!match.goalieMode); // goalie mode puts icons on the face buttons
+    this.touch.querySelectorAll('.gk-ico').forEach((i) => i.remove());
     this.keyhintT = 12;
   }
 
@@ -243,6 +245,16 @@ export class HUD {
     }
   }
 
+  // An icon above a face button's word in goalie mode (none: just the word).
+  gkIcon(sel, src) {
+    const b = this.touch.querySelector(sel);
+    let img = b.querySelector('.gk-ico');
+    if (!src) { if (img) img.hidden = true; return; }
+    if (!img) { img = document.createElement('img'); img.className = 'gk-ico'; img.alt = ''; b.prepend(img); }
+    img.hidden = false;
+    if (img.dataset.src !== src) { img.dataset.src = src; img.src = src; }
+  }
+
   // Goalie mode: Halla's card (Wall of Ice is her meter) and the touch buttons for goaltending.
   updateGoalie(g, m) {
     if (this.last.ctrl !== g) {
@@ -262,8 +274,15 @@ export class HUD {
     if (this.touch.hidden) return;
     const hold = g.state === 'hold';
     const aLbl = hold ? t('PASS') : t('BLOCK'), bLbl = hold ? t('CLEAR') : t('DIVE');
-    if (this.last.a !== aLbl) { this.last.a = aLbl; this.touch.querySelector('.t-a span').textContent = aLbl; }
-    if (this.last.b !== bLbl) { this.last.b = bLbl; this.touch.querySelector('.t-b span').textContent = bLbl; }
+    if (this.last.a !== aLbl) {
+      this.last.a = aLbl; this.touch.querySelector('.t-a span').textContent = aLbl;
+      this.gkIcon('.t-a', Assets.url(`gfx/touch-kit/images/${hold ? 'goalie_pass' : 'goalie_block'}.png`));
+    }
+    if (this.last.b !== bLbl) {
+      this.last.b = bLbl; this.touch.querySelector('.t-b span').textContent = bLbl;
+      const dive = Assets.atlas.goalie_mode && Assets.atlas.goalie_mode.actions && Assets.atlas.goalie_mode.actions.dive;
+      this.gkIcon('.t-b', !hold && dive ? Assets.icon(dive, 80) : '');
+    }
     const skill = this.touch.querySelector('.t-skill');
     const cdf = g.pokeCd > 0 ? g.pokeCd / 0.8 : 0;
     skill.querySelector('.cd').style.background = cdf > 0 ? `conic-gradient(rgba(11,20,36,.78) ${cdf * 360}deg, transparent 0)` : 'none';

@@ -132,6 +132,12 @@ for section, values in final_mappings.items():
             art_mappings.setdefault(section, {}).setdefault(key, {}).update(value)
     else:
         art_mappings.setdefault(section, {}).update(values)
+VX = sys.argv[12] if len(sys.argv) > 12 else '../assets/Puckbound-Batches-V-X'
+from merge_vx import merge_vx
+src, vx_roots, vx_mappings = merge_vx(src, VX)
+art_roots.update(vx_roots)
+for section, values in vx_mappings.items():
+    art_mappings.setdefault(section, {}).update(values)
 frames = src['frames']
 info = src['sheets']
 os.makedirs(os.path.join(OUT, 'cutins'), exist_ok=True)
@@ -233,6 +239,10 @@ SCENE_GROUPS = {'polish': 'title', 'arena_rules': 'rules', 'hub_fullbody': 'hub'
 
 
 def group_of(fid):
+    if fid.startswith('touch/'):
+        return 'touch'
+    if fid.startswith('badges/'):
+        return 'badges'
     if fid.startswith('winter_crowd/home/'):
         return 'winter'
     t = rival_of(fid)
@@ -370,7 +380,7 @@ for fid, f in frames.items():
     r = f['frame']
     img = crop(fid)
     nw, nh = max(1, round(r['w'] * k)), max(1, round(r['h'] * k))
-    img = img.convert('RGBa').resize((nw, nh), Image.LANCZOS).convert('RGBA')
+    img = img.convert('RGBa').resize((nw, nh), Image.NEAREST if sh in vx_roots else Image.LANCZOS).convert('RGBA')
     if cleanup:
         img = drop_fragments(img)
     if foot:
@@ -522,7 +532,7 @@ crowd = {team: {pose: [f'crowd_fans/{team}/{pose}/fan_{i}' for i in range(1, 9)]
 # ---------------------------------------------------------------- packing
 out_frames = {}
 pages = []
-groups = ['home', 'away'] + ['rival_' + t for t in RIVALS] + ['gearmask'] + sorted(set(SCENE_GROUPS.values()))
+groups = ['home', 'away'] + ['rival_' + t for t in RIVALS] + ['gearmask'] + sorted(set(SCENE_GROUPS.values())) + (['touch', 'badges'] if vx_roots else [])
 for group in groups:
     group_items = sorted([i for i in items if i['group'] == group], key=lambda i: -i['img'].height)
     page_imgs = []
@@ -548,7 +558,7 @@ for group in groups:
         rows = np.nonzero(a.any(axis=1))[0]
         p = p.crop((0, 0, PAGE, int(rows.max()) + PAD + 1))
         name = f'{group}_{idx}.webp'
-        if group == 'gearmask':
+        if group in ('gearmask', 'touch', 'badges'):
             p.save(os.path.join(OUT, name), 'WEBP', lossless=True, method=6)  # exact channels
         else:
             p.save(os.path.join(OUT, name), 'WEBP', quality=90, method=6, alpha_quality=100)
@@ -605,7 +615,14 @@ if awards_stage:
         stage_img.crop((x,y,x+w,y+h)).save(os.path.join(OUT, 'awards_podium.webp'), 'WEBP', quality=92, method=6)
         podium['file'] = 'gfx/awards_podium.webp'
 
+touch_root = os.path.join(VX, 'Puckbound-Batch-V', 'touch-kit')
+if os.path.exists(touch_root):
+    shutil.copytree(touch_root, os.path.join(OUT, 'touch-kit'), dirs_exist_ok=True)
 atlas = {
+    'touch_kit': {**art_mappings.get('touch_kit', {}), 'manifest':'gfx/touch-kit/touch-kit.json','css':'gfx/touch-kit/puckbound-touch.css'},
+    'badges': art_mappings.get('badges', {}),
+    'badge_animations': {key: value for key, value in src.get('animations', {}).items() if key == 'frostline_cup_shine'},
+    'touch_animations': {key: value for key, value in src.get('animations', {}).items() if key == 'touch_ready'},
     'awards_stage': awards_stage,
     'rule_icons': art_mappings.get('rule_icons', {}),
     'achievement_icons': art_mappings.get('achievement_icons', {}),

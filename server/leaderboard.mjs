@@ -1,7 +1,7 @@
 // Online leaderboards and cloud saves: the request handling, shared by the AWS Lambda
 // (server/lambda.mjs) and the local test server (tools/leaderboard_server.mjs). Storage is
 // passed in.
-import { createHash } from 'crypto';
+import { createHash, randomInt } from 'crypto';
 //
 // One record per player per board holds their best score. Boards rank by a sortable key
 // (better scores first, earlier on ties). Scores come from a browser game, so they can be
@@ -11,6 +11,12 @@ import { createHash } from 'crypto';
 // 'sniper@2026-W41'), that starts empty every Monday at 00:00 UTC. A score counts for the
 // week it was set in: the client sends when it was played, so a score queued offline
 // still lands in the right week.
+//
+// Friends boards: a group is a short code (six letters and digits, no look-alikes) with a
+// name, kept as a '_group' row. Every board has a copy per group, '<board>#<CODE>' (and
+// '<board>@<week>#<CODE>'), kept up to date for the groups a score post names. Joining
+// copies the player's current bests in; leaving rewrites their rows without a rank, which
+// takes them out of the byRank index the boards are read and counted from.
 
 export const BOARDS = {
   cones: { better: 'lower', min: 8, max: 200, decimals: 2 }, // seconds
@@ -42,6 +48,13 @@ export const MAX_SCORE_BODY = 2048;
 export const MAX_SAVE_BODY = 262144; // a save is a few tens of KB; the table allows 400 KB
 const SAVE_GAP_MS = 20000;
 const SAVE_BOARD = '_save';
+const GROUP_BOARD = '_group';
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+export const MAX_GROUPS = 3;
+const GROUP_GAP_MS = 30000; // between new groups from one player
+const validCode = (c) => typeof c === 'string' && /^[A-HJ-NP-Z2-9]{6}$/.test(c);
+const groupKey = (key, code) => `${key}#${code}`;
+const validPlayer = (p) => typeof p === 'string' && /^[a-f0-9]{16,40}$/.test(p);
 
 // Cloud saves are filed under a hash of the player's backup code, so the code itself is
 // never stored: knowing the table's contents doesn't let anyone read or overwrite a save.
@@ -63,12 +76,72 @@ async function cloudSave(b, store, now) {
   return ok({ at: now });
 }
 
+// The board keys a group has right now: every all-time board and this week's drill boards.
+const groupKeys = (code, now) => {
+  const wk = weekOf(now).key;
+  return [
+    ...Object.keys(BOARDS).map((board) => ({ board, from: board, key: groupKey(board, code) })),
+    ...[...WEEKLY].map((board) => ({ board, from: weekBoard(board, wk), key: groupKey(weekBoard(board, wk), code) })),
+  ];
+};
+const live = (row) => !!row && row.rank !== undefined;
+
+// Keep a player's best on one group board (a left player's row counts as empty).
+async function groupBest(store, key, board, who, score, at, now) {
+  const def = BOARDS[board];
+  const prev = await store.get(key, who.player);
+  const better = !live(prev) || (def.better === 'higher' ? score > prev.score : score < prev.score);
+  if (better) await store.put({ board: key, ...who, score, at, rank: rankKey(board, score, at), last: now });
+  else if (prev.name !== who.name || prev.tag !== who.tag) await store.put({ ...prev, name: who.name, tag: who.tag });
+}
+
+// Copy the player's current bests into a group's boards.
+async function copyBests(store, code, player, now) {
+  for (const g of groupKeys(code, now)) {
+    const row = await store.get(g.from, player);
+    if (live(row)) await groupBest(store, g.key, g.board, { player, name: row.name, tag: row.tag, char: row.char }, row.score, row.at, now);
+  }
+}
+
+async function groups(b, store, now) {
+  if (!validPlayer(b.player)) return bad('bad player');
+  if (b.op === 'group_new') {
+    const mark = await store.get(GROUP_BOARD, 'by:' + b.player);
+    if (mark && now - (mark.at || 0) < GROUP_GAP_MS) return bad('slow down', 429);
+    let code = null;
+    for (let i = 0; i < 6 && !code; i++) {
+      const c = Array.from({ length: 6 }, () => CODE_CHARS[randomInt(CODE_CHARS.length)]).join('');
+      if (!(await store.get(GROUP_BOARD, c))) code = c;
+    }
+    if (!code) return bad('try again', 503);
+    const name = cleanName(b.name, 'Friends');
+    await store.put({ board: GROUP_BOARD, player: code, name, at: now });
+    await store.put({ board: GROUP_BOARD, player: 'by:' + b.player, at: now });
+    await copyBests(store, code, b.player, now);
+    return ok({ code, name });
+  }
+  const code = String(b.group || '').toUpperCase();
+  if (!validCode(code)) return bad('bad code');
+  const group = await store.get(GROUP_BOARD, code);
+  if (!group) return bad('not found', 404);
+  if (b.op === 'group_join') {
+    await copyBests(store, code, b.player, now);
+    return ok({ code, name: group.name });
+  }
+  // group_leave
+  for (const g of groupKeys(code, now)) {
+    const row = await store.get(g.key, b.player);
+    if (live(row)) await store.put({ board: g.key, player: b.player, left: now });
+  }
+  return ok({ code });
+}
+
 // a small filter: clubs with these in the name post as "Anonymous Club"
 const BLOCK = ['fuck', 'shit', 'cunt', 'nigg', 'fag', 'rape', 'nazi', 'hitler', 'whore', 'slut', 'bitch', 'dick', 'cock', 'pussy', 'retard', 'kike', 'spic', 'chink'];
-export function cleanName(name) {
+export function cleanName(name, fallback = 'Anonymous Club') {
   let n = String(name || '').normalize('NFKC').replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 28);
   const flat = n.toLowerCase().replace(/[^a-z]/g, '').replace(/0/g, 'o');
-  if (!n || BLOCK.some((w) => flat.includes(w))) n = 'Anonymous Club';
+  if (!n || BLOCK.some((w) => flat.includes(w))) n = fallback;
   return n;
 }
 
@@ -91,13 +164,15 @@ export async function handle(req, store, now = Date.now()) {
     const weekly = req.query.period === 'week';
     if (weekly && !WEEKLY.has(board)) return bad('no weekly board');
     const week = weekOf(now);
-    const key = weekly ? weekBoard(board, week.key) : board;
+    const group = req.query.group;
+    if (group !== undefined && !validCode(group)) return bad('bad code');
+    const key = group ? groupKey(weekly ? weekBoard(board, week.key) : board, group) : weekly ? weekBoard(board, week.key) : board;
     const top = await store.top(key, TOP);
     let me = null;
     const player = req.query.player;
     if (player && /^[a-f0-9]{16,40}$/.test(player)) {
       const mine = await store.get(key, player);
-      if (mine) me = { rank: (await store.countAbove(key, mine.rank)) + 1, score: mine.score };
+      if (live(mine)) me = { rank: (await store.countAbove(key, mine.rank)) + 1, score: mine.score };
     }
     return ok({ board, top: top.map(publicRow), me, total: await store.count(key), ...(weekly ? { week: week.key, resetsAt: week.ends } : {}) });
   }
@@ -107,6 +182,7 @@ export async function handle(req, store, now = Date.now()) {
     try { b = typeof req.body === 'string' ? JSON.parse(req.body) : req.body; } catch { return bad('bad json'); }
     if (!b || typeof b !== 'object') return bad('bad body');
     if (b.op === 'save_put' || b.op === 'save_get') return cloudSave(b, store, now);
+    if (b.op === 'group_new' || b.op === 'group_join' || b.op === 'group_leave') return groups(b, store, now);
     if (size > MAX_SCORE_BODY) return bad('too big', 413);
     const { board, player } = b;
     const def = BOARDS[board];
@@ -139,6 +215,18 @@ export async function handle(req, store, now = Date.now()) {
       if (betterW || prevW.name !== name || prevW.tag !== tag) await store.put(betterW ? rowW : { ...prevW, name, tag });
       out.week = { key: wk.key, best: rowW.score, improved: betterW, rank: (await store.countAbove(wb, rowW.rank)) + 1, total: await store.count(wb), resetsAt: wk.ends };
     }
+    // the friends boards this player is on (codes that don't exist are skipped)
+    const codes = [...new Set(Array.isArray(b.groups) ? b.groups : [])].filter(validCode).slice(0, MAX_GROUPS);
+    for (const code of codes) {
+      if (!(await store.get(GROUP_BOARD, code))) continue;
+      const who = { player, name, tag, char };
+      await groupBest(store, groupKey(board, code), board, who, score, now, now);
+      if (out.week) {
+        const played = Number(b.played);
+        const when = Number.isFinite(played) && played <= now + 60000 && played > now - 8 * DAY ? Math.min(played, now) : now;
+        await groupBest(store, groupKey(weekBoard(board, weekOf(when).key), code), board, who, score, when, now);
+      }
+    }
     return ok(out);
   }
   return bad('method not allowed', 405);
@@ -154,8 +242,9 @@ export function memoryStore() {
   return {
     async get(board, player) { const r = of(board).get(player); return r ? { ...r } : null; },
     async put(row) { of(row.board).set(row.player, { ...row }); },
-    async top(board, n) { return [...of(board).values()].sort(cmp).slice(0, n); },
-    async countAbove(board, rank) { const r = BigInt(rank); return [...of(board).values()].filter((x) => BigInt(x.rank) > r).length; },
-    async count(board) { return of(board).size; },
+    // (like the byRank index, only rows with a rank are on a board)
+    async top(board, n) { return [...of(board).values()].filter(live).sort(cmp).slice(0, n); },
+    async countAbove(board, rank) { const r = BigInt(rank); return [...of(board).values()].filter((x) => live(x) && BigInt(x.rank) > r).length; },
+    async count(board) { return [...of(board).values()].filter(live).length; },
   };
 }
