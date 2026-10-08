@@ -1,16 +1,12 @@
 # Sprite requests
 
-What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies) and Batch N (near-side crowd).
+What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd) and the remaining packs (Batches B, H, I, C and N-Extras).
 
 The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes** (the Snow Fox is their mascot; colours unchanged). Packs can be named `Puckbound-...` from now on; older `Glacial-Strikers-...` folder names still work.
 
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
-**Next batches:**
-1. **B**: atmosphere (two more arenas, fans at the glass).
-2. **H**: locker-room life.
-3. **I**: arena-rule art.
-4. **C**: polish.
+**Next:** one small, optional batch (M2, below). Nothing else is outstanding.
 
 ## Format notes
 
@@ -34,57 +30,20 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - **Batch M gear masks:** all 58 sheets, clean on the first pass. Equipped sticks, boots and blades now recolour on the sprites in every pose.
 - **Batch L profile goalies:** 294 frames, true profile both ways for all seven goalies, with the glove in the correct hand at both nets. The game uses them for every side pose, skating and puck handling; glove and blocker saves follow the art.
 - **Batch N near-side crowd:** 32 frames of fans seen from behind, home and away colours, sitting and cheering, on the near benches.
+- **Batch B atmosphere:** the Golden Hall (Gilded Rams) and the Dark Aerie (Obsidian Ravens), now their home buildings; fans banging on the far glass after goals, with camera flashes in the stands; the volcanic scoreboard in the Ember Dome.
+- **Batch H locker-room life:** Coach Brekka, Gearsmith Ottar and Kip Vance standing at their stations (idle, and talking while you point at their station), the trophy chest (glowing while there are trophies you haven't looked at, open after), and the league board, which opens the League tab.
+- **Batch I arena-rule art:** meltwater pools and splashes, pond cracks that grow through their four stages, and aurora lane tiles that scroll the way the lane pushes.
+- **Batch C polish:** side strides, stops and glides for all 15 rival skaters, the five captains' celebrations, the title logo, championship fireworks, and the ice resurfacer that laps the title screen's rink before the demo match.
+- **Batch N-Extras:** a flag waver on each near bench.
 
 ---
 
-## Batch B: atmosphere
+## Next (optional)
 
-### B2. Arenas for the Rams and the Ravens
-The other three rivals host you in their own building; these two still play at the Frostline rink.
-- **Gilded Rams:** a golden mountain hall (carved stone, gold banners, braziers).
-- **Obsidian Ravens:** a dark aerie (black stone, violet lanterns, perched ravens).
+### Batch M2. Gear masks for the Batch C side strides
+Signed rival skaters wear our gear, but their new side strides, stops and glides have no masks, so their special sticks and skates don't recolour in those poses. The same format as Batch M: `<sheet>_gearmask.png` beside each `<team>_<role>_side_strides.png` (15 sheets), red for the stick, green for the boots, blue for the blades. Captain celebrations don't need them.
 
-Same rink geometry, line positions and lamp spots as `rink_backdrop.png`, 1536×1024. The v3 near-glass layer must line up with them as it does with the others. A rule idea each: the Rams' hall with "rumble strips" by the boards, and the Ravens' with "shadow zones" where the puck is harder to see.
+## Ideas (ask before drawing)
 
-### B4. Fans pressed against the glass
-3–4 fans, facing the camera, about 28 px tall, home and away colours, plus a camera-flash frame. For goals scored near the bottom glass.
-
-### B5. Volcanic scoreboard (optional)
-A stone/lava variant of the v3 scoreboard for the Ember Dome, same canvas and display fields.
-
----
-
-## Batch H: locker-room life
-
-The hub is now the clickable locker room (`locker_room.png`), with stations at the lockers (Team), the shop counter (Shop), the stick rack (Training), the crystal chest (Trophies) and the benches (League). The dressed line-up and Halla stand on the floor.
-
-### H1. Hub characters, full body
-Coach Brekka, Gearsmith Ottar and Kip Vance (the announcer) standing, facing the camera. Each gets a 2-frame idle plus 1 talking frame, at skater scale (about 152 px). They'll stand at their stations: Ottar behind the counter, the coach by the stick rack, Kip by the benches. Total: **9 frames**.
-
-### H2. Trophy chest, open
-An overlay exactly over the crystal chest: about x 228–345, y 200–345 in the 1536×864 `locker_room.png`. Two frames: closed and glowing, and open with trophies inside.
-
-### H3. League board (optional)
-A freestanding cork or whiteboard easel with fixture papers, about 180×240 px, feet at about 57% across and 52% down the room. It makes the League station read at a glance.
-
----
-
-## Batch I: arena-rule art (optional)
-
-The arena rules are drawn in code today. Sprites would look richer:
-- **Meltwater pool** (Ember Dome): a 4-frame ripple loop, a top-down ellipse about 150×110 px with warm reflections.
-- **Pond crack decals** (Pine Pond): 3 variants × 4 growth stages, from hairline to wide with dark water showing, about 180 px.
-- **Aurora lane tile** (Aurora Palace): a tileable strip about 64×36 px, 8 frames shimmering from green to violet, with a chevron.
-- **Splash**: a 6-frame water burst, about 60 px.
-
----
-
-## Batch C: polish
-
-- **C1. Rival captain celebrations:** 4 phases each for the five captains (20 frames). Ideas: Lynx howl, Comets fire burst, Rams headbutt the glass, Ravens wing spread, Royals crown tip.
-- **C2. Rival side strides:** a 4-frame stride, hockey stop and glide facing right for each rival skater (15 × 6 = 90 frames).
-- **C3. Title logo:** a "Puckbound" pixel logo, about 900×300 px, transparent.
-- **C4. Fun extras:** fireworks/pyro bursts (6 frames) for the championship, and an ice resurfacer driving laps on the title screen.
-
-## Later
-
+- **Golden Hall rule: rumble strips** along the boards that shake the puck loose. It would need a strip tile, like the aurora lanes.
+- **Dark Aerie rule: shadow zones** where the puck is harder to see. It would need a soft shadow decal and a raven flying over.

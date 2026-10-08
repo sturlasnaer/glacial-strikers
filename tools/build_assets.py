@@ -12,7 +12,9 @@ side-view nets, the near-glass overlay, the scoreboard, team banners and the mas
   pivots for skaters and goalies, and shelf-packs the results into atlas pages.
 - Pages are grouped: 'home' (never recoloured), 'away' (our trio in away colours, away
   fans; recoloured per rival) and one 'rival_<team>' group per rival roster, loaded
-  only when that team is needed and recoloured into its colours.
+  only when that team is needed and recoloured into its colours. Scene art has its own
+  groups: 'title' (logo, fireworks, resurfacer), 'hub' (locker-room characters and props)
+  and 'rules' (arena-rule art).
 - Every character is rescaled to the v1 skaters' standing height, so one world scale
   fits all of them.
 - Arenas, the locker room and the ultimate cut-in banners are written as separate
@@ -109,6 +111,9 @@ if BATCH_N and os.path.exists(os.path.join(BATCH_N, 'atlas.json')):
     crowd_back_sheets = set(near['sheets'])
     src['crowd_back'] = near['crowd_back']
     src['crowd_back_scale'] = near['crowd_back_scale']
+REST = sys.argv[9] if len(sys.argv) > 9 else '../assets/Puckbound-Remaining-Packs'
+from merge_remaining_packs import merge_remaining
+src, art_roots, art_mappings, art_backgrounds = merge_remaining(src, REST)
 frames = src['frames']
 info = src['sheets']
 os.makedirs(os.path.join(OUT, 'cutins'), exist_ok=True)
@@ -125,7 +130,7 @@ sheets = {}
 
 def sheet(name):
     if name not in sheets:
-        root = BATCH_N if name in crowd_back_sheets else BATCH_L if name in goalie_west_sheets else BATCH_G if name in goalie_batch_sheets else (BATCH_A if name in batch_sheets else PACK)
+        root = art_roots[name] if name in art_roots else BATCH_N if name in crowd_back_sheets else BATCH_L if name in goalie_west_sheets else BATCH_G if name in goalie_batch_sheets else (BATCH_A if name in batch_sheets else PACK)
         sheets[name] = Image.open(os.path.join(root, info[name]['image'])).convert('RGBA')
     return sheets[name]
 
@@ -205,10 +210,16 @@ def rival_of(fid):
     return None
 
 
+# Scene art that only one scene uses gets its own pages, decoded when that scene opens.
+SCENE_GROUPS = {'polish': 'title', 'arena_rules': 'rules', 'hub_fullbody': 'hub', 'hub_chest': 'hub', 'hub_props': 'hub'}
+
+
 def group_of(fid):
     t = rival_of(fid)
     if t:
         return 'rival_' + t
+    if fid.split('/')[0] in SCENE_GROUPS:
+        return SCENE_GROUPS[fid.split('/')[0]]
     return 'away' if '/away' in fid else 'home'
 
 
@@ -307,6 +318,16 @@ for fid, f in frames.items():
             continue
         k = s = SCALE[sh]
         foot = sh in ROLE_V1.values()
+    elif sh in art_roots:
+        meta = info[sh]
+        if meta['category'] in ('stride', 'celebration'):
+            role = fid.split('/')[2]
+            calibration = meta.get('per_role_scale', {}).get(role, meta['recommended_render_scale'])
+            s, k = SKATER_S, SKATER_S * calibration * f.get('render_scale_multiplier', 1) * v1_h[ROLE_V1[role]] / 152
+        elif meta['category'] == 'scoreboard':
+            s = k = 0.2
+        else:
+            s = k = 2 * meta['recommended_render_scale']
     elif sh in crowd_back_sheets:
         k = s = 0.5 * info[sh]['recommended_render_scale']
     elif sh in FLAT:
@@ -384,6 +405,10 @@ if os.path.exists(os.path.join(ADDON, 'atlas-v3.json')):
 else:
     print('no arena add-on at', ADDON)
 
+if 'scoreboard_volcanic' in art_mappings.get('arena_additions', {}):
+    sb = art_mappings['arena_additions']['scoreboard_volcanic']
+    arena['scoreboard_volcanic'] = {**sb, 'pivot': [sb['pivot']['x'], sb['pivot']['y']]}
+
 # ---------------------------------------------------------------- mappings
 skaters = json.loads(json.dumps(src['skaters']))
 for name, v1 in V1_SKATER.items():
@@ -407,6 +432,10 @@ for key, r in src['rivals'].items():
     if all(k in src['animations'] for k in hit_keys.values()):
         dirs['hit'] = {d: src['animations'][k]['frames'] for d, k in hit_keys.items()}
     skaters[key] = {'home': dirs, 'away': dirs}
+
+for key, extra in art_mappings.get('rival_polish', {}).items():
+    for kit in ('home', 'away'):
+        skaters[key][kit].update(extra)
 
 goalies_side = {}
 for key, g in src['goalies'].items():
@@ -465,7 +494,7 @@ crowd = {team: {pose: [f'crowd_fans/{team}/{pose}/fan_{i}' for i in range(1, 9)]
 # ---------------------------------------------------------------- packing
 out_frames = {}
 pages = []
-groups = ['home', 'away'] + ['rival_' + t for t in RIVALS] + ['gearmask']
+groups = ['home', 'away'] + ['rival_' + t for t in RIVALS] + ['gearmask'] + sorted(set(SCENE_GROUPS.values()))
 for group in groups:
     group_items = sorted([i for i in items if i['group'] == group], key=lambda i: -i['img'].height)
     page_imgs = []
@@ -508,6 +537,12 @@ for key, sh in ARENAS.items():
     Image.open(os.path.join(PACK, 'sheets', sh + '.png')).convert('RGB').resize((1536, 1024), Image.LANCZOS).save(
         os.path.join(OUT, sh + '.webp'), 'WEBP', quality=88, method=6)
     arenas[key] = f'gfx/{sh}.webp'
+for key, bg in art_backgrounds.items():
+    img = Image.open(bg['absolute_image']).convert('RGB')
+    assert img.size == (1536, 1024)
+    name = 'arena_' + key + '.webp'
+    img.save(os.path.join(OUT, name), 'WEBP', quality=92, method=6)
+    arenas[key] = 'gfx/' + name
 # Locker room fills the hub behind the menus (cover-fitted by CSS).
 Image.open(os.path.join(PACK, 'sheets', 'locker_room.png')).convert('RGB').resize((1536, 864), Image.LANCZOS).save(
     os.path.join(OUT, 'locker_room.webp'), 'WEBP', quality=86, method=6)
@@ -521,6 +556,8 @@ for key, b in src['ultimate_banners'].items():
     banners[who] = 'gfx/' + name
 
 atlas = {
+    'art_additions': art_mappings,
+    'art_draw_scales': {fid: (0.5 if info[f['sheet']]['category'] in ('stride', 'celebration') else 0.09 if info[f['sheet']]['category'] == 'scoreboard' else info[f['sheet']]['recommended_render_scale'] * (0.5 if info[f['sheet']]['category'] == 'npc' else 1)) for fid, f in frames.items() if f['sheet'] in art_roots},
     'pages': pages,
     'frames': out_frames,
     'skaters': skaters,

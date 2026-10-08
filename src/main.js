@@ -10,6 +10,7 @@ import { PadNav } from './padnav.js';
 import { firstTime } from './guide.js';
 import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as cloudBackup } from './online.js';
 import { ARENA_MUSIC } from './songs.js';
+import { ResurfacerLap } from './scenery.js';
 import { UI, controlsHtml, crest } from './ui.js';
 import { HUD } from './hud.js';
 import { toScreen } from './rink.js';
@@ -36,6 +37,7 @@ const STEP = 1 / 60;
 // Vibrate only once the player has interacted (browsers block it before that).
 const buzz = (p) => { if (navigator.userActivation?.hasBeenActive !== false) navigator.vibrate?.(p); };
 const RIVALS = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
+const RULE_ART = ['meltwater', 'aurora_lanes', 'pond_cracks', 'cracked_ice', 'both']; // rules drawn with the Batch I sprites
 
 const INTRO = [
   ['us', 'frost', 'Welcome to the Frostline Regional Cup, Foxes. Five wins and the cup comes home.'],
@@ -234,8 +236,12 @@ class App {
   makeMatch(cfg, teamId, arena = 'home') {
     // keep only the art this match uses decoded (phones have little image memory)
     const geared = cfg.teams.some((t) => t.skaters.some((k) => k.gear && (GEAR_LOOK[k.gear.stick] || GEAR_LOOK[k.gear.skates])));
-    Assets.trim({ teams: [teamId], arena, gear: geared });
+    const rules = RULE_ART.includes(cfg.twist);
+    // the title and hub scenes show over the demo match, so their art stays with it
+    Assets.trim({ teams: [teamId], arena, gear: geared, groups: [...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : [])] });
     if (geared) Assets.ensureGear();
+    if (rules) Assets.loadGroup('rules').catch(() => {});
+    this.lap = null;
     Assets.prepareTeam(TEAMS[teamId]);
     this.awayTeamId = teamId;
     this.arena = arena;
@@ -261,6 +267,8 @@ class App {
     cfg.twist = this.twistFor(where, { twist: 'none' });
     this.makeMatch(cfg, teamId, where);
     this.match.state = 'faceoff';
+    // the ice gets resurfaced before each demo match
+    if (Assets.atlas.art_additions && Assets.atlas.art_additions.polish) this.lap = new ResurfacerLap();
   }
 
   fixture() { return this.save.league ? nextFixture(this.save.league) : null; }
@@ -931,6 +939,7 @@ class App {
     this.hud.hide();
     if (!this.attract) this.startAttract();
     this.ui.title();
+    if (!Assets.groupReady('title')) Assets.loadGroup('title').then(() => { if (this.scene === 'title') this.ui.titleLogo(); }).catch(() => {});
     this.music('title');
     audio.setArena('menu');
   }
@@ -1054,7 +1063,13 @@ class App {
           if (this.save.settings.autoSprint && Math.hypot(raw.mx, raw.my) > 0.92) raw.sprint = true;
           m.setHumanInput(raw);
         }
-        let simDt = realDt * this.fx.slowScale * (this.save.settings.speed === 'relaxed' && !(this.cur && this.cur.drill) && !this.attract ? 0.85 : 1);
+        if (this.lap && this.attract) {
+          // resurfacing: the match waits for the machine (and for its art, a couple of seconds at most)
+          if (Assets.groupReady('title')) this.lap.update(realDt);
+          else if ((this.lap.wait = (this.lap.wait || 0) + realDt) > 2) this.lap = null;
+          if (this.lap && this.lap.done) this.lap = null;
+        }
+        let simDt = this.lap ? 0 : realDt * this.fx.slowScale * (this.save.settings.speed === 'relaxed' && !(this.cur && this.cur.drill) && !this.attract ? 0.85 : 1);
         if (this.fx.hitstop > 0) simDt = 0;
         this.acc += simDt;
         let n = 0;
@@ -1082,8 +1097,10 @@ class App {
         if (this.scene === 'match' && isDrill && m.state === 'drill_over' && m.stateT > 1.1 && !this.drillShown) { this.drillShown = true; this.finishDrill(); }
       }
       const t = TEAMS[this.awayTeamId];
-      this.renderer.updateCamera(m, this.fx, realDt, { attract: this.attract, zoom: this.attract ? 0.9 : this.replay.active ? 1.15 : 1 });
-      this.renderer.render(m, this.fx, { awayTeamId: this.awayTeamId, awayColor: t.color, awayColor2: t.color2, arena: this.arena, replay: this.replay.active });
+      const lap = this.lap && this.attract ? this.lap : null;
+      const focus = lap && toScreen(lap.pos().x, lap.pos().y);
+      this.renderer.updateCamera(m, this.fx, realDt, { attract: this.attract, focus, zoom: this.attract ? 0.9 : this.replay.active ? 1.15 : 1 });
+      this.renderer.render(m, this.fx, { awayTeamId: this.awayTeamId, awayColor: t.color, awayColor2: t.color2, arena: this.arena, replay: this.replay.active, lap });
       this.clips.frame();
       this.hud.update(realDt);
       this.crowdT = (this.crowdT || 0) - realDt;

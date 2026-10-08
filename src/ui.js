@@ -90,13 +90,25 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 // The locker room hub: stations in the painting, in % of the 16:9 image.
 const STATIONS = [
   { tab: 'team', label: 'Team', icon: 'equipment_items/hub/locker', rect: [19, 2, 47, 27], at: [42, 15], tip: 'Lockers: line-up, stats, gear and scouting' },
-  { tab: 'shop', label: 'Shop', npc: 'shopkeeper', rect: [69, 11, 30, 58], at: [84, 38], tip: 'Gearsmith Ottar\'s counter' },
-  { tab: 'training', label: 'Training', npc: 'coach', rect: [0.5, 15, 13.5, 40], at: [11, 31], tip: 'Grab a stick and hit the practice rink' },
+  { tab: 'shop', label: 'Shop', npc: 'shopkeeper', rect: [69, 11, 30, 58], at: [84, 27], tip: 'Gearsmith Ottar\'s counter' },
+  { tab: 'training', label: 'Training', npc: 'coach', rect: [0.5, 15, 13.5, 40], at: [11.5, 15], tip: 'Grab a stick and hit the practice rink' },
   { tab: 'trophies', label: 'Trophies', icon: 'equipment_items/reward/trophy', rect: [14.5, 23, 8.5, 17], at: [21, 44], tip: 'The trophy chest' },
   { tab: 'tournament', label: 'League', npc: 'announcer', rect: [10, 77, 58, 18], at: [37, 86], tip: 'Benches: schedule, standings and playoffs' },
 ];
 // Where the dressed skaters and Halla stand on the floor (feet, % of the room).
-const CREW_SPOTS = [[29, 71], [41, 67], [53, 64], [64, 70]];
+const CREW_SPOTS = [[32, 71], [43, 67], [54, 64], [64.5, 70]];
+// The hub characters at their stations (feet, % of the room).
+const NPC_SPOTS = [
+  { who: 'brekka', tab: 'training', at: [22, 66] },
+  { who: 'ottar', tab: 'shop', at: [75.5, 46] },
+  { who: 'kip', tab: 'tournament', at: [72.5, 86] },
+];
+// The painted logo for the title screen, or the lettering until its art has loaded.
+function logoHtml() {
+  const P = Assets.atlas && Assets.atlas.art_additions && Assets.atlas.art_additions.polish;
+  const set = P && P.logo && Assets.spriteSet(P.logo, 220);
+  return set ? `<img class="title-logo-img" src="${set.urls[0]}" alt="Puckbound">` : 'Puck<span>bound</span>';
+}
 
 // Portrait for a league stat row or award winner (ours or a rival's).
 const rowFace = (r, size) => (r.team === 'home' ? portrait(r.face, 0, null, size) : portrait(r.face, 1, r.team, size));
@@ -146,7 +158,7 @@ export class UI {
       <div class="dim"></div>
       <div class="title-wrap">
         <div class="title-crests"><img src="${crest('home', 128)}" alt=""></div>
-        <div class="title-logo">Puck<span>bound</span></div>
+        <div class="title-logo" id="t-logo">${logoHtml()}</div>
         <div class="title-sub">${t('3-on-3 arcade hockey RPG')}</div>
         <div class="title-buttons">
           <button class="btn gold" id="t-start">${hasSave ? t('Continue') : t('New Season')}</button>
@@ -164,6 +176,12 @@ export class UI {
     this.click('#t-settings', () => { audio.sfx('click'); this.settings(); });
     this.click('#t-install', async () => { audio.sfx('confirm'); await this.app.install(); this.title(); });
     return r;
+  }
+
+  // The painted logo replaces the lettering once the title art has loaded.
+  titleLogo() {
+    const el = document.getElementById('t-logo');
+    if (el) el.innerHTML = logoHtml();
   }
 
   quickMatchPicker() {
@@ -327,7 +345,38 @@ export class UI {
       const name = id === 'goalie' ? GOALIE.name : member(id).name;
       return `<button class="crew" data-crew="${id}" style="left:${x}%;top:${y}%;animation-delay:${-i * 0.7}s" aria-label="${esc(name)}"><img src="${src}" alt=""><span>${esc(name)}</span></button>`;
     }).join('');
-    return `<img class="room-bg" src="${Assets.url(Assets.atlas.locker)}" alt="">${spots}${crew}`;
+    return `<img class="room-bg" src="${Assets.url(Assets.atlas.locker)}" alt=""><div class="room-props" id="room-props">${this.roomProps(s)}</div>${spots}${crew}`;
+  }
+
+  // Batch H art in the room: the trophy chest, the league board, and Brekka, Ottar and Kip at
+  // their stations. Empty until the hub's pages have loaded.
+  roomProps(s) {
+    const A = Assets.atlas.art_additions;
+    if (!A || !A.hub_fullbody || !Assets.groupReady('hub')) return '';
+    const R = A.arena_additions || {};
+    const at = (x, y) => `left:${(x / 1536) * 100}%;top:${(y / 864) * 100}%`;
+    let html = '';
+    // the chest glows while there are trophies you haven't looked at, and stands open after
+    const got = Object.keys((s.achievements && s.achievements.unlocked) || {}).length;
+    const chest = R.h_chest_open && R.chest_placement && Assets.spriteSet(R.h_chest_open, 190);
+    if (chest && got) {
+      const p = R.chest_placement, fresh = got > (s.trophiesSeen || 0);
+      html += `<img class="room-chest${fresh ? ' fresh' : ''}" src="${chest.urls[fresh ? 0 : 1]}" alt="" style="${at(p.x, p.y)};height:${(p.h / 864) * 100}%">`;
+    }
+    const board = R.h_league_board && R.league_board_foot && Assets.spriteSet(R.h_league_board, 240);
+    if (board) {
+      const f = R.league_board_foot;
+      html += `<button class="room-board" data-board="tournament" aria-label="${esc(t('League'))}" style="${at(f.x, f.y)};height:${(240 / 864) * 100}%;aspect-ratio:${board.w}/${board.h};transform:translate(-${board.fx * 100}%,-${board.fy * 100}%)"><img src="${board.urls[0]}" alt=""></button>`;
+    }
+    for (const n of NPC_SPOTS) {
+      const m = A.hub_fullbody[n.who];
+      const set = m && Assets.spriteSet([...m.idle, m.talking], 150);
+      if (!set) continue;
+      const [x, y] = n.at;
+      html += `<div class="npc-body" data-for="${n.tab}" style="left:${x}%;top:${y}%;aspect-ratio:${set.w}/${set.h};transform:translate(-${set.fx * 100}%,-${set.fy * 100}%)">
+        <img class="a" src="${set.urls[0]}" alt=""><img class="b" src="${set.urls[1]}" alt=""><img class="tk" src="${set.urls[2]}" alt=""></div>`;
+    }
+    return html;
   }
 
   // Coach Brekka's tip for this moment, pointing at the station or button it's about.
@@ -369,6 +418,25 @@ export class UI {
     fit();
     if (typeof ResizeObserver !== 'undefined') { this.roomFit = new ResizeObserver(fit); this.roomFit.observe(wrap); }
     this.click('[data-crew]', (el) => { audio.sfx('click'); this.hub(el.dataset.crew === 'goalie' ? 'team' : 'team'); }, room);
+    const s = this.app.save;
+    const props = room.querySelector('#room-props');
+    const bindProps = () => {
+      this.click('.room-board', (el) => { audio.sfx('click'); this.hub(el.dataset.board); }, props);
+      // a character talks while you point at their station
+      room.querySelectorAll('.spot').forEach((sp) => {
+        const body = props.querySelector(`.npc-body[data-for="${sp.dataset.tab}"]`);
+        if (!body) return;
+        const on = () => body.classList.add('talk'), off = () => body.classList.remove('talk');
+        sp.addEventListener('pointerenter', on); sp.addEventListener('pointerleave', off);
+        sp.addEventListener('focus', on); sp.addEventListener('blur', off);
+      });
+    };
+    if (props.childElementCount) bindProps();
+    else Assets.loadGroup('hub').then(() => {
+      if (!props.isConnected) return;
+      props.innerHTML = this.roomProps(s);
+      bindProps();
+    }).catch(() => {});
   }
 
   tabTournament(body) {
@@ -447,6 +515,7 @@ export class UI {
     const tr = this.app.ach;
     const got = ACHIEVEMENTS.filter((a) => tr.has(a.id));
     const earned = got.reduce((n, a) => n + a.coins, 0);
+    if ((s.trophiesSeen || 0) !== got.length) { s.trophiesSeen = got.length; writeSave(s); } // the chest in the room stops glowing
     body.innerHTML = `
       <div class="train-top"><div><div class="label">${t('Trophy case')}</div>
         <p style="margin:2px 0 0;font-size:13px">${t('{n} of {total} unlocked', { n: got.length, total: ACHIEVEMENTS.length })} · ${t('{n} coins earned', { n: earned })}${s.cups ? ` · ${t(s.cups > 1 ? '{n} cups won' : '{n} cup won', { n: s.cups })}` : ''}</p></div>
@@ -1385,6 +1454,36 @@ export class UI {
       </div>`);
     audio.jingle('win');
     this.click('#c-go', () => { audio.sfx('confirm'); onDone(); });
+    this.fireworks();
+  }
+
+  // Fireworks over the championship screen (title art, loaded on demand).
+  fireworks() {
+    const P = Assets.atlas.art_additions && Assets.atlas.art_additions.polish;
+    if (!P || !P.fireworks || (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+    const layer = document.createElement('div');
+    layer.className = 'fireworks';
+    this.root.appendChild(layer); // over the panel, bursting at the sides
+    Assets.loadGroup('title').then(() => {
+      const set = Assets.spriteSet(P.fireworks, 320);
+      if (!set) return;
+      const launch = () => {
+        if (!layer.isConnected) return;
+        const img = document.createElement('img');
+        img.alt = '';
+        img.src = set.urls[0];
+        const x = Math.random() < 0.5 ? 3 + Math.random() * 20 : 77 + Math.random() * 20;
+        img.style.cssText = `left:${x}%;top:${50 + Math.random() * 45}%;height:${Math.round(150 + Math.random() * 130)}px;transform:translate(-${set.fx * 100}%,-${set.fy * 100}%)`;
+        layer.appendChild(img);
+        let i = 0;
+        const step = setInterval(() => {
+          if (++i >= set.urls.length || !img.isConnected) { clearInterval(step); img.remove(); return; }
+          img.src = set.urls[i];
+        }, 150);
+        setTimeout(launch, 300 + Math.random() * 650);
+      };
+      launch(); setTimeout(launch, 200);
+    }).catch(() => {});
   }
 }
 

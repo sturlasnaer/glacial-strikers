@@ -40,6 +40,8 @@ export class FX {
     this.cheerTeam = null;
     this.shakeMul = 1; this.flashes = true; this.particleMul = 1; // comfort settings
     this.chant = null; // { team, t } crowd chanting in rhythm
+    this.glassFans = null; // { team, side, t, life, seed } fans banging on the far glass after a goal
+    this.cams = []; // camera flashes in the stands: { x, y, t } (t < 0: still to come)
     this.marks = null; // offscreen canvas for skate scratches
     this.marksCtx = null;
     this.marksFade = 0;
@@ -52,6 +54,7 @@ export class FX {
     this.colors = [homeColor, awayColor];
     this.parts.length = 0; this.anims.length = 0; this.texts.length = 0; this.bolts.length = 0; this.rings.length = 0;
     this.excite = 0.2;
+    this.glassFans = null; this.cams.length = 0;
     if (typeof document !== 'undefined') {
       if (!this.marks) {
         this.marks = document.createElement('canvas');
@@ -143,6 +146,7 @@ export class FX {
       if (speed > 850 || caught === false) this.text(g.x - g.goalSide * 30, g.y - 110, caught ? t('SAVE!') : t('REBOUND'), caught ? '#ffffff' : '#fff2cb', 0.9, caught ? 20 : 15);
       this.excite = Math.min(1, this.excite + 0.2);
     });
+    on('splash', ({ x, y }) => this.anim('arena_rules/splash/phase_', x, y + 2, 0.2, { fps: 14 }));
     on('goalie_dive', ({ g }) => {
       this.burst(g.x, g.y, 2, 6, ELEMENT_COLORS.snow, 160, 0.4);
       this.anim(CHIPS, g.x, g.y + 2, 0.12, { fps: 18, frames: PHASES, flip: g.diveDir < 0 });
@@ -158,6 +162,8 @@ export class FX {
       this.zoomPunch = 1;
       this.excite = 1; this.cheerTeam = g.team;
       this.flashScreen('#ffffff', 0.2);
+      this.glassFans = { team: g.team, side, t: 0, life: 3.6, seed: Math.floor(rnd() * 4) };
+      for (let i = 0; i < 12; i++) this.camFlash(-rnd.range(0, 2.6));
       const gx = side * GOAL_X;
       for (let i = 0; i < 70; i++) {
         const a = rnd.range(0, Math.PI * 2);
@@ -259,6 +265,12 @@ export class FX {
     this.bolts.push({ pts, t: 0, life: 0.35 });
   }
   ghost(s, delay) { this.parts.push({ kind: 'ghost', s, x: s.x, y: s.y, face: s.face, t: -delay, life: 0.3, z: 0, vx: 0, vy: 0, vz: 0 }); }
+  // A camera flash somewhere in the far stands (not with flashes turned off).
+  camFlash(t = 0) {
+    if (!this.flashes) return;
+    const left = rnd() < 0.5;
+    this.cams.push({ x: left ? rnd.range(296, 664) : rnd.range(876, 1250), y: rnd.range(6, 58), t });
+  }
   shake(a) { this.shakeT = Math.min(1, this.shakeT + a * this.shakeMul); }
   flashScreen(color, life) { if (this.flashes) this.flash = { color, t: 0, life }; }
 
@@ -331,6 +343,10 @@ export class FX {
     this.excite = Math.max(0.15, this.excite - realDt * 0.12);
     if (this.excite < 0.5) this.cheerTeam = null;
     if (this.chant) { this.chant.t += realDt; if (this.chant.t > 8) this.chant = null; }
+    if (this.glassFans) { this.glassFans.t += realDt; if (this.glassFans.t > this.glassFans.life) this.glassFans = null; }
+    for (const c of this.cams) c.t += realDt;
+    if (this.cams.length) this.cams = this.cams.filter((c) => c.t < 0.2);
+    if (this.excite > 0.75 && rnd() < realDt * 1.5) this.camFlash();
     if (this.flash) { this.flash.t += realDt; if (this.flash.t > this.flash.life) this.flash = null; }
     if (this.reticle) { this.reticle.t += dt; if (this.reticle.t > this.reticle.life) this.reticle = null; }
     // fade old scratches slowly
@@ -398,6 +414,14 @@ function makeCrowd() {
         team: r() < 0.6 ? 0 : 1, skin: r.pick(skins), hat: r.pick(hats), hair: r.pick(hair), phase: r.range(0, 6.28),
         sign: r() < 0.06, scarf: r() < 0.3, fan: Math.floor(r() * 8),
       });
+    }
+  }
+  // a flag waver on each near bench, for either side's supporters (they swap in rival buildings)
+  for (const [x0, x1] of [[362, 640], [898, 1176]]) {
+    for (const team of [0, 1]) {
+      const near = fans.filter((f) => f.back && f.team === team && f.x >= x0 && f.x < x1);
+      const mid = (x0 + x1) / 2 + (team ? 70 : -70);
+      if (near.length) near.reduce((a, b) => (Math.abs(b.x - mid) < Math.abs(a.x - mid) ? b : a)).flag = true;
     }
   }
   return fans;

@@ -23,6 +23,8 @@ const ROOMS = {
   ember_dome: { decay: 2.5, wet: 0.24, bright: 0.4, crowd: 1.1 },
   aurora_palace: { decay: 3, wet: 0.26, bright: 0.75, crowd: 0.9 },
   pine_pond: { decay: 0.6, wet: 0.08, bright: 0.8, crowd: 0.55 },
+  golden_hall: { decay: 2.8, wet: 0.25, bright: 0.6, crowd: 1.05 },
+  dark_aerie: { decay: 3.6, wet: 0.3, bright: 0.3, crowd: 0.8 },
   menu: { decay: 1.2, wet: 0.1, bright: 0.6, crowd: 0 },
 };
 
@@ -436,6 +438,23 @@ export class Audio {
         ['C4', 'E4', 'G4', 'C5'].forEach((n, i) => this.tone(freq(midi(n)), t + i * 0.12, 1.6 - i * 0.12, 'sawtooth', 0.05, out, { lp: 2200, attack: 0.03, release: 0.4 }));
         for (let i = 0; i < 6; i++) this.ring(t + 0.4 + i * 0.11, freq(midi(['C6', 'E6', 'G6', 'C7', 'G6', 'E7'][i])), 1.4, 0.06, out, [1, 3.01, 5.2]);
         break;
+      case 'golden_hall': // a ram's horn call over a deep gong
+        [[233.1, 0], [233.1, 0.28], [311.1, 0.56]].forEach(([f, d], i) => {
+          const o = this.tone(f * 0.94, t + d, i === 2 ? 1.8 : 0.24, 'sawtooth', 0.075, out, { lp: 1700, attack: 0.03, release: 0.25, vib: i === 2, vibRate: 5, vibDepth: 0.006 });
+          o.frequency.setValueAtTime(f * 0.94, t + d); o.frequency.exponentialRampToValueAtTime(f, t + d + 0.09);
+        });
+        this.ring(t, 55, 3.2, 0.22, out, [1, 2.76, 5.4]);
+        break;
+      case 'dark_aerie': { // a low bell and the ravens taking off
+        this.ring(t, 82.4, 3.4, 0.2, out, [1, 2.4, 3.9, 6.1]);
+        for (let i = 0; i < 5; i++) {
+          const tt = t + 0.35 + i * 0.19 + (i % 2) * 0.05;
+          const o = this.tone(1150 - i * 60, tt, 0.16, 'square50', 0.035, out, { lp: 2400, attack: 0.005, release: 0.06 });
+          o.frequency.setValueAtTime(1150 - i * 60, tt); o.frequency.exponentialRampToValueAtTime(620, tt + 0.15); // caw
+        }
+        this.noiseBurst(t + 0.3, 1.1, 0.12, 'bandpass', 900, 0.5, out, 0.02, 600); // wings
+        break;
+      }
       case 'pine_pond': { // cowbells and a hand-cranked siren
         for (let i = 0; i < 8; i++) { const tt = t + i * 0.16; this.tone(540, tt, 0.25, 'square50', 0.05, out, { lp: 1500 }); this.tone(800, tt, 0.25, 'square50', 0.04, out, { lp: 1500 }); }
         const o = this.tone(400, t, 2.4, 'sine', 0.12, out, { vib: true, vibRate: 7, vibDepth: 0.01, attack: 0.2, release: 0.6 });

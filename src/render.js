@@ -71,6 +71,7 @@ export class Renderer {
       const g = toScreen(match.lastGoal.side * (GOAL_X - 90), 0);
       tx = g.x; ty = g.y - 30;
     }
+    if (opts.focus) { tx = opts.focus.x; ty = opts.focus.y; }
     if (opts.attract) { tx = lerp(tx, BACKDROP.cx, 0.5); }
     const k = 1 - Math.exp(-4.5 * dt);
     this.cam.x += (tx - this.cam.x) * k;
@@ -120,18 +121,23 @@ export class Renderer {
     this.drawArenaProps(ctx, match, fx, ui, arena);
     this.drawGoalLights(ctx, match, fx);
     if (fx.marks) ctx.drawImage(fx.marks, 0, 0, BACKDROP.w, BACKDROP.h);
+    const lap = ui.lap; // the resurfacer's lap before the title screen's match: nobody on the ice
+    if (lap) this.drawLapSheen(ctx, lap);
     this.drawTwists(ctx, match, fx);
-    this.drawTrails(ctx, match);
-    this.drawPickupsGround(ctx, match, fx);
-    this.drawShadows(ctx, match);
-    this.drawGroundMarkers(ctx, match, fx);
+    if (!lap) {
+      this.drawTrails(ctx, match);
+      this.drawPickupsGround(ctx, match, fx);
+      this.drawShadows(ctx, match);
+      this.drawGroundMarkers(ctx, match, fx);
+    }
     if (match.drill && match.drill.drawGround) match.drill.drawGround(ctx, this, match, fx, Assets);
     this.drawRings(ctx, fx);
     if (window.__debugRink) this.drawDebug(ctx, match);
 
     // depth-sorted sprites
     const list = [];
-    for (const s of match.skaters) list.push({ y: s.y, f: () => this.drawSkater(ctx, s, match, fx) });
+    if (lap) list.push({ y: lap.pos().y, f: () => this.drawResurfacer(ctx, lap) });
+    else for (const s of match.skaters) list.push({ y: s.y, f: () => this.drawSkater(ctx, s, match, fx) });
     // Nets: back layer, then a puck that's inside the net, then the front layer.
     // The goalie always draws after his own net so the crossbar never cuts through him.
     const NET_KEY = -MOUTH * 0.5;
@@ -145,7 +151,7 @@ export class Renderer {
     // then the front layer (near post, roof, near-side mesh) over them. Out of the crease
     // they draw in front of it.
     this.goaliePoses = new Map();
-    for (const g of match.goalies) {
+    for (const g of lap ? [] : match.goalies) {
       if (g.disabled && !g.leaving) continue;
       const pose = this.goaliePose(g, match, ui.replay);
       this.goaliePoses.set(g, pose);
@@ -155,9 +161,9 @@ export class Renderer {
       list.push({ y: inMouth ? NET_KEY - 0.2 : outBack ? g.y + 1 : Math.max(g.y + 1, NET_KEY + 0.5), f: () => this.drawGoalie(ctx, g, match, pose) });
     }
     if (match.drill && match.drill.sprites) for (const sp of match.drill.sprites(match, this, Assets)) list.push({ y: sp.y, f: () => sp.f(ctx) });
-    list.push({ y: inNet ? NET_KEY - 0.25 : p.owner ? p.y + 0.5 : p.y, f: () => this.drawPuck(ctx, p, fx, match) });
-    for (const b of match.barriers) list.push({ y: b.y, f: () => this.drawBarrier(ctx, b) });
-    for (const k of match.pickups) list.push({ y: k.y, f: () => this.drawPickupOrb(ctx, k, fx) });
+    if (!lap) list.push({ y: inNet ? NET_KEY - 0.25 : p.owner ? p.y + 0.5 : p.y, f: () => this.drawPuck(ctx, p, fx, match) });
+    for (const b of lap ? [] : match.barriers) list.push({ y: b.y, f: () => this.drawBarrier(ctx, b) });
+    for (const k of lap ? [] : match.pickups) list.push({ y: k.y, f: () => this.drawPickupOrb(ctx, k, fx) });
     for (const pt of fx.parts) if (pt.kind === 'ghost') list.push({ y: pt.s.y - 1, f: () => this.drawGhost(ctx, pt, match) });
     list.sort((a, b) => a.y - b.y);
     for (const d of list) d.f();
@@ -169,7 +175,7 @@ export class Renderer {
     this.drawBolts(ctx, fx);
     this.drawGoalLamp(ctx, match, fx);
     this.drawReticle(ctx, fx);
-    this.drawOverheads(ctx, match, fx);
+    if (!lap) this.drawOverheads(ctx, match, fx);
     if (match.drill && match.drill.drawOver) match.drill.drawOver(ctx, this, match, fx, Assets);
 
     // screen space
@@ -184,6 +190,29 @@ export class Renderer {
       ctx.fillRect(0, 0, this.w, this.h);
       ctx.globalAlpha = 1;
     }
+  }
+
+  // ------------------------------------------------------------ the resurfacer's lap
+  drawResurfacer(ctx, lap) {
+    const P = Assets.atlas.art_additions && Assets.atlas.art_additions.polish;
+    if (!P || !P.resurfacer) return;
+    const p = lap.pos(), s = toScreen(p.x, p.y);
+    Assets.draw(ctx, lap.frame(P.resurfacer), s.x, s.y, 0.36 * persp(p.y));
+  }
+
+  // Freshly flooded ice: a wet sheen along the machine's path that dries over a few seconds.
+  drawLapSheen(ctx, lap) {
+    const tr = lap.trail;
+    if (tr.length < 2) return;
+    ctx.save();
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = 50;
+    for (let i = 1; i < tr.length; i++) {
+      const a = Math.max(0, 1 - (lap.t - tr[i].t) / 7);
+      if (!a) continue;
+      ctx.strokeStyle = `rgba(232,248,255,${0.38 * a})`;
+      ctx.beginPath(); ctx.moveTo(tr[i - 1].x, tr[i - 1].y - 6); ctx.lineTo(tr[i].x, tr[i].y - 6); ctx.stroke();
+    }
+    ctx.restore();
   }
 
   // ------------------------------------------------------------ environment
@@ -238,6 +267,11 @@ export class Renderer {
         continue;
       }
       // near benches: fans seen from behind (Batch N sprites)
+      const flag = f.flag && f.team === 0 && Assets.atlas.art_additions && Assets.atlas.art_additions.crowd_back_extras && Assets.atlas.art_additions.crowd_back_extras.home_flag;
+      if (flag) { // a home fan waving the club flag
+        Assets.draw(ctx, flag[Math.floor(t * (cheer ? 4 : 2) + f.phase) % 2], x, y + 5 * s, 0.155 * (s / 1.75), { pages: Assets.clubPages() });
+        continue;
+      }
       const backs = Assets.atlas.crowd_back;
       if (backs && backs[f.team ? 'away' : 'home']) {
         const team = f.team ? 'away' : 'home';
@@ -326,7 +360,41 @@ export class Renderer {
       else if (fx.excite > 0.55 || Math.floor(t / 3) % 4 === 0) pose = Math.floor(t * 2) % 2 ? 'wave' : 'idle';
       Assets.draw(ctx, A.mascot[pose], 768, 950 - (party ? Math.abs(Math.sin(t * 8)) * 6 : 0), 0.125, { pages: Assets.clubPages() });
     }
-    if (A.scoreboard && arena !== 'ember_dome') this.drawScoreboard(ctx, match, fx, A.scoreboard);
+    const board = arena === 'ember_dome' ? A.scoreboard_volcanic : A.scoreboard;
+    if (board) this.drawScoreboard(ctx, match, fx, board);
+    this.drawGlassFans(ctx, fx);
+    this.drawCameraFlashes(ctx, fx);
+  }
+
+  // After a goal, fans run down to the far glass behind that net and bang on it.
+  drawGlassFans(ctx, fx) {
+    const g = fx.glassFans;
+    const A = Assets.atlas.art_additions && Assets.atlas.art_additions.arena_additions;
+    const ids = g && A && A[g.team === 0 ? 'b_glass_home' : 'b_glass_away'];
+    if (!ids) return;
+    const pages = g.team === 0 ? Assets.clubPages() : this.awayPages;
+    const c = toScreen(g.side * 470, RINK.minY);
+    const rail = c.y - 42; // top of the far boards, where the glass starts
+    const rise = Math.min(1, g.t / 0.25), fade = Math.min(1, (g.life - g.t) / 0.4);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, BACKDROP.w, rail - 1); ctx.clip(); // legs hidden behind the boards
+    for (let i = 0; i < 4; i++) {
+      const bang = Math.abs(Math.sin(g.t * 9 + i * 1.3)) * 3;
+      Assets.draw(ctx, ids[(i + g.seed) % ids.length], c.x + (i - 1.5) * 25, rail + 5 + (1 - rise) * 26 - bang, 0.05, { pages, alpha: 0.9 * fade, flip: (i + g.seed) % 3 === 0 });
+    }
+    ctx.restore();
+  }
+
+  // Camera flashes popping in the far stands on big moments.
+  drawCameraFlashes(ctx, fx) {
+    const A = Assets.atlas.art_additions && Assets.atlas.art_additions.arena_additions;
+    const id = A && A.b_flash && A.b_flash[0];
+    if (!id) return;
+    for (const c of fx.cams) {
+      if (c.t < 0) continue;
+      const k = 1 - c.t / 0.2;
+      Assets.draw(ctx, id, c.x, c.y, 0.006 + 0.012 * k, { alpha: k, blend: 'lighter' });
+    }
   }
 
   // Scoreboard hanging over the far stairs, with the live score drawn into its displays.
@@ -358,15 +426,66 @@ export class Renderer {
     const tw = match.twists;
     if (!tw || tw.kind === 'none') return;
     const t = fx.time;
+    const art = this.ruleArt();
     const aurora = tw.kind === 'aurora_lanes';
-    for (const l of tw.lanes) this.drawLane(ctx, l, t, aurora, 1);
+    for (const l of tw.lanes) if (aurora && art) this.drawAuroraTiles(ctx, l, t, art, 1); else this.drawLane(ctx, l, t, aurora, 1);
     if (aurora && tw.next) {
       // the next lanes flicker in before the lights shift
       const blink = 0.35 + Math.max(0, Math.sin(t * 12)) * 0.4;
-      for (const l of tw.next) this.drawLane(ctx, l, t, true, blink, true);
+      for (const l of tw.next) if (art) this.drawAuroraTiles(ctx, l, t, art, blink, true); else this.drawLane(ctx, l, t, true, blink, true);
     }
-    for (const p of tw.pools) this.drawPool(ctx, p, t);
-    for (const c of tw.cracks) this.drawCrack(ctx, c, tw);
+    for (const p of tw.pools) if (art) this.drawPoolArt(ctx, p, t, art); else this.drawPool(ctx, p, t);
+    for (const c of tw.cracks) if (art) this.drawCrackArt(ctx, c, art); else this.drawCrack(ctx, c, tw);
+  }
+
+  // The Batch I sprites for the arena rules, once their pages are in (drawn in code until then).
+  ruleArt() {
+    const R = Assets.atlas.art_additions && Assets.atlas.art_additions.arena_rules;
+    const f = R && R.pool && Assets.frame(R.pool[0]);
+    return f && Assets.pages[f[0]] ? R : null;
+  }
+
+  // Aurora lanes: the shimmering tile repeated along the lane, scrolling the way it pushes.
+  drawAuroraTiles(ctx, l, t, R, alpha, ghost) {
+    const a = toScreen(l.x0, l.y), b = toScreen(l.x1, l.y);
+    const id = R.lane[Math.floor(t * 8) % R.lane.length];
+    const f = Assets.frame(id);
+    const len = b.x - a.x, n = Math.max(1, Math.round(len / 64)), w = len / n;
+    const k = w / (f[3] / f[7]);
+    const squash = l.h / ((f[4] / f[7]) * k);
+    const off = ((t * 45) % w) * l.dir;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(a.x, a.y - l.h / 2, len, l.h); ctx.clip();
+    ctx.globalAlpha = alpha;
+    for (let i = -1; i <= n; i++) Assets.draw(ctx, id, a.x + (i + 0.5) * w + off, a.y, k, { squash, flip: l.dir < 0 });
+    ctx.restore();
+    if (ghost) {
+      ctx.save();
+      ctx.setLineDash([10, 8]);
+      ctx.strokeStyle = `rgba(220,255,240,${0.8 * alpha})`;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(a.x, a.y - l.h / 2 + 3, len, l.h - 6);
+      ctx.restore();
+    }
+  }
+
+  // Meltwater: the pool's ripple loop stretched over the pool, with steam rising off it.
+  drawPoolArt(ctx, p, t, R) {
+    const s = toScreen(p.x, p.y);
+    const id = R.pool[Math.floor(t * 5 + p.ph * 3) % R.pool.length];
+    const f = Assets.frame(id);
+    const rx = p.rx * persp(p.y);
+    const k = (2.15 * rx) / (f[3] / f[7]);
+    Assets.draw(ctx, id, s.x, s.y, k, { squash: (2.15 * p.ry) / ((f[4] / f[7]) * k) });
+    this.drawSteam(ctx, s, rx, t, p.ph);
+  }
+
+  // Pond cracks: one of three crack drawings per crack, at the growth stage its size has reached.
+  drawCrackArt(ctx, c, R) {
+    const s = toScreen(c.x, c.y);
+    const variant = Math.abs(Math.round(c.x * 13 + c.y * 7)) % 3;
+    const stage = c.r < 36 ? 0 : c.r < 50 ? 1 : c.r < 62 ? 2 : 3;
+    Assets.draw(ctx, R.cracks[variant * 4 + stage], s.x, s.y, 0.5 * persp(c.y), { squash: 0.85 });
   }
 
   drawLane(ctx, l, t, aurora, alpha, ghost) {
@@ -436,11 +555,17 @@ export class Renderer {
       ctx.globalAlpha = 1 - k;
       ctx.beginPath(); ctx.ellipse(s.x, s.y, rx * (0.3 + k * 0.6), ry * (0.3 + k * 0.6), 0, 0, Math.PI * 2); ctx.stroke();
     }
-    ctx.globalAlpha = 0.35;
+    ctx.restore();
+    this.drawSteam(ctx, s, rx, t, p.ph);
+  }
+
+  // A little steam off the warm meltwater.
+  drawSteam(ctx, s, rx, t, ph) {
+    ctx.save();
     ctx.fillStyle = '#fff2e0';
     for (let i = 0; i < 3; i++) {
-      const k = (t * 0.4 + i / 3 + p.ph) % 1;
-      const wx = s.x + Math.sin(t * 1.3 + i * 2 + p.ph) * rx * 0.4;
+      const k = (t * 0.4 + i / 3 + ph) % 1;
+      const wx = s.x + Math.sin(t * 1.3 + i * 2 + ph) * rx * 0.4;
       ctx.globalAlpha = 0.3 * (1 - k);
       ctx.beginPath(); ctx.arc(wx, s.y - k * 34, 4 + k * 6, 0, Math.PI * 2); ctx.fill();
     }

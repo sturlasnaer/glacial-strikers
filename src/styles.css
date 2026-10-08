@@ -75,6 +75,7 @@ img { image-rendering: auto; max-width: 100%; }
 .title-wrap { position: relative; margin: auto; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: calc(16px + var(--safe-t)) 16px calc(16px + var(--safe-b)); text-align: center; }
 .title-logo { font-family: var(--display); line-height: 0.78; color: var(--cream); font-size: clamp(48px, min(13vw, 21vh), 150px); text-shadow: 0 5px 0 var(--navy-3), 0 9px 0 var(--navy), 0 0 40px rgba(113, 220, 232, 0.5); text-wrap: balance; }
 .title-logo span { display: block; color: var(--ice); }
+.title-logo-img { display: block; width: clamp(260px, min(78vw, 120vh), 860px); height: auto; margin: 0 auto; filter: drop-shadow(0 6px 0 rgba(10, 20, 40, 0.55)); }
 .title-sub { font-size: 15px; color: var(--ice-2); letter-spacing: 0.12em; text-transform: uppercase; }
 .title-crests { display: flex; gap: 14px; align-items: center; }
 .title-crests img { width: 64px; height: 64px; }
@@ -536,7 +537,26 @@ body.in-hub.hub-room #screen { background: linear-gradient(rgba(8, 14, 26, 0.82)
 .crew:hover span, .crew:focus-visible span { opacity: 1; }
 @keyframes crew-bob { 0%, 100% { transform: translate(-50%, -100%); } 50% { transform: translate(-50%, calc(-100% - 3px)); } }
 .tab.room-tab { background: rgba(255, 242, 203, 0.12); }
-@media (prefers-reduced-motion: reduce) { .crew { animation: none; } }
+/* Batch H: the chest, the league board and the hub characters standing in the room */
+.room-props { position: absolute; inset: 0; pointer-events: none; }
+.room-chest { position: absolute; width: auto; display: block; }
+.room-chest.fresh { animation: chest-glow 1.6s ease-in-out infinite; }
+@keyframes chest-glow { 0%, 100% { filter: drop-shadow(0 0 0 rgba(113, 220, 232, 0)); } 50% { filter: drop-shadow(0 0 calc(var(--u) * 1.2) rgba(113, 220, 232, 0.9)); } }
+.room-board { position: absolute; padding: 0; border: 0; background: none; cursor: pointer; pointer-events: auto; }
+.room-board img { display: block; width: 100%; height: 100%; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.35)); }
+.room-board:hover img, .room-board:focus-visible img { filter: drop-shadow(0 0 calc(var(--u) * 0.8) rgba(255, 212, 94, 0.9)); }
+.npc-body { position: absolute; height: 19%; }
+.npc-body img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.35)); }
+.npc-body .a { animation: npc-flip 1.3s infinite; }
+.npc-body .b { animation: npc-flip 1.3s infinite -0.65s; }
+.npc-body .tk { visibility: hidden; }
+.npc-body.talk .a { animation-duration: 0.6s; }
+.npc-body.talk .b { visibility: hidden; animation: none; }
+.npc-body.talk .tk { visibility: visible; animation: npc-flip 0.6s infinite -0.3s; }
+@keyframes npc-flip { 0%, 49.9% { visibility: visible; } 50%, 100% { visibility: hidden; } }
+.fireworks { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 5; }
+.fireworks img { position: absolute; width: auto; image-rendering: pixelated; }
+@media (prefers-reduced-motion: reduce) { .crew, .room-chest.fresh, .npc-body .a, .npc-body .b { animation: none; } .npc-body .b { visibility: hidden; } }
 .look { margin-top: 3px; font-size: 12px; color: var(--ice); letter-spacing: 0.01em; }
 .look::before { content: "✦ "; color: var(--gold, #ffd45e); }
 

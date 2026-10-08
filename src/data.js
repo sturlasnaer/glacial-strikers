@@ -140,7 +140,7 @@ export const TEAMS = {
   },
   rams: {
     id: 'rams', plan: 'forecheck', chem: 1, name: 'Gilded Rams', short: 'RAM', crest: 'hud_elements/misc/away_crest',
-    art: 'gilded_rams',
+    art: 'gilded_rams', arena: 'golden_hall',
     color: '#ffd45e', color2: '#a86b1d', recolor: { h1: 44, h2: 22, sat: 1.0, val: 1.05, sat2: 0.9, val2: 0.65 },
     diff: 0.55, bonus: { sht: 1, chk: 1 }, goalie: { rfx: 6, pos: 6 },
     names: { frost: 'Aurum', thunder: 'Gilda', stone: 'Horn', goalie: 'Bulwark' },
@@ -149,7 +149,7 @@ export const TEAMS = {
   },
   ravens: {
     id: 'ravens', plan: 'trap', chem: 2, name: 'Obsidian Ravens', short: 'RAV', crest: 'hud_elements/misc/away_crest',
-    art: 'obsidian_ravens',
+    art: 'obsidian_ravens', arena: 'dark_aerie',
     color: '#9aa3b5', color2: '#2a2f3d', recolor: { h1: 220, h2: 220, sat: 0.12, val: 0.66, sat2: 0.15, val2: 0.4 },
     diff: 0.72, bonus: { agi: 1, pas: 1, chk: 1 }, goalie: { rfx: 7, pos: 7 },
     names: { frost: 'Corvin', thunder: 'Nyx', stone: 'Basalt', goalie: 'Grim' },
@@ -175,6 +175,8 @@ export const ARENAS = {
   home: { name: 'Frostline Rink', lamps: '#ffb84d', twist: null },
   ember_dome: { name: 'Ember Dome', lamps: '#ff7a2e', flicker: 2.2, ice: 'rgba(255,140,60,0.06)', twist: 'meltwater', rule: 'Meltwater' },
   aurora_palace: { name: 'Aurora Palace', lamps: '#ffd27a', twist: 'aurora_lanes', rule: 'Aurora lanes' },
+  golden_hall: { name: 'Golden Hall', lamps: '#ffc04a', flicker: 1.6, twist: null },
+  dark_aerie: { name: 'Dark Aerie', lamps: '#b48cff', flicker: 0.7, twist: null },
   pine_pond: { name: 'Pine Pond', lamps: null, twist: 'pond_cracks', rule: 'Pond cracks' },
 };
 

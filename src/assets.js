@@ -1,8 +1,9 @@
 // Loads the atlas pages, draws frames, recolours rival jerseys, makes UI icons.
 //
-// The 'home' and 'away' pages load at startup. Each rival roster has its own pages, and
-// the arenas, locker room and cut-in banners are separate images; those load in the
-// background after startup, and ensureTeam() waits for whatever a match needs.
+// The 'home', 'away' and 'title' pages load at startup. Each rival roster has its own pages,
+// the hub's characters and the arena-rule art have theirs ('hub', 'rules'), and the arenas,
+// locker room and cut-in banners are separate images; those load when a scene needs them.
+// (Everything is prefetched into the browser cache, but only decoded when used.)
 
 import { TEAMS, PALETTES } from './data.js';
 
@@ -26,7 +27,7 @@ export const Assets = {
     const atlas = INLINE ? INLINE['gfx/atlas.json'] : await (await fetch(BASE + 'gfx/atlas.json')).json();
     this.atlas = atlas;
     this.pages = new Array(atlas.pages.length);
-    const core = atlas.pages.map((p, i) => i).filter((i) => atlas.pages[i].group === 'home' || atlas.pages[i].group === 'away');
+    const core = atlas.pages.map((p, i) => i).filter((i) => ['home', 'away', 'title'].includes(atlas.pages[i].group));
     const glass = atlas.arena && atlas.arena.glass && atlas.arena.glass.file;
     const files = [...core.map((i) => atlas.pages[i].file), ...(glass ? [glass] : []), 'gfx/rink_backdrop.webp'];
     let done = 0;
@@ -50,6 +51,11 @@ export const Assets = {
   async loadGroup(group) {
     await Promise.all(this.atlas.pages.map((p, i) => (p.group !== group || this.pages[i] ? null
       : this.image(p.file).then((img) => { this.pages[i] = img; }))));
+  },
+  // Every page of a group decoded (false for a group the atlas doesn't have).
+  groupReady(group) {
+    const own = this.atlas.pages.map((p, i) => i).filter((i) => this.atlas.pages[i].group === group);
+    return own.length > 0 && own.every((i) => this.pages[i]);
   },
 
   // Everything a match or scene with this rival needs: roster pages, arena, banners.
@@ -89,11 +95,12 @@ export const Assets = {
 
   forget(file) { this.images.delete(file); this.loading.delete(file); },
 
-  // Free decoded art the current scene doesn't use. keep: { teams: [team ids], arena }.
-  // Home and away art, the home rink, our signings' pages and the club colours stay.
+  // Free decoded art the current scene doesn't use. keep: { teams: [team ids], arena, gear,
+  // groups: [scene groups] }. Home and away art, the home rink, our signings' pages and the
+  // club colours stay.
   trim(keep = {}) {
     const a = this.atlas;
-    const groups = new Set(['home', 'away', ...(PALETTES.homekit.groups || [])]);
+    const groups = new Set(['home', 'away', ...(PALETTES.homekit.groups || []), ...(keep.groups || [])]);
     for (const id of keep.teams || []) { const t = TEAMS[id]; if (t && t.art) groups.add('rival_' + t.art); }
     if (keep.gear) groups.add('gearmask');
     const released = new Set();
@@ -233,6 +240,31 @@ export const Assets = {
     const [pi, fx, fy, fw, fh] = f;
     const k = size / Math.max(fw, fh);
     ctx.drawImage((pages || this.pages)[pi], fx, fy, fw, fh, cx - (fw * k) / 2, cy - (fh * k) / 2, fw * k, fh * k);
+  },
+
+  // Animation frames for <img> tags: each drawn at the same scale with its pivot at the same
+  // spot, so swapping images doesn't jump. Returns { urls, w, h, fx, fy } (fx, fy: where the
+  // pivot sits, as fractions of the image), or null until the pages are loaded.
+  spriteSet(ids, height, teamId = null) {
+    const key = `set|${ids.join(',')}|${height}|${teamId}`;
+    if (this.iconCache.has(key)) return this.iconCache.get(key);
+    const pages = this.pagesFor(teamId);
+    const fr = ids.map((id) => this.atlas.frames[id]);
+    if (!fr.length || fr.some((f) => !f || !pages[f[0]])) return null;
+    let l = 0, r = 0, t = 0, b = 0; // extents around the pivot, in source pixels
+    for (const [, , , fw, fh, px, py, s] of fr) { l = Math.max(l, px / s); r = Math.max(r, (fw - px) / s); t = Math.max(t, py / s); b = Math.max(b, (fh - py) / s); }
+    const k = height / (t + b), w = Math.ceil((l + r) * k);
+    const urls = fr.map(([pi, fx, fy, fw, fh, px, py, s]) => {
+      const c = document.createElement('canvas');
+      c.width = w; c.height = height;
+      const ctx = c.getContext('2d');
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(pages[pi], fx, fy, fw, fh, (l - px / s) * k, (t - py / s) * k, (fw / s) * k, (fh / s) * k);
+      return c.toDataURL('image/png');
+    });
+    const set = { urls, w, h: height, fx: l / (l + r), fy: t / (t + b) };
+    this.iconCache.set(key, set);
+    return set;
   },
 
   // Data URL of a frame fitted in a square, for <img> tags in menus.

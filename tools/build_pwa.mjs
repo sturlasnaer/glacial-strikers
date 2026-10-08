@@ -1,5 +1,7 @@
 // Writes sw.js: a service worker that precaches every file the game needs, so an
-// installed copy plays offline. Re-run after changing any game file:
+// installed copy plays offline. Art in assets/gfx is included only when the atlas or the
+// code names it, so leftovers from older builds aren't shipped. Re-run after changing any
+// game file:
 //   node tools/build_pwa.mjs
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -14,6 +16,10 @@ const walk = (p) => {
   else if (!/\.DS_Store$/.test(p)) files.push(p);
 };
 include.forEach(walk);
+const named = readFileSync(join(root, 'assets/gfx/atlas.json'), 'utf8') + readdirSync(join(root, 'src')).map((f) => (f.endsWith('.js') ? readFileSync(join(root, 'src', f), 'utf8') : '')).join('');
+const unused = files.filter((f) => f.startsWith('assets/gfx/') && !f.endsWith('atlas.json') && !named.includes(f.slice('assets/'.length)));
+if (unused.length) console.log(`not shipped (nothing uses them): ${unused.join(', ')}`);
+files.splice(0, files.length, ...files.filter((f) => !unused.includes(f)));
 files.sort();
 const hash = createHash('sha256');
 for (const f of files) hash.update(f).update(readFileSync(join(root, f)));
