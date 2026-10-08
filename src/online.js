@@ -6,7 +6,7 @@ import { CLUB } from './data.js';
 import { t } from './i18n.js';
 
 // The leaderboard server (an AWS Lambda function URL). ?lb=<url> overrides it for testing.
-const DEFAULT_URL = '';
+const DEFAULT_URL = 'https://vivkdhbjjsajnazmoijsbim3gq0tjzox.lambda-url.eu-west-1.on.aws/';
 const query = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('lb') : null;
 export const LB_URL = query || DEFAULT_URL;
 
