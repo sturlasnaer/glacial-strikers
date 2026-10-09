@@ -37,14 +37,20 @@ export const formShift = (save, key) => Math.round(curve(ageOf(save, key)) - cur
 // stats per season after the first (four seasons at most), each rival goalie a point every
 // other season.
 export const leagueGrowth = (save) => Math.max(0, Math.min(4, (save.season || 1) - 1));
+// On top of that, the league keeps up with a club that has run away from it: set each season
+// from how far our line was ahead (see setLeagueEdge in progress.js), 0 to 3.
+export const leagueEdge = (save) => save.leagueEdge || 0;
 export function grown(save, stats) {
-  const g = leagueGrowth(save);
+  const g = leagueGrowth(save) + leagueEdge(save);
   if (!g) return stats;
   const out = { ...stats };
-  for (const k of [...STAT_KEYS].sort((a, b) => out[b] - out[a]).slice(0, 4)) out[k] = Math.min(12, out[k] + g);
+  for (const k of [...STAT_KEYS].sort((a, b) => out[b] - out[a]).slice(0, 4)) out[k] = Math.min(12 + leagueEdge(save), out[k] + g);
   return out;
 }
-export const goalieGrowth = (save) => Math.min(2, Math.floor(((save.season || 1) - 1) / 2));
+// Rival goalies: a point a season (three at most), and the league's goalie edge on top (see
+// setLeagueEdge), so a goalie we've built up doesn't leave every rival's behind.
+export const goalieGrowth = (save) => Math.min(3, Math.max(0, (save.season || 1) - 1)) + (save.goalieEdge || 0);
+export const GOALIE_CAP = 12;
 
 // A star's numbers now: the slot's numbers, their three best moved by their form.
 export function agedStats(save, teamId, kit, stats) {

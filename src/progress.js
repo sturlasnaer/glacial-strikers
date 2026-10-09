@@ -7,7 +7,8 @@ import {
 import { newLeague, migrateLeague } from './league.js';
 import { lookFor, maskFor, goalieArt, isPartsArt } from './modular.js';
 import { seasonStats } from './awards.js';
-import { rivalSub, setFills, agedStats, grown, goalieGrowth, leagueGrowth } from './slots.js';
+import { rivalSub, setFills, agedStats, grown, goalieGrowth, leagueGrowth, GOALIE_CAP } from './slots.js';
+import { leagueRivals } from './league.js';
 import { t } from './i18n.js';
 import { addNews } from './news.js';
 
@@ -237,6 +238,43 @@ export const homeKitGroups = (save) => {
   ])];
 };
 
+// The league keeps up: at the start of a season, after a season we won most of (prev: last
+// season's league), how far our line's numbers are ahead of the rival skaters' (average stat
+// total per skater). A lead of up to EDGE_FREE is ours to enjoy; past it, every EDGE_STEP more
+// puts the rivals a point up on their four best stats, up to 3. The goalies the same way, a
+// point on reflexes and positioning per two we're ahead past two. Returns the skater edge (and
+// puts it in the news when either grows).
+export const EDGE_FREE = 3, EDGE_STEP = 3;
+export function lastSeasonRate(L) {
+  let w = 0, n = 0;
+  for (const round of (L && L.results) || []) {
+    const g = round.find((r) => r.a === 'home' || r.b === 'home');
+    if (!g) continue;
+    n++;
+    if (g.a === 'home' ? g.ga > g.gb : g.gb > g.ga) w++;
+  }
+  return n ? w / n : 0;
+}
+export function setLeagueEdge(save, prevLeague = null) {
+  const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+  const ours = lineupIds(save).reduce((a, id) => a + sum(effectiveStats(id, save.roster[id])), 0) / 3;
+  const prev = save.leagueEdge || 0; // (last season's edge)
+  save.leagueEdge = 0;
+  const rivals = leagueRivals(save.league);
+  const theirs = rivals.reduce((a, id) => a + matchConfig(save, id, null).teams[1].skaters.reduce((b, k) => b + sum(k.stats), 0) / 3, 0) / Math.max(1, rivals.length);
+  save.leagueEdge = Math.max(0, Math.min(3, Math.floor((ours - theirs - EDGE_FREE) / EDGE_STEP) + 1));
+  if (ours - theirs <= EDGE_FREE) save.leagueEdge = 0;
+  // the goalies the same way: our starter's reflexes and positioning against the rivals' average
+  const gPrev = save.goalieEdge || 0;
+  save.goalieEdge = 0;
+  const g = goalieStats(save), gOurs = g.rfx + g.pos;
+  const gTheirs = rivals.reduce((a, id) => { const r = rivalGoalie(save, id).stats; return a + r.rfx + r.pos; }, 0) / Math.max(1, rivals.length);
+  save.goalieEdge = Math.max(0, Math.min(3, Math.floor((gOurs - gTheirs - 2) / 2)));
+  if (prevLeague && lastSeasonRate(prevLeague) < 0.6) { save.leagueEdge = 0; save.goalieEdge = 0; } // (no runaway last season: no catching up)
+  if (save.leagueEdge > prev || save.goalieEdge > gPrev) addNews(save, { k: 'edge', n: save.leagueEdge + save.goalieEdge });
+  return save.leagueEdge;
+}
+
 export function effectiveStats(id, r) {
   const base = member(id).base;
   const gm = gearMods(r);
@@ -268,8 +306,8 @@ export function homeGoalie(save) {
 export function rivalGoalie(save, teamId) {
   const t = TEAMS[teamId];
   const gg = goalieGrowth(save); // (the league gets better)
-  if (isSigned(save, teamId + '_g')) return { stats: { rfx: Math.max(3, t.goalie.rfx - 1) + gg, pos: Math.max(3, t.goalie.pos - 1) + gg }, name: t.subs.goalie || t.names.goalie, art: 'newcomer', style: 'hybrid', who: 'sub_goalie' }; // (the plain away goalie until the newcomer goalie, Batch AN)
-  return { stats: { rfx: t.goalie.rfx + gg, pos: t.goalie.pos + gg }, name: t.names.goalie, art: t.art || (t.goalieLook ? goalieArt(t.goalieLook) : 'newcomer'), mask: t.goalieLook || null, style: t.gstyle || 'hybrid' }; // (an expansion club's goalie: the newcomer goalie)
+  if (isSigned(save, teamId + '_g')) return { stats: { rfx: Math.min(GOALIE_CAP, Math.max(3, t.goalie.rfx - 1) + gg), pos: Math.min(GOALIE_CAP, Math.max(3, t.goalie.pos - 1) + gg) }, name: t.subs.goalie || t.names.goalie, art: 'newcomer', style: 'hybrid', who: 'sub_goalie' }; // (the plain away goalie until the newcomer goalie, Batch AN)
+  return { stats: { rfx: Math.min(GOALIE_CAP, t.goalie.rfx + gg), pos: Math.min(GOALIE_CAP, t.goalie.pos + gg) }, name: t.names.goalie, art: t.art || (t.goalieLook ? goalieArt(t.goalieLook) : 'newcomer'), mask: t.goalieLook || null, style: t.gstyle || 'hybrid' }; // (an expansion club's goalie: the newcomer goalie)
 }
 
 export function goalieStatus(save, key) {

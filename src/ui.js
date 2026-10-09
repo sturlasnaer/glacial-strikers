@@ -189,7 +189,7 @@ const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 // The league news icon for each kind of story (Batch AV).
-const NEWS_ICON = { rivalSign: 'sign', weSign: 'sign', weGoalie: 'sign', weAgent: 'sign', weLegend: 'sign', rivalDraft: 'draft', weDraft: 'draft', trade: 'trade', retire: 'retire', champion: 'cup', expansion: 'new_club' };
+const NEWS_ICON = { edge: 'new_club', rivalSign: 'sign', weSign: 'sign', weGoalie: 'sign', weAgent: 'sign', weLegend: 'sign', rivalDraft: 'draft', weDraft: 'draft', trade: 'trade', retire: 'retire', champion: 'cup', expansion: 'new_club' };
 // The locker room hub: stations in the painting, in % of the 16:9 image.
 const STATIONS = [
   { tab: 'team', label: 'Team', icon: 'equipment_items/hub/locker', rect: [19, 2, 47, 27], at: [42, 15], tip: 'Lockers: line-up, stats, gear and scouting' },
@@ -731,6 +731,7 @@ export class UI {
         case 'trade': return t('Trade: {gave} to the {team} for {name}.', { gave: `<b>${esc(n.gave || '')}</b>`, team: tn(n.team), name });
         case 'champion': return n.team === 'home' ? t('The {club} win the Frostline Cup!', { club: esc(CLUB.nick) }) : t('{team} win the Frostline Cup.', { team: tn(n.team) });
         case 'expansion': return t('The Glacier Owls and Thunder Moose join the Frostline.');
+        case 'edge': return t('The league has noticed the {club}: the rivals trained hard all summer.', { club: esc(CLUB.nick) });
         default: return '';
       }
     };

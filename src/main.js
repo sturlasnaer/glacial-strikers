@@ -39,7 +39,7 @@ import { offerDraft } from './draft.js';
 import { recordCareer } from './career.js';
 import {
   loadSave, newSave, writeSave, setSaveOff, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards,
-  lineupIds, homeKitGroups, allStarVote, allStarConfig,
+  lineupIds, homeKitGroups, allStarVote, allStarConfig, setLeagueEdge,
 } from './progress.js';
 import { t, setLang, getLang, defaultLang } from './i18n.js';
 
@@ -1059,9 +1059,10 @@ class App {
     const s = this.save;
     s.season++;
     s.stage = 0; s.beaten = []; s.champion = false;
-    const before = new Set(Object.keys((s.rivals || {})));
+    const before = new Set(Object.keys((s.rivals || {}))), last = s.league;
     s.league = newLeague(s.season);
     s.buffs = [];
+    setLeagueEdge(s, last); // (the league keeps up with a club that ran away with it)
     writeSave(s);
     // the league grows: Kip welcomes the new clubs (once)
     const fresh = s.league.teams.filter((id) => TEAMS[id] && TEAMS[id].expansion && !before.has(id));

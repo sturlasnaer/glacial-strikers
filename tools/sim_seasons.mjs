@@ -6,7 +6,7 @@
 // starts the next season. Prints a line per season.
 //   node tools/sim_seasons.mjs [seasons=4] [seeds=2]
 import { Match } from '../src/match.js';
-import { newSave, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, lineupIds, rosterIds, canRaise, effectiveStats, setLineup,
+import { setLeagueEdge, newSave, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, lineupIds, rosterIds, canRaise, effectiveStats, setLineup,
   recruitStatus, signRecruit, recruitPrice, goalieStatus, signGoalie, goalieStats, starterId, setStarter, joinLevel } from '../src/progress.js';
 import { newLeague, nextFixture, recordOurGame, recordClassic, recordAllStar, standings, strength, leagueRivals } from '../src/league.js';
 import { recordRealGame, computeAwards, AWARD_BY_ID } from '../src/awards.js';
@@ -118,9 +118,12 @@ function season(s, rnd, out) {
   const rivals = leagueRivals(L);
   out.push({ season: s.season, teams: L.teams.length, record: `${log.w}-${log.l}`, goals: `${log.gf}:${log.ga}`, place: order.indexOf('home') + 1, result: log.result || 'playoffs',
     coinsStart: coins0, earned: log.earned, spent: log.spent, coinsEnd: s.coins, levels: line.join('/'), signed: log.signed.join(', ') || '-', trades: log.trades,
-    sumUs: +ours.toFixed(1), sumThem: +theirs.toFixed(1), us: +strength('home', s).toFixed(2), rivals: +(rivals.reduce((a, id) => a + strength(id, s), 0) / rivals.length).toFixed(2), retired: retired.length });
+    sumUs: +ours.toFixed(1), sumThem: +theirs.toFixed(1), us: +strength('home', s).toFixed(2), rivals: +(rivals.reduce((a, id) => a + strength(id, s), 0) / rivals.length).toFixed(2), retired: retired.length, edge: s.leagueEdge || 0,
+    gUs: (() => { const g = goalieStats(s, starterId(s)); return g.rfx + g.pos; })(), gThem: +(rivals.reduce((a, id) => { const g = matchConfig(s, id, TOURNAMENT.stages.find((x) => x.team === id) || TOURNAMENT.stages[0]).teams[1].goalie.stats; return a + g.rfx + g.pos; }, 0) / rivals.length).toFixed(1) });
   s.season++;
+  const last = s.league;
   s.league = newLeague(s.season);
+  setLeagueEdge(s, last);
 }
 
 for (let seed = 1; seed <= SEEDS; seed++) {

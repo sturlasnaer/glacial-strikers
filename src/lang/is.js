@@ -1425,6 +1425,7 @@ export const IS = {
   "The hardest hitter in the Frostline. Ask anyone. Carefully.": "Harðasti tæklarinn í Frostline-deildinni. Spurðu hvern sem er. Varlega.",
   "The home All-Stars take it! What a show for the fans!": "Heimastjörnurnar vinna! Þvílík sýning fyrir áhorfendur!",
   "The League All-Stars win it! Nobody leaves disappointed tonight.": "Stjörnulið deildarinnar vinnur! Enginn fer vonsvikinn heim í kvöld.",
+  "The league has noticed the {club}: the rivals trained hard all summer.": "Deildin hefur tekið eftir {club}: hin liðin æfðu stíft í allt sumar.",
   "the league leaders": "efsta lið deildarinnar",
   "The league's best, all on one bench.": "Þau bestu í deildinni, öll á sama bekk.",
   "The morning paper: \"{club} ROLL {gf}–{ga}.\" Volta has already framed it.": "Blöðin í morgun: „{club} MEÐ STÓRSIGUR, {gf}–{ga}.“ Volta er þegar búin að ramma fyrirsögnina inn.",

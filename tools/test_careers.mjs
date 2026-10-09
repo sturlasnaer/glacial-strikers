@@ -2,7 +2,8 @@
 // old decline, the oldest retire after the awards and Draft Day fills their places; and every
 // signing, pick, trade, retirement and champion lands in Around the Frostline.
 //   node tools/test_careers.mjs
-import { newSave, matchConfig, recruitStatus, signRecruit, addRecruit, recruitPrice, rivalGoalie, joinLevel, expToNext } from '../src/progress.js';
+import { newSave, matchConfig, recruitStatus, signRecruit, addRecruit, recruitPrice, rivalGoalie, joinLevel, expToNext, setLeagueEdge, lineupIds } from '../src/progress.js';
+import { newLeague } from '../src/league.js';
 import { startAge, ageOf, formShift, agedStats, retireRivals, vacated, rivalSub, RETIRE_AT, leagueGrowth, grown, goalieGrowth } from '../src/slots.js';
 import { holes, rivalDraft } from '../src/moves.js';
 import { makeDraft, draftPick, otherPicks } from '../src/draft.js';
@@ -42,13 +43,21 @@ check('a team with young stars gets stronger', strength('lynx', s) > strength('l
   check('four best stats up a point a season', leagueGrowth(g) === 2 && sum(grown(g, base)) === sum(base) + 8);
   g.season = 9;
   check('...four seasons at most', leagueGrowth(g) === 4 && Object.values(grown(g, base)).every((v) => v <= 12));
-  check('goalies every other season', goalieGrowth(g) === 2 && rivalGoalie(g, 'royals').stats.rfx === 10);
+  check('goalies a point a season, three at most, capped', goalieGrowth(g) === 3 && rivalGoalie(g, 'royals').stats.rfx === 11 && rivalGoalie(g, 'royals').stats.rfx <= 12);
   g.season = 3;
   check('stars cost more later', recruitPrice(g, 'lynx_c') > RECRUITS.lynx_c.price && recruitPrice(newSave(), 'lynx_c') === RECRUITS.lynx_c.price);
   g.rivals = { lynx: { wins: 1 } }; g.coins = 9999;
   signRecruit(g, 'lynx_c');
   check('...and arrive with what they\'ve grown', g.roster.lynx_c.points === joinLevel(g) - 1 + 4 * leagueGrowth(g), g.roster.lynx_c);
   check('the top levels take longer', expToNext(9) > expToNext(5) + 4 * 60 + 400);
+  // the league keeps up with a club that ran away with it
+  const e = newSave(); e.season = 2; e.league = newLeague(2);
+  for (const id of lineupIds(e)) { e.roster[id].level = 10; for (const k of Object.keys(e.roster[id].alloc)) e.roster[id].alloc[k] = 3; }
+  const won = { results: Array.from({ length: 8 }, () => [{ a: 'home', b: 'lynx', ga: 5, gb: 1 }]) };
+  const lost = { results: Array.from({ length: 8 }, (_, i) => [{ a: 'home', b: 'lynx', ga: i < 3 ? 5 : 1, gb: i < 3 ? 1 : 5 }]) };
+  const before = matchConfig(e, 'rams', TOURNAMENT.stages[0]).teams[1].skaters.reduce((a, k) => a + sum(k.stats), 0);
+  check('after a runaway season, the rivals catch up some', setLeagueEdge(e, won) > 0 && matchConfig(e, 'rams', TOURNAMENT.stages[0]).teams[1].skaters.reduce((a, k) => a + sum(k.stats), 0) > before && latestNews(e).some((x) => x.k === 'edge'), e.leagueEdge);
+  check('...but not after a season we didn\'t win most of', setLeagueEdge(e, lost) === 0 && !e.goalieEdge);
 }
 
 // retirement after the awards
