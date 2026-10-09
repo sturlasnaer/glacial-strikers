@@ -176,10 +176,22 @@ class App {
     audio.jingle('achievement');
   }
 
+  // Toasts queue: in the hub and in matches they stack (a moment apart); over the results they
+  // come one at a time, small, in the top-left corner, clear of the score and the box score.
   toast(img, small, title, line) {
-    if (document.querySelector('.whatsnew')) { setTimeout(() => this.toast(img, small, title, line), 500); return; } // (after the what's-new card, not over it)
+    (this.toastQ ||= []).push([img, small, title, line]);
+    if (!this.toastBusy) { this.toastBusy = true; setTimeout(() => this.nextToast(), 0); } // (after the screen it's for is drawn)
+  }
+
+  nextToast() {
+    const q = this.toastQ;
+    if (!q.length) { this.toastBusy = false; return; }
+    if (document.querySelector('.whatsnew')) { setTimeout(() => this.nextToast(), 500); return; } // (after the what's-new card, not over it)
+    const [img, small, title, line] = q.shift();
     let box = document.getElementById('toasts');
     if (!box) { box = document.createElement('div'); box.id = 'toasts'; document.getElementById('app').appendChild(box); }
+    const side = !!document.querySelector('.results');
+    box.classList.toggle('side', side);
     const el = document.createElement('div');
     el.className = 'toast';
     el.innerHTML = `<img src="${img}" alt=""><div><small></small><b></b><span></span></div>`;
@@ -187,7 +199,9 @@ class App {
     el.querySelector('b').textContent = title;
     el.querySelector('span').textContent = line;
     box.appendChild(el);
-    setTimeout(() => el.remove(), 4200);
+    const life = side ? 2600 : 4200;
+    setTimeout(() => el.remove(), life);
+    setTimeout(() => this.nextToast(), side ? life + 150 : 350);
   }
 
   // Apply comfort / accessibility settings everywhere they matter.
