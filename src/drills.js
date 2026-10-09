@@ -522,7 +522,8 @@ class ShootoutDrill extends DrillBase {
     for (const g of m.goalies) {
       g.x = g.goalSide * (GOAL_X - 28); g.y = 0; g.vy = 0; g.setState('ready'); g.holdT = 0; g.react = null; g.track = null; g.slowT = 0;
       g.disabled = us ? g.goalSide !== 1 : g.goalSide !== -1;
-      g.manual = !us && g.goalSide === -1 ? { ty: 0, butterfly: 0, dive: false } : null;
+      // the player's goalie on their turn: goal mode's controls and its help (Settings › Aim assist)
+      g.manual = null; g.human = !us && g.goalSide === -1; g.prevHuman = { a: true, b: true, skill: true, ult: true };
       if (g.disabled) { g.x = g.goalSide * 900; g.y = 900; }
     }
     p.inNet = null; p.shot = null; p.pass = null;
@@ -541,12 +542,7 @@ class ShootoutDrill extends DrillBase {
     this.attT += dt;
     // the player plays goalie on their turn
     const g = m.goalieAt(-1);
-    if (this.turn === 'them' && g.manual) {
-      const inp = m.humanInput || {};
-      g.manual.ty = clamp(g.manual.ty + (inp.my || 0) * 260 * dt, -MOUTH - 6, MOUTH + 6);
-      if (inp.a && !this.prevA) g.manual.butterfly = 0.45;
-      if (inp.b && !this.prevB && g.state !== 'dive') g.manual.dive = Math.sign(inp.my || (p.y - g.y) || 1);
-      this.prevA = !!inp.a; this.prevB = !!inp.b;
+    if (this.turn === 'them') {
       // their shooter is AI: make sure it shoots before the time is up
       const s = this.active;
       if (s.hasPuck && this.attT > 4.5 && !s.prevIn.shoot) { s.in.shoot = true; }
