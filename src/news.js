@@ -2,7 +2,7 @@
 // Kept as small records (the words are made when they're shown, in the player's language):
 //   { k: kind, s: season, r: round, team?, name?, kit?, ... }
 // Kinds: 'rivalSign', 'rivalDraft', 'retire', 'weSign', 'weAgent', 'weGoalie', 'weLegend',
-// 'weDraft', 'trade', 'champion', 'expansion'.
+// 'weDraft', 'trade', 'champion', 'expansion', 'edge', 'hatTrick' (ours, in a league game).
 export const NEWS_KEEP = 80;
 
 export function addNews(save, item) {

@@ -963,6 +963,7 @@ class App {
       Assets.ensureKit(homeKitGroups(s));
     } else if (!c.exhibition && s.league) {
       recordRealGame(s, s.league, summary, c.teamId);
+      for (const k of summary.skaters) if (k.team === 0 && k.goals >= 3) addNews(s, { k: 'hatTrick', name: k.name, team: c.teamId, n: k.goals }); // (the league notices)
       leagueOut = recordOurGame(s.league, s, summary.score[0], summary.score[1]);
       leagueOut.kind = c.fixture ? c.fixture.kind : 'regular';
       leagueOut.won = rewards.won;
