@@ -4,7 +4,7 @@ import { Assets } from './assets.js';
 import {
   CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
-  RECRUITS, ROOKIES, setRookies, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, RIVAL_IDS, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, CLUB_CRESTS, clubCrestId, MASK_NAMES, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
+  RECRUITS, ROOKIES, setRookies, setFreeGoalies, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, RIVAL_IDS, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, CLUB_CRESTS, clubCrestId, MASK_NAMES, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
 import { standings, classicOpponent, CLASSIC_AFTER, ALLSTAR_AFTER, leagueRivals } from './league.js';
 import { BUFF_TEXT } from './lockerroom.js';
@@ -1266,7 +1266,7 @@ export class UI {
       const pips = (n) => Array.from({ length: 12 }, (_, i) => `<i class="${i < n ? 'b' : ''}"></i>`).join('');
       return `<div class="card ${on ? '' : 'benched'}">
         <div class="card-head"><img src="${portrait(gid, 0, null, 152)}" alt="">
-          <div style="min-width:0"><h3>${esc(info.name)}</h3><div class="sub">${t('Goaltender (AI)')}${info.recruit ? ` · ${t('signed')}` : ''}</div><div class="lvl">${t('LV {n}', { n: g.level })}</div></div></div>
+          <div style="min-width:0"><h3>${esc(info.name)}${s.freeGoalies && s.freeGoalies[gid] ? ` <button class="btn tiny ghost rename-btn" data-rename="${gid}">${t('Rename')}</button>` : ''}</h3><div class="sub">${t('Goaltender (AI)')}${info.recruit ? ` · ${t('signed')}` : ''}</div><div class="lvl">${t('LV {n}', { n: g.level })}</div></div></div>
         ${keepers.length < 2 ? '' : on ? `<div class="dress on">${t('In goal')}</div>` : `<button class="btn small dress" data-start="${gid}">${t('Start in goal (for {name})', { name: esc(goalieInfo(starting).name) })}</button>`}
         <div class="xpbar"><i style="width:${gpct}%"></i></div>
         <div class="stats">
@@ -1856,10 +1856,10 @@ export class UI {
       <div class="row" style="justify-content:flex-end"><button class="btn gold" data-close>${t('Got it')}</button></div>`, null, true, done);
   }
 
-  // A drafted rookie or a signed free agent is ours to name (the cast, the stars we signed and the
-  // legends keep theirs). The name is what the HUD, the commentary and the crowd use from now on.
+  // A drafted rookie or a signed free agent (a goalie too) is ours to name (the cast, the stars
+  // we signed and the legends keep theirs). The name is what the HUD, the commentary and the crowd use from now on.
   renameModal(id) {
-    const s = this.app.save, k = s.rookies && s.rookies[id];
+    const s = this.app.save, goalie = !!(s.freeGoalies && s.freeGoalies[id]), k = goalie ? s.freeGoalies[id] : s.rookies && s.rookies[id];
     if (!k) return;
     this.modal(`<h2>${t('Rename {name}', { name: esc(k.name) })}</h2>
       <p class="muted" style="margin-top:0">${t('A name of their own, for the scoresheet and the commentators.')}</p>
@@ -1871,7 +1871,7 @@ export class UI {
         const name = input.value.replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 14);
         if (!name) { audio.sfx('deny'); return; }
         k.name = name;
-        setRookies(s.rookies);
+        if (goalie) setFreeGoalies(s.freeGoalies); else setRookies(s.rookies);
         writeSave(s);
         audio.sfx('confirm');
         close();
