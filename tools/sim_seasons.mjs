@@ -16,6 +16,7 @@ import { refreshAgents, agentState, signAgent } from '../src/agents.js';
 import { retireRivals } from '../src/slots.js';
 import { makeDraft, draftPick } from '../src/draft.js';
 import { recordCareer } from '../src/career.js';
+import { updateSeasonGoals, goalStates, seasonGoals } from '../src/goals.js';
 import { RECRUITS, GOALIE_RECRUITS, CHARACTERS, GEAR, member, setRookies, setFreeGoalies, TOURNAMENT } from '../src/data.js';
 import { DRILL_REWARDS } from '../src/drills.js';
 import { useModular } from '../src/modular.js';
@@ -73,7 +74,7 @@ function season(s, rnd, out) {
   for (let guard = 0; guard < 30; guard++) {
     const f = nextFixture(L);
     if (!f) break;
-    if (f.kind === 'allstar') { recordAllStar(L, { skipped: true }); continue; }
+    if (f.kind === 'allstar') { recordAllStar(L, { skipped: true }); seasonGoals(s); continue; } // (skipped: its season goal is swapped)
     const before = s.coins;
     const sm = play(s, f.opponent, f.stage, rnd);
     const won = sm.winner === 0;
@@ -96,6 +97,8 @@ function season(s, rnd, out) {
       const offer = rivalOffer(s, rnd);
       if (offer && sum(RECRUITS[offer.get].base) > sum(effectiveStats(offer.give, s.roster[offer.give])) && s.coins >= offer.coins) { if (acceptOffer(s, offer)) { log.trades++; setLineup(s, offer.get); } }
     }
+    // Coach Brekka's season goals, paid as they're met (as main.js does after every counted game)
+    updateSeasonGoals(s, { kind: f.kind, won, summary: sm, opp: f.opponent });
     // two training sessions (silver)
     const low = lineupIds(s).sort((a, b) => s.roster[a].level - s.roster[b].level)[0];
     s.coins += 2 * DRILL_REWARDS.coins[2]; applyExp(s, low, 2 * DRILL_REWARDS.exp[2]);
@@ -117,6 +120,7 @@ function season(s, rnd, out) {
   const theirs = leagueRivals(L).reduce((a, id) => a + matchConfig(s, id, TOURNAMENT.stages.find((x) => x.team === id) || TOURNAMENT.stages[0]).teams[1].skaters.reduce((b, k) => b + sum(k.stats), 0) / 3, 0) / leagueRivals(L).length;
   const rivals = leagueRivals(L);
   out.push({ season: s.season, teams: L.teams.length, record: `${log.w}-${log.l}`, goals: `${log.gf}:${log.ga}`, place: order.indexOf('home') + 1, result: log.result || 'playoffs',
+    goalsMet: (() => { const g = goalStates(s); return `${g.filter((x) => x.done).length}/${g.length}`; })(),
     coinsStart: coins0, earned: log.earned, spent: log.spent, coinsEnd: s.coins, levels: line.join('/'), signed: log.signed.join(', ') || '-', trades: log.trades,
     sumUs: +ours.toFixed(1), sumThem: +theirs.toFixed(1), us: +strength('home', s).toFixed(2), rivals: +(rivals.reduce((a, id) => a + strength(id, s), 0) / rivals.length).toFixed(2), retired: retired.length, edge: s.leagueEdge || 0,
     gUs: (() => { const g = goalieStats(s, starterId(s)); return g.rfx + g.pos; })(), gThem: +(rivals.reduce((a, id) => { const g = matchConfig(s, id, TOURNAMENT.stages.find((x) => x.team === id) || TOURNAMENT.stages[0]).teams[1].goalie.stats; return a + g.rfx + g.pos; }, 0) / rivals.length).toFixed(1) });
