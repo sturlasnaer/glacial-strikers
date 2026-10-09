@@ -726,6 +726,9 @@ atlas = merge_motion(atlas, OUT, BD_BE)
 BF_BG = sys.argv[22] if len(sys.argv) > 22 else '../assets/Puckbound-Batches-BF-BG'
 from merge_polish import merge_polish
 atlas = merge_polish(atlas, OUT, BF_BG)
+# where the blade meets the ice in the ordinary skating frames (from the gear masks)
+from blade_points import blade_points
+atlas = blade_points(atlas, OUT)
 with open(os.path.join(OUT, 'atlas.json'), 'w') as fh:
     json.dump(atlas, fh, separators=(',', ':'))
 

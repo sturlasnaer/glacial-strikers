@@ -1036,10 +1036,12 @@ export class Renderer {
     return null;
   }
 
-  // Where the drawn puck sits on a stick-handling or crossover pose's blade (screen space), or
-  // null for frames without one. Only the drawing moves: the puck itself stays where it is.
+  // Where the drawn puck sits on the frame's blade (screen space): measured for the
+  // stick-handling and crossover poses, read from the gear masks for the ordinary skating
+  // frames (tools/blade_points.py); null for others. Only the drawing moves: the puck itself
+  // stays where it is.
   puckSpritePoint(s, match) {
-    const fr = this.skaterFrame(s, match), blade = Assets.atlas.motion_blades?.[fr.id];
+    const fr = this.skaterFrame(s, match), A = Assets.atlas, blade = A.motion_blades?.[fr.id] || A.blade_points?.[fr.id];
     const f = blade && Assets.frame(fr.id);
     if (!f) return null;
     const p = toScreen(s.x, s.y);

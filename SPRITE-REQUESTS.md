@@ -9,7 +9,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Next batches:**
 1. **BH**: stick handling for the rest of the league (the rival players, the expansion captains and the legends), like BD.
 2. **BI**: crossovers for the same players, like BE.
-3. **BJ**: blade contact points for the skating frames everyone already has (data only, no new drawing).
+3. **BJ**: the stick in the gear masks of 27 early skating frames (masks only, no new art).
 
 ## Format notes
 
@@ -97,6 +97,34 @@ The BE crossovers for the same 19 players: two frames (step over, push out) for 
 
 ---
 
-## Batch BJ: blade points for the existing skating frames (data only)
+## Batch BJ: the stick in 27 early gear masks (masks only)
 
-With BD/BE the game draws the carried puck exactly where the pose's `blade_pixels` say. In every other frame it still draws the puck where the physics carries it, which misses the painted blade by up to a puck's width or two (most on the diagonals and facing north). No new art is needed: please measure and deliver **`blade_pixels` (x, y in the frame's own pixels, the centre of the blade's contact with the ice) for every existing skating frame** that shows a stick on the ice: `idle`, `skate_a`, `skate_b`, `glide` in all eight directions, the side `stride` frames (four, plus `stop` and `glide`, and the `stride_west` sets), and `shot_windup` where the blade is down. For every character with skating sets: our cast, the founding rivals, the newcomers, the parts bodies, the legends and the expansion captains. As a JSON file keyed by the atlas frame id (`{ "<frame id>": { "x": …, "y": … } }`), measured in the **packed** frame as it is in `assets/gfx/atlas.json` now (pixels from the top-left of that frame's rectangle on its page, so no rescaling is needed on our side), with a preview sheet marking each point so we can check it.
+The game now draws the carried puck on the painted blade in every skating frame. It finds the blade from each frame's gear mask (the stick is the red channel; its low end by the skates is the blade), which lands within a few pixels of BD/BE's measured points. These 27 frames, mostly from the first art, have gear masks with **no stick in them** (only skates), or sit in a set where one does, so their sets keep the old puck position, and a special stick can't be recoloured in them either. Please redraw just their gear masks with the stick in red (Batch M format, same size and pivot as the art frame, untrimmed is fine):
+
+- `ak_newcomer_d_diagonals_northwest/away/northwest/idle`
+- `ak_newcomer_d_diagonals_northwest/away/northwest/skate_a`
+- `ak_newcomer_d_diagonals_northwest/away/northwest/skate_b`
+- `frost_captain/home_east/idle`
+- `frost_captain/home_east/skate_a`
+- `frost_captain/home_east/skate_b`
+- `frost_captain/home_north/idle`
+- `frost_captain/home_north/skate_a`
+- `frost_captain/home_north/skate_b`
+- `frost_captain/home_south/idle`
+- `frost_captain/home_south/skate_a`
+- `frost_captain/home_south/skate_b`
+- `frost_captain_variant/away_south/idle`
+- `frost_captain_variant/away_south/skate_a`
+- `frost_captain_variant/away_south/skate_b`
+- `stone_defender/home_north/idle`
+- `stone_defender/home_north/skate_a`
+- `stone_defender/home_north/skate_b`
+- `thunder_winger/away_north/idle`
+- `thunder_winger/away_north/skate_a`
+- `thunder_winger/away_north/skate_b`
+- `thunder_winger/home_east/idle`
+- `thunder_winger/home_east/skate_a`
+- `thunder_winger/home_east/skate_b`
+- `thunder_winger/home_north/idle`
+- `thunder_winger/home_north/skate_a`
+- `thunder_winger/home_north/skate_b`
