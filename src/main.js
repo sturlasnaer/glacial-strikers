@@ -840,6 +840,10 @@ class App {
       setTimeout(() => { if (this.match === m) audio.sfx('whistle', { vol: 0.5 }); }, 2600);
     });
     m.on('faceoff', () => audio.sfx('whistle', { vol: 0.55 }));
+    m.on('faceoff_early', (e) => {
+      audio.sfx('deny', { vol: 0.5 });
+      if (!this.attract && e.s.team === 0 && firstTime(this.save, 'faceoff')) this.hud.hint(this.isTouch ? t('Wait for the puck to touch the ice, then tap SHOOT or PASS to win the draw.') : t('Wait for the puck to touch the ice, then press J or K to win the draw.'), 5);
+    });
     m.on('drop', () => audio.sfx('drop'));
     m.on('stop', (e) => audio.sfx('stop', at(e.s.x, e.s.y, 0.8)));
     m.on('splash', (e) => {

@@ -154,6 +154,7 @@ export class Match {
     this.dropped = false;
     this.washedOut = false;
     this.faceoffRt = [0, 1].map((t) => this.ai[t].faceoffReaction());
+    this.faceoffJump = [false, false]; // (a human who went before the puck was down)
     if (this.humans.length) {
       for (const s of this.skaters) s.controlled = this.humans.includes(s.team) && s === this.faceoffCenter(s.team);
     }
@@ -273,20 +274,25 @@ export class Match {
     if (this.stateT > DROP - 0.35) {
       p.z = Math.max(0, 46 * (1 - (this.stateT - (DROP - 0.35)) / 0.35));
     }
+    const centers = [this.faceoffCenter(0), this.faceoffCenter(1)].filter(Boolean);
+    const human = (c) => c.controlled && this.humans.includes(c.team);
+    // jumping the drop: a press while the puck is still in the air holds you back a moment
+    // after it lands, so the draw is timing, not mashing
+    if (!this.dropped && this.stateT > DROP - 0.35) {
+      for (const c of centers) if (human(c) && !this.faceoffJump[c.team] && (c.pressed('a') || c.pressed('b'))) { this.faceoffJump[c.team] = true; this.emit('faceoff_early', { s: c }); }
+    }
     if (!this.dropped && this.stateT >= DROP) { this.dropped = true; p.z = 0; this.emit('drop', {}); }
     if (this.dropped) {
       const t = this.stateT - DROP;
-      const centers = [this.faceoffCenter(0), this.faceoffCenter(1)].filter(Boolean);
       let winner = null;
       for (const c of centers) {
-        const human = c.controlled && this.humans.includes(c.team);
-        if (human) {
-          if (c.pressed('a') || c.pressed('b')) winner = winner || c;
+        if (human(c)) {
+          if ((c.pressed('a') || c.pressed('b')) && (!this.faceoffJump[c.team] || t > 0.3)) winner = winner || c;
         } else if (t >= this.faceoffRt[c.team]) winner = winner || c;
       }
       if (winner) {
         this.takePossession(winner, 'faceoff');
-        this.emit('faceoff_win', { s: winner });
+        this.emit('faceoff_win', { s: winner, clean: human(winner) && t < 0.12 }); // (right on the drop)
         this.state = 'play'; this.stateT = 0;
       } else if (t > 0.9) { this.state = 'play'; this.stateT = 0; }
     }

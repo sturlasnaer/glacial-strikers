@@ -231,7 +231,8 @@ export class FX {
       this.flashScreen('#fff7c2', 0.1);
       this.text(to.x, to.y - 96, t('CHARGED!'), '#ffe066', 1, 18);
     });
-    on('faceoff_win', ({ s }) => this.text(s.x, s.y - 92, t('WON IT!'), '#ffffff', 0.7, 14));
+    on('faceoff_win', ({ s, clean }) => this.text(s.x, s.y - 92, clean ? t('CLEAN DRAW!') : t('WON IT!'), clean ? '#ffe066' : '#ffffff', 0.7, 14));
+    on('faceoff_early', ({ s }) => this.text(s.x, s.y - 92, t('TOO EARLY!'), '#ff8a7a', 0.6, 14));
     on('combo', ({ s, key }) => {
       const p = match.puck;
       const c = COMBOS[key];
