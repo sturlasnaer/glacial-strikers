@@ -515,7 +515,9 @@ export class Match {
       }
       // chasing a faster carrier and reaching round them from behind: now and then the stick
       // hooks them (the same draw, from the other end, so it costs no extra randomness)
-      if (r > 1 - HOOK_RATE * dt && shielded && !(c.dekeT > 0) && this.hooking(d, c)) return;
+      // (half as often for the player's own skater: the stick's out on its own, not by choice)
+      const hookRate = HOOK_RATE * (d.controlled && this.humans.includes(d.team) ? 0.5 : 1);
+      if (r > 1 - hookRate * dt && shielded && !(c.dekeT > 0) && this.hooking(d, c)) return;
     }
   }
 
