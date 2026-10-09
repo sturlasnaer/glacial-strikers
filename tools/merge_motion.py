@@ -7,11 +7,11 @@ from PIL import Image
 # originals, the three bodies the parts players are built on and the three newcomers. Adapted
 # from the pack's integration/compile_motion.py: each frame is sized so its owner's south idle
 # stands as tall as it does now (the sheets draw that idle 200 pixels tall), drawn at the same
-# scale, and appended on pages of its own; its gear mask goes with the masks for its art (the
-# parts' masks load with the parts). Every motion section carries its own hand map, as each
+# scale, and appended on pages of its own, in the page groups of the character's art and masks
+# (so the parts' masks load with the parts, a rival's frames with their club). Every motion section carries its own hand map, as each
 # pose is drawn with that character's own stick hand.
 PAGE, PAD = 2048, 2
-LOSSLESS = {'parts', 'parts_masks', 'newcomers', 'gearmask', 'newcomer_gearmask'}
+LOSSLESS = {'parts', 'parts_masks', 'newcomers', 'gearmask', 'newcomer_gearmask', 'legends_gearmask'}
 SECTIONS = ('stickhandling', 'crossover')
 
 
@@ -46,18 +46,18 @@ def merge_motion(atlas, out, root):
             mask = meta['category'] == 'data_mask'
             for fid in meta['frame_ids']:
                 f = S['frames'][fid]
-                key, kit = f['key'], f['kit']
+                key = f['key']
+                kit = f.get('kit') if f.get('kit') in atlas['skaters'][key] else 'home'  # (a rival's one drawing serves both kits)
                 idle = atlas['skaters'][key][kit]['south']['frames']['idle']
                 k = height(idle) / 200
                 r = f['frame']
                 q = sheet.crop((r['x'], r['y'], r['x'] + r['w'], r['y'] + r['h']))
                 size = (max(1, round(q.width * k)), max(1, round(q.height * k)))
                 sx, sy = size[0] / q.width, size[1] / q.height
-                newcomer = key.startswith('newcomer')
-                if mask:
-                    group = 'parts_masks' if f['parts'] else 'newcomer_gearmask' if newcomer else 'gearmask'
-                else:
-                    group = 'parts' if f['parts'] else 'newcomers' if newcomer else 'home'
+                # on pages with the character's own art and masks (ours, the parts', the newcomers',
+                # a rival club's, the legends'), so they load and recolour with them
+                art_group = pages[frames[idle][0]]['group']
+                group = (pages[frames['gm:' + idle][0]]['group'] if 'gm:' + idle in frames else 'gearmask') if mask else art_group
                 p = f['pivot_pixels']
                 items.setdefault(group, []).append({'id': fid, 'img': q.resize(size, Image.Resampling.NEAREST),
                                                     'pivot': (p['x'] * sx, p['y'] * sy), 'scale': frames[idle][7]})
@@ -68,8 +68,11 @@ def merge_motion(atlas, out, root):
                     if an:
                         anchors[fid] = {**an, 'x': an['x'] * sx, 'y': an['y'] * sy}
         for key, m in S['skater_motion_additions'].items():
-            # the parts and the newcomers are drawn once and recoloured for either side
-            for kit in ('home', 'away') if m['parts'] or key.startswith('newcomer') else (m['kit'],):
+            # drawn once and recoloured for either side (the parts, the newcomers, the rivals:
+            # any character whose two kits share their frames) or for the one kit it's drawn in
+            sets = atlas['skaters'][key]
+            shared = all(k in sets for k in ('home', 'away')) and sets['home']['south']['frames']['idle'] == sets['away']['south']['frames']['idle']
+            for kit in ('home', 'away') if m['parts'] or key.startswith('newcomer') or shared else (m.get('kit', 'home'),):
                 for sec in SECTIONS:
                     if m[sec]:
                         atlas['skaters'][key][kit][sec] = {**copy.deepcopy(m[sec]), 'hands': {dr: m['hand'] for dr in m[sec]}}
