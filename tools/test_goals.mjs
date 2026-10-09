@@ -91,5 +91,14 @@ function season(s, win, opts = {}) {
   check('a drafted rookie\'s goal', goalStates(s).find((g) => g.id === 'rookie').done);
 }
 
+// a skipped All-Star Game can't be won: its goal is swapped for another
+{
+  const s = newSave(); s.league = newLeague(1);
+  s.league.goals = { season: 1, ids: ['playoffs', 'goals', 'allstar'], done: [], c: { streak: 0, best: 0, ppg: 0 } };
+  recordAllStar(s.league, { skipped: true });
+  const ids = seasonGoals(s).ids;
+  check('a skipped All-Star Game swaps its goal', !ids.includes('allstar') && ids.length === 3 && new Set(ids).size === 3, ids);
+}
+
 console.log(`season goals: ${pass} passed, ${fail} failed`);
 if (fail) process.exitCode = 1;

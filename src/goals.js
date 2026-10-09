@@ -43,7 +43,12 @@ export const SEASON_GOALS = {
 export function seasonGoals(save) {
   const L = save.league;
   if (!L) return null;
-  if (L.goals && L.goals.season === L.season) return L.goals;
+  if (L.goals && L.goals.season === L.season) {
+    // an All-Star Game skipped (too few stars to vote in) can't be won: another goal instead
+    const G = L.goals, i = G.ids.indexOf('allstar');
+    if (i >= 0 && L.allstar && L.allstar.skipped && !G.done.includes('allstar')) G.ids[i] = !L.classic && !G.ids.includes('classic') ? 'classic' : ['hattrick', 'shutout', 'powerplay', 'streak'].find((k) => !G.ids.includes(k));
+    return G;
+  }
   const rng = makeRng(((L.seedRng || 1) * 31 + 7) >>> 0);
   const pick = (ids) => ids[Math.floor(rng() * ids.length)];
   const table = L.season <= 1 ? 'playoffs' : pick(L.season >= 3 ? ['top2', 'final', 'cup'] : ['top2', 'final', 'final']);
