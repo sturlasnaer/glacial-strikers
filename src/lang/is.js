@@ -408,6 +408,7 @@ export const IS = {
   "chants, commentary and dialogue": "söngvar, lýsingar og samtöl",
   "CHARGED!": "HLAÐIÐ!",
   "Charging": "Ásókn",
+  "Chasing a game late? Pause and change the game plan: Run-and-gun throws more at the net. The pause menu says what beats their plan.": "Undir seint í leik? Gerðu hlé og breyttu leikáætluninni: Allt í sókn sendir meira á markið. Hléið segir hvað vinnur áætlun þeirra.",
   "CHECK": "TÆKLA",
   "Checking": "Tæklingar",
   "Checks hit 12% harder, and hits move you 12% less.": "Tæklingar eru 12% fastari og högg hreyfa þig 12% minna.",
