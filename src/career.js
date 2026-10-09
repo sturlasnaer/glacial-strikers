@@ -31,6 +31,15 @@ export function careerOf(save) {
   return c;
 }
 
+// The three stars of a match, best first: from either team, goals counting most, a goalie with a
+// big night among them, and the winners ahead on a tie. Goalies come as { goalie, team, saves, ga }.
+export function threeStars(sm) {
+  const goalies = [0, 1].map((tm) => ({ goalie: true, team: tm, saves: sm.saves[tm], ga: sm.score[1 - tm] }));
+  const score = (k) => (k.goalie ? (k.saves >= 8 ? k.saves * 0.45 - k.ga * 1.2 + (k.ga === 0 ? 5 : 0) : -9)
+    : k.goals * 5 + (k.goals >= 3 ? 2 : 0) + k.assists * 2.5 + ((k.steals || 0) + (k.blocks || 0)) * 0.6 + (k.hits || 0) * 0.25) + (sm.winner === k.team ? 1 : 0);
+  return [...sm.skaters, ...goalies].map((k) => ({ k, v: score(k) })).sort((a, b) => b.v - a.v).slice(0, 3).map((x) => x.k);
+}
+
 // One full match from the summary (our side only).
 export function recordCareer(save, summary, won) {
   const c = careerOf(save);
@@ -49,6 +58,12 @@ export function recordCareer(save, summary, won) {
   for (const season of Object.keys(c.goalMap)) if (+season < save.season - 1) delete c.goalMap[season]; // (this season and last)
   const g = (c.goalies[summary.goalie || 'halla'] ||= GOALIE());
   g.gp++; if (won) g.w++;
+  // the three stars: how often each of ours was the first, second or third
+  threeStars(summary).forEach((k, i) => {
+    if (k.team !== 0) return;
+    const r = k.goalie ? g : save.roster[k.id] && c.skaters[k.id];
+    if (r) (r.stars ||= [0, 0, 0])[i]++;
+  });
   g.sa += summary.shots[1]; g.sv += summary.saves[0];
   if (summary.score[1] === 0) g.so++;
 }

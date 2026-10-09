@@ -1476,6 +1476,7 @@ export const IS = {
   "Standings": "Staðan",
   "Star": "Stjarna",
   "Stars": "Stjörnur",
+  "Stars of the game: {a} first, {b} second, {c} third": "Stjörnur leiksins: {a} sinnum fyrsta, {b} sinnum önnur, {c} sinnum þriðja",
   "Start": "Byrja",
   "Start {name}": "Láta {name} byrja",
   "Start a new season from the hub when you're ready.": "Byrjaðu nýtt tímabil í bækistöðinni þegar þú ert klár.",

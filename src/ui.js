@@ -19,7 +19,7 @@ import {
 import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave, resetsIn, groupsOf, createGroup, joinGroup, leaveGroup, inviteLink, MAX_GROUPS, fetchCup, fetchGhost, CHALLENGE_BOARDS, createChallenge, fetchChallenge, challengeLink } from './online.js';
 import { nextGuide, doneGuide, guideOff } from './guide.js';
 import { draftOpen, draftPick, skipDraft, otherPicks, POTENTIAL_GRADE, DRAFT_LINES } from './draft.js';
-import { careerOf, careerRows, careerGoalies } from './career.js';
+import { careerOf, careerRows, careerGoalies, threeStars } from './career.js';
 import { legendState, legendLeft, signLegend } from './legends.js';
 import { tradeable, tradeQuote, trade, TEAM_LIKES } from './trades.js';
 import { rivalSub, fillLook, vacated, ageOf, RETIRE_AT, leagueGrowth } from './slots.js';
@@ -887,7 +887,8 @@ export class UI {
     this.modal(`
       <div class="card-head" style="margin:0"><img src="${portrait(id, 0, null, 152, 'grin')}" alt="" style="width:76px;height:76px"><div>
         <h2 style="margin:0">${esc(m.name)}</h2><div class="sub">${esc(t(m.title))}</div>
-        <div>${t('{g} goals, {a} assists in {n} games', { g: r.g, a: r.a, n: r.gp })}</div></div></div>
+        <div>${t('{g} goals, {a} assists in {n} games', { g: r.g, a: r.a, n: r.gp })}</div>
+        ${r.stars && r.stars.some(Boolean) ? `<div class="muted" style="font-size:13px">${t('Stars of the game: {a} first, {b} second, {c} third', { a: r.stars[0], b: r.stars[1], c: r.stars[2] })}</div>` : ''}</div></div>
       ${seasons.length ? `<table class="car-table small"><thead><tr><th>${t('Season')}</th><th>${t('GP')}</th><th>${t('G')}</th><th>${t('A')}</th><th>${t('PTS')}</th></tr></thead>
         <tbody>${seasons.map(([n, x]) => `<tr><td>${n}</td><td>${x.gp}</td><td>${x.g}</td><td>${x.a}</td><td>${x.g + x.a}</td></tr>`).join('')}</tbody></table>` : `<p class="muted">${t('No games yet.')}</p>`}
       ${awards.length ? `<div class="label" style="margin:8px 0 4px">${t('Awards')}</div>${awards.map((w) => `<div class="car-award"><img src="${ico(AWARD_BY_ID[w.id].icon, 64)}" alt=""><span>${t('Season {n}', { n: w.season })} · ${esc(t(AWARD_BY_ID[w.id].name))}</span></div>`).join('')}` : ''}
@@ -2543,10 +2544,8 @@ export class UI {
     const goalies = [0, 1].map((tm) => ({ goalie: true, team: tm, saves: summary.saves[tm], ga: summary.score[1 - tm],
       id: tm === 0 ? summary.goalie || 'halla' : (summary.goalieWho && summary.goalieWho[1]) === 'sub_goalie' ? 'sub_goalie' : 'goalie',
       name: (summary.goalieNames && summary.goalieNames[tm]) || (tm === 0 ? goalieInfo(summary.goalie || 'halla').name : t('Goalie')) }));
-    // the three stars of the game: from either team, a winner ahead on a tie
-    const starScore = (k) => (k.goalie ? (k.saves >= 8 ? k.saves * 0.45 - k.ga * 1.2 + (k.ga === 0 ? 5 : 0) : -9)
-      : k.goals * 5 + (k.goals >= 3 ? 2 : 0) + k.assists * 2.5 + (k.steals + k.blocks) * 0.6 + k.hits * 0.25) + (summary.winner === k.team ? 1 : 0);
-    const stars = [...summary.skaters, ...goalies].sort((a, b) => starScore(b) - starScore(a)).slice(0, 3);
+    // the three stars of the game (career.js picks them; the goalies' faces and names from here)
+    const stars = threeStars(summary).map((k) => (k.goalie ? goalies[k.team] : k));
     const starLine = (k) => (k.goalie ? t('{n} saves', { n: k.saves })
       : k.goals || k.assists ? `${k.goals} ${t('G')} · ${k.assists} ${t('A')}` : `${k.steals} ${t('STL')} · ${k.hits} ${t('HIT')}`);
     const map = summary.shotMap || [];
