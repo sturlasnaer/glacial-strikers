@@ -55,6 +55,13 @@ const bots = {
     const shoot = GOAL_X - s.x < 210 && st.tap % 8 < 1;
     return raw({ mx: t.mx, my: shoot ? (g.y > 0 ? -1 : 1) : t.my, sprint: true, a: shoot });
   },
+  tips(m, c, st) { // into the lane between the point and the middle of the net, SHOOT as it comes
+    const s = m.controlled(), f = c.feeder, p = m.puck;
+    const x = GOAL_X - 110, y = f.y * (GOAL_X - x) / (GOAL_X - f.x), stk = s.stickPoint();
+    const t = toward(s, x + (s.x - stk.x), y + (s.y - stk.y));
+    const near = !!p.shot && Math.hypot(p.x - s.x, p.y - s.y) < 140;
+    return raw({ mx: t.l > 6 ? t.mx * Math.min(1, t.l / 40) : 0, my: t.l > 6 ? t.my * Math.min(1, t.l / 40) : 0, a: near });
+  },
   faceoffs(m, c, st) { // (a 0.24 s reaction to the puck touching down)
     if (m.state !== 'faceoff') return raw();
     const go = m.dropped && m.stateT >= 1.1 + 0.24;

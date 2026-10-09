@@ -590,6 +590,10 @@ class App {
       if (e.scored) { audio.jingle('goal'); fx.lamp = 1.4; } else audio.crowdOoh(0.6);
       if (!mine && !e.scored) audio.crowdCheer(0.6);
     });
+    m.on('tip_result', (e) => {
+      hud.banner(`<div class="small" style="color:${e.kind === 'goal' ? '#ffd45e' : '#c3d3ea'}">${e.kind === 'goal' ? t('GOAL!') : e.tipped ? t('SAVED') : t('NO TIP')}</div>`, 0.9);
+      if (e.kind === 'goal') { audio.jingle('goal'); audio.crowdCheer(0.4); fx.lamp = 1.2; } else audio.crowdOoh(0.3);
+    });
     m.on('faceoff_result', (e) => {
       hud.banner(`<div class="small" style="color:${e.won ? '#ffd45e' : '#ff6f7d'}">${e.clean ? t('CLEAN DRAW!') : e.won ? t('WON IT!') : e.early ? t('TOO EARLY!') : t('TOO SLOW')}</div>`, 0.9);
       if (e.won) { audio.sfx('coin', { vol: e.clean ? 0.6 : 0.4 }); if (e.clean) audio.crowdCheer(0.3); } else audio.sfx('deny');

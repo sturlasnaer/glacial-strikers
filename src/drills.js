@@ -34,6 +34,11 @@ export const DRILLS = {
     text: 'Five breakaways against a sharp goalie. Tap SPRINT close in to deke: if they bite, shoot the other way.',
     medals: [2, 3, 4],
   },
+  tips: {
+    id: 'tips', name: 'Tip-Ins', trains: 'Net front', icon: 'equipment_items/stick/slapshot', unit: 'tips', offline: true,
+    text: 'Ten shots from the point. Get your stick in the lane in front of the net and press SHOOT as the puck comes by to tip it past the goalie.',
+    medals: [2, 4, 6],
+  },
   faceoffs: {
     id: 'faceoffs', name: 'Faceoffs', trains: 'Draws', icon: 'achievements/off_the_drop', art: 'equipment_items/hub/faceoffs', unit: 'draws', offline: true, // (art: Batch BO, when it's in)
     text: 'Ten draws against a centre who gets quicker every time. Press SHOOT or PASS as the puck touches the ice: go while it\'s still in the air and you\'re held back.',
@@ -55,6 +60,7 @@ export function formatScore(def, score) {
   if (def.unit === 'time') return t('{seconds}s', { seconds: score.toFixed(2) });
   if (def.unit === 'goals') return `${score}/5`;
   if (def.unit === 'draws') return `${score}/${FACEOFF_DRAWS}`;
+  if (def.unit === 'tips') return `${score}/${TIP_SHOTS}`;
   return t('{n} pts', { n: score });
 }
 
@@ -80,6 +86,7 @@ export function createDrill(id, save, charId, opts = {}) {
     case 'rondo': home = [charId, ...mates]; away = ['frost', 'stone']; ctrl = new RondoDrill(save.paces && save.paces.rondo); break;
     case 'breakaway': ctrl = new BreakawayDrill(opts.ghost); break;
     case 'faceoffs': away = ['frost']; ctrl = new FaceoffDrill(); break;
+    case 'tips': home = [charId, opts.feeder || mates.find((k) => member(k).role === 'D') || mates[0]]; ctrl = new TipDrill(); break;
     case 'shootout': home = line; awayTeam = opts.teamId || 'comets'; away = ids; ctrl = new ShootoutDrill(opts.teamId); break;
     default: throw new Error('Unknown drill ' + id);
   }
@@ -501,6 +508,69 @@ class BreakawayDrill extends DrillBase {
       { y: gs.y - 0.5, f: (ctx) => R.drawRaceGhost(ctx, gs, m, fade, label) },
       { y: puck.y, f: (ctx) => R.drawGhostPuck(ctx, puck.x, puck.y, fade) },
     ];
+  }
+}
+
+// ------------------------------------------------------------- Tip-Ins
+// Ten shots from the point at the net, the player in front: a stick in the lane and SHOOT pressed
+// as the puck comes by tips it (the match's own tip, at the player's chance). Goals off a tip count.
+const TIP_SHOTS = 10;
+const TIP_SPOTS = [-110, 0, 110, -60, 60];
+class TipDrill extends DrillBase {
+  constructor() { super(); this.noSwitch = true; this.neutralAim = 0; }
+  init(m) {
+    this.hideGoalies(m, true);
+    this.n = 0; this.goals = 0; this.tips = 0; this.results = []; this.phase = 'set'; this.setT = 0;
+    const s = m.controlled();
+    s.x = GOAL_X - 150; s.y = 0; s.face = Math.PI;
+    this.feeder = m.teamSkaters(0).find((k) => k !== s);
+    this.feeder.scripted = true;
+    m.on('tip', () => { if (this.phase === 'shot') this.tipped = true; });
+    this.place(m);
+    this.startCountdown(m);
+  }
+  place(m) {
+    const f = this.feeder, g = m.goalieAt(1), p = m.puck;
+    f.x = 300; f.y = TIP_SPOTS[this.n % TIP_SPOTS.length]; f.vx = f.vy = 0; f.face = 0;
+    g.x = GOAL_X - 28; g.y = 0; g.setState('ready'); g.react = null; g.track = null; g.holdT = 0;
+    p.inNet = null; p.shot = null; p.pass = null;
+    m.takePossession(f, 'drill');
+    this.phase = 'set'; this.setT = 0; this.tipped = false; this.shotT = 0;
+  }
+  tick(m, dt) {
+    const f = this.feeder, p = m.puck, g = m.goalieAt(1);
+    f.in = Skater.blankInput();
+    if (this.phase === 'set') {
+      if ((this.setT += dt) > 1.4) { // the point shot, at the middle of the net
+        m.shoot(f, { kind: 'wrist' });
+        const d = norm(GOAL_X - p.x, -p.y), sp = Math.hypot(p.vx, p.vy);
+        p.vx = d.x * sp; p.vy = d.y * sp; p.curve = null; p.vz = 20;
+        this.phase = 'shot'; this.n++;
+      }
+      return;
+    }
+    if (this.phase === 'shot') {
+      this.shotT += dt;
+      const over = p.owner === g || (!p.owner && (p.speed < 60 || p.x > GOAL_X + 6 || p.x < 150)) || this.shotT > 3;
+      if (over) this.end(m, 'miss');
+      return;
+    }
+    if (this.phase === 'between' && (this.pauseT -= dt) <= 0) {
+      if (this.n >= TIP_SHOTS) this.finish(m, this.goals, { tips: this.tips, results: this.results });
+      else this.place(m);
+    }
+  }
+  end(m, kind) {
+    if (this.phase !== 'shot') return;
+    if (this.tipped) this.tips++;
+    this.results.push(kind);
+    this.phase = 'between'; this.pauseT = 1;
+    m.emit('tip_result', { kind, tipped: this.tipped, n: this.n });
+  }
+  onGoal(m, info) { if (this.phase === 'shot' && info.side === 1) { if (this.tipped) { this.goals++; this.end(m, 'goal'); } else this.end(m, 'untipped'); } }
+  hud() {
+    const dots = Array.from({ length: TIP_SHOTS }, (_, i) => (this.results[i] === 'goal' ? '●' : this.results[i] ? '○' : '·')).join(' ');
+    return { title: t('Tip-Ins'), main: t(this.goals === 1 ? '{n} goal' : '{n} goals', { n: this.goals }), sub: `${t('Shot {n} of {total}', { n: Math.min(TIP_SHOTS, this.n + (this.phase === 'set' ? 1 : 0)), total: TIP_SHOTS })}  ${dots}`, note: this.tips ? t(this.tips === 1 ? '{n} tip' : '{n} tips', { n: this.tips }) : '' };
   }
 }
 
