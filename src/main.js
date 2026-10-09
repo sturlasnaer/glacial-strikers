@@ -11,7 +11,7 @@ import { firstTime } from './guide.js';
 import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as cloudBackup, settleCups } from './online.js';
 import { ARENA_MUSIC } from './songs.js';
 import { ResurfacerLap } from './scenery.js';
-import { UI, controlsHtml, crest, ruleIconSrc, cupPlaceImg, portrait } from './ui.js';
+import { UI, controlsHtml, crest, ruleIconSrc, cupPlaceImg, portrait, shotMapSvg, esc } from './ui.js';
 import { HUD } from './hud.js';
 import { toScreen } from './rink.js';
 import { Replay } from './replay.js';
@@ -1196,14 +1196,20 @@ class App {
       <h2>${t('Paused')}</h2>
       <div class="row"><button class="btn gold" id="p-resume">${t('Resume')}</button>
       <button class="btn small ${st.music ? 'cream' : 'ghost'}" id="p-music">${st.music ? t('Music on') : t('Music off')}</button>
-      <button class="btn small ${st.sfx ? 'cream' : 'ghost'}" id="p-sfx">${st.sfx ? t('Sound on') : t('Sound off')}</button></div>
-      ${controlsHtml(this.isTouch)}
+      <button class="btn small ${st.sfx ? 'cream' : 'ghost'}" id="p-sfx">${st.sfx ? t('Sound on') : t('Sound off')}</button>
+      ${this.cur && this.cur.drill ? '' : `<button class="btn small ghost" id="p-stats">${t('Match stats')}</button>`}</div>
+      <div id="p-body">${controlsHtml(this.isTouch)}</div>
       <div class="row" style="justify-content:space-between"><span class="muted" style="font-size:13px">${this.cur && this.cur.drill ? t('Quitting a drill gives no rewards.') : t(this.match.winScore === 1 ? 'Score {a}–{b}, next goal wins.' : 'Score {a}–{b}, first to 5 wins.', { a: this.match.score[0], b: this.match.score[1] })}</span>
       <button class="btn small ghost" id="p-quit">${this.cur && this.cur.drill ? t('Quit') : t('Forfeit match')}</button></div>`, (m, close) => {
       const resume = () => { close(); this.resume(); };
       m.querySelector('#p-resume').addEventListener('click', resume);
       m.querySelector('#p-music').addEventListener('click', (e) => { st.music = !st.music; if (st.music && !st.musicVol) st.musicVol = 1; this.applySettings(); writeSave(this.save); e.target.textContent = st.music ? t('Music on') : t('Music off'); e.target.className = 'btn small ' + (st.music ? 'cream' : 'ghost'); });
       m.querySelector('#p-sfx').addEventListener('click', (e) => { st.sfx = !st.sfx; if (st.sfx && !st.sfxVol) st.sfxVol = 1; this.applySettings(); writeSave(this.save); e.target.textContent = st.sfx ? t('Sound on') : t('Sound off'); e.target.className = 'btn small ' + (st.sfx ? 'cream' : 'ghost'); });
+      m.querySelector('#p-stats')?.addEventListener('click', (e) => { // the box score and shot map so far, or the controls again
+        const body = m.querySelector('#p-body'), on = e.target.classList.toggle('cream');
+        e.target.classList.toggle('ghost', !on);
+        body.innerHTML = on ? this.pauseStats() : controlsHtml(this.isTouch);
+      });
       m.querySelector('#p-quit').addEventListener('click', (e) => {
         if (!e.target.dataset.armed) { e.target.dataset.armed = '1'; e.target.textContent = this.forfeitLoses() ? t('Tap again: it counts as a loss') : t('Tap again to confirm'); return; }
         close();
@@ -1212,6 +1218,15 @@ class App {
     }, false);
     this.pauseModal = modal;
     if (auto) this.autoPaused = true;
+  }
+
+  // The pause menu's match stats: shots, each skater's line and the shot map so far.
+  pauseStats() {
+    const m = this.match, sm = m.summary(), team = TEAMS[this.cur.teamId], theirs = (team && team.color) || '#f5b3bb';
+    const rows = sm.skaters.map((k) => `<tr style="color:${k.team === 0 ? 'var(--cream)' : '#f5b3bb'}"><td>${esc(k.name)}</td><td>${k.goals}</td><td>${k.assists}</td><td>${k.shots}</td><td>${k.hits}</td></tr>`).join('');
+    return `<div class="muted" style="font-size:13px">${t('Shots on goal {a}–{b}', { a: sm.shots[0], b: sm.shots[1] })} · ${t('{n} saves', { n: sm.saves[0] })}</div>
+      <table class="res-table"><thead><tr><th>${t('Player')}</th><th>${t('G')}</th><th>${t('A')}</th><th>${t('SOG')}</th><th>${t('HIT')}</th></tr></thead><tbody>${rows}</tbody></table>
+      ${sm.shotMap.length ? shotMapSvg(sm.shotMap, CLUB.trim || '#71dce8', theirs) : ''}`;
   }
 
   resume() {

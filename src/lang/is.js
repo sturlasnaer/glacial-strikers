@@ -862,6 +862,7 @@ export const IS = {
   "Mask": "Gríma",
   "Match": "Leikur",
   "Match challenges": "Áskoranir",
+  "Match stats": "Tölfræði leiksins",
   "matches": "leikir",
   "Matches are played in landscape.": "Leikir eru spilaðir í láréttri stöðu.",
   "Melt into the shadows for 3s: checks miss you and nobody can pick off a pass to or from you.": "Hverfðu inn í skuggana í 3 sek.: tæklingar hitta þig ekki og enginn kemst inn í sendingar til þín eða frá þér.",

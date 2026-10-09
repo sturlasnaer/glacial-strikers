@@ -187,7 +187,7 @@ function expression(side, text, mood) {
 }
 const ico = (id, size = 64) => Assets.icon(id, size);
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 // The league news icon for each kind of story (Batch AV).
 const NEWS_ICON = { edge: 'edge', rivalSign: 'sign', weSign: 'sign', weGoalie: 'sign', weAgent: 'sign', weLegend: 'sign', rivalDraft: 'draft', weDraft: 'draft', trade: 'trade', retire: 'retire', champion: 'cup', expansion: 'new_club' };
@@ -260,7 +260,7 @@ const CARD_RIMS = { bronze: 'gfx/prospect-cards/images/prospect_bronze.png', sil
 const rimFor = (potential) => CARD_RIMS[potential >= 4 ? 'gold' : potential === 3 ? 'silver' : 'bronze'];
 // The shot map on the results: the rink from above, every shot on goal where it was taken from
 // (ours attack the right-hand net), goals ringed in gold.
-const shotMapSvg = (list, ours, theirs) => {
+export const shotMapSvg = (list, ours, theirs) => {
   const { minX, maxX, minY, maxY, r } = RINK, col = (k) => (k.team === 0 ? ours : theirs);
   const dots = [...list].sort((a, b) => a.goal - b.goal).map((k) => (k.goal
     ? `<circle cx="${k.x}" cy="${k.y}" r="22" fill="${col(k)}" stroke="#ffd45e" stroke-width="10"/>`
