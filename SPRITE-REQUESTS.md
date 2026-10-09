@@ -7,11 +7,9 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **AV**: small icons for the league news.
-2. **AW**: crests for the player's club: six designs to choose from, recoloured to the club's colours.
-3. **AX**: big and slim builds for goalies made from parts.
-4. **AY**: a rule each for the Observatory and the Longhouse, the expansion clubs' buildings.
-5. **AZ**: six more heads for players made from parts.
+1. **BA**: the expansion captains, Talon (Glacier Owls) and Tamarack (Thunder Moose), as full characters who match their cut-ins.
+2. **BB**: the other hand for the five founding rivals' fifteen skaters, as AK did for our cast and the newcomers.
+3. **BC**: six more goalie masks, including a Snow Fox mask for our club, for a mask picker at goalie camp.
 
 ## Format notes
 
@@ -26,6 +24,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - **Batch AO:** two more builds (big and slim) and six more heads (cage, visor, mohawk, ponytail, moustache, glasses), with portrait shoulders per build, and the jersey moment for the parts body: drafted rookies now pull on our jersey with their own face.
 - **Batch AP:** big and slim rookies pull on our jersey too.
 - **Batches AQ to AU:** cut-in backdrops for players made from parts, Vigga the agent, the linesman's signals for each call, goalies made from parts (a body and six painted masks), and the Glacier Owls' and Thunder Moose's crests, buildings, mascots, scoreboards, banners and captains.
+- **Batches AV to AZ:** icons for the league news, six crests for the player's club, big and slim goalie builds, the Observatory's moonbeams and the Longhouse's loose planks, and six more heads.
 
 ---
 
@@ -79,36 +78,35 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 ---
 
-## Batch AV: small icons
+## Batch BA: the expansion captains in their own art
 
-In the style and size of the reward icons (about 200 px source), sheet `icons_av.png`:
-- For **Around the Frostline**, the league news in the League tab, read at 20–24 px, so bold and simple: `icons/news_sign` (a quill over a contract), `icons/news_draft` (a jersey on a hanger with a star), `icons/news_trade` (two jerseys swapping, like `icons/trade` but simpler), `icons/news_retire` (a pair of skates hung up by their laces), `icons/news_cup` (the Frostline Cup), `icons/news_new_club` (a crest with a small plus).
+The Glacier Owls' and Thunder Moose's captains have painted cut-in banners from AU (`cutin/glacier_owls_c`, `cutin/thunder_moose_c`), but on the ice they are players made from parts, so the banner shows someone the player never sees skating. Please draw both captains as full characters, matching the people in those banners, in the same format as the five founding rivals' captains (for example `pinewood_lynx_c`):
+- **Talon**, Glacier Owls centre, a calm playmaker. **Shoots right.**
+- **Tamarack**, Thunder Moose centre, a big enforcer. **Shoots left.**
 
-6 frames. (The Veteran Presence icon came with the AP–AU v2 pack: thank you, it's in.)
+For each: the eight skating directions (idle, skate_a, skate_b, shot_windup, shot_release, pass, check, celebrate), the side stride, stop and glide, hit reactions, their signature celebration, **and the west-facing set from AK** so they keep their stick hand both ways. Gear masks for the stick and skates (Batch M format), and five portrait expressions (neutral, determined, grin, shocked, defeated) for the pre- and post-match talk. Drawn in **coral + violet** like every rival, so the game recolours them into each club's colours (and into ours once signed). Frame prefixes `glacier_owls_c` and `thunder_moose_c`.
 
-## Batch AW: crests for the player's club
+About 200 frames.
 
-Players rename their club and pick its colours, but the crest is always the Snow Fox. Please draw **six more crest designs** to choose from, in the style and size of `hud_elements/misc/home_crest`, in our **teal and cream** (the game recolours them to the club's colours, as it does the Snow Fox): a **howling wolf**, a **polar bear**, a **snowy owl in flight** (different from the Glacier Owls' front-on owl), a **narwhal**, a **crossed sticks over a mountain**, and a **lightning bolt through a snowflake**. Frame names `crests_club/<name>` (`wolf`, `bear`, `owl`, `narwhal`, `mountain`, `bolt`). The same shield shape family as the Snow Fox is fine, or each its own shape.
+## Batch BB: the other hand for the founding rivals
 
-6 frames.
+Batch AK drew our cast and the newcomers facing west, so a left shot stays a left shot whichever way they skate. The fifteen founding rival skaters still only face east and are mirrored for west, so their stick jumps to the other hand every time they turn round. That shows most once you sign one. Please draw the same AK set for each of them: the west, northwest and southwest directions with the stick in their own hand, the west side stride, stop and glide, and the `hands` map for each direction. Their stick hands:
+- Pinewood Lynx: Fern L, Pip R, Oakley L.
+- Ember Comets: Cinder R, Blaze L, Ash R.
+- Gilded Rams: Aurum L, Gilda R, Horn L.
+- Obsidian Ravens: Corvin R, Nyx L, Basalt L.
+- Aurora Royals: Solenne L, Aurelio R, Regalia R.
 
-## Batch AX: goalie builds
+Coral + violet as before, gear masks for the new frames (Batch M format), and the same scale and baseline as their existing sheets. About 33 frames each, about 500 in all. Splitting it into deliveries by team is fine.
 
-Batch AT's goalie body is one build. Like AO did for skaters, please draw **`body_big`** (a wide, heavy goalie who fills the net) and **`body_small`** (a small, quick one) with exactly AT's list: the side sets both ways, front, back, skating and puck handling, the foreground layers, mask anchors on every frame, and the portrait shoulders. The six masks fit all three bodies, so no new masks.
+## Batch BC: six more goalie masks
 
-About 120 frames per build.
+The game will let you pick your goalie's mask and its paint colour at goalie camp, and free-agent goalies wear these designs too. Please draw six more designs in exactly the AT format (seven field views, five portrait expressions, and a pure-red paint mask for each head; the helmet shell and cage fixed, the design paintable):
+- `snow_fox`: our club's Snow Fox across the mask (our own design; keep it close to the crest).
+- `aurora`: wavy aurora bands.
+- `lightning`: a jagged bolt from brow to chin.
+- `tiger`: bold stripes.
+- `crown`: a small crown on the forehead with filigree down the sides.
+- `pixel`: a blocky retro checker pattern.
 
-## Batch AY: rules for the expansion buildings
-
-Every rival's building has a rule (meltwater, aurora lanes, pond cracks, rumble strips, shadow zones). The two new ones need theirs:
-- **The Observatory (Glacier Owls): moonbeams.** A wide beam of moonlight slowly sweeps across the ice from the telescope dome. A shot taken from inside it glares in the goalie's eyes. Art: the beam as a soft translucent light shape on the ice, about a third of the rink's width (one frame plus three shimmer frames), and the glare as a small star-burst on the puck (three frames).
-- **The Longhouse (Thunder Moose): loose planks.** Stretches of the wooden boards rattle, and a puck that hits one takes an odd bounce. Art: a board-plank segment overlay for the side boards and one for the end boards, each rattling (three frames), and a puff of wood splinters (four frames).
-- A rule icon for each, in the style of the Batch O rule icons: `icons/rule_moonbeams` and `icons/rule_loose_planks`.
-
-About 18 frames.
-
-## Batch AZ: six more heads
-
-Players made from parts have ten heads. Six more, in the AJ/AO format (the five views with normal and effort states, skin and hair masks, the five portrait faces), so drafts and free agents keep looking new: `curls` (curly hair spilling out under the helmet), `bun` (a hair bun at the back), `long_hair` (straight hair to the shoulders), `eye_black` (stripes under the eyes), `bandaged_nose` (a strip across the nose), `freckled_redhead` (a different face from `freckles`, with a wide grin). Keep coral and violet off skin and hair.
-
-About 150 frames.
+They must sit on all three builds (std, big, small) at the existing anchors, as AX checked for the AT masks. About 144 frames with the paint masks.
