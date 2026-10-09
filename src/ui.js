@@ -927,8 +927,9 @@ export class UI {
             <div class="card-head" style="margin:0"><img src="${portrait(id, 0, null, 152, 'grin')}" alt="" style="width:76px;height:76px"><div>
             ${otherPicks(d, s).map((o) => `<p style="margin:0 0 4px">${o.replaces ? t('The {team} took {name} to replace {old}, who retired.', { team: esc(o.team.name), name: esc(o.name), old: esc(o.replaces) }) : o.fills ? t('The {team} took {name} to fill the gap you left.', { team: esc(o.team.name), name: esc(o.name) }) : t('The {team} took {name}.', { team: esc(o.team.name), name: esc(o.name) })}</p>`).join('')}
             <p class="muted" style="margin:0;font-size:13px">${t('Dress {name} at {role} from the Team tab, or before a match.', { name: esc(p.name), role: t(ROLE_NAME[role]).toLowerCase() })}</p></div></div>
-            <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Later')}</button><button class="btn gold" id="dress-now">${t('Dress now')}</button></div>`, (m2, close2) => {
+            <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Later')}</button><button class="btn small ghost" id="name-now">${t('Rename')}</button><button class="btn gold" id="dress-now">${t('Dress now')}</button></div>`, (m2, close2) => {
             this.click('#dress-now', () => { setLineup(s, id); writeSave(s); audio.sfx('confirm'); close2(); this.hub('team'); }, m2);
+            this.click('#name-now', () => { close2(); this.renameModal(id); }, m2); // (yours to name)
           });
         }, m);
       });
