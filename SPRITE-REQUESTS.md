@@ -10,7 +10,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 1. **BH, the rest:** stick handling for the 13 players still to come (Part 1 brought six): `aurora_royals_d`, `ember_comets_c`, `ember_comets_w`, `gilded_rams_w`, `gilded_rams_d`, `obsidian_ravens_c`, `obsidian_ravens_d`, `pinewood_lynx_c`, `pinewood_lynx_w`, `glacier_owls_c`, `thunder_moose_c`, `fafnir` and `fenrir`, as in the BH section below.
 2. **BI, the rest:** Fáfnir's crossovers (held for his northwest right-turn stick). Fenrir's southeast backhand blade correction remains part of BH.
 3. **BN:** the linesman skating with his arm up, for delayed penalties (8 frames), as in the BN section below.
-4. **BO:** five achievement icons, a season-goals icon and a Faceoffs drill icon (7 frames), as in the BO section below.
+4. **BO:** five achievement icons, a season-goals icon, a Faceoffs drill icon and two league-news icons (9 frames), as in the BO section below.
 
 Native generation reached its daily quota; pending art and masks are saved for the reset at **2026-10-09 18:10:25 UTC**.
 
@@ -121,6 +121,10 @@ And two icons in the icons_z style (the league news and rule icons):
 - `icons/season_goals`: the same clipboard, smaller and simpler, three boxes (for the Season goals panel and its toast).
 - `equipment_items/hub/faceoffs`: a puck dropping between two crossed stick blades on a faceoff dot, matching the other drill cards' icons (the cone, the target, the passing stick, the goalie gloves).
 
-7 frames.
+And two league-news icons in the AV style (`icons/news_sign` and the rest), mapped as `news_icons.hat_trick` and `news_icons.streak` in the atlas:
+- `icons/news_hat_trick`: three hats in a little pile on the ice.
+- `icons/news_streak`: a stick blade with a small flame trailing off it (a scoring streak: one of ours scoring in game after game).
+
+9 frames.
 
 ---
