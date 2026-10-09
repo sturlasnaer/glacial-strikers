@@ -10,7 +10,7 @@ const keys=['aurora_royals_c','aurora_royals_w','aurora_royals_d','ember_comets_
 const mirror={south:'south',southeast:'southwest',east:'west',northeast:'northwest',north:'north',northwest:'northeast',west:'east',southwest:'southeast'};let cases=0;
 const s0={speed:120,stun:0,celebrate:0,ultWindup:0,dashT:0,charging:false,state:'skate',stridePhase:0,danglePhase:.25,turnRate:0,hasPuck:true,x:20,y:-15,lean:.12};
 for(const key of keys)for(const kit of ['home','away']){
- const set=A.skaters[key][kit];assert.equal(Object.keys(set.crossover.hands).length,6);if(set.stickhandling)assert.equal(Object.keys(set.stickhandling.hands).length,8);
+ const set=A.skaters[key][kit];assert.equal(Object.keys(set.crossover.hands).length,6);assert.ok(set.stickhandling,key+' '+kit+' stick handling');assert.equal(Object.keys(set.stickhandling.hands).length,8);
  for(const dir of Object.keys(mirror))for(const hand of ['L','R']){
   const own=Object.values(set.crossover.hands)[0],flip=hand!==own,facing=flip?mirror[dir]:dir,s={...s0,hand};
   const frame=state=>Renderer.prototype.motionFrame.call({}, {...s,...state},{state:'play'},set,dir);
@@ -33,4 +33,4 @@ for(const call of ['hooking','penalty_shot']){assert.equal(A.linesman.calls[call
 for(const icon of ['sold_it','off_the_drop','from_the_spot']){const f=A.frames['achievements/'+icon];assert.ok(f);assert.equal(A.pages[f[0]].group,'icons_z');cases++;}
 const draw=Assets.draw;const calls=[];Assets.draw=(_,id)=>calls.push(id);
 for(let style=0;style<6;style++){Renderer.prototype.drawHat.call({}, {},{style,y:0,rot:0},{x:0,y:0});assert.equal(calls.at(-1),'crowd_props/hats/hat_'+(style+1));const f=A.frames[calls.at(-1)];assert.equal(A.pages[f[0]].group,'home');cases++;}Assets.draw=draw;
-console.log(JSON.stringify({status:'passed',cases,checks:'18 crossover and six stickhandling players, both kits and hands, native handedness, mirrored crossovers, all blade contacts with turn lean, action priorities, recovered away poses, icons, signals and six rendered hats'}));
+console.log(JSON.stringify({status:'passed',cases,checks:'every league player with crossovers and stick handling, both kits and hands, native handedness, mirrored crossovers, all blade contacts with turn lean, action priorities, recovered away poses, icons, signals and six rendered hats'}));
