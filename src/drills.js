@@ -31,7 +31,7 @@ export const DRILLS = {
   },
   breakaway: {
     id: 'breakaway', name: 'Breakaway', trains: 'Finishing', icon: 'equipment_items/armor/goalie_gloves', unit: 'goals',
-    text: 'Five breakaways against a sharp goalie. Use your skill to deke and pick a corner.',
+    text: 'Five breakaways against a sharp goalie. Tap SPRINT close in to deke: if they bite, shoot the other way.',
     medals: [2, 3, 4],
   },
 };

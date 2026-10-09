@@ -580,7 +580,7 @@ export const IS = {
   "First Pick": "Fyrsta valið",
   "First things first: let's get a game in. Hit Play match when you're ready.": "Byrjum á byrjuninni: tökum einn leik. Ýttu á Spila leik þegar þú ert klár.",
   "FIRST{br}TO 5": "FYRST{br}Í 5",
-  "Five breakaways against a sharp goalie. Use your skill to deke and pick a corner.": "Fimm sinnum einn á móti beittum markverði. Notaðu tæknina til að plata hann og veldu horn.",
+  "Five breakaways against a sharp goalie. Tap SPRINT close in to deke: if they bite, shoot the other way.": "Fimm sinnum einn á móti beittum markverði. Pikkaðu á SPRETTUR þegar þú nálgast til að leika á hann: ef hann bítur á agnið skaltu skjóta hinum megin.",
   "Five honours": "Fimm verðlaun",
   "Five wins? I'll score five goals in the first match alone.": "Fimm sigrar? Ég skora fimm mörk bara í fyrsta leiknum.",
   "Flames": "Logar",
