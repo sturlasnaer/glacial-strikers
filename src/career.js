@@ -42,6 +42,11 @@ export function recordCareer(save, summary, won) {
     const ss = (r.seasons[save.season] ||= { gp: 0, g: 0, a: 0 });
     ss.gp++; ss.g += k.goals; ss.a += k.assists;
   }
+  // where our goals came from, this season (for the map on the career page)
+  const spots = ((c.goalMap ||= {})[save.season] ||= []);
+  for (const k of summary.shotMap || []) if (k.team === 0 && k.goal) spots.push([k.x, k.y]);
+  if (spots.length > 150) spots.splice(0, spots.length - 150);
+  for (const season of Object.keys(c.goalMap)) if (+season < save.season - 1) delete c.goalMap[season]; // (this season and last)
   const g = (c.goalies[summary.goalie || 'halla'] ||= GOALIE());
   g.gp++; if (won) g.w++;
   g.sa += summary.shots[1]; g.sv += summary.saves[0];

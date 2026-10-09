@@ -1775,6 +1775,7 @@ export const IS = {
   "What's new": "Hvað er nýtt",
   "Where my twin plays, I play. Let's finish the set.": "Þar sem tvíburinn minn spilar, spila ég. Klárum settið.",
   "Where my twin plays, I play. Room on the wing?": "Þar sem tvíburinn minn spilar, spila ég. Pláss á kantinum?",
+  "Where our goals came from this season ({n})": "Hvaðan mörkin okkar komu á tímabilinu ({n})",
   "Whistled dead: nobody can get to it.": "Flautað af: enginn kemst að pökknum.",
   "Who takes the shot?": "Hver á að skjóta?",
   "Whole team": "Allt liðið",
