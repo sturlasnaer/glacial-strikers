@@ -1,6 +1,7 @@
 // Íslenska. Keys are the English text exactly as written in the game (with {braces} for
 // values); values are the Icelandic. Names of people, teams and the club stay as they are.
 export const IS = {
+  "Name your own players: Rename on a drafted rookie's or a free agent's card, or right after the pick on Draft Day.": "Nefndu þína eigin leikmenn: Endurnefna á spjaldi nýliða eða frjáls leikmanns, eða strax eftir valið í nýliðavalinu.",
   "A name of their own, for the scoresheet and the commentators.": "Nafn að eigin vali, fyrir leikskýrsluna og lýsendurna.",
   "Rename {name}": "Endurnefna {name}",
   "Rename": "Endurnefna",
