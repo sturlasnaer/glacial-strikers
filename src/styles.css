@@ -513,7 +513,9 @@ body.large-text .hub, body.large-text .modal, body.large-text .results, body.lar
   .scoreboard .digit { height: 30px; width: 30px; }
   .scoreboard img.crest { width: 28px; height: 28px; }
   .powerchip { top: calc(50px + var(--safe-t)); }
-  .hint { top: calc(80px + var(--safe-t)); font-size: 12px; }
+  /* (the ticker fills the top left on a phone: tips go to the bottom, between the stick and the buttons) */
+  .hint { top: auto; bottom: calc(10px + var(--safe-b)); font-size: 12px; max-width: min(340px, 40vw); }
+  .ticker { font-size: 16px; max-width: min(40vw, 360px); }
   .penchip { top: calc(50px + var(--safe-t)); }
 }
 @media (prefers-reduced-motion: reduce) {
