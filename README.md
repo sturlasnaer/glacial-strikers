@@ -42,7 +42,7 @@ Hold shoot while a pass is on its way to fire a **one-timer**. Your skates plant
 
 **Gamepad in menus:** the D-pad or left stick moves a highlight, ✕/A selects, ○/B goes back or closes a pop-up, L1/R1 switch hub tabs, and the right stick scrolls. PlayStation and Xbox pads both work (Chrome needs a button press before it sees the pad).
 
-**Shootout goalie:** on the rival's shot you're in goal. Steer to move, shoot = butterfly, pass = dive.
+**Shootout goalie (and penalty shots against you):** on the rival's shot you're in goal, with goal mode's controls: the stick nudges the angle (with Settings › Aim assist's help tracking the shot), shoot = butterfly, pass = dive, skill = poke check.
 
 **Goalie mode** (Play as: Goalie): steer to move Halla, shoot (J / X / BLOCK) drops into the butterfly, pass (K / A / DIVE) dives toward the stick, skill (U / B) pokes, sprint gives quicker feet, ultimate (I / Y / star) fires Wall of Ice. Holding the puck, shoot passes toward the stick and pass rims it around the boards (CLEAR).
 
