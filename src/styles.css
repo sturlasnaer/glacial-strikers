@@ -369,6 +369,9 @@ img { image-rendering: auto; max-width: 100%; }
 .mvp img { width: 64px; height: 64px; }
 .season-goals { display: grid; gap: 4px; }
 .sg-ico { width: 22px; height: 22px; }
+.sg-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 6px 0; font-size: 12.5px; }
+.sg-strip .label { font-size: 12px; margin-right: 2px; }
+.sg-chip { padding: 1px 8px; border-radius: 10px; border: 1px solid rgba(113, 220, 232, 0.4); background: rgba(113, 220, 232, 0.08); }
 .season-goals .sg { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.04); border-left: 4px solid var(--ice); font-size: 13.5px; }
 .season-goals .sg.done { border-left-color: var(--gold); background: rgba(255, 212, 94, 0.08); }
 .season-goals .sg.failed { border-left-color: #5a6a86; opacity: 0.6; }

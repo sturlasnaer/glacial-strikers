@@ -1153,6 +1153,7 @@ export class UI {
       <div class="scout"><img src="${crest(teamId, 64)}" alt="" width="40" height="40"><div><div class="label" style="font-size:13px">${t('Scouting report · {match}', { match: esc(fixture.label) })}</div>
         ${t('{team} will most likely play {plan}.', { team: esc(tm.name), plan: `<b class="gold-t">${esc(t(their.name))}</b>` })}${tm.plan === 'counter' ? ` ${t('They adapt to what you used against them last time.')}` : ''}</div></div>
       ${s.buffs && s.buffs.length ? `<div class="buffs">${s.buffs.map((b) => `<span class="buff">${esc(BUFF_TEXT(b))}</span>`).join('')}</div>` : ''}
+      ${(() => { const open = goalStates(s).filter((g) => !g.done && !g.failed); return open.length ? `<div class="sg-strip"><span class="label">${t('Season goals')}</span>${open.map((g) => `<span class="sg-chip">${esc(t(g.text, { n: g.n }))}${g.progress ? ` <span class="muted">${g.progress}</span>` : ''}</span>`).join('')}</div>` : ''; })()}
       ${rosterIds(s).length > 3 ? `<div class="line-row" id="line-row">${lineupIds(s).map((id) => `<span><img src="${portrait(id, 0, null, 64)}" width="26" height="26" alt="">${esc(member(id).name)}</span>`).join('')}<button class="btn small ghost" id="line-change">${t('Change line-up')}</button></div>` : ''}
       <div class="plans">${Object.values(GAME_PLANS).map((p) => `
         <button class="plan ${p.id === cur ? 'sel' : ''}" data-plan="${p.id}">
