@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10d',
+    items: [
+      { icon: 'icons/stat_goals', text: 'Club records, in Trophies: the biggest win, the most goals, points and saves in a match, the fastest goal, the longest winning streak and the best seasons. Break one and the game tells you.' },
+    ],
+  },
+  {
     id: '2026-10-10c',
     items: [
       { icon: 'icons/career', text: 'The Hall of Fame: 75 goals or 120 points for the club, 40 wins in goal, or three Cups with it, and a player goes in, with a plaque in Trophies and their number in the rafters at home. Every Frostline Cup hangs up there too.' },

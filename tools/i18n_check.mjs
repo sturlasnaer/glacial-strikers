@@ -49,7 +49,7 @@ function walk(v, path, where, depth = 0) {
     }
   }
 }
-const modules = ['data.js', 'facilities.js', 'press.js', 'achievements.js', 'awards.js', 'drills.js', 'daily.js', 'lockerroom.js', 'guide.js', 'online.js', 'songs.js', 'skills.js', 'draft.js', 'legends.js', 'agents.js', 'whatsnew.js', 'goals.js'];
+const modules = ['data.js', 'facilities.js', 'press.js', 'records.js', 'achievements.js', 'awards.js', 'drills.js', 'daily.js', 'lockerroom.js', 'guide.js', 'online.js', 'songs.js', 'skills.js', 'draft.js', 'legends.js', 'agents.js', 'whatsnew.js', 'goals.js'];
 for (const f of modules) {
   const mod = await import(join(root, 'src', f));
   for (const [name, v] of Object.entries(mod)) {

@@ -12,6 +12,7 @@ import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as clou
 import { ARENA_MUSIC } from './songs.js';
 import { ResurfacerLap } from './scenery.js';
 import { UI, controlsHtml, crest, ruleIconSrc, cupPlaceImg, portrait, shotMapSvg, esc, hintKeys } from './ui.js';
+import { updateRecords, GAME_RECORDS } from './records.js';
 import { noteCup, hallCandidates, induct } from './hall.js';
 import { pressWorthy, pressPlayer, answerPress } from './press.js';
 import { chantBoost, trainingSessions } from './facilities.js';
@@ -980,6 +981,12 @@ class App {
     s.record.goals += summary.score[0];
     if (refreshAgents(s)) this.agentNews = true; // new faces on the free-agent market
     recordCareer(s, summary, rewards.won);
+    // the club's record book: a record broken gets a toast
+    const oppName = teamInfo(c.teamId) ? teamInfo(c.teamId).name : '';
+    for (const r of updateRecords(s, { summary, won: rewards.won, opp: c.teamId, oppName, season: s.season, nameOf: (id) => (member(id) ? member(id).name : ''), goalieName: (summary.goalieNames && summary.goalieNames[0]) || goalieInfo(summary.goalie || 'halla').name })) {
+      const R = GAME_RECORDS[r.id];
+      setTimeout(() => this.toast(Assets.icon(Assets.atlas.frames['icons/career'] ? 'icons/career' : 'icons/stat_goals', 72), t('New club record'), t(R.name), t(R.text, { ...s.records[r.id], n: s.records[r.id].n })), 3000);
+    }
     // now and then a legend turns up in Scouting
     const legend = rollLegend(s, Math.random, (k) => LEGEND_ART.has(LEGENDS[k].art) || this.legendsPreview);
     if (legend) this.pendingLegend = legend; // Kip announces them on the way back to the hub

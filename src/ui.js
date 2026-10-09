@@ -31,6 +31,7 @@ import { t } from './i18n.js';
 import { FACILITIES, FACILITY_IDS, MAX_FACILITY, facilityLevel, nextCost, buildFacility } from './facilities.js';
 import { pressQuestion, PRESS_ANSWERS, pressHeadline } from './press.js';
 import { HALL } from './hall.js';
+import { GAME_RECORDS, CAREER_RECORDS, careerRecords } from './records.js';
 import { ACTIONS, LOCKED, keyMap, keyName, keyNames, firstKey, moveGroups, groupText, setKeyMap, bindKey, canBind, sideless, isDefault,
   PAD_ACTIONS, PAD_LOCKED, padMap, padName, padNames, firstPad, setPadMap, bindPad, canBindPad, isPadDefault } from './keys.js';
 import { RINK, GOAL_X, BLUE_X, CREASE, MOUTH, NET_DEPTH } from './rink.js';
@@ -854,6 +855,13 @@ export class UI {
         return `<div class="label" style="margin:4px 0 6px">${t('Hall of Fame')}</div>${hall.length ? `<div class="hall">${hall.map((h) => `<div class="plaque${plaque ? ' art' : ''}"${plaque ? ` style="background-image:url(${plaque})"` : ''}>
           <img src="${portrait(h.id, 0, null, 96)}" alt=""><div><b>${esc(h.name)} <span class="gold-t">#${h.number}</span></b><span>${esc(hallWhy(h))}</span><small>${t('Inducted in season {n}', { n: h.season })}</small></div></div>`).join('')}</div>`
           : `<p class="muted" style="margin:0 0 10px;font-size:12.5px">${t('No one yet. {goals} goals or {points} points for the club, {cups} Cups with it, or {wins} wins in goal puts a player in, with a banner in the rafters at home.', { goals: HALL.goals, points: HALL.points, cups: HALL.cups, wins: HALL.goalieWins })}</p>`}`;
+      })()}
+      ${(() => { // the club's record book
+        const R = s.records || {}, rows = [
+          ...careerRecords(s, (id) => (member(id) ? member(id).name : '')).map((r) => [CAREER_RECORDS[r.id], r]),
+          ...Object.keys(GAME_RECORDS).filter((id) => R[id]).map((id) => [GAME_RECORDS[id], R[id]]),
+        ];
+        return rows.length ? `<div class="label" style="margin:4px 0 6px">${t('Club records')}</div><div class="records">${rows.map(([def, r]) => `<div><span>${esc(t(def.name))}</span><b>${esc(clubText(t(def.text, { ...r, n: r.n })))}</b></div>`).join('')}</div>` : '';
       })()}
       ${s.weeklyCups && s.weeklyCups.length ? `<div class="label" style="margin:4px 0 6px">${t('Weekly Cups')}</div>
       <div class="cup-shelf">${s.weeklyCups.slice(-12).reverse().map((w) => `<div class="cup-won" title="${esc(w.name)} · ${esc(w.week)}"><img src="${cupPlaceImg(w.place, 72)}" alt=""><small>${esc(w.name)}</small><span class="muted">${esc(w.week.replace(/^\d+-W/, t('week') + ' '))}</span></div>`).join('')}</div>` : ''}
