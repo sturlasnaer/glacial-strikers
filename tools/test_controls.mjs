@@ -174,6 +174,14 @@ const check = (name, cond) => { if (cond) ok++; else { fail++; console.log('FAIL
   }
   check('a press on the drop wins the draw clean', onDrop === n);
   check('...one before it lands is too early', earlyWins === 0);
-  check('...and mashing never wins it', mashWins === 0); }
+  check('...and mashing never wins it', mashWins === 0);
+  // (counted for the daily goals: clean draws and dekes in the match summary)
+  const m = new Match({ teams: [team(), team()], humanTeam: 0, seed: 7, powers: [], diff: [0.6, 0.6] });
+  m.state = 'faceoff'; m.stateT = 0; m.dropped = false;
+  for (let i = 0; i < 160 && m.state === 'faceoff'; i++) { m.setHumanInput(raw({ b: i === 67 })); m.update(1 / 60); }
+  const c = m.controlled(); for (const o of m.skaters) if (o.team === 1) { o.x = c.x + 60; o.y = c.y; break; }
+  c.face = 0; m.deke(c);
+  const k = m.summary().skaters.find((x) => x.team === 0 && x.cleanDraws);
+  check('clean draws and dekes are counted for the daily goals', k && k.cleanDraws === 1 && m.summary().skaters.some((x) => x.dekes === 1)); }
 
 console.log(`controls: ${ok} passed, ${fail} failed`);
