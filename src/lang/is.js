@@ -1309,6 +1309,7 @@ export const IS = {
   "Scrambler": "Kvikur",
   "Screen flashes and blinking goal lights.": "Skjáleiftur og blikkandi markljós.",
   "Screen shake": "Skjáhristingur",
+  "Screened! A body in front hides the puck until it's past them. Watch for it coming out.": "Skjár! Leikmaður fyrir framan felur pökkinn þar til hann er kominn framhjá. Fylgstu með honum koma út.",
   "Seals the ice when down, but the top of the net opens up.": "Lokar svellinu þegar hann fer niður, en efri hluti marksins opnast.",
   "Season": "Tímabil",
   "season {n}": "tímabil {n}",

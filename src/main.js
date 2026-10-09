@@ -821,6 +821,7 @@ class App {
     });
     m.on('plan_change', (e) => { if (!m.humans.includes(e.team)) this.hud.ticker(t('The {team} switch to {plan}!', { team: e.team === 1 ? (teamInfo(this.awayTeamId).nick || teamInfo(this.awayTeamId).name.split(' ').slice(-1)[0]) : CLUB.nick, plan: t(GAME_PLANS[e.id].name) })); });
     m.on('tip', (e) => audio.sfx('stick', at(e.s.x, e.s.y, 0.7)));
+    m.on('screen', (e) => { if (e.g.human && !this.attract && !(this.cur && this.cur.versus) && firstTime(this.save, 'screened')) this.hud.hint(t('Screened! A body in front hides the puck until it\'s past them. Watch for it coming out.'), 4); });
     m.on('penalty_delayed', (e) => {
       audio.crowdOoh(0.4);
       if (!this.attract && e.team === 1 && !m.goalieMode && !(this.cur && this.cur.versus) && firstTime(this.save, 'delayed')) this.hud.hint(this.isTouch ? t('Delayed penalty! The whistle waits until they touch the puck. Keep it, and tap PULL GOALIE for a free extra attacker.') : this.input.lastDevice === 'gamepad' ? t('Delayed penalty! The whistle waits until they touch the puck. Keep it, and press Back for a free extra attacker.') : t('Delayed penalty! The whistle waits until they touch the puck. Keep it, and press H for a free extra attacker.'), 6);
