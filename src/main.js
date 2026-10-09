@@ -1261,7 +1261,8 @@ class App {
     const c = this.renderer.c;
     if (!c || !c.toBlob) return;
     audio.sfx('click');
-    c.toBlob(async (b) => {
+    const shoot = (fn) => { try { c.toBlob(fn, 'image/png'); } catch { if (btn) btn.disabled = true; } }; // (a canvas that won't give itself up)
+    shoot(async (b) => {
       if (!b) return;
       const name = `puckbound-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.png`;
       const file = new File([b], name, { type: 'image/png' });
@@ -1273,7 +1274,7 @@ class App {
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 4000);
       if (btn) { btn.textContent = t('Saved!'); setTimeout(() => { if (btn.isConnected) btn.textContent = t('Photo'); }, 1500); }
-    }, 'image/png');
+    });
   }
 
   // The pause menu's match stats: shots, each skater's line and the shot map so far.
