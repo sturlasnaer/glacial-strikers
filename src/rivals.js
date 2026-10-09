@@ -33,7 +33,10 @@ export function recordRivalResult(save, teamId, gf, ga, won, opts = {}) {
 export function rivalLines(save, teamId) {
   const r = save.rivals && save.rivals[teamId];
   const team = TEAMS[teamId];
-  if (!r || !r.last || !team) return [];
+  // one of ours scoring in game after game: they've noticed
+  const hot = team && Object.entries(save.goalStreaks || {}).filter(([id, n]) => n >= 3 && save.roster[id] && member(id)).sort((a, b) => b[1] - a[1])[0];
+  const hotLine = hot ? ['them', 'stone', t('{name}, {n} games in a row with a goal? Not tonight.', { name: member(hot[0]).name, n: hot[1] })] : null;
+  if (!r || !r.last || !team) return hotLine ? [hotLine] : [];
   const L = r.last;
   const seed = r.played * 7 + r.gf * 3 + r.ga;
   const ours = (id) => (member(id) ? member(id).name : t('Somebody'));
@@ -54,6 +57,7 @@ export function rivalLines(save, teamId) {
     if (r.streak <= -2) lines.push(['us', 'thunder', t('{n} losses in a row to these guys. That ends today.', { n: -r.streak })]);
   }
   if (save.season > 1 && L.season < save.season && seed % 2 === 0) lines.push(['them', 'frost', t('New season, same Foxes? We\'ll see.')]);
+  if (hotLine) lines.splice(1, 0, hotLine);
   const poached = poachedLine(save, teamId);
   if (poached) lines.unshift(poached);
   return lines.slice(0, 3);

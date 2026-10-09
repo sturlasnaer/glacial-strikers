@@ -147,6 +147,7 @@ export const IS = {
   "{name} with the glove!": "{name} grípur hann með hanskanum!",
   "{name} won't forget that one.": "{name} á eftir að muna eftir þessari.",
   "{name} would join their reserves. The offer goes when you leave this screen.": "{name} færi á varamannabekkinn þeirra. Tilboðið fellur niður þegar þú ferð af þessum skjá.",
+  "{name}, {n} games in a row with a goal? Not tonight.": "{name}, {n} leikir í röð með mark? Ekki í kvöld.",
   "{name}: choose a perk": "{name}: veldu eiginleika",
   "{name}: goalie camp": "{name}: markmannabúðir",
   "{name}: training camp": "{name}: æfingabúðir",
