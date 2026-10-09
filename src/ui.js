@@ -709,7 +709,7 @@ export class UI {
     const had = !!(L.goals && L.goals.season === L.season);
     const goals = goalStates(s);
     if (!had && goals.length) writeSave(s);
-    const goalsHtml = goals.length ? `<div class="label" style="margin:12px 0 4px;font-size:14px">${t('Season goals')}</div>
+    const goalsHtml = goals.length ? `<div class="label" style="margin:12px 0 4px;font-size:14px;display:flex;align-items:center;gap:6px">${Assets.atlas.frames['icons/season_goals'] ? smallIcon('icons/season_goals', 40, 'sg-ico') : ''}${t('Season goals')}</div>
       <div class="season-goals">${goals.map((g) => `<div class="sg ${g.done ? 'done' : g.failed ? 'failed' : ''}">
         <span class="sg-text">${esc(t(g.text, { n: g.n }))}</span>
         <span class="sg-res">${g.done ? `<span class="good">${t('Done')}</span>` : g.failed ? `<span class="bad">${t('Missed')}</span>` : g.progress ? `<span class="muted">${g.progress}</span>` : ''}<span class="gold-t">+${g.coins}</span></span></div>`).join('')}</div>
@@ -2052,7 +2052,7 @@ export class UI {
         const best = tr.best[d.id];
         const medal = tr.medals[d.id] || 0;
         return `<div class="card drill">
-          <div class="card-head"><img src="${ico(d.icon, 128)}" alt="" style="border:0;background:none">
+          <div class="card-head"><img src="${ico(d.art && Assets.atlas.frames[d.art] ? d.art : d.icon, 128)}" alt="" style="border:0;background:none">
             <div style="min-width:0"><h3>${esc(t(d.name))}</h3><div class="sub">${t('Trains {skill}', { skill: esc(t(d.trains)) })}</div>
               <div class="medal-row">${[1, 2, 3].map((mi) => `<span class="medal ${mi <= medal ? 'got' : ''}" style="--m:${MEDAL_COLORS[mi]}" title="${t(MEDAL_NAMES[mi])}: ${formatScore(d, d.medals[mi - 1])}">${badge(MEDAL_BADGES[mi <= medal ? mi : 0], 44, 'medal-ico')}${formatScore(d, d.medals[mi - 1])}</span>`).join('')}</div>
             </div></div>

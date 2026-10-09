@@ -991,9 +991,9 @@ class App {
     if (!c.exhibition && s.league) { // Coach Brekka's season goals: paid as they're met
       const sg = updateSeasonGoals(s, { kind: c.fixture ? c.fixture.kind : 'regular', won: rewards.won, summary, opp: c.teamId });
       for (const g of sg.met) rewards.lines.push([t('Season goal: {goal}', { goal: t(g.text, { n: g.n }) }), g.coins]);
-      if (sg.bonus) rewards.lines.push([t('All three season goals!'), sg.bonus]);
+      if (sg.bonus) { rewards.lines.push([t('All three season goals!'), sg.bonus]); this.ach.unlock('coachs-orders'); }
       rewards.coins += sg.met.reduce((a, g) => a + g.coins, 0) + sg.bonus;
-      if (sg.met.length) setTimeout(() => this.toast(Assets.icon((Assets.atlas.npcs && Assets.atlas.npcs.coach) || 'badges/daily_star', 72), t('Season goal'), t(sg.met[0].text, { n: sg.met[0].n }), t('+{n} coins', { n: sg.met[0].coins + sg.bonus })), 2400);
+      if (sg.met.length) setTimeout(() => this.toast(Assets.icon(Assets.atlas.frames['icons/season_goals'] ? 'icons/season_goals' : (Assets.atlas.npcs && Assets.atlas.npcs.coach) || 'badges/daily_star', 72), t('Season goal'), t(sg.met[0].text, { n: sg.met[0].n }), t('+{n} coins', { n: sg.met[0].coins + sg.bonus })), 2400);
     }
     if (c.daily) {
       const goal = dailyGoal(c.daily.goal);

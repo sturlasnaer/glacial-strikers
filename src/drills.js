@@ -35,7 +35,7 @@ export const DRILLS = {
     medals: [2, 3, 4],
   },
   faceoffs: {
-    id: 'faceoffs', name: 'Faceoffs', trains: 'Draws', icon: 'achievements/off_the_drop', unit: 'draws', offline: true,
+    id: 'faceoffs', name: 'Faceoffs', trains: 'Draws', icon: 'achievements/off_the_drop', art: 'equipment_items/hub/faceoffs', unit: 'draws', offline: true, // (art: Batch BO, when it's in)
     text: 'Ten draws against a centre who gets quicker every time. Press SHOOT or PASS as the puck touches the ice: go while it\'s still in the air and you\'re held back.',
     medals: [5, 7, 9],
   },

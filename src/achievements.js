@@ -62,6 +62,10 @@ export const ACHIEVEMENTS = [
   { id: 'sold-it', name: 'Sold It', text: 'Score right after a deke makes the goalie bite.', icon: 'icons/arch_dangler', art: 'achievements/sold_it', coins: 70 },
   { id: 'penalty-shot', name: 'From the Spot', text: 'Score on a penalty shot.', icon: 'icons/challenge', art: 'achievements/from_the_spot', coins: 60 },
   { id: 'off-the-drop', name: 'Off the Drop', text: 'Win three faceoffs clean in one match.', icon: 'power_pucks/plain/phase_1', art: 'achievements/off_the_drop', coins: 60 },
+  // tip-ins, delayed penalties and the season goals (Batch BO art; a stand-in until then)
+  { id: 'redirect', name: 'Redirect', text: 'Score on a tip-in.', icon: 'equipment_items/stick/slapshot', art: 'achievements/redirect', coins: 50 },
+  { id: 'wiped-out', name: 'Wiped Out', text: 'Score while a delayed penalty is coming against them.', icon: 'achievements/clean_game', art: 'achievements/wiped_out', coins: 60 },
+  { id: 'coachs-orders', name: 'Coach\'s Orders', text: 'Meet all three of Coach Brekka\'s season goals.', icon: 'equipment_items/hub/target', art: 'achievements/coachs_orders', coins: 120 },
   { id: 'weekly-cup', name: 'Cup of the Week', text: 'Win a Weekly Cup on a friends board.', icon: 'badges/rank_1', art: 'achievements/cup_of_the_week', coins: 100 },
 ];
 // Batch AF: the achievements that borrowed a gear or HUD picture get their own.
@@ -150,6 +154,8 @@ export class AchievementTracker {
       if (m.time - plankT < 2.5) this.unlock('splinters');
       if (m.time - biteT < 2) this.unlock('sold-it');
       if (ourShot) this.unlock('penalty-shot');
+      if (g.kind === 'tip') this.unlock('redirect');
+      if (g.delayed) this.unlock('wiped-out');
     });
     m.on('no_goal', () => { this.minDiff = Math.min(this.minDiff, m.score[0] - m.score[1]); });
     m.on('chain', (e) => { if (e.team === 0 && e.n >= 5) this.unlock('tic-tac-toe'); });
