@@ -303,7 +303,9 @@ export class Match {
       }
       if (winner) {
         this.takePossession(winner, 'faceoff');
-        this.emit('faceoff_win', { s: winner, clean: human(winner) && t < 0.12 }); // (right on the drop)
+        const clean = human(winner) && t < 0.12; // (right on the drop)
+        if (clean) winner.stats_.cleanDraws++;
+        this.emit('faceoff_win', { s: winner, clean });
         this.state = 'play'; this.stateT = 0;
       } else if (t > 0.9) { this.state = 'play'; this.stateT = 0; }
     }
@@ -442,6 +444,7 @@ export class Match {
       by.biteT = 0.55; by.biteY = -py * 26; // (sold the other way)
       this.emit('deke_goalie', { s, g: by });
     }
+    s.stats_.dekes++;
     this.emit('deke', { s, by });
     return true;
   }

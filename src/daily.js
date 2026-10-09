@@ -14,6 +14,9 @@ export const DAILY_GOALS = [
   { id: 'hits', text: 'Win with 8 or more hits.', check: (s) => s.winner === 0 && s.skaters.filter((k) => k.team === 0).reduce((a, k) => a + k.hits, 0) >= 8 },
   { id: 'combo', text: 'Win and score a chemistry combo goal.', check: (s) => s.winner === 0 && s.goals.some((g) => g.team === 0 && g.special && g.special.combo) },
   { id: 'shield', text: 'Win and shield the puck from a defender 8 times.', check: (s) => s.winner === 0 && s.skaters.filter((k) => k.team === 0).reduce((a, k) => a + (k.shields || 0), 0) >= 8 },
+  // (from: a goal added later joins the draw from that date, so earlier days keep their challenge)
+  { id: 'dekes', from: '2026-10-10', text: 'Win and deke past defenders 5 times.', check: (s) => s.winner === 0 && s.skaters.filter((k) => k.team === 0).reduce((a, k) => a + (k.dekes || 0), 0) >= 5 },
+  { id: 'draws', from: '2026-10-10', text: 'Win and take 3 faceoffs clean, right on the drop.', check: (s) => s.winner === 0 && s.skaters.filter((k) => k.team === 0).reduce((a, k) => a + (k.cleanDraws || 0), 0) >= 3 },
   { id: 'spread', text: 'Win with all three skaters scoring a point.', check: (s) => s.winner === 0 && s.skaters.filter((k) => k.team === 0 && !k.extra).every((k) => k.goals + k.assists > 0) },
 ];
 const GOAL_BY_ID = Object.fromEntries(DAILY_GOALS.map((g) => [g.id, g]));
@@ -42,7 +45,7 @@ export function dailyFor(date = dayKey()) {
   const mods = [];
   const n = rng() < 0.45 ? 2 : 1;
   while (mods.length < n) { const c = pick(pool).id; if (!mods.includes(c)) mods.push(c); }
-  let goal = pick(DAILY_GOALS);
+  let goal = pick(DAILY_GOALS.filter((g) => !g.from || date >= g.from));
   if (mods.includes('onetimers') && goal.id === 'combo') goal = GOAL_BY_ID.onetimer;
   return { date, teamId, arena, mods, goal: goal.id, seed: hash('seed-' + date) };
 }
