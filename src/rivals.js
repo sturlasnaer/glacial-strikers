@@ -41,19 +41,19 @@ export function rivalLines(save, teamId) {
   const lines = [];
   if (L.won) {
     const margin = L.gf - L.ga;
-    if (L.shootout) lines.push(['them', 'frost', pick([`A shootout. You beat us in a shootout. That's not hockey, that's a coin toss.`, `Last time it came down to a shootout. This time we finish it in regulation.`], seed)]);
+    if (L.shootout) lines.push(['them', 'frost', pick([t('A shootout. You beat us in a shootout. That\'s not hockey, that\'s a coin toss.'), t('Last time it came down to a shootout. This time we finish it in regulation.')], seed)]);
     else if (L.top) lines.push(['them', 'stone', pick([t('{name} put {n} past us last time. We\'ve drilled for that all week.', { name: ours(L.top.id), n: L.top.goals }), t('Somebody keep an eye on {name}. {n} goals on us last game. Never again.', { name: ours(L.top.id), n: L.top.goals })], seed)]);
     else if (margin >= 3) lines.push(['them', 'frost', pick([t('{gf}–{ga}. We haven\'t forgotten. Not for a second.', { gf: L.gf, ga: L.ga }), t('Still hearing about that {gf}–{ga} loss back home. Today we fix it.', { gf: L.gf, ga: L.ga })], seed)]);
     else lines.push(['them', 'thunder', pick([t('{gf}–{ga} last time. One lucky bounce, that\'s all you had.', { gf: L.gf, ga: L.ga }), t('You squeaked by us {gf}–{ga}. Enjoyed it? It won\'t happen twice.', { gf: L.gf, ga: L.ga })], seed)]);
     if (r.streak >= 2) lines.push(['them', 'stone', t('{n} straight losses to the Foxes. Coach made us skate laps until midnight.', { n: r.streak })]);
-    else if (seed % 3 === 0) lines.push(['us', 'thunder', `They remember us. Good. Let's give them something new to remember.`]);
+    else if (seed % 3 === 0) lines.push(['us', 'thunder', t('They remember us. Good. Let\'s give them something new to remember.')]);
   } else {
     if (L.theirTop) lines.push(['us', 'stone', t('{name} scored {n} on us last time. I\'m on them all game.', { name: theirs(L.theirTop.id), n: L.theirTop.goals })]);
     else lines.push(['us', 'frost', t('They beat us {ga}–{gf} last time. Remember how that felt.', { ga: L.ga, gf: L.gf })]);
-    lines.push(['them', 'thunder', pick([`Back for another lesson, Foxes?`, `Didn't you learn anything last time?`, `Oh good, the Foxes. Easy points.`], seed)]);
+    lines.push(['them', 'thunder', pick([t('Back for another lesson, Foxes?'), t('Didn\'t you learn anything last time?'), t('Oh good, the Foxes. Easy points.')], seed)]);
     if (r.streak <= -2) lines.push(['us', 'thunder', t('{n} losses in a row to these guys. That ends today.', { n: -r.streak })]);
   }
-  if (save.season > 1 && L.season < save.season && seed % 2 === 0) lines.push(['them', 'frost', `New season, same Foxes? We'll see.`]);
+  if (save.season > 1 && L.season < save.season && seed % 2 === 0) lines.push(['them', 'frost', t('New season, same Foxes? We\'ll see.')]);
   const poached = poachedLine(save, teamId);
   if (poached) lines.unshift(poached);
   return lines.slice(0, 3);
