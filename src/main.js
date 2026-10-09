@@ -849,6 +849,7 @@ class App {
     });
     m.on('faceoff', () => audio.sfx('whistle', { vol: 0.55 }));
     m.on('penalty_shot', () => this.replay.clear()); // (its replay starts at centre ice, not before the foul)
+    m.on('hat_trick', () => setTimeout(() => { if (this.match === m) audio.crowdCheer(1); }, 400)); // (the hats come down to a roar)
     m.on('faceoff_early', (e) => {
       audio.sfx('deny', { vol: 0.5 });
       if (this.attract || e.s.team !== 0 || (this.cur && this.cur.versus) || !firstTime(this.save, 'faceoff')) return; // (versus has its own keys)
