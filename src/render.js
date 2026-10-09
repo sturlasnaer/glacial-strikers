@@ -1620,6 +1620,13 @@ export class Renderer {
     const e = 1 - Math.exp(-dt * (on ? 30 : 18)); // (quick: it follows the blade from forehand to backhand)
     off.x += ((on ? on.x - s.x : 0) - off.x) * e; off.y += ((on ? on.y - s.y : 0) - off.y) * e;
     s = { x: s.x + off.x, y: s.y + off.y };
+    // off the ice: its shadow below it, smaller and fainter the higher it goes, so a lifted
+    // shot or a chip reads as up in the air
+    if (p.z > 1.5 && !p.inNet) {
+      const g = toScreen(p.x, p.y, 0), k = persp(p.y) * Math.max(0.55, 1 - p.z * 0.006);
+      ctx.fillStyle = `rgba(12, 24, 44, ${Math.max(0.12, 0.34 - p.z * 0.003).toFixed(3)})`;
+      ctx.beginPath(); ctx.ellipse(g.x + off.x, g.y - 1, 7 * k, 2.8 * k, 0, 0, Math.PI * 2); ctx.fill();
+    }
     const sp = p.shot && p.shot.special;
     const comboType = sp && sp.combo ? { 'frost+thunder': 'lightning', 'frost+stone': 'ice', 'stone+thunder': 'lightning' }[sp.combo] : null;
     const type = p.power || comboType || (sp && sp.zero ? 'ice' : sp && (sp.thunder || sp.charged) ? 'lightning' : 'plain');
