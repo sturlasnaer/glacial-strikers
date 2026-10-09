@@ -7,9 +7,8 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **BB** (under way, team by team: the Pinewood Lynx are in): the other hand for the founding rivals' fifteen skaters.
-2. **BD**: stick-handling frames: the puck dangled from forehand to backhand, in eight directions, for the players you control most.
-3. **BE**: crossovers: skaters crossing their feet through turns.
+1. **BD**: stick-handling frames: the puck dangled from forehand to backhand, in eight directions, for the players you control most.
+2. **BE**: crossovers: skaters crossing their feet through turns.
 
 ## Format notes
 
@@ -25,7 +24,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - **Batch AP:** big and slim rookies pull on our jersey too.
 - **Batches AQ to AU:** cut-in backdrops for players made from parts, Vigga the agent, the linesman's signals for each call, goalies made from parts (a body and six painted masks), and the Glacier Owls' and Thunder Moose's crests, buildings, mascots, scoreboards, banners and captains.
 - **Batches AV to AZ:** icons for the league news, six crests for the player's club, big and slim goalie builds, the Observatory's moonbeams and the Longhouse's loose planks, and six more heads.
-- **Batches BA and BC:** Talon and Tamarack as full characters (their cut-ins match now), and six more goalie masks for the mask picker at goalie camp (Snow Fox, aurora, lightning, tiger, royal crown, pixel).
+- **Batches BA to BC:** Talon and Tamarack as full characters (their cut-ins match now), the founding rivals' fifteen skaters facing west with their own stick hand, and six more goalie masks for the mask picker at goalie camp (Snow Fox, aurora, lightning, tiger, royal crown, pixel).
 
 ---
 
@@ -78,17 +77,6 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - **Batch AM:** the element stones, style camp, respec and trade icons, and Ottar holding up a stone and Brekka with the whistle in the training camp.
 
 ---
-
-## Batch BB: the other hand for the founding rivals
-
-Batch AK drew our cast and the newcomers facing west, so a left shot stays a left shot whichever way they skate. The fifteen founding rival skaters still only face east and are mirrored for west, so their stick jumps to the other hand every time they turn round. That shows most once you sign one. Please draw the same AK set for each of them: the west, northwest and southwest directions with the stick in their own hand, the west side stride, stop and glide, and the `hands` map for each direction. Their stick hands:
-- Pinewood Lynx: Fern L, Pip R, Oakley L.
-- Ember Comets: Cinder R, Blaze L, Ash R.
-- Gilded Rams: Aurum L, Gilda R, Horn L.
-- Obsidian Ravens: Corvin R, Nyx L, Basalt L.
-- Aurora Royals: Solenne L, Aurelio R, Regalia R.
-
-Coral + violet as before, gear masks for the new frames (Batch M format), and the same scale and baseline as their existing sheets. About 33 frames each, about 500 in all. Splitting it into deliveries by team is fine.
 
 ## Batch BD: stick-handling frames
 

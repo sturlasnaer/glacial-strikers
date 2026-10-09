@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { handMirror } from '../src/hands.js';
 import { Linesman, DROP } from '../src/linesman.js';
 import { Match } from '../src/match.js';
-import { CHARACTERS } from '../src/data.js';
+import { CHARACTERS, RECRUITS, TEAMS } from '../src/data.js';
 import { ACHIEVEMENTS, useAchievementArt } from '../src/achievements.js';
 
 let pass = 0, fail = 0;
@@ -92,6 +92,13 @@ for (const key of ['glacier_owls_c', 'thunder_moose_c']) {
   const S = A.skaters[key];
   check(`${key}: eight directions, strides both ways, hits, signature, hands`, S && EIGHT.every((d) => S.away[d] && Object.values(S.away[d].frames).every((f) => F[f])) && S.away.stride.frames.length === 4 && S.away.stride_west.frames.length === 4 && S.away.hit.east.length === 3 && S.away.signature.length === 4 && S.away.hands.south);
   check('...on their club\'s pages, gear masks, portraits', A.pages[F[S.away.south.frames.idle][0]].group === 'rival_' + key.slice(0, -2) && F['gm:' + S.away.east.frames.idle] && ['neutral', 'grin', 'determined', 'shocked', 'defeated'].every((e) => F[A.portraits[key][e]]));
+}
+
+// BB: the founding rivals facing west, each keeping their own stick hand
+{
+  const keys = Object.keys(RECRUITS).filter((k) => TEAMS[RECRUITS[k].team].art);
+  const ok = keys.filter((k) => { const S = A.skaters[RECRUITS[k].sprite].away; return ['west', 'northwest', 'southwest'].every((d) => S[d].flip_x === false && F[S[d].frames.idle]) && S.hands.west === RECRUITS[k].hand && S.stride_west.frames.length === 4 && S.hit.west.length === 3; });
+  check('all fifteen founding rival skaters drawn facing west, in their own hand', keys.length === 15 && ok.length === 15, keys.filter((k) => !ok.includes(k)));
 }
 
 // achievements: own icons for the old borrowers
