@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10b',
+    items: [
+      { icon: 'icons/share', text: 'Press conferences: after a big game Kip Vance puts a question to the player of the night. Stay humble, sound confident or fire back: each answer gives an edge, and it makes the league news.' },
+    ],
+  },
+  {
     id: '2026-10-10',
     items: [
       { icon: 'icons/friends', text: 'Club facilities, in the shop: build up the Stands, a Training centre, a Scouting office and a Physio room, three levels each, for a louder home crowd, more EXP from drills, better prospects and fresher legs.' },

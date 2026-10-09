@@ -29,6 +29,7 @@ import { latestNews } from './news.js';
 import { audio } from './audio.js';
 import { t } from './i18n.js';
 import { FACILITIES, FACILITY_IDS, MAX_FACILITY, facilityLevel, nextCost, buildFacility } from './facilities.js';
+import { pressQuestion, PRESS_ANSWERS, pressHeadline } from './press.js';
 import { ACTIONS, LOCKED, keyMap, keyName, keyNames, firstKey, moveGroups, groupText, setKeyMap, bindKey, canBind, sideless, isDefault,
   PAD_ACTIONS, PAD_LOCKED, padMap, padName, padNames, firstPad, setPadMap, bindPad, canBindPad, isPadDefault } from './keys.js';
 import { RINK, GOAL_X, BLUE_X, CREASE, MOUTH, NET_DEPTH } from './rink.js';
@@ -195,7 +196,7 @@ export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '
 
 // The league news icon for each kind of story (Batch AV).
 const NEWS_ICON = { edge: 'edge', rivalSign: 'sign', weSign: 'sign', weGoalie: 'sign', weAgent: 'sign', weLegend: 'sign', rivalDraft: 'draft', weDraft: 'draft', trade: 'trade', retire: 'retire', champion: 'cup', expansion: 'new_club' };
-const NEWS_ART = { hatTrick: 'achievements/hat_trick', streak: 'badges/streak_flame' }; // (news without a news icon of its own)
+const NEWS_ART = { hatTrick: 'achievements/hat_trick', streak: 'badges/streak_flame', press: 'icons/share' }; // (news without a news icon of its own)
 // The locker room hub: stations in the painting, in % of the 16:9 image.
 const STATIONS = [
   { tab: 'team', label: 'Team', icon: 'equipment_items/hub/locker', rect: [19, 2, 47, 27], at: [42, 15], tip: 'Lockers: line-up, stats, gear and scouting' },
@@ -798,6 +799,7 @@ export class UI {
         case 'expansion': return t('The Glacier Owls and Thunder Moose join the Frostline.');
         case 'edge': return t('The league has noticed the {club}: the rivals trained hard all summer.', { club: esc(CLUB.nick) });
         case 'streak': return t('{name} has scored in {n} straight games.', { name, n: n.n });
+        case 'press': return t(pressHeadline(n.tone), { name, team: tn(n.team), club: esc(CLUB.nick) });
         case 'hatTrick': return t(n.n > 3 ? '{name} scores {n} against the {team}. The hats are still coming down.' : '{name} scores a hat trick against the {team}. Hats everywhere!', { name, team: tn(n.team), n: n.n });
         default: return '';
       }
@@ -1268,6 +1270,34 @@ export class UI {
   }
 
   // A locker-room scene with two choices. choose(i) applies it and returns the reply text.
+  // A press conference after a big game (press.js): Kip's question to the player of the night,
+  // three answers, then the reply and what it does. (In the press room once Batch BT is in.)
+  pressConference(game, who, vars, answer, done) {
+    const npcs = Assets.atlas.npcs || {}, kipId = npcs.announcer_press || npcs.announcer;
+    const kip = kipId ? Assets.icon(kipId, 152) : '';
+    const room = Assets.atlas.frames['press/room'] ? Assets.icon('press/room', 640) : '';
+    audio.sfx('blip');
+    this.modal(`
+      <div class="label">${t('Press conference')}</div>
+      <div class="locker press"${room ? ` style="background-image:url(${room})"` : ''}>
+        <div class="locker-faces">${kip ? `<img src="${kip}" alt="">` : ''}<img src="${portrait(who, 0, null, 152)}" alt=""></div>
+        <div><h2>${esc(t('Kip Vance asks'))}</h2><p style="margin:6px 0 0">${esc(clubText(t(pressQuestion(game), vars)))}</p></div>
+      </div>
+      <div class="choice" id="pc-choices">${PRESS_ANSWERS.map((a, i) => `<button class="btn ghost" data-pc="${i}"><b>${esc(t((game.won ? a.win : a.loss).label))}</b>${esc(t(a.fx))}</button>`).join('')}</div>
+      <div id="pc-reply" hidden></div>`, (el, close) => {
+      this.click('[data-pc]', (b) => {
+        const a = answer(+b.dataset.pc);
+        if (!a) return;
+        audio.sfx('confirm');
+        el.querySelector('#pc-choices').hidden = true;
+        const r = el.querySelector('#pc-reply');
+        r.hidden = false;
+        r.innerHTML = `<p style="margin:0 0 6px"><b>${esc(vars.name)}:</b> ${esc(clubText(t(a.reply, vars)))}</p><p class="gold-t" style="margin:0 0 6px">${esc(t(a.fx))}</p><p class="muted" style="margin:0 0 10px;font-size:12.5px">${t('Tomorrow\'s headline')}: ${esc(clubText(t(pressHeadline(a.tone), vars)))}</p><div class="row" style="justify-content:flex-end"><button class="btn gold" id="pc-go">${t('Continue')}</button></div>`;
+        r.querySelector('#pc-go').addEventListener('click', () => { close(); done(); });
+      }, el);
+    }, false);
+  }
+
   lockerMoment(m, ctx, choose, done) {
     const who = m.whoFn ? m.whoFn(ctx) : m.who;
     audio.sfx('blip');

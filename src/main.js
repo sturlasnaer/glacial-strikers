@@ -12,6 +12,7 @@ import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as clou
 import { ARENA_MUSIC } from './songs.js';
 import { ResurfacerLap } from './scenery.js';
 import { UI, controlsHtml, crest, ruleIconSrc, cupPlaceImg, portrait, shotMapSvg, esc, hintKeys } from './ui.js';
+import { pressWorthy, pressPlayer, answerPress } from './press.js';
 import { chantBoost, trainingSessions } from './facilities.js';
 import { isKey, setKeyMap, setPadMap } from './keys.js';
 import { HUD } from './hud.js';
@@ -22,7 +23,7 @@ import { ClipRecorder } from './clips.js';
 import { AchievementTracker, useAchievementArt, ACHIEVEMENTS } from './achievements.js';
 import { createDrill, medalFor, DRILL_REWARDS } from './drills.js';
 import { makeSkills, recordSkills, SKILLS_EVENTS } from './skills.js';
-import { recordRivalResult, rivalLines, rivalAfterLine } from './rivals.js';
+import { recordRivalResult, rivalLines, rivalAfterLine, rivalRecord } from './rivals.js';
 import { recordRealGame, computeAwards, AWARD_BY_ID } from './awards.js';
 import { dailyFor, dailyGoal, completeDaily, noteAttempt, dayKey, dailyState } from './daily.js';
 import { standings } from './league.js';
@@ -30,7 +31,7 @@ import { nextFixture, recordOurGame, newLeague, rivalPlan, recordClassic, record
 import { updateSeasonGoals, goalStates } from './goals.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, EXPANSION_LINES } from './data.js';
+import { member, TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, EXPANSION_LINES } from './data.js';
 import { rollLegend, legendState, STAY, joinLegend, LEGEND_LINES, twinsFirstTogether } from './legends.js';
 import { rivalSigning, rivalOffer } from './moves.js';
 import { refreshAgents } from './agents.js';
@@ -1170,6 +1171,15 @@ class App {
     let streak = 0;
     if (L) for (let i = L.results.length - 1; i >= 0; i--) { const g = L.results[i][0]; if (g.ga > g.gb) streak++; else break; }
     const ctx = { won: rewards.won, gf: summary.score[0], ga: summary.score[1], summary, streak, next: this.fixture(), ups: [] };
+    // after a big game the press gets the player of the night instead
+    const c = this.cur, game = { kind: c && c.fixture ? c.fixture.kind : 'regular', opp: c && c.teamId, won: rewards.won };
+    const who = c && pressWorthy(s, game) && pressPlayer(summary);
+    if (who && member(who)) {
+      this.scene = 'results';
+      const away = teamInfo(game.opp), name = member(who).name;
+      const vars = { name, team: away ? away.name : '', club: CLUB.nick, score: `${summary.score[0]}–${summary.score[1]}`, n: Math.abs(rivalRecord(s, game.opp).streak) };
+      return this.ui.pressConference(game, who, vars, (i) => { const a = answerPress(s, game, who, name, i); writeSave(s); return a; }, () => this.resolvePerks(done));
+    }
     const m = pickMoment(s, ctx);
     if (!m) return done();
     this.scene = 'results';
