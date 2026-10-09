@@ -195,7 +195,10 @@ export class Match {
     }
     else {
       const incoming = !p.owner && p.pass && p.pass.to === c;
-      if (incoming || (c.prevIn.shoot && raw.a)) inp.shoot = raw.a;
+      // a teammate's shot coming by in front of the net: SHOOT is for the tip, not a check
+      const tip = !p.owner && p.shot && p.shot.team === c.team && p.shot.by !== c && !p.shot.tipped && Math.hypot(p.x - c.x, p.y - c.y) < 240
+        && Math.hypot(c.side * GOAL_X - c.x, c.y) < 190;
+      if (incoming || tip || (c.prevIn.shoot && raw.a)) inp.shoot = raw.a;
       else inp.check = raw.a;
       inp.switch = raw.b;
     }

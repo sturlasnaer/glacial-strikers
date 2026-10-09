@@ -244,6 +244,31 @@ const mk = (seed = 5) => new Match({ teams: [team(), team()], humanTeam: null, s
   setTipBase(base);
 }
 
+// the player in front pressing SHOOT as a teammate's shot comes by: a tip (most of the time), never
+// a body check
+{
+  const raw = (o = {}) => ({ mx: 0, my: 0, sprint: false, a: false, b: false, skill: false, ult: false, ...o });
+  let tips = 0, checks = 0;
+  for (let i = 0; i < 30; i++) {
+    const m = new Match({ teams: [team(), team()], humanTeam: 0, seed: 600 + i, powers: [], diff: [0.6, 0.6] });
+    m.state = 'play';
+    for (const a of m.ai) a.update = () => {};
+    const me = m.teamSkaters(0)[0], d = m.teamSkaters(0)[2];
+    for (const o of m.skaters) if (o !== me && o !== d) { o.x = -500; o.y = o.slot * 60 - 60; }
+    for (const k of m.skaters) k.controlled = k === me;
+    me.x = GOAL_X - 80; me.y = 8; me.face = Math.PI; d.x = 260; d.y = (i % 3 - 1) * 60; d.face = 0;
+    m.takePossession(d, 'catch');
+    m.shoot(d, { kind: 'wrist' });
+    const st = me.stickPoint(), sp = Math.hypot(m.puck.vx, m.puck.vy), dd = Math.hypot(st.x - m.puck.x, st.y - m.puck.y);
+    m.puck.vx = (st.x - m.puck.x) / dd * sp; m.puck.vy = (st.y - m.puck.y) / dd * sp; m.puck.curve = null;
+    let tipped = false, checked = false;
+    m.on('tip', () => { tipped = true; });
+    for (let f = 0; f < 60 && (m.puck.shot || f < 5); f++) { m.setHumanInput(raw({ a: Math.hypot(m.puck.x - me.x, m.puck.y - me.y) < 130 })); m.update(1 / 60); if (me.in.check) checked = true; }
+    if (tipped) tips++; if (checked) checks++;
+  }
+  check('tips: the player pressing SHOOT in front tips it, without a check', tips >= 15 && checks === 0, { tips, checks });
+}
+
 // screens: a body in the shot's way in front of the goalie makes the read later; one off to the
 // side doesn't
 {
