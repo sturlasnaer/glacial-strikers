@@ -682,6 +682,8 @@ body.in-hub.hub-room #screen { background: linear-gradient(rgba(8, 14, 26, 0.82)
 .aw-front span { display: block; margin-top: 4px; font-size: 14px; }
 .aw-team { display: inline-flex !important; gap: 6px; align-items: center; }
 .aw-list { display: grid; gap: 6px; width: 100%; }
+.aw-goals { width: 100%; margin-bottom: 8px; }
+.aw-goals .label { margin-top: 0 !important; }
 .aw-row { display: grid; grid-template-columns: 44px 1fr 28px; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 8px; background: rgba(13, 24, 42, 0.55); border: 2px solid var(--navy-3); }
 .aw-row.us { border-color: var(--ice); background: rgba(30, 90, 102, 0.35); }
 .aw-row img { width: 44px; height: 44px; border-radius: 8px; }

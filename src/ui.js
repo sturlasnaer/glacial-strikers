@@ -1097,7 +1097,12 @@ export class UI {
     const summary = () => {
       setPose('speaking');
       say.textContent = t('That\'s a wrap on the season. See you on the ice!');
+      // and how Coach Brekka's goals went
+      const gs = goalStates(this.app.save), met = gs.filter((g) => g.done).length;
+      const goals = gs.length ? `<div class="label" style="margin:10px 0 4px">${t('Season goals: {n} of {total} met', { n: met, total: gs.length })}</div>
+        <div class="season-goals">${gs.map((g) => `<div class="sg ${g.done ? 'done' : 'failed'}"><span class="sg-text">${esc(t(g.text, { n: g.n }))}</span><span class="sg-res">${g.done ? `<span class="good">${t('Done')}</span><span class="gold-t">+${g.coins}</span>` : `<span class="bad">${t('Missed')}</span>`}</span></div>`).join('')}</div>` : '';
       stage.innerHTML = `<div class="aw-list">${list.map((w) => `<div class="aw-row ${w.team === 'home' ? 'us' : ''}"><img src="${rowFace(w, 64)}" alt=""><div style="min-width:0"><small>${esc(t(AWARD_BY_ID[w.id].name))}</small><b>${esc(w.name)}</b><span class="muted">${esc(w.line)}</span></div><img class="cr" src="${crest(w.team, 40)}" alt=""></div>`).join('')}</div>`;
+      if (goals) stage.insertAdjacentHTML('afterbegin', `<div class="aw-goals">${goals}</div>`); // (first: the awards were just read out)
       next.textContent = t('Back to the locker room');
     };
     this.click('#aw-next', () => {
