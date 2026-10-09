@@ -52,6 +52,12 @@ export const ACHIEVEMENTS = [
   { id: 'ragnarok', name: 'Ragnarök', text: 'Score with Ragnarök, the twins\' combo.', icon: 'hud_elements/ability/fire', art: 'achievements/ragnarok', coins: 150 },
   { id: 'elements', name: 'Six Elements', text: 'Score with skaters of all six elements.', icon: 'power_pucks/gravity/pickup_orb', art: 'achievements/six_elements', coins: 120, set: 'elemGoals', goal: 6 },
   { id: 'veteran', name: 'Veteran Presence', text: 'Sign a free agent from the market.', icon: 'achievements/free_agent', art: 'achievements/veteran_presence', coins: 50 },
+  // the expansion buildings, the puck on the stick, goalie masks and crests (Batch BF art; a stand-in until then)
+  { id: 'moonstruck', name: 'Moonstruck', text: 'Score out of the Observatory\'s moonbeam.', icon: 'icons/rule_moonbeams', art: 'achievements/moonstruck', coins: 80 },
+  { id: 'splinters', name: 'Splinters', text: 'Score off a loose plank\'s bounce at the Longhouse.', icon: 'icons/rule_loose_planks', art: 'achievements/splinters', coins: 80 },
+  { id: 'protector', name: 'Puck Protector', text: 'Shield the puck from a defender 15 times in one match.', icon: 'achievements/pickpocket', art: 'achievements/puck_protector', coins: 70 },
+  { id: 'game-face', name: 'Game Face', text: 'Pick a new mask for a goalie at goalie camp.', icon: 'icons/gstyle_hybrid', art: 'achievements/game_face', coins: 30 },
+  { id: 'new-colours', name: 'New Colours', text: 'Give the club a new crest.', icon: 'hud_elements/misc/home_crest', art: 'achievements/new_colours', coins: 30 },
   { id: 'weekly-cup', name: 'Cup of the Week', text: 'Win a Weekly Cup on a friends board.', icon: 'badges/rank_1', art: 'achievements/cup_of_the_week', coins: 100 },
 ];
 // Batch AF: the achievements that borrowed a gear or HUD picture get their own.
@@ -110,6 +116,10 @@ export class AchievementTracker {
   // Watch a real match (not drills or versus) for in-game achievements.
   attachMatch(m) {
     this.minDiff = 0;
+    let glareT = -9, plankT = -9, shields = 0;
+    m.on('glare', (e) => { if (e.g.team === 1) glareT = m.time; }); // (their goalie, dazzled by our shot)
+    m.on('plank', () => { plankT = m.time; });
+    m.on('shield', (e) => { if (e.s.team === 0 && ++shields >= 15) this.unlock('protector'); });
     const ours = m.teamSkaters(0).map((k) => k.who);
     if (Object.keys(LEGENDS).every((k) => ours.includes(k))) this.unlock('twins');
     m.on('goal', (g) => {
@@ -126,6 +136,8 @@ export class AchievementTracker {
       if (m.teamSkaters(0).some((k) => k.boxT > 0)) this.unlock('shorthanded');
       if (m.goalies.find((k) => k.team === 1).disabled) this.unlock('empty-net');
       if (m.extra && m.extra[0]) this.unlock('extra-attacker');
+      if (m.time - glareT < 1.5) this.unlock('moonstruck');
+      if (m.time - plankT < 2.5) this.unlock('splinters');
     });
     m.on('no_goal', () => { this.minDiff = Math.min(this.minDiff, m.score[0] - m.score[1]); });
     m.on('chain', (e) => { if (e.team === 0 && e.n >= 5) this.unlock('tic-tac-toe'); });

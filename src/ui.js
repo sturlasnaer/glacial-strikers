@@ -1397,6 +1397,7 @@ export class UI {
       this.click('#club-save', () => {
         const same = Object.keys(CLUB_DEFAULT).every((k) => draft[k] === CLUB_DEFAULT[k]);
         s.club = same ? null : { ...draft };
+        if (draft.crest && draft.crest !== CLUB_DEFAULT.crest) this.app.ach.unlock('new-colours');
         this.app.applyClubLook();
         writeSave(s);
         audio.jingle('achievement');
@@ -1738,7 +1739,7 @@ export class UI {
         mm.querySelectorAll('[data-paint]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.paint.toLowerCase() === String(look.paint).toLowerCase()));
       };
       if (masks.length) showMask();
-      const pick = (change) => { if (!pickMask(s, gid, change)) return; changed = true; writeSave(s); audio.sfx('equip'); showMask(); };
+      const pick = (change) => { if (!pickMask(s, gid, change)) return; changed = true; this.app.ach.unlock('game-face'); writeSave(s); audio.sfx('equip'); showMask(); };
       this.click('[data-mask]', (el) => pick({ mask: el.dataset.mask }), mm);
       this.click('[data-paint]', (el) => pick({ paint: el.dataset.paint }), mm);
       this.click('[data-gstyle]', (el) => {

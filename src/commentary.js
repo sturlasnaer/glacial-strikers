@@ -19,6 +19,7 @@ export class Commentary {
     this.cool = 2;
     this.queue.length = 0;
     this.lastBreak = null;
+    this.glareT = undefined; this.plankT = undefined;
     const team = (t) => (t === 0 ? CLUB.nick : this.away.nick || this.away.name.split(' ').slice(-1)[0]);
     const n = (s) => s.name;
 
@@ -26,6 +27,8 @@ export class Commentary {
       const s = g.scorer;
       let line;
       if (!s) line = t('Own goal! {team} will take it.', { team: team(g.team) });
+      else if (this.glareT !== undefined && m.time - this.glareT < 1.5) line = t('Out of the moonlight! {name} scores!', { name: n(s) });
+      else if (this.plankT !== undefined && m.time - this.plankT < 2.5) line = t('Off the loose boards and in! {name} will take it!', { name: n(s) });
       else if (g.kind === 'onetimer') line = pick([t('ONE-TIMER! {name} buries it!', { name: n(s) }), t('{name} one-times it home!', { name: n(s) })]);
       else if (g.kind === 'zero') line = t('{name} freezes the whole defense! GOAL!', { name: n(s) });
       else if (g.kind === 'thunderclap') line = t('THUNDERCLAP! {name} lights the lamp!', { name: n(s) });
@@ -59,6 +62,10 @@ export class Commentary {
     m.on('power_get', (e) => { if (e.by) this.say(t('{name} grabs the {power}!', { name: n(e.by), power: t(POWER_INFO[e.type].name) }), 1); });
     m.on('ult', (e) => this.say(t('{name} unleashes {ult}!', { name: n(e.s), ult: t(e.s.def.ult.name) }), 2));
     m.on('barrier_block', () => this.say(t('The wall holds!'), 1));
+    // the expansion buildings and the puck on the stick
+    m.on('glare', (e) => { this.glareT = m.time; this.say(pick([t('{name} loses it in the moonlight!', { name: e.g.name }), t('Out of the moonbeam! {name} squints.', { name: e.g.name })]), 1); });
+    m.on('plank', () => { this.plankT = m.time; if (Math.random() < 0.45) this.say(pick([t('Off the loose boards! Who knows where that\'s going.'), t('The Longhouse boards take a bite out of that one!')]), 0); });
+    m.on('shield', (e) => { if (Math.random() < 0.3) this.say(pick([t('{name} shields it from {by}.', { name: n(e.s), by: n(e.by) }), t('{name} keeps it away from {by}.', { name: n(e.s), by: n(e.by) })]), 0); });
     m.on('faceoff_win', (e) => { if (Math.random() < 0.35) this.say(t('{name} wins the draw.', { name: n(e.s) }), 0); });
     m.on('lightning_pass', (e) => this.say(t('Lightning pass to {name}!', { name: n(e.to) }), 1));
     m.on('combo', (e) => this.say(pick([t('{from} to {name}... {combo}!', { from: n(e.from), name: n(e.s), combo: t(COMBOS[e.key].name).toUpperCase() }), t('{combo}! {from} and {name} in sync!', { combo: t(COMBOS[e.key].name), from: n(e.from), name: n(e.s) })]), 2));

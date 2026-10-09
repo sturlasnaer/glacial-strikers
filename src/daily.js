@@ -13,6 +13,7 @@ export const DAILY_GOALS = [
   { id: 'clean', text: 'Win without taking a penalty.', check: (s) => s.winner === 0 && s.pen && s.pen[0].pims === 0 },
   { id: 'hits', text: 'Win with 8 or more hits.', check: (s) => s.winner === 0 && s.skaters.filter((k) => k.team === 0).reduce((a, k) => a + k.hits, 0) >= 8 },
   { id: 'combo', text: 'Win and score a chemistry combo goal.', check: (s) => s.winner === 0 && s.goals.some((g) => g.team === 0 && g.special && g.special.combo) },
+  { id: 'shield', text: 'Win and shield the puck from a defender 8 times.', check: (s) => s.winner === 0 && s.skaters.filter((k) => k.team === 0).reduce((a, k) => a + (k.shields || 0), 0) >= 8 },
   { id: 'spread', text: 'Win with all three skaters scoring a point.', check: (s) => s.winner === 0 && s.skaters.filter((k) => k.team === 0 && !k.extra).every((k) => k.goals + k.assists > 0) },
 ];
 const GOAL_BY_ID = Object.fromEntries(DAILY_GOALS.map((g) => [g.id, g]));

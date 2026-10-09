@@ -186,7 +186,7 @@ export class Skater {
     this.controlled = false;
     this.celebrate = 0;
     this.flash = 0;
-    this.stats_ = { goals: 0, assists: 0, shots: 0, passes: 0, steals: 0, hits: 0, blocks: 0, skills: 0, ults: 0, oneTimers: 0, powerGoals: 0 };
+    this.stats_ = { goals: 0, assists: 0, shots: 0, passes: 0, steals: 0, hits: 0, blocks: 0, skills: 0, ults: 0, oneTimers: 0, powerGoals: 0, shields: 0 };
   }
 
   static blankInput() {

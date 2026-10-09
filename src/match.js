@@ -415,6 +415,7 @@ export class Match {
       if ((near.x - c.x) * lx + (near.y - c.y) * ly > 0) want = clamp(0.45 + (c.stats.agi + c.stats.pas) * 0.03, 0, 1);
     }
     c.protect += (want - c.protect) * Math.min(1, dt * (6 + c.stats.agi * 0.6));
+    c.shieldCd = Math.max(0, (c.shieldCd || 0) - dt);
   }
 
   // Defender's stick on the puck has a chance to poke it free.
@@ -425,7 +426,14 @@ export class Match {
     for (const d of this.opponents(c)) {
       if (d.stun > 0 || d.parked) continue;
       const sp = d.stickPoint();
-      if (Math.hypot(sp.x - p.x, sp.y - p.y) > 20) continue;
+      if (Math.hypot(sp.x - p.x, sp.y - p.y) > 20) {
+        // a stick that would have had it on the forehand, beaten by the puck pulled across: a shield
+        if (c.protect > 0.5 && !(c.shieldCd > 0)) {
+          const b = c.bladeReach(), open = c.bladeAt(b.fwd, b.lat);
+          if (Math.hypot(sp.x - open.x, sp.y - open.y) < 16) { c.shieldCd = 1.2; c.stats_.shields++; this.emit('shield', { s: c, by: d }); }
+        }
+        continue;
+      }
       const shielded = (d.x - c.x) * (p.x - c.x) + (d.y - c.y) * (p.y - c.y) < 0; // reaching round the carrier's body
       // (the base was 0.8 when the puck sat in front of the body: out on the blade it's easier to reach)
       const rate = STEAL_BASE * (shielded ? 0.58 : 1) * (1 + (d.stats.chk - c.stats.pas) * 0.06) * this.ai[d.team].stealMul() * (d.def.arch === 'grinder' ? 1.08 : 1) * (d.hasPerk('Pickpocket') ? 1.1 : 1);

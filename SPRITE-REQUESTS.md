@@ -9,6 +9,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Next batches:**
 1. **BD**: stick-handling frames: the puck dangled from forehand to backhand, in eight directions, for the players you control most.
 2. **BE**: crossovers: skaters crossing their feet through turns.
+3. **BF**: six small icons: five new achievements and a league-news icon.
+4. **BG**: goal celebrations for players made from parts (drafted rookies, free agents, the expansion clubs).
 
 ## Format notes
 
@@ -90,3 +92,21 @@ Draw them **without the puck** (the game draws it). Same scale, pivots and stick
 ## Batch BE: crossovers
 
 Skaters turning hard now lean into the turn. Please draw the **crossover**: the outside skate stepping over the inside one, two frames (step over, push out) for the six directions that aren't straight north or south, turning each way (drawn both ways like AK, so left and right turns each get their own), for the same characters as BD. Frame names `<key>/crossover/<kit>/<direction>/<left|right>_a` and `_b`. About 216 frames plus masks.
+
+## Batch BF: achievement and news icons
+
+In the style and size of the AN/AF achievement icons (about 200 px source), sheet `icons_bf.png`:
+- `achievements/moonstruck`: a puck flashing white in a shaft of moonlight (scored out of the Observatory's moonbeam).
+- `achievements/splinters`: a puck skipping off a cracked wooden board with flying splinters (scored off a loose plank's bounce at the Longhouse).
+- `achievements/puck_protector`: a gloved hand and stick blade curling a puck away from a reaching stick (shield the puck 15 times in a match).
+- `achievements/game_face`: a goalie mask on a stand with fresh paint and a brush (pick a new mask at goalie camp).
+- `achievements/new_colours`: a shield crest half repainted, with a paint roller (give the club a new crest).
+- `icons/news_edge`: for the league news line "the rivals trained hard all summer": a dumbbell or a stopwatch over a rival jersey, read at 20 to 24 px, so bold and simple like the other `icons/news_*`.
+
+6 frames.
+
+## Batch BG: goal celebrations for players from parts
+
+Drafted rookies, free agents and the expansion clubs' skaters are made from parts (Batch AJ/AO bodies with heads on anchors). The cast and the founding rivals each celebrate a goal with a four-frame signature sequence, but players from parts only have the one `celebrate` pose. Please draw a **four-frame celebration** for each of the three builds (`body_std`, `body_big`, `body_small`), without the head and with head anchors per frame like AJ/AO (the head turns and tilts with the body), facing the camera (south), in the AJ/AO palette rules (coral and violet kit for recolouring, skin and hair handled by the heads). Something different for each build, for example a fist pump and knee slide for `body_std`, a stick raised over the head and a roar for `body_big`, a spin and point to the crowd for `body_small`. Gear masks for the stick and skates (Batch M format). Frame names `modular/<body>/celebration/phase_1` to `phase_4`.
+
+12 frames plus masks and anchors.
