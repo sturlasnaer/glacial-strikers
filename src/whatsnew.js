@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-09d',
+    items: [
+      { icon: 'badges/cup_small', text: 'From Monday 12 October, Faceoffs and Tip-Ins count in the Weekly Cup too: six drills, six chances at points.' },
+    ],
+  },
+  {
     id: '2026-10-09c',
     items: [
       { icon: 'badges/cup_small', text: 'The Faceoffs and Tip-Ins drills have online leaderboards now: this week\'s and all time, and on your friends boards.' },

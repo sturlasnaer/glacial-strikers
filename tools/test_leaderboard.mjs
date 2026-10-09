@@ -261,6 +261,16 @@ check('Monday starts the next', weekOf(Date.UTC(2026, 9, 12)).key === '2026-W42'
   now += 7 * 86400000; // next week: last week's cup is settled, this week's is empty
   r = await cupGet(code, id(2));
   check('last week settled', r.body.last.standings[0].name === 'P1' && r.body.last.standings[1].me && r.body.standings.length === 0, r.body);
+  // from week 42 the cup counts Faceoffs and Tip-Ins too (week 41's stays as it was)
+  {
+    let t42 = Date.UTC(2026, 9, 13, 12); // a Tuesday, week 42
+    const p42 = (n, board, sc) => handle({ method: 'POST', query: {}, body: JSON.stringify({ board, player: id(n), name: 'P' + n, score: sc, played: t42, groups: [code] }) }, ws, (t42 += 40000));
+    await p42(1, 'sniper', 500); await p42(2, 'faceoffs', 9); await p42(1, 'faceoffs', 6); await p42(3, 'tips', 2);
+    const c42 = await handle({ method: 'GET', query: { cup: code, player: id(2) } }, ws, t42);
+    const s42 = c42.body.standings, p2 = s42.find((x) => x.name === 'P2');
+    check('week 42: six drills in the cup', c42.body.drills.length === 6 && c42.body.drills.includes('tips') && c42.body.last.drills.length === 4, c42.body.drills);
+    check('...and Faceoffs and Tip-Ins score in it', p2 && p2.places.faceoffs === 1 && p2.points === 5 && s42.find((x) => x.name === 'P3').places.tips === 1, s42);
+  }
   check('cup unknown code', (await cupGet('ZZZZZZ')).status === 404);
   check('cup bad code', (await cupGet('nope')).status === 400);
 }

@@ -27,8 +27,9 @@ import { createHash, randomInt } from 'crypto';
 // Challenges: any run (not just a best) can be filed under a short code for a friend to
 // race: POST {op: 'challenge_put'} returns the code, GET ?challenge=CODE the run.
 //
-// The Weekly Cup: every friends board runs one, Monday to Sunday, over the group's first
-// four weekly drill boards. GET ?cup=CODE returns this week's standings and last week's.
+// The Weekly Cup: every friends board runs one, Monday to Sunday, over the group's weekly
+// drill boards (the first four; all six from week 42 of 2026). GET ?cup=CODE returns this
+// week's standings and last week's, each with the drills that week counted.
 // Nothing new is stored: past weeks' group boards are still there to read.
 
 export const BOARDS = {
@@ -43,8 +44,11 @@ export const BOARDS = {
 };
 
 export const WEEKLY = new Set(['cones', 'sniper', 'rondo', 'breakaway', 'faceoffs', 'tips']);
-// The Weekly Cup's drills: the first four (Faceoffs and Tip-Ins have weekly boards, not cup points)
+// The Weekly Cup's drills: the first four, and from week 42 of 2026 (Monday 12 October)
+// Faceoffs and Tip-Ins too (so no cup changed its drills part of the way through a week)
 export const CUP = ['cones', 'sniper', 'rondo', 'breakaway'];
+export const CUP_FROM = { faceoffs: '2026-W42', tips: '2026-W42' };
+export const cupBoards = (wk) => [...CUP, ...Object.keys(CUP_FROM).filter((b) => wk >= CUP_FROM[b])];
 const DAY = 86400000;
 
 // The ISO week (UTC) a time falls in, e.g. '2026-W41', and when that week ends.
@@ -254,7 +258,7 @@ export function rankKey(board, score, at) {
 const CUP_POINTS = [5, 3, 2];
 async function cupTable(store, code, wk, player) {
   const table = new Map();
-  for (const board of CUP) {
+  for (const board of cupBoards(wk)) {
     const rows = await store.top(groupKey(weekBoard(board, wk), code), TOP);
     rows.forEach((r, i) => {
       const e = table.get(r.player) || { player: r.player, points: 0, firsts: 0, places: {} };
@@ -294,8 +298,8 @@ export async function handle(req, store, now = Date.now()) {
       const player = validPlayer(req.query.player) ? req.query.player : null;
       const week = weekOf(now), last = weekOf(now - 7 * DAY);
       return ok({
-        code, name: g.name, week: week.key, resetsAt: week.ends, standings: await cupTable(store, code, week.key, player),
-        last: { week: last.key, standings: await cupTable(store, code, last.key, player) },
+        code, name: g.name, week: week.key, resetsAt: week.ends, drills: cupBoards(week.key), standings: await cupTable(store, code, week.key, player),
+        last: { week: last.key, drills: cupBoards(last.key), standings: await cupTable(store, code, last.key, player) },
       });
     }
     const board = req.query.board;

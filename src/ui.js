@@ -2277,18 +2277,19 @@ export class UI {
   weeklyCup(code, back = null) {
     const s = this.app.save;
     const g = groupsOf(s).find((x) => x.code === code);
-    const drills = ['cones', 'sniper', 'rondo', 'breakaway'];
     this.modal(`<h2><img class="h-ico" src="${cupPlaceImg(1, 96)}" alt="">${t('Weekly Cup')} · ${esc(g ? g.name : code)}</h2><div id="cup-body"><p class="muted">${t('Looking…')}</p></div>
       <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>${t('Back')}</button></div>`, (m) => {
       const body = m.querySelector('#cup-body');
       fetchCup(s, code).then((r) => {
+        // (the drills that week counts: the server says, from week 42 of 2026 all six)
+        const drills = (Array.isArray(r.drills) ? r.drills : ['cones', 'sniper', 'rondo', 'breakaway']).filter((d) => DRILLS[d]);
         const row = (x) => `<div class="lb-row cup-row ${x.me ? 'me' : ''}"><span class="lb-rank">${x.place <= 3 ? `<img src="${cupPlaceImg(x.place, 48)}" alt="${x.place}" width="22" height="22">` : x.place}</span>
           <span class="lb-name">${esc(x.name)} <span class="lb-tag">${esc(x.tag || '')}</span></span>
           <span class="cup-places">${drills.map((d) => `<span title="${esc(t(DRILLS[d].name))}"><img src="${ico(DRILLS[d].icon, 40)}" alt="">${x.places[d] || '–'}</span>`).join('')}</span>
           <b class="lb-score">${t('{n} pts', { n: x.points })}</b></div>`;
         const podium = r.last.standings.filter((x) => x.place <= 3);
         body.innerHTML = `
-          <p style="font-size:13.5px;margin:0 0 8px">${t('Every drill this week counts: 5, 3 and 2 points for the top three on each board, 1 for taking part. Ends in {time}.', { time: resetsIn(r.resetsAt) })}</p>
+          <p style="font-size:13.5px;margin:0 0 8px">${t('This week\'s cup counts {n} drills: 5, 3 and 2 points for the top three on each board, 1 for taking part. Ends in {time}.', { n: drills.length, time: resetsIn(r.resetsAt) })}</p>
           <div class="lb-list">${r.standings.length ? r.standings.map(row).join('') : `<p class="muted" style="font-size:13px">${t('No runs on this board yet this week. Play a drill to get on it.')}</p>`}</div>
           <div class="label" style="margin:12px 0 6px">${t('Last week')}</div>
           ${podium.length >= 2 ? podiumHtml([1, 0, 2].map((i) => podium[i]).filter(Boolean).map((x) => ({ place: x.place, me: x.me, html: `<img src="${cupPlaceImg(x.place, 96)}" alt=""><b>${esc(x.name)}</b><small>${t('{n} pts', { n: x.points })}</small>` })))
