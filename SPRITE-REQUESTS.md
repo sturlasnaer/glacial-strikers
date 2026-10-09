@@ -6,7 +6,9 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
-**Next batches:** no outstanding requests as of this delivery.
+**Next batches:**
+1. **BH**: stick handling for the rest of the league (the rival players, the expansion captains and the legends), like BD.
+2. **BI**: crossovers for the same players, like BE.
 
 ## Format notes
 
@@ -79,3 +81,17 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 ---
 
+## Batch BH: stick handling for the rest of the league
+
+BD is in: our cast, the parts bodies and the newcomers now work the puck from forehand to backhand on the drawn blade when they have time and space. Everyone else still carries it in their skating frames, so a rival carrier looks stiff next to ours. Please draw the same **forehand / backhand pair in all eight directions**, exactly as in BD (gliding upright, puck *not* drawn, blade contact point recorded per frame as `blade_pixels`, gear masks in the Batch M format, own stick hand), for these 19 players:
+- the founding rivals: `aurora_royals_c`, `_w`, `_d`; `ember_comets_c`, `_w`, `_d`; `gilded_rams_c`, `_w`, `_d`; `obsidian_ravens_c`, `_w`, `_d`; `pinewood_lynx_c`, `_w`, `_d`;
+- the expansion captains `glacier_owls_c` (Talon) and `thunder_moose_c`;
+- the legends `fafnir` and `fenrir`.
+
+Each is drawn once in their own club's colours, like their skating sets (the game recolours the same drawing for either kit and for our colours once signed), and with that set's stick hand (each set's `hands` map). Same scale and pivots as their skating frames. Frame names `<key>/stickhandling/<direction>/forehand` and `/backhand`, and in the atlas a `skater_motion_additions` entry per key as in BD. About 304 frames plus masks.
+
+## Batch BI: crossovers for the rest of the league
+
+The BE crossovers for the same 19 players: two frames (step over, push out) for the six directions that aren't straight north or south, turning left and turning right, with `blade_pixels` per frame and gear masks, as in BE. Frame names `<key>/crossover/<direction>/<left|right>_a` and `_b`. About 456 frames plus masks.
+
+---
