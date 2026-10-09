@@ -419,8 +419,9 @@ export class Audio {
     }
   }
 
-  // The arena's goal horn, for the home side's goals.
-  goalHorn(home = true) {
+  // The arena's goal horn, for the home side's goals (style: another building's horn instead, as
+  // the club picks for its own rink).
+  goalHorn(home = true, style = null) {
     if (!this.ctx || !this.sfxOn) return;
     const t = this.now() + 0.01, out = this.worldBus;
     if (!home) { this.sfx('buzzer'); return; }
@@ -428,7 +429,7 @@ export class Audio {
       const o = this.tone(f * 0.97, t, len, 'sawtooth', vol, out, { lp, attack: 0.05, release: 0.3, vib: true, vibRate: 4.5, vibDepth: 0.004 });
       o.frequency.setValueAtTime(f * 0.97, t); o.frequency.exponentialRampToValueAtTime(f, t + 0.12); // the scoop of a big air horn
     });
-    switch (this.arena) {
+    switch (style || this.arena) {
       case 'ember_dome': // a low volcanic horn and a burst of flame
         horn([65.4, 98, 130.8], 2.6, 0.08, 900);
         this.noiseBurst(t, 1.4, 0.35, 'lowpass', 300, 0.8, out, 0.05, 2200);

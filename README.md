@@ -106,6 +106,7 @@ Hold shoot while a pass is on its way to fire a **one-timer**. Your skates plant
 - **Local versus:** two players on one keyboard or with gamepads, plus gamepad rumble on hits, goals, combos and ultimates.
 - **Accessibility and comfort (Settings):** aim assist (off/normal/strong), auto-sprint, relaxed game speed, screen shake strength, flashes off, reduced effects, colorblind-friendly team markers (blue triangles vs orange diamonds), large text, bigger touch buttons and a left-handed touch layout.
 - **Photo:** Pause › Photo saves a picture of the ice as it stands (the share sheet on a phone).
+- **Our goal horn:** Settings › Our goal horn picks the horn for our goals at our own rink from the buildings' horns (classic, volcano, fanfare, ram's horn, bell and ravens, cowbells); tap one to hear it.
 - **Goal clips:** every instant replay is recorded as a short video with game sound and a caption. The results screen lists the match's highlights with Share (phones) and Save.
 - **Achievements:** 55 trophies (hat tricks, comebacks, every combo and power puck, empty-netters, shorthanded goals, the cup, a perfect season, gold in every drill and more), each paying coins, shown in the Trophies tab.
 - **Broadcast:** instant goal replays (skippable, toggle in Settings), play-by-play commentary ticker, ultimate cut-ins (a player from parts or a rookie gets their element's backdrop with their portrait), crowd chants that speed up the cheered team's ultimates, a team logo at centre ice.

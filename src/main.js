@@ -858,7 +858,7 @@ class App {
       this.renderer.nets.ripple(e.side, e.y, 1);
       // the building cheers its own team; a horn for the home side, a siren for visitors
       const homeSide = this.arena === 'home' ? 0 : 1;
-      audio.goalHorn(e.team === homeSide);
+      audio.goalHorn(e.team === homeSide, homeSide === 0 && this.save.settings.horn && this.save.settings.horn !== 'home' ? this.save.settings.horn : null); // (our rink: the club's pick)
       audio.sfx('net', at(e.side * GOAL_X, e.y));
       if (e.team === homeSide) audio.crowdCheer(1);
       else { audio.crowdAww(1); audio.crowdCheer(0.25); if (homeSide === 1) audio.crowdBoo(0.6); }

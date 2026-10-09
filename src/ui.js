@@ -2422,6 +2422,7 @@ export class UI {
       ${row(t('Sound effects'), seg('sfxVol', VOLUMES()))}
       ${row(t('Audio quality'), seg('audioQuality', [['auto', t('Auto')], ['full', t('Full')], ['light', t('Light')]]), t('Light leaves out the backing layers and crowd voices for slower phones. Auto picks it on low-memory devices.'))}
       ${row(t('Music room'), `<button class="btn small ghost" id="s-jukebox">${t('Listen')}</button>`, t('Every track in the game, from the title theme to the Cup Final.'))}
+      ${row(t('Our goal horn'), `<span class="seg">${[['home', t('Classic')], ['ember_dome', t('Volcano')], ['aurora_palace', t('Fanfare')], ['golden_hall', t('Ram\'s horn')], ['dark_aerie', t('Bell and ravens')], ['pine_pond', t('Cowbells')]].map(([v, label]) => `<button class="chip" data-horn="${v}" aria-pressed="${(st.horn || 'home') === v}">${label}</button>`).join('')}</span>`, t('At our rink. Tap one to hear it.'))}
       <div class="label">${t('Gameplay')}</div>
       ${row(t('Rival difficulty'), seg('difficulty', [['easy', t('Easy')], ['normal', t('Normal')], ['hard', t('Hard')]]))}
       ${row(t('Aim assist'), seg('assist', [['off', t('Off')], ['normal', t('Normal')], ['strong', t('Strong')]]), t('Strong tightens your shots and widens pass catching. Off aims dead centre unless you steer.'))}
@@ -2459,6 +2460,11 @@ export class UI {
           this.app.applySettings();
           const y = m.scrollTop;
           m.innerHTML = body(); bind(); m.scrollTop = y;
+        }, m);
+        this.click('[data-horn]', (el) => { // the club's horn: saved, and played
+          st.horn = el.dataset.horn; writeSave(s);
+          audio.unlock(); audio.goalHorn(true, st.horn);
+          m.querySelectorAll('[data-horn]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.horn === st.horn)));
         }, m);
         this.click('#s-install', async () => { await this.app.install(); m.innerHTML = body(); bind(); }, m);
         this.click('#s-close', () => { audio.sfx('back'); close(); }, m);
