@@ -2049,7 +2049,7 @@ export class UI {
           ${CHALLENGE_BOARDS.includes(d.id) ? this.ghostPicker(s, d.id) : ''}
           <div class="row" style="justify-content:space-between">
             <span style="font-size:13px">${t('Best: {score}', { score: `<b class="gold-t">${best === undefined || best === null ? '–' : formatScore(d, best)}</b>` })}</span>
-            <span class="row" style="gap:6px"><button class="btn small ghost" data-lb="${d.id}" title="${t('Online leaderboard')}" aria-label="${t('{drill} online leaderboard', { drill: esc(t(d.name)) })}">${badge('cup_small', 48, 'btn-ico', '🏆')}</button>
+            <span class="row" style="gap:6px">${d.offline ? '' : `<button class="btn small ghost" data-lb="${d.id}" title="${t('Online leaderboard')}" aria-label="${t('{drill} online leaderboard', { drill: esc(t(d.name)) })}">${badge('cup_small', 48, 'btn-ico', '🏆')}</button>`}
             <button class="btn small ${tr.sessions > 0 ? 'gold' : ''}" data-play="${d.id}">${tr.sessions > 0 ? t('Train') : t('Practice')}</button></span>
           </div>
         </div>`;

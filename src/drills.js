@@ -34,6 +34,11 @@ export const DRILLS = {
     text: 'Five breakaways against a sharp goalie. Tap SPRINT close in to deke: if they bite, shoot the other way.',
     medals: [2, 3, 4],
   },
+  faceoffs: {
+    id: 'faceoffs', name: 'Faceoffs', trains: 'Draws', icon: 'achievements/off_the_drop', unit: 'draws', offline: true,
+    text: 'Ten draws against a centre who gets quicker every time. Press SHOOT or PASS as the puck touches the ice: go while it\'s still in the air and you\'re held back.',
+    medals: [5, 7, 9],
+  },
 };
 
 export const MEDAL_NAMES = ['No medal', 'Bronze', 'Silver', 'Gold'];
@@ -49,6 +54,7 @@ export function formatScore(def, score) {
   if (score === null || score === undefined) return '–';
   if (def.unit === 'time') return t('{seconds}s', { seconds: score.toFixed(2) });
   if (def.unit === 'goals') return `${score}/5`;
+  if (def.unit === 'draws') return `${score}/${FACEOFF_DRAWS}`;
   return t('{n} pts', { n: score });
 }
 
@@ -73,6 +79,7 @@ export function createDrill(id, save, charId, opts = {}) {
     case 'sniper': home = [charId, opts.feeder || mates[0]]; ctrl = new SniperDrill(); break;
     case 'rondo': home = [charId, ...mates]; away = ['frost', 'stone']; ctrl = new RondoDrill(); break;
     case 'breakaway': ctrl = new BreakawayDrill(opts.ghost); break;
+    case 'faceoffs': away = ['frost']; ctrl = new FaceoffDrill(); break;
     case 'shootout': home = line; awayTeam = opts.teamId || 'comets'; away = ids; ctrl = new ShootoutDrill(opts.teamId); break;
     default: throw new Error('Unknown drill ' + id);
   }
@@ -479,6 +486,51 @@ class BreakawayDrill extends DrillBase {
       { y: gs.y - 0.5, f: (ctx) => R.drawRaceGhost(ctx, gs, m, fade, label) },
       { y: puck.y, f: (ctx) => R.drawGhostPuck(ctx, puck.x, puck.y, fade) },
     ];
+  }
+}
+
+// ------------------------------------------------------------- Faceoffs
+// Ten draws at centre ice, the linesman dropping the puck, against a centre who reacts a little
+// quicker every time. The match's own faceoff decides each one: press after the puck lands and
+// before they react; a press while it's in the air holds you back past their reaction.
+const FACEOFF_DRAWS = 10;
+const FACEOFF_RT = [0.5, 0.44, 0.39, 0.35, 0.31, 0.28, 0.25, 0.22, 0.2, 0.18];
+class FaceoffDrill extends DrillBase {
+  constructor() { super(); this.faceoffs = true; this.noSwitch = true; this.linesman = true; }
+  init(m) {
+    this.n = 0; this.wins = 0; this.clean = 0; this.results = []; this.phase = 'wait'; this.pauseT = 0;
+    m.on('faceoff_win', (e) => this.drawn(m, e));
+    this.startCountdown(m);
+  }
+  update(m, dt) {
+    if (m.state === 'countdown') { super.update(m, dt); if (m.state === 'play') this.next(m); return; }
+    if (m.state === 'faceoff') { this.t += dt; m.updateFaceoff(dt); return; }
+    super.update(m, dt);
+  }
+  next(m) {
+    m.setupFaceoff();
+    m.faceoffRt[1] = FACEOFF_RT[this.n];
+    this.phase = 'draw';
+  }
+  drawn(m, e) {
+    if (this.phase !== 'draw') return;
+    const won = e.s.team === 0;
+    this.n++;
+    if (won) this.wins++;
+    if (won && e.clean) this.clean++;
+    this.results.push(won ? 'won' : 'lost');
+    this.phase = 'between'; this.pauseT = 1.2;
+    m.emit('faceoff_result', { won, clean: won && e.clean, early: !won && m.faceoffJump[0], n: this.n });
+  }
+  tick(m, dt) {
+    if (this.phase === 'draw') { this.drawn(m, { s: m.faceoffCenter(1), clean: false }); return; } // (nobody took it: theirs)
+    if (this.phase !== 'between' || (this.pauseT -= dt) > 0) return;
+    if (this.n >= FACEOFF_DRAWS) { this.phase = 'done'; this.finish(m, this.wins, { clean: this.clean, results: this.results }); }
+    else this.next(m);
+  }
+  hud() {
+    const dots = Array.from({ length: FACEOFF_DRAWS }, (_, i) => (this.results[i] === 'won' ? '●' : this.results[i] ? '○' : '·')).join(' ');
+    return { title: t('Faceoffs'), main: t('{n} won', { n: this.wins }), sub: `${t('Draw {n} of {total}', { n: Math.min(FACEOFF_DRAWS, this.n + 1), total: FACEOFF_DRAWS })}  ${dots}`, note: this.clean ? t('{n} clean', { n: this.clean }) : '' };
   }
 }
 

@@ -147,7 +147,7 @@ export class Renderer {
     this.drawTwists(ctx, match, fx);
     if (!lap) this.warmUp(match); // (gear recolours and heads, built ahead of their first use)
     // the linesman (Batch AG): not in drills, replays or the resurfacer's lap
-    const L = !lap && !match.drill && !ui.replay && Assets.atlas.linesman ? this.official(match, fx) : null;
+    const L = !lap && (!match.drill || match.drill.linesman) && !ui.replay && Assets.atlas.linesman ? this.official(match, fx) : null;
     this.puckHeld = !!(L && L.holding(match)); // (in his hand: his art draws it)
     if (L) this.drawLinesmanShadow(ctx, L);
     if (!lap) {

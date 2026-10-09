@@ -475,6 +475,7 @@ class App {
     const ghostTeam = opts.ghost && RECRUITS[opts.ghost.char] && id !== 'shootout' ? RECRUITS[opts.ghost.char].team : null;
     if (this.loading) return;
     if (ghostTeam && !opts.awayTeam) return this.loadThen(Assets.ensureTeam(ghostTeam), () => this.startDrill(id, charId, { ...opts, awayTeam: ghostTeam }));
+    if (id === 'faceoffs' && !opts.awayTeam) return this.loadThen(Assets.ensureTeam('lynx'), () => this.startDrill(id, charId, { ...opts, awayTeam: 'lynx' })); // (with the linesman)
     const { cfg, ctrl, def, awayTeam } = createDrill(id, this.save, charId, opts);
     this.cur = { drill: id, char: charId, teamId: awayTeam, ctrl, def, opts };
     this.attract = false;
@@ -587,6 +588,10 @@ class App {
       if (e.scored) { audio.jingle('goal'); fx.lamp = 1.4; } else audio.crowdOoh(0.6);
       if (!mine && !e.scored) audio.crowdCheer(0.6);
     });
+    m.on('faceoff_result', (e) => {
+      hud.banner(`<div class="small" style="color:${e.won ? '#ffd45e' : '#ff6f7d'}">${e.clean ? t('CLEAN DRAW!') : e.won ? t('WON IT!') : e.early ? t('TOO EARLY!') : t('TOO SLOW')}</div>`, 0.9);
+      if (e.won) { audio.sfx('coin', { vol: e.clean ? 0.6 : 0.4 }); if (e.clean) audio.crowdCheer(0.3); } else audio.sfx('deny');
+    });
     m.on('drill_over', () => { audio.sfx('whistle'); hud.banner(`<div class="big" style="font-size:clamp(48px,10vw,110px)">${t('FINISHED')}</div>`, 1.4); });
   }
 
@@ -618,7 +623,7 @@ class App {
     this.ui.drillResult(c.def, res.score, rw, c.char,
       () => this.startDrill(c.drill, c.char, again),
       () => this.resolvePerks(() => { this.startAttract(); if (skills) this.openSkills(); else this.goHub('training'); }));
-    this.postScore(c.drill, res.score, c.char, '#d-online', res.timeout ? null : res.ghost);
+    if (!c.def.offline) this.postScore(c.drill, res.score, c.char, '#d-online', res.timeout ? null : res.ghost); // (no online board for some)
   }
 
   // Post a best score to the online leaderboard; show the rank in `where` if given.

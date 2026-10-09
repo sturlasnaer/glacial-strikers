@@ -55,6 +55,12 @@ const bots = {
     const shoot = GOAL_X - s.x < 210 && st.tap % 8 < 1;
     return raw({ mx: t.mx, my: shoot ? (g.y > 0 ? -1 : 1) : t.my, sprint: true, a: shoot });
   },
+  faceoffs(m, c, st) { // (a 0.24 s reaction to the puck touching down)
+    if (m.state !== 'faceoff') return raw();
+    const go = m.dropped && m.stateT >= 1.1 + 0.24;
+    const a = go && !st.pressed; st.pressed = go;
+    return raw({ a });
+  },
   shootout(m, c, st) {
     if (c.turn === 'us') return bots.breakaway(m, { attempt: c.round }, st);
     const g = m.goalieAt(-1), p = m.puck;
@@ -71,7 +77,7 @@ for (const id of [...Object.keys(DRILLS), 'shootout']) {
       const st = {};
       let t = 0;
       while (!ctrl.result && t < 240) {
-        m.setHumanInput(m.state === 'play' ? bots[id](m, ctrl, st) : raw());
+        m.setHumanInput(m.state === 'play' || (id === 'faceoffs' && m.state === 'faceoff') ? bots[id](m, ctrl, st) : raw());
         m.update(1 / 60); t += 1 / 60;
       }
       if (!ctrl.result) { scores.push('DNF'); continue; }
@@ -79,4 +85,23 @@ for (const id of [...Object.keys(DRILLS), 'shootout']) {
     }
     console.log(id.padEnd(10), char.padEnd(8), scores.join('  '));
   }
+}
+
+// the faceoff drill: quick hands win more draws, and going before the puck lands wins none
+{
+  const run = (react, early = false) => {
+    const { cfg, ctrl } = createDrill('faceoffs', save, 'frost', { seed: 7 });
+    const m = new Match(cfg);
+    let t = 0, was = false;
+    while (!ctrl.result && t < 120) {
+      const go = m.state === 'faceoff' && (early ? m.stateT > 0.9 && !m.dropped : m.dropped && m.stateT >= 1.1 + react);
+      m.setHumanInput(raw({ a: go && !was })); was = go;
+      m.update(1 / 60); t += 1 / 60;
+    }
+    return ctrl.result ? ctrl.result.score : 'DNF';
+  };
+  const fast = run(0.12), mid = run(0.27), early = run(0, true);
+  const ok = fast === 10 && mid === 5 && early === 0;
+  console.log(ok ? 'faceoffs: ok' : '✗ faceoffs', { fast, mid, early });
+  if (!ok) process.exitCode = 1;
 }

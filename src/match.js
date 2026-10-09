@@ -204,7 +204,7 @@ export class Match {
       const raw = this.humanInputs[team];
       const c = this.controlled(team);
       if (!raw || !c) continue;
-      if (this.drill && this.state !== 'play') { c.in = Skater.blankInput(); continue; }
+      if (this.drill && this.state !== 'play' && !(this.state === 'faceoff' && this.drill.faceoffs)) { c.in = Skater.blankInput(); continue; }
       c.in = this.mapHuman(c, raw);
       if (this.state === 'play' && c.in.switch && !c.prevIn.switch && !c.prevIn.b && !(this.drill && this.drill.noSwitch)) this.switchControl(null, team);
       if (raw.pull && !this.prevPull[team]) this.togglePull(team);
