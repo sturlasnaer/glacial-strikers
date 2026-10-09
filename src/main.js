@@ -595,7 +595,9 @@ class App {
       if (e.kind === 'goal') { audio.jingle('goal'); audio.crowdCheer(0.4); fx.lamp = 1.2; } else audio.crowdOoh(0.3);
     });
     m.on('faceoff_result', (e) => {
-      hud.banner(`<div class="small" style="color:${e.won ? '#ffd45e' : '#ff6f7d'}">${e.clean ? t('CLEAN DRAW!') : e.won ? t('WON IT!') : e.early ? t('TOO EARLY!') : t('TOO SLOW')}</div>`, 0.9);
+      const secs = (v) => t('{seconds}s', { seconds: v.toFixed(2) });
+      const sub = e.won && e.rt != null ? secs(e.rt) : !e.won && e.theirs != null ? t('They took {s}', { s: secs(e.theirs) }) : '';
+      hud.banner(`<div class="small" style="color:${e.won ? '#ffd45e' : '#ff6f7d'}">${e.clean ? t('CLEAN DRAW!') : e.won ? t('WON IT!') : e.early ? t('TOO EARLY!') : t('TOO SLOW')}</div>${sub ? `<div class="sub">${sub}</div>` : ''}`, 1.1);
       if (e.won) { audio.sfx('coin', { vol: e.clean ? 0.6 : 0.4 }); if (e.clean) audio.crowdCheer(0.3); } else audio.sfx('deny');
     });
     m.on('drill_over', () => { audio.sfx('whistle'); hud.banner(`<div class="big" style="font-size:clamp(48px,10vw,110px)">${t('FINISHED')}</div>`, 1.4); });

@@ -325,7 +325,7 @@ export class Match {
         const clean = human(winner) && t < 0.12; // (right on the drop)
         if (clean) winner.stats_.cleanDraws++;
         this.draws[winner.team]++;
-        this.emit('faceoff_win', { s: winner, clean });
+        this.emit('faceoff_win', { s: winner, clean, rt: t });
         this.state = 'play'; this.stateT = 0;
       } else if (t > 0.9) { this.state = 'play'; this.stateT = 0; }
     }

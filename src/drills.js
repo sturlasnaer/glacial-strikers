@@ -605,7 +605,7 @@ class FaceoffDrill extends DrillBase {
     if (won && e.clean) this.clean++;
     this.results.push(won ? 'won' : 'lost');
     this.phase = 'between'; this.pauseT = 1.2;
-    m.emit('faceoff_result', { won, clean: won && e.clean, early: !won && m.faceoffJump[0], n: this.n });
+    m.emit('faceoff_result', { won, clean: won && e.clean, early: !won && m.faceoffJump[0], n: this.n, rt: e.rt, theirs: m.faceoffRt[1] });
   }
   tick(m, dt) {
     if (this.phase === 'draw') { this.drawn(m, { s: m.faceoffCenter(1), clean: false }); return; } // (nobody took it: theirs)

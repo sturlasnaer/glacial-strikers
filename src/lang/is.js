@@ -1642,6 +1642,7 @@ export const IS = {
   "They remember us. Good. Let's give them something new to remember.": "Þau muna eftir okkur. Gott. Gefum þeim eitthvað nýtt að muna.",
   "They stay until the Zamboni kicks them off the ice.": "Þær æfa þangað til Zamboni-vélin rekur þær af svellinu.",
   "They take it": "Þau höfðu betur",
+  "They took {s}": "Þau tóku {s}",
   "they win": "draugurinn vinnur",
   "They won the draws {b}–{a}. Wait for the puck to touch the ice, then press. The Faceoffs drill helps.": "Þau unnu uppköstin {b}–{a}. Bíddu þar til pökkurinn snertir ísinn og ýttu þá. Uppkastaæfingin hjálpar.",
   "They're moving it around!": "Pökkurinn gengur manna á milli!",
