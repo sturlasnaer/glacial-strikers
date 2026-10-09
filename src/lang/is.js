@@ -1630,6 +1630,7 @@ export const IS = {
   "Their goalie will take your call too. A new style in net changes how a match plays: look in Scouting.": "Markvörðurinn þeirra svarar líka í símann. Nýr stíll í markinu breytir leiknum: kíktu í Leikmannaleit.",
   "THEIR NET IS EMPTY": "MARK ÞEIRRA ER AUTT",
   "Their old team plays a backup in goal from now on.": "Gamla liðið spilar með varamarkvörð héðan í frá.",
+  "Their top scorer: {name}, {n} goals.": "Markahæsti leikmaður þeirra: {name}, {n} mörk.",
   "Then let's make it a good story.": "Þá skulum við gera þetta að góðri sögu.",
   "Then no mistakes. Short passes, and keep your heads up.": "Þá engin mistök. Stuttar sendingar og haldið höfðinu uppi.",
   "Then we're not going home.": "Þá förum við ekki heim.",
