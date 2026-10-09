@@ -806,6 +806,10 @@ class App {
         setTimeout(() => this.hud.hint(this.isTouch ? t('Only check the puck carrier. Hits away from the puck draw penalties.') : t('Only check the puck carrier. Hits away from the puck draw penalties.'), 5), 2200);
       }
     });
+    m.on('penalty_delayed', (e) => {
+      audio.crowdOoh(0.4);
+      if (!this.attract && e.team === 1 && !m.goalieMode && !(this.cur && this.cur.versus) && firstTime(this.save, 'delayed')) this.hud.hint(t('Delayed penalty! The whistle waits until they touch the puck: keep it and attack.'), 5);
+    });
     m.on('penalty_over', (e) => { if (!e.byGoal) this.hud.ticker(t('{name} is out of the box. Back to full strength.', { name: e.s.name })); });
     m.on('goalie_pulled', (e) => {
       this.hud.banner(`<div class="small" style="color:${e.team === 0 ? '#ffd45e' : '#ff6f7d'}">${e.team === 0 ? t('GOALIE PULLED') : t('THEY PULLED THEIR GOALIE')}</div><div class="sub">${e.team === 0 ? t('Extra attacker on! Protect the empty net.') : t('Empty net! Shoot from anywhere.')}</div>`, 1.8);

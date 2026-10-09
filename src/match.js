@@ -256,6 +256,7 @@ export class Match {
       this.tickEntities(dt, false);
       if (this.stateT > 3.4 && !this.holdGoal) {
         if (this.winner !== null) { this.state = 'over'; this.stateT = 0; this.emit('final', { winner: this.winner }); }
+        else if (this.pendingPenalty) { this.whistlePenalty(); this.penaltyDot = null; } // (then the faceoff at centre)
         else this.setupFaceoff();
       }
       return;
@@ -274,7 +275,16 @@ export class Match {
     this.possessionT[this.puck.owner ? this.puck.owner.team : 0] += this.puck.owner ? dt : 0;
     this.tickEntities(dt, false);
     this.updatePickups(dt);
-    if (this.pendingPenalty) this.whistlePenalty();
+    if (this.pendingPenalty && this.state === 'play' && this.penaltyDue()) this.whistlePenalty();
+  }
+
+  // A delayed penalty: the arm goes up and play goes on while the fouled side has the puck; the
+  // whistle comes when the offending side touches it (a penalty shot is whistled at once).
+  penaltyDue() {
+    const pp = this.pendingPenalty, o = this.puck.owner;
+    if (pp.shot || (o && o.team === pp.s.team)) return true;
+    if (!pp.announced) { pp.announced = true; this.emit('penalty_delayed', { s: pp.s, reason: pp.reason, team: pp.s.team }); }
+    return false;
   }
 
   updateFaceoff(dt) {
@@ -1275,6 +1285,9 @@ export class Match {
     // a power-play goal ends the minor penalty
     const boxed = this.teamSkaters(1 - team).find((k) => k.boxT > 0);
     if (boxed) { info.powerPlay = true; this.penStats[team].ppGoals++; this.releaseFromBox(boxed, true); }
+    // a goal on a delayed penalty: the minor is wiped out (one the other way is called at the faceoff)
+    const pp = this.pendingPenalty;
+    if (pp && pp.s.team !== team) { this.pendingPenalty = null; info.delayed = true; this.emit('penalty_waived', { s: pp.s, reason: pp.reason, team: pp.s.team }); }
     this.state = 'goal';
     this.stateT = 0;
     p.shot = null; p.pass = null; p.curve = null; p.power = null;
@@ -1633,6 +1646,7 @@ export class Match {
     const d = this.nearestDot(p.x < 0 ? -1 : 1, p.y);
     if (o) this.loosePuck(o);
     this.emit('stall', { x: p.x, y: p.y });
+    if (this.pendingPenalty) { this.whistlePenalty(); return true; } // (a delayed penalty: called now)
     this.setupFaceoff(d.x, d.y);
     return true;
   }

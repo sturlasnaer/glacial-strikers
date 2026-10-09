@@ -78,6 +78,8 @@ export class Commentary {
     m.on('penalty_shot', (e) => this.say(pick([t('Penalty shot! {name} has it at centre ice, all alone.', { name: n(e.s) }), t('Here comes {name} on the penalty shot...', { name: n(e.s) })]), 3, true));
     m.on('penalty_shot_over', (e) => this.say(t('No goal on the penalty shot!'), 2));
     m.on('penalty', (e) => e.shot ? this.say(t('{name} hauls {by} down from behind. That\'s a penalty shot!', { name: n(e.s), by: n(e.shooter) }), 3, true) : this.say(t('{name} heads to the box for {reason}. {team} on the power play!', { name: n(e.s), reason: t(e.reason).toLowerCase(), team: team(1 - e.team) }), 3, true));
+    m.on('penalty_delayed', (e) => this.say(pick([t('The arm is up: delayed penalty on {name}.', { name: n(e.s) }), t('Delayed penalty coming on {name}. {team} keep the puck!', { name: n(e.s), team: team(1 - e.team) })]), 2));
+    m.on('penalty_waived', (e) => this.say(t('That goal wipes out the penalty on {name}.', { name: n(e.s) }), 3));
     m.on('goalie_pulled', (e) => this.say(t('{team} pull their goalie for the extra attacker!', { team: team(e.team) }), 3));
     m.on('plow', (e) => this.say(t('{name} gets bowled over!', { name: n(e.s) }), 1));
   }

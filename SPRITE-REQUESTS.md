@@ -9,6 +9,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Next batches:**
 1. **BH, the rest:** stick handling for the 13 players still to come (Part 1 brought six): `aurora_royals_d`, `ember_comets_c`, `ember_comets_w`, `gilded_rams_w`, `gilded_rams_d`, `obsidian_ravens_c`, `obsidian_ravens_d`, `pinewood_lynx_c`, `pinewood_lynx_w`, `glacier_owls_c`, `thunder_moose_c`, `fafnir` and `fenrir`, as in the BH section below.
 2. **BI, the rest:** Fáfnir's crossovers (held for his northwest right-turn stick). Fenrir's southeast backhand blade correction remains part of BH.
+3. **BN:** the linesman skating with his arm up, for delayed penalties (8 frames), as in the BN section below.
 
 Native generation reached its daily quota; pending art and masks are saved for the reset at **2026-10-09 18:10:25 UTC**.
 
@@ -96,5 +97,14 @@ Each is drawn once in their own club's colours, like their skating sets (the gam
 ## Batch BI: crossovers for the rest of the league
 
 The BE crossovers for the same 19 players: two frames (step over, push out) for the six directions that aren't straight north or south, turning left and turning right, with `blade_pixels` per frame and gear masks, as in BE. Frame names `<key>/crossover/<direction>/<left|right>_a` and `_b`. About 456 frames plus masks.
+
+## Batch BN: the linesman's arm up on the move
+
+Penalties are now **delayed**, as in real hockey: when a team fouls while the other has the puck, the linesman raises an arm and play goes on until the offending team touches the puck (a goal by the fouled team wipes the penalty out). Standing still he uses the AS `penalty_a` pose (one arm straight up), but while he follows play he has to drop the arm and use his ordinary stride, so the signal disappears just when the play is moving. Please draw him **skating with one arm raised straight up**, in the AG linesman's style, scale and pivots:
+- `linesman_delayed/linesman/stride_a` to `stride_d`: the four-frame side stride facing right (the game mirrors it for skating left), the raised arm steady through the stride, the other arm swinging as in the ordinary stride.
+- `linesman_delayed/linesman/glide_north`, `glide_south`, `glide_east`: the three glides with the arm up.
+- `linesman_delayed/linesman/stop`: a hockey stop facing right with the arm up (he pulls up when the whistle goes).
+
+In the atlas, a `linesman.delayed` map: `{ "stride": [the four], "glides": { "north", "south", "east" }, "stop": ... }`, with the linesman's usual recolour masks if his stripes need them. 8 frames.
 
 ---

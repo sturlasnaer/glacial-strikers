@@ -70,6 +70,14 @@ export class Linesman {
     if (st === 'goal' && m.stateT < 2.6) return { id: L.calls.goal, flip: p.x < this.x }; // pointing at the net
     if (this.duckT > 0) return { id: L.calls.duck, flip: false };
     const sp = Math.hypot(this.vx, this.vy);
+    // a delayed penalty: the arm up (skating with it, when there's art for that)
+    const up = st === 'play' && m.pendingPenalty && m.pendingPenalty.announced, U = L.delayed;
+    if (up && sp > 40 && U && U.stride) {
+      const g = U.glides && U.glides[this.vy < 0 ? 'north' : 'south'], gid = typeof g === 'string' ? g : g && g.frame;
+      if (gid && Math.abs(this.vy) > Math.abs(this.vx) * 1.4) return { id: gid, flip: false };
+      return { id: U.stride[beat(U.stride.length, 3 + sp / 60)], flip: this.vx < 0 };
+    }
+    if (up && sp <= 40 && L.calls.penalty) return { id: L.calls.penalty[0], flip: false };
     if (sp > 40) {
       if (Math.abs(this.vy) > Math.abs(this.vx) * 1.4) return { id: L.glides[this.vy < 0 ? 'north' : 'south'].frame, flip: false };
       return { id: L.stride.frames[beat(4, 3 + sp / 60)], flip: this.vx < 0 };

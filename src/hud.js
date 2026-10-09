@@ -277,6 +277,8 @@ export class HUD {
     if (pc) {
       const parts = [];
       for (const k of m.skaters) if (k.boxT > 0) parts.push(`<span class="${k.team === 0 ? 'pk' : 'pp'}">${k.team === 0 ? t('PENALTY KILL {n}s', { n: Math.ceil(k.boxT) }) : t('POWER PLAY {n}s', { n: Math.ceil(k.boxT) })}</span>`);
+      const pp = m.pendingPenalty;
+      if (pp && pp.announced && m.state === 'play') parts.push(`<span class="${pp.s.team === 0 ? 'pk' : 'pp'}">${t('DELAYED PENALTY')}</span>`);
       for (const side of [0, 1]) if (m.extra && m.extra[side]) parts.push(`<span class="${side === 0 ? 'pp' : 'pk'}">${side === 0 ? t('YOUR NET IS EMPTY') : t('THEIR NET IS EMPTY')}</span>`);
       const html = parts.join('');
       if (this.last.pen !== html) { this.last.pen = html; pc.innerHTML = html; pc.hidden = !html; }

@@ -215,6 +215,56 @@ const mk = (seed = 5) => new Match({ teams: [team(), team()], humanTeam: null, s
   setHookRate(rate);
 }
 
+// delayed penalties: play goes on while the fouled side has the puck, the whistle comes when the
+// other side touches it, and a goal by the fouled side wipes the minor out
+{
+  const setup = (seed) => {
+    const m = mk(seed);
+    m.state = 'play';
+    const c = m.teamSkaters(0)[0], d = m.teamSkaters(1)[0];
+    m.takePossession(c, 'catch');
+    m.pendingPenalty = { s: d, reason: 'Hooking' };
+    return { m, c, d };
+  };
+  {
+    const { m, c, d } = setup(41), seen = [];
+    m.on('penalty_delayed', () => seen.push('delayed'));
+    m.on('penalty', () => seen.push('penalty'));
+    for (const a of m.ai) a.update = () => {};
+    m.update(1 / 60); m.update(1 / 60);
+    const during = m.state === 'play' && seen.join() === 'delayed';
+    m.takePossession(d, 'steal');
+    m.update(1 / 60);
+    check('delayed penalty: play goes on while the fouled side has the puck', during, seen);
+    check('...and the whistle comes when the offending side touches it', m.state === 'penalty' && d.boxT > 0 && seen.join() === 'delayed,penalty', [m.state, d.boxT, seen]);
+  }
+  {
+    const { m, d } = setup(42), seen = [];
+    m.on('penalty_waived', () => seen.push('waived'));
+    m.update(1 / 60);
+    m.goal(1, 0); // (the fouled side, team 0, scores on the right-hand net)
+    for (let i = 0; i < 60 * 4 && m.state === 'goal'; i++) m.update(1 / 60);
+    check('...a goal by the fouled side wipes it out', seen.join() === 'waived' && !(d.boxT > 0) && m.state === 'faceoff' && !m.pendingPenalty, [seen, d.boxT, m.state]);
+  }
+  {
+    const { m, d } = setup(43);
+    m.update(1 / 60);
+    m.goal(-1, 0); // (off the offending side's own stick into the fouled side's net)
+    for (let i = 0; i < 60 * 4 && m.state === 'goal'; i++) m.update(1 / 60);
+    check('...a goal the other way still sends them to the box', m.state === 'penalty' && d.boxT > 0, [m.state, d.boxT]);
+  }
+  {
+    const { m, d } = setup(44);
+    m.update(1 / 60);
+    m.loosePuck(m.puck.owner);
+    Object.assign(m.puck, { x: GOAL_X + 56, y: 24, vx: 0, vy: 0 });
+    for (const a of m.ai) a.update = () => {};
+    for (const s of m.skaters) { s.x = -300; s.y = s.slot * 40; s.vx = s.vy = 0; }
+    for (let i = 0; i < 60 * 8 && m.state === 'play'; i++) m.update(1 / 60);
+    check('...and a puck whistled dead calls it', m.state === 'penalty' && d.boxT > 0, [m.state, d.boxT]);
+  }
+}
+
 // whole matches: skaters never end up in the boards or a net
 {
   let worst = 0, inNet = 0;
