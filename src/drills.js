@@ -567,6 +567,17 @@ class TipDrill extends DrillBase {
     this.phase = 'between'; this.pauseT = 1;
     m.emit('tip_result', { kind, tipped: this.tipped, n: this.n });
   }
+  // the lane the shot will take, while it's set up: get a stick on that line
+  drawOver(ctx, R, m, fx) {
+    if (this.phase !== 'set') return;
+    const a = toScreen(this.feeder.x, this.feeder.y), b = toScreen(GOAL_X, 0);
+    ctx.save();
+    ctx.globalAlpha = 0.7 + Math.sin(fx.time * 5) * 0.15;
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+    ctx.strokeStyle = 'rgba(20,35,59,0.35)'; ctx.lineWidth = 6; ctx.stroke();
+    ctx.setLineDash([10, 8]); ctx.lineDashOffset = -fx.time * 30; ctx.strokeStyle = '#ffd45e'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.restore();
+  }
   onGoal(m, info) { if (this.phase === 'shot' && info.side === 1) { if (this.tipped) { this.goals++; this.end(m, 'goal'); } else this.end(m, 'untipped'); } }
   hud() {
     const dots = Array.from({ length: TIP_SHOTS }, (_, i) => (this.results[i] === 'goal' ? '●' : this.results[i] ? '○' : '·')).join(' ');
