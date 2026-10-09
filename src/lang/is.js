@@ -12,7 +12,7 @@ export const IS = {
   "PENALTY{br}SHOT": "VÍTA{br}SKOT",
   "Win and take 3 faceoffs clean, right on the drop.": "Vinndu og vinndu 3 uppköst hreint, um leið og pökkurinn lendir.",
   "Win and deke past defenders 5 times.": "Vinndu og leiktu á varnarmenn 5 sinnum.",
-  "Careful chasing a breakaway: haul them down from behind and the ref can give them a penalty shot. If it's against us, you're in goal for it.": "Farðu varlega þegar þú eltir leikmann sem er sloppinn í gegn: ef þú fellir hann aftan frá getur dómarinn dæmt vítaskot. Ef það er á okkur ert þú í markinu.",
+  "Careful chasing from behind: reach round a faster skater and the ref can call hooking. Haul down a breakaway and it's a penalty shot. If it's against us, you're in goal for it.": "Farðu varlega þegar þú eltir aftan frá: ef þú teygir kylfuna fram fyrir hraðari leikmann getur dómarinn dæmt krækju. Ef þú fellir leikmann sem er sloppinn í gegn er það vítaskot. Ef það er á okkur ert þú í markinu.",
   "One on one: you're in goal!": "Einn á móti einum: þú ert í markinu!",
   "You're in goal! J drops to the butterfly, K dives.": "Þú ert í markinu! J fer niður í fiðrildið og K stekkur þvert yfir markið.",
   "You're in goal! X / □ drops to the butterfly, A / ✕ dives.": "Þú ert í markinu! X / □ fer niður í fiðrildið og A / ✕ stekkur þvert yfir markið.",

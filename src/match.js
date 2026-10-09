@@ -29,6 +29,8 @@ const lv3 = (level) => (level - 1) * 0.03;
 
 export let STEAL_BASE = 0.47; // a defender's stick on the puck: steals a second at the base rate
 export const setStealBase = (v) => { STEAL_BASE = v; }; // (for balance runs)
+export let HOOK_RATE = 0.6; // a stick reaching round a carrier in full flight from behind: hooking calls a second
+export const setHookRate = (v) => { HOOK_RATE = v; };
 
 export class Match {
   // cfg: { teams: [teamCfg, teamCfg], humanTeam: 0|null, seed, powers: [], twist, diff: [d0, d1] }
@@ -489,12 +491,16 @@ export class Match {
       const shielded = c.dekeT > 0 || (d.x - c.x) * (p.x - c.x) + (d.y - c.y) * (p.y - c.y) < 0; // reaching round the carrier's body (or a deke going by)
       // (the base was 0.8 when the puck sat in front of the body: out on the blade it's easier to reach)
       const rate = STEAL_BASE * (shielded ? 0.58 : 1) * (1 + (d.stats.chk - c.stats.pas) * 0.06) * this.ai[d.team].stealMul() * (d.def.arch === 'grinder' ? 1.08 : 1) * (d.hasPerk('Pickpocket') ? 1.1 : 1);
-      if (this.rng() < rate * dt) {
+      const r = this.rng();
+      if (r < rate * dt) {
         this.takePossession(d, 'steal');
         c.stun = 0.12;
         p.noPickup.set(c, 0.5);
         return;
       }
+      // chasing a faster carrier and reaching round them from behind: now and then the stick
+      // hooks them (the same draw, from the other end, so it costs no extra randomness)
+      if (r > 1 - HOOK_RATE * dt && shielded && !(c.dekeT > 0) && this.hooking(d, c)) return;
     }
   }
 
@@ -1539,6 +1545,18 @@ export class Match {
     else if (power > 330 && this.rng() < 0.12) reason = 'Charging';
     else if (insideDepth(b.x, b.y) < 34 && power > 260 && this.rng() < 0.1) reason = 'Boarding';
     if (reason) this.pendingPenalty = { s: a, reason };
+  }
+
+  // A hook from behind on a carrier skating away from the stick: a minor (the call is made
+  // only when the carrier is outskating the chaser, so a stick from the side is never hooking).
+  hooking(d, c) {
+    if (!this.penaltiesOn || this.state !== 'play' || this.pendingPenalty || this.pshot) return false;
+    const cs = Math.hypot(c.vx, c.vy);
+    if (cs < 150 || (d.x - c.x) * c.vx + (d.y - c.y) * c.vy > -0.5 * cs * Math.hypot(d.x - c.x, d.y - c.y)) return false;
+    if (Math.hypot(d.vx, d.vy) > cs + 20) return false;
+    if (this.teamSkaters(d.team).some((k) => k.boxT > 0)) return false; // (one in the box at a time)
+    this.pendingPenalty = { s: d, reason: 'Hooking' };
+    return true;
   }
 
   // A penalty shot: the fouled skater alone from centre ice against the goalie, everyone else

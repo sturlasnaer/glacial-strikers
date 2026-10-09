@@ -190,6 +190,31 @@ const mk = (seed = 5) => new Match({ teams: [team(), team()], humanTeam: null, s
   check('the player takes over in goal for a penalty shot against them', during && !g.human, { during, after: g.human });
 }
 
+// hooking: a stick reaching round a faster carrier from behind gets called, a stick from the side
+// or in front never does
+{
+  const { setHookRate, HOOK_RATE } = await import('../src/match.js');
+  const rate = HOOK_RATE;
+  setHookRate(1e6); // (every reach a call, to test where they're made)
+  const reach = (dx, dy, cvx, dvx) => {
+    const m = mk(31);
+    m.state = 'play';
+    const c = m.teamSkaters(0)[0], d = m.teamSkaters(1)[0];
+    for (const o of m.skaters) if (o !== c && o !== d) { o.x = -400; o.y = o.slot * 60 - 60; o.parked = true; }
+    for (const a of m.ai) a.update = () => {};
+    c.x = 0; c.y = 0; c.vx = cvx; c.vy = 0; c.face = 0; d.x = dx; d.y = dy; d.vx = dvx; d.vy = 0;
+    m.takePossession(c, 'catch');
+    m.puck.x = c.x + 22; m.puck.y = c.y; // (on the blade, ahead)
+    d.stickPoint = () => ({ x: m.puck.x, y: m.puck.y });
+    m.stickChecks(1 / 60);
+    return m.pendingPenalty && m.pendingPenalty.reason === 'Hooking' && !m.pendingPenalty.shot;
+  };
+  check('hooking: called reaching round a faster carrier from behind', reach(-26, 4, 260, 200));
+  check('...not from in front or the side', !reach(40, 4, 260, -100) && !reach(4, 30, 260, 200));
+  check('...nor on a carrier standing still', !reach(-26, 4, 40, 0));
+  setHookRate(rate);
+}
+
 // whole matches: skaters never end up in the boards or a net
 {
   let worst = 0, inNet = 0;
