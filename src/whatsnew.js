@@ -12,6 +12,7 @@ export const WHATS_NEW = [
       { icon: 'icons/rule_moonbeams', text: 'The Glacier Owls\' Observatory and the Thunder Moose\'s Longhouse have rules of their own: a moonbeam and loose planks.' },
       { icon: 'icons/challenge', text: 'Penalty shots: haul a skater down from behind on a breakaway and they go one on one with the goalie. One against you, and you\'re in goal for it, as in shootouts.' },
       { icon: 'achievements/clean_game', text: 'Delayed penalties: when the other team commits a foul, play goes on until they touch the puck, and a goal in the meantime wipes the penalty out. Watch for hooking, too: reaching round a faster skater from behind.' },
+      { icon: 'equipment_items/hub/target', text: 'Season goals: Coach Brekka sets three each season, under the standings. Each pays coins the moment you meet it.' },
       { icon: 'badges/daily_star', text: 'After each match: the three stars of the game, and a shot map of where every shot came from.' },
       { icon: 'icons/stat_games', text: 'Forfeiting a league or playoff game now counts as a loss. After a quick game, Play again starts it over.' },
     ],

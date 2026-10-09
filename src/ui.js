@@ -29,6 +29,7 @@ import { latestNews } from './news.js';
 import { audio } from './audio.js';
 import { t } from './i18n.js';
 import { RINK, GOAL_X, BLUE_X, CREASE, MOUTH, NET_DEPTH } from './rink.js';
+import { goalStates, ALL_GOALS_BONUS } from './goals.js';
 const VOLUMES = () => [[0, t('Off')], [0.35, t('Low')], [0.7, t('Mid')], [1, t('Full')]];
 // dialogue voices: each role speaks at its own pitch; rivals a little lower
 const VOICE = { frost: 660, thunder: 800, stone: 470, goalie: 590 };
@@ -704,6 +705,15 @@ export class UI {
         <div class="bracket-po">${game(po.semis[0], t('Semifinal · 1 v 4'))}${game(po.semis[1], t('Semifinal · 2 v 3'))}${game(po.final, t('Cup Final'))}</div>
         ${L.champion ? `<p class="gold-t" style="font-family:var(--display);font-size:26px;text-align:center;margin:10px 0 0">${L.champion === 'home' ? t('The Frostline Cup is yours!') : t('{team} win the Frostline Cup.', { team: esc(name(L.champion)) })}</p>` : ''}`;
     }
+    // Coach Brekka's goals for the season (set the first time they're shown)
+    const had = !!(L.goals && L.goals.season === L.season);
+    const goals = goalStates(s);
+    if (!had && goals.length) writeSave(s);
+    const goalsHtml = goals.length ? `<div class="label" style="margin:12px 0 4px;font-size:14px">${t('Season goals')}</div>
+      <div class="season-goals">${goals.map((g) => `<div class="sg ${g.done ? 'done' : g.failed ? 'failed' : ''}">
+        <span class="sg-text">${esc(t(g.text, { n: g.n }))}</span>
+        <span class="sg-res">${g.done ? `<span class="good">${t('Done')}</span>` : g.failed ? `<span class="bad">${t('Missed')}</span>` : g.progress ? `<span class="muted">${g.progress}</span>` : ''}<span class="gold-t">+${g.coins}</span></span></div>`).join('')}</div>
+      <div class="muted" style="font-size:12px;margin-top:4px">${t('Coach Brekka pays for each as it\'s met, and {n} more for all three.', { n: ALL_GOALS_BONUS })}</div>` : '';
     const last = L.results.length ? L.results[L.results.length - 1].slice(1) : [];
     const next = this.app.fixture && this.app.fixture();
     const nt = next && teamInfo(next.opponent);
@@ -717,6 +727,7 @@ export class UI {
       <div class="label" style="margin-bottom:6px">${esc(t(TOURNAMENT.name))} · ${t('Season {n}', { n: s.season })}</div>
       <div class="league-grid">
         <div style="min-width:0">${table}
+          ${goalsHtml}
           ${last.length ? `<div class="label" style="margin:12px 0 4px;font-size:14px">${t('Around the league · round {n}', { n: L.results.length })}</div>
           <div class="around">${last.map((g) => `<div>${esc(short(g.a))} <b>${g.ga}–${g.gb}</b> ${esc(short(g.b))}</div>`).join('')}</div>` : ''}
           ${bracket}

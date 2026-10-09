@@ -25,6 +25,7 @@ import { recordRealGame, computeAwards, AWARD_BY_ID } from './awards.js';
 import { dailyFor, dailyGoal, completeDaily, noteAttempt, dayKey, dailyState } from './daily.js';
 import { standings } from './league.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan, recordClassic, recordAllStar } from './league.js';
+import { updateSeasonGoals } from './goals.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
 import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, EXPANSION_LINES } from './data.js';
@@ -986,6 +987,13 @@ class App {
       if (leagueOut.champion) addNews(s, { k: 'champion', team: leagueOut.champion });
       s.stage = s.league.round;
     }
+    if (!c.exhibition && s.league) { // Coach Brekka's season goals: paid as they're met
+      const sg = updateSeasonGoals(s, { kind: c.fixture ? c.fixture.kind : 'regular', won: rewards.won, summary, opp: c.teamId });
+      for (const g of sg.met) rewards.lines.push([t('Season goal: {goal}', { goal: t(g.text, { n: g.n }) }), g.coins]);
+      if (sg.bonus) rewards.lines.push([t('All three season goals!'), sg.bonus]);
+      rewards.coins += sg.met.reduce((a, g) => a + g.coins, 0) + sg.bonus;
+      if (sg.met.length) setTimeout(() => this.toast(Assets.icon((Assets.atlas.npcs && Assets.atlas.npcs.coach) || 'badges/daily_star', 72), t('Season goal'), t(sg.met[0].text, { n: sg.met[0].n }), t('+{n} coins', { n: sg.met[0].coins + sg.bonus })), 2400);
+    }
     if (c.daily) {
       const goal = dailyGoal(c.daily.goal);
       const met = goal.check(summary);
@@ -1138,6 +1146,7 @@ class App {
     s.stage = 0; s.beaten = []; s.champion = false;
     const before = new Set(Object.keys((s.rivals || {}))), last = s.league;
     s.league = newLeague(s.season);
+    s.league.prevChampion = (last && last.champion) || null; // (beat them: a season goal)
     s.buffs = [];
     setLeagueEdge(s, last); // (the league keeps up with a club that ran away with it)
     writeSave(s);
