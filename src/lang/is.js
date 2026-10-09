@@ -1306,6 +1306,7 @@ export const IS = {
   "Season goal": "Markmið tímabilsins",
   "Season goal: {goal}": "Markmið tímabilsins: {goal}",
   "Season goals": "Markmið tímabilsins",
+  "season goals {n}/{of}": "markmið {n}/{of}",
   "Season goals {n}/{of}": "Markmið tímabilsins {n}/{of}",
   "Season goals: {n} of {total} met": "Markmið tímabilsins: {n} af {total} náðust",
   "Season goals: Coach Brekka sets three each season, under the standings. Each pays coins the moment you meet it.": "Markmið tímabilsins: Brekka þjálfari setur þrjú á hverju tímabili, undir stöðutöflunni. Hvert borgar mynt um leið og þú nærð því.",

@@ -483,7 +483,7 @@ export class UI {
         </div>
         <div class="hub-body panel" id="hub-body"></div>`}
         <div class="hub-cta">
-          ${nt ? `<div class="next">${esc(t(next.round, { n: next.roundN }))}<br><b>${t('vs {team}', { team: esc(nt.name) })}</b>${s.buffs && s.buffs.length ? `<span class="buffs">${s.buffs.map((b) => `<span class="buff">${esc(BUFF_TEXT(b))}</span>`).join('')}</span>` : ''}</div>
+          ${nt ? `<div class="next">${esc(t(next.round, { n: next.roundN }))}${(() => { const g = s.league ? goalStates(s) : []; return g.length ? ` · <span class="muted">${t('season goals {n}/{of}', { n: g.filter((x) => x.done).length, of: g.length })}</span>` : ''; })()}<br><b>${t('vs {team}', { team: esc(nt.name) })}</b>${s.buffs && s.buffs.length ? `<span class="buffs">${s.buffs.map((b) => `<span class="buff">${esc(BUFF_TEXT(b))}</span>`).join('')}</span>` : ''}</div>
           <button class="btn gold" id="h-play">${t('Play match')}</button>` : `<div class="next"><b>${s.league && s.league.champion && s.league.champion !== 'home' ? t('{team} won the cup', { team: esc(TEAMS[s.league.champion].name) }) : t('Champions!')}</b><br>${t('Start a new season or play exhibitions.')}</div>
           ${draftOpen(s) ? `<button class="btn gold" id="h-draft">${btnIcon('icons/draft')}${t('Draft Day')}</button>` : ''}<button class="btn ${draftOpen(s) ? 'ghost' : 'gold'}" id="h-season">${t('New season')}</button>`}
           <button class="btn ghost daily-btn" id="h-daily" title="${t('Today\'s daily challenge')}">${doneToday(s) ? badge('daily_done', 48, 'btn-ico', '✓') : badge('daily_star', 48, 'btn-ico', '★')} ${t('Daily')}${currentStreak(s) ? ` <span class="streak">${currentStreak(s)}${badge('streak_flame', 40, 'btn-ico', '🔥')}</span>` : ''}</button>
