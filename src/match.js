@@ -1561,6 +1561,12 @@ export class Match {
     if (this.humans.includes(s.team)) for (const o of this.teamSkaters(s.team)) o.controlled = o === s;
     this.takePossession(s, 'faceoff');
     this.pshot = { s, t: 0, gone: 0, benched };
+    // one against the player's team: they take over in goal for it (in goal mode they're there already)
+    const def = 1 - s.team;
+    if (!this.goalieMode && this.humans.length === 1 && this.humans[0] === def) {
+      const gk = this.goalies.find((k) => k.team === def);
+      if (gk && !gk.human) { gk.human = true; gk.prevHuman = { a: true, b: true, skill: true, ult: true }; this.pshot.keeper = gk; }
+    }
     this.stall = null;
     this.state = 'play'; this.stateT = 0;
     this.emit('penalty_shot', { s });
@@ -1582,6 +1588,7 @@ export class Match {
 
   endPenaltyShot() {
     if (!this.pshot) return;
+    if (this.pshot.keeper) this.pshot.keeper.human = false; // (back to the AI)
     for (const o of this.pshot.benched) o.parked = false;
     this.pshot = null;
   }

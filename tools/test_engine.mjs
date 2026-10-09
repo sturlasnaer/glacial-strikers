@@ -175,6 +175,21 @@ const mk = (seed = 5) => new Match({ teams: [team(), team()], humanTeam: null, s
   check('...and it\'s never on an empty net', empty === 0, empty);
 }
 
+// a penalty shot against the player's team: they take over in goal for it, and hand back after
+{
+  const m = new Match({ teams: [team(), team()], humanTeam: 0, seed: 77, powers: [], diff: [0.6, 0.6] });
+  m.state = 'play';
+  const shooter = m.teamSkaters(1)[0], foul = m.teamSkaters(0)[0], g = m.goalies.find((k) => k.team === 0);
+  let during = false;
+  m.on('penalty_shot', () => { during = g.human; });
+  m.pendingPenalty = { s: foul, reason: 'Hooking', shot: shooter };
+  m.whistlePenalty();
+  const idle = { mx: 0, my: 0, sprint: false, a: false, b: false, skill: false, ult: false };
+  for (let i = 0; i < 60 * 15 && m.state !== 'faceoff'; i++) { m.setHumanInput(idle); m.update(1 / 60); }
+  for (let i = 0; i < 60 * 6 && m.state !== 'faceoff'; i++) { m.setHumanInput(idle); m.update(1 / 60); }
+  check('the player takes over in goal for a penalty shot against them', during && !g.human, { during, after: g.human });
+}
+
 // whole matches: skaters never end up in the boards or a net
 {
   let worst = 0, inNet = 0;

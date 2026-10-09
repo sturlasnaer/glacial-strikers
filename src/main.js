@@ -795,7 +795,7 @@ class App {
     m.on('penalty', (e) => {
       const ours = e.team === 0;
       if (e.shot) { // taken down on a breakaway: a penalty shot
-        this.hud.banner(`<div class="small" style="color:${ours ? '#ff6f7d' : '#ffd45e'}">${t('PENALTY SHOT')}</div><div class="sub">${e.s.name} · ${t(e.reason)} · ${e.shooter.name}</div><div class="small" style="font-size:clamp(20px,3.6vw,34px);margin-top:6px">${ours ? t('One on one with your goalie!') : t('Alone against the goalie: make it count!')}</div>`, 2);
+        this.hud.banner(`<div class="small" style="color:${ours ? '#ff6f7d' : '#ffd45e'}">${t('PENALTY SHOT')}</div><div class="sub">${e.s.name} · ${t(e.reason)} · ${e.shooter.name}</div><div class="small" style="font-size:clamp(20px,3.6vw,34px);margin-top:6px">${ours ? (m.goalieMode || (this.cur && this.cur.versus) ? t('One on one with your goalie!') : t('One on one: you\'re in goal!')) : t('Alone against the goalie: make it count!')}</div>`, 2);
         audio.sfx('whistle'); audio.crowdOoh(1);
         return;
       }
@@ -848,7 +848,10 @@ class App {
       setTimeout(() => { if (this.match === m) audio.sfx('whistle', { vol: 0.5 }); }, 2600);
     });
     m.on('faceoff', () => audio.sfx('whistle', { vol: 0.55 }));
-    m.on('penalty_shot', () => this.replay.clear()); // (its replay starts at centre ice, not before the foul)
+    m.on('penalty_shot', (e) => {
+      this.replay.clear(); // (its replay starts at centre ice, not before the foul)
+      if (m.pshot && m.pshot.keeper) this.hud.hint(this.isTouch ? t('You\'re in goal! SHOOT drops to the butterfly, PASS dives.') : this.input.lastDevice === 'gamepad' ? t('You\'re in goal! X drops to the butterfly, A dives.') : t('You\'re in goal! J drops to the butterfly, K dives.'), 4);
+    });
     m.on('hat_trick', () => setTimeout(() => { if (this.match === m) audio.crowdCheer(1); }, 400)); // (the hats come down to a roar)
     m.on('faceoff_early', (e) => {
       audio.sfx('deny', { vol: 0.5 });
