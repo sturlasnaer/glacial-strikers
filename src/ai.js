@@ -136,6 +136,17 @@ export class TeamAI {
       const sorted = free.filter((s) => !roles.has(s)).sort((a, b) => dc(a) - dc(b));
       let left = sorted;
       const plan = this.gamePlan;
+      // killing a penalty (two against three) in our end: no chasing round the boards. One takes
+      // the top of the slot between the puck and the net, the other the low slot on the far
+      // side, and the carrier is only pressed once they're inside the dots.
+      const pk = m.powerPlay(this.team) < 0 && (c.x - this.ownX) * this.side < GOAL_X - BLUE_X + 40;
+      if (pk && Math.hypot(this.ownX - c.x, c.y) > 230) {
+        this.assign(sorted, [
+          { x: this.ownX + this.side * 175, y: clamp(c.y * 0.4, -70, 70), kind: 'spot', sprint: true },
+          { x: this.ownX + this.side * 85, y: c.y > 0 ? -35 : 35, kind: 'spot', sprint: true },
+        ], roles);
+        return roles;
+      }
       if (!humanClose && sorted.length) {
         roles.set(sorted[0], { kind: 'pressure', target: c });
         left = sorted.slice(1);
@@ -255,6 +266,15 @@ export class TeamAI {
         { x: side * (BLUE_X + 170), y: -ySign * 120, kind: 'spot', pref: 'W', sprint: true },
         { x: c.x - side * 90, y: -ySign * 40, kind: 'spot', pref: 'D' },
       ];
+    }
+    // a power play in their zone: the umbrella, the point and both flanks at the dots, so a pass
+    // across finds someone for a one-timer (with the puck at the point, the flanks; on a flank,
+    // the point and the far flank)
+    if (this.m.powerPlay(this.team) > 0 && !(c.controlled && this.m.humans.includes(this.team))) {
+      const fy = c.y >= 0 ? 1 : -1;
+      const far = { x: this.attX - side * 190, y: -fy * 130, kind: 'spot', pref: 'W' };
+      if (Math.hypot(this.attX - c.x, c.y) > 300) return [far, { x: this.attX - side * 200, y: fy * 140, kind: 'spot', pref: 'C' }];
+      return [far, { x: side * (BLUE_X + 90), y: clamp(c.y * 0.2, -40, 40), kind: 'spot', pref: 'D' }];
     }
     // offensive zone, the player with the puck out at the point: the winger goes to the front of
     // the net, for a tip or the rebound (the AI's own point men pass instead)
