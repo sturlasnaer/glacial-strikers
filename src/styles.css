@@ -554,6 +554,8 @@ body.large-text .hub, body.large-text .modal, body.large-text .results, body.lar
   .powerchip { top: calc(50px + var(--safe-t)); }
   /* (the ticker fills the top left on a phone: tips go to the bottom, between the stick and the buttons) */
   .hint { top: auto; bottom: calc(10px + var(--safe-b)); font-size: 12px; max-width: min(340px, 40vw); }
+  /* (a short window with a keyboard: the key hints hold the bottom right, so tips take the bottom left) */
+  #hud:has(.keyhints:not([hidden])) .hint { left: calc(10px + var(--safe-l)); transform: none; max-width: min(340px, 44vw); text-align: left; }
   .wn-coach .npc { margin-bottom: 6px; }
   .wn-coach .npc img { width: 40px; height: 40px; }
   .wn-coach .npc .say { padding: 4px 10px; font-size: 13px; }
