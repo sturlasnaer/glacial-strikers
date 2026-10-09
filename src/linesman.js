@@ -19,6 +19,10 @@ export class Linesman {
     this.t += dt;
     this.duckT = Math.max(0, this.duckT - dt);
     const p = m.puck, st = m.state;
+    this.delayedStopT = Math.max(0, (this.delayedStopT || 0) - dt);
+    const armUp = st === 'play' && !!(m.pendingPenalty && m.pendingPenalty.announced);
+    if (this.delayedArmUp && !armUp && st === 'penalty') this.delayedStopT = .25;
+    this.delayedArmUp = armUp;
     if (st === 'intro' || (st === 'faceoff' && m.stateT < DROP)) {
       if (this.mode !== 'dot') { this.side = this.faceoffs++ % 2 ? -1 : 1; this.mode = 'dot'; }
       this.x = p.x; this.y = p.y + BEHIND; this.vx = this.vy = 0;
@@ -60,6 +64,7 @@ export class Linesman {
       const i = m.stateT < DROP - 0.35 ? 0 : m.stateT < DROP - 0.2 ? 1 : 2; // crouched, the release, arms back
       return { id: L.faceoff.drop[i], flip: false };
     }
+    if (st === 'penalty' && this.delayedStopT > 0 && L.delayed && L.delayed.stop) return { id: L.delayed.stop, flip: this.vx < 0 };
     if (st === 'penalty') { // the signal for the call (Batch AS), or an arm up
       // (a penalty shot: the foul for the first second, then its own signal, Batch BL)
       const foul = L.calls[String(m.penaltyReason || '').toLowerCase()];
@@ -72,12 +77,14 @@ export class Linesman {
     const sp = Math.hypot(this.vx, this.vy);
     // a delayed penalty: the arm up (skating with it, when there's art for that)
     const up = st === 'play' && m.pendingPenalty && m.pendingPenalty.announced, U = L.delayed;
-    if (up && sp > 40 && U && U.stride) {
+    if (up && sp > 10 && U && U.stride) {
       const g = U.glides && U.glides[this.vy < 0 ? 'north' : 'south'], gid = typeof g === 'string' ? g : g && g.frame;
       if (gid && Math.abs(this.vy) > Math.abs(this.vx) * 1.4) return { id: gid, flip: false };
+      const east = U.glides && U.glides.east, eid = typeof east === 'string' ? east : east && east.frame;
+      if (eid && sp < 90) return { id: eid, flip: this.vx < 0 };
       return { id: U.stride[beat(U.stride.length, 3 + sp / 60)], flip: this.vx < 0 };
     }
-    if (up && sp <= 40 && L.calls.penalty) return { id: L.calls.penalty[0], flip: false };
+    if (up && L.calls.penalty) return { id: L.calls.penalty[0], flip: false };
     if (sp > 40) {
       if (Math.abs(this.vy) > Math.abs(this.vx) * 1.4) return { id: L.glides[this.vy < 0 ? 'north' : 'south'].frame, flip: false };
       return { id: L.stride.frames[beat(4, 3 + sp / 60)], flip: this.vx < 0 };

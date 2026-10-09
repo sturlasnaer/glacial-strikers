@@ -1131,3 +1131,45 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
   .trade-call img { width: 48px; height: 48px; }
   .trade-call .tc-arrow { font-size: 22px; }
 }
+
+/* ---- phones on their side (short, wide screens): the hub's header and tabs share one slim row
+   and the play bar another, so each tab gets most of the height; pop-ups go wider and tighter ---- */
+@media (max-height: 480px) and (min-aspect-ratio: 3/2) {
+  .hub { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-rows: auto minmax(0, 1fr) auto; align-items: center; column-gap: 8px; row-gap: 4px; }
+  .hub-top { display: contents; }
+  .hub-top .crest { grid-column: 1; grid-row: 1; width: 30px; height: 30px; }
+  .hub-title { grid-column: 2; grid-row: 1; font-size: 20px; }
+  .hub:has(.tabs) .hub-title { display: none; }
+  .hub .coins { grid-column: 3; grid-row: 1; margin-left: 0; font-size: 18px; padding: 2px 8px; }
+  .hub .coins img { width: 20px; height: 20px; }
+  .hub #h-settings { grid-column: 4; grid-row: 1; width: 34px; height: 34px; font-size: 18px; }
+  .hub .tabs { grid-column: 2; grid-row: 1; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; align-self: end; }
+  .hub .tabs::-webkit-scrollbar { display: none; }
+  .hub .tab { font-size: 15px; padding: 0 6px; flex: none; }
+  .hub .tab.room-tab .lbl { display: none; }
+  .hub .hub-body, .hub .room-wrap { grid-column: 1 / -1; grid-row: 2; align-self: stretch; min-height: 0; }
+  .hub .hub-body { padding: 8px 10px; }
+  .hub .hub-cta { grid-column: 1 / -1; grid-row: 3; gap: 6px; flex-wrap: nowrap; }
+  .hub .hub-cta .btn { font-size: 15px; padding: 1px 8px 0; }
+  .hub .hub-cta .btn-ico { width: 18px; height: 18px; }
+  .hub .hub-cta .next { font-size: 11px; line-height: 1.2; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .hub .hub-cta .next b { font-size: 14px; }
+  .npc { margin-bottom: 6px; gap: 6px; align-items: center; }
+  .npc img { width: 36px; height: 36px; }
+  .npc .say { padding: 4px 10px; font-size: 12.5px; }
+  .modal-bg { padding: 4px calc(8px + var(--safe-r)) 4px calc(8px + var(--safe-l)); }
+  .modal { width: min(820px, 100%); max-height: calc(100% - 4px); padding: 8px 12px; gap: 8px; }
+  .modal h2 { font-size: 24px; }
+  .modal .btn { font-size: 16px; }
+  .toggle { padding: 3px 0; }
+  .seg .chip { padding: 1px 8px; font-size: 12px; }
+  .plans { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .plan { padding: 5px 7px; font-size: 11.5px; }
+  .plan b { font-size: 18px; }
+  .plan .plan-ico { width: 22px; height: 22px; }
+  .scout { padding: 5px 8px; font-size: 13px; }
+  .choice { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .choice button { padding: 4px 8px; font-size: 12.5px; }
+  .choice button b { font-size: 17px; }
+  .locker-faces img { width: 52px; height: 52px; }
+}

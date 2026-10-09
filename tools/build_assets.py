@@ -709,6 +709,16 @@ atlas = {
     'banners': banners,
     'arena': arena,
 }
+BQ = sys.argv[27] if len(sys.argv) > 27 else '../assets/Puckbound-Batch-BQ'
+bq_ui = os.path.join(BQ, 'ui-kit')
+if os.path.isdir(bq_ui):
+    shutil.copytree(os.path.join(bq_ui, 'images'), os.path.join(OUT, 'ui-kit', 'images'), dirs_exist_ok=True)
+    manifest_path = os.path.join(OUT, 'ui-kit', 'ui-kit.json')
+    with open(manifest_path) as f: ui_manifest = json.load(f)
+    with open(os.path.join(bq_ui, 'ui-kit.json')) as f: bq_manifest = json.load(f)
+    ui_manifest['pieces'].update(bq_manifest['pieces'])
+    with open(manifest_path, 'w') as f: json.dump(ui_manifest, f, indent=2)
+
 # Part 2 and new additions (Batches AD to AM), then AN to AU: appended on pages of their own
 PART2 = sys.argv[15] if len(sys.argv) > 15 else '../assets/Puckbound-Part-2-and-New-Additions'
 AN_AO = sys.argv[16] if len(sys.argv) > 16 else '../assets/Puckbound-Batches-AN-AO'
@@ -733,7 +743,8 @@ BH_BI = sys.argv[23] if len(sys.argv) > 23 else '../assets/Puckbound-Batches-BH-
 BJ = sys.argv[24] if len(sys.argv) > 24 else '../assets/Puckbound-Batch-BJ'
 BK_BL_BM = sys.argv[25] if len(sys.argv) > 25 else '../assets/Puckbound-Batches-BK-BL-BM'
 from compile_request_additions import merge_request_additions
-atlas = merge_request_additions(atlas, OUT, [BJ, BK_BL_BM])
+BN_BO_BP = sys.argv[26] if len(sys.argv) > 26 else '../assets/Puckbound-Batches-BN-BP'
+atlas = merge_request_additions(atlas, OUT, [BJ, BK_BL_BM, BN_BO_BP])
 from merge_league_motion import merge_league_motion
 atlas = merge_league_motion(atlas, OUT, BH_BI)
 # where the blade meets the ice in the ordinary skating frames (from the gear masks)

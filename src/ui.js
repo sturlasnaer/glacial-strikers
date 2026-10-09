@@ -215,8 +215,8 @@ const NPC_SPOTS = [
   { who: 'agent', tab: 'team', at: [63, 38], when: marketOpen }, // Vigga, by the lockers once she has players to offer (Batch AR)
 ];
 // Button prompts from the UI kit (Batch U), as small images with the text as their alt.
-const PAD_PROMPT = { '✕': 'ps_cross', '○': 'ps_circle', '□': 'ps_square', '△': 'ps_triangle', L1: 'ps_l1', R1: 'ps_r1', L2: 'ps_l2', R2: 'ps_r2', Options: 'ps_options', Create: 'ps_create', A: 'xbox_a', B: 'xbox_b', X: 'xbox_x', Y: 'xbox_y', LB: 'xbox_lb', RB: 'xbox_rb', LT: 'xbox_lt', RT: 'xbox_rt', Start: 'xbox_menu', Back: 'xbox_view' };
-const KEYS = ['a', 'd', 'enter', 'esc', 'h', 'i', 'j', 'k', 'l', 'o', 'p', 's', 'shift', 'space', 'u', 'w'];
+const PAD_PROMPT = { '✕': 'ps_cross', '○': 'ps_circle', '□': 'ps_square', '△': 'ps_triangle', L1: 'ps_l1', R1: 'ps_r1', L2: 'ps_l2', R2: 'ps_r2', Options: 'ps_options', Create: 'ps_create', A: 'xbox_a', B: 'xbox_b', X: 'xbox_x', Y: 'xbox_y', LB: 'xbox_lb', RB: 'xbox_rb', LT: 'xbox_lt', RT: 'xbox_rt', Start: 'xbox_menu', Back: 'xbox_view', LS: 'xbox_ls', RS: 'xbox_rs', L3: 'ps_l3', R3: 'ps_r3' };
+const KEYS = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "enter", "esc", "shift", "space", "ctrl", "alt", "backspace", "semicolon", "quote", "comma", "period", "slash", "backslash", "bracketleft", "bracketright", "minus", "equal", "backquote"];
 const promptImg = (name, alt) => `<img class="pb-prompt" src="${Assets.url(`gfx/ui-kit/images/${name}.png`)}" alt="${esc(alt)}">`;
 // controller buttons named in a (translated) sentence
 // the OWNED stamp (Batch V's blank frame, so the word can be in either language)
@@ -229,14 +229,15 @@ function badge(name, size, cls = 'badge', fallback = '') {
   const src = id && Assets.groupReady('badges') ? Assets.icon(id, size) : '';
   return src ? `<img class="${cls}" src="${src}" alt="">` : fallback;
 }
-const padGlyphs = (text) => text.replace(/✕|○|□|△|\b(?:L1|R1|L2|R2|LB|RB|LT|RT|Options|Create|Start|Back|[ABXY])\b/g, (m) => promptImg(PAD_PROMPT[m], m));
+const padGlyphs = (text) => text.replace(/✕|○|□|△|\b(?:L1|R1|L2|R2|L3|R3|LS|RS|LB|RB|LT|RT|Options|Create|Start|Back|[ABXY])\b/g, (m) => promptImg(PAD_PROMPT[m], m));
 // the shop's filters: the gear slots, then the club's facilities
 const shopFilters = (filter) => `<div class="filters">${['all', 'stick', 'skates', 'armor', 'goalie'].map((f) => `<button class="chip" data-f="${f}" aria-pressed="${filter === f}">${f === 'all' ? t('All') : t(SLOT_NAMES[f])}</button>`).join('')}<button class="chip" data-f="club" aria-pressed="${filter === 'club'}">${t('Club facilities')}</button></div>`;
 // a key by name ('J', 'Space', '↑') as a keycap (keys without art stay text)
 const ARROW_KEYS = { '↑': 'up', '←': 'left', '↓': 'down', '→': 'right' };
 export function keyCap(name) {
   if (ARROW_KEYS[name]) return promptImg('key_' + ARROW_KEYS[name], name);
-  const k = String(name).toLowerCase();
+  const symbols = {";": "semicolon", "'": "quote", ",": "comma", ".": "period", "/": "slash", "\\": "backslash", "[": "bracketleft", "]": "bracketright", "-": "minus", "=": "equal", "`": "backquote"};
+  const k = symbols[name] || String(name).toLowerCase();
   return KEYS.includes(k) ? promptImg('key_' + k, name) : `<span class="keycap">${esc(name)}</span>`;
 }
 // an action's keys as keycaps, 'J / Space'
@@ -503,7 +504,7 @@ export class UI {
         </div>
         ${room ? `<div class="room-wrap" id="room-wrap"><div class="room" id="room">${this.roomHtml(s, anyPoints)}</div></div>` : `
         <div class="tabs" role="tablist">
-          <button class="tab room-tab" data-tab="room" aria-label="${t('Back to the locker room')}"><span class="arr">◂</span> ${t('Locker room')}</button>
+          <button class="tab room-tab" data-tab="room" aria-label="${t('Back to the locker room')}"><span class="arr">◂</span> <span class="lbl">${t('Locker room')}</span></button>
           ${[['tournament', t('League')], ['team', t('Team')], ['shop', t('Shop')], ['training', t('Training')], ['trophies', t('Trophies')]].map(([t, label]) => `<button class="tab" role="tab" data-tab="${t}" aria-selected="${this.tab === t}">${label}${t === 'team' && anyPoints ? '<span class="dot"></span>' : ''}</button>`).join('')}
         </div>
         <div class="hub-body panel" id="hub-body"></div>`}
@@ -1279,7 +1280,7 @@ export class UI {
     audio.sfx('blip');
     this.modal(`
       <div class="label">${t('Press conference')}</div>
-      <div class="locker press"${room ? ` style="background-image:url(${room})"` : ''}>
+      <div class="locker press-conf"${room ? ` style="background-image:url(${room})"` : ''}>
         <div class="locker-faces">${kip ? `<img src="${kip}" alt="">` : ''}<img src="${portrait(who, 0, null, 152)}" alt=""></div>
         <div><h2>${esc(t('Kip Vance asks'))}</h2><p style="margin:6px 0 0">${esc(clubText(t(pressQuestion(game), vars)))}</p></div>
       </div>

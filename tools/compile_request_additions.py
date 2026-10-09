@@ -1,4 +1,4 @@
-"""Append BJ equipment masks, recovered poses and BK/BL/BM art without rewriting old pages."""
+"""Append request art and equipment masks without rewriting old pages."""
 from pathlib import Path
 from PIL import Image
 import json,copy,hashlib,sys,shutil
@@ -7,7 +7,7 @@ def merge_request_additions(atlas,out,sources):
  for root in map(Path,sources):
   batches=sorted(root.glob('Puckbound-Batch-*'))if not(root/'atlas.json').exists()else[root]
   for B in batches:
-   S=json.loads((B/'atlas.json').read_text());batch=B.name.split('-')[-1];assert batch in ['BJ','BK','BL','BM'];digest=hashlib.sha256((B/'atlas.json').read_bytes()+b''.join((B/m['image']).read_bytes()for m in S['sheets'].values())).hexdigest();digests[batch]=digest
+   S=json.loads((B/'atlas.json').read_text());batch=B.name.split('-')[-1];assert batch in ['BJ','BK','BL','BM','BN','BO','BP'];digest=hashlib.sha256((B/'atlas.json').read_bytes()+b''.join((B/m['image']).read_bytes()for m in S['sheets'].values())).hexdigest();digests[batch]=digest
    if A.get('request_addition_sources',{}).get(batch)==digest:continue
    if batch=='BJ':
     for fid,m in S.get('legacy_art_recovery',{}).items():
@@ -19,8 +19,11 @@ def merge_request_additions(atlas,out,sources):
      f=S['frames'][fid]
      if fid in A['frames']and batch!='BJ':continue
      if batch=='BJ':replaced.add(fid)
-     rr=f['frame'];q=page.crop((rr['x'],rr['y'],rr['x']+rr['w'],rr['y']+rr['h']));k=.6 if batch=='BL'else 1;s=.6 if batch=='BL'else f.get('source_scale',1);size=(round(q.width*k),round(q.height*k));sx,sy=size[0]/q.width,size[1]/q.height;p=f['pivot_pixels'];group={'BJ':'gearmask','BK':'icons_z','BL':'linesman','BM':'home'}[batch];items.append({'id':fid,'q':q.resize(size,Image.Resampling.NEAREST),'pivot':[p['x']*sx,p['y']*sy],'scale':s,'group':group})
+     rr=f['frame'];q=page.crop((rr['x'],rr['y'],rr['x']+rr['w'],rr['y']+rr['h']));k=.6 if batch in ['BL','BN'] else .33 if fid=='hub_npcs/portrait/coach_stern' else 1;s=k*f.get('source_scale',1);size=(round(q.width*k),round(q.height*k));sx,sy=size[0]/q.width,size[1]/q.height;p=f['pivot_pixels'];group=f.get('game_group') or {'BJ':'gearmask','BK':'icons_z','BL':'linesman','BM':'home'}[batch];items.append({'id':fid,'q':q.resize(size,Image.Resampling.NEAREST),'pivot':[p['x']*sx,p['y']*sy],'scale':s,'group':group})
    if batch=='BL':A.setdefault('linesman',{}).setdefault('calls',{}).update(S['linesman']['calls'])
+   if batch=='BN':A.setdefault('linesman',{})['delayed']=copy.deepcopy(S['linesman']['delayed'])
+   if batch=='BP':
+    A.setdefault('npcs',{}).update(S['npcs']);A.setdefault('badges',{}).update(S['badges'])
    A.setdefault('art_additions',{})[batch]={k:v for k,v in S.items()if k not in ['frames','sheets']};A.setdefault('request_addition_sources',{})[batch]=digest
  if not items:return A
  suffix=hashlib.sha256((''.join(digests.values())).encode()).hexdigest()[:10];items.sort(key=lambda it:(it['group'],-it['q'].height,it['id']));page=Image.new('RGBA',(2048,2048));placed=[];x=y=rowh=idx=0;group=items[0]['group'];existing={Path(p['file']).name for p in A['pages']}

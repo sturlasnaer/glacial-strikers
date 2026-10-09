@@ -7,13 +7,11 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **BH, the rest:** stick handling for the 13 players still to come (Part 1 brought six): `aurora_royals_d`, `ember_comets_c`, `ember_comets_w`, `gilded_rams_w`, `gilded_rams_d`, `obsidian_ravens_c`, `obsidian_ravens_d`, `pinewood_lynx_c`, `pinewood_lynx_w`, `glacier_owls_c`, `thunder_moose_c`, `fafnir` and `fenrir`, as in the BH section below.
-2. **BI, the rest:** Fáfnir's crossovers (held for his northwest right-turn stick). Fenrir's southeast backhand blade correction remains part of BH.
-3. **BN:** the linesman skating with an arm up, for delayed penalties (8 frames), as in the BN section below.
-4. **BO:** six achievement icons, a season-goals icon and icons for the Faceoffs and Tip-Ins drills (9 frames), as in the BO section below.
-5. **BP:** gold, silver and bronze stars for the three stars of the game, and a stern Coach Brekka for the note after a loss (4 frames), as in the BP section below.
+1. **BR:** the six club facility icons.
+2. **BS:** championship and retired-number banners, and the home supporters' section (13 frames plus masks).
+3. **BT:** the press room, Kip interviewing, and the three reporters' neutral/eager portraits (9 frames).
 
-Native generation reached its daily quota; pending art and masks are saved for the reset at **2026-10-09 18:10:25 UTC**.
+**Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
 ## Format notes
 
@@ -88,7 +86,7 @@ Native generation reached its daily quota; pending art and masks are saved for t
 
 ---
 
-## Batch BN: the linesman's arm up on the move
+## Batch BN ✓: the linesman's arm up on the move
 
 Penalties are now **delayed**, as in real hockey: when a team fouls while the other has the puck, the linesman raises an arm and play goes on until the offending team touches the puck (a goal by the fouled team wipes the penalty out). Standing still, the linesman uses the AS `penalty_a` pose (one arm straight up), but following play the game has to drop the arm and use the ordinary stride, so the signal disappears just when the play is moving. Please draw the linesman **skating with one arm raised straight up**, in the AG linesman's style, scale and pivots:
 - `linesman_delayed/linesman/stride_a` to `stride_d`: the four-frame side stride facing right (the game mirrors it for skating left), the raised arm steady through the stride, the other arm swinging as in the ordinary stride.
@@ -97,7 +95,7 @@ Penalties are now **delayed**, as in real hockey: when a team fouls while the ot
 
 In the atlas, a `linesman.delayed` map: `{ "stride": [the four], "glides": { "north", "south", "east" }, "stop": ... }`, with the linesman's usual recolour masks if the stripes need them. 8 frames.
 
-## Batch BO: icons for tip-ins, delayed penalties, season goals and the faceoff drill
+## Batch BO ✓: icons for tip-ins, delayed penalties, season goals and the faceoff drill
 
 New today: **tip-ins** (a stick in front of the net redirects a teammate's shot), **delayed penalties** (play goes on while the fouled team has the puck; their goal wipes the penalty out), **season goals** (Coach Brekka sets three each season, shown under the standings) and a **Faceoffs drill** at the training rink. Their achievements and cards borrow other pictures for now. Please draw, in the style and size of the AF/BK achievement icons:
 - `achievements/redirect` (Redirect: score on a tip-in): a stick blade in front of the crease, the puck glancing off it at an angle with a little speed streak.
@@ -116,7 +114,7 @@ And two icons in the icons_z style (the league news and rule icons):
 
 ---
 
-## Batch BP: the three stars and a stern coach
+## Batch BP ✓: the three stars and a stern coach
 
 After every match the results now name **the three stars of the game** (the hockey tradition: the best players from either side, announced third star first), each card with the daily-challenge star for now; and after a loss **Coach Brekka** gives one thing to work on, with the ordinary hub portrait. Please draw, in the Batch X badge style and size (`badges/daily_star`, `badges/rank_1`):
 - `badges/star_1`, `badges/star_2`, `badges/star_3`: a gold, a silver and a bronze star (1st, 2nd and 3rd star), each with a small "1", "2" or "3" on it or under it.
@@ -128,7 +126,7 @@ And in the hub portrait style (`hub_npcs/portrait/coach`), same size and framing
 
 ---
 
-## Batch BQ: the rest of the keyboard keycaps
+## Batch BQ ✓: the rest of the keyboard keycaps
 
 Settings › Keyboard now lets players put any key on any action, and the controls page, the in-match key hints and the Keyboard screen show each key as a keycap. Batch U drew the default keys (`key_w`, `key_a`, `key_s`, `key_d`, `key_j`, `key_k`, `key_l`, `key_u`, `key_i`, `key_o`, `key_p`, `key_h`, `key_shift`, `key_space`, `key_enter`, `key_esc` and the four arrows); any other key is drawn as a plain box with its letter for now. Please draw the rest in exactly the Batch U keycap style, size and padding, as PNGs in `assets/gfx/ui-kit/images/`:
 - letters: `key_b`, `key_c`, `key_e`, `key_f`, `key_g`, `key_m`, `key_n`, `key_q`, `key_r`, `key_t`, `key_v`, `key_x`, `key_y`, `key_z`
