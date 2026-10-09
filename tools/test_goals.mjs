@@ -69,6 +69,12 @@ function season(s, win, opts = {}) {
   let s = set(['top2', 'goals', 'classic']);
   season(s, (f) => f.kind !== 'allstar');
   check('top two, goals and the Classic, all met by winning', goalStates(s).every((g) => g.done), goalStates(s));
+  s = set(['cup', 'goals', 'classic'], null, 3);
+  season(s, () => true);
+  check('winning the cup', goalStates(s).find((g) => g.id === 'cup').done, goalStates(s));
+  s = set(['cup', 'goals', 'classic'], null, 3);
+  season(s, (f) => f.kind !== 'final');
+  check('...and losing the final misses it', goalStates(s).find((g) => g.id === 'cup').failed, goalStates(s));
   s = set(['final', 'streak', 'revenge'], 'comets');
   season(s, () => true);
   check('the final, a streak and beating the champions', goalStates(s).every((g) => g.done), goalStates(s));

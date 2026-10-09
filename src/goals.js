@@ -23,6 +23,7 @@ export const SEASON_GOALS = {
     progress: (L) => (L.round > 0 && !regularOver(L) ? `#${rankOf(L)}` : '') },
   final: { kind: 'table', coins: 180, text: 'Reach the Cup Final.',
     done: (L) => !!(L.playoffs && ours(L.playoffs.final)), failed: (L) => (L.phase === 'done' && !(L.playoffs && ours(L.playoffs.final))) || !!(L.playoffs && regularOver(L) && !L.playoffs.semis.some(ours)) || !!(L.playoffs && L.playoffs.semis.some((g) => ours(g) && g.winner && g.winner !== 'home')) },
+  cup: { kind: 'table', coins: 220, text: 'Win the Frostline Cup.', done: (L) => L.champion === 'home', failed: (L) => (L.phase === 'done' && L.champion !== 'home') || !!(L.playoffs && regularOver(L) && !L.playoffs.semis.some(ours)) || !!(L.playoffs && L.playoffs.semis.some((g) => ours(g) && g.winner && g.winner !== 'home')) || !!(L.playoffs && L.playoffs.final && L.playoffs.final.winner && L.playoffs.final.winner !== 'home') },
   goals: { kind: 'play', coins: 120, text: 'Score {n} goals in the regular season.', n: (L) => rounds(L) * 3,
     done: (L, c, n) => L.table.home.gf >= n, failed: (L, c, n) => regularOver(L) && L.table.home.gf < n, progress: (L, c, n) => `${Math.min(n, L.table.home.gf)}/${n}` },
   defence: { kind: 'play', coins: 130, text: 'Let in {n} goals or fewer in the regular season.', n: (L) => Math.round(rounds(L) * 2.5),
@@ -45,7 +46,7 @@ export function seasonGoals(save) {
   if (L.goals && L.goals.season === L.season) return L.goals;
   const rng = makeRng(((L.seedRng || 1) * 31 + 7) >>> 0);
   const pick = (ids) => ids[Math.floor(rng() * ids.length)];
-  const table = L.season <= 1 ? 'playoffs' : pick(['top2', 'final', 'final']);
+  const table = L.season <= 1 ? 'playoffs' : pick(L.season >= 3 ? ['top2', 'final', 'cup'] : ['top2', 'final', 'final']);
   const play = pick(['goals', 'defence', 'shutout', 'streak', 'hattrick', 'powerplay']);
   const nights = [...(L.round <= 2 && !L.allstar ? ['allstar'] : []), ...(L.round <= 3 && !L.classic ? ['classic'] : []),
     ...(Object.keys(save.rookies || {}).some((id) => save.roster[id]) ? ['rookie'] : []),
