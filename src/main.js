@@ -1264,7 +1264,7 @@ class App {
   pauseStats() {
     const m = this.match, sm = m.summary(), team = TEAMS[this.cur.teamId], theirs = (team && team.color) || '#f5b3bb';
     const rows = sm.skaters.map((k) => `<tr style="color:${k.team === 0 ? 'var(--cream)' : '#f5b3bb'}"><td>${esc(k.name)}</td><td>${k.goals}</td><td>${k.assists}</td><td>${k.shots}</td><td>${k.hits}</td></tr>`).join('');
-    return `<div class="muted" style="font-size:13px">${t('Shots on goal {a}–{b}', { a: sm.shots[0], b: sm.shots[1] })} · ${t('{n} saves', { n: sm.saves[0] })}</div>
+    return `<div class="muted" style="font-size:13px">${t('Shots on goal {a}–{b}', { a: sm.shots[0], b: sm.shots[1] })} · ${t('Faceoffs {a}–{b}', { a: sm.draws[0], b: sm.draws[1] })} · ${t('{n} saves', { n: sm.saves[0] })}</div>
       <table class="res-table"><thead><tr><th>${t('Player')}</th><th>${t('G')}</th><th>${t('A')}</th><th>${t('SOG')}</th><th>${t('HIT')}</th></tr></thead><tbody>${rows}</tbody></table>
       ${sm.shotMap.length ? shotMapSvg(sm.shotMap, CLUB.trim || '#71dce8', theirs) : ''}`;
   }

@@ -583,6 +583,7 @@ export const IS = {
   "Faceoff": "Uppkast",
   "FACEOFF": "UPPKAST",
   "Faceoffs": "Uppköst",
+  "Faceoffs {a}–{b}": "Uppköst {a}–{b}",
   "Faceoffs: wait for the puck to touch the ice, then press. Go too early and you're a step slow.": "Uppköst: bíddu þar til pökkurinn snertir ísinn og ýttu þá. Ef þú ferð of snemma ertu skrefi of seinn.",
   "Fade": "Hverfa",
   "Fan mail": "Aðdáendapóstur",

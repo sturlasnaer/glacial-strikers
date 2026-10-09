@@ -2546,7 +2546,7 @@ export class UI {
         <div class="res-head">
           <h1 class="${won ? 'gold-t' : ''}">${won ? t('Victory!') : t('Defeat')}</h1>
           <div class="score">${esc(CLUB.nick)} ${summary.score[0]} – ${summary.score[1]} ${esc(tm.name.split(' ').slice(-1)[0])}</div>
-          <div class="muted">${exhibition ? t('Exhibition') : esc(data.round ? t(data.round, { n: data.roundN }) : '')} · ${t('Shots on goal {a}–{b}', { a: summary.shots[0], b: summary.shots[1] })}</div>
+          <div class="muted">${exhibition ? t('Exhibition') : esc(data.round ? t(data.round, { n: data.roundN }) : '')} · ${t('Shots on goal {a}–{b}', { a: summary.shots[0], b: summary.shots[1] })}${summary.draws ? ` · ${t('Faceoffs {a}–{b}', { a: summary.draws[0], b: summary.draws[1] })}` : ''}</div>
         </div>
         ${note ? npc('coach', note) : ''}
         <div class="res-grid">
