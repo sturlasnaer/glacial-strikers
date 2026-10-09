@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-09f',
+    items: [
+      { icon: 'icons/ghost', text: 'Sniper: your best run skates beside you as a ghost, and a frosty ring flashes on each target it hit, when it hit it.' },
+    ],
+  },
+  {
     id: '2026-10-09e',
     items: [
       { icon: 'icons/respec', text: 'Settings › Keyboard: put any key on any action, two keys each. The hints and the controls page follow your keys.' },

@@ -639,7 +639,7 @@ class App {
     const better = !prev || (c.def.unit === 'time' ? res.score < prev.score : res.score > prev.score);
     if (run && !res.timeout && better) s.ghosts[c.drill] = run;
     // Sniper and Keep-Away keep your best run's pace, to race in the HUD
-    if (res.pace && !skills && !(s.paces && s.paces[c.drill] && s.paces[c.drill].score >= res.score)) (s.paces ||= {})[c.drill] = { score: res.score, pace: res.pace };
+    if (res.pace && !skills && !(s.paces && s.paces[c.drill] && s.paces[c.drill].score >= res.score)) (s.paces ||= {})[c.drill] = { score: res.score, pace: res.pace, ...(res.race ? { race: res.race } : {}) }; // (Sniper's run too, for its ghost)
     this.ach.checkMeta();
     writeSave(s);
     if (res.vsLine) rw.ghostVs = { line: res.vsLine, won: res.vsWon };

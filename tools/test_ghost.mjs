@@ -90,5 +90,25 @@ check('its record in the HUD', /^Best: [●○·]( [●○·]){4}$/.test(bb.ctrl
 check('the result line', typeof bb.res.vsLine === 'string' && /Best: \d goals? · (you win|they win|a tie)/.test(bb.res.vsLine), bb.res.vsLine);
 check('ghost sprites draw', bb.ctrl.sprites(bb.m, { drawRaceGhost() {}, drawGhostPuck() {} }).length === 2);
 
+// Sniper: the AI shoots the run (the player's skater too), it's kept with the pace, and the
+// next run brings it back as a ghost with its hits
+function sniper(best = null) {
+  const s0 = newSave();
+  if (best) s0.paces = { sniper: best };
+  const { cfg, ctrl } = createDrill('sniper', s0, 'thunder', { seed: 5 });
+  const m = new Match(cfg);
+  m.humans = [];
+  for (let i = 0; i < 60 * 50 && m.state !== 'drill_over'; i++) m.update(1 / 60);
+  return { m, ctrl, res: ctrl.result };
+}
+const sa = sniper();
+const race = sa.res && sa.res.race;
+check('sniper run recorded', race && decodeGhost(race.path).length > 600 && decodeGhost(race.puck).length > 600 && race.char === 'thunder', race && [race.path.length, race.char]);
+check('...its hits, one a target hit', Array.isArray(race.lit) && race.lit.length === sa.res.hits && race.lit.every(([at, i]) => at > 0 && at <= 45 && i >= 0 && i < 3), [race.lit, sa.res.hits]);
+const sb = sniper({ score: sa.res.score, pace: sa.res.pace, race });
+check('...comes back as a ghost', sb.ctrl.ghost && sb.ctrl.ghost.lit.length === race.lit.length && sb.ctrl.ghostS);
+check('...its sprites draw', sb.ctrl.sprites(sb.m, { drawRaceGhost() {}, drawGhostPuck() {} }).length === 2);
+check('...an old best without a run: no ghost', !sniper({ score: 100, pace: [[0, 0]] }).ctrl.ghost);
+
 console.log(`ghosts: ${ok} passed, ${fail} failed  (run ${a.res.score}s, ${samples.length} samples, ${path.length} chars; breakaway ${ba.res.score}/5 vs ${bb.res.score}/5)`);
 process.exit(fail ? 1 : 0);

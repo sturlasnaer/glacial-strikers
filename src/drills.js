@@ -82,7 +82,7 @@ export function createDrill(id, save, charId, opts = {}) {
   let home = [charId], away = [], ctrl, awayTeam = opts.awayTeam || 'lynx'; // (a ghost's team, so its art stays loaded)
   switch (id) {
     case 'cones': ctrl = new ConeDrill(opts.ghost); break;
-    case 'sniper': home = [charId, opts.feeder || mates[0]]; ctrl = new SniperDrill(opts.skills ? null : save.paces && save.paces.sniper); break; // (your best run's pace)
+    case 'sniper': home = [charId, opts.feeder || mates[0]]; ctrl = new SniperDrill(opts.skills ? null : save.paces && save.paces.sniper, charId); break; // (your best run: its pace, and its ghost)
     case 'rondo': home = [charId, ...mates]; away = ['frost', 'stone']; ctrl = new RondoDrill(save.paces && save.paces.rondo); break;
     case 'breakaway': ctrl = new BreakawayDrill(opts.ghost); break;
     case 'faceoffs': away = ['frost']; ctrl = new FaceoffDrill(); break;
@@ -269,10 +269,18 @@ class ConeDrill extends DrillBase {
 }
 
 // --------------------------------------------------------------- Sniper
+// Your best run comes back as a ghost: the skater and the puck, see-through, and a frosty ring
+// on each target it hit when it hit it. Every run is recorded (kept with the best's pace).
 const TARGETS = [-26, 0, 26];
 
 class SniperDrill extends DrillBase {
-  constructor(best) { super(); this.setPace(best); }
+  constructor(best, char) {
+    super();
+    this.setPace(best);
+    this.char = char;
+    const r = best && best.race, path = r && decodeGhost(r.path), puck = r && decodeGhost(r.puck);
+    this.ghost = path && path.length && puck && puck.length ? { path, puck, lit: Array.isArray(r.lit) ? r.lit : [], char: r.char || char, label: t('Your best') } : null;
+  }
   init(m) {
     this.hideGoalies(m);
     this.neutralAim = 0;
@@ -287,6 +295,8 @@ class SniperDrill extends DrillBase {
     this.spot = 0; this.dead = 0; this.holdT = 0;
     m.on('shot', (e) => { if (e.s === s) this.shots++; });
     m.takePossession(f, 'drill');
+    this.rec = new GhostRecorder(); this.recPuck = new GhostRecorder(); this.lit = [];
+    if (this.ghost) this.ghostS = ghostSkater(this.ghost.char, this.ghost.path[0]);
     this.startCountdown(m);
   }
   light() {
@@ -314,7 +324,8 @@ class SniperDrill extends DrillBase {
       this.dead = dead ? this.dead + dt : 0;
       if (this.dead > (p.inNet ? 0.6 : 0.9)) this.respawn(m);
     } else this.dead = 0;
-    if (this.t >= this.duration) this.finish(m, this.score, { hits: this.hits, shots: this.shots, pace: this.pace });
+    this.rec.update(this.t, s); this.recPuck.update(this.t, { x: p.x, y: p.y, face: 0 });
+    if (this.t >= this.duration) this.finish(m, this.score, { hits: this.hits, shots: this.shots, pace: this.pace, race: { path: this.rec.encode(), puck: this.recPuck.encode(), lit: this.lit, char: this.char } });
   }
   respawn(m) {
     const p = m.puck;
@@ -332,6 +343,7 @@ class SniperDrill extends DrillBase {
     if (hit) {
       pts = 100 + (info.kind === 'onetimer' ? 50 : 0) + (info.special && info.special.combo ? 50 : 0) + (info.kind === 'slap' ? 25 : 0);
       hit.lit = false; hit.flash = 0.5;
+      this.lit.push([Math.round(this.t * 10) / 10, this.targets.indexOf(hit)]); // (for the ghost's rings)
       this.light();
       this.hits++;
     } else pts = 10;
@@ -341,6 +353,19 @@ class SniperDrill extends DrillBase {
   }
   hud() {
     return { title: t('Sniper'), main: t('{n} pts', { n: this.score }), sub: `${t('{seconds}s left', { seconds: Math.max(0, Math.ceil(this.duration - this.t)) })} · ${t(this.hits === 1 ? '{n} target' : '{n} targets', { n: this.hits })}`, note: this.paceNote(this.score) };
+  }
+  sprites(m, R) {
+    const gs = this.ghostS;
+    if (!gs || !R.drawRaceGhost) return [];
+    // it waits at the start through the countdown, then skates and shoots its run
+    const t0 = m.state === 'countdown' ? 0 : this.t;
+    moveGhost(gs, this.ghost.path, t0);
+    const puck = ghostAt(this.ghost.puck, t0);
+    const fade = m.state === 'drill_over' ? 0.4 : 0.8;
+    return [
+      { y: gs.y - 0.5, f: (ctx) => R.drawRaceGhost(ctx, gs, m, fade, this.ghost.label) },
+      { y: puck.y, f: (ctx) => R.drawGhostPuck(ctx, puck.x, puck.y, fade) },
+    ];
   }
   drawOver(ctx, R, m, fx) {
     for (const t of this.targets) {
@@ -352,6 +377,20 @@ class SniperDrill extends DrillBase {
         ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(p.x, p.y, rr * 0.75, rr, 0, 0, Math.PI * 2); ctx.fill();
       }
       ctx.globalAlpha = 1;
+    }
+    // the ghost's hits: a frosty ring over the target, swelling and fading over 0.7 s
+    if (this.ghost && m.state !== 'countdown') {
+      for (const [at, i] of this.ghost.lit) {
+        const k = (this.t - at) / 0.7;
+        if (k < 0 || k > 1 || !this.targets[i]) continue;
+        const p = toScreen(GOAL_X - 4, this.targets[i].y, 14);
+        ctx.save();
+        ctx.globalAlpha = 1 - k;
+        ctx.beginPath(); ctx.ellipse(p.x, p.y, 11 + k * 12, 14 + k * 16, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(11,20,36,0.7)'; ctx.lineWidth = 5; ctx.stroke();
+        ctx.strokeStyle = '#bff4ff'; ctx.lineWidth = 2.5; ctx.stroke();
+        ctx.restore();
+      }
     }
   }
 }
