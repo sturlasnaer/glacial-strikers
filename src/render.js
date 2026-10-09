@@ -1028,7 +1028,8 @@ export class Renderer {
     const handling = set.stickhandling;
     if (handling && s.hasPuck && s.speed > 40 && (s.gliding || s.speed < 200)) {
       const md = handMirror(handling.hands, dir, s.hand);
-      const pose = Math.sin((s.danglePhase || 0) * Math.PI * 2) < 0 ? 'backhand' : 'forehand';
+      // (protecting it, it's on the backhand, as the puck itself is: see Match.protectPuck)
+      const pose = (s.protect || 0) > 0.5 || Math.sin((s.danglePhase || 0) * Math.PI * 2) < 0 ? 'backhand' : 'forehand';
       const id = handling[md || dir]?.[pose];
       if (id) return { id, flip: !!md, pose: 'handling' };
     }

@@ -25,7 +25,7 @@ for(const key of ['frost_captain','thunder_winger','stone_defender','body_std','
   const flip=hand!==own,facing=flip?mirror[dir]:dir,s={...s0,hand,parts:key.startsWith('body')?{}:null};
   const frame=state=>Renderer.prototype.motionFrame.call({}, {...s,...state},{state:'play'},set,dir);
   for(const [phase,pose] of [[.25,'forehand'],[.75,'backhand']]){
-   const fr=frame({danglePhase:phase});assert.equal(fr.id,set.stickhandling[facing][pose]);assert.equal(fr.flip,flip);
+   const fr=frame({danglePhase:phase});assert.equal(fr.id,set.stickhandling[facing][pose]);assert.equal(fr.flip,flip);assert.equal(frame({danglePhase:phase,protect:1}).id,set.stickhandling[facing].backhand);
    const actual=Renderer.prototype.puckSpritePoint.call({skaterFrame:()=>fr},s,{state:'play'}),f=A.frames[fr.id],b=A.motion_blades[fr.id],p=toScreen(s.x,s.y),k=.5*persp(s.y)*(s.parts?M.PARTS_SCALE.body:1)/f[7];
    assert.equal(actual.x,p.x+(b.x-f[5])*k*(flip?-1:1));assert.equal(actual.y,p.y+(b.y-f[6])*k);
    if(s.parts){const look={head:Object.keys(A.modular.heads)[0]};const hp=M.headPlacement(A.modular,look,fr.id,f,p.x,p.y,.5*persp(s.y)*M.PARTS_SCALE.body,flip);assert.ok(hp&&A.frames[hp.head]);}cases++;
