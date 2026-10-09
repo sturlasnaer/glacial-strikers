@@ -1297,6 +1297,12 @@ export class Renderer {
           }
           for (const id of new Set(ids)) q.push(() => this.touch(this.gearFrame(id, pages, s.gear)));
         }
+        // the stick-handling and crossover pages (Batches BD/BE), uploaded before their first pose
+        for (const sec of ['stickhandling', 'crossover']) {
+          const v = kit && kit[sec], first = v && Object.entries(v).find(([d]) => d !== 'hands');
+          const f = first && Assets.frame(Object.values(first[1]).flat()[0]), pg = f && pages && pages[f[0]];
+          if (pg) q.push(() => this.touch(pg));
+        }
         const M = Assets.atlas.modular, views = s.parts && M && M.heads[s.parts.head];
         if (views) for (const st of Object.values(views)) for (const id of Object.values(st)) q.push(() => this.touch(Assets.partsCanvas(id, s.parts)));
       }
