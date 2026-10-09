@@ -106,7 +106,7 @@ useAchievementArt(F);
 check('every achievement icon exists', ACHIEVEMENTS.every((a) => F[a.icon]), ACHIEVEMENTS.filter((a) => !F[a.icon]).map((a) => a.id));
 const own = (a) => a.icon.startsWith('achievements/') || a.icon.startsWith('allstar/');
 // (requested ones show a stand-in until their art arrives: BF's five, in; BK's two)
-const PENDING = new Set(['moonstruck', 'splinters', 'protector', 'game-face', 'new-colours', 'sold-it', 'off-the-drop', 'penalty-shot', 'redirect', 'wiped-out', 'coachs-orders', 'traffic', 'bench-boss']);
+const PENDING = new Set(['moonstruck', 'splinters', 'protector', 'game-face', 'new-colours', 'sold-it', 'off-the-drop', 'penalty-shot', 'redirect', 'wiped-out', 'coachs-orders', 'traffic', 'bench-boss', 'hot-hand']);
 check('every achievement has its own icon (AF, AN, BF, BK; BO pending)', ACHIEVEMENTS.every((a) => own(a) || (PENDING.has(a.id) && !F[a.art])), ACHIEVEMENTS.filter((a) => !own(a) && !PENDING.has(a.id)).map((a) => a.id));
 
 // the linesman

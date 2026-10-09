@@ -67,6 +67,7 @@ export const ACHIEVEMENTS = [
   { id: 'wiped-out', name: 'Wiped Out', text: 'Score while a delayed penalty is coming against them.', icon: 'achievements/clean_game', art: 'achievements/wiped_out', coins: 60 },
   { id: 'traffic', name: 'Through Traffic', text: 'Score through a screen in front of the goalie.', icon: 'icons/arch_enforcer', art: 'achievements/through_traffic', coins: 50 },
   { id: 'bench-boss', name: 'Bench Boss', text: 'Change the game plan while trailing, and win.', icon: 'icons/challenge', art: 'achievements/bench_boss', coins: 70 },
+  { id: 'hot-hand', name: 'Hot Hand', text: 'One of your players scores in five league games in a row.', icon: 'badges/streak_flame', art: 'achievements/hot_hand', coins: 80 },
   { id: 'coachs-orders', name: 'Coach\'s Orders', text: 'Meet all three of Coach Brekka\'s season goals.', icon: 'equipment_items/hub/target', art: 'achievements/coachs_orders', coins: 120 },
   { id: 'weekly-cup', name: 'Cup of the Week', text: 'Win a Weekly Cup on a friends board.', icon: 'badges/rank_1', art: 'achievements/cup_of_the_week', coins: 100 },
 ];

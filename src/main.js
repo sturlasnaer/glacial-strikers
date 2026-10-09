@@ -997,6 +997,7 @@ class App {
         if (k.team !== 0 || !s.roster[k.id]) continue;
         streaks[k.id] = k.goals > 0 ? (streaks[k.id] || 0) + 1 : 0;
         if ([3, 5, 7, 10].includes(streaks[k.id])) addNews(s, { k: 'streak', name: k.name, team: 'home', n: streaks[k.id] });
+        if (streaks[k.id] >= 5) this.ach.unlock('hot-hand');
       }
       leagueOut = recordOurGame(s.league, s, summary.score[0], summary.score[1]);
       leagueOut.kind = c.fixture ? c.fixture.kind : 'regular';
