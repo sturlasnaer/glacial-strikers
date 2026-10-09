@@ -53,7 +53,7 @@ export class PadNav {
   // Should the pad drive the menus right now? Not while a match is being played.
   active() {
     const s = this.app.scene;
-    return s !== 'match' && s !== 'loading';
+    return s !== 'match' && s !== 'loading' && !this.app.padCapture; // (not while Settings › Gamepad waits for a button)
   }
 
   update(dt) {

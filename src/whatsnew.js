@@ -2,6 +2,13 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-09g',
+    items: [
+      { icon: 'icons/respec', text: 'Settings › Gamepad: put any button on any action, as with the keyboard. With a pad in hand, the tips name your buttons.' },
+      { icon: 'achievements/puck_protector', text: 'Every rival now works the puck from forehand to backhand and crosses over in their own art.' },
+    ],
+  },
+  {
     id: '2026-10-09f',
     items: [
       { icon: 'icons/ghost', text: 'Sniper: your best run skates beside you as a ghost, and a frosty ring flashes on each target it hit, when it hit it.' },

@@ -2,7 +2,10 @@
 // { mx, my, sprint, a, b, skill, ult, pause }
 //   a = shoot (hold to charge) / check     b = pass / switch player
 // The keyboard's keys come from keys.js (the defaults, or the player's own from Settings).
-import { ACTIONS, keyMap, isKey } from './keys.js';
+import { ACTIONS, keyMap, isKey, padMap } from './keys.js';
+
+// Is one of an action's buttons (Settings › Gamepad) down on this pad?
+const padDown = (gp, action) => padMap()[action].some((i) => i != null && gp.buttons[i] && gp.buttons[i].pressed);
 
 // Local versus: player 1 on the left of the keyboard, player 2 around the arrows.
 export const SPLIT = {
@@ -65,7 +68,7 @@ export class Input {
     const btn = (i) => gp.buttons[i] && gp.buttons[i].pressed;
     if (mag > 0.2) { const k = Math.min(1, (mag - 0.2) / 0.7) / mag; st.mx = ax * k; st.my = ay * k; }
     if (btn(14)) st.mx = -1; if (btn(15)) st.mx = 1; if (btn(12)) st.my = -1; if (btn(13)) st.my = 1;
-    st.a = btn(2) || btn(7); st.b = btn(0); st.sprint = btn(5) || btn(6); st.skill = btn(1) || btn(4); st.ult = btn(3); st.pause = btn(9);
+    for (const k of ['a', 'b', 'sprint', 'skill', 'ult', 'pause']) st[k] = padDown(gp, k);
     return st;
   }
 
@@ -102,13 +105,9 @@ export class Input {
       if (mag > 0.2) { const k = Math.min(1, (mag - 0.2) / 0.7) / mag; st.mx = ax * k; st.my = ay * k; used = true; }
       if (btn(14)) { st.mx = -1; used = true; } if (btn(15)) { st.mx = 1; used = true; }
       if (btn(12)) { st.my = -1; used = true; } if (btn(13)) { st.my = 1; used = true; }
-      if (btn(2) || btn(7)) { st.a = true; used = true; } // X / RT: shoot-check
-      if (btn(0)) { st.b = true; used = true; } // A: pass-switch
-      if (btn(5) || btn(6)) { st.sprint = true; used = true; } // RB/LT sprint
-      if (btn(1) || btn(4)) { st.skill = true; used = true; } // B/LB skill
-      if (btn(3)) { st.ult = true; used = true; } // Y ult
-      if (btn(9)) { st.pause = true; used = true; }
-      if (btn(8)) { st.pull = true; used = true; }
+      // (X or RT shoots, A passes, RB or LT sprints, B or LB skill, Y ultimate, Back pulls the
+      // goalie, unless Settings › Gamepad says otherwise)
+      for (const k of ['a', 'b', 'sprint', 'skill', 'ult', 'pause', 'pull']) if (padDown(gp, k)) { st[k] = true; used = true; }
       if (used) this.lastDevice = 'gamepad';
     }
     // touch

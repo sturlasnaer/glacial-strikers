@@ -28,7 +28,8 @@ import { agentState, marketOpen, agentsLeft, signAgent } from './agents.js';
 import { latestNews } from './news.js';
 import { audio } from './audio.js';
 import { t } from './i18n.js';
-import { ACTIONS, LOCKED, keyMap, keyName, keyNames, firstKey, moveGroups, groupText, setKeyMap, bindKey, canBind, sideless, isDefault } from './keys.js';
+import { ACTIONS, LOCKED, keyMap, keyName, keyNames, firstKey, moveGroups, groupText, setKeyMap, bindKey, canBind, sideless, isDefault,
+  PAD_ACTIONS, PAD_LOCKED, padMap, padName, padNames, firstPad, setPadMap, bindPad, canBindPad, isPadDefault } from './keys.js';
 import { RINK, GOAL_X, BLUE_X, CREASE, MOUTH, NET_DEPTH } from './rink.js';
 import { goalStates, ALL_GOALS_BONUS } from './goals.js';
 const VOLUMES = () => [[0, t('Off')], [0.35, t('Low')], [0.7, t('Mid')], [1, t('Full')]];
@@ -239,7 +240,11 @@ export const actionGlyphs = (action) => keyMap()[action].filter(Boolean).map((c)
 // the skating keys: WASD / arrows
 const moveGlyphs = () => moveGroups().map((g) => (g === 'arrows' ? ['up', 'left', 'down', 'right'].map((k) => promptImg('key_' + k, t('Arrows'))).join('') : g.map(keyCap).join(''))).join(' / ');
 // The keys the hints name, from the player's key map: {shoot} 'J', {move} 'WASD or the arrow keys'.
-export function hintKeys() {
+export function hintKeys(pad = false) {
+  if (pad) { // (the gamepad's buttons, Settings › Gamepad)
+    const ps = psPad(), f = (a) => firstPad(a, ps);
+    return { move: t('the left stick'), shoot: f('a'), pass: f('b'), sprint: f('sprint'), skill: f('skill'), ult: f('ult'), pull: f('pull') };
+  }
   const g = moveGroups().map((x) => (x === 'arrows' ? t('the arrow keys') : groupText(x)));
   return { move: g.length > 1 ? t('{a} or {b}', { a: g[0], b: g[1] }) : g[0] || '—', shoot: firstKey('a'), pass: firstKey('b'), sprint: firstKey('sprint'), skill: firstKey('skill'), ult: firstKey('ult'), pull: firstKey('pull') };
 }
@@ -2463,6 +2468,7 @@ export class UI {
       ${row(t('Play offline'), `<span style="font-size:13px;text-align:right;max-width:30ch">${installHelp(this.app)}</span>`)}
       <div class="label">${t('Controls')}</div>
       ${this.app.isTouch ? '' : row(t('Keyboard'), `<button class="btn small ghost" id="s-keys">${t('Change keys')}</button>`, isDefault() ? t('The keys as they came.') : t('Your own keys.'))}
+      ${this.app.isTouch && !padList().length ? '' : row(t('Gamepad'), `<button class="btn small ghost" id="s-pad">${t('Change buttons')}</button>`, isPadDefault() ? t('The buttons as they came.') : t('Your own buttons.'))}
       ${controlsHtml(this.app.isTouch)}
       <div class="toggle"><span class="muted">${t('Erase the save and start over')}</span><button class="btn small ghost" id="s-reset">${t('Reset save')}</button></div>
       <button class="btn small" id="s-close">${t('Close')}</button>`;
@@ -2488,7 +2494,9 @@ export class UI {
         this.click('#s-install', async () => { await this.app.install(); m.innerHTML = body(); bind(); }, m);
         this.click('#s-close', () => { audio.sfx('back'); close(); }, m);
         this.click('#s-jukebox', () => { audio.sfx('click'); this.jukebox(); }, m);
-        this.click('#s-keys', () => { audio.sfx('click'); this.keyboard(() => { const y = m.scrollTop; m.innerHTML = body(); bind(); m.scrollTop = y; }); }, m);
+        const redraw = () => { const y = m.scrollTop; m.innerHTML = body(); bind(); m.scrollTop = y; };
+        this.click('#s-keys', () => { audio.sfx('click'); this.keyboard(redraw); }, m);
+        this.click('#s-pad', () => { audio.sfx('click'); this.keyboard(redraw, 'pad'); }, m);
         this.click('#s-code', () => { audio.sfx('click'); this.cloudCode(); }, m);
         this.click('#s-restore', () => { audio.sfx('click'); this.cloudRestore(); }, m);
         this.click('#s-reset', (el) => {
@@ -2500,53 +2508,85 @@ export class UI {
     });
   }
 
-  // Settings › Keyboard: two keys for each action. Click one, press the new key; a key that
-  // was doing something else swaps over. Esc cancels (it always pauses, so it can't be taken).
-  keyboard(onClose) {
-    const st = this.app.save.settings;
+  // Settings › Keyboard (kind 'keys') and › Gamepad ('pad'): two keys or buttons for each
+  // action. Pick one, press the new key or button; one that was doing something else swaps
+  // over. Esc cancels (and a gamepad wait gives up after six seconds). Esc and Start always
+  // pause, so they can't be taken.
+  keyboard(onClose, kind = 'keys') {
+    const st = this.app.save.settings, pad = kind === 'pad', ps = psPad();
     const NAMES = { up: t('Skate up'), left: t('Skate left'), down: t('Skate down'), right: t('Skate right'), a: t('Shoot / check'), b: t('Pass / switch'), sprint: t('Sprint'), skill: t('Signature ability'), ult: t('Ultimate'), pull: t('Pull the goalie'), pause: t('Pause') };
-    let listen = null; // [action, slot] waiting for a key
+    const K = pad
+      ? { actions: PAD_ACTIONS, map: padMap, locked: PAD_LOCKED, name: (b) => padName(b, ps), cap: (b) => padGlyphs(esc(padName(b, ps))), isDefault: isPadDefault, set: (c) => { st.pad = c; setPadMap(c); } }
+      : { actions: ACTIONS, map: keyMap, locked: LOCKED, name: keyName, cap: (c) => keyCap(keyName(c)), isDefault, set: (c) => { st.keys = c; setKeyMap(c); } };
+    let listen = null; // [action, slot] waiting for a key or button
+    let poll = null;
     const slot = (a, i) => {
-      const code = keyMap()[a][i], locked = LOCKED[a] === i, on = listen && listen[0] === a && listen[1] === i;
-      return `<button class="chip keyslot${on ? ' listening' : ''}" data-key="${a}:${i}" ${locked ? 'disabled' : ''} aria-label="${esc(NAMES[a])}: ${esc(code ? keyName(code) : t('none'))}">${on ? t('Press a key…') : code ? keyCap(keyName(code)) : '—'}</button>`;
+      const v = K.map()[a][i], locked = K.locked[a] === i, on = listen && listen[0] === a && listen[1] === i;
+      return `<button class="chip keyslot${on ? ' listening' : ''}" data-key="${a}:${i}" ${locked ? 'disabled' : ''} aria-label="${esc(NAMES[a])}: ${esc(v != null ? K.name(v) : t('none'))}">${on ? (pad ? t('Press a button…') : t('Press a key…')) : v != null ? K.cap(v) : '—'}</button>`;
     };
-    const body = (msg = '') => `<h2>${t('Keyboard')}</h2>
-      <p class="muted" style="font-size:13px;margin:0 0 8px">${t('Click a key, then press the one you want. A key that was doing something else swaps over. Esc cancels.')}</p>
-      <div class="keymap">${ACTIONS.map((a) => `<span>${esc(NAMES[a])}</span>${slot(a, 0)}${slot(a, 1)}`).join('')}</div>
+    const body = (msg = '') => `<h2>${pad ? t('Gamepad') : t('Keyboard')}</h2>
+      <p class="muted" style="font-size:13px;margin:0 0 8px">${pad ? t('Pick a slot, then press the button you want. A button that was doing something else swaps over. Esc cancels.') : t('Click a key, then press the one you want. A key that was doing something else swaps over. Esc cancels.')}</p>
+      <div class="keymap">${K.actions.map((a) => `<span>${esc(NAMES[a])}</span>${slot(a, 0)}${slot(a, 1)}`).join('')}</div>
       <p class="muted" id="kb-msg" style="font-size:12.5px;min-height:1.3em;margin:6px 0">${msg}</p>
-      <p class="muted" style="font-size:12px;margin:0 0 8px">${t('Local versus keeps its own keys: WASD and F, G for player 1, the arrows and K, L for player 2.')}</p>
-      <div class="row" style="justify-content:space-between"><button class="btn small ghost" id="kb-reset" ${isDefault() ? 'disabled' : ''}>${t('Reset to defaults')}</button><button class="btn small" id="kb-done" data-close>${t('Done')}</button></div>`;
+      <p class="muted" style="font-size:12px;margin:0 0 8px">${pad ? padGlyphs(t('The D-pad and left stick skate. In the menus {a} picks and {b} goes back, whatever is set here.', { a: padName(0, ps), b: padName(1, ps) })) : t('Local versus keeps its own keys: WASD and F, G for player 1, the arrows and K, L for player 2.')}</p>
+      <div class="row" style="justify-content:space-between"><button class="btn small ghost" id="kb-reset" ${K.isDefault() ? 'disabled' : ''}>${t('Reset to defaults')}</button><button class="btn small" id="kb-done" data-close>${t('Done')}</button></div>`;
     let bg = null;
     const render = (msg) => { const m = bg.querySelector('.modal'); m.innerHTML = body(msg); wire(m); };
-    const save = (custom) => { st.keys = custom; setKeyMap(custom); writeSave(this.app.save); };
-    // the next key goes to the waiting slot (before the game or the menus see it)
+    const save = (custom) => { K.set(custom); writeSave(this.app.save); };
+    const stopPoll = () => { if (poll) cancelAnimationFrame(poll); poll = null; this.app.padCapture = false; };
+    const take = (v, refused) => {
+      const [a, i] = listen;
+      listen = null; stopPoll();
+      const custom = pad ? bindPad(st.pad, a, i, v) : bindKey(st.keys, a, i, v);
+      if (!custom) { audio.sfx('deny'); render(refused); return; }
+      save(custom);
+      audio.sfx('click');
+      render();
+    };
+    // the next key goes to the waiting slot (before the game or the menus see it); for a
+    // gamepad, only Esc counts (to cancel)
     const onKey = (e) => {
       if (!listen) return;
       if (!document.body.contains(bg)) { window.removeEventListener('keydown', onKey, true); return; }
       e.preventDefault(); e.stopImmediatePropagation();
       if (e.repeat) return;
-      const [a, i] = listen;
-      listen = null;
-      if (e.code === 'Escape') { audio.sfx('back'); render(); return; }
-      const custom = canBind(sideless(e.code)) ? bindKey(st.keys, a, i, e.code) : null;
-      if (!custom) { audio.sfx('deny'); render(t('{key} is kept for the browser. Try another.', { key: keyName(e.code) })); return; }
-      save(custom);
-      audio.sfx('click');
-      render();
+      if (e.code === 'Escape') { listen = null; stopPoll(); audio.sfx('back'); render(); return; }
+      if (!pad) take(sideless(e.code), canBind(sideless(e.code)) ? '' : t('{key} is kept for the browser. Try another.', { key: keyName(e.code) }));
+    };
+    // a button that goes down after the wait began (one already held, like the A that picked
+    // the slot, counts once it's let go and pressed again); the menus stand aside meanwhile
+    const watchPad = () => {
+      const pads = () => [...(navigator.getGamepads ? navigator.getGamepads() : [])].filter(Boolean);
+      const held = new Set(), t0 = performance.now();
+      for (const gp of pads()) gp.buttons.forEach((b, i) => { if (b && b.pressed) held.add(i); });
+      this.app.padCapture = true;
+      const step = () => {
+        if (!listen || !document.body.contains(bg)) { stopPoll(); return; }
+        const down = new Set();
+        for (const gp of pads()) gp.buttons.forEach((b, i) => { if (b && b.pressed) down.add(i); });
+        for (const i of [...held]) if (!down.has(i)) held.delete(i);
+        const hit = [...down].find((i) => !held.has(i));
+        if (hit !== undefined) { take(hit, canBindPad(hit) ? '' : t('{key} is kept for skating and the menus. Try another.', { key: padName(hit, ps) })); return; }
+        if (performance.now() - t0 > 6000) { listen = null; stopPoll(); render(t('No button pressed.')); return; }
+        poll = requestAnimationFrame(step);
+      };
+      poll = requestAnimationFrame(step);
     };
     const wire = (m) => {
       m.querySelectorAll('[data-key]').forEach((el) => el.addEventListener('click', () => {
         const [a, i] = el.dataset.key.split(':');
+        stopPoll();
         listen = [a, +i];
         audio.sfx('click');
         render();
         m.querySelector(`[data-key="${a}:${i}"]`)?.blur(); // (a Space on it mustn't press it again)
+        if (pad) watchPad();
       }));
       this.click('#kb-reset', () => { save({}); audio.sfx('click'); render(); }, m);
       // (the first Done is the modal's own; a redrawn one needs wiring)
       if (bg) this.click('#kb-done', () => { audio.sfx('back'); bg.remove(); done(); }, m);
     };
-    const done = () => { window.removeEventListener('keydown', onKey, true); onClose?.(); };
+    const done = () => { listen = null; stopPoll(); window.removeEventListener('keydown', onKey, true); onClose?.(); };
     window.addEventListener('keydown', onKey, true);
     bg = this.modal(body(), (m) => wire(m), true, done);
   }
@@ -2820,7 +2860,7 @@ function chemCard(k, xp) {
 
 // The moves on top of the buttons, in the pause menu under the controls.
 function movesHtml(touch, pad) {
-  const k = touch ? { sprint: t('SPRINT'), shoot: t('SHOOT'), pass: t('PASS') } : pad ? (psPad() ? { sprint: 'R1', shoot: '□', pass: '✕' } : { sprint: 'RB', shoot: 'X', pass: 'A' }) : hintKeys();
+  const k = touch ? { sprint: t('SPRINT'), shoot: t('SHOOT'), pass: t('PASS') } : hintKeys(pad);
   const g = pad && !touch ? padGlyphs : (x) => x;
   return `<div class="label" style="margin:10px 0 4px">${t('Moves')}</div><div class="keys moves">
     <kbd>${t('Deke')}</kbd><span>${g(t('Tap {sprint} with a defender in front to cut past them; near the goalie it can make them bite.', k))}</span>
@@ -2828,6 +2868,14 @@ function movesHtml(touch, pad) {
     <kbd>${t('Faceoff')}</kbd><span>${g(t('Press {shoot} or {pass} as the puck touches the ice, not before.', k))}</span>
     <kbd>${t('Tip-in')}</kbd><span>${g(t('In front of the net, press {shoot} as a teammate\'s shot goes by.', k))}</span>
   </div>`;
+}
+
+// The gamepad's buttons in one line, from Settings › Gamepad: 'Left stick to skate · X or RT
+// shoot/check · …'
+function padLine() {
+  const ps = psPad(), n = (a) => { const x = padNames(a, ps); return x.length > 1 ? t('{a} or {b}', { a: x[0], b: x[1] }) : x[0] || '—'; };
+  return [t('Left stick to skate'), `${n('a')} ${t('shoot/check')}`, `${n('b')} ${t('pass/switch')}`, `${n('sprint')} ${t('sprint')}`, `${n('skill')} ${t('skill')}`,
+    `${n('ult')} ${t('ultimate')}`, `${n('pause')} ${t('pause')}`, `${n('pull')} ${t('pull goalie')}`].join(' · ');
 }
 
 export function controlsHtml(touch, pad = false) {
@@ -2852,9 +2900,7 @@ export function controlsHtml(touch, pad = false) {
     <kbd>${actionGlyphs('ult')}</kbd><span>${t('Ultimate (when the gold meter is full)')}</span>
     <kbd>${actionGlyphs('pull')}</kbd><span>${t('Pull the goalie for an extra attacker (when trailing and they need one more goal)')}</span>
     <kbd>${actionGlyphs('pause')}</kbd><span>${t('Pause')}</span>
-    ${psPad()
-    ? `<kbd>${t('PlayStation pad')}</kbd><span>${padGlyphs(t('Left stick to skate · □ or R2 shoot-check · ✕ pass-switch · R1 or L2 sprint · ○ or L1 skill · △ ultimate · Options pause · Create pull goalie'))}</span>`
-    : `<kbd>${t('Gamepad')}</kbd><span>${padGlyphs(t('Left stick to skate · X or RT shoot-check · A pass-switch · RB or LT sprint · B or LB skill · Y ultimate · Start pause · Back pull goalie'))}</span>`}
+    <kbd>${psPad() ? t('PlayStation pad') : t('Gamepad')}</kbd><span>${padGlyphs(padLine())}</span>
     <kbd>${t('Pad in menus')}</kbd><span>${padGlyphs(t('D-pad or stick to move · {select} select · {back} back · {tabs} switch tabs · right stick scrolls', { select: psPad() ? '✕' : 'A', back: psPad() ? '○' : 'B', tabs: psPad() ? 'L1/R1' : 'LB/RB' }))}</span>
     <kbd>${t('Touch')}</kbd><span>${t('Left thumb anywhere to skate · right-side buttons for actions')}</span>
   </div>${movesHtml(false, pad)}`;

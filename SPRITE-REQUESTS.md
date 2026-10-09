@@ -83,22 +83,10 @@ Native generation reached its daily quota; pending art and masks are saved for t
 - **Batches BD and BE:** stick handling (forehand and backhand, eight directions) and crossovers (six directions, both ways) for Nix, Volta, Bram, the three parts bodies and the newcomers. In the game: a carrier with time and space works the puck from forehand to backhand on the drawn blade, and skaters cross over through hard turns at speed.
 
 - **Batches BH to BM, part 1:** crossovers for 18 more players (the founding rivals, Talon, Tamarack and Fenrir) and stick handling for six, the stick in the 27 early gear masks (plus eight of Nix's away poses recovered), the Sold It, Off the Drop and From the Spot icons, the linesman's hooking and penalty-shot signals, and the six hats.
+- **Batches BH and BI, part 2:** stick handling (eight directions) and crossovers (six, both turns) for the rest of the league's players, so every founding rival, both expansion captains and the legends now work the puck and cross over in their own art (464 more frames with masks).
 - **Batches BF and BG:** six achievement/news icons and three distinct four-phase goal celebrations for players from parts, with gear masks and turned/tilted head anchors. Source and ready packs: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-Batches-BF-BG`.
 
 ---
-
-## Batch BH: stick handling for the rest of the league
-
-BD is in: our cast, the parts bodies and the newcomers now work the puck from forehand to backhand on the drawn blade when they have time and space. Everyone else still carries it in their skating frames, so a rival carrier looks stiff next to ours. Please draw the same **forehand / backhand pair in all eight directions**, exactly as in BD (gliding upright, puck *not* drawn, blade contact point recorded per frame as `blade_pixels`, gear masks in the Batch M format, own stick hand), for these 19 players:
-- the founding rivals: `aurora_royals_c`, `_w`, `_d`; `ember_comets_c`, `_w`, `_d`; `gilded_rams_c`, `_w`, `_d`; `obsidian_ravens_c`, `_w`, `_d`; `pinewood_lynx_c`, `_w`, `_d`;
-- the expansion captains `glacier_owls_c` (Talon) and `thunder_moose_c`;
-- the legends `fafnir` and `fenrir`.
-
-Each is drawn once in their own club's colours, like their skating sets (the game recolours the same drawing for either kit and for our colours once signed), and with that set's stick hand (each set's `hands` map). Same scale and pivots as their skating frames. Frame names `<key>/stickhandling/<direction>/forehand` and `/backhand`, and in the atlas a `skater_motion_additions` entry per key as in BD. About 304 frames plus masks.
-
-## Batch BI: crossovers for the rest of the league
-
-The BE crossovers for the same 19 players: two frames (step over, push out) for the six directions that aren't straight north or south, turning left and turning right, with `blade_pixels` per frame and gear masks, as in BE. Frame names `<key>/crossover/<direction>/<left|right>_a` and `_b`. About 456 frames plus masks.
 
 ## Batch BN: the linesman's arm up on the move
 
@@ -148,4 +136,8 @@ Settings › Keyboard now lets players put any key on any action, and the contro
 - punctuation (the US-layout symbol on the cap): `key_semicolon` (;), `key_quote` ('), `key_comma` (,), `key_period` (.), `key_slash` (/), `key_backslash` (\), `key_bracketleft` ([), `key_bracketright` (]), `key_minus` (-), `key_equal` (=), `key_backquote` (`)
 - wide keys, in the width of `key_shift`: `key_ctrl`, `key_alt`, `key_backspace`
 
-38 images.
+And Settings › Gamepad lets a player put an action on a stick click, which has no prompt yet. In the Batch U controller prompt style (`xbox_a`, `ps_cross`, `xbox_lb`, …), same folder:
+- `xbox_ls` and `xbox_rs` (the Xbox stick clicks, a stick top with LS / RS)
+- `ps_l3` and `ps_r3` (the PlayStation stick clicks, L3 / R3)
+
+42 images.

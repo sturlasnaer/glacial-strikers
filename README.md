@@ -34,7 +34,7 @@ The game needs to be served over http; opening `index.html` straight from disk w
 | Ultimate | I or E | Y | Star button |
 | Pause | Esc / P | Start | Pause icon |
 
-**Your own keys:** Settings › Keyboard puts any key on any action (two keys each; a key already in use swaps over, and Esc always pauses). The tutorial tips, key hints and controls page name your keys. Local versus keeps its fixed split layout.
+**Your own keys and buttons:** Settings › Keyboard puts any key on any action, and Settings › Gamepad any button (two each; one already in use swaps over; Esc and Start always pause, and the D-pad keeps skating and driving the menus, where A and B still pick and go back). The tutorial tips, key hints and controls page name your keys, or your buttons when you're playing with a pad. Local versus keeps its fixed split layout on the keyboard; pads in versus follow Settings › Gamepad.
 
 **Pull the goalie:** H on keyboard, Back/View (Create on PlayStation) on a gamepad, or the PULL GOALIE touch button. It's available when you're behind and the other team needs one more goal.
 
