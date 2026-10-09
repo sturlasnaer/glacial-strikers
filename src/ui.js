@@ -772,6 +772,7 @@ export class UI {
         case 'champion': return n.team === 'home' ? t('The {club} win the Frostline Cup!', { club: esc(CLUB.nick) }) : t('{team} win the Frostline Cup.', { team: tn(n.team) });
         case 'expansion': return t('The Glacier Owls and Thunder Moose join the Frostline.');
         case 'edge': return t('The league has noticed the {club}: the rivals trained hard all summer.', { club: esc(CLUB.nick) });
+        case 'streak': return t('{name} has scored in {n} straight games.', { name, n: n.n });
         case 'hatTrick': return t(n.n > 3 ? '{name} scores {n} against the {team}. The hats are still coming down.' : '{name} scores a hat trick against the {team}. Hats everywhere!', { name, team: tn(n.team), n: n.n });
         default: return '';
       }

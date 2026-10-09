@@ -98,6 +98,7 @@ export const IS = {
   "{name} gets a stick on it in front!": "{name} nær kylfunni í hann fyrir framan!",
   "{name} gets bowled over!": "Valtað yfir {name}!",
   "{name} grabs the {power}!": "{name} nælir sér í ofurpökk: {power}!",
+  "{name} has scored in {n} straight games.": "{name} hefur skorað í {n} leikjum í röð.",
   "{name} hauls {by} down from behind. That's a penalty shot!": "{name} fellir {by} aftan frá. Það er vítaskot!",
   "{name} heads to the {team}.": "{name} fer til {team}.",
   "{name} heads to the box for {reason}. {team} on the power play!": "{name} fer í refsiboxið ({reason}). {team} í yfirtölu!",

@@ -981,6 +981,13 @@ class App {
     } else if (!c.exhibition && s.league) {
       recordRealGame(s, s.league, summary, c.teamId);
       for (const k of summary.skaters) if (k.team === 0 && k.goals >= 3) addNews(s, { k: 'hatTrick', name: k.name, team: c.teamId, n: k.goals }); // (the league notices)
+      // scoring streaks in league games: news at 3, 5, 7 and 10 straight
+      const streaks = (s.goalStreaks ||= {});
+      for (const k of summary.skaters) {
+        if (k.team !== 0 || !s.roster[k.id]) continue;
+        streaks[k.id] = k.goals > 0 ? (streaks[k.id] || 0) + 1 : 0;
+        if ([3, 5, 7, 10].includes(streaks[k.id])) addNews(s, { k: 'streak', name: k.name, team: 'home', n: streaks[k.id] });
+      }
       leagueOut = recordOurGame(s.league, s, summary.score[0], summary.score[1]);
       leagueOut.kind = c.fixture ? c.fixture.kind : 'regular';
       leagueOut.won = rewards.won;
