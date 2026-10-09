@@ -1563,7 +1563,7 @@ export class Match {
     this.pshot = { s, t: 0, gone: 0, benched };
     // one against the player's team: they take over in goal for it (in goal mode they're there already)
     const def = 1 - s.team;
-    if (!this.goalieMode && this.humans.length === 1 && this.humans[0] === def) {
+    if (!this.goalieMode && this.humans.includes(def)) {
       const gk = this.goalies.find((k) => k.team === def);
       if (gk && !gk.human) { gk.human = true; gk.prevHuman = { a: true, b: true, skill: true, ult: true }; this.pshot.keeper = gk; }
     }
