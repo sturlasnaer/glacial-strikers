@@ -1826,6 +1826,7 @@ export const IS = {
   "You {us}   Them {them}": "Við {us}   Þau {them}",
   "You add {coins}.": "Þú bætir við {coins}.",
   "You appear as {name}. Rename the club in Team › Club.": "Þú birtist sem {name}. Breyttu nafni félagsins í Lið › Félag.",
+  "You can change it during the match from the pause menu.": "Þú getur breytt því í leiknum úr hléinu.",
   "You got lucky. The boards will remember you.": "Þið voruð heppin. Battarnir muna eftir ykkur.",
   "You left {name}.": "Þú hættir á {name}.",
   "You need a signing or a drafted rookie to trade.": "Þú þarft leikmann sem þú samdir við eða nýliða til að skipta.",

@@ -1187,6 +1187,7 @@ export class UI {
           ${p.beats ? `<span class="muted">${t('Beats {plan}', { plan: esc(t(GAME_PLANS[p.beats].name)) })}</span>` : ''}
           ${counters(p.id) ? `<span class="edge good">${t('Counters their plan')}</span>` : countered(p.id) ? `<span class="edge bad">${t('Countered by their plan')}</span>` : ''}
         </button>`).join('')}</div>
+      <div class="muted" style="font-size:12px;margin-top:-4px">${t('You can change it during the match from the pause menu.')}</div>
       <div class="row" style="justify-content:space-between;align-items:center">${playAsHtml(s)}<button class="btn gold" id="plan-go">${t('Drop the puck')}</button></div>`, (m, close) => {
       this.bindPlayAs(m);
       let pick = cur;
