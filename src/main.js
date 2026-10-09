@@ -853,13 +853,15 @@ class App {
       if (m.pshot && m.pshot.keeper && !(this.cur && this.cur.versus)) this.hud.hint(this.isTouch ? t('You\'re in goal! BLOCK drops to the butterfly, DIVE dives across.') : this.input.lastDevice === 'gamepad' ? t('You\'re in goal! X / □ drops to the butterfly, A / ✕ dives.') : t('You\'re in goal! J drops to the butterfly, K dives.'), 4);
     });
     m.on('hat_trick', () => setTimeout(() => { if (this.match === m) audio.crowdCheer(1); }, 400)); // (the hats come down to a roar)
-    m.on('faceoff_early', (e) => {
-      audio.sfx('deny', { vol: 0.5 });
-      if (this.attract || e.s.team !== 0 || (this.cur && this.cur.versus) || !firstTime(this.save, 'faceoff')) return; // (versus has its own keys)
+    // how the draw is won: shown once, on the first early press or the first faceoff after a goal
+    const drawHint = () => {
+      if (this.attract || (this.cur && this.cur.versus) || m.goalieMode || !firstTime(this.save, 'faceoff')) return; // (versus has its own keys)
       this.hud.hint(this.isTouch ? t('Wait for the puck to touch the ice, then tap SHOOT or PASS to win the draw.')
         : this.input.lastDevice === 'gamepad' ? t('Wait for the puck to touch the ice, then press SHOOT or PASS to win the draw.')
           : t('Wait for the puck to touch the ice, then press J or K to win the draw.'), 5);
-    });
+    };
+    m.on('faceoff_early', (e) => { audio.sfx('deny', { vol: 0.5 }); if (e.s.team === 0) drawHint(); });
+    m.on('faceoff', () => { if (m.score[0] + m.score[1] > 0 && !m.drill) drawHint(); });
     m.on('drop', () => audio.sfx('drop'));
     m.on('stop', (e) => audio.sfx('stop', at(e.s.x, e.s.y, 0.8)));
     m.on('splash', (e) => {
