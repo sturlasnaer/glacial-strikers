@@ -2736,6 +2736,17 @@ function chemCard(k, xp) {
   </div>`;
 }
 
+// The moves on top of the buttons, in the pause menu under the controls.
+function movesHtml(touch) {
+  const k = touch ? { sprint: t('SPRINT'), shoot: t('SHOOT'), pass: t('PASS') } : { sprint: 'Shift', shoot: 'J', pass: 'K' };
+  return `<div class="label" style="margin:10px 0 4px">${t('Moves')}</div><div class="keys moves">
+    <kbd>${t('Deke')}</kbd><span>${t('Tap {sprint} with a defender in front to cut past them; near the goalie it can make them bite.', k)}</span>
+    <kbd>${t('One-timer')}</kbd><span>${t('Hold {shoot} as a pass arrives.', k)}</span>
+    <kbd>${t('Faceoff')}</kbd><span>${t('Press {shoot} or {pass} as the puck touches the ice, not before.', k)}</span>
+    <kbd>${t('Tip-in')}</kbd><span>${t('In front of the net, press {shoot} as a teammate\'s shot goes by.', k)}</span>
+  </div>`;
+}
+
 export function controlsHtml(touch) {
   if (touch) {
     return `<div class="keys">
@@ -2747,7 +2758,7 @@ export function controlsHtml(touch) {
     <kbd>${t('Snowflake')}</kbd><span>${t('Signature ability (swaps per character)')}</span>
     <kbd>${t('Star')}</kbd><span>${t('Ultimate, when it glows gold')}</span>
     <kbd>${t('Pull goalie')}</kbd><span>${t('Appears when you\'re behind and they need one more goal')}</span>
-  </div>`;
+  </div>${movesHtml(true)}`;
   }
   return `<div class="keys">
     <kbd>${keyGlyphs(`WASD / ${t('Arrows')}`)}</kbd><span>${t('Skate')}</span>
@@ -2763,5 +2774,5 @@ export function controlsHtml(touch) {
     : `<kbd>${t('Gamepad')}</kbd><span>${padGlyphs(t('Left stick to skate · X or RT shoot-check · A pass-switch · RB or LT sprint · B or LB skill · Y ultimate · Start pause · Back pull goalie'))}</span>`}
     <kbd>${t('Pad in menus')}</kbd><span>${padGlyphs(t('D-pad or stick to move · {select} select · {back} back · {tabs} switch tabs · right stick scrolls', { select: psPad() ? '✕' : 'A', back: psPad() ? '○' : 'B', tabs: psPad() ? 'L1/R1' : 'LB/RB' }))}</span>
     <kbd>${t('Touch')}</kbd><span>${t('Left thumb anywhere to skate · right-side buttons for actions')}</span>
-  </div>`;
+  </div>${movesHtml(false)}`;
 }
