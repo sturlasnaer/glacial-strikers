@@ -151,6 +151,7 @@ export class FX {
     on('puck_hop', ({ x, y }) => this.anim('arena_rules/puck_hop/phase_', x, y + 2, 0.085, { fps: 12, frames: [1, 2, 3] }));
     // the expansion buildings' rules (Batch AY's art once the rule pages are in, drawn in code until then)
     const ruleArt = (id) => { const f = Assets.frame(id); return f && Assets.pages[f[0]]; };
+    on('deke', ({ s }) => { this.burst(s.x, s.y, 2, 8, ELEMENT_COLORS.ice, 150, 0.35); });
     on('plank', ({ x, y, power }) => { // a puff of splinters
       if (ruleArt('arena_rules/loose_planks/splinters_a')) this.anim('arena_rules/loose_planks/splinters_', x, y + 4, 0.42, { fps: 14, frames: ['a', 'b', 'c', 'd'], z: 10 });
       else this.burst(x, y, 10, 4 + Math.min(6, Math.round(power / 120)), ['#a8743a', '#7a4f25', '#d9a866'], 120, 0.45);

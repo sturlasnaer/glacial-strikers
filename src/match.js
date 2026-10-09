@@ -169,7 +169,7 @@ export class Match {
   mapHuman(c, raw) {
     const p = this.puck;
     const inp = Skater.blankInput();
-    inp.mx = raw.mx; inp.my = raw.my; inp.sprint = raw.sprint;
+    inp.mx = raw.mx; inp.my = raw.my; inp.sprint = raw.sprint; inp.sprintBtn = raw.sprintBtn ?? raw.sprint;
     inp.skill = raw.skill; inp.ult = raw.ult; inp.a = raw.a; inp.b = raw.b;
     if (p.owner === c) {
       // a button still held from a check shouldn't start a shot
@@ -397,6 +397,35 @@ export class Match {
     this.judgeHit(a, b, kb, hadPuck, puckDist);
   }
 
+  // The deke: with someone right in front (a skater, or the goalie), the carrier cuts away from
+  // them with a burst, the puck pulled across to the backhand and hard to poke for a moment. A
+  // goalie can bite on it, leaning the way the puck was shown (less often the better they read
+  // the play). Costs stamina, and a breath before the next.
+  deke(s) {
+    const c = Math.cos(s.face), sn = Math.sin(s.face);
+    let by = null, bd = 1e9;
+    for (const o of [...this.opponents(s), this.goalieAt(s.side)]) {
+      if (!o || o.parked || o.disabled) continue;
+      const dx = o.x - s.x, dy = o.y - s.y, d = Math.hypot(dx, dy), ahead = (dx * c + dy * sn) / (d || 1);
+      if (d < (o.isGoalie ? 230 : 110) && ahead > 0.3 && d < bd) { bd = d; by = o; }
+    }
+    if (!by) return false;
+    const cross = c * (by.y - s.y) - sn * (by.x - s.x); // which side of our line they're on
+    const side = cross > 0 ? -1 : 1; // cut the other way
+    const px = -sn * side, py = c * side;
+    s.vx += px * 250 + c * 40; s.vy += py * 250 + sn * 40;
+    const sp = Math.hypot(s.vx, s.vy), cap = s.d.maxSpeed * 1.35;
+    if (sp > cap) { s.vx *= cap / sp; s.vy *= cap / sp; }
+    s.dekeT = 0.45; s.dekeCd = 1.6; s.protect = 1;
+    s.stamina -= 10; s.regenDelay = 0.5;
+    if (by.isGoalie && this.rng() < clamp(0.45 + (s.stats.agi - by.stats.rfx) * 0.05, 0.15, 0.8)) {
+      by.biteT = 0.55; by.biteY = -py * 26; // (sold the other way)
+      this.emit('deke_goalie', { s, g: by });
+    }
+    this.emit('deke', { s, by });
+    return true;
+  }
+
   // Puck protection: a carrier with a stick reaching in on the forehand side pulls the puck
   // across to the backhand, in close, with their body between it and the stick (quicker and
   // fuller the better their hands). A stick on the backhand side finds it out on the forehand.
@@ -409,8 +438,8 @@ export class Match {
       const st = d.stickPoint(), dd = Math.hypot(st.x - c.x, st.y - c.y);
       if (dd < nd) { nd = dd; near = d; }
     }
-    let want = 0;
-    if (near) {
+    let want = c.dekeT > 0 ? 1 : 0; // (mid-deke: pulled right in)
+    if (near && !(c.dekeT > 0)) {
       const side = c.hand === 'R' ? -1 : 1, lx = side * Math.sin(c.face), ly = -side * Math.cos(c.face); // the stick side
       if ((near.x - c.x) * lx + (near.y - c.y) * ly > 0) want = clamp(0.45 + (c.stats.agi + c.stats.pas) * 0.03, 0, 1);
     }
@@ -434,7 +463,7 @@ export class Match {
         }
         continue;
       }
-      const shielded = (d.x - c.x) * (p.x - c.x) + (d.y - c.y) * (p.y - c.y) < 0; // reaching round the carrier's body
+      const shielded = c.dekeT > 0 || (d.x - c.x) * (p.x - c.x) + (d.y - c.y) * (p.y - c.y) < 0; // reaching round the carrier's body (or a deke going by)
       // (the base was 0.8 when the puck sat in front of the body: out on the blade it's easier to reach)
       const rate = STEAL_BASE * (shielded ? 0.58 : 1) * (1 + (d.stats.chk - c.stats.pas) * 0.06) * this.ai[d.team].stealMul() * (d.def.arch === 'grinder' ? 1.08 : 1) * (d.hasPerk('Pickpocket') ? 1.1 : 1);
       if (this.rng() < rate * dt) {

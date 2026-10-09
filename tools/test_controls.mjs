@@ -1,6 +1,7 @@
 // Scripted checks of the player's controls through Match.setHumanInput.
 import { Match } from '../src/match.js';
 import { CHARACTERS } from '../src/data.js';
+import { GOAL_X as GOAL_X_ } from '../src/rink.js';
 const team = (chem = {}) => ({ chem, skaters: ['frost', 'thunder', 'stone'].map((id) => ({ def: CHARACTERS[id], stats: { ...CHARACTERS[id].base }, perks: [] })), goalie: { stats: { rfx: 6, pos: 6 } } });
 const mk = (chem) => { const m = new Match({ teams: [team(chem), team()], humanTeam: 0, seed: 5, powers: [], diff: [0.6, 0.6] }); m.state = 'play'; return m; };
 const raw = (o = {}) => ({ mx: 0, my: 0, sprint: false, a: false, b: false, skill: false, ult: false, ...o });
@@ -129,4 +130,28 @@ const check = (name, cond) => { if (cond) ok++; else { fail++; console.log('FAIL
   check('PP goal releases boxed player', m.score[0] === 1 && !boxed.parked && boxed.boxT === 0);
   for (let i = 0; i < 260; i++) m.update(1 / 60);
   check('goalie returns after a goal', !m.extra[0] && !m.goalieAt(-1).disabled && m.teamSkaters(0).length === 3); }
+// 16. the deke: a quick tap of sprint with a defender in front cuts away with the puck pulled in;
+// a held sprint is just sprinting; near the goalie it can make them bite
+{ const m = mk(); const c = m.controlled(); const d = m.teamSkaters(1)[0];
+  for (const o of m.skaters) if (o !== c && o !== d) { o.x = -600; o.y = 250; o.parked = true; }
+  c.x = 0; c.y = 0; c.face = 0; d.x = 70; d.y = 6; m.takePossession(c, 'catch');
+  let dekes = 0; m.on('deke', () => dekes++);
+  run(m, [raw({ sprint: true, mx: 1 }), raw({ sprint: true, mx: 1 }), raw({ mx: 1 }), raw({ mx: 1 })]);
+  check('a tap of sprint dekes past the defender', dekes === 1 && c.dekeT > 0 && c.protect === 1 && c.vy < -100);
+  const m2 = mk(); const c2 = m2.controlled(); const d2 = m2.teamSkaters(1)[0];
+  for (const o of m2.skaters) if (o !== c2 && o !== d2) { o.x = -600; o.y = 250; o.parked = true; }
+  c2.x = 0; c2.y = 0; c2.face = 0; d2.x = 70; d2.y = 6; m2.takePossession(c2, 'catch');
+  let dekes2 = 0; m2.on('deke', () => dekes2++);
+  run(m2, [...Array(30).fill(raw({ sprint: true, mx: 1 })), raw({ mx: 1 })]);
+  check('...a held sprint is just a sprint', dekes2 === 0);
+  let bites = 0;
+  for (let i = 0; i < 40; i++) {
+    const m3 = new Match({ teams: [team(), team()], humanTeam: 0, seed: 100 + i, powers: [], diff: [0.6, 0.6] }); m3.state = 'play';
+    const c3 = m3.controlled(); for (const o of m3.skaters) if (o !== c3) { o.x = -600; o.y = 250; o.parked = true; }
+    c3.x = GOAL_X_ - 170; c3.y = 0; c3.face = 0; m3.takePossession(c3, 'catch');
+    m3.on('deke_goalie', () => bites++);
+    m3.deke(c3);
+  }
+  check('...and near the goalie, they bite now and then', bites > 6 && bites < 36, bites); }
+
 console.log(`controls: ${ok} passed, ${fail} failed`);

@@ -183,6 +183,7 @@ export class Skater {
     this.animT = 0;
     this.stridePhase = 0; this.danglePhase = (slot || 0) * 0.37 + team * 0.5; this.lean = 0; this.faceWas = 0; // (see update)
     this.protect = 0; // 0..1: the puck pulled in to the backhand, away from a stick reaching in (see Match.protectPuck)
+    this.dekeT = 0; this.dekeCd = 0; this.sprintHeld = 0; // the deke: a quick tap of sprint with someone in your face (Match.deke)
     this.controlled = false;
     this.celebrate = 0;
     this.flash = 0;
@@ -190,7 +191,7 @@ export class Skater {
   }
 
   static blankInput() {
-    return { mx: 0, my: 0, sprint: false, shoot: false, pass: false, check: false, skill: false, ult: false, a: false, b: false, switch: false, aimX: 0, aimY: 0, passTo: null };
+    return { mx: 0, my: 0, sprint: false, sprintBtn: false, deke: false, shoot: false, pass: false, check: false, skill: false, ult: false, a: false, b: false, switch: false, aimX: 0, aimY: 0, passTo: null };
   }
 
   get hasPuck() { return this.match.puck.owner === this; }
@@ -232,6 +233,7 @@ export class Skater {
     this.fadeT = Math.max(0, this.fadeT - dt);
     this.gustT = Math.max(0, this.gustT - dt);
     this.oneTimerArmed = Math.max(0, this.oneTimerArmed - dt);
+    this.dekeT = Math.max(0, this.dekeT - dt); this.dekeCd = Math.max(0, this.dekeCd - dt);
     if (this.comboT > 0) { this.comboT -= dt; if (this.comboT <= 0) this.comboFrom = null; }
 
     if (this.stun > 0) {
@@ -385,6 +387,11 @@ export class Skater {
     if (this.pressed('ult') && this.ult >= 100) m.abilities.useUlt(this);
 
     if (this.hasPuck) {
+      // a deke: a quick tap of sprint (a held one is just sprinting), or the AI's call
+      const btn = inp.sprintBtn; // (a player's button only: the AI calls its dekes)
+      if (btn) this.sprintHeld += dt;
+      else { if (this.sprintHeld > 0 && this.sprintHeld < 0.22) inp.deke = true; this.sprintHeld = 0; }
+      if (inp.deke) { inp.deke = false; if (this.dekeCd <= 0 && this.stamina >= 10 && !this.charging) m.deke(this); }
       if (this.pressed('shoot')) { this.charging = true; this.chargeT = 0; }
       if (this.charging) {
         this.chargeT += dt * (this.hasPerk('Cannon') ? 1.25 : 1);
@@ -398,6 +405,7 @@ export class Skater {
       if (this.pressed('pass') && !this.charging) { if (inp.dump) m.dumpPuck(this); else m.pass(this, inp.passTo); }
     } else {
       this.charging = false;
+      this.sprintHeld = 0;
       if (inp.shoot) this.oneTimerArmed = 0.3;
       if (this.pressed('check') && this.checkCd <= 0 && this.stamina >= 12) this.startCheck();
     }
@@ -585,6 +593,8 @@ export class Goalie {
     if (this.state === 'ready' && this.pokeCd <= 0 && m.state === 'play') this.tryPoke();
 
     let { tx, ty } = this.angleTarget(gx);
+    // sold on a deke: leaning the way the puck was shown, not where it went
+    if (this.biteT > 0) { this.biteT -= dt; ty = clamp(ty + this.biteY, -MOUTH + 4, MOUTH - 4); }
 
     if (this.react) {
       this.react.t -= dt;

@@ -735,6 +735,7 @@ class App {
     return [
       touch ? t('Drag your left thumb to skate. Hold SPRINT for a burst of speed.') : t('Skate with WASD or the arrow keys. Hold Shift to sprint.'),
       touch ? t('With the puck: tap SHOOT for a wrist shot, hold it to charge a slapshot.') : t('With the puck: tap J for a wrist shot, hold J to charge a slapshot.'),
+      touch ? t('Defender in your face? Tap SPRINT to deke past them. Near the goalie, a deke can make them bite.') : t('Defender in your face? Tap Shift to deke past them. Near the goalie, a deke can make them bite.'),
       touch ? t('PASS goes to the teammate you\'re steering toward. Hold SHOOT as it arrives for a one-timer.') : t('K passes toward the teammate you\'re steering at. Hold J as it arrives for a one-timer.'),
       touch ? t('No puck? SHOOT becomes CHECK and PASS switches to the skater nearest the puck.') : t('No puck? J checks and K switches to the skater nearest the puck.'),
       touch ? t('The round button above SHOOT is your signature skill. The star fires your ultimate when it glows.') : t('U fires your signature skill. I fires your ultimate when the gold bar is full.'),
@@ -832,6 +833,7 @@ class App {
     m.on('ice_crack', (e) => { audio.sfx('crack', { vol: 0.5 + e.k * 0.3 }); if (!e.grow) this.rumble(0.1, 0.3, 80); });
     m.on('aurora_shift', () => audio.sfx('shimmer', { vol: 0.8 }));
     m.on('puck_hop', (e) => { audio.sfx('boards', at(e.x, e.y, 0.45)); audio.sfx('stick', at(e.x, e.y, 0.5)); });
+    m.on('deke', (e) => audio.sfx('glide', at(e.s.x, e.s.y, 0.55)));
     m.on('plank', (e) => { audio.sfx('boards', at(e.x, e.y, Math.min(1, 0.4 + e.power / 900))); audio.sfx('stick', at(e.x, e.y, 0.6)); });
     m.on('glare', (e) => audio.sfx('shimmer', at(e.x, e.y, 0.35)));
     m.on('stride', (e) => { if (e.s.controlled) audio.sfx('stride'); });
@@ -1311,6 +1313,7 @@ class App {
           else if (pads.length === 1) p2 = mergeInputs(p2, this.input.readPad(pads[0]));
           m.setHumanInput(p1, 0); m.setHumanInput(p2, 1);
         } else if (this.scene === 'match') {
+          raw.sprintBtn = raw.sprint; // (the button itself: a quick tap of it dekes, even with auto-sprint)
           if (this.save.settings.autoSprint && Math.hypot(raw.mx, raw.my) > 0.92) raw.sprint = true;
           m.setHumanInput(raw);
         }

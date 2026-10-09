@@ -467,6 +467,8 @@ export class TeamAI {
         inp.pass = true; inp.dump = true;
         return;
       }
+      // a deke: past a defender closing in, or to sell the goalie on a breakaway
+      if (s.dekeCd <= 0 && s.stamina > 25 && ((nearFront < 70 && m.rng() < 0.1 + this.diff * 0.2) || (nearFront > 140 && dG < 210 && m.rng() < 0.25))) inp.deke = true;
       // abilities while carrying
       if (s.skillCd <= 0) {
         const id = s.def.skill.id;

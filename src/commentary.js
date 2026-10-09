@@ -65,6 +65,8 @@ export class Commentary {
     // the expansion buildings and the puck on the stick
     m.on('glare', (e) => { this.glareT = m.time; this.say(pick([t('{name} loses it in the moonlight!', { name: e.g.name }), t('Out of the moonbeam! {name} squints.', { name: e.g.name })]), 1); });
     m.on('plank', () => { this.plankT = m.time; if (Math.random() < 0.45) this.say(pick([t('Off the loose boards! Who knows where that\'s going.'), t('The Longhouse boards take a bite out of that one!')]), 0); });
+    m.on('deke', (e) => { if (!e.by.isGoalie && Math.random() < 0.5) this.say(pick([t('{name} dekes {by}!', { name: n(e.s), by: n(e.by) }), t('{name} walks right around {by}!', { name: n(e.s), by: n(e.by) })]), 1); });
+    m.on('deke_goalie', (e) => this.say(pick([t('{name} sells the deke... {goalie} bites!', { name: n(e.s), goalie: e.g.name }), t('What a move! {goalie} is way out of position!', { goalie: e.g.name })]), 2));
     m.on('shield', (e) => { if (Math.random() < 0.3) this.say(pick([t('{name} shields it from {by}.', { name: n(e.s), by: n(e.by) }), t('{name} keeps it away from {by}.', { name: n(e.s), by: n(e.by) })]), 0); });
     m.on('faceoff_win', (e) => { if (Math.random() < 0.35) this.say(t('{name} wins the draw.', { name: n(e.s) }), 0); });
     m.on('lightning_pass', (e) => this.say(t('Lightning pass to {name}!', { name: n(e.to) }), 1));
