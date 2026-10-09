@@ -1,6 +1,7 @@
 // Íslenska. Keys are the English text exactly as written in the game (with {braces} for
 // values); values are the Icelandic. Names of people, teams and the club stay as they are.
 export const IS = {
+  "Score {a}–{b}, next goal wins.": "Staðan er {a}–{b}. Næsta mark vinnur.",
   "NEXT GOAL{br}WINS": "NÆSTA MARK{br}VINNUR",
   "PENALTY{br}SHOT": "VÍTA{br}SKOT",
   "Win and take 3 faceoffs clean, right on the drop.": "Vinndu og vinndu 3 uppköst hreint, um leið og pökkurinn lendir.",

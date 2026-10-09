@@ -1186,7 +1186,7 @@ class App {
       <button class="btn small ${st.music ? 'cream' : 'ghost'}" id="p-music">${st.music ? t('Music on') : t('Music off')}</button>
       <button class="btn small ${st.sfx ? 'cream' : 'ghost'}" id="p-sfx">${st.sfx ? t('Sound on') : t('Sound off')}</button></div>
       ${controlsHtml(this.isTouch)}
-      <div class="row" style="justify-content:space-between"><span class="muted" style="font-size:13px">${this.cur && this.cur.drill ? t('Quitting a drill gives no rewards.') : t('Score {a}–{b}, first to 5 wins.', { a: this.match.score[0], b: this.match.score[1] })}</span>
+      <div class="row" style="justify-content:space-between"><span class="muted" style="font-size:13px">${this.cur && this.cur.drill ? t('Quitting a drill gives no rewards.') : t(this.match.winScore === 1 ? 'Score {a}–{b}, next goal wins.' : 'Score {a}–{b}, first to 5 wins.', { a: this.match.score[0], b: this.match.score[1] })}</span>
       <button class="btn small ghost" id="p-quit">${this.cur && this.cur.drill ? t('Quit') : t('Forfeit match')}</button></div>`, (m, close) => {
       const resume = () => { close(); this.resume(); };
       m.querySelector('#p-resume').addEventListener('click', resume);
