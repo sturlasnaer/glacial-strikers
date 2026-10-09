@@ -369,6 +369,8 @@ img { image-rendering: auto; max-width: 100%; }
 .mvp img { width: 64px; height: 64px; }
 .season-goals { display: grid; gap: 4px; }
 .sg-ico { width: 22px; height: 22px; }
+.p-plans { flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0; }
+.p-plans .label { font-size: 13px; margin-right: 4px; }
 .sg-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 6px 0; font-size: 12.5px; }
 .sg-strip .label { font-size: 12px; margin-right: 2px; }
 .sg-chip { padding: 1px 8px; border-radius: 10px; border: 1px solid rgba(113, 220, 232, 0.4); background: rgba(113, 220, 232, 0.08); }

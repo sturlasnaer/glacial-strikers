@@ -1599,6 +1599,8 @@ export const IS = {
   "they win": "draugurinn vinnur",
   "They won the draws {b}–{a}. Wait for the puck to touch the ice, then press. The Faceoffs drill helps.": "Þau unnu uppköstin {b}–{a}. Bíddu þar til pökkurinn snertir ísinn og ýttu þá. Uppkastaæfingin hjálpar.",
   "They're moving it around!": "Pökkurinn gengur manna á milli!",
+  "They're playing {plan}; {beat} beats it.": "Þau spila {plan}; {beat} vinnur það.",
+  "They're playing {plan}.": "Þau spila {plan}.",
   "Thick Skin: shrug off hits 30% faster": "Þykkur skrápur: jafnar sig 30% hraðar eftir högg",
   "Third in the Weekly Cup": "Þriðja sæti í vikubikarnum",
   "This is your club now. Rename it and pick your colours in Team › Club.": "Nú er þetta félagið þitt. Gefðu því nýtt nafn og veldu litina í Lið › Félag.",

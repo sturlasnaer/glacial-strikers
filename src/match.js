@@ -1784,6 +1784,15 @@ export class Match {
   }
 
   // ------------------------------------------------------------ game plans
+  // A change of plan mid-match (from the pause menu): forecheck's slower recovery comes and goes with it.
+  setPlan(team, id) {
+    const was = this.plans[team];
+    if (was === id || !GAME_PLANS[id]) return;
+    for (const s of this.teamSkaters(team)) { if (was === 'forecheck') s.d.regen /= 0.88; if (id === 'forecheck') s.d.regen *= 0.88; }
+    this.plans = this.plans.map((p, i) => (i === team ? id : p));
+    this.emit('plan_change', { team, id });
+  }
+
   // +1 when this team's plan beats the opponent's, -1 when it's beaten.
   planEdge(team) {
     const mine = GAME_PLANS[this.plans[team]], theirs = this.plans[1 - team];

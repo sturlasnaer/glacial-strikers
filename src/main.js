@@ -1208,6 +1208,7 @@ class App {
       <button class="btn small ${st.music ? 'cream' : 'ghost'}" id="p-music">${st.music ? t('Music on') : t('Music off')}</button>
       <button class="btn small ${st.sfx ? 'cream' : 'ghost'}" id="p-sfx">${st.sfx ? t('Sound on') : t('Sound off')}</button>
       ${this.cur && this.cur.drill ? '' : `<button class="btn small ghost" id="p-stats">${t('Match stats')}</button>`}</div>
+      ${this.cur && !this.cur.drill && !this.cur.versus && !this.cur.allstar && !this.match.goalieMode ? `<div class="row p-plans"><span class="label">${t('Game plan')}</span>${Object.values(GAME_PLANS).map((p) => `<button class="btn small ${this.match.plans[0] === p.id ? 'cream' : 'ghost'}" data-pplan="${p.id}">${esc(t(p.name))}</button>`).join('')}<span class="muted" style="font-size:12.5px">${(() => { const theirs = this.match.plans[1], beat = Object.values(GAME_PLANS).find((p) => p.beats === theirs); return beat ? t('They\'re playing {plan}; {beat} beats it.', { plan: esc(t(GAME_PLANS[theirs].name)), beat: esc(t(beat.name)) }) : t('They\'re playing {plan}.', { plan: esc(t(GAME_PLANS[theirs].name)) }); })()}</span></div>` : ''}
       <div id="p-body">${controlsHtml(this.isTouch)}</div>
       <div class="row" style="justify-content:space-between"><span class="muted" style="font-size:13px">${this.cur && this.cur.drill ? t('Quitting a drill gives no rewards.') : t(this.match.winScore === 1 ? 'Score {a}–{b}, next goal wins.' : 'Score {a}–{b}, first to 5 wins.', { a: this.match.score[0], b: this.match.score[1] })}</span>
       <button class="btn small ghost" id="p-quit">${this.cur && this.cur.drill ? t('Quit') : t('Forfeit match')}</button></div>`, (m, close) => {
@@ -1215,6 +1216,11 @@ class App {
       m.querySelector('#p-resume').addEventListener('click', resume);
       m.querySelector('#p-music').addEventListener('click', (e) => { st.music = !st.music; if (st.music && !st.musicVol) st.musicVol = 1; this.applySettings(); writeSave(this.save); e.target.textContent = st.music ? t('Music on') : t('Music off'); e.target.className = 'btn small ' + (st.music ? 'cream' : 'ghost'); });
       m.querySelector('#p-sfx').addEventListener('click', (e) => { st.sfx = !st.sfx; if (st.sfx && !st.sfxVol) st.sfxVol = 1; this.applySettings(); writeSave(this.save); e.target.textContent = st.sfx ? t('Sound on') : t('Sound off'); e.target.className = 'btn small ' + (st.sfx ? 'cream' : 'ghost'); });
+      m.querySelectorAll('[data-pplan]').forEach((b) => b.addEventListener('click', () => { // a new plan from here on
+        this.match.setPlan(0, b.dataset.pplan);
+        m.querySelectorAll('[data-pplan]').forEach((o) => { const on = o.dataset.pplan === this.match.plans[0]; o.classList.toggle('cream', on); o.classList.toggle('ghost', !on); });
+        audio.sfx('click');
+      }));
       m.querySelector('#p-stats')?.addEventListener('click', (e) => { // the box score and shot map so far, or the controls again
         const body = m.querySelector('#p-body'), on = e.target.classList.toggle('cream');
         e.target.classList.toggle('ghost', !on);

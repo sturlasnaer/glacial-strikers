@@ -265,6 +265,15 @@ const mk = (seed = 5) => new Match({ teams: [team(), team()], humanTeam: null, s
   check('...one off to the side doesn\'t', !b.seen && !b.screened, b);
 }
 
+// a change of game plan mid-match: forecheck's slower recovery comes and goes with it
+{
+  const m = mk(81), s = m.teamSkaters(0)[0], base = s.d.regen;
+  m.setPlan(0, 'forecheck');
+  const fc = s.d.regen;
+  m.setPlan(0, 'trap');
+  check('game plan: switching to forecheck slows recovery, and back', Math.abs(fc - base * 0.88) < 1e-9 && Math.abs(s.d.regen - base) < 1e-9 && m.plans[0] === 'trap' && m.ai[0].gamePlan === 'trap', [base, fc, s.d.regen]);
+}
+
 // delayed penalties: play goes on while the fouled side has the puck, the whistle comes when the
 // other side touches it, and a goal by the fouled side wipes the minor out
 {
