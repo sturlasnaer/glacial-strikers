@@ -25,7 +25,7 @@ import { recordRealGame, computeAwards, AWARD_BY_ID } from './awards.js';
 import { dailyFor, dailyGoal, completeDaily, noteAttempt, dayKey, dailyState } from './daily.js';
 import { standings } from './league.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan, recordClassic, recordAllStar } from './league.js';
-import { updateSeasonGoals } from './goals.js';
+import { updateSeasonGoals, goalStates } from './goals.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
 import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, EXPANSION_LINES } from './data.js';
@@ -1355,6 +1355,14 @@ class App {
     const order = standings(L).map((r) => r.id);
     const list = computeAwards(s, L, order);
     L.awards = list;
+    // the season in the club's history (the Trophies tab lists them)
+    if (!(s.history ||= []).some((h) => h.season === L.season)) {
+      const row = L.table.home, po = L.playoffs, inGame = (g) => g && (g.a === 'home' || g.b === 'home');
+      const gs = goalStates(s);
+      s.history.push({ season: L.season, finish: order.indexOf('home') + 1, teams: order.length, w: row.w, l: row.l, gf: row.gf, ga: row.ga,
+        playoff: L.champion === 'home' ? 'champion' : po && inGame(po.final) ? 'final' : po && po.semis.some(inGame) ? 'semi' : 'missed',
+        goals: gs.filter((g) => g.done).length, of: gs.length });
+    }
     // the season's over: the oldest rival stars retire (Draft Day fills their places)
     for (const r of retireRivals(s)) addNews(s, { k: 'retire', team: r.team, name: RECRUITS[r.key].name, kit: r.kit, n: r.seasons });
     if (!list.length) { writeSave(s); return false; }

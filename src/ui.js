@@ -805,10 +805,17 @@ export class UI {
         <span class="row" style="gap:6px;margin:0"><button class="btn small ghost" id="tr-career">${btnIcon('icons/career')} ${t('Career stats')}</button><button class="btn small ghost" id="tr-lb">${badge('cup_small', 48, 'btn-ico', '🏆')} ${t('Online leaderboards')}</button></span></div>
       ${s.weeklyCups && s.weeklyCups.length ? `<div class="label" style="margin:4px 0 6px">${t('Weekly Cups')}</div>
       <div class="cup-shelf">${s.weeklyCups.slice(-12).reverse().map((w) => `<div class="cup-won" title="${esc(w.name)} · ${esc(w.week)}"><img src="${cupPlaceImg(w.place, 72)}" alt=""><small>${esc(w.name)}</small><span class="muted">${esc(w.week.replace(/^\d+-W/, t('week') + ' '))}</span></div>`).join('')}</div>` : ''}
+      ${s.history && s.history.length ? `<div class="label" style="margin:4px 0 6px">${t('Seasons')}</div>
+      <div class="seasons">${s.history.slice().reverse().map((h) => `<div class="season-row ${h.playoff === 'champion' ? 'champ' : ''}">
+        <b>${t('Season {n}', { n: h.season })}</b>
+        <span>${t('#{n} of {total}', { n: h.finish, total: h.teams })} · ${h.w}–${h.l} · ${h.gf}–${h.ga}</span>
+        <span class="${h.playoff === 'champion' ? 'gold-t' : h.playoff === 'missed' ? 'muted' : ''}">${{ champion: t('Frostline Cup champions'), final: t('Lost the Cup Final'), semi: t('Out in the semifinals'), missed: t('Missed the playoffs') }[h.playoff]}</span>
+        ${h.of ? `<span class="muted">${t('Season goals {n}/{of}', { n: h.goals, of: h.of })}</span>` : ''}</div>`).join('')}</div>` : ''}
       ${s.awards && s.awards.length ? `<div class="label" style="margin:4px 0 6px">${t('Award cabinet')}</div>
       <div class="aw-list cabinet">${s.awards.slice().reverse().map((w) => `
         <div class="aw-row us"><img src="${rowFace({ ...w, team: 'home' }, 64)}" alt=""><div style="min-width:0"><small>${t('Season {n}', { n: w.season })} · ${esc(t(AWARD_BY_ID[w.id].name))}</small><b>${esc(w.name)}</b><span class="muted">${esc(w.line)}</span></div><img class="cr" src="${ico(AWARD_BY_ID[w.id].icon, 64)}" alt=""></div>`).join('')}</div>
-      <div class="label" style="margin:14px 0 6px">${t('Achievements')}</div>` : ''}
+` : ''}
+      ${(s.awards && s.awards.length) || (s.history && s.history.length) ? `<div class="label" style="margin:14px 0 6px">${t('Achievements')}</div>` : ''}
       <div class="trophies">${ACHIEVEMENTS.map((a) => {
         const done = tr.has(a.id);
         const pr = !done && tr.progress(a);

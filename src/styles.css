@@ -683,6 +683,10 @@ body.in-hub.hub-room #screen { background: linear-gradient(rgba(8, 14, 26, 0.82)
 .aw-team { display: inline-flex !important; gap: 6px; align-items: center; }
 .aw-list { display: grid; gap: 6px; width: 100%; }
 .aw-goals { width: 100%; margin-bottom: 8px; }
+.seasons { display: grid; gap: 4px; margin-bottom: 12px; }
+.season-row { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; padding: 6px 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.04); border-left: 4px solid var(--ice); font-size: 13.5px; }
+.season-row.champ { border-left-color: var(--gold); background: rgba(255, 212, 94, 0.08); }
+.season-row b { font-family: var(--display); font-size: 16px; min-width: 76px; }
 .aw-goals .label { margin-top: 0 !important; }
 .aw-row { display: grid; grid-template-columns: 44px 1fr 28px; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 8px; background: rgba(13, 24, 42, 0.55); border: 2px solid var(--navy-3); }
 .aw-row.us { border-color: var(--ice); background: rgba(30, 90, 102, 0.35); }
