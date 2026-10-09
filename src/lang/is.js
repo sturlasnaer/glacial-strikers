@@ -1597,6 +1597,7 @@ export const IS = {
   "The League All-Stars win it! Nobody leaves disappointed tonight.": "Stjörnulið deildarinnar vinnur! Enginn fer vonsvikinn heim í kvöld.",
   "The league has noticed the {club}: the rivals trained hard all summer.": "Deildin hefur tekið eftir {club}: hin liðin æfðu stíft í allt sumar.",
   "the league leaders": "efsta lið deildarinnar",
+  "The league news follows scoring streaks, the scouting report names their top scorer, and the career page counts stars and maps where this season's goals came from.": "Deildarfréttirnar fylgjast með markahrinum, njósnaskýrslan nefnir markahæsta leikmann þeirra og ferilsíðan telur stjörnur og sýnir hvaðan mörk tímabilsins komu.",
   "The league's best, all on one bench.": "Þau bestu í deildinni, öll á sama bekk.",
   "The list stays on the board. Everybody reads it on the way out.": "Listinn hangir áfram á töflunni. Allir lesa hann á leiðinni út.",
   "The Longhouse boards take a bite out of that one!": "Battinn í Longhouse tók sinn toll af þessum!",
