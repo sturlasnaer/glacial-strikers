@@ -141,3 +141,34 @@ And Settings › Gamepad lets a player put an action on a stick click, which has
 - `ps_l3` and `ps_r3` (the PlayStation stick clicks, L3 / R3)
 
 42 images.
+
+---
+
+## Batch BR: club facility icons
+
+After two or three seasons a club sits on 8,000–14,000 coins with nothing worth buying, so the club can now build **facilities** (in Ottar's shop, under Club facilities), each with three levels: the **Stands** (a louder home crowd: chants come sooner and last longer at home), the **Training centre** (more EXP from drills, and at level 3 a third rewarded session), the **Scouting office** (a fourth prospect on Draft Day, and the rival's game plan shown before a match) and the **Physio room** (stamina comes back a little faster in matches). They show as cards with a level meter, using borrowed icons for now. Please draw, in the icons_z style and size (`icons/scout`, `icons/draft`, `icons/career`):
+- `icons/facility_stands`: a slice of packed home stands with a scarf held up
+- `icons/facility_training`: a training rink corner with cones and a target board
+- `icons/facility_scouting`: a desk with a clipboard, binoculars and a rink diagram
+- `icons/facility_physio`: a treatment table with an ice pack and a water bottle
+- `icons/facility_pip_empty` and `icons/facility_pip_full`: a small level pip (like `icons/potential_empty` / `_full`)
+
+6 frames.
+
+## Batch BS: the home rink grows with the club
+
+The home rink should show the club's history and its supporters. Please draw, for the home arena:
+- **Championship banners** in the rafters, one for each Frostline Cup won: `rafters/cup_banner_a` and `_b` (two sway frames), navy cloth with the gold Frostline Cup and a blank gold band near the bottom where the game writes the season ("SEASON 2"). Same size and hanging style as the AV team banners (`arena.banners`, about 150×187 source px at 0.37). They hang over the far stands between the two team banners.
+- **Retired numbers**: `rafters/number_banner_a` and `_b`, a jersey-shaped banner in the home colours with a Batch M style recolour mask (so a custom club colour repaints it), a blank chest where the game writes the number and a blank strip under it for the name. Same size as the cup banner. A player retired from the club gets one (the Hall of Fame).
+- **A supporters' section** on the near side (the Stands facility at levels 2 and 3), in the Batch N near-side crowd style and scale, home kit with recolour masks: a drummer beating a big bass drum (`crowd_supporters/drummer_a`, `_b`), a capo standing on the rail with a megaphone, facing the fans (`capo_a`, `_b`), and two fans holding up a long blank banner in club colours (`banner_a`, `_b`; the game writes the club's short name on it). Plus a cheering frame of each for goals (`drummer_cheer`, `capo_cheer`, `banner_cheer`).
+
+13 frames plus masks.
+
+## Batch BT: press conferences
+
+After the big games (rivalry games, playoff games, the Winter Classic and the All-Star Game), Kip Vance now holds a short press conference. One of our players answers a question by picking one of three replies (humble, confident or fiery), with a small effect on the next game. Until the art comes, it plays as a dialogue scene with Kip's ordinary portrait. Please draw:
+- `press/room`: a press room backdrop at 1280×720 like the draft hall and the legends' reveal: a table with microphones in front of a sponsor wall that has a blank square for the club crest (the game draws the crest on it) and the Frostline league logo, warm TV lights, a camera at the edge of the frame.
+- `npcs/announcer_press`: Kip in the dialogue portrait style, holding a microphone out, asking a question.
+- `npcs/reporter_radio`, `npcs/reporter_paper`, `npcs/reporter_tv`: three reporters in the dialogue portrait style: a radio host in headphones, a newspaper writer with a notepad, and a TV reporter with a microphone flag. Each has a neutral expression and an eager one (`_eager`), for when the answer gives them a headline.
+
+9 frames.
