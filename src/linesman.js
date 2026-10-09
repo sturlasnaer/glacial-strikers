@@ -21,7 +21,7 @@ export class Linesman {
     const p = m.puck, st = m.state;
     if (st === 'intro' || (st === 'faceoff' && m.stateT < DROP)) {
       if (this.mode !== 'dot') { this.side = this.faceoffs++ % 2 ? -1 : 1; this.mode = 'dot'; }
-      this.x = p.x; this.y = BEHIND; this.vx = this.vy = 0;
+      this.x = p.x; this.y = p.y + BEHIND; this.vx = this.vy = 0;
       return;
     }
     if (st === 'faceoff' || this.mode === 'dot' || this.mode === 'clear') {

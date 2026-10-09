@@ -15,6 +15,10 @@ const CRACK_MAX = 72; // pond cracks stop spreading at this radius
 
 export const WIN_SCORE = 5;
 export const PENALTY_SECONDS = 15;
+// the goalie's reach as a disc around them (see goalieSave), scaled to keep scoring where it was
+export let GOALIE_DISC = 0.7;
+const STALL_SECONDS = 6; // a dead puck this long is whistled (see updateStall)
+export const setGoalieDisc = (v) => { GOALIE_DISC = v; }; // (for balance runs)
 
 // ultimate shots, and the perks that fill the meter faster
 const ULT_SHOTS = new Set(['zero', 'thunderclap', 'firestorm', 'eclipse']);
@@ -121,7 +125,8 @@ export class Match {
     return this.teamSkaters(team).filter((s) => !s.parked).sort((a, b) => a.slot - b.slot)[0];
   }
 
-  setupFaceoff(dotX = 0) {
+  // A faceoff at centre ice, or at one of the painted dots (dotX, dotY).
+  setupFaceoff(dotX = 0, dotY = 0) {
     for (const t of [0, 1]) if (this.extra[t]) this.returnGoalie(t, true);
     const P = [
       [{ x: -30, y: 0 }, { x: -120, y: -125 }, { x: -230, y: 110 }, { x: -160, y: 0 }],
@@ -132,7 +137,8 @@ export class Match {
       if (s.parked) continue;
       const i = order[s.team].indexOf(s);
       const pos = P[s.team][i] || { x: s.team ? 200 : -200, y: 0 };
-      s.x = pos.x + dotX; s.y = pos.y; s.vx = 0; s.vy = 0;
+      const q = clampInside(pos.x + dotX, pos.y + dotY, s.r + 6);
+      s.x = q.x; s.y = q.y; s.vx = 0; s.vy = 0;
       s.face = s.team === 0 ? 0 : Math.PI;
       s.stun = 0; s.charging = false; s.ultWindup = 0; s.dashT = 0; s.state = 'skate'; s.celebrate = 0;
       s.trailT = 0;
@@ -141,7 +147,8 @@ export class Match {
       g.x = g.goalSide * (GOAL_X - 28); g.y = 0; g.setState('ready'); g.react = null; g.track = null; g.holdT = 0;
     }
     const p = this.puck;
-    p.owner = null; p.x = dotX; p.y = 0; p.z = 46; p.vx = 0; p.vy = 0; p.vz = 0;
+    p.owner = null; p.x = dotX; p.y = dotY; p.z = 46; p.vx = 0; p.vy = 0; p.vz = 0;
+    this.stall = null;
     p.shot = null; p.pass = null; p.curve = null; p.touches = []; p.lastTouch = null;
     p.noPickup.clear(); p.rolled.clear(); p.trail.length = 0; p.inNet = null; p.power = null; p.powerT = 0;
     this.barriers.length = 0;
@@ -253,11 +260,12 @@ export class Match {
     if (st === 'over') { this.tickEntities(dt, false); return; }
     if (st === 'penalty') {
       this.tickEntities(dt, false);
-      if (this.stateT > 2) this.setupFaceoff(this.penaltyDot || 0);
+      if (this.stateT > 2) { const d = this.penaltyDot; this.setupFaceoff(d ? d.x : 0, d ? d.y : 0); }
       return;
     }
     // play
     if (this.hype.t > 0) this.hype.t -= dt;
+    if (this.updateStall(dt)) return;
     this.updateBox(dt);
     this.aiGoaliePull(dt);
     this.possessionT[this.puck.owner ? this.puck.owner.team : 0] += this.puck.owner ? dt : 0;
@@ -361,6 +369,8 @@ export class Match {
         }
       }
     }
+    // (a shove can push someone into the boards: back onto the ice, and out of the nets)
+    for (const a of S) if (!a.parked) { constrainToRink(a, a.r); collideNets(a, a.r); }
   }
 
   hit(a, b) {
@@ -708,11 +718,13 @@ export class Match {
     return best;
   }
 
-  // 0..1: how clear a passing lane is of opponents
+  // 0..1: how clear a passing lane is of opponents (one in the box isn't in it). (A lane that
+  // counts the ground a defender covers while the pass travels was tried: carriers held on
+  // to the puck, sticks found it more, and matches ran about a minute longer.)
   laneClear(ax, ay, bx, by, team) {
     let worst = 1;
     for (const o of this.skaters) {
-      if (o.team === team) continue;
+      if (o.team === team || o.parked) continue;
       const sd = segDist(o.x, o.y, ax, ay, bx, by);
       if (sd.t < 0.05 || sd.t > 0.97) continue;
       worst = Math.min(worst, clamp((sd.d - 14) / 40, 0, 1));
@@ -728,7 +740,7 @@ export class Match {
   pass(s, toHint) {
     const p = this.puck;
     if (p.owner !== s) return;
-    const target = toHint || this.choosePassTarget(s);
+    const target = toHint && !toHint.parked ? toHint : this.choosePassTarget(s); // (never to the penalty box)
     const speed = s.d.passSpeed * ((s.hasPerk('Vision') || s.hasPerk('Outlet')) ? 1.12 : 1) * (s.def.arch === 'playmaker' ? 1.06 : 1)
       * (target && s.twin && target.who === s.twin ? 1.15 : 1); // the twins' link
     s.setState('pass', 0.2);
@@ -791,7 +803,7 @@ export class Match {
   // around the boards (or always, when the player rims it).
   goalieDistribute(g, aim = null, rim = false) {
     const p = this.puck;
-    const mates = this.teamSkaters(g.team);
+    const mates = this.teamSkaters(g.team).filter((m) => !m.parked);
     let best = null, bestScore = -1e9;
     for (const m of rim ? [] : mates) {
       const lane = this.laneClear(g.x, g.y, m.x, m.y, g.team);
@@ -1035,7 +1047,10 @@ export class Match {
       if (sh.special.hidden) reach *= 0.92;
       if (sh.special.ember) reach *= 0.95;
     }
-    if (Math.abs(off) > reach + PUCK_R) return false;
+    // the goalie covers a disc, not a line across the crease: what counts is how close the
+    // puck's path passes him (so a sharp angle doesn't slip by a goalie it hits square)
+    const across = Math.abs(off) * Math.max(0.3, Math.abs(p.vx) / Math.max(1, Math.hypot(p.vx, p.vy)));
+    if (across > reach * GOALIE_DISC + PUCK_R) return false;
     // saved
     if (sh) this.shotOnGoal(sh);
     const speed = p.speed;
@@ -1120,7 +1135,7 @@ export class Match {
     for (const s of this.skaters) {
       if (s.stun > 0 || p.noPickup.has(s) || s.dashT > 0 || s.parked) { p.rolled.delete(s); continue; }
       // a pass sails past teammates it wasn't meant for
-      if (p.pass && p.pass.from.team === s.team && p.pass.to !== s && p.pass.to) { p.rolled.delete(s); continue; }
+      if (p.pass && p.pass.from.team === s.team && p.pass.to !== s && p.pass.to && !p.pass.to.parked) { p.rolled.delete(s); continue; }
       // Fade: nobody picks off a pass to or from a shadow
       if (p.pass && p.pass.from.team !== s.team && (p.pass.from.fadeT > 0 || (p.pass.to && p.pass.to.fadeT > 0))) { p.rolled.delete(s); continue; }
       const st = s.stickPoint();
@@ -1503,6 +1518,26 @@ export class Match {
     if (reason) this.pendingPenalty = { s: a, reason };
   }
 
+  // The painted dot on that side of centre (side -1 or 1) nearest a height on the ice.
+  nearestDot(side, y) {
+    return DOTS.filter((d) => Math.sign(d.x) === side).sort((a, b) => Math.abs(a.y - y) - Math.abs(b.y - y))[0];
+  }
+
+  // The referee: a puck nobody can get to (wedged behind a net, pinned on the boards), or an
+  // AI carrier boxed in with it, gets whistled dead after a few seconds and faced off at the
+  // nearest dot. (A player holding the puck still is left alone.)
+  updateStall(dt) {
+    const p = this.puck, o = p.owner;
+    if ((o && (o.isGoalie || (o.controlled && this.humans.includes(o.team)))) || p.inNet) { this.stall = null; return false; }
+    if (!this.stall || Math.hypot(p.x - this.stall.x, p.y - this.stall.y) > 40) { this.stall = { x: p.x, y: p.y, t: 0 }; return false; }
+    if ((this.stall.t += dt) < STALL_SECONDS) return false;
+    const d = this.nearestDot(p.x < 0 ? -1 : 1, p.y);
+    if (o) this.loosePuck(o);
+    this.emit('stall', { x: p.x, y: p.y });
+    this.setupFaceoff(d.x, d.y);
+    return true;
+  }
+
   whistlePenalty() {
     const { s, reason } = this.pendingPenalty;
     this.pendingPenalty = null;
@@ -1513,7 +1548,7 @@ export class Match {
     if (this.puck.owner === s) this.loosePuck(s);
     this.penStats[s.team].pims++;
     this.state = 'penalty'; this.stateT = 0; this.penaltyReason = reason; // (the linesman's signal)
-    this.penaltyDot = s.team === 0 ? -180 : 180; // faceoff in the offender's end
+    this.penaltyDot = this.nearestDot(s.team === 0 ? -1 : 1, this.puck.y); // faceoff on the offender's side of centre
     this.emit('penalty', { s, reason, team: s.team });
   }
 

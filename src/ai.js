@@ -4,6 +4,7 @@
 
 import { clamp, lerp, norm, segDist } from './util.js';
 import { GOAL_X, MOUTH, BLUE_X, clampInside, RINK, insideDepth, netBox } from './rink.js';
+import { netWaypoint } from './entities.js';
 
 export class TeamAI {
   constructor(match, team, diff) {
@@ -148,6 +149,17 @@ export class TeamAI {
         this.assign(left, [{ x: bx, y: -95, kind: 'spot' }, { x: bx, y: 95, kind: 'spot' }, { x: bx - this.side * 120, y: 0, kind: 'spot' }], roles);
         return roles;
       }
+      // someone stays home: when whoever's on the carrier isn't between them and our net, the
+      // free skater furthest back takes the slot on the carrier's line to our net (rather than
+      // all of them marking, which left the carrier a clear run in)
+      const out = -Math.sign(this.ownX) || this.side, gs = (s) => (s.x - c.x) * -out; // (how far goal-side of the carrier)
+      const presser = humanClose ? ctrl : sorted[0];
+      if (left.length && !(plan === 'forecheck' && inTheirEnd) && (!presser || gs(presser) < 20)) {
+        const back = [...left].sort((a, b) => gs(b) - gs(a))[0];
+        const hd = Math.max(90, (c.x - this.ownX) * out * 0.45);
+        roles.set(back, { kind: 'spot', x: this.ownX + out * hd, y: clamp(c.y * 0.45, -120, 120), sprint: true });
+        left = left.filter((s) => s !== back);
+      }
       const markD = plan === 'trap' ? 72 : plan === 'forecheck' ? 32 : plan === 'rungun' ? 40 : 48;
       // mark the other attackers, goal side
       const marks = opps.filter((o) => o !== c).map((o) => {
@@ -168,10 +180,21 @@ export class TeamAI {
     times.sort((a, b) => a.t - b.t);
     // if the player is clearly closer, let them go; we still send our closest at a lower intensity
     const ctrlT = ctrl ? this.intercept(ctrl).t : 1e9;
-    const first = times[0];
+    // (the one already chasing keeps at it unless someone else is clearly quicker: two near
+    // equal chasers swapping every tick just twitch)
+    const kept = this.chaser && times.find((x) => x.s === this.chaser);
+    const first = kept && kept.t < times[0].t + 0.15 ? kept : times[0];
+    this.chaser = null;
     if (!(ctrl && ctrlT + 0.25 < first.t)) {
       roles.set(first.s, { kind: 'chase', x: first.x, y: first.y });
-      times.shift();
+      times.splice(times.indexOf(first), 1);
+      this.chaser = first.s;
+    }
+    // their pass on its way: the rest keep marking, goal side, as if it had arrived
+    if (p.pass && p.pass.from && p.pass.from.team !== this.team) {
+      const marks = opps.filter((o) => o !== p.pass.from).map((o) => { const g = norm(this.ownX - o.x, -o.y); return { x: o.x + g.x * 48, y: o.y + g.y * 48, kind: 'mark', who: o, sprint: true }; });
+      this.assign(times.map((t) => t.s), marks, roles);
+      return roles;
     }
     // opponents also racing? send a second if we're losing the race and it's in our zone
     const inOurHalf = p.x * this.side < 0;
@@ -290,6 +313,11 @@ export class TeamAI {
         slowR = Math.min(slowR, 20); // (keep the speed up going round)
       }
     }
+    // and round the nets, never into them (a puck behind one is reached by going round it)
+    for (const side of [-1, 1]) {
+      const w = netWaypoint(side, s.x, s.y, c.x, c.y, s.r + 6);
+      if (w.x !== c.x || w.y !== c.y) { c = w; slowR = Math.min(slowR, 20); }
+    }
     let dx = c.x - s.x, dy = c.y - s.y;
     const d = Math.hypot(dx, dy);
     // separation from teammates
@@ -364,7 +392,8 @@ export class TeamAI {
       // Cyclone on a carrier close by: blow them off the puck
       if (s.def.ult.id === 'cyclone' && s.ult >= 100 && d < 110 && m.rng() < 0.4 * this.diff + 0.25) s.in.ult = true;
       // Stone wall in the shooting lane when they're near our net
-      if (s.def.ult.id === 'monolith' && s.ult >= 100 && Math.abs(c.x - this.ownX) < 330 && m.rng() < 0.5 * this.diff + 0.2) {
+      // (not on a carrier along the boards: the wall would pin them there and the play would stop)
+      if (s.def.ult.id === 'monolith' && s.ult >= 100 && Math.abs(c.x - this.ownX) < 330 && insideDepth(c.x, c.y) > 70 && m.rng() < 0.5 * this.diff + 0.2) {
         const n = norm(c.x - s.x, c.y - s.y);
         s.face = Math.atan2(n.y, n.x);
         s.in.ult = true;
@@ -448,7 +477,7 @@ export class TeamAI {
       const own = this.posValue(s, s);
       let best = null, bestV = -1e9;
       for (const t of m.teamSkaters(this.team)) {
-        if (t === s) continue;
+        if (t === s || t.parked) continue; // (not to a teammate in the box)
         const lane = m.laneClear(s.x, s.y, t.x, t.y, this.team);
         if (lane < 0.35) continue;
         let v = this.posValue(t, s) * (0.6 + lane * 0.4);

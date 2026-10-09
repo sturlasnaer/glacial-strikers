@@ -64,7 +64,7 @@ export function netWaypoint(side, ax, ay, bx, by, margin) {
   }
   return best ? { x: best[0], y: best[1] } : { x: bx, y: by };
 }
-function pathLength(side, ax, ay, bx, by, margin) {
+export function pathLength(side, ax, ay, bx, by, margin) {
   let x = ax, y = ay, total = 0;
   for (let i = 0; i < 4; i++) {
     const w = netWaypoint(side, x, y, bx, by, margin);
@@ -775,7 +775,8 @@ export class Goalie {
   rivalTime() {
     const p = this.match.puck;
     let t = Infinity;
-    for (const s of this.match.skaters) if (s.team !== this.team && !s.parked) t = Math.min(t, Math.hypot(s.x - p.x, s.y - p.y) / OPP_SPEED);
+    // (round the net, not through it: a puck behind the net is further than it looks)
+    for (const s of this.match.skaters) if (s.team !== this.team && !s.parked) t = Math.min(t, pathLength(this.goalSide, s.x, s.y, p.x, p.y, s.r + 6) / OPP_SPEED);
     return t;
   }
 

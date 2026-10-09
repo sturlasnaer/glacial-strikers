@@ -252,7 +252,7 @@ export const homeKitGroups = (save) => {
 // puts the rivals a point up on their four best stats, up to 3. The goalies the same way, a
 // point on reflexes and positioning per two we're ahead past two. Returns the skater edge (and
 // puts it in the news when either grows).
-export const EDGE_FREE = 3, EDGE_STEP = 3;
+export const EDGE_FREE = 2, EDGE_STEP = 2;
 export function lastSeasonRate(L) {
   let w = 0, n = 0;
   for (const round of (L && L.results) || []) {
