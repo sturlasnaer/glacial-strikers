@@ -2737,17 +2737,18 @@ function chemCard(k, xp) {
 }
 
 // The moves on top of the buttons, in the pause menu under the controls.
-function movesHtml(touch) {
-  const k = touch ? { sprint: t('SPRINT'), shoot: t('SHOOT'), pass: t('PASS') } : { sprint: 'Shift', shoot: 'J', pass: 'K' };
+function movesHtml(touch, pad) {
+  const k = touch ? { sprint: t('SPRINT'), shoot: t('SHOOT'), pass: t('PASS') } : pad ? (psPad() ? { sprint: 'R1', shoot: '□', pass: '✕' } : { sprint: 'RB', shoot: 'X', pass: 'A' }) : { sprint: 'Shift', shoot: 'J', pass: 'K' };
+  const g = pad && !touch ? padGlyphs : (x) => x;
   return `<div class="label" style="margin:10px 0 4px">${t('Moves')}</div><div class="keys moves">
-    <kbd>${t('Deke')}</kbd><span>${t('Tap {sprint} with a defender in front to cut past them; near the goalie it can make them bite.', k)}</span>
-    <kbd>${t('One-timer')}</kbd><span>${t('Hold {shoot} as a pass arrives.', k)}</span>
-    <kbd>${t('Faceoff')}</kbd><span>${t('Press {shoot} or {pass} as the puck touches the ice, not before.', k)}</span>
-    <kbd>${t('Tip-in')}</kbd><span>${t('In front of the net, press {shoot} as a teammate\'s shot goes by.', k)}</span>
+    <kbd>${t('Deke')}</kbd><span>${g(t('Tap {sprint} with a defender in front to cut past them; near the goalie it can make them bite.', k))}</span>
+    <kbd>${t('One-timer')}</kbd><span>${g(t('Hold {shoot} as a pass arrives.', k))}</span>
+    <kbd>${t('Faceoff')}</kbd><span>${g(t('Press {shoot} or {pass} as the puck touches the ice, not before.', k))}</span>
+    <kbd>${t('Tip-in')}</kbd><span>${g(t('In front of the net, press {shoot} as a teammate\'s shot goes by.', k))}</span>
   </div>`;
 }
 
-export function controlsHtml(touch) {
+export function controlsHtml(touch, pad = false) {
   if (touch) {
     return `<div class="keys">
     <kbd>${t('Left thumb')}</kbd><span>${t('Touch anywhere on the left half and drag to skate')}</span>
@@ -2774,5 +2775,5 @@ export function controlsHtml(touch) {
     : `<kbd>${t('Gamepad')}</kbd><span>${padGlyphs(t('Left stick to skate · X or RT shoot-check · A pass-switch · RB or LT sprint · B or LB skill · Y ultimate · Start pause · Back pull goalie'))}</span>`}
     <kbd>${t('Pad in menus')}</kbd><span>${padGlyphs(t('D-pad or stick to move · {select} select · {back} back · {tabs} switch tabs · right stick scrolls', { select: psPad() ? '✕' : 'A', back: psPad() ? '○' : 'B', tabs: psPad() ? 'L1/R1' : 'LB/RB' }))}</span>
     <kbd>${t('Touch')}</kbd><span>${t('Left thumb anywhere to skate · right-side buttons for actions')}</span>
-  </div>${movesHtml(false)}`;
+  </div>${movesHtml(false, pad)}`;
 }
