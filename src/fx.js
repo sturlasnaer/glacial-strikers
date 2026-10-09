@@ -242,7 +242,7 @@ export class FX {
     });
     on('faceoff', () => { this.parts = this.parts.filter((p) => p.kind !== 'hat'); });
     on('faceoff_win', ({ s, clean }) => { if (s.controlled && match.humans.includes(s.team)) this.text(s.x, s.y - 92, clean ? t('CLEAN DRAW!') : t('WON IT!'), clean ? '#ffe066' : '#ffffff', 0.7, 14); }); // (the player's own draws)
-    on('tip', ({ s }) => this.text(s.x, s.y - 92, t('TIPPED!'), '#71dce8', 0.7, 14));
+    on('tip', ({ s }) => { this.text(s.x, s.y - 92, t('TIPPED!'), '#71dce8', 0.7, 14); const p = match.puck; this.burst(p.x, p.y, 8, 6, ['#ffffff', '#ffd45e', '#c3d3ea'], 160, 0.25); });
     on('faceoff_early', ({ s }) => this.text(s.x, s.y - 92, t('TOO EARLY!'), '#ff8a7a', 0.6, 14));
     on('combo', ({ s, key }) => {
       const p = match.puck;
