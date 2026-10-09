@@ -40,7 +40,7 @@ export class HUD {
         <img class="crest" src="${crest('home', 72)}" alt="">
         <span class="abbr" style="color:${TEAMS.home.color}">${TEAMS.home.short}</span>
         <canvas class="digit" id="d0" width="96" height="96" aria-label="0"></canvas>
-        <div class="mid">${t('FIRST{br}TO 5', { br: '<br>' })}</div>
+        <div class="mid">${this.midLabel(match)}</div>
         <canvas class="digit" id="d1" width="96" height="96" aria-label="0"></canvas>
         <span class="abbr" style="color:${team.color}">${team.short}</span>
         <img class="crest" src="${crest(teamId, 72)}" alt="">
@@ -229,6 +229,8 @@ export class HUD {
         d.classList.remove('bump'); void d.offsetWidth; d.classList.add('bump');
       }
     }
+    const mid = this.midLabel(m);
+    if (this.last.mid !== mid) { this.last.mid = mid; const el = this.el.querySelector('.scoreboard .mid'); if (el) el.innerHTML = mid; }
     // player card
     const c = m.controlled();
     if (c && this.gkTemp) { // back from a penalty shot in goal: the skater's buttons again
@@ -322,6 +324,12 @@ export class HUD {
   }
 
   // Goalie mode: our goalie's card (Wall of Ice is the meter) and the touch buttons for goaltending.
+  // Under the score: what wins it (or a penalty shot on now).
+  midLabel(m) {
+    if (m.pshot) return t('PENALTY{br}SHOT', { br: '<br>' });
+    return m.winScore === 1 ? t('NEXT GOAL{br}WINS', { br: '<br>' }) : t('FIRST{br}TO 5', { br: '<br>' });
+  }
+
   updateGoalie(g, m) {
     if (this.last.ctrl !== g) {
       this.last.ctrl = g;
