@@ -274,6 +274,17 @@ export const shotMapSvg = (list, ours, theirs) => {
     <rect x="${minX}" y="${minY}" width="${maxX - minX}" height="${maxY - minY}" rx="${r}" fill="#eaf5fb" stroke="#16223d" stroke-width="8"/>
     <line x1="0" y1="${minY}" x2="0" y2="${maxY}" stroke="#e05a6a" stroke-width="12"/>${end(1)}${end(-1)}${dots}</svg>`;
 };
+// After a loss: Coach Brekka's one thing to work on, from the match's numbers.
+function coachNote(sm) {
+  const [shotsUs, shotsThem] = sm.shots, pims = (sm.pen && sm.pen[0] && sm.pen[0].pims) || 0;
+  const draws = sm.draws || [0, 0], poss = sm.possession || [1, 1], share = poss[0] / Math.max(1, poss[0] + poss[1]);
+  if (pims >= 2) return t('{n} trips to the box. Every penalty is a power play against us: hit the puck carrier, and don\'t reach in from behind.', { n: pims });
+  if (sm.saves[1] >= 14 && sm.score[0] <= 2) return t('Their goalie saw everything. Get bodies in front: a screen or a tip beats a hot goalie.');
+  if (shotsUs * 1.5 < shotsThem) return t('They outshot us {b}–{a}. Get pucks on net, even from the point: the winger goes to the front for it.', { a: shotsUs, b: shotsThem });
+  if (draws[1] >= draws[0] + 3) return t('They won the draws {b}–{a}. Wait for the puck to touch the ice, then press. The Faceoffs drill helps.', { a: draws[0], b: draws[1] });
+  if (share < 0.42) return t('We chased the puck all game. Move it: the gold ring shows who a pass will find.');
+  return t('Close one. Shake it off: we go again next time.');
+}
 const smallIcon = (id, size = 40, cls = 'rule-ico') => { const src = id && Assets.icon(id, size); return src ? `<img class="${cls}" src="${src}" alt="">` : ''; };
 const btnIcon = (id) => smallIcon(id, 48, 'btn-ico'); // in front of a button's words
 // A goaltending style's icon (Batch AN), the Iron Wall until it's in.
@@ -2527,6 +2538,7 @@ export class UI {
       : k.goals || k.assists ? `${k.goals} ${t('G')} · ${k.assists} ${t('A')}` : `${k.steals} ${t('STL')} · ${k.hits} ${t('HIT')}`);
     const map = summary.shotMap || [];
     const s = this.app.save;
+    const note = !won ? coachNote(summary) : null;
     const r = this.set(`
       <div class="dim"></div>
       <div class="results panel">
@@ -2535,6 +2547,7 @@ export class UI {
           <div class="score">${esc(CLUB.nick)} ${summary.score[0]} – ${summary.score[1]} ${esc(tm.name.split(' ').slice(-1)[0])}</div>
           <div class="muted">${exhibition ? t('Exhibition') : esc(data.round ? t(data.round, { n: data.roundN }) : '')} · ${t('Shots on goal {a}–{b}', { a: summary.shots[0], b: summary.shots[1] })}</div>
         </div>
+        ${note ? npc('coach', note) : ''}
         <div class="res-grid">
           <div>
             <div class="label">${t('Box score')}</div>

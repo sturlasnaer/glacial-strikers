@@ -82,6 +82,7 @@ export class Match {
     this.shotsOnGoal = [0, 0];
     this.shotLog = []; // (where each shot on goal came from, for the shot map)
     this.possessionT = [0, 0];
+    this.draws = [0, 0]; // faceoffs won
     cfg.teams.forEach((t, team) => {
       t.skaters.forEach((sk, slot) => {
         this.skaters.push(new Skater(this, team, sk.def, sk.stats, slot, sk));
@@ -320,6 +321,7 @@ export class Match {
         this.takePossession(winner, 'faceoff');
         const clean = human(winner) && t < 0.12; // (right on the drop)
         if (clean) winner.stats_.cleanDraws++;
+        this.draws[winner.team]++;
         this.emit('faceoff_win', { s: winner, clean });
         this.state = 'play'; this.stateT = 0;
       } else if (t > 0.9) { this.state = 'play'; this.stateT = 0; }
@@ -1838,6 +1840,8 @@ export class Match {
       goals: this.goalLog,
       shots: [...this.shotsOnGoal],
       shotMap: this.shotLog,
+      draws: [...this.draws],
+      possession: [...this.possessionT],
       skaters: this.skaters.filter((s) => !s.extraAttacker).map((s) => ({ id: s.who, kit: s.def.id, team: s.team, name: s.name, ...s.stats_ })),
       saves: this.goalies.map((g) => g.saves),
       goalie: this.goalies[0].who || 'halla', // who was in our net
