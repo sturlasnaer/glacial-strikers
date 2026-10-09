@@ -872,7 +872,7 @@ export class UI {
       <div class="car-wrap"><table class="car-table"><thead><tr><th></th>${head}</tr></thead><tbody>${body}</tbody></table></div>
       <div class="label" style="margin:10px 0 4px">${t('In goal')}</div>
       ${gks.map((g) => `<div class="car-goalie"><img src="${portrait(g.id, 0, null, 64)}" alt=""><b>${esc(goalieInfo(g.id).name)}</b>
-        <span>${t('{n} games', { n: g.gp })} · ${t('{n} wins', { n: g.w })} · ${t('{n} saves', { n: g.sv })} · ${t('save % {n}', { n: sv(g) })} · ${t('{n} shutouts', { n: g.so })}</span></div>`).join('')}
+        <span>${t('{n} games', { n: g.gp })} · ${t('{n} wins', { n: g.w })} · ${t('{n} saves', { n: g.sv })} · ${t('save % {n}', { n: sv(g) })} · ${t('{n} shutouts', { n: g.so })}${g.stars && g.stars.some(Boolean) ? ` · ${t('{n} times a star', { n: g.stars[0] + g.stars[1] + g.stars[2] })}` : ''}</span></div>`).join('')}
       <p class="muted" style="font-size:12px;margin:8px 0 0">${t('Every full match counts: league, playoffs, showcases, exhibitions and the daily challenge. Tap a skater for their seasons.')}</p>
       <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>${t('Done')}</button></div>`, (m) => {
       this.click('[data-car]', (el) => { audio.sfx('click'); this.careerOne(el.dataset.car); }, m);

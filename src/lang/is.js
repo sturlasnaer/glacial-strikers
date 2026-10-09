@@ -78,6 +78,7 @@ export const IS = {
   "{n} straight. Maybe this is our building now.": "{n} í röð. Kannski er þetta bara orðinn okkar heimavöllur.",
   "{n} target": "{n} skotmark",
   "{n} targets": "{n} skotmörk",
+  "{n} times a star": "{n} sinnum stjarna",
   "{n} tip": "{n} stýring",
   "{n} tips": "{n} stýringar",
   "{n} trips to the box. Every penalty is a power play against us: hit the puck carrier, and don't reach in from behind.": "{n} ferðir í refsiboxið. Hver refsing er yfirtala gegn okkur: tæklaðu þann sem er með pökkinn og ekki teygja kylfuna fram fyrir aftan frá.",
