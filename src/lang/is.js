@@ -804,6 +804,7 @@ export const IS = {
   "Joins at level {lv} with {n} points to spend.": "Kemur inn á stigi {lv} með {n} ónotuð hæfnistig.",
   "K passes toward the teammate you're steering at: the gold ring at their feet. Hold J as it arrives for a one-timer.": "K sendir á samherjann sem þú stýrir í átt að: gyllti hringurinn á ísnum. Haltu J inni þegar pökkurinn kemur og þú skýtur viðstöðulaust.",
   "Keep {name}": "Halda {name}",
+  "Keep an eye on {name}: {n} goals for the {team} this season.": "Fylgist með {name}: {n} mörk fyrir {team} á tímabilinu.",
   "Keep this device's": "Halda núverandi",
   "Keep your feet moving and your head up. We can outskate a stampede.": "Haldið fótunum á hreyfingu og höfðinu uppi. Við getum skautað fram úr hjörð.",
   "Keep-Away": "Haltu pökknum",
