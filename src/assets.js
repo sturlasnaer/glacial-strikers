@@ -15,6 +15,8 @@ const INLINE = typeof window !== 'undefined' && window.__INLINE; // single-file 
 // loaded with the rival's (the newer supers' effects, the linesman).
 const CORE = ['home', 'away', 'title', 'icons_z', 'allstar', 'icons_ac', 'legends'];
 const MATCH = ['abilities_al', 'linesman', 'arena_au'];
+// Groups whose data masks live on pages of their own (read, never team-recoloured), loaded and kept with them.
+const COMPANION = { parts: 'parts_masks', goalie_parts: 'goalie_parts_masks' };
 
 export const Assets = {
   atlas: null,
@@ -55,13 +57,13 @@ export const Assets = {
   },
 
   async loadGroup(group) {
-    await Promise.all(this.atlas.pages.map((p, i) => (p.group !== group || this.pages[i] ? null
-      : this.image(p.file).then((img) => { this.pages[i] = img; }))));
+    await Promise.all([...this.atlas.pages.map((p, i) => (p.group !== group || this.pages[i] ? null
+      : this.image(p.file).then((img) => { this.pages[i] = img; }))), COMPANION[group] && this.loadGroup(COMPANION[group])]);
   },
   // Every page of a group decoded (false for a group the atlas doesn't have).
   groupReady(group) {
     const own = this.atlas.pages.map((p, i) => i).filter((i) => this.atlas.pages[i].group === group);
-    return own.length > 0 && own.every((i) => this.pages[i]);
+    return own.length > 0 && own.every((i) => this.pages[i]) && (!COMPANION[group] || !this.atlas.pages.some((p) => p.group === COMPANION[group]) || this.groupReady(COMPANION[group]));
   },
 
   // Everything a match or scene with this rival needs: roster pages, arena, banners.
@@ -127,6 +129,7 @@ export const Assets = {
     if (this.partsFor && (keep.teams || []).some(this.partsFor)) groups.add('parts');
     if ((keep.teams || []).length) for (const g of MATCH) groups.add(g); // (in a match)
     if (keep.gear) { groups.add('gearmask'); groups.add('legends_gearmask'); if (this.needNewcomers) groups.add('newcomer_gearmask'); }
+    for (const [g, c] of Object.entries(COMPANION)) if (groups.has(g)) groups.add(c); // (their masks with them)
     const released = new Set();
     a.pages.forEach((p, i) => { if (this.pages[i] && !groups.has(p.group)) { released.add(this.pages[i]); this.pages[i] = null; this.forget(p.file); } });
     // recoloured page sets keep references to the original pages they didn't change: drop those too

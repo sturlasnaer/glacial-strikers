@@ -464,7 +464,7 @@ export const IS = {
   "Defeat": "Tap",
   "Defender": "Varnarmaður",
   "Defender in your face? Tap Shift to deke past them. Near the goalie, a deke can make them bite.": "Varnarmaður í andlitinu á þér? Pikkaðu á Shift til að leika á hann. Nálægt markverðinum getur gabbið fengið hann til að bíta á agnið.",
-  "Defender in your face? Tap SPRINT to deke past them. Near the goalie, a deke can make them bite.": "Varnarmaður í andlitinu á þér? Pikkaðu á SPRETT til að leika á hann. Nálægt markverðinum getur gabbið fengið hann til að bíta á agnið.",
+  "Defender in your face? Tap SPRINT to deke past them. Near the goalie, a deke can make them bite.": "Varnarmaður í andlitinu á þér? Pikkaðu á SPRETTUR til að leika á hann. Nálægt markverðinum getur gabbið fengið hann til að bíta á agnið.",
   "Defending champions. No weaknesses, plenty of swagger.": "Ríkjandi meistarar. Engir veikleikar og nóg af sjálfsöryggi.",
   "DEKE!": "GABB!",
   "DENIED!": "LOKAÐ!",

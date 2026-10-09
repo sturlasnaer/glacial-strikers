@@ -20,7 +20,7 @@ BACKUP_HEIGHT = 0.87  # the backup goalie stands this tall next to a starter
 ROLE_V1 = {'c': 'frost_captain', 'w': 'thunder_winger', 'd': 'stone_defender'}
 POSES = {'stride_a': 'skate_a', 'stride_b': 'skate_b', 'windup': 'shot_windup', 'release': 'shot_release'}
 EIGHT = ('south', 'southeast', 'east', 'northeast', 'north', 'northwest', 'west', 'southwest')
-LOSSLESS = {'parts', 'newcomers', 'draft_rookies', 'gearmask', 'newcomer_gearmask', 'legends_gearmask', 'goalie_parts'}
+LOSSLESS = {'parts', 'parts_masks', 'newcomers', 'draft_rookies', 'gearmask', 'newcomer_gearmask', 'legends_gearmask', 'goalie_parts', 'goalie_parts_masks'}
 PAGE, PAD = 2048, 2
 # page groups the game knows, for groups packed separately here
 PAGE_GROUP = {'icons_new': 'icons_z', 'newcomer_goalie': 'newcomers'}
@@ -47,8 +47,8 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
 
     def group_of(b, sh, meta):
         cat = meta['category']
-        if b in PARTS:
-            return 'parts'
+        if b in PARTS:  # (the skin/hair and gear masks on pages of their own: read, never team-recoloured)
+            return 'parts_masks' if cat == 'data_mask' else 'parts'
         if b == 'AN':  # the backup goalie with the newcomers (recoloured per rival), the icons with the rest
             return 'newcomer_goalie' if cat in ('goalie', 'portrait') else 'icons_new'
         if b == 'AQ':
@@ -57,8 +57,8 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
             return 'hub' if cat == 'npc' else 'icons_new'
         if b == 'AS':
             return 'linesman'
-        if b in ('AT', 'AX', 'BC'):  # goalies from parts: bodies, masks and their paint masks (recoloured by team); AX: two more builds; BC: six more masks
-            return 'goalie_parts'
+        if b in ('AT', 'AX', 'BC'):  # goalies from parts: bodies and masks (recoloured by team; AX: two more builds; BC: six more masks), their paint masks apart
+            return 'goalie_parts_masks' if cat == 'data_mask' else 'goalie_parts'
         if b == 'BB':  # the founding rivals facing west, with their team's pages
             return None if cat == 'data_mask' else 'rival_' + meta['frame_ids'][0].split('/')[0][:-2]
         if b == 'BA':  # the expansion captains, with their club's pages (recoloured like the rest of it)
