@@ -69,6 +69,7 @@ export class Commentary {
     m.on('deke_goalie', (e) => this.say(pick([t('{name} sells the deke... {goalie} bites!', { name: n(e.s), goalie: e.g.name }), t('What a move! {goalie} is way out of position!', { goalie: e.g.name })]), 2));
     m.on('shield', (e) => { if (Math.random() < 0.3) this.say(pick([t('{name} shields it from {by}.', { name: n(e.s), by: n(e.by) }), t('{name} keeps it away from {by}.', { name: n(e.s), by: n(e.by) })]), 0); });
     m.on('faceoff_win', (e) => { if (e.clean) this.say(t('{name} wins it clean off the drop!', { name: n(e.s) }), 1); else if (Math.random() < 0.35) this.say(t('{name} wins the draw.', { name: n(e.s) }), 0); });
+    m.on('stall', () => this.say(pick([t('Whistled dead: nobody can get to it.'), t('The referee blows it dead. Faceoff!')]), 2));
     m.on('faceoff_early', (e) => { if (Math.random() < 0.5) this.say(t('{name} jumped the draw.', { name: n(e.s) }), 0); });
     m.on('lightning_pass', (e) => this.say(t('Lightning pass to {name}!', { name: n(e.to) }), 1));
     m.on('combo', (e) => this.say(pick([t('{from} to {name}... {combo}!', { from: n(e.from), name: n(e.s), combo: t(COMBOS[e.key].name).toUpperCase() }), t('{combo}! {from} and {name} in sync!', { combo: t(COMBOS[e.key].name), from: n(e.from), name: n(e.s) })]), 2));

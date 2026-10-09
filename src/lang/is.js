@@ -1,6 +1,8 @@
 // Íslenska. Keys are the English text exactly as written in the game (with {braces} for
 // values); values are the Icelandic. Names of people, teams and the club stay as they are.
 export const IS = {
+  "Whistled dead: nobody can get to it.": "Flautað af: enginn kemst að pökknum.",
+  "The referee blows it dead. Faceoff!": "Dómarinn flautar. Uppkast!",
   "Forfeiting a league or playoff game now counts as a loss.": "Ef þú gefur deildar- eða úrslitaleik telst það nú sem tap.",
   "The Glacier Owls' Observatory and the Thunder Moose's Longhouse have rules of their own: a moonbeam and loose planks.": "Stjörnuturn Glacier Owls og Langhús Thunder Moose hafa sínar eigin reglur: tunglgeisla og lausar fjalir.",
   "Goalies can pick a new mask at goalie camp, and the club editor has new crests.": "Markverðir geta valið nýja grímu í markmannabúðum og í félagsstillingunum eru ný merki.",
