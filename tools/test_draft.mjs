@@ -2,7 +2,8 @@
 // career book filling up from match summaries.
 //   node tools/test_draft.mjs
 import { newSave, applyExp, canRaise, capBonus, matchConfig, homeKitGroups, rosterIds, STAT_CAP_BONUS } from '../src/progress.js';
-import { makeDraft, offerDraft, draftOpen, draftPick, otherPicks } from '../src/draft.js';
+import { makeDraft, offerDraft, draftOpen, draftPick, otherPicks, skipDraft } from '../src/draft.js';
+import { newLeague, leagueRivals } from '../src/league.js';
 import { member, ROOKIES, setRookies, TOURNAMENT } from '../src/data.js';
 import { careerOf, recordCareer, careerRows } from '../src/career.js';
 
@@ -99,6 +100,15 @@ check('an old save starts from this season', careerOf(old).skaters.frost.g === 3
   check('the head on its anchor', hp.x === 100 && hp.y === 145 && hp.head === 'h_e' && hp.rot > 0, hp);
   check('mirrored', hf.x === 95 && hf.rot < 0, hf);
   Mo.useModular(null);
+}
+
+// skipping Draft Day: all three rookies sign with clubs in the league
+{
+  const s = newSave(); s.league = newLeague(1);
+  s.draft = makeDraft(s, 1);
+  skipDraft(s);
+  const L = leagueRivals(s.league), picks = otherPicks(s.draft, s);
+  check('a skipped draft sends all three to league clubs', s.draft.picked === -1 && picks.length === 3 && s.draft.rivals.every((t) => L.includes(t)) && new Set(s.draft.rivals).size === 3, s.draft.rivals);
 }
 
 console.log(`draft and career: ${pass} passed, ${fail} failed`);

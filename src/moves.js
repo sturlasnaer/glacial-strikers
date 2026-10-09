@@ -8,6 +8,7 @@ import { vacated, fillOf } from './slots.js';
 import { randomLook } from './modular.js';
 import { addNews } from './news.js';
 import { freshName, leagueNames } from './league_names.js';
+import { leagueRivals } from './league.js';
 
 const RIVALS = RIVAL_IDS;
 const KITS = ['frost', 'thunder', 'stone'];
@@ -29,7 +30,9 @@ export function rivalDraft(save, d) {
   d.rivals = left.map((i, n) => {
     const p = d.prospects[i];
     const need = RIVALS.find((tid) => !taken.has(tid) && holes(save, tid, true).includes(p.kit));
-    const team = need || [d.rivals[n], ...RIVALS].find((tid) => !taken.has(tid));
+    // (else the club the draw named, or any club in the league that hasn't picked: a skipped
+    // draft has three rookies for the two clubs drawn)
+    const team = need || [d.rivals[n], ...(save.league ? leagueRivals(save.league) : RIVALS)].find((tid) => tid && !taken.has(tid));
     taken.add(team);
     addNews(save, { k: 'rivalDraft', team, name: p.name, kit: p.kit });
     if (need) {
