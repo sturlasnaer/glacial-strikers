@@ -236,5 +236,28 @@ check('perks map across kits', perkSlot('Static: dash cooldown 2s shorter').tier
   check('the cast stays', !tradeable(s).includes('frost') && tradeable(s).includes('rams_d'));
 }
 
+// Monolith: the AI goes round a stone wall instead of skating into it, and doesn't shoot into one
+{
+  const { Barrier } = await import('../src/entities.js');
+  let rounded = 0, stuck = 0;
+  for (let i = 0; i < 6; i++) {
+    const mm = mk({}, {}, 40 + i);
+    for (const o of mm.skaters) place(o, -600, o.team ? 280 : -280);
+    const chaser = mm.skaters.find((k) => k.team === 1);
+    place(chaser, -60, 30 * (i - 3));
+    mm.puck.owner = null; Object.assign(mm.puck, { x: 140, y: 0, vx: 0, vy: 0, z: 0 });
+    mm.barriers.push(new Barrier(40, 0, Math.PI / 2, 0, 6)); // a wall across the way to the puck
+    let got = false;
+    for (let f = 0; f < 240 && !got; f++) { mm.update(1 / 60); if (mm.puck.owner === chaser || chaser.x > 70) got = true; }
+    if (got) rounded++; else stuck++;
+  }
+  check('Monolith: the AI goes round the wall to the puck', rounded === 6, [rounded, stuck]);
+  const mm = mk({}, {}, 7);
+  const ai = mm.ai[1], c = mm.skaters.find((k) => k.team === 1);
+  place(c, ai.attX - ai.side * 250, 0);
+  mm.barriers.push(new Barrier(ai.attX - ai.side * 150, 0, Math.PI / 2, 0, 6));
+  check('...and won\'t shoot into it', ai.shotLane(c, 0) === 0);
+}
+
 console.log(`supers: ${ok} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

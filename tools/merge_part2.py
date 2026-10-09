@@ -395,11 +395,13 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
     if 'AM' in packs:
         atlas['training_camp'] = packs['AM']['training_camp']
 
-    def save_image(b, fid, path, alpha=False):
+    def save_image(b, fid, path, alpha=False, fit=None):
         f = packs[b]['frames'][fid]
         m = packs[b]['sheets'][f['sheet']]
         r = f['frame']
         img = Image.open(os.path.join(folders[b], m['image'])).convert('RGBA').crop((r['x'], r['y'], r['x'] + r['w'], r['y'] + r['h']))
+        if fit:
+            img = fit(img)
         if alpha:
             img.save(os.path.join(out, path), 'WEBP', quality=92, method=6, alpha_quality=100)
         else:
@@ -516,7 +518,7 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
         ar = atlas.setdefault('arena', {})
         for mark, key in AU_ARENAS.items():  # (the pack lists each building under the club and under its key)
             fid = a['arenas'][mark]
-            atlas.setdefault('arenas', {})[key] = save_image('AU', fid, f'arena_{key}.webp')
+            atlas.setdefault('arenas', {})[key] = save_image('AU', fid, f'arena_{key}.webp', fit=fit_rink)
             m = a['expansion_mascots'][mark]  # (danced where the other hosts' mascots dance)
             ar.setdefault('rival_mascots', {})[mark] = {'idle': m['idle'], 'wave': m['dance_a'], 'cheer_a': m['dance_b'], 'cheer_b': m['cheer'], 'foot': {'x': 768, 'y': 950}, 'source_scale': 0.125}
             ar.setdefault('mascot_arenas', {})[key] = mark
@@ -534,6 +536,53 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
         atlas.setdefault('goalie_animations', {}).update(a.get('goalie_animations', {}))
 
     return atlas
+
+
+# Rows of the standard rink backdrop the game's rink geometry was measured from: the far
+# boards' red kick plate, the two neutral-zone faceoff dots, the near boards' kick plate.
+RINK_ROWS = (164.0, 330.0, 653.0, 830.5)
+
+
+def rink_rows(img):
+    """Those rows in a building's backdrop: red runs in a column band through the left
+    neutral-zone dots (None unless exactly the four are found)."""
+    a = np.array(img.convert('RGB')).astype(int)
+    red = (a[..., 0] > 200) & (a[..., 1] < 110) & (a[..., 2] < 120)
+    ys = np.nonzero(red[:, 560:620].sum(axis=1) >= 6)[0]
+    groups = []
+    for y in ys:
+        if groups and y - groups[-1][-1] <= 2:
+            groups[-1].append(y)
+        else:
+            groups.append([y])
+    rows = [float(np.mean(g)) for g in groups if len(g) >= 6]
+    return rows if len(rows) == 4 else None
+
+
+def fit_rink(img):
+    """Stretch a building's backdrop (Batch AU's were painted with the rink lower and
+    shorter) row by row so its rink lies where the game's rink is: piecewise linear through
+    the four rows, carried on past the ends (a little of the stands is trimmed)."""
+    rows = rink_rows(img)
+    if not rows:
+        print('   (rink rows not found: backdrop left as painted)')
+        return img
+    if max(abs(a - b) for a, b in zip(rows, RINK_ROWS)) < 1.5:
+        return img
+    print('   fitting the rink: rows', [round(r, 1) for r in rows], '->', list(RINK_ROWS))
+    a = np.array(img).astype(np.float32)
+    h = a.shape[0]
+    src, dst = [rows[0]] + rows + [rows[-1]], [RINK_ROWS[0]] + list(RINK_ROWS) + [RINK_ROWS[-1]]
+    # beyond the ends, the end segments' scale carries on
+    k0 = (rows[1] - rows[0]) / (RINK_ROWS[1] - RINK_ROWS[0]); k1 = (rows[3] - rows[2]) / (RINK_ROWS[3] - RINK_ROWS[2])
+    ys = np.arange(h, dtype=np.float32)
+    sy = np.interp(ys, RINK_ROWS, rows)
+    sy = np.where(ys < RINK_ROWS[0], rows[0] - (RINK_ROWS[0] - ys) * k0, sy)
+    sy = np.where(ys > RINK_ROWS[3], rows[3] + (ys - RINK_ROWS[3]) * k1, sy)
+    sy = np.clip(sy, 0, h - 1)
+    y0 = np.floor(sy).astype(int); y1 = np.minimum(y0 + 1, h - 1); w = (sy - y0)[:, None, None]
+    out = a[y0] * (1 - w) + a[y1] * w
+    return Image.fromarray(np.clip(out + 0.5, 0, 255).astype(np.uint8), 'RGBA')
 
 
 def west_stride(st):

@@ -7,7 +7,7 @@ import { POWER_INFO, COMBOS, TEAMS, ARENAS, PALETTES, GEAR_LOOK } from './data.j
 import { ELEMENT_COLORS } from './fx.js';
 import { NetRenderer, SpriteNets } from './net.js';
 import { t } from './i18n.js';
-import { headPlacement } from './modular.js';
+import { headPlacement, PARTS_SCALE } from './modular.js';
 import { handMirror } from './hands.js';
 import { Linesman } from './linesman.js';
 
@@ -104,9 +104,15 @@ export class Renderer {
     const { dpr } = this;
     const z = this.cam.zoom;
     const sh = fx.shakeOffset();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = '#0b1424';
-    ctx.fillRect(0, 0, this.c.width, this.c.height);
+    // clear only when the backdrop doesn't cover the screen (zoomed out, or shaken off an edge):
+    // a full-screen fill a frame that a phone's GPU can do without
+    const vx0 = this.cam.x - (this.w / 2 + sh.x) / z, vy0 = this.cam.y - (this.h / 2 + sh.y) / z;
+    const covered = vx0 >= 0 && vy0 >= 0 && vx0 + this.w / z <= BACKDROP.w && vy0 + this.h / z <= BACKDROP.h;
+    if (!covered) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = '#0b1424';
+      ctx.fillRect(0, 0, this.c.width, this.c.height);
+    }
     ctx.setTransform(dpr * z, 0, 0, dpr * z, dpr * (this.w / 2 - this.cam.x * z + sh.x), dpr * (this.h / 2 - this.cam.y * z + sh.y));
     if (ui.awayTeamId && TEAMS[ui.awayTeamId]) Assets.prepareTeam(TEAMS[ui.awayTeamId]); // picks up pages loaded mid-match
     Assets.prepareTeam(PALETTES.homekit); // our recruits in home colours
@@ -1082,7 +1088,7 @@ export class Renderer {
     }
     const fr = this.skaterFrame(s, match);
     const p = at || toScreen(s.x, s.y);
-    const k = SKATER_SCALE * persp(s.y);
+    const k = SKATER_SCALE * persp(s.y) * (s.parts ? PARTS_SCALE.body : 1);
     let y = p.y, rot = 0;
     if (fr.pose === 'celebrate') y -= Math.abs(Math.sin(s.animT * 7 + s.slot)) * 12;
     if (fr.pose === 'check' && s.stun > 0) rot = Math.sin(s.animT * 30) * 0.12 + (fr.flip ? 0.25 : -0.25);
@@ -1127,7 +1133,7 @@ export class Renderer {
     const hp = M && f && headPlacement(M, s.parts, fr.id, f, x, y, k, fr.flip);
     if (!hp) return;
     const hf = Assets.frame(hp.head), c = hf && Assets.partsCanvas(hp.head, s.parts);
-    if (c) this.drawFrameCanvas(ctx, c, hf, hp.x, hp.y, k, hp.flip, hp.rot);
+    if (c) this.drawFrameCanvas(ctx, c, hf, hp.x, hp.y, k * PARTS_SCALE.head, hp.flip, hp.rot); // (bigger than drawn: see PARTS_SCALE)
     if (hp.front) Assets.draw(ctx, hp.front, x, y, k, { flip: fr.flip, pages });
   }
 
@@ -1783,16 +1789,10 @@ export class Renderer {
     ctx.fillStyle = '#fff2cb'; ctx.fillText(o.score, w - 14, h - bar / 2);
   }
 
+  // The darkened edges are a still overlay over the canvas (#vignette, in the page's CSS):
+  // drawn here they were another full-screen gradient fill every frame. Only the goal
+  // lamp's flicker is drawn.
   drawVignette(ctx, fx) {
-    if (!this.vig || this.vigW !== this.w || this.vigH !== this.h) {
-      this.vigW = this.w; this.vigH = this.h;
-      const g = ctx.createRadialGradient(this.w / 2, this.h / 2, Math.min(this.w, this.h) * 0.45, this.w / 2, this.h / 2, Math.max(this.w, this.h) * 0.75);
-      g.addColorStop(0, 'rgba(11,20,36,0)');
-      g.addColorStop(1, 'rgba(11,20,36,0.55)');
-      this.vig = g;
-    }
-    ctx.fillStyle = this.vig;
-    ctx.fillRect(0, 0, this.w, this.h);
     if (fx.flashes && fx.lamp > 0 && Math.sin(fx.lamp * 12) > 0) {
       ctx.fillStyle = hexA(fx.lampColor, 0.08);
       ctx.fillRect(0, 0, this.w, this.h);

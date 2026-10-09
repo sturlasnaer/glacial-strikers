@@ -298,7 +298,7 @@ export class Match {
     for (const s of this.skaters) s.update(dt);
     for (const g of this.goalies) g.update(dt);
     this.collideSkaters();
-    if (live) this.stickChecks(dt);
+    if (live) { this.protectPuck(dt); this.stickChecks(dt); }
     this.updatePuck(dt);
     this.updateTrails(dt);
     this.updateBarriers(dt);
@@ -394,6 +394,26 @@ export class Match {
     this.judgeHit(a, b, kb, hadPuck, puckDist);
   }
 
+  // Puck protection: a carrier with a stick reaching in on the forehand side pulls the puck
+  // across to the backhand, in close, with their body between it and the stick (quicker and
+  // fuller the better their hands). A stick on the backhand side finds it out on the forehand.
+  protectPuck(dt) {
+    const c = this.puck.owner;
+    if (!c || !c.isSkater) return;
+    let near = null, nd = 85;
+    for (const d of this.opponents(c)) {
+      if (d.stun > 0 || d.parked) continue;
+      const st = d.stickPoint(), dd = Math.hypot(st.x - c.x, st.y - c.y);
+      if (dd < nd) { nd = dd; near = d; }
+    }
+    let want = 0;
+    if (near) {
+      const side = c.hand === 'R' ? -1 : 1, lx = side * Math.sin(c.face), ly = -side * Math.cos(c.face); // the stick side
+      if ((near.x - c.x) * lx + (near.y - c.y) * ly > 0) want = clamp(0.45 + (c.stats.agi + c.stats.pas) * 0.03, 0, 1);
+    }
+    c.protect += (want - c.protect) * Math.min(1, dt * (6 + c.stats.agi * 0.6));
+  }
+
   // Defender's stick on the puck has a chance to poke it free.
   stickChecks(dt) {
     const p = this.puck;
@@ -403,7 +423,8 @@ export class Match {
       if (d.stun > 0 || d.parked) continue;
       const sp = d.stickPoint();
       if (Math.hypot(sp.x - p.x, sp.y - p.y) > 20) continue;
-      const rate = 0.6 * (1 + (d.stats.chk - c.stats.pas) * 0.06) // (0.8 when the puck sat in front of the body: out on the blade it's easier to reach) * this.ai[d.team].stealMul() * (d.def.arch === 'grinder' ? 1.08 : 1) * (d.hasPerk('Pickpocket') ? 1.1 : 1);
+      const shielded = (d.x - c.x) * (p.x - c.x) + (d.y - c.y) * (p.y - c.y) < 0; // reaching round the carrier's body
+      const rate = (shielded ? 0.35 : 0.6) * (1 + (d.stats.chk - c.stats.pas) * 0.06) // (0.8 when the puck sat in front of the body: out on the blade it's easier to reach) * this.ai[d.team].stealMul() * (d.def.arch === 'grinder' ? 1.08 : 1) * (d.hasPerk('Pickpocket') ? 1.1 : 1);
       if (this.rng() < rate * dt) {
         this.takePossession(d, 'steal');
         c.stun = 0.12;
@@ -435,6 +456,7 @@ export class Match {
     p.shot = null; p.pass = null;
     p.rolled.clear();
     if (s.isSkater) {
+      s.protect = 0;
       const cp = s.carryPoint();
       if (Math.hypot(cp.x - p.x, cp.y - p.y) > 60) { p.x = cp.x; p.y = cp.y; } // (close: it eases onto the blade, see updatePuck)
       // pass completed?
@@ -700,7 +722,12 @@ export class Match {
   dumpPuck(s) {
     const p = this.puck;
     if (p.owner !== s) return;
-    const sy = Math.sign(s.y) || (this.rng() < 0.5 ? -1 : 1);
+    let sy = Math.sign(s.y) || (this.rng() < 0.5 ? -1 : 1);
+    // the Longhouse: an AI dumps it into the corner without a loose plank on the way
+    if (!s.controlled && this.twists.planks.length) {
+      const loose = (y) => this.twists.planks.some((pl) => (pl.side === 'far' || pl.side === 'near') ? (pl.side === 'far') === (y < 0) && Math.max(pl.a0 * s.side, pl.a1 * s.side) > GOAL_X - 260 : pl.side === (s.side > 0 ? 'right' : 'left') && Math.sign((pl.a0 + pl.a1) / 2) === Math.sign(y));
+      if (loose(sy * 200) && !loose(-sy * 200)) sy = -sy;
+    }
     const tx = s.side * (GOAL_X + 60), ty = sy * 200 + this.rng.range(-30, 30);
     const d = norm(tx - p.x, ty - p.y);
     s.setState('pass', 0.2);

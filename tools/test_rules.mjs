@@ -67,6 +67,22 @@ check('other rules have neither', ['meltwater', 'shadow_zones', 'none'].every((k
   check('a plank rattles when hit', end.rattle > 0);
 }
 
+// the AI knows them: it leans its attack toward the moonbeam, and dumps the puck into the
+// corner without a loose plank
+{
+  const m = mk('moonbeams', 3), ai = m.ai[0], s = m.teamSkaters(0)[0], b = m.twists.beam;
+  s.x = ai.attX - ai.side * 500; s.y = 0;
+  b.x = ai.attX - ai.side * 250; b.y = 150; b.period = 1e9; b.dperiod = 1e9;
+  check('the attack leans toward the moonbeam', ai.pickLane(s, null) > 40, ai.pickLane(s, null));
+  const L = mk('loose_planks', 3), c = L.teamSkaters(0)[0];
+  L.state = 'play';
+  L.twists.planks = [{ side: 'far', a0: c.side * 500 - 85, a1: c.side * 500 + 85, rattle: 0 }];
+  c.x = c.side * 250; c.y = -60; c.controlled = false;
+  L.puck.owner = null; L.takePossession(c, 'catch'); L.puck.x = c.x + 20; L.puck.y = c.y;
+  L.dumpPuck(c);
+  check('a dump-in avoids the loose plank\'s corner', L.puck.vy > 0, L.puck.vy);
+}
+
 // whole matches in both buildings
 for (const twist of ['moonbeams', 'loose_planks']) {
   const m = mk(twist, 11);

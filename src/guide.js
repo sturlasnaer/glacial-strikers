@@ -23,6 +23,10 @@ export const GUIDE = [
   { id: 'trades', when: (s, x) => x.tradeReady, target: '[data-tab="team"]', text: 'Got a signing or a rookie you don\'t need? Trade them for a rival\'s player: Trade, next to the price in Scouting.' },
   { id: 'gcamp', when: (s) => s.record.played >= 8 && s.coins >= 200, target: '[data-tab="team"]', text: 'Goalies go to camp too. Change style… on a goalie\'s card teaches them a new way to play the net, once a season.' },
   { id: 'expansion', when: (s, x) => x.expansion, target: '[data-tab="tournament"]', text: 'Two new clubs this season: the Owls wait for your mistakes, the Moose run you over. Seven rounds to the playoffs now.' },
+  { id: 'masks', when: (s, x) => x.maskPick, target: '[data-tab="team"]', text: 'Your goalie is made from parts, so the mask is yours to pick: Change style… on their card has twelve designs and any paint. Free, any time.' },
+  { id: 'crests', when: (s) => s.record.played >= 6 && !(s.club && s.club.crest && s.club.crest !== 'fox'), target: '[data-tab="team"]', text: 'The Snow Fox isn\'t the only crest: Team › Customise club has six more, all in your colours.' },
+  { id: 'moonbeams', when: (s, x) => x.nextRule === 'moonbeams', target: '[data-tab="tournament"]', text: 'Next up, the Observatory: a pool of moonlight sweeps the ice. Shoot from inside it and the goalie squints.' },
+  { id: 'planks', when: (s, x) => x.nextRule === 'loose_planks', target: '[data-tab="tournament"]', text: 'Next up, the Longhouse: some of its boards are loose. A puck off a loose plank goes anywhere, so don\'t rim it blind.' },
   { id: 'friends', when: (s, x) => x.online && s.record.played >= 4 && !((s.online && s.online.groups) || []).length, target: '[data-tab="training"]', text: 'Make a friends board under the cup in Training and share its code: the same boards with just your friends, every week.' },
 ];
 

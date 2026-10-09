@@ -252,9 +252,34 @@ export class TeamAI {
     return { t: 2 + Math.hypot(c.x - s.x, c.y - s.y) / sp, x: c.x, y: c.y };
   }
 
+  // A Monolith wall standing across the straight line from (ax, ay) to (bx, by), with `rad`
+  // to spare on either side: the barrier, and which side of it the start is on (null if clear).
+  wallAcross(ax, ay, bx, by, rad) {
+    for (const w of this.m.barriers) {
+      if (!w.alive || w.breaking > 0) continue;
+      const ux = Math.cos(w.ang), uy = Math.sin(w.ang), R = w.thick / 2 + rad;
+      const da = (ax - w.x) * -uy + (ay - w.y) * ux, db = (bx - w.x) * -uy + (by - w.y) * ux; // across the wall
+      if (Math.sign(da) === Math.sign(db) && Math.abs(db) > R) continue; // both on one side, clear of its face
+      const t = da === db ? 0 : clamp(da / (da - db), 0, 1);
+      const along = (ax + (bx - ax) * t - w.x) * ux + (ay + (by - ay) * t - w.y) * uy;
+      if (Math.abs(along) < w.len / 2 + R) return { w, side: Math.sign(da) || 1, ux, uy, R };
+    }
+    return null;
+  }
+
   // ------------------------------------------------------------- actions
   seek(s, tx, ty, sprint, slowR = 60) {
-    const c = clampInside(tx, ty, 22);
+    let c = clampInside(tx, ty, 22);
+    // a stone wall in the way: round its nearer end rather than skating into it
+    const wall = this.wallAcross(s.x, s.y, c.x, c.y, s.r + 4);
+    if (wall) {
+      const { w, side, ux, uy, R } = wall, reach = w.len / 2 + R + 14;
+      const ends = [1, -1].map((e) => ({ x: w.x + ux * reach * e - uy * side * R * 0.6, y: w.y + uy * reach * e + ux * side * R * 0.6 }));
+      const cost = (q) => Math.hypot(q.x - s.x, q.y - s.y) + Math.hypot(c.x - q.x, c.y - q.y);
+      const best = cost(ends[0]) <= cost(ends[1]) ? ends[0] : ends[1];
+      c = clampInside(best.x, best.y, 22);
+      slowR = Math.min(slowR, 20); // (keep the speed up going round)
+    }
     let dx = c.x - s.x, dy = c.y - s.y;
     const d = Math.hypot(dx, dy);
     // separation from teammates
@@ -394,6 +419,7 @@ export class TeamAI {
         let score = (1 - dG / 430) * 1.2 + lane * 0.6 - angle * 0.35 + (Math.abs(g.y - aimY) > 25 ? 0.25 : 0);
         if (m.puck.power && m.puck.power !== 'lightning') score += 0.3;
         if (s.empowered > 0 || s.igniteT > 0) score += 0.3;
+        if (m.twists.beam && m.inBeam(s.x, s.y)) score += 0.12 + 0.18 * this.diff; // (the Observatory: shoot out of the moonlight)
         if (s.def.arch === 'sniper') score += 0.12; // a sniper lets it go sooner
         const thresh = lerp(0.55, 0.75, this.diff) - (near < 60 ? 0.25 : 0) - (this.gamePlan === 'rungun' ? 0.14 : this.gamePlan === 'trap' ? -0.05 : 0);
         if (score > thresh) {
@@ -443,7 +469,11 @@ export class TeamAI {
       }
       // a whirlwind to clear the way to the net
       if (s.def.ult.id === 'cyclone' && s.ult >= 100 && near < 90 && dx < 520 && m.rng() < 0.35) inp.ult = true;
-      if (s.def.ult.id === 'monolith' && s.ult >= 100 && near < 120 && m.rng() < 0.3) inp.ult = true;
+      // a wall between the carrier and the defender closing in (not across the carrier's own way)
+      if (s.def.ult.id === 'monolith' && s.ult >= 100 && nearOpp && near < 120 && m.rng() < 0.3) {
+        s.face = Math.atan2(nearOpp.y - s.y, nearOpp.x - s.x);
+        inp.ult = true;
+      }
       b.driveY = this.pickLane(s, nearOpp);
     }
     this.drive(s, near, nearOpp, b);
@@ -467,6 +497,7 @@ export class TeamAI {
 
   shotLane(s, aimY) {
     const m = this.m;
+    if (this.wallAcross(s.x, s.y, this.attX, aimY, 6)) return 0; // (a Monolith in the way stops the shot dead)
     let worst = 1;
     for (const o of m.opponents(s)) {
       const sd = segDist(o.x, o.y, s.x, s.y, this.attX, aimY);
@@ -483,6 +514,9 @@ export class TeamAI {
     if (nearOpp && Math.abs(nearOpp.y - s.y) < 90 && (nearOpp.x - s.x) * this.side > -20) {
       y = nearOpp.y > s.y ? nearOpp.y - 130 : nearOpp.y + 130;
     }
+    // the Observatory: lean the attack toward the moonbeam when it lies between us and the net
+    const B = this.m.twists.beam;
+    if (B) { const bdx = (this.attX - B.x) * this.side; if (bdx > 60 && bdx < 420 && dx > bdx) y = y * 0.6 + B.y * 0.4; }
     if (dx < 380) y = clamp(y, -110, 110);
     return clamp(y, RINK.minY + 70, RINK.maxY - 70);
   }

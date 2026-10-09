@@ -6,7 +6,7 @@
 // (Everything is prefetched into the browser cache, but only decoded when used.)
 
 import { TEAMS, PALETTES } from './data.js';
-import { recolorParts, recolorPaint, headPlacement } from './modular.js';
+import { recolorParts, recolorPaint, headPlacement, PARTS_SCALE } from './modular.js';
 
 const BASE = new URL('assets/', document.baseURI).href;
 const INLINE = typeof window !== 'undefined' && window.__INLINE; // single-file offline build
@@ -486,10 +486,11 @@ export const Assets = {
       return hp && hf ? { id: hp.head, f: hf, x: hp.x, y: hp.y } : null; // (at scale 1: source pixels)
     });
     let l = 0, r = 0, t = 0, b = 0; // extents around the pivot, in source pixels
+    const H = PARTS_SCALE.head; // (the head bigger than drawn, round its neck)
     fr.forEach(([, , , fw, fh, px, py, s], i) => {
       l = Math.max(l, px / s); r = Math.max(r, (fw - px) / s); t = Math.max(t, py / s); b = Math.max(b, (fh - py) / s);
       const h = heads[i];
-      if (h) { const [, , , hw, hh, hx, hy, hs] = h.f; l = Math.max(l, hx / hs - h.x); r = Math.max(r, h.x + (hw - hx) / hs); t = Math.max(t, hy / hs - h.y); }
+      if (h) { const [, , , hw, hh, hx, hy, hs] = h.f; l = Math.max(l, (hx / hs) * H - h.x); r = Math.max(r, h.x + ((hw - hx) / hs) * H); t = Math.max(t, (hy / hs) * H - h.y); }
     });
     const k = height / (t + b), w = Math.ceil((l + r) * k);
     const urls = fr.map(([pi, fx, fy, fw, fh, px, py, s], i) => {
@@ -501,7 +502,7 @@ export const Assets = {
       const h = heads[i], face = h && this.partsCanvas(h.id, look);
       if (face) {
         const [, , , hw, hh, hx, hy, hs] = h.f;
-        ctx.drawImage(face, (l + h.x - hx / hs) * k, (t + h.y - hy / hs) * k, (hw / hs) * k, (hh / hs) * k);
+        ctx.drawImage(face, (l + h.x - (hx / hs) * H) * k, (t + h.y - (hy / hs) * H) * k, (hw / hs) * H * k, (hh / hs) * H * k);
       }
       return c.toDataURL('image/png');
     });

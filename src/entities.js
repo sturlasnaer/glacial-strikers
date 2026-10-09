@@ -182,6 +182,7 @@ export class Skater {
     this.stride = 0;
     this.animT = 0;
     this.stridePhase = 0; this.danglePhase = (slot || 0) * 0.37 + team * 0.5; this.lean = 0; this.faceWas = 0; // (see update)
+    this.protect = 0; // 0..1: the puck pulled in to the backhand, away from a stick reaching in (see Match.protectPuck)
     this.controlled = false;
     this.celebrate = 0;
     this.flash = 0;
@@ -442,8 +443,11 @@ export class Skater {
     const b = this.bladeReach();
     if (this.ultWindup > 0 || (this.charging && this.chargeT > 0.08)) return this.bladeAt(b.fwd * 0.8, b.lat + 8);
     const fast = Math.min(1, this.speed / 260), ph = (this.danglePhase ?? this.animT * 2.4) * Math.PI * 2;
-    const lat = b.lat + Math.sin(ph) * (6 - fast * 3.5);
-    const fwd = b.fwd + fast * 4 + Math.cos(ph * 2) * (2 - fast);
+    let lat = b.lat + Math.sin(ph) * (6 - fast * 3.5);
+    let fwd = b.fwd + fast * 4 + Math.cos(ph * 2) * (2 - fast);
+    // protecting it: pulled across to the backhand, in close to the skates
+    const k = this.protect || 0;
+    if (k > 0) { lat += (-4 - lat) * k; fwd += (b.fwd * 0.55 - fwd) * k; }
     return this.bladeAt(fwd, lat);
   }
 

@@ -53,6 +53,9 @@ export const bodySprite = (look) => (look && MODULAR.bodies.includes(look.body) 
 // Goalies from parts (Batch AT): a body drawn without the mask, and painted masks that sit on
 // it. A goalie's look is { mask: 'flame', paint: '#e7bf52' }; the paint goes where the mask's
 // paint layer is red. Set from the atlas at start; empty without the art.
+// Players from parts are drawn a little sturdier and with bigger heads than their art, to
+// sit with the cast's chibi proportions (their heads were drawn about 35% smaller).
+export const PARTS_SCALE = { head: 1.35, body: 1.05 };
 export const GOALIE_PARTS = { masks: [], builds: ['std'] };
 export const PAINTS = ['#e7bf52', '#c9d6e3', '#7fd16b', '#ff6f7d', '#9b8cff', '#71dce8', '#f2a93b', '#e8eef5', '#2a2f3d'];
 export function useGoalieParts(atlas) {

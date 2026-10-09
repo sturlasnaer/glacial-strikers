@@ -486,6 +486,8 @@ export class UI {
       goalieTalk: Object.keys(GOALIE_RECRUITS).some((k) => goalieStatus(s, k) === 'open'),
       tradeReady: tradeable(s).length > 0 && Object.keys(RECRUITS).some((k) => recruitStatus(s, k) === 'open'),
       expansion: !!(s.league && s.league.teams && s.league.teams.some((id) => TEAMS[id] && TEAMS[id].expansion)),
+      maskPick: goalieIds(s).some((id) => canPickMask(s, id)),
+      nextRule: (() => { const f = this.app.fixture && this.app.fixture(), ar = f && f.stage && (f.stage.arena || (TEAMS[f.opponent] && TEAMS[f.opponent].arena)); return ar && ARENAS[ar] ? ARENAS[ar].twist : null; })(),
       newCombo: lineupIds(s).some((a, i, l) => l.some((b, j) => j > i && !CAST_PAIRS.includes(pairKey(member(a).def.elem, member(b).def.elem)) && COMBOS[pairKey(member(a).def.elem, member(b).def.elem)])),
     });
     this.roomFit?.disconnect();
@@ -534,7 +536,8 @@ export class UI {
         const set = Assets.atlas.skaters[m.sprite || m.def.sprite];
         // a legend stands in their own art before their skating sets are in (Batch AI part 1)
         const own = m.legend && Assets.atlas.legends && Assets.atlas.legends[m.legend.art] && Assets.atlas.legends[m.legend.art].idle;
-        src = own ? Assets.icon(own, 160, 'homekit') : set && Assets.icon(set.home.south.frames.idle, 160, m.look || CLUB_PAGES());
+        const mo = !own && m.parts && set && Assets.partsMoment([set.home.south.frames.idle], m.parts, 160, 'homekit'); // (from parts: the body with their head)
+        src = own ? Assets.icon(own, 160, 'homekit') : mo ? mo.urls[0] : set && Assets.icon(set.home.south.frames.idle, 160, m.look || CLUB_PAGES());
         if (!src) src = Assets.icon(Assets.atlas.skaters[m.def.sprite].home.south.frames.idle, 160, CLUB_PAGES());
       }
       const name = id === 'goalie' ? keeper.name : member(id).name;
