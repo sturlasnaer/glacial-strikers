@@ -812,6 +812,7 @@ class App {
         setTimeout(() => this.hud.hint(this.isTouch ? t('Only check the puck carrier. Hits away from the puck draw penalties.') : t('Only check the puck carrier. Hits away from the puck draw penalties.'), 5), 2200);
       }
     });
+    m.on('tip', (e) => audio.sfx('stick', at(e.s.x, e.s.y, 0.7)));
     m.on('penalty_delayed', (e) => {
       audio.crowdOoh(0.4);
       if (!this.attract && e.team === 1 && !m.goalieMode && !(this.cur && this.cur.versus) && firstTime(this.save, 'delayed')) this.hud.hint(t('Delayed penalty! The whistle waits until they touch the puck: keep it and attack.'), 5);
@@ -1061,7 +1062,7 @@ class App {
     const scorer = g.scorer ? g.scorer.name : t('Goal');
     const assists = g.assists && g.assists.length ? g.assists.map((a) => a.name).join(' & ') : '';
     const who = (name) => (assists ? t('{scorer} from {assists}', { scorer: name, assists }) : name);
-    const kind = g.kind === 'onetimer' ? ` · ${t('one-timer')}` : g.special && g.special.combo ? ` · ${t(COMBOS[g.special.combo].name)}` : g.powerPlay ? ` · ${t('power play')}` : '';
+    const kind = g.kind === 'onetimer' ? ` · ${t('one-timer')}` : g.kind === 'tip' ? ` · ${t('tip-in')}` : g.special && g.special.combo ? ` · ${t(COMBOS[g.special.combo].name)}` : g.powerPlay ? ` · ${t('power play')}` : '';
     const score = `${TEAMS.home.short} ${m.score[0]} – ${m.score[1]} ${away.short}`;
     this.renderer.clipOverlay = { title: `${who(scorer.toUpperCase())}${kind}`, score };
     this.clips.start({ scorer, line: `${who(scorer)}${kind}. ${score}`, team: g.team, score });

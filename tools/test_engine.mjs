@@ -215,6 +215,35 @@ const mk = (seed = 5) => new Match({ teams: [team(), team()], humanTeam: null, s
   setHookRate(rate);
 }
 
+// tips: a teammate's shot going by a stick in the slot is sometimes redirected (the tipper's goal,
+// the shooter's assist); one going by out at the point never is
+{
+  const { setTipBase, TIP_BASE } = await import('../src/match.js');
+  const base = TIP_BASE;
+  setTipBase(1); // (every chance a tip, to test where they happen)
+  const shoot = (tx, ty, seed) => {
+    const m = mk(seed);
+    m.state = 'play';
+    for (const a of m.ai) a.update = () => {};
+    const [shooter, mate] = m.teamSkaters(0);
+    for (const o of m.skaters) if (o !== shooter && o !== mate) { o.x = -500; o.y = o.slot * 60 - 60; }
+    shooter.x = 250; shooter.y = 0; shooter.face = 0; mate.x = tx; mate.y = ty; mate.face = Math.PI; // (facing the shooter)
+    m.takePossession(shooter, 'catch');
+    m.shoot(shooter, { kind: 'wrist' });
+    const st = mate.stickPoint(); // (straight at the tipper's stick)
+    const sp = Math.hypot(m.puck.vx, m.puck.vy), d = Math.hypot(st.x - m.puck.x, st.y - m.puck.y);
+    m.puck.vx = (st.x - m.puck.x) / d * sp; m.puck.vy = (st.y - m.puck.y) / d * sp; m.puck.curve = null;
+    let tip = null;
+    m.on('tip', (e) => { tip = e; });
+    for (let i = 0; i < 40 && m.puck.shot && !tip; i++) m.update(1 / 60);
+    return { tip, m, shooter, mate };
+  };
+  const r = shoot(GOAL_X - 80, 10, 61);
+  check('tips: a shot past a stick in front of the net is redirected', r.tip && r.tip.s === r.mate && r.tip.from === r.shooter && r.m.puck.shot && r.m.puck.shot.by === r.mate && r.m.puck.lastTouch === r.mate, r.tip && r.tip.s.slot);
+  check('...not one past a stick out at the point', !shoot(330, 10, 62).tip);
+  setTipBase(base);
+}
+
 // delayed penalties: play goes on while the fouled side has the puck, the whistle comes when the
 // other side touches it, and a goal by the fouled side wipes the minor out
 {

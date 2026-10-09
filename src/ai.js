@@ -256,6 +256,14 @@ export class TeamAI {
         { x: c.x - side * 90, y: -ySign * 40, kind: 'spot', pref: 'D' },
       ];
     }
+    // offensive zone, the player with the puck out at the point: the winger goes to the front of
+    // the net, for a tip or the rebound (the AI's own point men pass instead)
+    if (c.controlled && this.m.humans.includes(this.team) && Math.hypot(this.attX - c.x, c.y) > 330) {
+      return [
+        { x: this.attX - side * 78, y: clamp(c.y * 0.15, -30, 30), kind: 'spot', pref: 'W' },
+        { x: side * (BLUE_X + 70), y: -ySign * 60 + c.y * 0.2, kind: 'spot', pref: 'D' },
+      ];
+    }
     // offensive zone: one-timer spot on the far side + point man
     return [
       { x: this.attX - side * 165, y: -ySign * 85, kind: 'spot', pref: 'W' },

@@ -30,6 +30,7 @@ export class Commentary {
       else if (this.glareT !== undefined && m.time - this.glareT < 1.5) line = t('Out of the moonlight! {name} scores!', { name: n(s) });
       else if (this.plankT !== undefined && m.time - this.plankT < 2.5) line = t('Off the loose boards and in! {name} will take it!', { name: n(s) });
       else if (g.kind === 'onetimer') line = pick([t('ONE-TIMER! {name} buries it!', { name: n(s) }), t('{name} one-times it home!', { name: n(s) })]);
+      else if (g.kind === 'tip') line = pick([t('Tipped in! {name} gets a piece of it in front!', { name: n(s) }), t('{name} redirects it past the goalie!', { name: n(s) })]);
       else if (g.kind === 'zero') line = t('{name} freezes the whole defense! GOAL!', { name: n(s) });
       else if (g.kind === 'thunderclap') line = t('THUNDERCLAP! {name} lights the lamp!', { name: n(s) });
       else if (g.powerPlay) line = t('Power-play goal! {name} makes them pay.', { name: n(s) });
@@ -78,6 +79,7 @@ export class Commentary {
     m.on('penalty_shot', (e) => this.say(pick([t('Penalty shot! {name} has it at centre ice, all alone.', { name: n(e.s) }), t('Here comes {name} on the penalty shot...', { name: n(e.s) })]), 3, true));
     m.on('penalty_shot_over', (e) => this.say(t('No goal on the penalty shot!'), 2));
     m.on('penalty', (e) => e.shot ? this.say(t('{name} hauls {by} down from behind. That\'s a penalty shot!', { name: n(e.s), by: n(e.shooter) }), 3, true) : this.say(t('{name} heads to the box for {reason}. {team} on the power play!', { name: n(e.s), reason: t(e.reason).toLowerCase(), team: team(1 - e.team) }), 3, true));
+    m.on('tip', (e) => { if (Math.random() < 0.5) this.say(t('{name} gets a stick on it in front!', { name: n(e.s) }), 1); });
     m.on('penalty_delayed', (e) => this.say(pick([t('The arm is up: delayed penalty on {name}.', { name: n(e.s) }), t('Delayed penalty coming on {name}. {team} keep the puck!', { name: n(e.s), team: team(1 - e.team) })]), 2));
     m.on('penalty_waived', (e) => this.say(t('That goal wipes out the penalty on {name}.', { name: n(e.s) }), 3));
     m.on('goalie_pulled', (e) => this.say(t('{team} pull their goalie for the extra attacker!', { team: team(e.team) }), 3));

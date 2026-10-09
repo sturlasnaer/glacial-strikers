@@ -29,6 +29,8 @@ const lv3 = (level) => (level - 1) * 0.03;
 
 export let STEAL_BASE = 0.47; // a defender's stick on the puck: steals a second at the base rate
 export const setStealBase = (v) => { STEAL_BASE = v; }; // (for balance runs)
+export let TIP_BASE = 0.25; // an AI stick in the slot redirecting a teammate's shot going by
+export const setTipBase = (v) => { TIP_BASE = v; };
 export let HOOK_RATE = 0.6; // a stick reaching round a carrier in full flight from behind: hooking calls a second
 export const setHookRate = (v) => { HOOK_RATE = v; };
 
@@ -1184,6 +1186,11 @@ export class Match {
         this.emit('plow', { s, x: p.x, y: p.y });
         continue;
       }
+      // a teammate's shot past a stick held out in front of the net: a tip, maybe (a reach of its own)
+      if (p.shot && p.shot.team === s.team && p.shot.by !== s && !p.shot.tipped && sp >= 300 && p.z < 26 && ds < 40 && !p.rolled.has(s)) {
+        p.rolled.add(s);
+        if (this.tipShot(s)) continue;
+      }
       if (ds < reach || db < s.r + PUCK_R) {
         if (p.rolled.has(s)) continue;
         p.rolled.add(s);
@@ -1562,6 +1569,29 @@ export class Match {
     else if (power > 330 && this.rng() < 0.12) reason = 'Charging';
     else if (insideDepth(b.x, b.y) < 34 && power > 260 && this.rng() < 0.1) reason = 'Boarding';
     if (reason) this.pendingPenalty = { s: a, reason };
+  }
+
+  // A teammate's shot going past a stick in front of the net: now and then it's tipped, off at a
+  // new angle (not always on target) that the goalie has to read again. The goal is the tipper's,
+  // with an assist for the shooter. A player in front of the net holding SHOOT tips it on purpose.
+  tipShot(s) {
+    const p = this.puck, sh = p.shot, gx = s.side * GOAL_X;
+    if (Math.hypot(gx - s.x, s.y) > 170 || s.x * s.side > GOAL_X - 10) return false; // (the slot, not behind the net)
+    const human = s.controlled && this.humans.includes(s.team);
+    const chance = human ? (s.in.a ? 0.7 : 0.1) : TIP_BASE + (s.stats.sht - 5) * 0.02;
+    if (this.rng() >= chance) return false;
+    // off the blade at a new angle (8 to 24 degrees either way): away from where the goalie set up
+    const from = sh.by, a = (this.rng() < 0.5 ? -1 : 1) * this.rng.range(0.14, 0.42), c = Math.cos(a), sn = Math.sin(a);
+    const vx = p.vx * 0.85, vy = p.vy * 0.85;
+    p.vx = vx * c - vy * sn; p.vy = vx * sn + vy * c; p.vz = this.rng.range(0, 70); p.curve = null;
+    Object.assign(sh, { tipped: true, kind: 'tip', by: s, x0: s.x, y0: s.y });
+    p.setTouch(s);
+    p.noPickup.set(s, 0.3);
+    // the goalie, set for the shot, has to read it again (late), unless already committed to a dive
+    const g = this.goalieAt(s.side);
+    if (g && !g.human && !g.disabled && g.state !== 'dive' && g.state !== 'down') { g.track = null; g.react = { t: 0.2 + this.rng() * 0.1, shot: sh }; }
+    this.emit('tip', { s, from });
+    return true;
   }
 
   // A hook from behind on a carrier skating away from the stick: a minor (the call is made
