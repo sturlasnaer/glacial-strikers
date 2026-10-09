@@ -1,13 +1,14 @@
 // Visual effects: particles, sprite animations, floating text, ice scratches, crowd,
 // screen shake, hit-stop and slow motion. Listens to match events.
 
-import { toScreen, persp, GOAL_X, BACKDROP } from './rink.js';
+import { toScreen, persp, GOAL_X, BACKDROP, RINK } from './rink.js';
 import { Assets } from './assets.js';
 import { POWER_INFO, COMBOS, GEAR_LOOK } from './data.js';
 import { makeRng, clamp } from './util.js';
 import { t } from './i18n.js';
 
 const rnd = makeRng(1234);
+const HAT_COLORS = ['#c8423a', '#2f5fa8', '#e8b33a', '#3c8a4f', '#6b4fd8', '#f2f2f2', '#2b2b33'];
 const SPRAY = 'ice_spray_goal_lights/ice_spray/phase_';
 const CHIPS = 'ice_spray_goal_lights/ice_chips/phase_';
 const PHASES = [1, 2, 3, 4, 5, 6, 7, 8];
@@ -231,6 +232,15 @@ export class FX {
       this.flashScreen('#fff7c2', 0.1);
       this.text(to.x, to.y - 96, t('CHARGED!'), '#ffe066', 1, 18);
     });
+    // a hat trick: the fans throw their hats onto the ice (gone by the next faceoff)
+    on('hat_trick', ({ s }) => {
+      this.text(s.x, s.y - 110, t('HAT TRICK!'), '#ffe066', 1.6, 26);
+      for (let i = 0; i < 28; i++) {
+        const far = i % 2 === 0, x = rnd.range(-560, 560);
+        this.part(x, far ? RINK.minY + 4 : RINK.maxY - 4, rnd.range(60, 110), rnd.range(-50, 50), (far ? 1 : -1) * rnd.range(120, 420), rnd.range(40, 160), 8, HAT_COLORS[i % HAT_COLORS.length], 1, 'hat', { style: i % 3, force: true });
+      }
+    });
+    on('faceoff', () => { this.parts = this.parts.filter((p) => p.kind !== 'hat'); });
     on('faceoff_win', ({ s, clean }) => this.text(s.x, s.y - 92, clean ? t('CLEAN DRAW!') : t('WON IT!'), clean ? '#ffe066' : '#ffffff', 0.7, 14));
     on('faceoff_early', ({ s }) => this.text(s.x, s.y - 92, t('TOO EARLY!'), '#ff8a7a', 0.6, 14));
     on('combo', ({ s, key }) => {
@@ -266,7 +276,7 @@ export class FX {
   part(x, y, z, vx, vy, vz, life, color, size, kind = 'dot', extra = null) {
     if (this.parts.length > 600) return;
     const share = this.particleMul * (this.qualityMul ?? 1); // the effects setting, and auto-quality
-    if (share < 1 && rnd() > share) return;
+    if (share < 1 && rnd() > share && !(extra && extra.force)) return;
     this.parts.push({ x, y, z, vx, vy, vz, life, t: 0, color, size, kind, rot: rnd.range(0, 6.28), ...extra });
   }
   burst(x, y, z, n, colors, speed, life) {
@@ -387,9 +397,9 @@ export class FX {
       p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
       p.vz -= (p.kind === 'confetti' ? 260 : 520) * dt;
       if (p.z < 0) { p.z = 0; p.vz *= -0.3; p.vx *= 0.6; p.vy *= 0.6; }
-      const drag = p.kind === 'confetti' ? 1.8 : 2.6;
+      const drag = p.kind === 'confetti' ? 1.8 : p.kind === 'hat' && p.z === 0 ? 5 : 2.6; // (a hat on the ice slides to a stop)
       p.vx *= Math.exp(-drag * dt); p.vy *= Math.exp(-drag * dt);
-      p.rot += dt * 8;
+      p.rot += dt * (p.kind === 'hat' ? (p.z > 0 ? 6 : 0) : 8);
     }
     this.parts = this.parts.filter((p) => p.t < p.life);
     for (const a of this.anims) { a.t += dt; if (a.follow) { a.x = a.follow.x; a.y = a.follow.y; } }

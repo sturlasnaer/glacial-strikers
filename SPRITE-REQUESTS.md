@@ -12,6 +12,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 3. **BJ**: the stick in the gear masks of 27 early skating frames (masks only, no new art).
 4. **BK**: two achievement icons: Sold It and Off the Drop.
 5. **BL**: two more linesman signals: hooking and the penalty shot.
+6. **BM**: six hats the fans throw on the ice after a hat trick.
 
 ## Format notes
 
@@ -146,3 +147,9 @@ The game now calls **penalty shots**: a skater hauled down from behind on a brea
 - `linesman_calls/linesman/penalty_shot_a` and `_b`: arms crossed overhead, then one pointing to centre ice (or whatever reads as "penalty shot" at a glance), as `linesman.calls.penalty_shot`.
 
 4 frames.
+
+## Batch BM: hats on the ice
+
+When a skater scores three in a match, the fans now throw their hats onto the ice (a hockey tradition), and they lie there until the next faceoff. The game draws simple pixel caps for now. Please draw **six hats**, each lying on the ice seen from the game's three-quarter view, about 48 px source (they're drawn small): `crowd_props/hats/hat_1` to `hat_6`. A mix like a red toque with a bobble, a blue ball cap, a yellow beanie with a cuff, a green knit hat with ear flaps, a fur trapper hat, and a Snow Fox fan hat with ears. Pivot at the bottom centre (where it touches the ice).
+
+6 frames.

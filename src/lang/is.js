@@ -1,6 +1,9 @@
 // Íslenska. Keys are the English text exactly as written in the game (with {braces} for
 // values); values are the Icelandic. Names of people, teams and the club stay as they are.
 export const IS = {
+  "That's three for {name}! Hats all over the ice!": "Þrjú mörk hjá {name}! Húfur út um allan ís!",
+  "Hat trick for {name}! Here come the hats!": "Þrenna hjá {name}! Hér koma húfurnar!",
+  "HAT TRICK!": "ÞRENNA!",
   "Penalty shots: haul a skater down from behind on a breakaway and they go one on one with the goalie.": "Vítaskot: ef leikmaður er felldur aftan frá þegar hann er sloppinn í gegn fer hann einn á móti markverðinum.",
   "{name} hauls {by} down from behind. That's a penalty shot!": "{name} fellir {by} aftan frá. Það er vítaskot!",
   "No goal on the penalty shot!": "Ekkert mark úr vítaskotinu!",

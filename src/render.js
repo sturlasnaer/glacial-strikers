@@ -1667,6 +1667,26 @@ export class Renderer {
     Assets.draw(ctx, `power_pucks/${k.type}/pickup_orb`, s.x, s.y - 30 + bob, 0.2, { alpha: fade * blink });
   }
 
+  // A hat thrown on the ice (a hat trick): the fans' own hats once they're drawn, else a simple
+  // one in pixels: a toque with a bobble, a cap, a beanie.
+  drawHat(ctx, p, s) {
+    const id = `crowd_props/hats/hat_${1 + (p.style % 6)}`;
+    const k = persp(p.y);
+    if (Assets.frame(id)) { Assets.draw(ctx, id, s.x, s.y, 0.3 * k, { rot: Math.sin(p.rot) * 0.5 }); return; }
+    ctx.save();
+    ctx.translate(Math.round(s.x), Math.round(s.y));
+    ctx.rotate(Math.sin(p.rot) * 0.4);
+    ctx.scale(2 * k, 2 * k);
+    if (p.z <= 0.5) { ctx.fillStyle = 'rgba(12, 24, 44, 0.25)'; ctx.fillRect(-7, 1, 14, 2); }
+    ctx.fillStyle = p.color;
+    if (p.style === 1) { ctx.fillRect(-5, -6, 10, 5); ctx.fillRect(2, -2, 7, 2); } // a cap and its bill
+    else { ctx.fillRect(-5, -6, 10, 6); ctx.fillRect(-4, -8, 8, 2); } // a toque
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    if (p.style === 0) ctx.fillRect(-2, -11, 4, 3); // the bobble
+    else if (p.style === 2) ctx.fillRect(-5, -2, 10, 2); // a beanie's cuff
+    ctx.restore();
+  }
+
   // --------------------------------------------------------------- effects
   drawParticles(ctx, fx) {
     for (const p of fx.parts) {
@@ -1675,6 +1695,7 @@ export class Renderer {
       const a = 1 - p.t / p.life;
       ctx.globalAlpha = Math.min(1, a * 1.5);
       ctx.fillStyle = p.color;
+      if (p.kind === 'hat') { this.drawHat(ctx, p, s); continue; }
       if (p.kind === 'confetti') {
         const w = p.size * 1.6, h = p.size * Math.abs(Math.cos(p.rot));
         ctx.fillRect(s.x - w / 2, s.y - h / 2, w, h + 0.5);

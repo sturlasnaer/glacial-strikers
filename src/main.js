@@ -1441,7 +1441,7 @@ class App {
             this.startClip(m);
             this.hud.replayMode(true);
             this.replayGuard = raw.a || raw.b || raw.sprint;
-            this.fx.parts.length = 0;
+            this.fx.parts = this.fx.parts.filter((p) => p.kind === 'hat'); // (a hat trick's hats stay on the ice)
             this.fx.texts.length = 0;
             audio.sfx('whoosh');
           }

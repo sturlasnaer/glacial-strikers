@@ -1244,6 +1244,7 @@ export class Match {
         if (assists.length >= 2) break;
       }
       scorer.stats_.goals++;
+      if (scorer.stats_.goals === 3) this.emit('hat_trick', { s: scorer, team }); // (the hats come down)
       this.addUlt(scorer, 15);
       if (sh && sh.power) scorer.stats_.powerGoals++;
       for (const a of assists) { a.stats_.assists++; this.addUlt(a, 8); this.chemStat(team, a, scorer).assists++; }
