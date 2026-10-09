@@ -709,7 +709,7 @@ export class Match {
       const v = norm(m.x - s.x, m.y - s.y);
       const ang = ax * v.x + ay * v.y;
       const open = Math.min(1.5, this.nearestOpp(m) / 110);
-      const lane = this.laneClear(s.x, s.y, m.x, m.y, s.team);
+      const lane = this.laneClear(s.x, s.y, m.x, m.y, s.team, true);
       const score = ang * 2.2 + open * 0.6 + lane * 0.8 - v.l / 1400 + (m.x - s.x) * s.side / 900;
       if (score > bestScore) { bestScore = score; best = m; }
     }
@@ -722,16 +722,19 @@ export class Match {
     return best;
   }
 
-  // 0..1: how clear a passing lane is of opponents (one in the box isn't in it). (A lane that
-  // counts the ground a defender covers while the pass travels was tried: carriers held on
-  // to the puck, sticks found it more, and matches ran about a minute longer.)
-  laneClear(ax, ay, bx, by, team) {
+  // 0..1: how clear a passing lane is of opponents (one in the box isn't in it). `timed` also
+  // counts the ground a defender covers while the pass travels: the player's own pass picks
+  // its target with it. (For the AI's passing too it held on to the puck, sticks found it more,
+  // and matches ran about a minute longer.)
+  laneClear(ax, ay, bx, by, team, timed = false) {
     let worst = 1;
+    const L = timed ? Math.hypot(bx - ax, by - ay) : 0;
     for (const o of this.skaters) {
       if (o.team === team || o.parked) continue;
       const sd = segDist(o.x, o.y, ax, ay, bx, by);
       if (sd.t < 0.05 || sd.t > 0.97) continue;
-      worst = Math.min(worst, clamp((sd.d - 14) / 40, 0, 1));
+      const reach = timed ? 22 + o.d.maxSpeed * 1.1 * Math.max(0, (sd.t * L) / 700 - 0.1) : 14; // (a pass travels about 700 a second)
+      worst = Math.min(worst, clamp((sd.d - reach) / 40, 0, 1));
     }
     for (const b of this.barriers) {
       if (!b.alive) continue;
