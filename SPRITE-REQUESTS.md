@@ -7,9 +7,9 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **BA**: the expansion captains, Talon (Glacier Owls) and Tamarack (Thunder Moose), as full characters who match their cut-ins.
-2. **BB**: the other hand for the five founding rivals' fifteen skaters, as AK did for our cast and the newcomers.
-3. **BC**: six more goalie masks, including a Snow Fox mask for our club, for a mask picker at goalie camp.
+1. **BB** (under way, team by team: the Pinewood Lynx are in): the other hand for the founding rivals' fifteen skaters.
+2. **BD**: stick-handling frames: the puck dangled from forehand to backhand, in eight directions, for the players you control most.
+3. **BE**: crossovers: skaters crossing their feet through turns.
 
 ## Format notes
 
@@ -25,6 +25,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - **Batch AP:** big and slim rookies pull on our jersey too.
 - **Batches AQ to AU:** cut-in backdrops for players made from parts, Vigga the agent, the linesman's signals for each call, goalies made from parts (a body and six painted masks), and the Glacier Owls' and Thunder Moose's crests, buildings, mascots, scoreboards, banners and captains.
 - **Batches AV to AZ:** icons for the league news, six crests for the player's club, big and slim goalie builds, the Observatory's moonbeams and the Longhouse's loose planks, and six more heads.
+- **Batches BA and BC:** Talon and Tamarack as full characters (their cut-ins match now), and six more goalie masks for the mask picker at goalie camp (Snow Fox, aurora, lightning, tiger, royal crown, pixel).
 
 ---
 
@@ -78,16 +79,6 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 ---
 
-## Batch BA: the expansion captains in their own art
-
-The Glacier Owls' and Thunder Moose's captains have painted cut-in banners from AU (`cutin/glacier_owls_c`, `cutin/thunder_moose_c`), but on the ice they are players made from parts, so the banner shows someone the player never sees skating. Please draw both captains as full characters, matching the people in those banners, in the same format as the five founding rivals' captains (for example `pinewood_lynx_c`):
-- **Talon**, Glacier Owls centre, a calm playmaker. **Shoots right.**
-- **Tamarack**, Thunder Moose centre, a big enforcer. **Shoots left.**
-
-For each: the eight skating directions (idle, skate_a, skate_b, shot_windup, shot_release, pass, check, celebrate), the side stride, stop and glide, hit reactions, their signature celebration, **and the west-facing set from AK** so they keep their stick hand both ways. Gear masks for the stick and skates (Batch M format), and five portrait expressions (neutral, determined, grin, shocked, defeated) for the pre- and post-match talk. Drawn in **coral + violet** like every rival, so the game recolours them into each club's colours (and into ours once signed). Frame prefixes `glacier_owls_c` and `thunder_moose_c`.
-
-About 200 frames.
-
 ## Batch BB: the other hand for the founding rivals
 
 Batch AK drew our cast and the newcomers facing west, so a left shot stays a left shot whichever way they skate. The fifteen founding rival skaters still only face east and are mirrored for west, so their stick jumps to the other hand every time they turn round. That shows most once you sign one. Please draw the same AK set for each of them: the west, northwest and southwest directions with the stick in their own hand, the west side stride, stop and glide, and the `hands` map for each direction. Their stick hands:
@@ -99,14 +90,15 @@ Batch AK drew our cast and the newcomers facing west, so a left shot stays a lef
 
 Coral + violet as before, gear masks for the new frames (Batch M format), and the same scale and baseline as their existing sheets. About 33 frames each, about 500 in all. Splitting it into deliveries by team is fine.
 
-## Batch BC: six more goalie masks
+## Batch BD: stick-handling frames
 
-The game will let you pick your goalie's mask and its paint colour at goalie camp, and free-agent goalies wear these designs too. Please draw six more designs in exactly the AT format (seven field views, five portrait expressions, and a pure-red paint mask for each head; the helmet shell and cage fixed, the design paintable):
-- `snow_fox`: our club's Snow Fox across the mask (our own design; keep it close to the crest).
-- `aurora`: wavy aurora bands.
-- `lightning`: a jagged bolt from brow to chin.
-- `tiger`: bold stripes.
-- `crown`: a small crown on the forehead with filigree down the sides.
-- `pixel`: a blocky retro checker pattern.
+The game now carries the puck on the blade and dangles it from forehand to backhand when a player has time and space (and pushes it out ahead at speed). The skating frames hold the stick still, so the puck moves under a stick that doesn't. Please draw a **two-frame stick-handling pair** for each of the eight directions: **forehand** (blade out on the stick side, puck cupped) and **backhand** (blade pulled across in front of the skates), with the skater gliding upright, for:
+- our cast: Nix (left shot), Volta (right shot), Bram (left shot), in home colours;
+- the three builds made from parts (`body_std`, `body_big`, `body_small`, without a head, with head anchors like AJ/AO);
+- the newcomers `newcomer_c`, `newcomer_w`, `newcomer_d` (coral and violet).
 
-They must sit on all three builds (std, big, small) at the existing anchors, as AX checked for the AT masks. About 144 frames with the paint masks.
+Draw them **without the puck** (the game draws it). Same scale, pivots and stick-hand rules as each character's skating sets, with gear masks (Batch M format). Frame names `<key>/stickhandling/<kit>/<direction>/forehand` and `/backhand`. About 144 frames plus masks.
+
+## Batch BE: crossovers
+
+Skaters turning hard now lean into the turn. Please draw the **crossover**: the outside skate stepping over the inside one, two frames (step over, push out) for the six directions that aren't straight north or south, turning each way (drawn both ways like AK, so left and right turns each get their own), for the same characters as BD. Frame names `<key>/crossover/<kit>/<direction>/<left|right>_a` and `_b`. About 216 frames plus masks.
