@@ -181,7 +181,7 @@ export class Skater {
     this.comboFrom = null;
     this.stride = 0;
     this.animT = 0;
-    this.stridePhase = 0; this.danglePhase = Math.random() * 3; this.lean = 0; this.faceWas = 0; // (see update)
+    this.stridePhase = 0; this.danglePhase = (slot || 0) * 0.37 + team * 0.5; this.lean = 0; this.faceWas = 0; // (see update)
     this.controlled = false;
     this.celebrate = 0;
     this.flash = 0;
