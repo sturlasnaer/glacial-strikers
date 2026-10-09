@@ -39,7 +39,7 @@ for(const key of ['frost_captain','thunder_winger','stone_defender','body_std','
   assert.equal(frame({speed:300,gliding:false,hasPuck:true}),null);cases+=9;
  }
 }
-const id=A.skaters.frost_captain.home.south.frames.idle;assert.equal(Renderer.prototype.puckSpritePoint.call({skaterFrame:()=>({id,flip:false})},s0,{}),null);
+const id=A.skaters.frost_captain.home.south.frames.idle;const legacy=Renderer.prototype.puckSpritePoint.call({skaterFrame:()=>({id,flip:false})},s0,{});if(A.blade_points?.[id]){const f=A.frames[id],b=A.blade_points[id],p=toScreen(s0.x,s0.y),k=.5*persp(s0.y)/f[7];assert.deepEqual(legacy,{x:p.x+(b.x-f[5])*k,y:p.y+(b.y-f[6])*k});}else assert.equal(legacy,null);
 const replay=new Replay(),rs={...s0,turnRate:-2},rm={skaters:[rs],goalies:[],puck:{x:0,y:0,z:0,vx:0,vy:0,owner:rs,trail:[]},trails:[],barriers:[]};
 replay.record(rm);rs.turnRate=3;replay.record(rm);replay.frames=replay.buf;replay.t=0;replay.apply(rm);assert.equal(rs.turnRate,-2);assert.equal(rs.danglePhase,.25);cases++;
 for(const [fid,anchor]of Object.entries(A.modular.anchors))if(A.motion_blades[fid])for(const head of Object.keys(A.modular.heads))for(const flip of [false,true]){

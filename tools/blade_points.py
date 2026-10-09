@@ -36,7 +36,10 @@ def blade_points(atlas, out):
             return None
         ys, xs = ys + oy, xs + ox
         low = ys.max()
-        if low < 0.55 * frames[fid][4]:  # (the stick's low end isn't down by the skates)
+        # (the stick's low end isn't down by the skates; BJ's redrawn masks mark the held stick,
+        # and three early northwest frames paint the blade higher than that)
+        trusted = atlas.get('art_additions', {}).get('BJ', {}).get('gear_mask_replacements', {})
+        if low < 0.55 * frames[fid][4] and fid not in trusted:
             return None
         sel = ys >= low - 4
         return {'x': round(float(xs[sel].mean()), 2), 'y': round(float(ys[sel].mean()), 2)}

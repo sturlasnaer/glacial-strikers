@@ -726,6 +726,16 @@ atlas = merge_motion(atlas, OUT, BD_BE)
 BF_BG = sys.argv[22] if len(sys.argv) > 22 else '../assets/Puckbound-Batches-BF-BG'
 from merge_polish import merge_polish
 atlas = merge_polish(atlas, OUT, BF_BG)
+# Batches BJ (the stick in 27 early gear masks, and eight of Nix's away poses recovered), BK
+# (achievement icons), BL (the linesman's hooking and penalty-shot signals) and BM (hats), with
+# the pack's helper; then BH and BI (the rest of the league's stick handling and crossovers)
+BH_BI = sys.argv[23] if len(sys.argv) > 23 else '../assets/Puckbound-Batches-BH-BI'
+BJ = sys.argv[24] if len(sys.argv) > 24 else '../assets/Puckbound-Batch-BJ'
+BK_BL_BM = sys.argv[25] if len(sys.argv) > 25 else '../assets/Puckbound-Batches-BK-BL-BM'
+from compile_request_additions import merge_request_additions
+atlas = merge_request_additions(atlas, OUT, [BJ, BK_BL_BM])
+from merge_league_motion import merge_league_motion
+atlas = merge_league_motion(atlas, OUT, BH_BI)
 # where the blade meets the ice in the ordinary skating frames (from the gear masks)
 from blade_points import blade_points
 atlas = blade_points(atlas, OUT)

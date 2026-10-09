@@ -1,18 +1,16 @@
 # Sprite requests
 
-What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd), the remaining packs (Batches B, H, I, C and N-Extras), the new batches (P, R, S, K, T and M2) the D, U, Q, W, O, E, J and F delivery, V and X, the Y, Z, AA, AB and AC delivery, the twins' first look (AI part 1), Part 2 and the new additions (AD, AE, AF, AG, AI part 2, AJ, AK, AL and AM), AN, AO, AP, AQ to AU, AV to AZ, BA to BC, BD and BE, and BF and BG. AH was skipped: the AJ pilot works, so new faces come from parts.
+What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd), the remaining packs (Batches B, H, I, C and N-Extras), the new batches (P, R, S, K, T and M2) the D, U, Q, W, O, E, J and F delivery, V and X, the Y, Z, AA, AB and AC delivery, the twins' first look (AI part 1), Part 2 and the new additions (AD, AE, AF, AG, AI part 2, AJ, AK, AL and AM), AN, AO, AP, AQ to AU, AV to AZ, BA to BC, BD and BE, BF and BG, and BH to BM part 1. AH was skipped: the AJ pilot works, so new faces come from parts.
 
 The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes** (the Snow Fox is their mascot; colours unchanged). Packs can be named `Puckbound-...` from now on; older `Glacial-Strikers-...` folder names still work.
 
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **BH**: stick handling for the rest of the league (the rival players, the expansion captains and the legends), like BD.
-2. **BI**: crossovers for the same players, like BE.
-3. **BJ**: the stick in the gear masks of 27 early skating frames (masks only, no new art).
-4. **BK**: three achievement icons: Sold It, Off the Drop and From the Spot.
-5. **BL**: two more linesman signals: hooking and the penalty shot.
-6. **BM**: six hats the fans throw on the ice after a hat trick.
+1. **BH, the rest:** stick handling for the 13 players still to come (Part 1 brought six): `aurora_royals_d`, `ember_comets_c`, `ember_comets_w`, `gilded_rams_w`, `gilded_rams_d`, `obsidian_ravens_c`, `obsidian_ravens_d`, `pinewood_lynx_c`, `pinewood_lynx_w`, `glacier_owls_c`, `thunder_moose_c`, `fafnir` and `fenrir`, as in the BH section below.
+2. **BI, the rest:** Fáfnir's crossovers (held for his northwest right-turn stick). Fenrir's southeast backhand blade correction remains part of BH.
+
+Native generation reached its daily quota; pending art and masks are saved for the reset at **2026-10-09 18:10:25 UTC**.
 
 ## Format notes
 
@@ -81,6 +79,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - **Batch AM:** the element stones, style camp, respec and trade icons, and Ottar holding up a stone and Brekka with the whistle in the training camp.
 - **Batches BD and BE:** stick handling (forehand and backhand, eight directions) and crossovers (six directions, both ways) for Nix, Volta, Bram, the three parts bodies and the newcomers. In the game: a carrier with time and space works the puck from forehand to backhand on the drawn blade, and skaters cross over through hard turns at speed.
 
+- **Batches BH to BM, part 1:** crossovers for 18 more players (the founding rivals, Talon, Tamarack and Fenrir) and stick handling for six, the stick in the 27 early gear masks (plus eight of Nix's away poses recovered), the Sold It, Off the Drop and From the Spot icons, the linesman's hooking and penalty-shot signals, and the six hats.
 - **Batches BF and BG:** six achievement/news icons and three distinct four-phase goal celebrations for players from parts, with gear masks and turned/tilted head anchors. Source and ready packs: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-Batches-BF-BG`.
 
 ---
@@ -99,58 +98,3 @@ Each is drawn once in their own club's colours, like their skating sets (the gam
 The BE crossovers for the same 19 players: two frames (step over, push out) for the six directions that aren't straight north or south, turning left and turning right, with `blade_pixels` per frame and gear masks, as in BE. Frame names `<key>/crossover/<direction>/<left|right>_a` and `_b`. About 456 frames plus masks.
 
 ---
-
-## Batch BJ: the stick in 27 early gear masks (masks only)
-
-The game now draws the carried puck on the painted blade in every skating frame. It finds the blade from each frame's gear mask (the stick is the red channel; its low end by the skates is the blade), which lands within a few pixels of BD/BE's measured points. These 27 frames, mostly from the first art, have gear masks with **no stick in them** (only skates), or sit in a set where one does, so their sets keep the old puck position, and a special stick can't be recoloured in them either. Please redraw just their gear masks with the stick in red (Batch M format, same size and pivot as the art frame, untrimmed is fine):
-
-- `ak_newcomer_d_diagonals_northwest/away/northwest/idle`
-- `ak_newcomer_d_diagonals_northwest/away/northwest/skate_a`
-- `ak_newcomer_d_diagonals_northwest/away/northwest/skate_b`
-- `frost_captain/home_east/idle`
-- `frost_captain/home_east/skate_a`
-- `frost_captain/home_east/skate_b`
-- `frost_captain/home_north/idle`
-- `frost_captain/home_north/skate_a`
-- `frost_captain/home_north/skate_b`
-- `frost_captain/home_south/idle`
-- `frost_captain/home_south/skate_a`
-- `frost_captain/home_south/skate_b`
-- `frost_captain_variant/away_south/idle`
-- `frost_captain_variant/away_south/skate_a`
-- `frost_captain_variant/away_south/skate_b`
-- `stone_defender/home_north/idle`
-- `stone_defender/home_north/skate_a`
-- `stone_defender/home_north/skate_b`
-- `thunder_winger/away_north/idle`
-- `thunder_winger/away_north/skate_a`
-- `thunder_winger/away_north/skate_b`
-- `thunder_winger/home_east/idle`
-- `thunder_winger/home_east/skate_a`
-- `thunder_winger/home_east/skate_b`
-- `thunder_winger/home_north/idle`
-- `thunder_winger/home_north/skate_a`
-- `thunder_winger/home_north/skate_b`
-
-## Batch BK: three achievement icons
-
-In the style and size of the BF achievement icons (about 200 px source, reading at 48 px), sheet `icons_bk.png`:
-- `achievements/sold_it`: a goalie sprawled the wrong way while a puck slides into the open side of the net (score right after a deke makes the goalie bite).
-- `achievements/off_the_drop`: a puck dropping between two crossed sticks on a faceoff dot, a little burst of motion lines as one stick snaps it back (win three faceoffs clean in one match).
-- `achievements/from_the_spot`: a lone skater bearing down on a goalie from centre ice, a single puck between them, spotlight-style (score on a penalty shot).
-
-3 frames.
-
-## Batch BL: two more linesman signals
-
-The game now calls **penalty shots**: a skater hauled down from behind on a breakaway goes one on one with the goalie from centre ice. The linesman signals each call (Batch AS: interference, boarding, charging), but has no signal for these yet, so he raises an arm. Please add, in the AS style and size, two frames each:
-- `linesman_calls/linesman/hooking_a` and `_b`: the hooking signal (both hands pulling an imaginary stick in toward the stomach), as `linesman.calls.hooking`.
-- `linesman_calls/linesman/penalty_shot_a` and `_b`: arms crossed overhead, then one pointing to centre ice (or whatever reads as "penalty shot" at a glance), as `linesman.calls.penalty_shot`.
-
-4 frames.
-
-## Batch BM: hats on the ice
-
-When a skater scores three in a match, the fans now throw their hats onto the ice (a hockey tradition), and they lie there until the next faceoff. The game draws simple pixel caps for now. Please draw **six hats**, each lying on the ice seen from the game's three-quarter view, about 48 px source (they're drawn small): `crowd_props/hats/hat_1` to `hat_6`. A mix like a red toque with a bobble, a blue ball cap, a yellow beanie with a cuff, a green knit hat with ear flaps, a fur trapper hat, and a Snow Fox fan hat with ears. Pivot at the bottom centre (where it touches the ice).
-
-6 frames.
