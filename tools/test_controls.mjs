@@ -111,9 +111,10 @@ const check = (name, cond) => { if (cond) ok++; else { fail++; console.log('FAIL
     for (const s of m.teamSkaters(1)) { s.x = -500; s.y = 250; }
     const c = m.controlled(); const opp = m.teamSkaters(1)[1]; c.x = 0; c.y = 0; opp.x = 40; opp.y = 0;
     m.puck.owner = null; m.puck.x = 400; m.puck.y = -200; m.puck.z = 0;
-    let pen = null; m.on('penalty', (e) => { pen = e; });
+    let pen = null, delayed = null; m.on('penalty', (e) => { pen = e; }); m.on('penalty_delayed', (e) => { delayed = e; });
     run(m, [raw({ a: true, mx: 1 }), ...Array(10).fill(raw({ mx: 1 }))]);
-    n++; if (pen) { calls++; if (!(pen.s === c && c.boxT > 0 && m.state === 'penalty')) fail++; }
+    // (called at once if we have the puck, or delayed while it's loose or theirs)
+    n++; if (pen || delayed) { calls++; if (pen ? !(pen.s === c && c.boxT > 0 && m.state === 'penalty') : !(delayed.s === c && m.pendingPenalty && m.pendingPenalty.s === c)) fail++; }
   }
   check('interference gets called sometimes', calls > 3 && calls < 20); }
 // 17. power-play goal releases the boxed player; goalie pull works and returns after a goal
@@ -185,3 +186,4 @@ const check = (name, cond) => { if (cond) ok++; else { fail++; console.log('FAIL
   check('clean draws and dekes are counted for the daily goals', k && k.cleanDraws === 1 && m.summary().skaters.some((x) => x.dekes === 1)); }
 
 console.log(`controls: ${ok} passed, ${fail} failed`);
+if (fail) process.exitCode = 1;
