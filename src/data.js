@@ -314,7 +314,20 @@ export const FOUNDING_RIVALS = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
 // What plays a rival's roster slot: their own art, or a body from parts (an expansion club),
 // or null for our cast's art in their colours.
 export const slotLook = (teamId, kit) => { const t = TEAMS[teamId]; return t && t.looks && t.looks[kit] && bodySprite(t.looks[kit]) ? t.looks[kit] : null; };
-export const slotSprite = (teamId, kit) => { const t = TEAMS[teamId]; return t && t.art ? `${t.art}_${ROLE[kit]}` : (slotLook(teamId, kit) ? bodySprite(slotLook(teamId, kit)) : null); };
+export const slotSprite = (teamId, kit) => { const t = TEAMS[teamId]; return t && t.drawn && t.drawn[kit] ? t.drawn[kit] : t && t.art ? `${t.art}_${ROLE[kit]}` : (slotLook(teamId, kit) ? bodySprite(slotLook(teamId, kit)) : null); };
+// The expansion clubs' captains as characters of their own (Batch BA): once their art is in
+// they skate in it instead of being made from parts, for their club and once signed.
+export const CAPTAIN_ART = { owls: 'glacier_owls_c', moose: 'thunder_moose_c' };
+export function useCaptainArt(has) {
+  for (const [team, key] of Object.entries(CAPTAIN_ART)) {
+    if (!has(key)) continue;
+    const t = TEAMS[team];
+    (t.drawn ||= {}).frost = key;
+    if (t.looks) delete t.looks.frost;
+    const r = RECRUITS[team + '_c'];
+    if (r) { r.sprite = key; r.parts = null; }
+  }
+}
 
 // Sprite-pack names: each roster slot's role letter, and our cast's names in the art.
 export const ROLE = { frost: 'c', thunder: 'w', stone: 'd', goalie: 'g' };

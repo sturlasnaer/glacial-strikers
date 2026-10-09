@@ -79,7 +79,7 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
   if (team === 0 && RECRUITS[id]) {
     // a signing: their own portrait, in our colours
     const r = RECRUITS[id];
-    const p = P[`${TEAMS[r.team].art}_${ROLE[r.kit]}`];
+    const p = P[`${TEAMS[r.team].art}_${ROLE[r.kit]}`] || P[r.sprite]; // (an expansion captain: their own, Batch BA)
     const fid = p && ((expr && p[expr]) || p.neutral_roster || p.neutral);
     return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT[r.kit]}`, size);
   }
@@ -110,7 +110,7 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
   if (team !== 0 && RECRUITS[id]) { // a rival star by player key (a League All-Star: in the All-Star kit)
     const r = RECRUITS[id];
     if (teamId !== 'allstar') return portrait(r.kit, 1, r.team, size, expr);
-    const p = P[`${TEAMS[r.team].art}_${ROLE[r.kit]}`];
+    const p = P[`${TEAMS[r.team].art}_${ROLE[r.kit]}`] || P[r.sprite];
     const fid = p && ((expr && p[expr]) || p.neutral_roster || p.neutral);
     return (fid && Assets.icon(fid, size, 'allstar')) || Assets.icon(`character_portraits/away/${PORTRAIT[r.kit]}`, size, 'allstar');
   }
@@ -126,6 +126,10 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
   }
   if (t && !t.art && id === 'goalie' && P.newcomer_g) { // an expansion club's goalie: the newcomer goalie in their colours
     const fid = (expr && P.newcomer_g[expr]) || P.newcomer_g.neutral, url = fid && Assets.icon(fid, size, teamId);
+    if (url) return url;
+  }
+  if (t && t.drawn && t.drawn[id] && P[t.drawn[id]]) { // an expansion club's captain in their own art (Batch BA)
+    const q = P[t.drawn[id]], url = Assets.icon((expr && q[expr]) || q.neutral, size, teamId);
     if (url) return url;
   }
   if (t && !t.art && slotLook(teamId, id)) { // an expansion club's skater: made from parts, in their colours

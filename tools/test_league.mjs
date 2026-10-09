@@ -5,7 +5,7 @@
 //   node tools/test_league.mjs
 import { newLeague, leagueTeams, leagueRivals, nextFixture, recordOurGame, standings, strength, FOUNDING_TEAMS, EXPANDED_TEAMS } from '../src/league.js';
 import { newSave, matchConfig, homeKitGroups, addRecruit, rivalGoalie } from '../src/progress.js';
-import { TEAMS, TOURNAMENT, RIVAL_IDS, RECRUITS, GOALIE_RECRUITS, member, slotLook, slotSprite } from '../src/data.js';
+import { TEAMS, TOURNAMENT, RIVAL_IDS, RECRUITS, GOALIE_RECRUITS, member, slotLook, slotSprite, useCaptainArt } from '../src/data.js';
 import { useModular } from '../src/modular.js';
 import { makeDraft } from '../src/draft.js';
 
@@ -55,6 +55,15 @@ check('sign one: from parts, in our colours', m.sprite.startsWith('body_') && m.
 check('their parts load in our kit', homeKitGroups(s).includes('parts') && !homeKitGroups(s).some((g) => g === 'rival_null'));
 check('their goalie can be signed too', GOALIE_RECRUITS.owls_g && GOALIE_RECRUITS.owls_g.art === 'parts_small' && GOALIE_RECRUITS.owls_g.mask && RECRUITS.moose_d.parts);
 check('the draft draws from the league\'s clubs', makeDraft(s, 2, Math.random).rivals.every((r) => s.league.teams.includes(r)));
+
+// once their captains' own art is in (Batch BA), they skate in it, for their club and once signed
+useCaptainArt(() => true);
+check('the captains in their own art', slotSprite('owls', 'frost') === 'glacier_owls_c' && !slotLook('owls', 'frost') && slotSprite('moose', 'frost') === 'thunder_moose_c' && slotSprite('owls', 'thunder').startsWith('body_'));
+const s2 = newSave(); s2.season = 2; s2.league = newLeague(2); s2.rivals = { owls: { played: 1, wins: 1, losses: 0 } };
+const cfg2 = matchConfig(s2, 'owls', TOURNAMENT.stages.find((x) => x.team === 'owls'));
+check('...in a match', cfg2.teams[1].skaters[0].sprite === 'glacier_owls_c' && !cfg2.teams[1].skaters[0].parts);
+addRecruit(s2, 'owls_c');
+check('...and signed, in our colours', member('owls_c').sprite === 'glacier_owls_c' && !member('owls_c').parts && homeKitGroups(s2).includes('rival_glacier_owls'));
 
 console.log(`league: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

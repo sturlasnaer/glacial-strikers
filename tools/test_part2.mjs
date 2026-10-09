@@ -87,6 +87,13 @@ const ER = A.expansion_rules;
 check('moonbeam, glare, planks and splinters with the rule art', ER.moonbeams.moonbeams.length === 4 && ER.moonbeams.glare.length === 3 && ER.loose_planks.planks_side.length === 3 && ER.loose_planks.planks_end.length === 3 && ER.loose_planks.splinters.length === 4 && [...ER.moonbeams.moonbeams, ...ER.loose_planks.splinters].every((f) => A.pages[F[f][0]].group === 'rules'));
 check('...and their rule icons', F[A.rule_icons.moonbeams] && F[A.rule_icons.loose_planks]);
 
+// BA: the expansion captains, drawn like the founding rivals' captains
+for (const key of ['glacier_owls_c', 'thunder_moose_c']) {
+  const S = A.skaters[key];
+  check(`${key}: eight directions, strides both ways, hits, signature, hands`, S && EIGHT.every((d) => S.away[d] && Object.values(S.away[d].frames).every((f) => F[f])) && S.away.stride.frames.length === 4 && S.away.stride_west.frames.length === 4 && S.away.hit.east.length === 3 && S.away.signature.length === 4 && S.away.hands.south);
+  check('...on their club\'s pages, gear masks, portraits', A.pages[F[S.away.south.frames.idle][0]].group === 'rival_' + key.slice(0, -2) && F['gm:' + S.away.east.frames.idle] && ['neutral', 'grin', 'determined', 'shocked', 'defeated'].every((e) => F[A.portraits[key][e]]));
+}
+
 // achievements: own icons for the old borrowers
 useAchievementArt(F);
 check('every achievement icon exists', ACHIEVEMENTS.every((a) => F[a.icon]), ACHIEVEMENTS.filter((a) => !F[a.icon]).map((a) => a.id));

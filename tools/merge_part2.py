@@ -35,7 +35,11 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
         for b in BATCHES:
             if os.path.exists(os.path.join(root, f'Puckbound-Batch-{b}', 'atlas.json')):
                 folders[b] = os.path.join(root, f'Puckbound-Batch-{b}')
-    packs = {b: json.load(open(os.path.join(folders[b], 'atlas.json'))) for b in BATCHES if b in folders}
+        # (Batch BB comes a team at a time: Puckbound-Batch-BB-<team> folders side by side)
+        for d in sorted(os.listdir(root)) if os.path.isdir(root) else []:
+            if d.startswith('Puckbound-Batch-BB-') and os.path.exists(os.path.join(root, d, 'atlas.json')):
+                folders['BB-' + d[len('Puckbound-Batch-BB-'):]] = os.path.join(root, d)
+    packs = {b: json.load(open(os.path.join(folders[b], 'atlas.json'))) for b in [*BATCHES, *sorted(k for k in folders if k.startswith('BB-'))] if b in folders}
     if not packs:
         return atlas
     existing = set(atlas['frames'])
@@ -55,6 +59,10 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
             return 'linesman'
         if b in ('AT', 'AX', 'BC'):  # goalies from parts: bodies, masks and their paint masks (recoloured by team); AX: two more builds; BC: six more masks
             return 'goalie_parts'
+        if b == 'BB':  # the founding rivals facing west, with their team's pages
+            return None if cat == 'data_mask' else 'rival_' + meta['frame_ids'][0].split('/')[0][:-2]
+        if b == 'BA':  # the expansion captains, with their club's pages (recoloured like the rest of it)
+            return None if cat == 'data_mask' else 'rival_' + ('glacier_owls' if 'glacier_owls' in sh else 'thunder_moose')
         if b == 'AV':  # the league news icons
             return 'icons_new'
         if b == 'AW':  # the club's crests, on the home pages so they take the club colours
@@ -81,7 +89,8 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
             return 'badges' if sh != 'icons_ae' else 'icons_new'
         return 'icons_new'  # AF
 
-    MASK_GROUP = {'home': 'gearmask', 'newcomers': 'newcomer_gearmask', 'legends_ice': 'legends_gearmask', 'parts': 'parts'}
+    MASK_GROUP = {'home': 'gearmask', 'newcomers': 'newcomer_gearmask', 'legends_ice': 'legends_gearmask', 'parts': 'parts',
+                  **{'rival_' + t: 'gearmask' for t in ('glacier_owls', 'thunder_moose', 'pinewood_lynx', 'ember_comets', 'gilded_rams', 'obsidian_ravens', 'aurora_royals')}}
 
     def visible_h(folder, a, fid):
         f = a['frames'][fid]
@@ -124,6 +133,10 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
             return (1, 1) if '/portrait/' in fid else (backup_k, GOALIE_S)
         if b in ('AV', 'AY'):
             return 1, 1
+        if b == 'BB':  # each rival as tall facing west as they are facing east
+            return bb_k[fid.split('/')[0]], 0.6
+        if b == 'BA':  # as tall as the other clubs' captains (Talon's art stands 200 px; Tamarack's a touch bigger)
+            return (1, 1) if cat == 'portrait' else (0.6 * 135 / 200 * (1.04 if 'thunder_moose' in fid else 1.06), 0.6)  # (Talon's height counts the hood's ears)
         if b == 'AW':  # drawn as big as the Snow Fox at centre ice
             return 0.6, 0.54
         if b == 'AZ':  # heads at AO's scale, the portrait faces at the portraits'
@@ -132,8 +145,22 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
             return {'crest': (0.74, 0.4), 'mascot': (0.5, 0.25), 'scoreboard': (0.2, 0.2), 'arena_banner': (0.37, 0.37)}[cat]
         return None
 
+    def world_h(fid):
+        """A built frame's standing height in world units (from its page as saved)."""
+        pi, x, y, w, h, px, py, s = atlas['frames'][fid]
+        im = Image.open(os.path.join(out, atlas['pages'][pi]['file'].split('/')[-1])).convert('RGBA').crop((x, y, x + w, y + h))
+        ys = np.nonzero((np.array(im)[..., 3] > 100).any(axis=1))[0]
+        return (py - ys.min()) / s
+
+    bb_k = {}
     for b, a in packs.items():
-        folder = folders[b]
+        if b.startswith('BB'):
+            for key, data in a['handed_skater_additions'].items():
+                bb_k[key] = 0.6 * world_h(atlas['skaters'][key]['away']['east']['frames']['idle']) / visible_h(folders[b], a, data['directions']['west']['frames']['idle'])
+
+    for b_key, a in packs.items():
+        folder = folders[b_key]
+        b = b_key.split('-')[0]  # (BB-<team>: Batch BB)
         for sh, meta in a['sheets'].items():
             group = group_of(b, sh, meta)
             if group is None:
@@ -156,6 +183,8 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
                 kk, ss, py_fixed = k, s, None
                 if batch_scale(b, cat, fid):
                     kk, ss = batch_scale(b, cat, fid)
+                if b == 'AI' and body:
+                    kk *= 1.08  # the twins: as tall as the others, but slim enough to read as smaller
                 if b == 'AM' and cat == 'npc':  # Ottar's and Brekka's new poses: their idle's height and foot line
                     who = 'ottar' if '/shopkeeper/' in fid else 'brekka'
                     old = atlas['frames'][f'hub_fullbody/{who}/idle_a']
@@ -255,9 +284,10 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
             atlas['banners'][key] = f'gfx/cutins/{key}.webp'
         atlas.setdefault('legends', {})['joint_celebration'] = a['twins'].get('joint_celebration')
 
-    # ---- AK: the cast and the newcomers drawn facing west (and its diagonals) natively
-    if 'AK' in packs:
-        for key, data in packs['AK']['handed_skater_additions'].items():
+    # ---- AK: the cast and the newcomers drawn facing west (and its diagonals) natively; BB:
+    # the founding rivals the same way
+    def handed(adds):
+        for key, data in adds.items():
             sk = skaters[key]
             shared = sk['home'] == sk['away']  # (the newcomers: one set for both kits)
             kits = ('home', 'away') if shared or data['kit'] == 'away' else (data['kit'],)
@@ -268,6 +298,12 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
                 view['hands'] = dict(data['hands'])
                 view.setdefault('hit', {})['west'] = list(data['hits']['west']['frames'].values())
                 view['stride_west'] = west_stride(data['strides']['west'])
+
+    if 'AK' in packs:
+        handed(packs['AK']['handed_skater_additions'])
+    for b, a in packs.items():
+        if b.startswith('BB'):
+            handed(a['handed_skater_additions'])
 
     # ---- AJ and AO: bodies drawn without a head, the heads that sit on them, and their
     # portrait pieces (AO adds two builds, six heads and the parts body's jersey moment)
@@ -439,6 +475,19 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
             GP['anchors'].update(goalie_build(body, 'parts_' + build))
             GP['portraits']['bodies'][build] = shoulders(gp['portraits']['bodies'][name])
         GP['builds'] = ['std', *[n.removeprefix('body_') for n in gp['bodies']]]
+
+    # ---- BA: the expansion clubs' captains as characters of their own (like the twins in AI)
+    if 'BA' in packs:
+        a = packs['BA']
+        for key, r in a['skaters'].items():
+            dirs = {d: {'flip_x': v['flip_x'], 'frames': {POSES.get(p, p): fid for p, fid in v['frames'].items()}} for d, v in r['directions'].items()}
+            dirs['hit'] = {d: [v['frames'][p] for p in ('stagger', 'knocked_down', 'getting_up') if p in v['frames']] for d, v in r['hits'].items()}
+            dirs['stride'] = west_stride({'frames': dict(r['strides']['east']['frames'])})
+            dirs['stride_west'] = west_stride({'frames': dict(r['strides']['west']['frames'])})
+            dirs['signature'] = list(r['signature'])
+            dirs['hands'] = dict(r['hands'])
+            skaters[key] = {'home': copy.deepcopy(dirs), 'away': dirs}
+            atlas.setdefault('portraits', {})[key] = a['portraits'][key]
 
     # ---- BC: six more mask designs (Snow Fox, aurora, lightning, tiger, crown, pixel)
     if 'BC' in packs and 'goalie_parts' in atlas:

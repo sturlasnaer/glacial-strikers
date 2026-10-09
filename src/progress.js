@@ -227,7 +227,7 @@ export function setLineup(save, who) {
 export const homeKitGroups = (save) => {
   const ids = rosterIds(save), legends = ids.filter((id) => LEGENDS[id]);
   return [...new Set([
-    ...ids.filter((id) => RECRUITS[id]).map((id) => (TEAMS[RECRUITS[id].team].art ? 'rival_' + TEAMS[RECRUITS[id].team].art : 'parts')), // (an expansion club's player: from parts)
+    ...ids.filter((id) => RECRUITS[id]).map((id) => (TEAMS[RECRUITS[id].team].art ? 'rival_' + TEAMS[RECRUITS[id].team].art : RECRUITS[id].parts ? 'parts' : 'rival_' + TEAMS[RECRUITS[id].team].mark)), // (an expansion club's player: from parts, or their captain's own art)
     ...Object.keys(save.goalies || {}).filter((k) => GOALIE_RECRUITS[k]).map((k) => (isPartsArt(GOALIE_RECRUITS[k].art) ? 'goalie_parts' : { newcomer: 'newcomers' }[GOALIE_RECRUITS[k].art] || 'rival_' + GOALIE_RECRUITS[k].art)), // signed goalies
     ...(Object.keys(save.goalies || {}).some((k) => FREE_GOALIES[k] && FREE_GOALIES[k].look) ? ['goalie_parts'] : []), // (free agents with a mask of their own)
     ...(ids.some((id) => ROOKIES[id] && !member(id).parts) || legends.some((id) => !LEGEND_ART.has(LEGENDS[id].art)) || Object.keys(save.goalies || {}).some((k) => FREE_GOALIES[k]) ? ['newcomers'] : []), // (a free-agent goalie wears the newcomer goalie)
