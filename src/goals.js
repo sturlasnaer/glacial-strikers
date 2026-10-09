@@ -31,7 +31,7 @@ export const SEASON_GOALS = {
   shutout: { kind: 'play', coins: 140, text: 'Win a league game 5–0.', done: (L, c) => !!c.shutout, failed: (L) => L.phase === 'done' },
   streak: { kind: 'play', coins: 130, text: 'Win three league games in a row.', done: (L, c) => c.best >= 3, failed: (L) => L.phase === 'done', progress: (L, c) => (c.streak ? `${Math.min(3, c.streak)}/3` : '') },
   hattrick: { kind: 'play', coins: 120, text: 'Score a hat trick in a league game.', done: (L, c) => !!c.hat, failed: (L) => L.phase === 'done' },
-  powerplay: { kind: 'play', coins: 110, text: 'Score two power-play goals in league games.', done: (L, c) => c.ppg >= 2, failed: (L) => L.phase === 'done', progress: (L, c) => `${Math.min(2, c.ppg)}/2` },
+  powerplay: { kind: 'play', coins: 100, text: 'Score a power-play goal in a league game.', done: (L, c) => c.ppg >= 1, failed: (L) => L.phase === 'done' }, // (a quarter of a goal a match, both teams together: two was a long shot)
   classic: { kind: 'night', coins: 150, text: 'Win the Winter Classic.', done: (L) => !!(L.classic && L.classic.won), failed: (L) => !!(L.classic && !L.classic.won) || (L.phase !== 'regular' && !L.classic) },
   allstar: { kind: 'night', coins: 120, text: 'Win the All-Star Game.', done: (L) => !!(L.allstar && L.allstar.won), failed: (L) => !!(L.allstar && !L.allstar.won) || (L.phase !== 'regular' && !L.allstar) },
   rookie: { kind: 'night', coins: 120, text: 'Get a goal from one of your drafted rookies.', done: (L, c) => !!c.rookie, failed: (L) => L.phase === 'done' },
