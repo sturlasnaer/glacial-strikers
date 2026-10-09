@@ -105,3 +105,21 @@ for (const id of [...Object.keys(DRILLS), 'shootout']) {
   console.log(ok ? 'faceoffs: ok' : '✗ faceoffs', { fast, mid, early });
   if (!ok) process.exitCode = 1;
 }
+
+// racing your best: a Sniper run keeps its pace, and the next run's HUD compares against it
+{
+  const run = (best) => {
+    const s2 = { ...save, paces: best ? { sniper: best } : undefined };
+    const { cfg, ctrl } = createDrill('sniper', s2, 'frost', { seed: 3 });
+    const m = new Match(cfg);
+    const st = {};
+    let t = 0, note = '';
+    while (!ctrl.result && t < 120) { m.setHumanInput(m.state === 'play' ? bots.sniper(m, ctrl, st) : raw()); m.update(1 / 60); t += 1 / 60; if (t > 30 && !note) note = ctrl.hud(m).note; }
+    return { res: ctrl.result, note };
+  };
+  const a = run(null);
+  const b = run({ score: a.res.score, pace: a.res.pace });
+  const ok = a.res.pace.length > 1 && a.res.pace.at(-1)[1] === a.res.score && !a.note && /\d/.test(b.note);
+  console.log(ok ? 'pace: ok' : '✗ pace', { pace: a.res.pace.length, score: a.res.score, note: b.note });
+  if (!ok) process.exitCode = 1;
+}

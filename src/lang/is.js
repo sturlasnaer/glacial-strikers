@@ -1854,6 +1854,7 @@ export const IS = {
   "Your backup code": "Afritunarkóðinn þinn",
   "Your best": "Besti tíminn þinn",
   "Your best Cone Weave and Breakaway runs are saved. Pick Ghost › Your best on the card and race yourself.": "Bestu sprettirnir þínir (Keilusvig, Sloppinn í gegn) eru vistaðir. Veldu Draugur › Besti tíminn þinn á spjaldinu og kepptu við eigið met.",
+  "Your best: {n} by now ({diff})": "Þitt besta: {n} á þessum tíma ({diff})",
   "Your club": "Félagið þitt",
   "Your first trophy is in the chest. There are plenty more, and online leaderboards for the drills.": "Fyrsti verðlaunagripurinn er kominn í kistuna. Fleiri bíða þín, og á netinu eru stigatöflur fyrir æfingarnar.",
   "Your goalie is made from parts, so the mask is yours to pick: Change style… on their card has twelve designs and any paint. Free, any time.": "Markvörðurinn þinn er settur saman úr hlutum, svo þú velur grímuna: Breyta stíl… á spjaldinu hans er með tólf hönnunum og hvaða lit sem er. Ókeypis, hvenær sem er.",

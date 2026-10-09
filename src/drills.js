@@ -76,8 +76,8 @@ export function createDrill(id, save, charId, opts = {}) {
   let home = [charId], away = [], ctrl, awayTeam = opts.awayTeam || 'lynx'; // (a ghost's team, so its art stays loaded)
   switch (id) {
     case 'cones': ctrl = new ConeDrill(opts.ghost); break;
-    case 'sniper': home = [charId, opts.feeder || mates[0]]; ctrl = new SniperDrill(); break;
-    case 'rondo': home = [charId, ...mates]; away = ['frost', 'stone']; ctrl = new RondoDrill(); break;
+    case 'sniper': home = [charId, opts.feeder || mates[0]]; ctrl = new SniperDrill(opts.skills ? null : save.paces && save.paces.sniper); break; // (your best run's pace)
+    case 'rondo': home = [charId, ...mates]; away = ['frost', 'stone']; ctrl = new RondoDrill(save.paces && save.paces.rondo); break;
     case 'breakaway': ctrl = new BreakawayDrill(opts.ghost); break;
     case 'faceoffs': away = ['frost']; ctrl = new FaceoffDrill(); break;
     case 'shootout': home = line; awayTeam = opts.teamId || 'comets'; away = ids; ctrl = new ShootoutDrill(opts.teamId); break;
@@ -136,6 +136,17 @@ class DrillBase {
     this.result = { score, ...extra };
     m.state = 'drill_over'; m.stateT = 0;
     m.emit('drill_over', this.result);
+  }
+  // Racing your own best run (Sniper, Keep-Away): its points over time, and this run's.
+  setPace(best) { this.paceBest = best && Array.isArray(best.pace) ? best : null; this.pace = [[0, 0]]; }
+  track(score) { this.pace.push([Math.round(this.t * 10) / 10, score]); }
+  paceNote(score) {
+    const b = this.paceBest;
+    if (!b) return '';
+    let at = 0;
+    for (const [tt, v] of b.pace) { if (tt <= this.t) at = v; else break; }
+    const d = score - at;
+    return t('Your best: {n} by now ({diff})', { n: at, diff: (d >= 0 ? '+' : '−') + Math.abs(d) });
   }
   hideGoalies(m, keepRight = false) {
     for (const g of m.goalies) {
@@ -254,6 +265,7 @@ class ConeDrill extends DrillBase {
 const TARGETS = [-26, 0, 26];
 
 class SniperDrill extends DrillBase {
+  constructor(best) { super(); this.setPace(best); }
   init(m) {
     this.hideGoalies(m);
     this.neutralAim = 0;
@@ -295,7 +307,7 @@ class SniperDrill extends DrillBase {
       this.dead = dead ? this.dead + dt : 0;
       if (this.dead > (p.inNet ? 0.6 : 0.9)) this.respawn(m);
     } else this.dead = 0;
-    if (this.t >= this.duration) this.finish(m, this.score, { hits: this.hits, shots: this.shots });
+    if (this.t >= this.duration) this.finish(m, this.score, { hits: this.hits, shots: this.shots, pace: this.pace });
   }
   respawn(m) {
     const p = m.puck;
@@ -317,10 +329,11 @@ class SniperDrill extends DrillBase {
       this.hits++;
     } else pts = 10;
     this.score += pts;
+    this.track(this.score);
     m.emit(hit ? 'target_hit' : 'target_miss', { pts, y: info.y, x: GOAL_X });
   }
   hud() {
-    return { title: t('Sniper'), main: t('{n} pts', { n: this.score }), sub: `${t('{seconds}s left', { seconds: Math.max(0, Math.ceil(this.duration - this.t)) })} · ${t(this.hits === 1 ? '{n} target' : '{n} targets', { n: this.hits })}` };
+    return { title: t('Sniper'), main: t('{n} pts', { n: this.score }), sub: `${t('{seconds}s left', { seconds: Math.max(0, Math.ceil(this.duration - this.t)) })} · ${t(this.hits === 1 ? '{n} target' : '{n} targets', { n: this.hits })}`, note: this.paceNote(this.score) };
   }
   drawOver(ctx, R, m, fx) {
     for (const t of this.targets) {
@@ -340,6 +353,7 @@ class SniperDrill extends DrillBase {
 const RONDO_X = 60;
 
 class RondoDrill extends DrillBase {
+  constructor(best) { super(); this.setPace(best); }
   init(m) {
     this.hideGoalies(m);
     const home = m.teamSkaters(0), away = m.teamSkaters(1);
@@ -355,6 +369,7 @@ class RondoDrill extends DrillBase {
       this.best = Math.max(this.best, this.chain);
       const pts = Math.min(5, this.chain);
       this.score += pts;
+      this.track(this.score);
       m.emit('rondo_pass', { s: e.s, pts, chain: this.chain });
     });
     m.on('possession', (e) => { if (m.state === 'play' && e.s.team === 1 && this.resetT <= 0) this.turnover(m, 'steal'); });
@@ -384,11 +399,11 @@ class RondoDrill extends DrillBase {
     } else if (p.x < RONDO_X || p.inNet) this.turnover(m, 'zone');
     // keep everyone inside the zone
     for (const s of m.skaters) if (s.x < RONDO_X - 20) s.vx = Math.max(s.vx, 120);
-    if (this.t >= this.duration) this.finish(m, this.score, { best: this.best, steals: this.steals });
+    if (this.t >= this.duration) this.finish(m, this.score, { best: this.best, steals: this.steals, pace: this.pace });
   }
   onGoal(m) { this.turnover(m, 'shot'); }
   hud() {
-    return { title: t('Keep-Away'), main: t('{n} pts', { n: this.score }), sub: `${t('{seconds}s left', { seconds: Math.max(0, Math.ceil(this.duration - this.t)) })} · ${t('chain x{n}', { n: this.chain })}` };
+    return { title: t('Keep-Away'), main: t('{n} pts', { n: this.score }), sub: `${t('{seconds}s left', { seconds: Math.max(0, Math.ceil(this.duration - this.t)) })} · ${t('chain x{n}', { n: this.chain })}`, note: this.paceNote(this.score) };
   }
   drawGround(ctx, R, m, fx) {
     const a = toScreen(RONDO_X, -280), b = toScreen(RONDO_X, 320);
