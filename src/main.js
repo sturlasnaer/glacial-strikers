@@ -51,8 +51,8 @@ const RIVALS = RIVAL_IDS;
 const RULE_ART = ['meltwater', 'aurora_lanes', 'pond_cracks', 'cracked_ice', 'both', 'speed_lanes', 'rumble_strips', 'shadow_zones', 'moonbeams', 'loose_planks']; // rules drawn with the rule sprites
 
 const INTRO = [
-  ['us', 'frost', 'Welcome to the Frostline Regional Cup, Foxes. Five wins and the cup comes home.'],
-  ['us', 'thunder', 'Five wins? I\'ll score five goals in the first match alone.'],
+  ['us', 'frost', 'Welcome to the Frostline Regional Cup, Foxes. Five rounds, then the top four play it off for the cup.'],
+  ['us', 'thunder', 'Five rounds? I\'ll score five goals in the first match alone.'],
   ['us', 'stone', 'You\'ll score five because I\'m clearing the way. Pass to the open player, Volta.'],
   ['us', 'frost', 'Win matches, earn coins and EXP, then upgrade our gear in the hub. Let\'s go.'],
 ];

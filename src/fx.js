@@ -241,7 +241,7 @@ export class FX {
       }
     });
     on('faceoff', () => { this.parts = this.parts.filter((p) => p.kind !== 'hat'); });
-    on('faceoff_win', ({ s, clean }) => this.text(s.x, s.y - 92, clean ? t('CLEAN DRAW!') : t('WON IT!'), clean ? '#ffe066' : '#ffffff', 0.7, 14));
+    on('faceoff_win', ({ s, clean }) => { if (s.controlled && match.humans.includes(s.team)) this.text(s.x, s.y - 92, clean ? t('CLEAN DRAW!') : t('WON IT!'), clean ? '#ffe066' : '#ffffff', 0.7, 14); }); // (the player's own draws)
     on('faceoff_early', ({ s }) => this.text(s.x, s.y - 92, t('TOO EARLY!'), '#ff8a7a', 0.6, 14));
     on('combo', ({ s, key }) => {
       const p = match.puck;
