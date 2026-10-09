@@ -1173,3 +1173,21 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
   .choice button b { font-size: 17px; }
   .locker-faces img { width: 52px; height: 52px; }
 }
+/* ---- phones upright (the menus; matches ask to turn sideways): the tabs in one scrolling row,
+   the play bar's buttons on one line under what's next ---- */
+@media (max-width: 560px) and (orientation: portrait) {
+  .hub .tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .hub .tabs::-webkit-scrollbar { display: none; }
+  .hub .tab { flex: none; font-size: 17px; }
+  .hub .tab.room-tab .lbl { display: none; }
+  .hub-cta { flex-wrap: wrap; gap: 6px; }
+  .hub-cta .next { flex-basis: 100%; }
+  .hub-cta .btn { font-size: 18px; flex: 1 1 auto; padding-left: 4px; padding-right: 4px; }
+  .hub-top { flex-wrap: nowrap; gap: 8px; }
+  .hub-top .crest { width: 36px; height: 36px; }
+  .hub-title { font-size: 22px; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .hub-title small { display: none; }
+  .coins { font-size: 20px; padding: 2px 8px; }
+  .coins img { width: 22px; height: 22px; }
+  .icon-btn { width: 38px; height: 38px; flex: none; }
+}
