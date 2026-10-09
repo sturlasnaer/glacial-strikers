@@ -19,7 +19,7 @@ export class Commentary {
     this.away = teamInfo(awayTeamId);
     this.cool = 2;
     this.queue.length = 0;
-    this.lastBreak = null; this.lastRush = null;
+    this.lastBreak = null; this.lastRush = null; this.breakT = undefined;
     this.glareT = undefined; this.plankT = undefined;
     const team = (t) => this.teamName(t);
     const n = (s) => s.name;
@@ -115,7 +115,8 @@ export class Commentary {
       const dx = (c.side * GOAL_X - c.x) * c.side;
       if (dx < 520 && dx > 60) {
         const alone = m.opponents(c).every((o) => (o.x - c.x) * c.side < -30);
-        if (alone && this.lastBreak !== c) { this.lastBreak = c; this.say(pick([t('{name} is in alone!', { name: c.name }), t('Breakaway, {name}!', { name: c.name })]), 2); }
+        // (a real one: from out by the blue line, and not every time: it was seven a match)
+        if (alone && this.lastBreak !== c && dx > 180 && m.time - (this.breakT ?? -99) > 25) { this.lastBreak = c; this.breakT = m.time; this.say(pick([t('{name} is in alone!', { name: c.name }), t('Breakaway, {name}!', { name: c.name }), t('Nobody between {name} and the goalie!', { name: c.name })]), 2); }
         // an odd-man rush: more of them coming than there are back (once a rush)
         else if (!alone && dx > 200 && this.lastRush !== c) {
           const back = m.opponents(c).filter((o) => !o.parked && (o.x - c.x) * c.side > -30).length;

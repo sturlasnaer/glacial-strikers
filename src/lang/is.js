@@ -1016,6 +1016,7 @@ export const IS = {
   "NO SHOOTING!": "EKKI SKJÓTA!",
   "No thanks": "Nei takk",
   "NO TIP": "ENGIN STÝRING",
+  "Nobody between {name} and the goalie!": "Enginn á milli {name} og markvarðarins!",
   "Nobody on my list right now. New faces in {n} matches.": "Enginn á listanum mínum í augnablikinu. Ný andlit eftir {n} leiki.",
   "Nobody remembers the exact words. Everybody remembers how it felt.": "Enginn man nákvæmlega hvað var sagt. Allir muna hvernig það var.",
   "Nobody talks much after a {ga}–{gf} loss. Nix breaks the silence: \"We need to look at the tape.\"": "Það er fátt sagt eftir {ga}–{gf} tap. Nix rýfur þögnina: „Við þurfum að skoða upptökurnar.“",
