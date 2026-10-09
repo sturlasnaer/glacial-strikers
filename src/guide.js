@@ -32,6 +32,8 @@ export const GUIDE = [
   { id: 'moonbeams', when: (s, x) => x.nextRule === 'moonbeams', target: '[data-tab="tournament"]', text: 'Next up, the Observatory: a pool of moonlight sweeps the ice. Shoot from inside it and the goalie squints.' },
   { id: 'planks', when: (s, x) => x.nextRule === 'loose_planks', target: '[data-tab="tournament"]', text: 'Next up, the Longhouse: some of its boards are loose. A puck off a loose plank goes anywhere, so don\'t rim it blind.' },
   { id: 'friends', when: (s, x) => x.online && s.record.played >= 4 && !((s.online && s.online.groups) || []).length, target: '[data-tab="training"]', text: 'Make a friends board under the cup in Training and share its code: the same boards with just your friends, every week.' },
+  { id: 'facilities', when: (s) => s.coins >= 2500 && !Object.values(s.facilities || {}).some(Boolean), target: '[data-tab="shop"]', text: 'Coins piling up? Put them into the club: Ottar has Club facilities in the shop, from louder stands to a physio room. They help every match, for good.' },
+  { id: 'keys', when: (s, x) => !x.touch && s.record.played >= 2, target: '#h-settings', text: 'Keys or buttons not to your liking? Settings › Keyboard and › Gamepad put anything on any action.' },
 ];
 
 const state = (save) => (save.guide ||= { done: [], off: false, hints: [] });

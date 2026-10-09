@@ -538,6 +538,7 @@ export class UI {
     this.click('#h-settings', () => { audio.sfx('click'); this.settings(); });
     this.showGuide(r, s, {
       anyPoints,
+      touch: !!this.app.isTouch,
       shopNew: GEAR.some((g) => g.price > 0 && !s.owned.includes(g.id) && Math.round(g.price * (1 - (s.discount || 0))) <= s.coins),
       scoutOpen: Object.keys(RECRUITS).some((k) => recruitStatus(s, k) === 'open' && s.coins >= recruitPrice(s, k)),
       allstarNext: !!(this.app.fixture && this.app.fixture() && this.app.fixture().kind === 'allstar'),
