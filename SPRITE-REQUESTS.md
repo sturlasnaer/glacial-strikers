@@ -9,7 +9,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Next batches:**
 1. **BH, the rest:** stick handling for the 13 players still to come (Part 1 brought six): `aurora_royals_d`, `ember_comets_c`, `ember_comets_w`, `gilded_rams_w`, `gilded_rams_d`, `obsidian_ravens_c`, `obsidian_ravens_d`, `pinewood_lynx_c`, `pinewood_lynx_w`, `glacier_owls_c`, `thunder_moose_c`, `fafnir` and `fenrir`, as in the BH section below.
 2. **BI, the rest:** Fáfnir's crossovers (held for his northwest right-turn stick). Fenrir's southeast backhand blade correction remains part of BH.
-3. **BN:** the linesman skating with his arm up, for delayed penalties (8 frames), as in the BN section below.
+3. **BN:** the linesman skating with an arm up, for delayed penalties (8 frames), as in the BN section below.
 4. **BO:** five achievement icons, a season-goals icon and icons for the Faceoffs and Tip-Ins drills (8 frames), as in the BO section below.
 5. **BP:** gold, silver and bronze stars for the three stars of the game, and a stern Coach Brekka for the note after a loss (4 frames), as in the BP section below.
 
