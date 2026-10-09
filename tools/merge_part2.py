@@ -11,7 +11,7 @@ from PIL import Image
 # Adapted from the pack's integration/compile_additions.py, with our compression: art pages
 # lossy like the rest, lossless only where exact channels matter (masks, the parts and the
 # newcomers, which are recoloured by hue).
-BATCHES = ('AD', 'AE', 'AF', 'AG', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ')
+BATCHES = ('AD', 'AE', 'AF', 'AG', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ', 'BA', 'BB', 'BC')
 # the expansion clubs' identity art (Batch AU), by its key, and the arena each one hosts in
 AU_ARENAS = {'glacier_owls': 'owl_observatory', 'thunder_moose': 'moose_longhouse'}
 PARTS = ('AJ', 'AO', 'AP', 'AZ')  # the batches of players made from parts
@@ -53,7 +53,7 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
             return 'hub' if cat == 'npc' else 'icons_new'
         if b == 'AS':
             return 'linesman'
-        if b in ('AT', 'AX'):  # goalies from parts: bodies, masks and their paint masks (recoloured by team); AX: two more builds
+        if b in ('AT', 'AX', 'BC'):  # goalies from parts: bodies, masks and their paint masks (recoloured by team); AX: two more builds; BC: six more masks
             return 'goalie_parts'
         if b == 'AV':  # the league news icons
             return 'icons_new'
@@ -120,7 +120,7 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
             return 1, 1
         if b == 'AS':  # the linesman's other calls: Batch AG's scale
             return 0.6 * 0.825 * v1_h[ROLE_V1['c']] / 152, 0.6
-        if b in ('AT', 'AX'):
+        if b in ('AT', 'AX', 'BC'):
             return (1, 1) if '/portrait/' in fid else (backup_k, GOALIE_S)
         if b in ('AV', 'AY'):
             return 1, 1
@@ -439,6 +439,13 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
             GP['anchors'].update(goalie_build(body, 'parts_' + build))
             GP['portraits']['bodies'][build] = shoulders(gp['portraits']['bodies'][name])
         GP['builds'] = ['std', *[n.removeprefix('body_') for n in gp['bodies']]]
+
+    # ---- BC: six more mask designs (Snow Fox, aurora, lightning, tiger, crown, pixel)
+    if 'BC' in packs and 'goalie_parts' in atlas:
+        gp, GP = packs['BC']['goalie_parts'], atlas['goalie_parts']
+        GP['masks'].update(gp['masks'])
+        GP['paint'].update(gp['paint_masks'])
+        GP['portraits']['faces'].update(gp['portraits']['faces'])
 
     # ---- AV: the league news icons; AW: crests for the player's club
     if 'AV' in packs:

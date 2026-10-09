@@ -665,6 +665,15 @@ body.in-hub.hub-room #screen { background: linear-gradient(rgba(8, 14, 26, 0.82)
 .club-sw { display: inline-block; width: 26px; height: 18px; border-radius: 4px; border: 2px solid var(--navy); background: linear-gradient(135deg, var(--b) 0 55%, var(--a) 55% 100%); vertical-align: middle; flex: none; }
 .chip.preset { display: inline-flex; gap: 6px; align-items: center; }
 .chip.crest-pick { padding: 3px 6px; }
+.mask-pick { display: flex; gap: 10px; align-items: flex-start; }
+.mask-pick #mask-prev { width: 112px; height: 112px; flex: none; border-radius: 10px; background: radial-gradient(ellipse at 50% 110%, #dff3ff, #8fbfe0); }
+.mask-grid { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip.mask-opt { padding: 2px 4px; }
+.chip.mask-opt img { width: 44px; height: 44px; display: block; }
+.paint-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.paint-sw { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--navy); background: var(--c); cursor: pointer; padding: 0; }
+.paint-sw[aria-pressed="true"] { outline: 3px solid var(--gold, #ffd45e); outline-offset: 1px; }
+@media (max-width: 560px) { .mask-pick #mask-prev { width: 80px; height: 80px; } .chip.mask-opt img { width: 36px; height: 36px; } }
 .chip.crest-pick img { width: 40px; height: 40px; display: block; }
 .club-preview { display: flex; align-items: flex-end; gap: 4px; padding: 8px 10px; border-radius: 10px; background: radial-gradient(ellipse at 50% 120%, #dff3ff, #a9d3ec 60%, #7fb3d6); min-height: 140px; }
 .club-preview img { width: 96px; height: 96px; image-rendering: auto; }

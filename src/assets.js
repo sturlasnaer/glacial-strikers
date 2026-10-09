@@ -582,7 +582,9 @@ function loadImage(src, tries = 2) {
   return new Promise((res, rej) => {
     const img = new Image();
     img.decoding = 'async';
-    img.onload = () => res(img);
+    // decoded off the main thread now, not on first use: a page first drawn mid-match (an
+    // icon at a goal) used to decode right there and stall the frame for half a second
+    img.onload = () => (img.decode ? img.decode().catch(() => {}) : Promise.resolve()).then(() => res(img));
     img.onerror = () => (tries > 1 ? setTimeout(() => loadImage(src, tries - 1).then(res, rej), 600) : rej(new Error('Could not load ' + src)));
     img.src = src;
   });

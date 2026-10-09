@@ -403,7 +403,7 @@ export class Match {
       if (d.stun > 0 || d.parked) continue;
       const sp = d.stickPoint();
       if (Math.hypot(sp.x - p.x, sp.y - p.y) > 20) continue;
-      const rate = 0.8 * (1 + (d.stats.chk - c.stats.pas) * 0.06) * this.ai[d.team].stealMul() * (d.def.arch === 'grinder' ? 1.08 : 1) * (d.hasPerk('Pickpocket') ? 1.1 : 1);
+      const rate = 0.6 * (1 + (d.stats.chk - c.stats.pas) * 0.06) // (0.8 when the puck sat in front of the body: out on the blade it's easier to reach) * this.ai[d.team].stealMul() * (d.def.arch === 'grinder' ? 1.08 : 1) * (d.hasPerk('Pickpocket') ? 1.1 : 1);
       if (this.rng() < rate * dt) {
         this.takePossession(d, 'steal');
         c.stun = 0.12;
@@ -436,7 +436,7 @@ export class Match {
     p.rolled.clear();
     if (s.isSkater) {
       const cp = s.carryPoint();
-      p.x = cp.x; p.y = cp.y;
+      if (Math.hypot(cp.x - p.x, cp.y - p.y) > 60) { p.x = cp.x; p.y = cp.y; } // (close: it eases onto the blade, see updatePuck)
       // pass completed?
       if (prevTeam !== null && prevTeam !== s.team) this.chain[prevTeam] = 0;
       if (passInfo && passInfo.from.isSkater && passInfo.from.team === s.team && passInfo.from !== s) {
@@ -675,11 +675,13 @@ export class Match {
       target.empowered = 5;
       return;
     }
-    let tx = target.x, ty = target.y;
+    // tape to tape: aimed at the receiver's blade, led by where they're skating
+    const aim = target.isSkater ? target.stickPoint(18) : target;
+    let tx = aim.x, ty = aim.y;
     for (let i = 0; i < 3; i++) {
       const t = Math.hypot(tx - p.x, ty - p.y) / speed;
-      tx = target.x + target.vx * t * 0.85;
-      ty = target.y + target.vy * t * 0.85;
+      tx = aim.x + target.vx * t * 0.85;
+      ty = aim.y + target.vy * t * 0.85;
     }
     const c = clampInside(tx, ty, 34);
     const dir0 = norm(c.x - p.x, c.y - p.y);
@@ -765,7 +767,14 @@ export class Match {
       const o = p.owner;
       const cp = o.isSkater ? o.carryPoint() : o.holdPoint();
       p.px = p.x; p.py = p.y;
-      p.x = cp.x; p.y = cp.y; p.z = 0;
+      if (o.isSkater) {
+        // carried along, then eased onto the blade: a catch or a quick turn brings it round
+        // the stick rather than jumping it there
+        p.x += (o.vx || 0) * dt; p.y += (o.vy || 0) * dt;
+        const dx = cp.x - p.x, dy = cp.y - p.y, k = Math.hypot(dx, dy) > 60 ? 1 : 1 - Math.exp(-dt * 26);
+        p.x += dx * k; p.y += dy * k;
+      } else { p.x = cp.x; p.y = cp.y; }
+      p.z = 0;
       p.vx = o.vx || 0; p.vy = o.vy || 0;
       // carried puck can still touch pickups
       this.checkPickupTouch();
@@ -1060,7 +1069,9 @@ export class Match {
         if (intended) chance = sp < 1500 ? 1 : 0.6;
         else if (p.shot && p.shot.team === s.team) chance = sp < 300 ? 1 : 0; // let teammates' shots through
         else chance = sp < 260 ? 1 : sp < 600 ? 0.8 : sp < 1000 ? 0.45 : 0.2;
-        chance *= this.ai[s.team].catchMul(s);
+        // (a pass the player makes is caught like the player's own catches: an AI teammate's
+        // fumble roll on it felt like the game dropping one pass in nine)
+        if (!(intended && this.humans.includes(s.team))) chance *= this.ai[s.team].catchMul(s);
         if (this.rng() < chance) {
           this.takePossession(s, 'catch');
           return true;

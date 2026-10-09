@@ -65,6 +65,7 @@ check('perks map across kits', perkSlot('Static: dash cooldown 2s shorter').tier
   place(c, 0, 0); place(carrier, 50, 0); give(m2, carrier);
   c.ult = 100; m2.abilities.useUlt(c);
   check('Cyclone up', m2.cyclones.length === 1);
+  m2.cyclones[0].fumbled.add(carrier); for (const a of m2.ai) a.update = () => {}; // (the push on its own, everyone standing still: the fumble is checked below)
   let lost = 0;
   for (let i = 0; i < 20; i++) {
     const mm = mk({ frost: ['playmaker', 'gale'] }, {}, 20 + i);

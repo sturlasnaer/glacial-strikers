@@ -73,7 +73,7 @@ for (const k of ['body_big', 'body_small']) {
 check('cut-in backdrops per element', ['frost', 'thunder', 'stone', 'ember', 'gale', 'shadow'].every((e) => A.banners['bg_' + e]) && A.banners.bg_glow);
 check('Vigga: standing art, portrait, market icon', A.art_additions.hub_fullbody.agent.idle.every((f) => F[f]) && F[A.npcs.agent] && F['icons/free_agents']);
 const GP = A.goalie_parts;
-check('goalies from parts: every pose anchored, six masks with paint', Object.values(A.goalies_side.parts).every((f) => GP.anchors[f]) && Object.keys(GP.masks).length === 6 && Object.values(GP.masks).every((v) => Object.values(v).every((h) => F[h] && GP.paint[h] && F[GP.paint[h]])));
+check('goalies from parts: every pose anchored, twelve masks with paint (AT and BC)', Object.values(A.goalies_side.parts).every((f) => GP.anchors[f]) && Object.keys(GP.masks).length === 12 && Object.keys(GP.masks).every((k) => GP.portraits.faces[k]) && Object.values(GP.masks).every((v) => Object.values(v).every((h) => F[h] && GP.paint[h] && F[GP.paint[h]])));
 check('...drawn at the backup goalie\'s scale', Math.abs(F[A.goalies_side.parts.ready][7] - F[A.goalies_side.newcomer.ready][7]) < 1e-6);
 check('the clubs\' crests, buildings, mascots, boards and banners', ['glacier_owls', 'thunder_moose'].every((m) => F[A.crests[m]] && A.arena.rival_mascots[m] && A.arena.banners[m] && A.banners[m + '_c']) && ['owl_observatory', 'moose_longhouse'].every((k) => A.arenas[k] && A.arena.scoreboards[k] && A.arena.mascot_arenas[k]));
 check('...on their own pages', A.pages[F[A.arena.rival_mascots.glacier_owls.idle][0]].group === 'rival_glacier_owls');

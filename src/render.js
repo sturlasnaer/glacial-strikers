@@ -1029,10 +1029,10 @@ export class Renderer {
         const flip = dir === 'west' && !set.stride_west;
         if (s.stopping) return { id: st.stop, flip, pose: 'stop' };
         if (s.gliding && sp < s.d.maxSpeed * 1.05) return { id: st.glide, flip, pose: 'glide' };
-        return { id: st.frames[Math.floor(s.animT * (3 + sp / 60)) % 4], flip, pose: 'stride' };
+        return { id: st.frames[Math.floor(s.stridePhase ?? s.animT * (3 + sp / 60)) % 4], flip, pose: 'stride' };
       }
       if (s.gliding && map.frames.skate_a) pose = 'skate_b';
-      else pose = Math.floor(s.animT * (3 + sp / 70)) % 2 ? 'skate_a' : 'skate_b';
+      else pose = Math.floor((s.stridePhase ?? s.animT * (3 + sp / 60)) * 0.85) % 2 ? 'skate_a' : 'skate_b';
     }
     return { id: map.frames[pose], flip: map.flip_x, pose };
   }
@@ -1103,6 +1103,11 @@ export class Renderer {
     sfx('fade', 4, s.fadeT > 0, '#6b4fd8', 34); // (see-through as well, below)
     ctx.save();
     if (s.fadeT > 0) ctx.globalAlpha *= 0.42 + Math.sin(fx.time * 9) * 0.06;
+    // leaning into a turn: the sprite skewed about its skates (rows shift, so the pixel art
+    // keeps its lines), head and gear with it; a little lift on each push of the stride
+    const skating = fr.pose === 'stride' || fr.pose === 'skate_a' || fr.pose === 'skate_b' || fr.pose === 'glide';
+    if (s.lean && skating && !at) { ctx.translate(p.x, y); ctx.transform(1, 0, -s.lean, 1, 0, 0); ctx.translate(-p.x, -y); }
+    if (fr.pose === 'stride' && Math.floor(s.stridePhase ?? 0) % 2) y -= 1;
     const geared = s.gear && this.gearFrame(fr.id, pages, s.gear);
     if (geared) this.drawFrameCanvas(ctx, geared, Assets.frame(fr.id), p.x, y, k, fr.flip, rot);
     else Assets.draw(ctx, fr.id, p.x, y, k, { flip: fr.flip, rot, pages });

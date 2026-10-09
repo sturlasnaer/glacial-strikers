@@ -4,7 +4,7 @@ import { Assets } from './assets.js';
 import {
   CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
-  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, RIVAL_IDS, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, CLUB_CRESTS, clubCrestId, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
+  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, RIVAL_IDS, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, CLUB_CRESTS, clubCrestId, MASK_NAMES, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
 import { standings, classicOpponent, CLASSIC_AFTER, ALLSTAR_AFTER, leagueRivals } from './league.js';
 import { BUFF_TEXT } from './lockerroom.js';
@@ -14,7 +14,7 @@ import { dailyFor, dailyGoal, dayKey, currentStreak, doneToday, dailyReward, dai
 import {
   expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave,
   chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups, capBonus,
-  CAMP, campOpen, campChoices, campChange, recruitPrice, goalieIds, starterId, goalieRec, goalieStatus, signGoalie, setStarter, GOALIE_CAMP, goalieStyle, goalieCampOpen, goalieCampChange,
+  CAMP, campOpen, campChoices, campChange, recruitPrice, goalieIds, starterId, goalieRec, goalieStatus, signGoalie, setStarter, GOALIE_CAMP, goalieStyle, goalieCampOpen, goalieCampChange, canPickMask, pickMask,
 } from './progress.js';
 import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave, resetsIn, groupsOf, createGroup, joinGroup, leaveGroup, inviteLink, MAX_GROUPS, fetchCup, fetchGhost, CHALLENGE_BOARDS, createChallenge, fetchChallenge, challengeLink } from './online.js';
 import { nextGuide, doneGuide, guideOff } from './guide.js';
@@ -45,6 +45,7 @@ const padList = () => [...(navigator.getGamepads ? navigator.getGamepads() : [])
 const psPad = () => padList().some((p) => /dualsense|dualshock|playstation|054c/i.test(p.id));
 import { DRILLS, MEDAL_NAMES, MEDAL_COLORS, formatScore } from './drills.js';
 import { SKILLS_EVENTS, placeIn } from './skills.js';
+import { PAINTS } from './modular.js';
 
 const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
 const ROLE_NAME = { C: 'Centre', W: 'Winger', D: 'Defender' };
@@ -1688,6 +1689,12 @@ export class UI {
   async goalieCamp(gid) {
     await Assets.loadGroup('hub').catch(() => {}); // (Brekka)
     const s = this.app.save, name = goalieInfo(gid).name, cur = goalieStyle(s, gid);
+    // a goalie from parts picks their mask and its paint here too (free, any time)
+    const maskable = canPickMask(s, gid);
+    if (maskable) await Assets.ensureKit(homeKitGroups(s)).catch(() => {});
+    const GP = Assets.atlas.goalie_parts, masks = maskable && GP ? Object.keys(MASK_NAMES).filter((k) => GP.masks[k]) : [];
+    const paints = [...new Set([...PAINTS, CLUB.trim, CLUB.jersey])];
+    let changed = false;
     const open = goalieCampOpen(s, gid), price = GOALIE_CAMP.price, afford = s.coins >= price;
     const who = Assets.atlas.frames['hub_fullbody/coach/whistle'] && Assets.groupReady('hub') && Assets.spriteSet(['hub_fullbody/coach/whistle'], 200);
     const note = !open ? t('Already changed this season.') : !afford ? t('Not enough coins.') : '';
@@ -1698,8 +1705,25 @@ export class UI {
       <div class="camp-grid">${Object.values(GOALIE_STYLES).map((st) => `<button class="camp-choice${st.id === cur ? ' cur' : ''}" data-gstyle="${st.id}" ${st.id === cur || !open || !afford ? 'disabled' : ''}>
         ${goalieStyleIcon(st.id, 80).replace('<img ', '<img class="camp-ico" ')}<b>${esc(t(st.name))}${st.id === cur ? ` <small>${t('now')}</small>` : ''}</b><span>${esc(t(st.text))}</span></button>`).join('')}</div>
       <p class="muted" id="gcamp-msg" style="min-height:1.2em;font-size:12.5px;margin:6px 0 0"></p>
+      ${masks.length ? `<div class="label" style="margin:6px 0 4px">${t('Mask')} <span class="muted" style="text-transform:none;letter-spacing:0">${t('free, any time')}</span></div>
+      <div class="mask-pick"><img id="mask-prev" alt="" width="112" height="112"><div style="min-width:0">
+        <div class="mask-grid">${masks.map((k) => `<button class="chip mask-opt" data-mask="${k}" aria-label="${esc(t(MASK_NAMES[k]))}" title="${esc(t(MASK_NAMES[k]))}"><img alt="" width="44" height="44"></button>`).join('')}</div>
+        <div class="paint-row" aria-label="${esc(t('Paint'))}">${paints.map((c) => `<button class="paint-sw" data-paint="${c}" style="--c:${c}" aria-label="${esc(t('Paint'))} ${c}"></button>`).join('')}</div>
+      </div></div>` : ''}
       <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>${t('Done')}</button></div>`, (mm, close) => {
       let armed = null;
+      const showMask = () => {
+        const look = goalieInfo(gid).mask;
+        if (!look) return;
+        const prev = mm.querySelector('#mask-prev');
+        if (prev) prev.src = Assets.goaliePortrait(look, 'grin', 224, 'homekit');
+        mm.querySelectorAll('[data-mask]').forEach((b) => { b.setAttribute('aria-pressed', b.dataset.mask === look.mask); b.querySelector('img').src = Assets.goaliePortrait({ ...look, mask: b.dataset.mask }, 'neutral', 88, 'homekit'); });
+        mm.querySelectorAll('[data-paint]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.paint.toLowerCase() === String(look.paint).toLowerCase()));
+      };
+      if (masks.length) showMask();
+      const pick = (change) => { if (!pickMask(s, gid, change)) return; changed = true; writeSave(s); audio.sfx('equip'); showMask(); };
+      this.click('[data-mask]', (el) => pick({ mask: el.dataset.mask }), mm);
+      this.click('[data-paint]', (el) => pick({ paint: el.dataset.paint }), mm);
       this.click('[data-gstyle]', (el) => {
         if (armed !== el) {
           mm.querySelectorAll('.camp-choice.armed').forEach((b) => b.classList.remove('armed'));
@@ -1715,7 +1739,7 @@ export class UI {
         this.hub('team');
         this.toastNote(t('{name} now plays {what}.', { name, what: t(GOALIE_STYLES[el.dataset.gstyle].name) }));
       }, mm);
-    });
+    }, true, () => { if (changed) this.hub('team'); });
   }
 
   toastNote(text) { this.app.toast(Assets.icon(Assets.atlas.npcs && Assets.atlas.npcs.coach, 72) || '', t('Training camp'), text, ''); }

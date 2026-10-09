@@ -392,12 +392,21 @@ export function setFreeGoalies(list = {}) {
   for (const k of Object.keys(FREE_GOALIES)) delete FREE_GOALIES[k];
   Object.assign(FREE_GOALIES, list);
 }
+// Masks the player has picked at goalie camp for our goalies from parts, by id (from the save).
+export const GOALIE_LOOKS = {};
+export function setGoalieLooks(map = {}) {
+  for (const k of Object.keys(GOALIE_LOOKS)) delete GOALIE_LOOKS[k];
+  Object.assign(GOALIE_LOOKS, map);
+}
+// The mask designs, in the order goalie camp shows them (Batches AT and BC).
+export const MASK_NAMES = { classic: 'Classic', flame: 'Flames', wolf_teeth: 'Wolf teeth', stars: 'Stars', stripes: 'Stripes', skull: 'Skull', snow_fox: 'Snow Fox', aurora: 'Aurora', lightning: 'Lightning', tiger: 'Tiger', crown: 'Royal crown', pixel: 'Pixel' };
 // Who a goalie is: Halla, a rival's signed goalie or a free agent (in the newcomer goalie's
 // art, Batch AN). { id, name, base, style, art }
 export function goalieInfo(id) {
   const g = GOALIE_RECRUITS[id], f = FREE_GOALIES[id];
-  if (g) return { id, name: g.name, base: g.base, style: g.gstyle, art: g.art, mask: g.mask || null, recruit: g };
-  if (f) return { id, name: f.name, base: f.base, style: f.style, art: f.look ? goalieArt(f.look) : 'newcomer', mask: f.look || null, recruit: null, agent: f }; // (a mask of their own once Batch AT is in)
+  const own = GOALIE_LOOKS[id]; // (a mask picked at goalie camp)
+  if (g) return { id, name: g.name, base: g.base, style: g.gstyle, art: own ? goalieArt(own) : g.art, mask: own || g.mask || null, recruit: g };
+  if (f) return { id, name: f.name, base: f.base, style: f.style, art: own || f.look ? goalieArt(own || f.look) : 'newcomer', mask: own || f.look || null, recruit: null, agent: f }; // (a mask of their own once Batch AT is in)
   return { id: 'halla', name: GOALIE.name, base: GOALIE.base, style: GOALIE.gstyle, art: null, recruit: null };
 }
 

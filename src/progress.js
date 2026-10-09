@@ -3,7 +3,7 @@
 import { GUIDE } from './guide.js';
 import {
   CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE, CAST_PAIRS, makeDef, perkSlot,
-  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, setFreeGoalies, goalieInfo, areTwins, setRookies, setStyles, ELEMENTS, ARCHETYPES, member, pairKey, recruitKey, slotDef, GOALIE_STYLES, RIVAL_IDS, slotSprite, slotLook } from './data.js';
+  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, setFreeGoalies, setGoalieLooks, goalieInfo, areTwins, setRookies, setStyles, ELEMENTS, ARCHETYPES, member, pairKey, recruitKey, slotDef, GOALIE_STYLES, RIVAL_IDS, slotSprite, slotLook } from './data.js';
 import { newLeague, migrateLeague } from './league.js';
 import { lookFor, maskFor, goalieArt, isPartsArt } from './modular.js';
 import { seasonStats } from './awards.js';
@@ -71,6 +71,7 @@ export function loadSave() {
     setRookies(s.rookies); // drafted rookies (and signed free agents), so member() knows them
     for (const [id, g] of Object.entries(s.freeGoalies || {})) if (!g.look) { const m = maskFor(id); if (m) g.look = m; } // (a mask of their own once the art's in)
     setFreeGoalies(s.freeGoalies); // free-agent goalies, so goalieInfo() knows them
+    setGoalieLooks(s.goalieLooks); // masks picked at goalie camp
     setFills(s); // the rivals' fills, so their portraits know them
     setStyles(s.roster); // changes made at the training camp
     // perks are kept as text: a player whose super or archetype has changed since gets the
@@ -299,6 +300,16 @@ export function goalieCampChange(save, id, style) {
   g.style = style;
   g.camp = save.season;
   return true;
+}
+// A goalie made from parts can wear any mask design in any paint: free, whenever, at goalie
+// camp. Their build stays. Returns the new look, or null.
+export const canPickMask = (save, id) => !!(goalieRec(save, id) && goalieInfo(id).mask);
+export function pickMask(save, id, change) {
+  if (!canPickMask(save, id)) return null;
+  const look = { ...goalieInfo(id).mask, ...change };
+  (save.goalieLooks ||= {})[id] = look;
+  setGoalieLooks(save.goalieLooks);
+  return look;
 }
 export function setStarter(save, id) {
   if (!goalieIds(save).includes(id)) return false;

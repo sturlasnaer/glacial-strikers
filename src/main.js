@@ -17,7 +17,7 @@ import { toScreen } from './rink.js';
 import { Replay } from './replay.js';
 import { Commentary } from './commentary.js';
 import { ClipRecorder } from './clips.js';
-import { AchievementTracker, useAchievementArt } from './achievements.js';
+import { AchievementTracker, useAchievementArt, ACHIEVEMENTS } from './achievements.js';
 import { createDrill, medalFor, DRILL_REWARDS } from './drills.js';
 import { makeSkills, recordSkills, SKILLS_EVENTS } from './skills.js';
 import { recordRivalResult, rivalLines, rivalAfterLine } from './rivals.js';
@@ -27,7 +27,7 @@ import { standings } from './league.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan, recordClassic, recordAllStar } from './league.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, RIVAL_IDS, slotSprite, slotLook, EXPANSION_LINES } from './data.js';
+import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, RIVAL_IDS, slotSprite, slotLook, EXPANSION_LINES } from './data.js';
 import { rollLegend, legendState, STAY, joinLegend, LEGEND_LINES, twinsFirstTogether } from './legends.js';
 import { rivalSigning, rivalOffer } from './moves.js';
 import { refreshAgents } from './agents.js';
@@ -141,6 +141,7 @@ class App {
     this.startAttract();
     this.loadingEl.remove();
     this.goTitle();
+    this.warmIcons();
     // a restore link from another device: #restore=<code>
     const m = /#restore=([A-Za-z2-7-]+)/.exec(location.hash);
     if (m) { history.replaceState(null, '', location.pathname + location.search); this.ui.cloudRestore(m[1]); }
@@ -151,6 +152,18 @@ class App {
     const j = /#join=([A-Za-z0-9]{6})/.exec(location.hash);
     if (j) { history.replaceState(null, '', location.pathname + location.search); this.ui.friendsBoards(j[1].toUpperCase()); }
     requestAnimationFrame((t) => this.loop(t));
+  }
+
+  // The icons a match can show (achievement toasts, the arena rule on the ticker), made a few
+  // at a time while the title screen is up: made mid-match, each copy out of a page the rink
+  // is drawing forced the GPU to stop and hand it back, a hitch at the moment of a goal.
+  warmIcons() {
+    const jobs = [...ACHIEVEMENTS.map((a) => () => Assets.icon(a.icon, 72)), ...Object.keys(TWIST_INFO).map((k) => () => ruleIconSrc(k, 64))];
+    const step = () => {
+      for (let i = 0; i < 4 && jobs.length; i++) jobs.shift()();
+      if (jobs.length) setTimeout(step, 60);
+    };
+    setTimeout(step, 1500);
   }
 
   // "Achievement unlocked" toast; shows anywhere (menus or matches).
@@ -1082,6 +1095,7 @@ class App {
     this.save = newSave();
     setRookies({});
     setFreeGoalies({});
+    setGoalieLooks({});
     setFills(this.save);
     this.ach = new AchievementTracker(this.save, (a) => this.toastAchievement(a));
     writeSave(this.save);

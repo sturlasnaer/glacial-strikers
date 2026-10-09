@@ -181,6 +181,7 @@ export class Skater {
     this.comboFrom = null;
     this.stride = 0;
     this.animT = 0;
+    this.stridePhase = 0; this.danglePhase = Math.random() * 3; this.lean = 0; this.faceWas = 0; // (see update)
     this.controlled = false;
     this.celebrate = 0;
     this.flash = 0;
@@ -318,8 +319,18 @@ export class Skater {
       this.face += clamp(d, -rate * dt, rate * dt);
     }
 
-    // stride timer for skate scratches/sounds
+    // Animation phases, accumulated rather than worked out from the match clock: a stride
+    // rate times a clock that keeps growing jumped to a new frame at every change of speed.
     const spd = this.speed;
+    this.stridePhase += dt * (3 + spd / 60);
+    this.danglePhase += dt * (spd > 140 ? 1.6 + spd / 400 : 2.4);
+    // a lean into the turn, by how hard they're turning at speed (the drawing skews it)
+    const turn = angDiff(this.faceWas, this.face) / Math.max(dt, 1e-3);
+    this.faceWas = this.face;
+    const lean = spd > 60 ? clamp(0.00006 * spd * turn * -Math.sin(Math.atan2(this.vy, this.vx)), -0.13, 0.13) : 0;
+    this.lean += (lean - this.lean) * Math.min(1, dt * 9);
+
+    // stride timer for skate scratches/sounds
     if (spd > 60) {
       this.stride += spd * dt;
       if (this.stride > 70) { this.stride = 0; m.emit('stride', { s: this }); }
@@ -407,16 +418,33 @@ export class Skater {
     this.match.emit('check_start', { s: this });
   }
 
-  stickPoint(dist = 22) {
-    return { x: this.x + Math.cos(this.face) * dist, y: this.y + Math.sin(this.face) * dist * 0.85 + 3 };
+  // A point out in front, `lat` toward the stick hand's side (the player's left is (sin, -cos)
+  // on screen; the camera squashes depth a little).
+  bladeAt(fwd, lat) {
+    const c = Math.cos(this.face), s = Math.sin(this.face), side = this.hand === 'R' ? -1 : 1;
+    return { x: this.x + c * fwd + side * s * lat, y: this.y + (s * fwd - side * c * lat) * 0.85 + 3 };
   }
 
-  // Where the puck sits while carried.
+  // Where the blade is drawn: the art holds the stick out in front in its side views and off
+  // to the stick side in its front and back views, so it blends between the two by facing.
+  bladeReach() {
+    const side = Math.abs(Math.cos(this.face)), front = Math.abs(Math.sin(this.face));
+    return { fwd: 26 * side + 9 * front, lat: 3 * side + 18 * front };
+  }
+
+  // The blade: where the stick reaches for a loose puck or pokes at a carrier.
+  stickPoint(dist = 22) { const b = this.bladeReach(); return this.bladeAt(b.fwd * (dist / 22), b.lat); }
+
+  // Where the puck sits while carried: on the blade. With time and space it's dangled from
+  // forehand to backhand; at speed it's pushed out ahead and moves less; winding up a slapshot
+  // draws it back out wide on the forehand.
   carryPoint() {
-    const t = this.animT * (6 + this.speed / 60);
-    const wob = Math.sin(t) * 3.5;
-    const c = Math.cos(this.face), s = Math.sin(this.face);
-    return { x: this.x + c * 25 - s * wob, y: this.y + s * 21 + c * wob + 3 };
+    const b = this.bladeReach();
+    if (this.ultWindup > 0 || (this.charging && this.chargeT > 0.08)) return this.bladeAt(b.fwd * 0.8, b.lat + 8);
+    const fast = Math.min(1, this.speed / 260), ph = (this.danglePhase ?? this.animT * 2.4) * Math.PI * 2;
+    const lat = b.lat + Math.sin(ph) * (6 - fast * 3.5);
+    const fwd = b.fwd + fast * 4 + Math.cos(ph * 2) * (2 - fast);
+    return this.bladeAt(fwd, lat);
   }
 
   sortY() { return this.y; }
