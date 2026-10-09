@@ -1053,7 +1053,7 @@ export class Match {
     // the goalie covers a disc, not a line across the crease: what counts is how close the
     // puck's path passes him (so a sharp angle doesn't slip by a goalie it hits square)
     const across = Math.abs(off) * Math.max(0.3, Math.abs(p.vx) / Math.max(1, Math.hypot(p.vx, p.vy)));
-    if (across > reach * GOALIE_DISC + PUCK_R) return false;
+    if (across > reach * (g.human ? 1 : GOALIE_DISC) + PUCK_R) return false; // (a player in goal keeps their full reach: see HUMAN_REACH)
     // saved
     if (sh) this.shotOnGoal(sh);
     const speed = p.speed;
