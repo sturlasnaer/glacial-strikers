@@ -2505,7 +2505,7 @@ export class UI {
             <div class="row" style="gap:6px">${data.clips.canShare(c) ? `<button class="btn small cream" data-share="${i}">${btnIcon('icons/share')} ${t('Share')}</button>` : ''}<a class="btn small ghost" href="${c.url}" download="${esc(data.clips.fileFor(c, i).name)}">${t('Save')}</a></div>
           </div>`).join('')}</div>
         </div>` : ''}
-        <div class="row" style="justify-content:flex-end"><button class="btn gold" id="r-go">${t('Continue')}</button></div>
+        <div class="row" style="justify-content:flex-end">${data.rematch ? `<button class="btn ghost" id="r-again">${t('Play again')}</button>` : ''}<button class="btn gold" id="r-go">${t('Continue')}</button></div>
       </div>`);
     if (data.clips) this.click('[data-share]', async (el) => {
       const i = +el.dataset.share;
@@ -2514,6 +2514,13 @@ export class UI {
     requestAnimationFrame(() => r.querySelectorAll('[data-w]').forEach((el) => { el.style.width = el.dataset.w + '%'; }));
     if (won) audio.jingle('win'); else audio.jingle('lose');
     this.click('#r-go', (el) => { if (el.disabled) return; el.disabled = true; audio.sfx('confirm'); onContinue(); }); // (once)
+    this.click('#r-again', (el) => { // the same exhibition again, once perks and the like are settled
+      const go = r.querySelector('#r-go');
+      if (el.disabled || go.disabled) return;
+      el.disabled = go.disabled = true; audio.sfx('confirm');
+      this.app.rematchNext = true;
+      onContinue();
+    });
   }
 
   chemUnlocked(ups, done) {

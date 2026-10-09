@@ -463,6 +463,7 @@ class App {
   }
 
   startExhibition(teamId, mods = [], arena = 'auto', rules = true) {
+    this.lastExhibition = { teamId, mods, arena, rules }; // (for Play again on the results)
     const where = this.arenaFor(teamId, arena);
     this.loadThen(Assets.ensureTeam(teamId, where), () =>
       this.beginMatch(teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 120, round: 'Exhibition' }, true, mods, { arena: where, rules }));
@@ -986,9 +987,13 @@ class App {
     this.scene = 'results';
     this.music(rewards.won ? 'victory' : 'defeat');
     if (ups.length) setTimeout(() => audio.jingle('level'), 2600);
-    this.ui.results({ summary, rewards, ups, chemUps, teamId: c.teamId, exhibition: c.exhibition, round: c.stage.round, roundN: c.stage.roundN, gUp, clips: this.clips }, () => {
+    const rematch = c.exhibition && !c.daily && !c.fixture && !c.versus && this.lastExhibition && this.lastExhibition.teamId === c.teamId;
+    this.rematchNext = false;
+    this.ui.results({ summary, rewards, ups, chemUps, teamId: c.teamId, exhibition: c.exhibition, round: c.stage.round, roundN: c.stage.roundN, gUp, clips: this.clips, rematch }, () => {
       this.fx.heavySnow = false;
       const finish = () => {
+        // Play again: the same exhibition straight away
+        if (this.rematchNext) { this.rematchNext = false; const e = this.lastExhibition; return this.startExhibition(e.teamId, e.mods, e.arena, e.rules); }
         if (becameChampion) { this.scene = 'results'; this.music('final'); audio.jingle('champion'); this.ui.champion(() => this.goHub('tournament')); } else this.goHub(rewards.won ? 'tournament' : 'team');
       };
       const call = (next) => { const o = this.pendingOffer; this.pendingOffer = null; return o ? this.ui.rivalCall(o, next) : next(); };
