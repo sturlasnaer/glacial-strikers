@@ -458,7 +458,8 @@ export class TeamAI {
         const aimY = (g.y > 0 ? -1 : 1) * MOUTH * 0.7;
         const lane = this.shotLane(s, aimY);
         const angle = Math.abs(s.y) / Math.max(dx, 1);
-        let score = (1 - dG / 430) * 1.2 + lane * 0.6 - angle * 0.35 + (Math.abs(g.y - aimY) > 25 ? 0.25 : 0);
+        // (an open lane counts for less the further out: from the point it's mostly a save)
+        let score = (1 - dG / 430) * 1.2 + lane * 0.6 * clamp(1.4 - dG / 400, 0.3, 1) - angle * 0.35 + (Math.abs(g.y - aimY) > 25 ? 0.25 : 0);
         if (m.puck.power && m.puck.power !== 'lightning') score += 0.3;
         if (s.empowered > 0 || s.igniteT > 0) score += 0.3;
         if (m.twists.beam && m.inBeam(s.x, s.y)) score += 0.12 + 0.18 * this.diff; // (the Observatory: shoot out of the moonlight)

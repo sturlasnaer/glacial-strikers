@@ -295,7 +295,9 @@ export class Match {
       let winner = null;
       for (const c of centers) {
         if (human(c)) {
-          if ((c.pressed('a') || c.pressed('b')) && (!this.faceoffJump[c.team] || t > 0.3)) winner = winner || c;
+          // (jumped it: held back past the other centre's own reaction, or 0.3 s against a player)
+          const other = centers.find((o) => o.team !== c.team), wait = other && !human(other) ? Math.max(0.3, this.faceoffRt[other.team] + 0.05) : 0.3;
+          if ((c.pressed('a') || c.pressed('b')) && (!this.faceoffJump[c.team] || t > wait)) winner = winner || c;
         } else if (t >= this.faceoffRt[c.team]) winner = winner || c;
       }
       if (winner) {

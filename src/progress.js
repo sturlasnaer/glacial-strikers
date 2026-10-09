@@ -252,7 +252,7 @@ export const homeKitGroups = (save) => {
 // puts the rivals a point up on their four best stats, up to 3. The goalies the same way, a
 // point on reflexes and positioning per two we're ahead past two. Returns the skater edge (and
 // puts it in the news when either grows).
-export const EDGE_FREE = 2, EDGE_STEP = 2;
+export const EDGE_FREE = 3, EDGE_STEP = 3;
 export function lastSeasonRate(L) {
   let w = 0, n = 0;
   for (const round of (L && L.results) || []) {
@@ -474,7 +474,7 @@ export function allStarConfig(save, vote, opts = {}) {
     buffs: {},
     teams: [
       { skaters: vote.ours.map(ours), goalie: homeGoalie(save), chem: {} },
-      { skaters: vote.theirs.map((w) => rival(w)), goalie: { stats: { rfx: g.goalie.rfx + 1, pos: g.goalie.pos + 1 }, name: rg.name, art: rg.art, mask: rg.mask || null }, chem: {} },
+      { skaters: vote.theirs.map((w) => rival(w)), goalie: { stats: isSigned(save, vote.goalie + '_g') ? { rfx: rg.stats.rfx + 1, pos: rg.stats.pos + 1 } : { rfx: g.goalie.rfx + 1, pos: g.goalie.pos + 1 }, name: rg.name, art: rg.art, mask: rg.mask || null }, chem: {} },
     ],
     humanTeam: 0,
     goalieMode: !!opts.goalieMode,

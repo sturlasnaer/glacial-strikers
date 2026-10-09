@@ -844,7 +844,10 @@ class App {
     m.on('faceoff', () => audio.sfx('whistle', { vol: 0.55 }));
     m.on('faceoff_early', (e) => {
       audio.sfx('deny', { vol: 0.5 });
-      if (!this.attract && e.s.team === 0 && firstTime(this.save, 'faceoff')) this.hud.hint(this.isTouch ? t('Wait for the puck to touch the ice, then tap SHOOT or PASS to win the draw.') : t('Wait for the puck to touch the ice, then press J or K to win the draw.'), 5);
+      if (this.attract || e.s.team !== 0 || (this.cur && this.cur.versus) || !firstTime(this.save, 'faceoff')) return; // (versus has its own keys)
+      this.hud.hint(this.isTouch ? t('Wait for the puck to touch the ice, then tap SHOOT or PASS to win the draw.')
+        : this.input.lastDevice === 'gamepad' ? t('Wait for the puck to touch the ice, then press SHOOT or PASS to win the draw.')
+          : t('Wait for the puck to touch the ice, then press J or K to win the draw.'), 5);
     });
     m.on('drop', () => audio.sfx('drop'));
     m.on('stop', (e) => audio.sfx('stop', at(e.s.x, e.s.y, 0.8)));
@@ -1029,6 +1032,16 @@ class App {
     this.clips.start({ scorer, line: `${who(scorer)}${kind}. ${score}`, team: g.team, score });
   }
 
+  // Buttons still down from the pause menu (the one that pressed Resume) count once they're let go.
+  releaseHeld(...inputs) {
+    if (!this.heldFromPause) return;
+    for (const k of this.heldFromPause) {
+      if (inputs.some((i) => i[k])) for (const i of inputs) i[k] = false;
+      else this.heldFromPause.delete(k);
+    }
+    if (!this.heldFromPause.size) this.heldFromPause = null;
+  }
+
   // Drop any replay (and the clip it was recording) for good: a new match, or leaving one.
   resetReplay() {
     this.replay.clear();
@@ -1188,12 +1201,14 @@ class App {
   // winning score): it can't be quit and played again for a better result.
   forfeitLoses() {
     const c = this.cur, m = this.match;
-    return !!(c && !c.drill && !c.versus && !c.exhibition && c.fixture && c.fixture.kind !== 'allstar' && m && m.winner === null);
+    return !!(c && !c.drill && !c.versus && !c.exhibition && c.fixture && c.fixture.kind !== 'allstar' && m && m.winner !== 0);
   }
 
   forfeit() {
     const drill = this.cur && this.cur.drill;
     this.resetReplay(); // (a goal's replay could still be running)
+    // the deciding goal's in (its replay or the final whistle still to come): the result stands
+    if (this.cur && !drill && !this.cur.versus && this.match && this.match.winner !== null) { this.scene = 'match'; return this.endMatch(); }
     if (this.forfeitLoses()) {
       const m = this.match;
       m.score[1] = Math.max(m.score[1], m.winScore, m.score[0] + 1);
@@ -1383,12 +1398,10 @@ class App {
           let p1 = this.input.readLayout('p1'), p2 = this.input.readLayout('p2');
           if (pads.length >= 2) { p1 = mergeInputs(p1, this.input.readPad(pads[0])); p2 = mergeInputs(p2, this.input.readPad(pads[1])); }
           else if (pads.length === 1) p2 = mergeInputs(p2, this.input.readPad(pads[0]));
+          this.releaseHeld(p1, p2);
           m.setHumanInput(p1, 0); m.setHumanInput(p2, 1);
         } else if (this.scene === 'match') {
-          if (this.heldFromPause) { // buttons still down from the pause menu count once they're let go
-            for (const k of this.heldFromPause) if (raw[k]) raw[k] = false; else this.heldFromPause.delete(k);
-            if (!this.heldFromPause.size) this.heldFromPause = null;
-          }
+          this.releaseHeld(raw);
           raw.sprintBtn = raw.sprint; // (the button itself: a quick tap of it dekes, even with auto-sprint)
           if (this.save.settings.autoSprint && Math.hypot(raw.mx, raw.my) > 0.92) raw.sprint = true;
           m.setHumanInput(raw);

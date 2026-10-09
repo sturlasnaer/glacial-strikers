@@ -1,6 +1,7 @@
 // Íslenska. Keys are the English text exactly as written in the game (with {braces} for
 // values); values are the Icelandic. Names of people, teams and the club stay as they are.
 export const IS = {
+  "Wait for the puck to touch the ice, then press SHOOT or PASS to win the draw.": "Bíddu þar til pökkurinn lendir á ísnum og ýttu þá á SKJÓTA eða SENDA til að vinna uppkastið.",
   "Whistled dead: nobody can get to it.": "Flautað af: enginn kemst að pökknum.",
   "The referee blows it dead. Faceoff!": "Dómarinn flautar. Uppkast!",
   "Forfeiting a league or playoff game now counts as a loss.": "Ef þú gefur deildar- eða úrslitaleik telst það nú sem tap.",

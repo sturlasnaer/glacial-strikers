@@ -155,22 +155,25 @@ const check = (name, cond) => { if (cond) ok++; else { fail++; console.log('FAIL
   check('...and near the goalie, they bite now and then', bites > 6 && bites < 36, bites); }
 
 // 17. the faceoff: a press right on the drop wins it clean; a press while the puck is still
-// in the air holds you back, so the AI's centre gets there first
-{ const fo = (pressAt) => {
-    const m = new Match({ teams: [team(), team()], humanTeam: 0, seed: 7, powers: [], diff: [0.6, 0.6] });
+// in the air holds you back past the other centre's reaction, so mashing loses the draw (at
+// every difficulty, whatever the AI rolls)
+{ const draw = (seed, diff, press) => {
+    const m = new Match({ teams: [team(), team()], humanTeam: 0, seed, powers: [], diff: [0.6, diff] });
     m.state = 'faceoff'; m.stateT = 0; m.dropped = false;
-    const ev = {}; for (const k of ['faceoff_win', 'faceoff_early']) m.on(k, (e) => { ev[k] = e; });
-    for (let i = 0; i < 160 && m.state === 'faceoff'; i++) { m.setHumanInput(raw({ b: i === pressAt || i === pressAt + 2 })); m.update(1 / 60); }
-    return { winner: ev.faceoff_win && ev.faceoff_win.s.team, clean: ev.faceoff_win && ev.faceoff_win.clean, early: !!ev.faceoff_early };
+    let w = null, clean = false, early = false;
+    m.on('faceoff_win', (x) => { w = x.s.team; clean = !!x.clean; }); m.on('faceoff_early', () => { early = true; });
+    for (let i = 0; i < 160 && m.state === 'faceoff'; i++) { m.setHumanInput(raw({ b: press(i) })); m.update(1 / 60); }
+    return { w, clean, early };
   };
-  const onDrop = fo(67), early = fo(55), mash = (() => { // pressing on every other frame from before the drop
-    const m = new Match({ teams: [team(), team()], humanTeam: 0, seed: 7, powers: [], diff: [0.6, 0.6] });
-    m.state = 'faceoff'; m.stateT = 0; m.dropped = false; let w = null, e = false;
-    m.on('faceoff_win', (x) => { w = x.s.team; }); m.on('faceoff_early', () => { e = true; });
-    for (let i = 0; i < 160 && m.state === 'faceoff'; i++) { m.setHumanInput(raw({ b: i % 2 === 0 })); m.update(1 / 60); }
-    return { w, e }; })();
-  check('a press on the drop wins the draw clean', onDrop.winner === 0 && onDrop.clean && !onDrop.early);
-  check('...one before it lands is too early', early.early && early.winner === 1);
-  check('...and mashing doesn\'t win it', mash.e && mash.w === 1); }
+  let onDrop = 0, mashWins = 0, earlyWins = 0, n = 0;
+  for (const diff of [0.1, 0.3, 0.6, 0.9]) for (let seed = 1; seed <= 15; seed++) {
+    n++;
+    const d = draw(seed, diff, (i) => i === 67 || i === 69); if (d.w === 0 && d.clean && !d.early) onDrop++;
+    if (draw(seed, diff, (i) => i % 2 === 0).w === 0) mashWins++;
+    const e = draw(seed, diff, (i) => i === 55 || i === 57); if (e.early && e.w === 0) earlyWins++;
+  }
+  check('a press on the drop wins the draw clean', onDrop === n);
+  check('...one before it lands is too early', earlyWins === 0);
+  check('...and mashing never wins it', mashWins === 0); }
 
 console.log(`controls: ${ok} passed, ${fail} failed`);
