@@ -1689,8 +1689,10 @@ export class Match {
   }
 
   whistlePenalty() {
-    const { s, reason, shot } = this.pendingPenalty;
+    let { s, reason, shot } = this.pendingPenalty;
     this.pendingPenalty = null;
+    // (an extra attacker leaves the ice at the faceoff, or has already: a teammate serves it)
+    if (s.extraAttacker || !this.skaters.includes(s)) { s = this.teamSkaters(s.team).find((k) => !k.parked && !k.extraAttacker && !(k.boxT > 0)); if (!s) return; }
     if (shot) { // a penalty shot: nobody to the box; the linesman signals, then it's taken
       this.penStats[s.team].pims++; // (still a penalty taken)
       if (this.puck.owner) this.loosePuck(this.puck.owner);

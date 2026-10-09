@@ -334,6 +334,17 @@ const mk = (seed = 5) => new Match({ teams: [team(), team()], humanTeam: null, s
     check('...and a puck whistled dead calls it', m.state === 'penalty' && d.boxT > 0, [m.state, d.boxT]);
   }
 }
+{ // ...and one on an extra attacker (who leaves the ice at the faceoff) is served by a teammate
+  const m = mk(45);
+  m.state = 'play';
+  m.score = [0, 3];
+  m.pullGoalie(0);
+  const x = m.extra[0];
+  m.takePossession(m.teamSkaters(0)[0], 'catch');
+  m.pendingPenalty = { s: x, reason: 'Interference' };
+  for (let i = 0; i < 60 * 4 && m.state !== 'faceoff'; i++) m.update(1 / 60);
+  check('...a penalty on a pulled extra attacker is still served', m.state === 'faceoff' && !m.extra[0] && m.skaters.some((k) => k.team === 0 && k.boxT > 0 && !k.extraAttacker), [m.state]);
+}
 
 // whole matches: skaters never end up in the boards or a net
 {
