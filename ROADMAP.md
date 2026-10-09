@@ -26,6 +26,8 @@ The All-Star Game is in too: after round 2, the fans vote two mixed benches of t
 
 Since then: **Draft Day** (three prospects at season's end; the pick joins as a rookie whose potential speeds up their growth), a **career stats** page, and the **Weekly Cup** on every friends board. Then **supers and archetypes** (three new elements, Ember, Gale and Shadow, seven archetypes, mixed per player, with combos for every pair), the **legends** Fáfnir and Fenrir with their twin combo Ragnarök, and a stick hand for every player. Then **goalies for hire** with six goaltending styles, a **living league** (rival draft picks and signings fill the gaps you leave, and rivals call with trade offers), and nine new achievements.
 
+On 9 October: **the puck on the stick** (forehand and backhand stick handling, crossovers, shielding and the **deke**), **faceoffs** decided by timing the drop (and a **Faceoffs drill**), **penalty shots**, **hooking** and **delayed penalties**, **tip-ins** and **screens** in front of the net, **season goals** from Coach Brekka (with Trophies › Seasons), **the three stars of the game** and a **shot map** after every match (and mid-match in the pause menu), a coach's note after a loss, game plans changed mid-match (and the AI's bench going to Run-and-gun when two down late), a ring under the teammate a pass will find, and naming your own rookies.
+
 Ideas for later:
 1. **Ghosts for Sniper** (the shots and the lit targets), if the others catch on.
 2. **Replay checks** on the server if faked scores become a problem; the stored ghost runs would help.
