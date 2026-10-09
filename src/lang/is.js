@@ -1352,7 +1352,7 @@ export const IS = {
   "Shield the puck from a defender 15 times in one match.": "Skýldu pökknum fyrir varnarmanni 15 sinnum í einum leik.",
   "shoot": "skot",
   "SHOOT": "SKJÓTA",
-  "Shoot from the point and a teammate heads to the front of the net. They can tip it past the goalie. When it's their shot, stand in front and press SHOOT as it goes by.": "Skjóttu af bláu línunni og liðsfélagi fer fyrir framan markið til að stýra pökknum framhjá markverðinum. Þegar liðsfélaginn skýtur, stattu fyrir framan og ýttu á SKJÓTA þegar pökkurinn fer hjá.",
+  "Shoot from the point and a teammate heads to the front of the net. They can tip it past the goalie. When it's their shot, stand in front and press SHOOT as it goes by. The Tip-Ins drill at the training rink is the place to practise.": "Skjóttu af bláu línunni og liðsfélagi fer fyrir framan markið til að stýra pökknum framhjá markverðinum. Þegar liðsfélaginn skýtur, stattu fyrir framan og ýttu á SKJÓTA þegar pökkurinn fer hjá. Stýringaæfingin á æfingasvellinu er staðurinn til að æfa það.",
   "Shoot or check": "Skjóta eða tækla",
   "Shoot-first centre with a temper to match.": "Skotglaður miðherji með skap eftir því.",
   "Shoot: tap for a wrist shot, hold for a slapshot. Without the puck: check": "Skjóta: ýttu snöggt fyrir úlnliðsskot, haltu inni fyrir slagskot. Án pökksins: tækla",
