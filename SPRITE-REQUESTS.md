@@ -170,3 +170,22 @@ After the big games (rivalry games, playoff games, the Winter Classic and the Al
 - `npcs/reporter_radio`, `npcs/reporter_paper`, `npcs/reporter_tv`: three reporters in the dialogue portrait style: a radio host in headphones, a newspaper writer with a notepad, and a TV reporter with a microphone flag. Each has a neutral expression and an eager one (`_eager`), for when the answer gives them a headline.
 
 9 frames.
+
+## Batch BU: the facilities as they grow
+
+Shop › Club facilities shows each facility as a card. Please draw a small scene for each facility at each of its three levels, so the card shows what the coins built. Landscape, about 480×270, in the style of the locker-room hub and the draft hall (the same warm lights and navy tones), no text:
+- `facilities/stands_1`, `_2`, `_3`: the home rink's stands from rinkside, a few rows of fans; then a packed section with a drum and scarves held up; then full stands to the rafters with a big home banner.
+- `facilities/training_1`, `_2`, `_3`: a corner of practice ice with cones; then a training rink with target boards and a shooting machine; then a full training centre with a video wall and a skating treadmill.
+- `facilities/scouting_1`, `_2`, `_3`: a desk with a clipboard; then an office with a rink diagram on the wall and binoculars; then a war room with screens of game tape and a pinned-up prospect board.
+- `facilities/physio_1`, `_2`, `_3`: a treatment table with an ice pack; then a physio room with an exercise bike; then a recovery suite with a cold plunge and a stretching area.
+
+12 frames.
+
+## Batch BV: the Hall of Fame
+
+A player who reaches 50 league goals for the club, or wins three Frostline Cups with it, now goes into the club's Hall of Fame: their banner goes up in the rafters at home (Batch BS's number banner) and they get a plaque in Trophies › Hall of Fame. Please draw:
+- `hall/plaque`: a bronze plaque on dark wood, about 360×200, with a blank oval at the left for the player's portrait (the game puts it there) and blank engraved lines on the right (the game writes the name, the years and the numbers).
+- `hall/wall`: the Hall of Fame wall the plaques hang on, 1280×720 like the draft hall: a dark wood-panelled room with spotlights, a row of empty plaque spots and the club crest's blank shield over the middle.
+- `hall/ceremony`: the banner going up, 1280×720: the home rink in darkness, a single spotlight on a rolled banner rising to the rafters, the team standing at centre ice with sticks raised, fans holding up phone lights.
+
+3 frames.
