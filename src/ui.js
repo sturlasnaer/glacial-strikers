@@ -30,6 +30,7 @@ import { audio } from './audio.js';
 import { t } from './i18n.js';
 import { FACILITIES, FACILITY_IDS, MAX_FACILITY, facilityLevel, nextCost, buildFacility } from './facilities.js';
 import { pressQuestion, PRESS_ANSWERS, pressHeadline } from './press.js';
+import { HALL } from './hall.js';
 import { ACTIONS, LOCKED, keyMap, keyName, keyNames, firstKey, moveGroups, groupText, setKeyMap, bindKey, canBind, sideless, isDefault,
   PAD_ACTIONS, PAD_LOCKED, padMap, padName, padNames, firstPad, setPadMap, bindPad, canBindPad, isPadDefault } from './keys.js';
 import { RINK, GOAL_X, BLUE_X, CREASE, MOUTH, NET_DEPTH } from './rink.js';
@@ -230,6 +231,9 @@ function badge(name, size, cls = 'badge', fallback = '') {
   return src ? `<img class="${cls}" src="${src}" alt="">` : fallback;
 }
 const padGlyphs = (text) => text.replace(/✕|○|□|△|\b(?:L1|R1|L2|R2|L3|R3|LS|RS|LB|RB|LT|RT|Options|Create|Start|Back|[ABXY])\b/g, (m) => promptImg(PAD_PROMPT[m], m));
+// what put a player in the Hall of Fame
+const hallWhy = (h) => (h.why === 'cups' ? t('{n} Frostline Cups with the club.', { n: h.cups }) : h.why === 'wins' ? t('{n} wins in goal for the club.', { n: h.w })
+  : h.why === 'goals' ? t('{n} goals for the club.', { n: h.g }) : t('{n} points for the club.', { n: h.g + h.a }));
 // the shop's filters: the gear slots, then the club's facilities
 const shopFilters = (filter) => `<div class="filters">${['all', 'stick', 'skates', 'armor', 'goalie'].map((f) => `<button class="chip" data-f="${f}" aria-pressed="${filter === f}">${f === 'all' ? t('All') : t(SLOT_NAMES[f])}</button>`).join('')}<button class="chip" data-f="club" aria-pressed="${filter === 'club'}">${t('Club facilities')}</button></div>`;
 // a key by name ('J', 'Space', '↑') as a keycap (keys without art stay text)
@@ -845,6 +849,12 @@ export class UI {
       <div class="train-top"><div><div class="label">${t('Trophy case')}</div>
         <p style="margin:2px 0 0;font-size:13px">${t('{n} of {total} unlocked', { n: got.length, total: ACHIEVEMENTS.length })} · ${t('{n} coins earned', { n: earned })}${s.cups ? ` · ${t(s.cups > 1 ? '{n} cups won' : '{n} cup won', { n: s.cups })}` : ''}${classicWins ? ` · ${t(classicWins > 1 ? '{n} Winter Classics won' : '{n} Winter Classic won', { n: classicWins })}` : ''}${allstarWins ? ` · ${t(allstarWins > 1 ? '{n} All-Star Games won' : '{n} All-Star Game won', { n: allstarWins })}` : ''}</p></div>
         <span class="row" style="gap:6px;margin:0"><button class="btn small ghost" id="tr-career">${btnIcon('icons/career')} ${t('Career stats')}</button><button class="btn small ghost" id="tr-lb">${badge('cup_small', 48, 'btn-ico', '🏆')} ${t('Online leaderboards')}</button></span></div>
+      ${(() => { // the Hall of Fame's plaques (on Batch BV's plaque once it's in)
+        const hall = s.hall || [], plaque = Assets.atlas.frames['hall/plaque'] ? Assets.icon('hall/plaque', 360) : '';
+        return `<div class="label" style="margin:4px 0 6px">${t('Hall of Fame')}</div>${hall.length ? `<div class="hall">${hall.map((h) => `<div class="plaque${plaque ? ' art' : ''}"${plaque ? ` style="background-image:url(${plaque})"` : ''}>
+          <img src="${portrait(h.id, 0, null, 96)}" alt=""><div><b>${esc(h.name)} <span class="gold-t">#${h.number}</span></b><span>${esc(hallWhy(h))}</span><small>${t('Inducted in season {n}', { n: h.season })}</small></div></div>`).join('')}</div>`
+          : `<p class="muted" style="margin:0 0 10px;font-size:12.5px">${t('No one yet. {goals} goals or {points} points for the club, {cups} Cups with it, or {wins} wins in goal puts a player in, with a banner in the rafters at home.', { goals: HALL.goals, points: HALL.points, cups: HALL.cups, wins: HALL.goalieWins })}</p>`}`;
+      })()}
       ${s.weeklyCups && s.weeklyCups.length ? `<div class="label" style="margin:4px 0 6px">${t('Weekly Cups')}</div>
       <div class="cup-shelf">${s.weeklyCups.slice(-12).reverse().map((w) => `<div class="cup-won" title="${esc(w.name)} · ${esc(w.week)}"><img src="${cupPlaceImg(w.place, 72)}" alt=""><small>${esc(w.name)}</small><span class="muted">${esc(w.week.replace(/^\d+-W/, t('week') + ' '))}</span></div>`).join('')}</div>` : ''}
       ${s.history && s.history.length ? `<div class="label" style="margin:4px 0 6px">${t('Seasons')}</div>
@@ -1296,6 +1306,27 @@ export class UI {
         r.innerHTML = `<p style="margin:0 0 6px"><b>${esc(vars.name)}:</b> ${esc(clubText(t(a.reply, vars)))}</p><p class="gold-t" style="margin:0 0 6px">${esc(t(a.fx))}</p><p class="muted" style="margin:0 0 10px;font-size:12.5px">${t('Tomorrow\'s headline')}: ${esc(clubText(t(pressHeadline(a.tone), vars)))}</p><div class="row" style="justify-content:flex-end"><button class="btn gold" id="pc-go">${t('Continue')}</button></div>`;
         r.querySelector('#pc-go').addEventListener('click', () => { close(); done(); });
       }, el);
+    }, false);
+  }
+
+  // Into the Hall of Fame: one card for each new member (on the ceremony art once Batch BV is in).
+  hallCeremony(list, done) {
+    const h = list[0];
+    if (!h) return done();
+    const art = Assets.atlas.frames['hall/ceremony'] ? Assets.icon('hall/ceremony', 640) : '';
+    audio.jingle?.('champion');
+    this.modal(`
+      <div class="label">${t('Hall of Fame')}</div>
+      <div class="hall-cer"${art ? ` style="background-image:url(${art})"` : ''}>
+        <img src="${portrait(h.id, 0, null, 220)}" alt="">
+        <div>
+          <h2>${esc(h.name)} <span class="gold-t">#${h.number}</span></h2>
+          <p style="margin:6px 0">${esc(hallWhy(h))}</p>
+          <p class="muted" style="margin:0;font-size:13px">${esc(t('Number {n} goes up in the rafters at home.', { n: h.number }))}</p>
+        </div>
+      </div>
+      <div class="row" style="justify-content:flex-end"><button class="btn gold" id="hc-go">${t('Continue')}</button></div>`, (el, close) => {
+      this.click('#hc-go', () => { close(); this.hallCeremony(list.slice(1), done); }, el);
     }, false);
   }
 

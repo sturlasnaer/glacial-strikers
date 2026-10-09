@@ -12,6 +12,7 @@ import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as clou
 import { ARENA_MUSIC } from './songs.js';
 import { ResurfacerLap } from './scenery.js';
 import { UI, controlsHtml, crest, ruleIconSrc, cupPlaceImg, portrait, shotMapSvg, esc, hintKeys } from './ui.js';
+import { noteCup, hallCandidates, induct } from './hall.js';
 import { pressWorthy, pressPlayer, answerPress } from './press.js';
 import { chantBoost, trainingSessions } from './facilities.js';
 import { isKey, setKeyMap, setPadMap } from './keys.js';
@@ -31,7 +32,7 @@ import { nextFixture, recordOurGame, newLeague, rivalPlan, recordClassic, record
 import { updateSeasonGoals, goalStates } from './goals.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { member, TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, EXPANSION_LINES } from './data.js';
+import { member, goalieInfo, TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, EXPANSION_LINES } from './data.js';
 import { rollLegend, legendState, STAY, joinLegend, LEGEND_LINES, twinsFirstTogether } from './legends.js';
 import { rivalSigning, rivalOffer } from './moves.js';
 import { refreshAgents } from './agents.js';
@@ -43,7 +44,7 @@ import { offerDraft } from './draft.js';
 import { recordCareer } from './career.js';
 import {
   loadSave, newSave, writeSave, setSaveOff, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards,
-  lineupIds, homeKitGroups, allStarVote, allStarVoteStands, allStarConfig, setLeagueEdge,
+  lineupIds, homeKitGroups, allStarVote, allStarVoteStands, allStarConfig, setLeagueEdge, rosterIds, goalieIds,
 } from './progress.js';
 import { t, setLang, getLang, defaultLang } from './i18n.js';
 import { whatsNewFor } from './whatsnew.js';
@@ -1023,10 +1024,12 @@ class App {
       const move = rivalSigning(s);
       if (move) leagueOut.moves = [move];
       this.pendingOffer = rivalOffer(s);
-      if (leagueOut.champion === 'home') { s.champion = true; becameChampion = true; s.cups = (s.cups || 0) + 1; }
+      if (leagueOut.champion === 'home') { s.champion = true; becameChampion = true; s.cups = (s.cups || 0) + 1; noteCup(s, rosterIds(s), goalieIds(s)); }
       if (leagueOut.champion) addNews(s, { k: 'champion', team: leagueOut.champion });
       s.stage = s.league.round;
     }
+    // the Hall of Fame: anyone who's earned it goes in (the ceremony comes after the results)
+    this.pendingHall = hallCandidates(s, rosterIds(s), goalieIds(s)).map((h) => induct(s, h, h.goalie ? goalieInfo(h.id).name : member(h.id).name));
     if (!c.exhibition && s.league) { // Coach Brekka's season goals: paid as they're met
       const sg = updateSeasonGoals(s, { kind: c.fixture ? c.fixture.kind : 'regular', won: rewards.won, summary, opp: c.teamId });
       for (const g of sg.met) rewards.lines.push([t('Season goal: {goal}', { goal: t(g.text, { n: g.n }) }), g.coins]);
@@ -1067,10 +1070,11 @@ class App {
         if (becameChampion) { this.scene = 'results'; this.music('final'); audio.jingle('champion'); this.ui.champion(() => this.goHub('tournament')); } else this.goHub(rewards.won ? 'tournament' : 'team');
       };
       const call = (next) => { const o = this.pendingOffer; this.pendingOffer = null; return o ? this.ui.rivalCall(o, next) : next(); };
-      const after = () => this.leagueUpdate(leagueOut, () => call(() => this.resolvePerks(() => this.ui.chemUnlocked(chemUps, () => {
+      const hall = (next) => { const h = this.pendingHall || []; this.pendingHall = null; return h.length ? this.ui.hallCeremony(h, next) : next(); };
+      const after = () => this.leagueUpdate(leagueOut, () => call(() => this.resolvePerks(() => this.ui.chemUnlocked(chemUps, () => hall(() => {
         if (becameChampion || c.exhibition) return finish();
         this.lockerRoom(summary, rewards, finish);
-      }))));
+      })))));
       const kind = c.fixture ? c.fixture.kind : 'regular';
       const script = kind === 'regular' ? DIALOGUE[c.teamId] : kind === 'final' && DIALOGUE[c.teamId].final ? { win: DIALOGUE[c.teamId].finalWin, loss: DIALOGUE[c.teamId].finalLoss } : PLAYOFF_LINES[kind];
       let lines = !c.exhibition && script ? [...(script[rewards.won ? 'win' : 'loss'] || [])] : null;
@@ -1583,7 +1587,7 @@ class App {
       const lap = this.lap && this.attract ? this.lap : null;
       const focus = lap && toScreen(lap.pos().x, lap.pos().y);
       this.renderer.updateCamera(m, this.fx, realDt, { attract: this.attract, focus, zoom: this.attract ? 0.9 : this.replay.active ? 1.15 : m.pshot ? 1.12 : 1 });
-      this.renderer.render(m, this.fx, { awayTeamId: this.awayTeamId, awayColor: t.color, awayColor2: t.color2, arena: this.arena, replay: this.replay.active, lap });
+      this.renderer.render(m, this.fx, { awayTeamId: this.awayTeamId, awayColor: t.color, awayColor2: t.color2, arena: this.arena, replay: this.replay.active, lap, save: this.save }); // (save: the rafters' banners at home)
       this.clips.frame();
       this.hud.update(realDt);
       this.crowdT = (this.crowdT || 0) - realDt;

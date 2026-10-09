@@ -1191,3 +1191,17 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
   .coins img { width: 22px; height: 22px; }
   .icon-btn { width: 38px; height: 38px; flex: none; }
 }
+
+/* the Hall of Fame: the plaques in Trophies, and the ceremony */
+.hall { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; margin-bottom: 12px; }
+.plaque { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 8px; align-items: center; padding: 8px 10px; border-radius: 6px;
+  background: linear-gradient(160deg, #6b4a22, #3d2812); border: 2px solid #b8873a; color: #f6dfae; }
+.plaque.art { background-size: 100% 100%; background-repeat: no-repeat; border: 0; padding: 10px 14px 10px 16px; }
+.plaque img { width: 56px; height: 56px; border-radius: 50%; border: 2px solid #d9a64e; background: #1d2b45; }
+.plaque b { display: block; font-family: var(--display); font-weight: normal; font-size: 19px; line-height: 1.05; }
+.plaque span { display: block; font-size: 12px; }
+.plaque small { display: block; font-size: 11px; opacity: 0.8; }
+.hall-cer { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 14px; align-items: center; padding: 12px; border-radius: 8px;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 212, 94, 0.18), rgba(11, 20, 36, 0.9) 70%); background-size: cover; background-position: center; }
+.hall-cer img { width: 120px; height: 120px; border-radius: 8px; border: 3px solid var(--gold); background: var(--navy); }
+.hall-cer h2 { font-size: 30px; }

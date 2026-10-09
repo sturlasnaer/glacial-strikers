@@ -10,6 +10,7 @@ import { t } from './i18n.js';
 import { headPlacement, PARTS_SCALE } from './modular.js';
 import { handMirror } from './hands.js';
 import { Linesman } from './linesman.js';
+import { cupBanners } from './hall.js';
 
 const SKATER_SCALE = 0.5; // world px per source px
 const CROSS_IN = 5, CROSS_KEEP = 3; // turn rates (radians a second) into and through a crossover
@@ -395,6 +396,7 @@ export class Renderer {
         Assets.draw(ctx, id, x, y, 0.185, { rot: Math.sin(t * 1.3 + i * 1.7) * 0.025, pages: Assets.clubPages() });
       });
     }
+    if (arena === 'home' && ui && ui.save) this.drawRafters(ctx, ui.save, t);
     if (arena === 'home' && A.mascot) {
       const party = (fx.cheerTeam === 0 && fx.lamp > 0) || (fx.chant && fx.chant.team === 0);
       let pose = 'idle';
@@ -420,6 +422,37 @@ export class Renderer {
     if (board) this.drawScoreboard(ctx, match, fx, board);
     this.drawGlassFans(ctx, fx);
     this.drawCameraFlashes(ctx, fx);
+  }
+
+  // The club's history in the rafters at home: a banner for every Frostline Cup (left of the
+  // scoreboard) and every Hall of Fame number (right of it), newest nearest the middle. Batch
+  // BS's cloth when it's in, a painted pennant until then; the season, number and name are
+  // written on.
+  drawRafters(ctx, save, time) {
+    const cups = cupBanners(save).slice(-4), hall = (save.hall || []).slice(-4);
+    if (!cups.length && !hall.length) return;
+    const art = (k) => { const id = `rafters/${k}_banner_${Math.floor(time * 1.3) % 2 ? 'b' : 'a'}`; return Assets.frame(id) && Assets.pages[Assets.frame(id)[0]] ? id : null; };
+    const LEFT = [580, 470, 360, 250], RIGHT = [956, 1066, 1176, 1286];
+    const one = (x, i, kind, big, small) => {
+      const sway = Math.sin(time * 1.3 + i * 1.7) * 0.025, id = art(kind);
+      ctx.save();
+      ctx.translate(x, 36); ctx.rotate(sway);
+      if (id) Assets.draw(ctx, id, 0, 0, 0.185, kind === 'number' ? { pages: Assets.clubPages() } : {});
+      else { // a pennant: navy cloth, a gold edge, a point at the bottom
+        ctx.fillStyle = kind === 'cup' ? '#14233b' : '#1d3253';
+        ctx.strokeStyle = '#ffd45e'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(30, 0); ctx.lineTo(30, 66); ctx.lineTo(0, 84); ctx.lineTo(-30, 66); ctx.closePath(); ctx.fill(); ctx.stroke();
+      }
+      // the words: the cup banner's band, the number banner's chest and name strip
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = id && kind === 'cup' ? '#14233b' : '#ffd45e';
+      // (the cup's season goes low on the cloth, clear of the scoreboard over the top of the screen)
+      ctx.font = `${kind === 'number' ? 30 : 15}px ${this.font}`;
+      ctx.fillText(big, 0, kind === 'number' ? 30 : id ? 70 : 52);
+      if (small) { ctx.font = `11px ${this.font}`; ctx.fillStyle = '#fff2cb'; ctx.fillText(small, 0, kind === 'number' ? 55 : id ? 82 : 26); }
+      ctx.restore();
+    };
+    cups.slice().reverse().forEach((season, i) => one(LEFT[i], i, 'cup', season ? t('SEASON {n}', { n: season }) : t('CHAMPIONS'), t('FROSTLINE CUP')));
+    hall.slice().reverse().forEach((h, i) => one(RIGHT[i], i + 4, 'number', String(h.number), String(h.name).toUpperCase().slice(0, 10)));
   }
 
   // Pine Pond dressed for the Winter Classic (Batch W): a banner over the far snowbank, string

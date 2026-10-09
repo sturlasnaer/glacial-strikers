@@ -2,6 +2,13 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10c',
+    items: [
+      { icon: 'icons/career', text: 'The Hall of Fame: 75 goals or 120 points for the club, 40 wins in goal, or three Cups with it, and a player goes in, with a plaque in Trophies and their number in the rafters at home. Every Frostline Cup hangs up there too.' },
+      { icon: 'badges/star_1', text: 'New art: the three stars\' own badges, Coach Brekka\'s look after a loss, icons for the newest achievements and drills, the linesman skating with an arm up on a delayed penalty, and a keycap for every key.' },
+    ],
+  },
+  {
     id: '2026-10-10b',
     items: [
       { icon: 'icons/share', text: 'Press conferences: after a big game Kip Vance puts a question to the player of the night. Stay humble, sound confident or fire back: each answer gives an edge, and it makes the league news.' },
