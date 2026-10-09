@@ -2431,6 +2431,7 @@ export class UI {
       ${row(t('Effects'), seg('particles', [['full', t('Full')], ['reduced', t('Reduced')]]), t('Fewer sparks, snow sprays and confetti.'))}
       <div class="label">${t('Visibility and controls')}</div>
       ${row(t('Team markers'), seg('markers', [['color', t('Colors')], ['shapes', t('Shapes')]]), t('Shapes: blue triangles for your team, orange diamonds for rivals.'))}
+      ${row(t('Pass ring'), onOff('passRing'), t('A dashed gold ring at the feet of the teammate a pass would go to.'))}
       ${row(t('Text size'), seg('textSize', [['normal', t('Normal')], ['large', t('Large')]]))}
       ${row(t('Touch buttons'), seg('touchSize', [['normal', t('Normal')], ['large', t('Large')], ['huge', t('Huge')]]))}
       ${row(t('Touch layout'), seg('lefty', [[false, t('Stick left')], [true, t('Stick right')]]))}

@@ -199,6 +199,7 @@ class App {
     this.fx.flashes = st.flashes !== false;
     this.fx.particleMul = st.particles === 'reduced' ? 0.35 : 1;
     this.renderer.markers = st.markers || 'color';
+    this.renderer.passRing = st.passRing !== false;
     document.body.classList.toggle('large-text', st.textSize === 'large');
     const t = document.getElementById('touch');
     t.dataset.size = st.touchSize || 'normal';

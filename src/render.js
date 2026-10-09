@@ -946,7 +946,7 @@ export class Renderer {
     }
     // the teammate a pass would go to right now (a player with the puck): a thin ring at their
     // feet, gold (in versus, each player's own colour)
-    for (const team of match.state === 'play' ? match.humans || [] : []) {
+    for (const team of match.state === 'play' && this.passRing !== false ? match.humans || [] : []) {
       const ctrl = match.controlled(team);
       const target = ctrl && ctrl.hasPuck ? match.choosePassTarget(ctrl) : null;
       if (!target) continue;
