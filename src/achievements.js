@@ -65,6 +65,8 @@ export const ACHIEVEMENTS = [
   // tip-ins, delayed penalties and the season goals (Batch BO art; a stand-in until then)
   { id: 'redirect', name: 'Redirect', text: 'Score on a tip-in.', icon: 'equipment_items/stick/slapshot', art: 'achievements/redirect', coins: 50 },
   { id: 'wiped-out', name: 'Wiped Out', text: 'Score while a delayed penalty is coming against them.', icon: 'achievements/clean_game', art: 'achievements/wiped_out', coins: 60 },
+  { id: 'traffic', name: 'Through Traffic', text: 'Score through a screen in front of the goalie.', icon: 'icons/arch_enforcer', art: 'achievements/through_traffic', coins: 50 },
+  { id: 'bench-boss', name: 'Bench Boss', text: 'Change the game plan while trailing, and win.', icon: 'icons/challenge', art: 'achievements/bench_boss', coins: 70 },
   { id: 'coachs-orders', name: 'Coach\'s Orders', text: 'Meet all three of Coach Brekka\'s season goals.', icon: 'equipment_items/hub/target', art: 'achievements/coachs_orders', coins: 120 },
   { id: 'weekly-cup', name: 'Cup of the Week', text: 'Win a Weekly Cup on a friends board.', icon: 'badges/rank_1', art: 'achievements/cup_of_the_week', coins: 100 },
 ];
@@ -133,6 +135,8 @@ export class AchievementTracker {
     m.on('faceoff_win', (e) => { if (e.clean && e.s.team === 0 && ++clean >= 3) this.unlock('off-the-drop'); });
     m.on('glare', (e) => { if (e.g.team === 1) glareT = m.time; }); // (their goalie, dazzled by our shot)
     m.on('plank', () => { plankT = m.time; });
+    this.planWhileBehind = false;
+    m.on('plan_change', (e) => { if (e.team === 0 && m.score[0] < m.score[1]) this.planWhileBehind = true; }); // (Bench Boss)
     m.on('shield', (e) => { if (e.s.team === 0 && ++shields >= 15) this.unlock('protector'); });
     const ours = m.teamSkaters(0).map((k) => k.who);
     if (Object.keys(LEGENDS).every((k) => ours.includes(k))) this.unlock('twins');
@@ -155,6 +159,7 @@ export class AchievementTracker {
       if (m.time - biteT < 2) this.unlock('sold-it');
       if (ourShot) this.unlock('penalty-shot');
       if (g.kind === 'tip') this.unlock('redirect');
+      if (g.screened) this.unlock('traffic');
       if (g.delayed) this.unlock('wiped-out');
     });
     m.on('no_goal', () => { this.minDiff = Math.min(this.minDiff, m.score[0] - m.score[1]); });
@@ -173,6 +178,7 @@ export class AchievementTracker {
     if (mine.reduce((a, k) => a + k.steals, 0) >= 6) this.unlock('pickpocket');
     if (won && ctx.league && summary.pen && summary.pen[0].pims === 0) this.unlock('clean');
     if (won && ctx.exhibition && (ctx.mods || []).length >= 3) this.unlock('challenge');
+    if (won && this.planWhileBehind) this.unlock('bench-boss');
   }
 
   // Progress-based achievements from the save itself.

@@ -10,7 +10,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 1. **BH, the rest:** stick handling for the 13 players still to come (Part 1 brought six): `aurora_royals_d`, `ember_comets_c`, `ember_comets_w`, `gilded_rams_w`, `gilded_rams_d`, `obsidian_ravens_c`, `obsidian_ravens_d`, `pinewood_lynx_c`, `pinewood_lynx_w`, `glacier_owls_c`, `thunder_moose_c`, `fafnir` and `fenrir`, as in the BH section below.
 2. **BI, the rest:** Fáfnir's crossovers (held for his northwest right-turn stick). Fenrir's southeast backhand blade correction remains part of BH.
 3. **BN:** the linesman skating with his arm up, for delayed penalties (8 frames), as in the BN section below.
-4. **BO:** three achievement icons, a season-goals icon and a Faceoffs drill icon (5 frames), as in the BO section below.
+4. **BO:** five achievement icons, a season-goals icon and a Faceoffs drill icon (7 frames), as in the BO section below.
 
 Native generation reached its daily quota; pending art and masks are saved for the reset at **2026-10-09 18:10:25 UTC**.
 
@@ -114,11 +114,13 @@ New today: **tip-ins** (a stick in front of the net redirects a teammate's shot)
 - `achievements/redirect` (Redirect: score on a tip-in): a stick blade in front of the crease, the puck glancing off it at an angle with a little speed streak.
 - `achievements/wiped_out` (Wiped Out: score while a delayed penalty is coming against them): the linesman's raised arm (striped sleeve) with the goal lamp lit behind it.
 - `achievements/coachs_orders` (Coach's Orders: meet all three of Coach Brekka's season goals): a clipboard with three ticked boxes and a whistle on a cord.
+- `achievements/through_traffic` (Through Traffic: score through a screen in front of the goalie): the view over a goalie's shoulder, a big back in a jersey blocking it, the puck slipping past low.
+- `achievements/bench_boss` (Bench Boss: change the game plan while trailing, and win): a coach's whiteboard with arrows drawn on a rink, tapped by a marker.
 
 And two icons in the icons_z style (the league news and rule icons):
 - `icons/season_goals`: the same clipboard, smaller and simpler, three boxes (for the Season goals panel and its toast).
 - `equipment_items/hub/faceoffs`: a puck dropping between two crossed stick blades on a faceoff dot, matching the other drill cards' icons (the cone, the target, the passing stick, the goalie gloves).
 
-5 frames.
+7 frames.
 
 ---
