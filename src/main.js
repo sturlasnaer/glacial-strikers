@@ -42,6 +42,7 @@ import {
   lineupIds, homeKitGroups, allStarVote, allStarVoteStands, allStarConfig, setLeagueEdge,
 } from './progress.js';
 import { t, setLang, getLang, defaultLang } from './i18n.js';
+import { whatsNewFor } from './whatsnew.js';
 
 const STEP = 1 / 60;
 // Vibrate only once the player has interacted (browsers block it before that).
@@ -175,6 +176,7 @@ class App {
   }
 
   toast(img, small, title, line) {
+    if (document.querySelector('.whatsnew')) { setTimeout(() => this.toast(img, small, title, line), 500); return; } // (after the what's-new card, not over it)
     let box = document.getElementById('toasts');
     if (!box) { box = document.createElement('div'); box.id = 'toasts'; document.getElementById('app').appendChild(box); }
     const el = document.createElement('div');
@@ -1259,6 +1261,14 @@ class App {
     this.ui.hub(tab);
     this.setHubBackground();
     this.music('hub');
+    // what's new since a returning player was last here (once)
+    const was = this.save.seenWhatsNew, news = !this.testRun && whatsNewFor(this.save);
+    if (news) setTimeout(() => {
+      if (this.scene !== 'hub' || document.querySelector('.modal-bg')) return; // (another time)
+      this.save.seenWhatsNew = news.id; writeSave(this.save);
+      this.ui.whatsNew(news);
+    }, 900);
+    else if (this.save.seenWhatsNew !== was) writeSave(this.save); // (a new player: nothing to read)
   }
 
   // New club colours or name: recolour our art and the signings, clear cached frames.

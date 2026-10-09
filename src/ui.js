@@ -1844,6 +1844,15 @@ export class UI {
     }, false, done);
   }
 
+  // What's new since the last visit (see whatsnew.js), from the coach, once.
+  whatsNew(entry, done) {
+    audio.sfx('blip');
+    this.modal(`<h2>${t('What\'s new')}</h2>
+      <div class="wn-coach">${npc('coach', t('A few new things since you were last in the room:'))}</div>
+      <div class="whatsnew">${entry.items.map((it) => `<div class="wn-row">${smallIcon(it.icon, 64, 'wn-ico') || '<span class="wn-ico"></span>'}<span>${esc(t(it.text))}</span></div>`).join('')}</div>
+      <div class="row" style="justify-content:flex-end"><button class="btn gold" data-close>${t('Got it')}</button></div>`, null, true, done);
+  }
+
   // Quick line-up change, one row per position.
   lineupPicker(done) {
     const s = this.app.save;

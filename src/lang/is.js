@@ -1,6 +1,14 @@
 // Íslenska. Keys are the English text exactly as written in the game (with {braces} for
 // values); values are the Icelandic. Names of people, teams and the club stay as they are.
 export const IS = {
+  "Forfeiting a league or playoff game now counts as a loss.": "Ef þú gefur deildar- eða úrslitaleik telst það nú sem tap.",
+  "The Glacier Owls' Observatory and the Thunder Moose's Longhouse have rules of their own: a moonbeam and loose planks.": "Stjörnuturn Glacier Owls og Langhús Thunder Moose hafa sínar eigin reglur: tunglgeisla og lausar fjalir.",
+  "Goalies can pick a new mask at goalie camp, and the club editor has new crests.": "Markmenn geta valið nýja grímu í markmannsbúðunum og í félagsstillingunum eru ný merki.",
+  "Faceoffs: wait for the puck to touch the ice, then press. Go too early and you're a step slow.": "Uppköst: bíddu þar til pökkurinn snertir ísinn og ýttu þá. Ef þú ferð of snemma ertu skrefi of seinn.",
+  "Players work the puck from forehand to backhand, cross over through hard turns, and shield it from a reaching stick.": "Leikmenn rekja pökkinn milli forhandar og bakhandar, krossa fótunum í kröppum beygjum og verja pökkinn fyrir kylfu sem teygir sig eftir honum.",
+  "Dekes: tap SPRINT with a defender in front to cut past them. Near the goalie, a deke can make them bite.": "Gabbhreyfingar: ýttu snöggt á SPRETT með varnarmann fyrir framan þig til að skjótast fram hjá honum. Nálægt markmanninum getur gabbið fengið hann til að bíta á agnið.",
+  "A few new things since you were last in the room:": "Nokkrar nýjungar síðan þú varst hér síðast:",
+  "What's new": "Hvað er nýtt",
   " and ": " og ",
   "...Unexpected. The Royals won't make the mistakes we did.": "...Óvænt. Royals munu ekki gera sömu mistök og við.",
   "\"...Okay. That's actually a great line.\" He cracks his knuckles.": "„...Ókei. Það var reyndar vel mælt.“ Hann lætur braka í hnúunum.",
