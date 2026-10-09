@@ -35,7 +35,7 @@ export const DRILLS = {
     medals: [2, 3, 4],
   },
   tips: {
-    id: 'tips', name: 'Tip-Ins', trains: 'Net front', icon: 'equipment_items/stick/slapshot', unit: 'tips', offline: true,
+    id: 'tips', name: 'Tip-Ins', trains: 'Net front', icon: 'equipment_items/stick/slapshot', art: 'equipment_items/hub/tips', unit: 'tips', offline: true, // (art: Batch BO)
     text: 'Ten shots from the point. Get your stick in the lane in front of the net and press SHOOT as the puck comes by to tip it past the goalie.',
     medals: [2, 4, 6],
   },
