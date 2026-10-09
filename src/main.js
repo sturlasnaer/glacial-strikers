@@ -794,6 +794,11 @@ class App {
     });
     m.on('penalty', (e) => {
       const ours = e.team === 0;
+      if (e.shot) { // taken down on a breakaway: a penalty shot
+        this.hud.banner(`<div class="small" style="color:${ours ? '#ff6f7d' : '#ffd45e'}">${t('PENALTY SHOT')}</div><div class="sub">${e.s.name} · ${t(e.reason)} · ${e.shooter.name}</div><div class="small" style="font-size:clamp(20px,3.6vw,34px);margin-top:6px">${ours ? t('One on one with your goalie!') : t('Alone against the goalie: make it count!')}</div>`, 2);
+        audio.sfx('whistle'); audio.crowdOoh(1);
+        return;
+      }
       this.hud.banner(`<div class="small" style="color:${ours ? '#ff6f7d' : '#ffd45e'}">${t('PENALTY')}</div><div class="sub">${e.s.name} · ${t(e.reason)} · ${PENALTY_SECONDS}s</div><div class="small" style="font-size:clamp(20px,3.6vw,34px);margin-top:6px">${ours ? t('Penalty kill: survive it!') : t('Power play!')}</div>`, 2);
       audio.sfx('whistle'); audio.crowdOoh(ours ? 0.4 : 0.8);
       if (ours && e.reason === 'Interference' && !this.penTipShown && !this.cur.versus) {

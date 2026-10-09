@@ -61,7 +61,7 @@ export class Linesman {
       return { id: L.faceoff.drop[i], flip: false };
     }
     if (st === 'penalty') { // the signal for the call (Batch AS), or an arm up
-      const sig = L.calls[String(m.penaltyReason || '').toLowerCase()];
+      const sig = (m.penaltyShotFor && L.calls.penalty_shot) || L.calls[String(m.penaltyReason || '').toLowerCase()]; // (a penalty shot has its own, Batch BL)
       return { id: (Array.isArray(sig) && sig.length ? sig : L.calls.penalty)[beat(2, 3)], flip: false };
     }
     if (st === 'goal' && m.washedOut && L.calls.washout) return { id: L.calls.washout[beat(L.calls.washout.length, 3)], flip: false }; // no goal

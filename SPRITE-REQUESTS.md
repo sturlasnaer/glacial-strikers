@@ -11,6 +11,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 2. **BI**: crossovers for the same players, like BE.
 3. **BJ**: the stick in the gear masks of 27 early skating frames (masks only, no new art).
 4. **BK**: two achievement icons: Sold It and Off the Drop.
+5. **BL**: two more linesman signals: hooking and the penalty shot.
 
 ## Format notes
 
@@ -137,3 +138,11 @@ In the style and size of the BF achievement icons (about 200 px source, reading 
 - `achievements/off_the_drop`: a puck dropping between two crossed sticks on a faceoff dot, a little burst of motion lines as one stick snaps it back (win three faceoffs clean in one match).
 
 2 frames.
+
+## Batch BL: two more linesman signals
+
+The game now calls **penalty shots**: a skater hauled down from behind on a breakaway goes one on one with the goalie from centre ice. The linesman signals each call (Batch AS: interference, boarding, charging), but has no signal for these yet, so he raises an arm. Please add, in the AS style and size, two frames each:
+- `linesman_calls/linesman/hooking_a` and `_b`: the hooking signal (both hands pulling an imaginary stick in toward the stomach), as `linesman.calls.hooking`.
+- `linesman_calls/linesman/penalty_shot_a` and `_b`: arms crossed overhead, then one pointing to centre ice (or whatever reads as "penalty shot" at a glance), as `linesman.calls.penalty_shot`.
+
+4 frames.

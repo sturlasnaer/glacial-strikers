@@ -107,6 +107,40 @@ const mk = (seed = 5) => new Match({ teams: [team(), team()], humanTeam: null, s
   check('someone heads back between the carrier and the net', ok === n, { ok, n });
 }
 
+// penalty shots: a breakaway carrier hauled down from behind gets one, alone against the goalie;
+// everyone's back for the faceoff after, and nobody went to the box
+{
+  let shots = 0, ends = 0, alone = true, back = true, boxed = 0;
+  for (let seed = 0; seed < 6; seed++) {
+    const m = mk(120 + seed);
+    m.state = 'play';
+    const shooter = m.teamSkaters(0)[1], foul = m.teamSkaters(1)[0];
+    m.on('penalty_shot', () => { shots++; if (m.skaters.filter((s) => !s.parked).length !== 1 || m.puck.owner !== shooter) alone = false; });
+    m.on('penalty_shot_over', () => ends++);
+    m.on('goal', () => ends++);
+    m.pendingPenalty = { s: foul, reason: 'Hooking', shot: shooter };
+    m.whistlePenalty();
+    for (let i = 0; i < 60 * 20 && !(ends && m.state === 'faceoff'); i++) m.update(1 / 60);
+    if (m.skaters.some((s) => s.parked)) back = false;
+    if (foul.boxT > 0) boxed++;
+  }
+  check('a penalty shot is taken alone against the goalie', shots === 6 && alone, { shots, alone });
+  check('...and play resumes with everyone back, nobody in the box', ends === 6 && back && boxed === 0, { ends, back, boxed });
+  // and it's called: take a breakaway carrier down from behind
+  let called = 0;
+  for (let seed = 0; seed < 30; seed++) {
+    const m = mk(200 + seed);
+    m.state = 'play';
+    const c = m.teamSkaters(0)[0], d = m.teamSkaters(1)[0];
+    for (const o of m.skaters) if (o !== c && o !== d) { o.x = -400; o.y = o.slot * 60 - 60; }
+    c.x = 200; c.y = 0; c.vx = 260; c.vy = 0; d.x = 175; d.y = 0;
+    m.takePossession(c, 'catch');
+    m.judgeHit(d, c, 300, true, 10);
+    if (m.pendingPenalty && m.pendingPenalty.shot === c) called++;
+  }
+  check('...called on about a third of breakaway hits from behind', called >= 4 && called <= 16, called);
+}
+
 // whole matches: skaters never end up in the boards or a net
 {
   let worst = 0, inNet = 0;

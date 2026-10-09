@@ -9,7 +9,8 @@ export const WHATS_NEW = [
       { icon: 'power_pucks/plain/phase_1', text: 'Faceoffs: wait for the puck to touch the ice, then press. Go too early and you\'re a step slow.' },
       { icon: 'achievements/game_face', text: 'Goalies can pick a new mask at goalie camp, and the club editor has new crests.' },
       { icon: 'icons/rule_moonbeams', text: 'The Glacier Owls\' Observatory and the Thunder Moose\'s Longhouse have rules of their own: a moonbeam and loose planks.' },
-      { icon: 'icons/stat_games', text: 'Forfeiting a league or playoff game now counts as a loss.' },
+      { icon: 'icons/challenge', text: 'Penalty shots: haul a skater down from behind on a breakaway and they go one on one with the goalie.' },
+      { icon: 'icons/stat_games', text: 'Forfeiting a league or playoff game now counts as a loss. After a quick game, Play again starts it over.' },
     ],
   },
 ];

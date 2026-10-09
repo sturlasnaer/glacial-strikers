@@ -1,6 +1,15 @@
 // Íslenska. Keys are the English text exactly as written in the game (with {braces} for
 // values); values are the Icelandic. Names of people, teams and the club stay as they are.
 export const IS = {
+  "Penalty shots: haul a skater down from behind on a breakaway and they go one on one with the goalie.": "Vítaskot: ef leikmaður er felldur aftan frá þegar hann er sloppinn í gegn fer hann einn á móti markverðinum.",
+  "{name} hauls {by} down from behind. That's a penalty shot!": "{name} fellir {by} aftan frá. Það er vítaskot!",
+  "No goal on the penalty shot!": "Ekkert mark úr vítaskotinu!",
+  "Here comes {name} on the penalty shot...": "Hér kemur {name} í vítaskotinu...",
+  "Penalty shot! {name} has it at centre ice, all alone.": "Vítaskot! {name} er með pökkinn á miðjunni, aleinn.",
+  "Hooking": "Krækja",
+  "Alone against the goalie: make it count!": "Einn á móti markverðinum: nýttu það!",
+  "One on one with your goalie!": "Einn á móti markverðinum þínum!",
+  "PENALTY SHOT": "VÍTASKOT",
   "Win three faceoffs clean in one match.": "Vinndu þrjú uppköst hreint í einum leik.",
   "Off the Drop": "Beint úr uppkastinu",
   "Score right after a deke makes the goalie bite.": "Skoraðu strax eftir að gabb fær markvörðinn til að bíta á agnið.",
@@ -9,7 +18,7 @@ export const IS = {
   "Wait for the puck to touch the ice, then press SHOOT or PASS to win the draw.": "Bíddu þar til pökkurinn lendir á ísnum og ýttu þá á SKJÓTA eða SENDA til að vinna uppkastið.",
   "Whistled dead: nobody can get to it.": "Flautað af: enginn kemst að pökknum.",
   "The referee blows it dead. Faceoff!": "Dómarinn flautar. Uppkast!",
-  "Forfeiting a league or playoff game now counts as a loss.": "Ef þú gefur deildar- eða úrslitaleik telst það nú sem tap.",
+  "Forfeiting a league or playoff game now counts as a loss. After a quick game, Play again starts it over.": "Ef þú gefur deildar- eða úrslitaleik telst það nú sem tap. Eftir stakan leik byrjar Spila aftur hann upp á nýtt.",
   "The Glacier Owls' Observatory and the Thunder Moose's Longhouse have rules of their own: a moonbeam and loose planks.": "Stjörnuturn Glacier Owls og Langhús Thunder Moose hafa sínar eigin reglur: tunglgeisla og lausar fjalir.",
   "Goalies can pick a new mask at goalie camp, and the club editor has new crests.": "Markverðir geta valið nýja grímu í markmannabúðum og í félagsstillingunum eru ný merki.",
   "Faceoffs: wait for the puck to touch the ice, then press. Go too early and you're a step slow.": "Uppköst: bíddu þar til pökkurinn snertir ísinn og ýttu þá. Ef þú ferð of snemma ertu skrefi of seinn.",

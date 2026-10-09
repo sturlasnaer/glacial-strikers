@@ -74,7 +74,9 @@ export class Commentary {
     m.on('lightning_pass', (e) => this.say(t('Lightning pass to {name}!', { name: n(e.to) }), 1));
     m.on('combo', (e) => this.say(pick([t('{from} to {name}... {combo}!', { from: n(e.from), name: n(e.s), combo: t(COMBOS[e.key].name).toUpperCase() }), t('{combo}! {from} and {name} in sync!', { combo: t(COMBOS[e.key].name), from: n(e.from), name: n(e.s) })]), 2));
     m.on('chain', (e) => { if (e.n === 3) this.say(pick([t('Tic-tac-toe!'), t('Beautiful passing!'), t('They\'re moving it around!')]), 1); else if (e.n >= 5) this.say(t('{n} passes in a row!', { n: e.n }), 1); });
-    m.on('penalty', (e) => this.say(t('{name} heads to the box for {reason}. {team} on the power play!', { name: n(e.s), reason: t(e.reason).toLowerCase(), team: team(1 - e.team) }), 3, true));
+    m.on('penalty_shot', (e) => this.say(pick([t('Penalty shot! {name} has it at centre ice, all alone.', { name: n(e.s) }), t('Here comes {name} on the penalty shot...', { name: n(e.s) })]), 3, true));
+    m.on('penalty_shot_over', (e) => this.say(t('No goal on the penalty shot!'), 2));
+    m.on('penalty', (e) => e.shot ? this.say(t('{name} hauls {by} down from behind. That\'s a penalty shot!', { name: n(e.s), by: n(e.shooter) }), 3, true) : this.say(t('{name} heads to the box for {reason}. {team} on the power play!', { name: n(e.s), reason: t(e.reason).toLowerCase(), team: team(1 - e.team) }), 3, true));
     m.on('goalie_pulled', (e) => this.say(t('{team} pull their goalie for the extra attacker!', { team: team(e.team) }), 3));
     m.on('plow', (e) => this.say(t('{name} gets bowled over!', { name: n(e.s) }), 1));
   }

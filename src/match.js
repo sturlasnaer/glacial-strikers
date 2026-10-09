@@ -127,6 +127,7 @@ export class Match {
 
   // A faceoff at centre ice, or at one of the painted dots (dotX, dotY).
   setupFaceoff(dotX = 0, dotY = 0) {
+    this.endPenaltyShot();
     for (const t of [0, 1]) if (this.extra[t]) this.returnGoalie(t, true);
     const P = [
       [{ x: -30, y: 0 }, { x: -120, y: -125 }, { x: -230, y: 110 }, { x: -160, y: 0 }],
@@ -260,12 +261,12 @@ export class Match {
     if (st === 'over') { this.tickEntities(dt, false); return; }
     if (st === 'penalty') {
       this.tickEntities(dt, false);
-      if (this.stateT > 2) { const d = this.penaltyDot; this.setupFaceoff(d ? d.x : 0, d ? d.y : 0); }
+      if (this.stateT > 2) { const d = this.penaltyDot; if (this.penaltyShotFor) this.setupPenaltyShot(); else this.setupFaceoff(d ? d.x : 0, d ? d.y : 0); }
       return;
     }
     // play
     if (this.hype.t > 0) this.hype.t -= dt;
-    if (this.updateStall(dt)) return;
+    if (this.pshot ? this.updatePenaltyShot(dt) : this.updateStall(dt)) return;
     this.updateBox(dt);
     this.aiGoaliePull(dt);
     this.possessionT[this.puck.owner ? this.puck.owner.team : 0] += this.puck.owner ? dt : 0;
@@ -1513,11 +1514,68 @@ export class Match {
     if (!this.penaltiesOn || this.state !== 'play' || this.pendingPenalty) return;
     if (this.teamSkaters(a.team).some((k) => k.boxT > 0)) return; // one in the box at a time
     let reason = null;
+    // taken down from behind on a breakaway (nobody else back, in the attacking half, going
+    // in): a penalty shot instead of the power play
+    if (hadPuck && b.speed > 120 && b.x * b.side > 0 && Math.cos(Math.atan2(a.y - b.y, a.x - b.x) - Math.atan2(b.vy, b.vx)) < -0.3
+      && !this.skaters.some((o) => o.team === a.team && o !== a && !o.parked && (o.x - b.x) * b.side > 0) && this.rng() < 0.3) {
+      this.pendingPenalty = { s: a, reason: 'Hooking', shot: b };
+      return;
+    }
     const looseNear = !this.puck.owner && puckDist < 80;
     if (!hadPuck && !looseNear && puckDist > 110) { if (this.rng() < 0.3) reason = 'Interference'; }
     else if (power > 330 && this.rng() < 0.12) reason = 'Charging';
     else if (insideDepth(b.x, b.y) < 34 && power > 260 && this.rng() < 0.1) reason = 'Boarding';
     if (reason) this.pendingPenalty = { s: a, reason };
+  }
+
+  // A penalty shot: the fouled skater alone from centre ice against the goalie, everyone else
+  // along the benches. Taken in ordinary play, so goals, saves and replays all work as ever.
+  setupPenaltyShot() {
+    const s = this.penaltyShotFor;
+    this.penaltyShotFor = null;
+    if (!s || s.parked) { this.setupFaceoff(); return; }
+    const benched = [];
+    let n = [0, 0];
+    for (const o of this.skaters) {
+      if (o === s || o.parked) continue;
+      benched.push(o);
+      o.parked = true; o.controlled = false;
+      o.x = (o.team === 0 ? -1 : 1) * (150 + n[o.team]++ * 45); o.y = RINK.minY + 16; o.vx = o.vy = 0; o.face = Math.PI / 2;
+      o.stun = 0; o.charging = false; o.ultWindup = 0; o.dashT = 0; o.state = 'skate'; o.in = Skater.blankInput();
+    }
+    for (const g of this.goalies) { g.x = g.goalSide * (GOAL_X - 28); g.y = 0; g.setState('ready'); g.react = null; g.track = null; g.holdT = 0; }
+    const p = this.puck;
+    Object.assign(s, { x: -s.side * 30, y: 0, vx: 0, vy: 0, face: s.side > 0 ? 0 : Math.PI, stun: 0, charging: false, ultWindup: 0, dashT: 0, state: 'skate' });
+    p.x = s.x + s.side * 20; p.y = 0; p.z = 0; p.vx = p.vy = p.vz = 0;
+    p.shot = null; p.pass = null; p.curve = null; p.trail.length = 0; p.inNet = null; p.power = null; p.powerT = 0;
+    p.noPickup.clear(); p.rolled.clear();
+    this.barriers.length = 0; this.cyclones.length = 0; this.trails.length = 0;
+    if (this.humans.includes(s.team)) for (const o of this.teamSkaters(s.team)) o.controlled = o === s;
+    this.takePossession(s, 'faceoff');
+    this.pshot = { s, t: 0, gone: 0, benched };
+    this.stall = null;
+    this.state = 'play'; this.stateT = 0;
+    this.emit('penalty_shot', { s });
+  }
+
+  // While it's on: over when the shot is saved, missed or stopped (or carried back out), a goal
+  // ends it the usual way.
+  updatePenaltyShot(dt) {
+    const ps = this.pshot, p = this.puck, s = ps.s;
+    ps.t += dt;
+    if (p.owner !== s) ps.gone += dt;
+    const back = p.x * s.side < -60; // (taken back past centre)
+    const dead = ps.gone > 0 && (ps.gone > 1.8 || (p.owner && p.owner.isGoalie) || (!p.owner && Math.hypot(p.vx, p.vy) < 40 && ps.gone > 0.4));
+    if (!(dead || back || ps.t > 10)) return false;
+    this.emit('penalty_shot_over', { s, scored: false });
+    this.setupFaceoff();
+    return true;
+  }
+
+  endPenaltyShot() {
+    if (!this.pshot) return;
+    for (const o of this.pshot.benched) o.parked = false;
+    this.pshot = null;
   }
 
   // The painted dot on that side of centre (side -1 or 1) nearest a height on the ice.
@@ -1541,8 +1599,15 @@ export class Match {
   }
 
   whistlePenalty() {
-    const { s, reason } = this.pendingPenalty;
+    const { s, reason, shot } = this.pendingPenalty;
     this.pendingPenalty = null;
+    if (shot) { // a penalty shot: nobody to the box; the linesman signals, then it's taken
+      if (this.puck.owner) this.loosePuck(this.puck.owner);
+      this.penaltyShotFor = shot;
+      this.state = 'penalty'; this.stateT = 0; this.penaltyReason = reason;
+      this.emit('penalty', { s, reason, team: s.team, shot: true, shooter: shot });
+      return;
+    }
     if (s.controlled) this.switchControl(null, s.team);
     s.parked = true; s.boxT = PENALTY_SECONDS; s.boxReason = reason;
     s.controlled = false; s.charging = false; s.ultWindup = 0; s.dashT = 0; s.stun = 0;
@@ -1555,6 +1620,7 @@ export class Match {
   }
 
   updateBox(dt) {
+    if (this.pshot) return; // (the clock in the box stops for a penalty shot)
     for (const s of this.skaters) {
       if (!(s.boxT > 0)) continue;
       s.boxT -= dt;
@@ -1575,7 +1641,7 @@ export class Match {
 
   // ------------------------------------------------------------ pulled goalie
   canPullGoalie(team) {
-    if (this.drill || this.state !== 'play' || this.extra[team]) return false;
+    if (this.drill || this.state !== 'play' || this.extra[team] || this.pshot) return false;
     if (this.goalieMode && team === 0) return false; // you're the one in goal
     const us = this.score[team], them = this.score[1 - team];
     return us < them && them >= this.winScore - 1 && this.winScore > 1 && !!this.extraCfg[team];
