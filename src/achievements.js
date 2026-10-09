@@ -60,6 +60,7 @@ export const ACHIEVEMENTS = [
   { id: 'new-colours', name: 'New Colours', text: 'Give the club a new crest.', icon: 'hud_elements/misc/home_crest', art: 'achievements/new_colours', coins: 30 },
   // the deke and the faceoff (Batch BK art; a stand-in until then)
   { id: 'sold-it', name: 'Sold It', text: 'Score right after a deke makes the goalie bite.', icon: 'icons/arch_dangler', art: 'achievements/sold_it', coins: 70 },
+  { id: 'penalty-shot', name: 'From the Spot', text: 'Score on a penalty shot.', icon: 'icons/challenge', art: 'achievements/from_the_spot', coins: 60 },
   { id: 'off-the-drop', name: 'Off the Drop', text: 'Win three faceoffs clean in one match.', icon: 'power_pucks/plain/phase_1', art: 'achievements/off_the_drop', coins: 60 },
   { id: 'weekly-cup', name: 'Cup of the Week', text: 'Win a Weekly Cup on a friends board.', icon: 'badges/rank_1', art: 'achievements/cup_of_the_week', coins: 100 },
 ];
@@ -121,6 +122,10 @@ export class AchievementTracker {
     this.minDiff = 0;
     let glareT = -9, plankT = -9, shields = 0, biteT = -9, clean = 0;
     m.on('deke_goalie', (e) => { if (e.s.team === 0) biteT = m.time; });
+    let ourShot = false; // (a penalty shot of ours under way)
+    m.on('penalty_shot', (e) => { ourShot = e.s.team === 0; });
+    m.on('penalty_shot_over', () => { ourShot = false; });
+    m.on('faceoff', () => { ourShot = false; });
     m.on('faceoff_win', (e) => { if (e.clean && e.s.team === 0 && ++clean >= 3) this.unlock('off-the-drop'); });
     m.on('glare', (e) => { if (e.g.team === 1) glareT = m.time; }); // (their goalie, dazzled by our shot)
     m.on('plank', () => { plankT = m.time; });
@@ -144,6 +149,7 @@ export class AchievementTracker {
       if (m.time - glareT < 1.5) this.unlock('moonstruck');
       if (m.time - plankT < 2.5) this.unlock('splinters');
       if (m.time - biteT < 2) this.unlock('sold-it');
+      if (ourShot) this.unlock('penalty-shot');
     });
     m.on('no_goal', () => { this.minDiff = Math.min(this.minDiff, m.score[0] - m.score[1]); });
     m.on('chain', (e) => { if (e.team === 0 && e.n >= 5) this.unlock('tic-tac-toe'); });
