@@ -8,7 +8,7 @@ import { newSave, signGoalie, setStarter, starterId, goalieIds, goalieStats, hom
 import { careerOf, recordCareer, careerGoalies } from '../src/career.js';
 import { recordRealGame, computeAwards, seasonStats } from '../src/awards.js';
 
-const N = +(process.argv[2] || 4);
+const N = +(process.argv[2] || 8); // (4 matches a style was too few: one style's save % wandered past the bounds)
 let ok = 0, fail = 0;
 const check = (name, cond, info) => { if (cond) ok++; else { fail++; console.log('FAIL', name, info ?? ''); } };
 const KITS = ['frost', 'thunder', 'stone'];

@@ -69,7 +69,7 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
     return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT.goalie}`, size, CLUB_PAGES());
   }
   if (team === 0 && GOALIE_RECRUITS[id]) { // a signed rival goalie, in our colours
-    const p = P[`${GOALIE_RECRUITS[id].art}_g`], fid = p && ((expr && p[expr]) || p.neutral_roster || p.neutral);
+    const p = P[`${GOALIE_RECRUITS[id].art}_g`] || (GOALIE_RECRUITS[id].mask ? P.newcomer_g : null), fid = p && ((expr && p[expr]) || p.neutral_roster || p.neutral);
     return (fid && Assets.icon(fid, size, 'homekit')) || Assets.icon(`character_portraits/home/${PORTRAIT.goalie}`, size, CLUB_PAGES());
   }
   if (team === 0 && RECRUITS[id] && member(id).parts) { // a signing from an expansion club: made from parts, in our colours
@@ -110,6 +110,8 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
   if (team !== 0 && RECRUITS[id]) { // a rival star by player key (a League All-Star: in the All-Star kit)
     const r = RECRUITS[id];
     if (teamId !== 'allstar') return portrait(r.kit, 1, r.team, size, expr);
+    const pu = member(id).parts && Assets.partsPortrait(member(id).parts, expr || 'neutral', size, 'allstar'); // (from parts: their own face)
+    if (pu) return pu;
     const p = P[`${TEAMS[r.team].art}_${ROLE[r.kit]}`] || P[r.sprite];
     const fid = p && ((expr && p[expr]) || p.neutral_roster || p.neutral);
     return (fid && Assets.icon(fid, size, 'allstar')) || Assets.icon(`character_portraits/away/${PORTRAIT[r.kit]}`, size, 'allstar');
@@ -1448,7 +1450,7 @@ export class UI {
     const needs = [list.some((a) => a.parts) && 'parts', list.some((a) => a.look) && 'goalie_parts'].filter((g) => g && !Assets.groupReady(g));
     if (needs.length && !this.partsLoading) {
       this.partsLoading = true;
-      Promise.all(needs.map((g) => Assets.loadGroup(g))).then(() => { this.partsLoading = false; if (this.tab === 'team') this.hub('team'); }).catch(() => { this.partsLoading = false; });
+      Promise.all(needs.map((g) => Assets.loadGroup(g))).then(() => { this.partsLoading = false; if (this.app.scene === 'hub' && this.tab === 'team') this.hub('team'); }).catch(() => { this.partsLoading = false; });
     }
     const P = Assets.atlas.portraits || {};
     const face = (a) => (a.goalie ? (a.look && Assets.goaliePortrait(a.look, 'neutral', 96)) || (P.newcomer_g && Assets.icon(P.newcomer_g.neutral, 96)) || portrait('goalie', 1, null, 96)
@@ -1694,6 +1696,12 @@ export class UI {
 
   // Goalie camp: a new goaltending style, once a season. The first tap arms a choice, the second pays.
   async goalieCamp(gid) {
+    if (this.campOpening) return;
+    this.campOpening = true;
+    try { await this.goalieCampOpen(gid); } finally { this.campOpening = false; }
+  }
+
+  async goalieCampOpen(gid) {
     await Assets.loadGroup('hub').catch(() => {}); // (Brekka)
     const s = this.app.save, name = goalieInfo(gid).name, cur = goalieStyle(s, gid);
     // a goalie from parts picks their mask and its paint here too (free, any time)
@@ -1702,6 +1710,7 @@ export class UI {
     const GP = Assets.atlas.goalie_parts, masks = maskable && GP ? Object.keys(MASK_NAMES).filter((k) => GP.masks[k]) : [];
     const paints = [...new Set([...PAINTS, CLUB.trim, CLUB.jersey])];
     let changed = false;
+    if (this.app.scene !== 'hub') return; // (a match started while the art loaded)
     const open = goalieCampOpen(s, gid), price = GOALIE_CAMP.price, afford = s.coins >= price;
     const who = Assets.atlas.frames['hub_fullbody/coach/whistle'] && Assets.groupReady('hub') && Assets.spriteSet(['hub_fullbody/coach/whistle'], 200);
     const note = !open ? t('Already changed this season.') : !afford ? t('Not enough coins.') : '';
@@ -2439,7 +2448,7 @@ export class UI {
           </div>
           <div>
             <div class="label">${t('Rewards')}</div>
-            <div class="reward-lines">${rewards.lines.map(([a, b]) => `<div><span>${esc(a)}</span><span class="gold-t">${b ? '+' + b : ''}</span></div>`).join('')}</div>
+            <div class="reward-lines">${rewards.lines.map(([a, b]) => `<div><span>${esc(a)}</span><span class="gold-t">${b > 0 ? '+' + b : b < 0 ? '−' + -b : ''}</span></div>`).join('')}</div>
             <div class="reward-total"><span>${t('Coins')}</span><span>+${rewards.coins}</span></div>
             <div class="label" style="margin-top:10px">${t('Experience')}</div>
             <div style="display:grid;gap:6px">

@@ -27,13 +27,13 @@ import { standings } from './league.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan, recordClassic, recordAllStar } from './league.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, RIVAL_IDS, slotSprite, slotLook, EXPANSION_LINES } from './data.js';
+import { TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, EXPANSION_LINES } from './data.js';
 import { rollLegend, legendState, STAY, joinLegend, LEGEND_LINES, twinsFirstTogether } from './legends.js';
 import { rivalSigning, rivalOffer } from './moves.js';
 import { refreshAgents } from './agents.js';
 import { addNews } from './news.js';
 import { teamHasParts, setFills, retireRivals } from './slots.js';
-import { useModular, useGoalieParts } from './modular.js';
+import { useModular, useGoalieParts, goalieArt } from './modular.js';
 import { Quality } from './quality.js';
 import { offerDraft } from './draft.js';
 import { recordCareer } from './career.js';
@@ -380,7 +380,9 @@ class App {
 
   // Both rival teams' art, recoloured for both benches.
   prepAllStar(vote) {
-    ALLSTAR.groups = vote.teams.map((id) => 'rival_' + TEAMS[id].art);
+    // (an expansion club's art is under its mark; players and goalies from parts have pages of their own)
+    ALLSTAR.groups = [...new Set([...vote.teams.map((id) => 'rival_' + (TEAMS[id].art || TEAMS[id].mark)),
+      ...(vote.teams.some(teamHasParts) ? ['parts'] : []), ...(vote.teams.some((id) => TEAMS[id].goalieLook) ? ['goalie_parts'] : [])])];
     return Promise.all([Assets.ensureKit([...new Set([...homeKitGroups(this.save), ...ALLSTAR.groups])]), ...ALLSTAR.groups.map((g) => Assets.loadGroup(g))])
       .catch(() => {}).then(() => Assets.prepareTeam(ALLSTAR));
   }
@@ -485,7 +487,7 @@ class App {
     const cfg = {
       teams: [
         { skaters: ids.map((id) => ({ def: CHARACTERS[id], stats: { ...CHARACTERS[id].base }, name: CHARACTERS[id].name, perks: [] })), goalie: { stats: { rfx: 6, pos: 6 }, name: GOALIE.name }, chem },
-        { skaters: ids.map((id) => ({ def: slotDef(teamId, id), stats: { ...CHARACTERS[id].base }, name: team.names[id], perks: [], sprite: slotSprite(teamId, id), parts: slotLook(teamId, id) })), goalie: { stats: { rfx: 6, pos: 6 }, name: team.names.goalie, art: team.art || 'newcomer' }, chem },
+        { skaters: ids.map((id) => ({ def: slotDef(teamId, id), stats: { ...CHARACTERS[id].base }, name: team.names[id], perks: [], sprite: slotSprite(teamId, id), parts: slotLook(teamId, id) })), goalie: { stats: { rfx: 6, pos: 6 }, name: team.names.goalie, art: team.art || (team.goalieLook ? goalieArt(team.goalieLook) : 'newcomer'), mask: team.goalieLook || null }, chem },
       ],
       humanTeam: 0, humans: [0, 1],
       powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none',
@@ -687,7 +689,7 @@ class App {
     m.classic = classic;
     if (classic) Assets.loadGroup('winter').catch(() => {}); // Pine Pond dressed up
     if (m.goalieMode) Assets.loadGroup('goalie').catch(() => {}); // Wall of Ice
-    if (extra.allstar) Assets.dropOriginals(ALLSTAR.groups); // only the recoloured copies are drawn
+    if (extra.allstar) Assets.dropOriginals(ALLSTAR.groups.filter((g) => g !== 'parts' && g !== 'goalie_parts')); // only the recoloured copies are drawn (heads and masks recolour from the originals)
     this.hookMatch(m);
     this.replay.clear();
     this.clips.clear();
@@ -1097,7 +1099,10 @@ class App {
     setRookies({});
     setFreeGoalies({});
     setGoalieLooks({});
+    setStyles({}); // (training-camp changes)
     setFills(this.save);
+    this.applyClubLook(); // the default club again: name, colours, crest
+    this.ui.guideStep = null; this.ui.partsLoading = false;
     this.ach = new AchievementTracker(this.save, (a) => this.toastAchievement(a));
     writeSave(this.save);
     this.goTitle();
@@ -1207,7 +1212,8 @@ class App {
     Assets.prepareClub();
     this.renderer.clearCaches();
     const kit = homeKitGroups(this.save);
-    if (kit.length) Assets.ensureKit(kit);
+    // once our pages are recoloured, the hub again (cards and portraits drawn before kept the old kit)
+    if (kit.length) Assets.ensureKit(kit).then(() => { Assets.prepareTeam(PALETTES.homekit); if (this.scene === 'hub') this.ui.hub(this.ui.tab); }).catch(() => {});
   }
 
   // Once a season is over: hand out the awards (once) and hold the ceremony.

@@ -1,6 +1,6 @@
 // Achievements: tracked from match events and save progress, shown in the Trophies tab.
 
-import { TEAMS, GEAR, CHEM_LEVELS, RECRUITS, CAST_PAIRS, LEGENDS, ELEMENTS } from './data.js';
+import { TEAMS, GEAR, CHEM_LEVELS, RECRUITS, CAST_PAIRS, LEGENDS, ELEMENTS, GOALIE_RECRUITS } from './data.js';
 
 const TROPHY = 'equipment_items/reward/trophy', MEDAL = 'equipment_items/reward/medal', STAR = 'hud_elements/misc/level_star';
 
@@ -70,7 +70,7 @@ export function useAchievementArt(frames) {
   }
 }
 const BY_ID = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a]));
-const RECRUITS_G = (k) => /^(lynx|comets|rams|ravens|royals)_g$/.test(k); // a rival's goalie (not a free agent)
+const RECRUITS_G = (k) => !!GOALIE_RECRUITS[k]; // a rival's goalie, the expansion clubs' too (not a free agent)
 
 export class AchievementTracker {
   constructor(save, onUnlock) {

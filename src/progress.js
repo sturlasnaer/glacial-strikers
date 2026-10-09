@@ -420,7 +420,7 @@ export function allStarConfig(save, vote, opts = {}) {
     buffs: {},
     teams: [
       { skaters: vote.ours.map(ours), goalie: homeGoalie(save), chem: {} },
-      { skaters: vote.theirs.map((w) => rival(w)), goalie: { stats: { rfx: g.goalie.rfx + 1, pos: g.goalie.pos + 1 }, name: g.names.goalie, art: g.art || 'newcomer' }, chem: {} },
+      { skaters: vote.theirs.map((w) => rival(w)), goalie: { stats: { rfx: g.goalie.rfx + 1, pos: g.goalie.pos + 1 }, name: g.names.goalie, art: g.art || (g.goalieLook ? goalieArt(g.goalieLook) : 'newcomer'), mask: g.goalieLook || null }, chem: {} },
     ],
     humanTeam: 0,
     goalieMode: !!opts.goalieMode,

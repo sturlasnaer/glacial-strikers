@@ -133,11 +133,12 @@ export class HUD {
 
   // Banner key in the sprite pack: our cast by name, rivals by roster slot.
   bannerKey(k) {
+    if (k.team === 0 && RECRUITS[k.who] && TEAMS[RECRUITS[k.who].team].mark && RECRUITS[k.who].kit === 'frost') return `${TEAMS[RECRUITS[k.who].team].mark}_c`; // an expansion club's captain, signed
     if (k.team === 0 && !k.isGoalie && RECRUITS[k.who]) return k.sprite; // a signing's own banner
     if (k.team === 0 && ROOKIES[k.who]) return null; // a rookie: no banner art, the portrait band
     if (k.team === 0 && LEGENDS[k.who]) return LEGEND_ART.has(k.sprite) ? k.sprite : null;
     if (k.team === 0 && k.isGoalie && k.art && !isPartsArt(k.art) && k.art !== 'newcomer') return `${k.art}_g`; // a signed rival goalie's own banner
-    if (k.team === 0 && RECRUITS[k.who] && TEAMS[RECRUITS[k.who].team].mark && RECRUITS[k.who].kit === 'frost') return `${TEAMS[RECRUITS[k.who].team].mark}_c`; // an expansion club's captain, signed
+    if (k.team === 0 && k.isGoalie && k.art) return null; // (made from parts, or the newcomer goalie: no painted banner, the portrait band)
     if (k.team === 0) return ART_NAME[k.isGoalie ? 'goalie' : k.def.id];
     if (k.isGoalie) return k.art && !isPartsArt(k.art) && k.art !== 'newcomer' ? `${k.art}_g` : null;
     const club = TEAMS[this.teamId];

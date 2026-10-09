@@ -3,7 +3,7 @@
 // reaction time, decision quality, aim and aggression.
 
 import { clamp, lerp, norm, segDist } from './util.js';
-import { GOAL_X, MOUTH, BLUE_X, clampInside, RINK } from './rink.js';
+import { GOAL_X, MOUTH, BLUE_X, clampInside, RINK, insideDepth, netBox } from './rink.js';
 
 export class TeamAI {
   constructor(match, team, diff) {
@@ -252,19 +252,21 @@ export class TeamAI {
     return { t: 2 + Math.hypot(c.x - s.x, c.y - s.y) / sp, x: c.x, y: c.y };
   }
 
-  // A Monolith wall standing across the straight line from (ax, ay) to (bx, by), with `rad`
-  // to spare on either side: the barrier, and which side of it the start is on (null if clear).
+  // The nearest Monolith wall the straight line from (ax, ay) to (bx, by) crosses: its ends on
+  // opposite faces, crossing within the wall's length and `rad` to spare (a target on our own
+  // side, even right against the face, isn't across it). The barrier and our side, or null.
   wallAcross(ax, ay, bx, by, rad) {
+    let best = null, bt = 2;
     for (const w of this.m.barriers) {
       if (!w.alive || w.breaking > 0) continue;
       const ux = Math.cos(w.ang), uy = Math.sin(w.ang), R = w.thick / 2 + rad;
       const da = (ax - w.x) * -uy + (ay - w.y) * ux, db = (bx - w.x) * -uy + (by - w.y) * ux; // across the wall
-      if (Math.sign(da) === Math.sign(db) && Math.abs(db) > R) continue; // both on one side, clear of its face
-      const t = da === db ? 0 : clamp(da / (da - db), 0, 1);
+      if (da === db || Math.sign(da) === Math.sign(db)) continue;
+      const t = da / (da - db);
       const along = (ax + (bx - ax) * t - w.x) * ux + (ay + (by - ay) * t - w.y) * uy;
-      if (Math.abs(along) < w.len / 2 + R) return { w, side: Math.sign(da) || 1, ux, uy, R };
+      if (Math.abs(along) < w.len / 2 + R && t < bt) { bt = t; best = { w, side: Math.sign(da) || 1, ux, uy, R }; }
     }
-    return null;
+    return best;
   }
 
   // ------------------------------------------------------------- actions
@@ -273,12 +275,20 @@ export class TeamAI {
     // a stone wall in the way: round its nearer end rather than skating into it
     const wall = this.wallAcross(s.x, s.y, c.x, c.y, s.r + 4);
     if (wall) {
-      const { w, side, ux, uy, R } = wall, reach = w.len / 2 + R + 14;
-      const ends = [1, -1].map((e) => ({ x: w.x + ux * reach * e - uy * side * R * 0.6, y: w.y + uy * reach * e + ux * side * R * 0.6 }));
-      const cost = (q) => Math.hypot(q.x - s.x, q.y - s.y) + Math.hypot(c.x - q.x, c.y - q.y);
-      const best = cost(ends[0]) <= cost(ends[1]) ? ends[0] : ends[1];
-      c = clampInside(best.x, best.y, 22);
-      slowR = Math.min(slowR, 20); // (keep the speed up going round)
+      const { w, side, ux, uy, R } = wall, reach = w.len / 2 + R + 14, m = this.m;
+      // a way round that's open: on the ice, out of the nets and clear of any other wall
+      const inNet = (q) => [-1, 1].some((sd) => { const b = netBox(sd); return q.x > b.x0 - s.r && q.x < b.x1 + s.r && q.y > b.y0 - s.r - 4 && q.y < b.y1 + s.r + 4; });
+      const open = (q) => insideDepth(q.x, q.y) > s.r + 6 && !inNet(q) && !m.barriers.some((o) => o !== w && o.alive && o.breaking <= 0 && segDist(q.x, q.y, ...o.ends()).d < o.thick / 2 + s.r + 4);
+      const ends = [1, -1].map((e) => ({ e, x: w.x + ux * reach * e - uy * side * R * 0.6, y: w.y + uy * reach * e + ux * side * R * 0.6 })).filter(open);
+      if (ends.length) {
+        const cost = (q) => Math.hypot(q.x - s.x, q.y - s.y) + Math.hypot(c.x - q.x, c.y - q.y);
+        // keep the way round we picked for a moment, so it doesn't flip from frame to frame
+        const held = s.detour && s.detour.w === w && m.time - s.detour.t < 0.6 && ends.find((q) => q.e === s.detour.e);
+        const best = held || ends.sort((a, b) => cost(a) - cost(b))[0];
+        if (!held) s.detour = { w, e: best.e, t: m.time };
+        c = { x: best.x, y: best.y };
+        slowR = Math.min(slowR, 20); // (keep the speed up going round)
+      }
     }
     let dx = c.x - s.x, dy = c.y - s.y;
     const d = Math.hypot(dx, dy);
@@ -470,7 +480,7 @@ export class TeamAI {
       // a whirlwind to clear the way to the net
       if (s.def.ult.id === 'cyclone' && s.ult >= 100 && near < 90 && dx < 520 && m.rng() < 0.35) inp.ult = true;
       // a wall between the carrier and the defender closing in (not across the carrier's own way)
-      if (s.def.ult.id === 'monolith' && s.ult >= 100 && nearOpp && near < 120 && m.rng() < 0.3) {
+      if (s.def.ult.id === 'monolith' && s.ult >= 100 && nearOpp && !nearOpp.parked && near >= 85 && near < 130 && m.rng() < 0.3) { // (closer, and it would rise behind them)
         s.face = Math.atan2(nearOpp.y - s.y, nearOpp.x - s.x);
         inp.ult = true;
       }

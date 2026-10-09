@@ -71,7 +71,7 @@ export const Assets = {
     if (t && (t.art || t.mark)) jobs.push(this.loadGroup('rival_' + (t.art || t.mark)));
     if (t && t.goalieLook) jobs.push(this.loadGroup('goalie_parts')); // (their goalie, made from parts)
     for (const g of MATCH) jobs.push(this.loadGroup(g));
-    if (t && t.art && this.needNewcomers) jobs.push(this.loadGroup('newcomers')); // (a signed slot's newcomer)
+    if (t && (t.art || t.mark) && this.needNewcomers) jobs.push(this.loadGroup('newcomers')); // (a signed slot's newcomer, or the backup goalie)
     if (this.partsFor && this.partsFor(teamId)) jobs.push(this.loadGroup('parts')); // (a fill made from parts, in their colours)
     if (arena && arena !== 'home') jobs.push(this.ensureArena(arena));
     await Promise.all(jobs).catch(() => {});
@@ -206,7 +206,7 @@ export const Assets = {
   // (or, for a palette with groups, just those pages).
   prepareTeam(team) {
     const mark = team.art || team.mark; // (an expansion club's identity art: Batch AU)
-    const own = (g) => (team.groups ? team.groups.includes(g) : g === 'away' || g === 'newcomers' || g === 'parts' || g === 'goalie_parts' || (mark && g === 'rival_' + mark));
+    const own = (g) => (team.groups ? team.groups.includes(g) : g === 'away' || g === 'newcomers' || (g === 'parts' && (!this.partsFor || this.partsFor(team.id))) || (g === 'goalie_parts' && !!team.goalieLook) || (mark && g === 'rival_' + mark));
     const loaded = this.pages.filter((img, i) => img && own(this.atlas.pages[i].group)).length + '|' + (team.groups || []).join(',');
     const r = this.recolored.get(team.id);
     if (r && r.loaded === loaded) return;
@@ -390,7 +390,7 @@ export const Assets = {
     const GP = this.atlas.goalie_parts, a = GP && GP.anchors[id], f = this.atlas.frames[id], pages = this.pagesFor(teamId);
     const views = a && GP.masks[look.mask], head = views && (views[a.view] || views.s), hf = head && this.atlas.frames[head];
     if (!f || !hf || !pages[f[0]]) return '';
-    const key = `gstand|${id}|${look.mask}|${look.paint}|${height}|${teamId}`;
+    const key = `gstand|${id}|${look.mask}|${look.paint}|${look.body || 'std'}|${height}|${teamId}|`;
     if (this.iconCache.has(key)) return this.iconCache.get(key);
     const face = this.paintCanvas(head, look);
     if (!face) return '';
@@ -423,7 +423,7 @@ export const Assets = {
     const bf = sh && this.atlas.frames[sh.body], ff = faceId && this.atlas.frames[faceId];
     const page = bf && this.pagesFor(teamId)[bf[0]];
     if (!bf || !ff || !page) return '';
-    const key = `gparts|${look.mask}|${look.paint}|${look.body || 'std'}|${faceId}|${size}|${teamId}${this.canvasMode ? '|c' : ''}`;
+    const key = `gparts|${look.mask}|${look.paint}|${look.body || 'std'}|${faceId}|${size}|${teamId}|${this.canvasMode ? 'c' : ''}`;
     if (this.iconCache.has(key)) return this.iconCache.get(key);
     const face = this.paintCanvas(faceId, look);
     if (!face) return '';
@@ -452,7 +452,7 @@ export const Assets = {
     const bf = body && this.atlas.frames[body.body], ff = faceId && this.atlas.frames[faceId];
     const page = bf && this.pagesFor(teamId)[bf[0]];
     if (!bf || !ff || !page) return '';
-    const key = `parts|${look.body}|${look.head}|${look.skin}|${look.hair}|${faceId}|${size}|${teamId}${this.canvasMode ? '|c' : ''}`;
+    const key = `parts|${look.body}|${look.head}|${look.skin}|${look.hair}|${faceId}|${size}|${teamId}|${this.canvasMode ? 'c' : ''}`;
     if (this.iconCache.has(key)) return this.iconCache.get(key); // (as a canvas mid-match, as a PNG in menus)
     const face = this.partsCanvas(faceId, look);
     if (!face) return '';
@@ -585,7 +585,7 @@ function loadImage(src, tries = 2) {
     img.decoding = 'async';
     // decoded off the main thread now, not on first use: a page first drawn mid-match (an
     // icon at a goal) used to decode right there and stall the frame for half a second
-    img.onload = () => (img.decode ? img.decode().catch(() => {}) : Promise.resolve()).then(() => res(img));
+    img.onload = () => Promise.race([img.decode ? img.decode().catch(() => {}) : null, new Promise((r) => setTimeout(r, 4000))]).then(() => res(img));
     img.onerror = () => (tries > 1 ? setTimeout(() => loadImage(src, tries - 1).then(res, rej), 600) : rej(new Error('Could not load ' + src)));
     img.src = src;
   });

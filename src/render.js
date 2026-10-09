@@ -1321,7 +1321,7 @@ export class Renderer {
     const fr = this.skaterFrame(s, match);
     const p = toScreen(g.x, g.y);
     const pages = s.team === 0 ? (s.look ? Assets.pagesFor(s.look) : Assets.clubPages()) : this.awayPages;
-    this.drawTinted(ctx, fr.id, pages, p.x, p.y, SKATER_SCALE * persp(g.y), fr.flip, 0, '#ffe066', 0.55 * (1 - g.t / g.life), true);
+    this.drawTinted(ctx, fr.id, pages, p.x, p.y, SKATER_SCALE * persp(g.y) * (s.parts ? PARTS_SCALE.body : 1), fr.flip, 0, '#ffe066', 0.55 * (1 - g.t / g.life), true);
   }
 
   // A race ghost (a recorded run): the skater's art, see-through with a frosty tint, and
@@ -1331,10 +1331,11 @@ export class Renderer {
     const f = Assets.frame(fr.id);
     if (!f) return;
     const p = toScreen(s.x, s.y);
-    const k = SKATER_SCALE * persp(s.y);
+    const k = SKATER_SCALE * persp(s.y) * (s.parts ? PARTS_SCALE.body : 1);
     const pages = s.look ? Assets.pagesFor(s.look) : Assets.clubPages();
     Assets.draw(ctx, fr.id, p.x, p.y, k, { flip: fr.flip, pages, alpha: alpha * 0.5 });
     this.drawTinted(ctx, fr.id, pages, p.x, p.y, k, fr.flip, 0, '#bff4ff', alpha * 0.35);
+    if (s.parts) { ctx.save(); ctx.globalAlpha *= alpha * 0.6; this.drawHead(ctx, s, fr, p.x, p.y, k, pages); ctx.restore(); } // (a player from parts: their head too)
     if (!label) return;
     ctx.save();
     ctx.globalAlpha = alpha * 0.85;
@@ -1793,6 +1794,20 @@ export class Renderer {
   // drawn here they were another full-screen gradient fill every frame. Only the goal
   // lamp's flicker is drawn.
   drawVignette(ctx, fx) {
+    // a goal clip records the canvas: while one is being made the vignette is drawn on it, and
+    // the page's still layer is hidden so it isn't doubled
+    const rec = !!this.clipOverlay;
+    if (rec !== this.vigRec) { this.vigRec = rec; const el = typeof document !== 'undefined' && document.getElementById('vignette'); if (el) el.hidden = rec; }
+    if (rec) {
+      if (!this.vig || this.vigW !== this.w || this.vigH !== this.h) {
+        this.vigW = this.w; this.vigH = this.h;
+        const g = ctx.createRadialGradient(this.w / 2, this.h / 2, Math.min(this.w, this.h) * 0.45, this.w / 2, this.h / 2, Math.max(this.w, this.h) * 0.75);
+        g.addColorStop(0, 'rgba(11,20,36,0)'); g.addColorStop(1, 'rgba(11,20,36,0.55)');
+        this.vig = g;
+      }
+      ctx.fillStyle = this.vig;
+      ctx.fillRect(0, 0, this.w, this.h);
+    }
     if (fx.flashes && fx.lamp > 0 && Math.sin(fx.lamp * 12) > 0) {
       ctx.fillStyle = hexA(fx.lampColor, 0.08);
       ctx.fillRect(0, 0, this.w, this.h);

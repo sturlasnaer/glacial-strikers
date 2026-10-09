@@ -4,7 +4,7 @@
 import { clamp, norm, dist, segDist, makeRng, Emitter, angDiff } from './util.js';
 import {
   RINK, GOAL_X, MOUTH, NET_DEPTH, POST_R, CROSSBAR, DOTS,
-  constrainToRink, netBox, makeTwists, auroraRows, clampInside, insideDepth,
+  constrainToRink, netBox, makeTwists, auroraRows, clampInside, insideDepth, collideNets,
 } from './rink.js';
 import { Puck, Skater, Goalie, Barrier, collideBarrier, PUCK_R } from './entities.js';
 import { Abilities } from './abilities.js';
@@ -22,6 +22,9 @@ const METER_PERKS = ['Captain', 'Storm Rider', 'Bulwark', 'Fuel', 'Squall', 'Dus
 // the cast's three combos have their own effects; the newer pairs mix their elements' parts
 const BESPOKE_COMBOS = new Set(CAST_PAIRS);
 const lv3 = (level) => (level - 1) * 0.03;
+
+export let STEAL_BASE = 0.47; // a defender's stick on the puck: steals a second at the base rate
+export const setStealBase = (v) => { STEAL_BASE = v; }; // (for balance runs)
 
 export class Match {
   // cfg: { teams: [teamCfg, teamCfg], humanTeam: 0|null, seed, powers: [], twist, diff: [d0, d1] }
@@ -424,7 +427,8 @@ export class Match {
       const sp = d.stickPoint();
       if (Math.hypot(sp.x - p.x, sp.y - p.y) > 20) continue;
       const shielded = (d.x - c.x) * (p.x - c.x) + (d.y - c.y) * (p.y - c.y) < 0; // reaching round the carrier's body
-      const rate = (shielded ? 0.35 : 0.6) * (1 + (d.stats.chk - c.stats.pas) * 0.06) // (0.8 when the puck sat in front of the body: out on the blade it's easier to reach) * this.ai[d.team].stealMul() * (d.def.arch === 'grinder' ? 1.08 : 1) * (d.hasPerk('Pickpocket') ? 1.1 : 1);
+      // (the base was 0.8 when the puck sat in front of the body: out on the blade it's easier to reach)
+      const rate = STEAL_BASE * (shielded ? 0.58 : 1) * (1 + (d.stats.chk - c.stats.pas) * 0.06) * this.ai[d.team].stealMul() * (d.def.arch === 'grinder' ? 1.08 : 1) * (d.hasPerk('Pickpocket') ? 1.1 : 1);
       if (this.rng() < rate * dt) {
         this.takePossession(d, 'steal');
         c.stun = 0.12;
@@ -800,6 +804,8 @@ export class Match {
         p.x += (o.vx || 0) * dt; p.y += (o.vy || 0) * dt;
         const dx = cp.x - p.x, dy = cp.y - p.y, k = Math.hypot(dx, dy) > 60 ? 1 : 1 - Math.exp(-dt * 26);
         p.x += dx * k; p.y += dy * k;
+        collideNets(p, PUCK_R); // (on a wraparound the blade passes the net: the puck goes round it, not through the mesh)
+        if (p.trail.length) p.trail.length = 0; // (the streak of the pass it came in on)
       } else { p.x = cp.x; p.y = cp.y; }
       p.z = 0;
       p.vx = o.vx || 0; p.vy = o.vy || 0;
@@ -1098,7 +1104,7 @@ export class Match {
         else chance = sp < 260 ? 1 : sp < 600 ? 0.8 : sp < 1000 ? 0.45 : 0.2;
         // (a pass the player makes is caught like the player's own catches: an AI teammate's
         // fumble roll on it felt like the game dropping one pass in nine)
-        if (!(intended && this.humans.includes(s.team))) chance *= this.ai[s.team].catchMul(s);
+        if (!(intended && p.pass.from.controlled && this.humans.includes(p.pass.from.team))) chance *= this.ai[s.team].catchMul(s);
         if (this.rng() < chance) {
           this.takePossession(s, 'catch');
           return true;
@@ -1506,7 +1512,7 @@ export class Match {
     g.leaving = true; g.leaveX = g.x; g.leaveY = g.y;
     g.disabled = true; g.x = g.goalSide * 900; g.y = 900;
     const c = this.extraCfg[team];
-    const x = new Skater(this, team, c.def, c.stats, 3, { name: c.name, perks: [], sprite: c.sprite, look: c.look, who: 'extra' });
+    const x = new Skater(this, team, c.def, c.stats, 3, { name: c.name, perks: [], sprite: c.sprite, look: c.look, parts: c.parts, hand: c.hand, gear: c.gear, who: 'extra' });
     x.extraAttacker = true;
     x.x = team === 0 ? -20 : 20; x.y = RINK.minY + 30; x.vy = 260; x.vx = (team === 0 ? 1 : -1) * 120;
     x.face = Math.PI / 2;
