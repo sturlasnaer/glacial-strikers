@@ -4,7 +4,7 @@ import { Assets } from './assets.js';
 import {
   CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
-  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, RIVAL_IDS, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, CLUB_CRESTS, clubCrestId, MASK_NAMES, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
+  RECRUITS, ROOKIES, setRookies, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, RIVAL_IDS, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, CLUB_CRESTS, clubCrestId, MASK_NAMES, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
 import { standings, classicOpponent, CLASSIC_AFTER, ALLSTAR_AFTER, leagueRivals } from './league.js';
 import { BUFF_TEXT } from './lockerroom.js';
@@ -1238,7 +1238,7 @@ export class UI {
         <div class="card-head">
           <img src="${portrait(id, 0, null, 152)}" alt="">
           <div style="min-width:0">
-            <h3>${esc(m.name)}</h3>
+            <h3>${esc(m.name)}${s.rookies && s.rookies[id] ? ` <button class="btn tiny ghost rename-btn" data-rename="${id}" title="${esc(t('Rename'))}">${t('Rename')}</button>` : ''}</h3>
             <div class="sub">${esc(t(m.title))}${m.recruit ? ` · ${t('signed')}` : ''}${m.agent ? ` · ${t('free agent')}` : ''}${m.legend ? ` · <span class="gold-t">${t('legend')}</span>` : ''}${m.rookie ? ` · ${smallIcon('icons/rookie', 40)}<span class="pot" title="${esc(t(POTENTIAL_GRADE[m.rookie.potential]))}">${stars(m.rookie.potential)}</span>` : ''}</div>
             <div class="lvl">${t('LV {n}', { n: r.level })}${r.points ? ` <span style="font-size:15px">· ${t(r.points > 1 ? '{n} points to spend' : '{n} point to spend', { n: r.points })}</span>` : ''}</div>
           </div>
@@ -1305,6 +1305,7 @@ export class UI {
     }, body);
     this.click('[data-perk]', (el) => this.perkChoice(el.dataset.perk, () => this.hub('team')), body);
     this.click('[data-camp]', (el) => this.campModal(el.dataset.camp), body);
+    this.click('[data-rename]', (el) => this.renameModal(el.dataset.rename), body);
     this.click('#t-supers', () => this.supersHelp(), body);
     this.click('[data-gear]', (el) => { const [id, slot] = el.dataset.gear.split(':'); this.gearPicker(id, slot); }, body);
     this.click('[data-dress]', (el) => { setLineup(s, el.dataset.dress); writeSave(s); audio.sfx('confirm'); this.hub('team'); }, body);
@@ -1852,6 +1853,32 @@ export class UI {
       <div class="wn-coach">${npc('coach', t('A few new things since you were last in the room:'))}</div>
       <div class="whatsnew">${entry.items.map((it) => `<div class="wn-row">${smallIcon(it.icon, 64, 'wn-ico') || '<span class="wn-ico"></span>'}<span>${esc(t(it.text))}</span></div>`).join('')}</div>
       <div class="row" style="justify-content:flex-end"><button class="btn gold" data-close>${t('Got it')}</button></div>`, null, true, done);
+  }
+
+  // A drafted rookie or a signed free agent is ours to name (the cast, the stars we signed and the
+  // legends keep theirs). The name is what the HUD, the commentary and the crowd use from now on.
+  renameModal(id) {
+    const s = this.app.save, k = s.rookies && s.rookies[id];
+    if (!k) return;
+    this.modal(`<h2>${t('Rename {name}', { name: esc(k.name) })}</h2>
+      <p class="muted" style="margin-top:0">${t('A name of their own, for the scoresheet and the commentators.')}</p>
+      <input class="cloud-input" id="rn-name" maxlength="14" autocomplete="off" spellcheck="false" value="${esc(k.name)}">
+      <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Cancel')}</button><button class="btn gold" id="rn-go">${t('Save')}</button></div>`, (m, close) => {
+      const input = m.querySelector('#rn-name');
+      setTimeout(() => { input.focus(); input.select(); }, 50);
+      const save = () => {
+        const name = input.value.replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 14);
+        if (!name) { audio.sfx('deny'); return; }
+        k.name = name;
+        setRookies(s.rookies);
+        writeSave(s);
+        audio.sfx('confirm');
+        close();
+        this.hub('team');
+      };
+      this.click('#rn-go', save, m);
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } e.stopPropagation(); });
+    });
   }
 
   // Quick line-up change, one row per position.
