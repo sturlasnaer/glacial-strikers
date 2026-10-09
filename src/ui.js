@@ -28,6 +28,7 @@ import { agentState, marketOpen, agentsLeft, signAgent } from './agents.js';
 import { latestNews } from './news.js';
 import { audio } from './audio.js';
 import { t } from './i18n.js';
+import { RINK, GOAL_X, BLUE_X, CREASE, MOUTH, NET_DEPTH } from './rink.js';
 const VOLUMES = () => [[0, t('Off')], [0.35, t('Low')], [0.7, t('Mid')], [1, t('Full')]];
 // dialogue voices: each role speaks at its own pitch; rivals a little lower
 const VOICE = { frost: 660, thunder: 800, stone: 470, goalie: 590 };
@@ -257,6 +258,21 @@ const stars = (n) => {
 // The prospect card rims (Batch AD), by potential: bronze, silver, gold.
 const CARD_RIMS = { bronze: 'gfx/prospect-cards/images/prospect_bronze.png', silver: 'gfx/prospect-cards/images/prospect_silver.png', gold: 'gfx/prospect-cards/images/prospect_gold.png' };
 const rimFor = (potential) => CARD_RIMS[potential >= 4 ? 'gold' : potential === 3 ? 'silver' : 'bronze'];
+// The shot map on the results: the rink from above, every shot on goal where it was taken from
+// (ours attack the right-hand net), goals ringed in gold.
+const shotMapSvg = (list, ours, theirs) => {
+  const { minX, maxX, minY, maxY, r } = RINK, col = (k) => (k.team === 0 ? ours : theirs);
+  const dots = [...list].sort((a, b) => a.goal - b.goal).map((k) => (k.goal
+    ? `<circle cx="${k.x}" cy="${k.y}" r="22" fill="${col(k)}" stroke="#ffd45e" stroke-width="10"/>`
+    : `<circle cx="${k.x}" cy="${k.y}" r="13" fill="${col(k)}" fill-opacity="0.85" stroke="#16223d" stroke-width="3"/>`)).join('');
+  const end = (sx) => `<line x1="${sx * GOAL_X}" y1="${minY + 40}" x2="${sx * GOAL_X}" y2="${maxY - 40}" stroke="#e05a6a" stroke-width="4"/>
+    <path d="M ${sx * GOAL_X} ${-CREASE.ry} A ${CREASE.rx} ${CREASE.ry} 0 0 ${sx > 0 ? 0 : 1} ${sx * GOAL_X} ${CREASE.ry} Z" fill="#9fd3f2"/>
+    <rect x="${sx > 0 ? GOAL_X : -GOAL_X - NET_DEPTH}" y="${-MOUTH}" width="${NET_DEPTH}" height="${MOUTH * 2}" fill="none" stroke="#16223d" stroke-width="6"/>
+    <line x1="${sx * BLUE_X}" y1="${minY}" x2="${sx * BLUE_X}" y2="${maxY}" stroke="#3b7fd6" stroke-width="12"/>`;
+  return `<svg class="shotmap" viewBox="${minX - 8} ${minY - 8} ${maxX - minX + 16} ${maxY - minY + 16}" role="img" aria-label="${t('Shot map')}">
+    <rect x="${minX}" y="${minY}" width="${maxX - minX}" height="${maxY - minY}" rx="${r}" fill="#eaf5fb" stroke="#16223d" stroke-width="8"/>
+    <line x1="0" y1="${minY}" x2="0" y2="${maxY}" stroke="#e05a6a" stroke-width="12"/>${end(1)}${end(-1)}${dots}</svg>`;
+};
 const smallIcon = (id, size = 40, cls = 'rule-ico') => { const src = id && Assets.icon(id, size); return src ? `<img class="${cls}" src="${src}" alt="">` : ''; };
 const btnIcon = (id) => smallIcon(id, 48, 'btn-ico'); // in front of a button's words
 // A goaltending style's icon (Batch AN), the Iron Wall until it's in.
@@ -2476,12 +2492,16 @@ export class UI {
     const tm = teamInfo(teamId);
     const won = summary.winner === 0;
     const mine = summary.skaters.filter((s) => s.team === 0);
-    const score = (s) => (s.goalie ? (s.saves >= 12 && s.saves >= 9 * s.ga ? s.saves * 0.3 + (s.ga === 0 ? 4 : 0) : -1) // (a goalie who stood on their head)
-      : s.goals * 3 + s.assists * 2 + s.steals + s.blocks + s.hits * 0.5);
     const goalies = [0, 1].map((tm) => ({ goalie: true, team: tm, saves: summary.saves[tm], ga: summary.score[1 - tm],
       id: tm === 0 ? summary.goalie || 'halla' : (summary.goalieWho && summary.goalieWho[1]) === 'sub_goalie' ? 'sub_goalie' : 'goalie',
       name: (summary.goalieNames && summary.goalieNames[tm]) || (tm === 0 ? goalieInfo(summary.goalie || 'halla').name : t('Goalie')) }));
-    const mvp = [...summary.skaters, ...goalies].sort((a, b) => score(b) - score(a))[0];
+    // the three stars of the game: from either team, a winner ahead on a tie
+    const starScore = (k) => (k.goalie ? (k.saves >= 8 ? k.saves * 0.45 - k.ga * 1.2 + (k.ga === 0 ? 5 : 0) : -9)
+      : k.goals * 5 + (k.goals >= 3 ? 2 : 0) + k.assists * 2.5 + (k.steals + k.blocks) * 0.6 + k.hits * 0.25) + (summary.winner === k.team ? 1 : 0);
+    const stars = [...summary.skaters, ...goalies].sort((a, b) => starScore(b) - starScore(a)).slice(0, 3);
+    const starLine = (k) => (k.goalie ? t('{n} saves', { n: k.saves })
+      : k.goals || k.assists ? `${k.goals} ${t('G')} · ${k.assists} ${t('A')}` : `${k.steals} ${t('STL')} · ${k.hits} ${t('HIT')}`);
+    const map = summary.shotMap || [];
     const s = this.app.save;
     const r = this.set(`
       <div class="dim"></div>
@@ -2497,7 +2517,15 @@ export class UI {
             <table class="res-table"><thead><tr><th>${t('Player')}</th><th>${t('G')}</th><th>${t('A')}</th><th>${t('SOG')}</th><th>${t('STL')}</th><th>${t('HIT')}</th></tr></thead><tbody>
               ${summary.skaters.map((k) => `<tr style="color:${k.team === 0 ? 'var(--cream)' : '#f5b3bb'}"><td>${esc(k.name)}</td><td>${k.goals}</td><td>${k.assists}</td><td>${k.shots}</td><td>${k.steals}</td><td>${k.hits}</td></tr>`).join('')}
             </tbody></table>
-            <div class="mvp" style="margin-top:10px"><img src="${portrait(mvp.id, mvp.team, teamId, 128)}" alt=""><div><div class="label">${t('Player of the match')}</div><div style="font-family:var(--display);font-size:28px">${esc(mvp.name)}</div></div></div>
+            <div class="label" style="margin-top:10px">${t('Three stars')}</div>
+            <div class="stars3">${stars.map((k, i) => `<div class="star3${i === 0 ? ' first' : ''}">
+              <div class="st-tag">${smallIcon('badges/daily_star', 24, 'st-ico')}${[t('1st star'), t('2nd star'), t('3rd star')][i]}</div>
+              <img src="${portrait(k.id, k.team, teamId, 128)}" alt="">
+              <div class="st-nm" style="color:${k.team === 0 ? 'var(--cream)' : '#f5b3bb'}">${esc(k.name)}</div>
+              <div class="muted">${starLine(k)}</div></div>`).join('')}</div>
+            ${map.length ? `<div class="label" style="margin-top:10px">${t('Shot map')}</div>
+            ${shotMapSvg(map, CLUB.trim || '#71dce8', tm.color || '#f5b3bb')}
+            <div class="sm-key"><span><i style="background:${CLUB.trim || '#71dce8'}"></i>${esc(CLUB.nick)}</span><span><i style="background:${tm.color || '#f5b3bb'}"></i>${esc(tm.name.split(' ').slice(-1)[0])}</span><span><i class="goal"></i>${t('Goal')}</span></div>` : ''}
           </div>
           <div>
             <div class="label">${t('Rewards')}</div>

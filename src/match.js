@@ -78,6 +78,7 @@ export class Match {
     this.lastGoal = null;
     this.goalLog = [];
     this.shotsOnGoal = [0, 0];
+    this.shotLog = []; // (where each shot on goal came from, for the shot map)
     this.possessionT = [0, 0];
     cfg.teams.forEach((t, team) => {
       t.skaters.forEach((sk, slot) => {
@@ -693,7 +694,7 @@ export class Match {
     this.loosePuck(s);
     p.vx = dir.x * speed; p.vy = dir.y * speed;
     p.vz = kind === 'slap' ? 40 + 120 * charge : kind === 'wrist' ? 70 : 30;
-    p.shot = { by: s, team: s.team, kind, t: this.time, speed, power, special, frozen: new Set(), onNet: false,
+    p.shot = { by: s, team: s.team, kind, t: this.time, speed, power, special, frozen: new Set(), onNet: false, x0: s.x, y0: s.y,
       plow: combo && combo.key === 'frost+stone' ? (combo.level >= 2 ? 2 : 1) : combo && !BESPOKE_COMBOS.has(combo.key) && combo.key.includes('stone') ? 1 : 0 };
     p.pass = null;
     p.noPickup.set(s, 0.35);
@@ -1141,6 +1142,7 @@ export class Match {
     if (sh.onNet) return;
     sh.onNet = true;
     this.shotsOnGoal[sh.team]++;
+    if (sh.x0 !== undefined) this.shotLog.push(sh.log = { team: sh.team, x: Math.round(sh.x0), y: Math.round(sh.y0), goal: false });
     this.addUlt(sh.by, 5);
   }
 
@@ -1261,6 +1263,8 @@ export class Match {
     }
     if (sh && sh.team === team) this.shotOnGoal(sh);
     this.score[team]++;
+    if (sh && sh.team === team && sh.log) sh.log.goal = true;
+    else if (p.lastTouch && p.lastTouch.team === team && !p.lastTouch.isGoalie) this.shotLog.push({ team, x: Math.round(p.lastTouch.x), y: Math.round(p.lastTouch.y), goal: true }); // (in off a stick or a skate)
     let scorer = p.lastTouch && p.lastTouch.team === team ? p.lastTouch : null;
     const assists = [];
     if (scorer) {
@@ -1803,6 +1807,7 @@ export class Match {
       winner: this.winner,
       goals: this.goalLog,
       shots: [...this.shotsOnGoal],
+      shotMap: this.shotLog,
       skaters: this.skaters.filter((s) => !s.extraAttacker).map((s) => ({ id: s.who, kit: s.def.id, team: s.team, name: s.name, ...s.stats_ })),
       saves: this.goalies.map((g) => g.saves),
       goalie: this.goalies[0].who || 'halla', // who was in our net
