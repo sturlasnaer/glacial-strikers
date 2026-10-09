@@ -1172,6 +1172,12 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
   .choice button { padding: 4px 8px; font-size: 12.5px; }
   .choice button b { font-size: 17px; }
   .locker-faces img { width: 52px; height: 52px; }
+  /* a drill's result: the score and medal smaller, so Retry and Done stay on screen */
+  .drill-score { font-size: 40px !important; line-height: 1; }
+  .medal-big, .medal-big img { max-height: 64px; width: auto; }
+  .modal .reward-lines { font-size: 12.5px; }
+  .hall-cer { grid-template-columns: 84px minmax(0, 1fr); }
+  .hall-cer img { width: 84px; height: 84px; }
 }
 /* ---- phones upright (the menus; matches ask to turn sideways): the tabs in one scrolling row,
    the play bar's buttons on one line under what's next ---- */
