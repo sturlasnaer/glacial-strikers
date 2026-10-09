@@ -18,9 +18,9 @@ export class Commentary {
     this.away = teamInfo(awayTeamId);
     this.cool = 2;
     this.queue.length = 0;
-    this.lastBreak = null;
+    this.lastBreak = null; this.lastRush = null;
     this.glareT = undefined; this.plankT = undefined;
-    const team = (t) => (t === 0 ? CLUB.nick : this.away.nick || this.away.name.split(' ').slice(-1)[0]);
+    const team = (t) => this.teamName(t);
     const n = (s) => s.name;
 
     m.on('goal', (g) => {
@@ -96,6 +96,8 @@ export class Commentary {
     this.cool = force ? 3.2 : 2.2;
   }
 
+  teamName(tm) { return tm === 0 ? CLUB.nick : this.away.nick || this.away.name.split(' ').slice(-1)[0]; }
+
   update(dt) {
     const m = this.m;
     if (!m) return;
@@ -108,7 +110,14 @@ export class Commentary {
       if (dx < 520 && dx > 60) {
         const alone = m.opponents(c).every((o) => (o.x - c.x) * c.side < -30);
         if (alone && this.lastBreak !== c) { this.lastBreak = c; this.say(pick([t('{name} is in alone!', { name: c.name }), t('Breakaway, {name}!', { name: c.name })]), 2); }
+        // an odd-man rush: more of them coming than there are back (once a rush)
+        else if (!alone && dx > 200 && this.lastRush !== c) {
+          const back = m.opponents(c).filter((o) => !o.parked && (o.x - c.x) * c.side > -30).length;
+          const up = m.teamSkaters(c.team).filter((o) => !o.parked && (o.x - c.x) * c.side > -60).length; // (the carrier too)
+          if (back === 1 && up >= 2) this.lastRush = c;
+          if (back === 1 && up >= 2 && (up >= 3 || Math.random() < 0.5)) { this.say(up >= 3 ? t('Three on one! {team} have the numbers!', { team: this.teamName(c.team) }) : pick([t('Two on one, {name} with the puck!', { name: c.name }), t('It\'s a two-on-one for the {team}!', { team: this.teamName(c.team) })]), 1); }
+        }
       }
-    } else if (!c) this.lastBreak = this.lastBreak && m.puck.speed > 50 ? this.lastBreak : null;
+    } else if (!c) { this.lastBreak = this.lastBreak && m.puck.speed > 50 ? this.lastBreak : null; this.lastRush = this.lastRush && m.puck.speed > 50 ? this.lastRush : null; }
   }
 }
