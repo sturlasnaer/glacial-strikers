@@ -165,7 +165,7 @@ export const Assets = {
     this.recolored.delete('homekit'); // signings follow the club colours too
     if (!rc) return;
     const ours = (id) => (/\/home[_/]/.test(id) && !id.startsWith('hud_elements/')) || id.startsWith('expressions_core/')
-      || id.startsWith('expressions_halla_royals_comets/halla/') || id === 'hud_elements/misc/home_crest'
+      || id.startsWith('expressions_halla_royals_comets/halla/') || id === 'hud_elements/misc/home_crest' || id.startsWith('crests_club/')
       || id === 'arena/banner/glacial_strikers' || id.startsWith('mascot/');
     const rects = new Map();
     for (const [id, f] of Object.entries(this.atlas.frames)) {

@@ -4,7 +4,7 @@ import { Assets } from './assets.js';
 import {
   CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
-  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, RIVAL_IDS, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
+  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, RIVAL_IDS, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, CLUB_CRESTS, clubCrestId, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
 import { standings, classicOpponent, CLASSIC_AFTER, ALLSTAR_AFTER, leagueRivals } from './league.js';
 import { BUFF_TEXT } from './lockerroom.js';
@@ -160,7 +160,7 @@ export function portraitCanvas(id, team, teamId, size, expr) {
 }
 
 export const crest = (teamId, size = 96) => {
-  if (teamId === 'home') return Assets.icon('hud_elements/misc/home_crest', size, CLUB_PAGES());
+  if (teamId === 'home') return Assets.icon(Assets.frame(TEAMS.home.crest) ? TEAMS.home.crest : 'hud_elements/misc/home_crest', size, CLUB_PAGES());
   if (teamId === 'allstar') return Assets.icon((Assets.atlas.allstar && Assets.atlas.allstar.crest) || 'hud_elements/misc/level_star', size); // the League All-Stars' crest
   const t = TEAMS[teamId];
   const c = t && (t.art || t.mark) && Assets.atlas.crests && Assets.atlas.crests[t.art || t.mark];
@@ -181,6 +181,8 @@ const ico = (id, size = 64) => Assets.icon(id, size);
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+// The league news icon for each kind of story (Batch AV).
+const NEWS_ICON = { rivalSign: 'sign', weSign: 'sign', weGoalie: 'sign', weAgent: 'sign', weLegend: 'sign', rivalDraft: 'draft', weDraft: 'draft', trade: 'trade', retire: 'retire', champion: 'cup', expansion: 'new_club' };
 // The locker room hub: stations in the painting, in % of the 16:9 image.
 const STATIONS = [
   { tab: 'team', label: 'Team', icon: 'equipment_items/hub/locker', rect: [19, 2, 47, 27], at: [42, 15], tip: 'Lockers: line-up, stats, gear and scouting' },
@@ -722,9 +724,15 @@ export class UI {
         default: return '';
       }
     };
-    const pic = (n) => (n.team && (TEAMS[n.team] || n.team === 'home') ? crest(n.team, 40) : Assets.icon(Assets.atlas.frames['icons/free_agents'] ? 'icons/free_agents' : 'icons/contract', 40));
+    // what happened (Batch AV's icons) and whose crest it is
+    const kind = (n) => { const id = Assets.atlas.news_icons && Assets.atlas.news_icons[NEWS_ICON[n.k]]; return id && Assets.frame(id) ? Assets.icon(id, 48) : ''; };
+    const pics = (n) => {
+      const k = kind(n), team = n.team && (TEAMS[n.team] || n.team === 'home') ? crest(n.team, 40) : '';
+      const list = [k, team || (k ? '' : Assets.icon(Assets.atlas.frames['icons/free_agents'] ? 'icons/free_agents' : 'icons/contract', 40))].filter(Boolean);
+      return list.map((src) => `<img src="${src}" alt="" width="20" height="20">`).join('');
+    };
     return `<div class="label" style="margin:14px 0 4px;font-size:14px">${t('Around the Frostline')}</div>
-      <div class="news">${items.map((n) => `<div class="news-row"><img src="${pic(n)}" alt="" width="20" height="20"><span>${line(n)}</span><small class="muted">${t('S{s}', { s: n.s })}</small></div>`).join('')}</div>`;
+      <div class="news">${items.map((n) => `<div class="news-row"><span class="news-pics">${pics(n)}</span><span>${line(n)}</span><small class="muted">${t('S{s}', { s: n.s })}</small></div>`).join('')}</div>`;
   }
 
   // Scoring leaders this season, and the award winners once it's over.
@@ -1320,8 +1328,9 @@ export class UI {
     audio.sfx('click');
     const previewIds = () => {
       const sk = Assets.atlas.skaters;
-      return ['hud_elements/misc/home_crest', sk.frost_captain.home.south.frames.idle, sk.thunder_winger.home.south.frames.celebrate, sk.stone_defender.home.east.frames.idle];
+      return [clubCrestId(draft.crest), sk.frost_captain.home.south.frames.idle, sk.thunder_winger.home.south.frames.celebrate, sk.stone_defender.home.east.frames.idle];
     };
+    const crests = CLUB_CRESTS.filter((c) => Assets.frame(clubCrestId(c.id))); // (the designs there's art for)
     const rc = () => {
       const p = { trim: hexToHsvUI(draft.trim), jersey: hexToHsvUI(draft.jersey), mode: 'home' };
       return draft.trim === CLUB_DEFAULT.trim && draft.jersey === CLUB_DEFAULT.jersey ? null : p;
@@ -1334,6 +1343,8 @@ export class UI {
         <label>${t('Nickname')} <small class="muted">${t('chants, commentary and dialogue')}</small><input id="club-nick" maxlength="16" value="${esc(draft.nick)}" autocomplete="off"></label>
         <label>${t('Short code')}<input id="club-short" maxlength="3" value="${esc(draft.short)}" autocomplete="off" style="text-transform:uppercase;width:5.5em"></label>
       </div>
+      <div class="label" style="font-size:15px;margin:4px 0 0">${t('Crest')}</div>
+      <div class="filters crest-picks" style="margin:6px 0 0">${crests.map((c) => `<button class="chip crest-pick" data-crest="${c.id}" aria-pressed="${draft.crest === c.id}" aria-label="${esc(t(c.name))}" title="${esc(t(c.name))}"><img alt="" width="40" height="40"></button>`).join('')}</div>
       <div class="label" style="font-size:15px;margin:4px 0 0">${t('Colours')}</div>
       <div class="filters" style="margin:6px 0 0">${CLUB_PRESETS.map((p) => `<button class="chip preset" data-preset="${p.id}" aria-pressed="${p.trim === draft.trim && p.jersey === draft.jersey}"><span class="club-sw" style="--a:${p.trim};--b:${p.jersey}"></span>${esc(t(p.name))}</button>`).join('')}</div>
       <div class="row" style="gap:16px;margin-top:4px">
@@ -1350,6 +1361,7 @@ export class UI {
         $('#club-preview').innerHTML = previewIds().map((id, i) => `<img src="${Assets.previewIcon(id, i ? 132 : 96, r)}" alt="">`).join('')
           + `<div class="club-name-preview"><b>${esc(draft.name)}</b><span>${esc(draft.short)} · ${esc(draft.nick)}</span></div>`;
         m.querySelectorAll('[data-preset]').forEach((b) => { const p = CLUB_PRESETS.find((x) => x.id === b.dataset.preset); b.setAttribute('aria-pressed', p.trim === draft.trim && p.jersey === draft.jersey); });
+        m.querySelectorAll('[data-crest]').forEach((b) => { b.setAttribute('aria-pressed', b.dataset.crest === draft.crest); b.querySelector('img').src = Assets.previewIcon(clubCrestId(b.dataset.crest), 80, r); });
         $('#club-trim').value = draft.trim; $('#club-jersey').value = draft.jersey;
       };
       paint();
@@ -1365,6 +1377,7 @@ export class UI {
       $('#club-trim').addEventListener('input', (e) => { draft.trim = e.target.value; paint(); });
       $('#club-jersey').addEventListener('input', (e) => { draft.jersey = e.target.value; paint(); });
       this.click('[data-preset]', (el) => { const p = CLUB_PRESETS.find((x) => x.id === el.dataset.preset); draft.trim = p.trim; draft.jersey = p.jersey; audio.sfx('click'); paint(); }, m);
+      this.click('[data-crest]', (el) => { draft.crest = el.dataset.crest; audio.sfx('click'); paint(); }, m);
       this.click('#club-reset', () => {
         Object.assign(draft, CLUB_DEFAULT); nickTouched = shortTouched = false;
         $('#club-name').value = draft.name; $('#club-nick').value = draft.nick; $('#club-short').value = draft.short;

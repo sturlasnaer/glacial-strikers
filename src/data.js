@@ -501,7 +501,13 @@ export const teamInfo = (id) => TEAMS[id] || (id === 'allstar' ? ALLSTAR : null)
 
 // ---------------------------------------------------------------- your club
 // Name, nickname, short code and colours (trim, jersey). Defaults are the Snowcrest Foxes.
-export const CLUB_DEFAULT = { name: 'Snowcrest Foxes', nick: 'Foxes', short: 'FOX', trim: '#71dce8', jersey: '#fff2cb' };
+export const CLUB_DEFAULT = { name: 'Snowcrest Foxes', nick: 'Foxes', short: 'FOX', trim: '#71dce8', jersey: '#fff2cb', crest: 'fox' };
+// The club's crest: the Snow Fox, or one of Batch AW's designs (all recoloured like our art).
+export const CLUB_CRESTS = [
+  { id: 'fox', name: 'Snow Fox' }, { id: 'wolf', name: 'Wolf' }, { id: 'bear', name: 'Polar bear' }, { id: 'owl', name: 'Snowy owl' },
+  { id: 'narwhal', name: 'Narwhal' }, { id: 'mountain', name: 'Mountain' }, { id: 'bolt', name: 'Lightning' },
+];
+export const clubCrestId = (crest) => (crest && crest !== 'fox' ? 'crests_club/' + crest : 'hud_elements/misc/home_crest');
 export const CLUB = { ...CLUB_DEFAULT, custom: false };
 export const CLUB_PRESETS = [
   { id: 'glacial', name: 'Snowcrest', trim: '#71dce8', jersey: '#fff2cb' },
@@ -525,9 +531,9 @@ export function hexToHsv(hex) {
 // Make the club's settings live: names everywhere, colours for our art and signings.
 export function applyClub(club) {
   const c = { ...CLUB_DEFAULT, ...(club || {}) };
-  Object.assign(CLUB, c, { custom: !!club && (c.name !== CLUB_DEFAULT.name || c.trim !== CLUB_DEFAULT.trim || c.jersey !== CLUB_DEFAULT.jersey || c.short !== CLUB_DEFAULT.short || c.nick !== CLUB_DEFAULT.nick) });
+  Object.assign(CLUB, c, { custom: !!club && (c.name !== CLUB_DEFAULT.name || c.trim !== CLUB_DEFAULT.trim || c.jersey !== CLUB_DEFAULT.jersey || c.short !== CLUB_DEFAULT.short || c.nick !== CLUB_DEFAULT.nick || c.crest !== CLUB_DEFAULT.crest) });
   const home = TEAMS.home;
-  home.name = c.name; home.short = c.short; home.color = c.trim; home.color2 = c.jersey;
+  home.name = c.name; home.short = c.short; home.color = c.trim; home.color2 = c.jersey; home.crest = clubCrestId(c.crest);
   const t = hexToHsv(c.trim), j = hexToHsv(c.jersey);
   const recoloured = c.trim !== CLUB_DEFAULT.trim || c.jersey !== CLUB_DEFAULT.jersey;
   // our own art: teal trim (h 187 s .51 v .91) and cream jersey (h 45 s .2 v 1)
