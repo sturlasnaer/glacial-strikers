@@ -823,7 +823,7 @@ class App {
     m.on('tip', (e) => audio.sfx('stick', at(e.s.x, e.s.y, 0.7)));
     m.on('penalty_delayed', (e) => {
       audio.crowdOoh(0.4);
-      if (!this.attract && e.team === 1 && !m.goalieMode && !(this.cur && this.cur.versus) && firstTime(this.save, 'delayed')) this.hud.hint(t('Delayed penalty! The whistle waits until they touch the puck: keep it and attack.'), 5);
+      if (!this.attract && e.team === 1 && !m.goalieMode && !(this.cur && this.cur.versus) && firstTime(this.save, 'delayed')) this.hud.hint(this.isTouch ? t('Delayed penalty! The whistle waits until they touch the puck. Keep it, and tap PULL GOALIE for a free extra attacker.') : this.input.lastDevice === 'gamepad' ? t('Delayed penalty! The whistle waits until they touch the puck. Keep it, and press Back for a free extra attacker.') : t('Delayed penalty! The whistle waits until they touch the puck. Keep it, and press H for a free extra attacker.'), 6);
     });
     m.on('penalty_over', (e) => { if (!e.byGoal) this.hud.ticker(t('{name} is out of the box. Back to full strength.', { name: e.s.name })); });
     m.on('goalie_pulled', (e) => {
