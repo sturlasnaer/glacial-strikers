@@ -869,7 +869,7 @@ export class UI {
         ${tile('icons/stat_goals', s.record.goals, t('goals'))}${tile('icons/stat_cups', s.cups || 0, t('cups'))}${tile(null, (s.awards || []).length, t('awards'))}
         ${tile(null, (s.allstars || []).length, t('All-Star Games'))}${tile('icons/stat_streak', dailyState(s).best || 0, t('best daily streak'))}
       </div>
-      ${(() => { const spots = (careerOf(s).goalMap || {})[s.season] || []; return spots.length ? `<div class="label" style="margin:8px 0 4px">${t('Where our goals came from this season ({n})', { n: spots.length })}</div><div style="width:100%;max-width:440px">${shotMapSvg(spots.map(([x, y]) => ({ team: 0, x, y, goal: true })), CLUB.trim || '#71dce8', '#f5b3bb')}</div>` : ''; })()}
+      ${(() => { const spots = (careerOf(s).goalMap || {})[s.season] || []; return spots.length ? `<div class="label" style="margin:8px 0 4px">${t('Where our goals came from this season ({n})', { n: spots.length })}</div><div style="width:100%;max-width:440px">${shotMapSvg(spots.map(([x, y, tip]) => ({ team: 0, x, y, goal: true, tip: !!tip })), CLUB.trim || '#71dce8', '#f5b3bb')}</div>` : ''; })()}
       <div class="label" style="margin:8px 0 4px">${t('Skaters')}</div>
       <div class="car-wrap"><table class="car-table"><thead><tr><th></th>${head}</tr></thead><tbody>${body}</tbody></table></div>
       <div class="label" style="margin:10px 0 4px">${t('In goal')}</div>

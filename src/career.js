@@ -53,7 +53,7 @@ export function recordCareer(save, summary, won) {
   }
   // where our goals came from, this season (for the map on the career page)
   const spots = ((c.goalMap ||= {})[save.season] ||= []);
-  for (const k of summary.shotMap || []) if (k.team === 0 && k.goal) spots.push([k.x, k.y]);
+  for (const k of summary.shotMap || []) if (k.team === 0 && k.goal) spots.push(k.tip ? [k.x, k.y, 1] : [k.x, k.y]);
   if (spots.length > 150) spots.splice(0, spots.length - 150);
   for (const season of Object.keys(c.goalMap)) if (+season < save.season - 1) delete c.goalMap[season]; // (this season and last)
   const g = (c.goalies[summary.goalie || 'halla'] ||= GOALIE());
