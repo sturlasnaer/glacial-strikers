@@ -763,7 +763,7 @@ class App {
       touch ? t('Drag your left thumb to skate. Hold SPRINT for a burst of speed.') : t('Skate with WASD or the arrow keys. Hold Shift to sprint.'),
       touch ? t('With the puck: tap SHOOT for a wrist shot, hold it to charge a slapshot.') : t('With the puck: tap J for a wrist shot, hold J to charge a slapshot.'),
       touch ? t('Defender in your face? Tap SPRINT to deke past them. Near the goalie, a deke can make them bite.') : t('Defender in your face? Tap Shift to deke past them. Near the goalie, a deke can make them bite.'),
-      touch ? t('PASS goes to the teammate you\'re steering toward. Hold SHOOT as it arrives for a one-timer.') : t('K passes toward the teammate you\'re steering at. Hold J as it arrives for a one-timer.'),
+      touch ? t('PASS goes to the teammate you\'re steering toward: the gold ring at their feet. Hold SHOOT as it arrives for a one-timer.') : t('K passes toward the teammate you\'re steering at: the gold ring at their feet. Hold J as it arrives for a one-timer.'),
       touch ? t('No puck? SHOOT becomes CHECK and PASS switches to the skater nearest the puck.') : t('No puck? J checks and K switches to the skater nearest the puck.'),
       touch ? t('The round button above SHOOT is your signature skill. The star fires your ultimate when it glows.') : t('U fires your signature skill. I fires your ultimate when the gold bar is full.'),
     ];
