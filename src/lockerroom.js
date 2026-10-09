@@ -4,6 +4,7 @@
 import { CHARACTERS, TEAMS, CLUB, teamInfo } from './data.js';
 import { applyExp, applyGoalieExp } from './progress.js';
 import { t } from './i18n.js';
+import { goalStates } from './goals.js';
 
 const ALL_PAIRS = ['frost+thunder', 'frost+stone', 'stone+thunder'];
 
@@ -29,6 +30,17 @@ export const BUFF_TEXT = (b) => {
 
 // ctx: { won, gf, ga, summary, streak, next (fixture), save }
 export const MOMENTS = [
+  {
+    // one of Coach Brekka's season goals left (and at least one met): the list goes up on the board
+    id: 'goal-push', who: ['frost'], weight: 5, once: true,
+    when: (c) => { const g = goalStates(c.save); return g.some((x) => x.done) && !g.some((x) => x.failed) && g.filter((x) => !x.done).length === 1; },
+    title: 'One to go',
+    text: (c) => { const g = goalStates(c.save).find((x) => !x.done && !x.failed); return t('Coach Brekka pins the season goals to the board, all ticked but one: "{goal}" Nix taps it. "We finish this."', { goal: t(g.text, { n: g.n }) }); },
+    choices: [
+      { label: 'Fire them up', fx: 'Next match: fired up (start with 25% ultimate)', apply: buff({ id: 'fired', type: 'ult', v: 25 }), reply: 'The list stays on the board. Everybody reads it on the way out.' },
+      { label: 'Watch the tape', fx: 'Next match: +15% steals', apply: buff({ id: 'scout', type: 'steal', v: 1.15 }), reply: 'Two hours of video. Bram takes notes in three colours.' },
+    ],
+  },
   {
     id: 'extra-reps', who: ['thunder', 'frost'], weight: 3, when: () => true,
     title: 'Extra reps',
