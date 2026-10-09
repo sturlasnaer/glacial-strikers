@@ -269,6 +269,17 @@ const mk = (seed = 5) => new Match({ teams: [team(), team()], humanTeam: null, s
   check('tips: the player pressing SHOOT in front tips it, without a check', tips >= 15 && checks === 0, { tips, checks });
 }
 
+// a delayed penalty on them while we have the puck: the goalie can come off for free
+{
+  const m = mk(51);
+  m.state = 'play';
+  const c = m.teamSkaters(0)[0], d = m.teamSkaters(1)[0];
+  m.takePossession(c, 'catch');
+  const before = m.canPullGoalie(0);
+  m.pendingPenalty = { s: d, reason: 'Hooking' };
+  check('delayed penalty: an extra attacker for free', !before && m.canPullGoalie(0) && !m.canPullGoalie(1), [before]);
+}
+
 // screens: a body in the shot's way in front of the goalie makes the read later; one off to the
 // side doesn't
 {

@@ -1741,8 +1741,12 @@ export class Match {
   canPullGoalie(team) {
     if (this.drill || this.state !== 'play' || this.extra[team] || this.pshot) return false;
     if (this.goalieMode && team === 0) return false; // you're the one in goal
+    if (!this.extraCfg[team]) return false;
+    // a delayed penalty on them while we have the puck: an extra attacker costs nothing
+    const pp = this.pendingPenalty;
+    if (pp && !pp.shot && pp.s.team !== team && this.puck.owner && this.puck.owner.team === team) return true;
     const us = this.score[team], them = this.score[1 - team];
-    return us < them && them >= this.winScore - 1 && this.winScore > 1 && !!this.extraCfg[team];
+    return us < them && them >= this.winScore - 1 && this.winScore > 1;
   }
 
   togglePull(team) {
@@ -1787,7 +1791,8 @@ export class Match {
       if (this.humans.includes(t) || this.extra[t] || !this.canPullGoalie(t)) continue;
       const p = this.puck;
       const attacking = p.owner && p.owner.team === t && (p.x * (t === 0 ? 1 : -1)) > 0;
-      if (attacking && this.score[1 - t] - this.score[t] <= 2 && this.rng() < 0.25 * dt) this.pullGoalie(t);
+      const delayed = this.pendingPenalty && this.pendingPenalty.s.team !== t; // (the free extra attacker)
+      if (attacking && (delayed || this.score[1 - t] - this.score[t] <= 2) && this.rng() < (delayed ? 1.5 : 0.25) * dt) this.pullGoalie(t);
     }
   }
 
