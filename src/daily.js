@@ -18,6 +18,7 @@ export const DAILY_GOALS = [
   { id: 'dekes', from: '2026-10-10', text: 'Win and deke past defenders 5 times.', check: (s) => s.winner === 0 && s.skaters.filter((k) => k.team === 0).reduce((a, k) => a + (k.dekes || 0), 0) >= 5 },
   { id: 'draws', from: '2026-10-10', text: 'Win and take 3 faceoffs clean, right on the drop.', check: (s) => s.winner === 0 && s.skaters.filter((k) => k.team === 0).reduce((a, k) => a + (k.cleanDraws || 0), 0) >= 3 },
   { id: 'spread', text: 'Win with all three skaters scoring a point.', check: (s) => s.winner === 0 && s.skaters.filter((k) => k.team === 0 && !k.extra).every((k) => k.goals + k.assists > 0) },
+  { id: 'tipin', from: '2026-10-11', text: 'Win and score on a tip-in: shoot from the point with a teammate in front.', check: (s) => s.winner === 0 && (s.goals || []).some((g) => g.team === 0 && g.kind === 'tip') },
 ];
 const GOAL_BY_ID = Object.fromEntries(DAILY_GOALS.map((g) => [g.id, g]));
 
@@ -46,7 +47,7 @@ export function dailyFor(date = dayKey()) {
   const n = rng() < 0.45 ? 2 : 1;
   while (mods.length < n) { const c = pick(pool).id; if (!mods.includes(c)) mods.push(c); }
   let goal = pick(DAILY_GOALS.filter((g) => !g.from || date >= g.from));
-  if (mods.includes('onetimers') && goal.id === 'combo') goal = GOAL_BY_ID.onetimer;
+  if (mods.includes('onetimers') && (goal.id === 'combo' || goal.id === 'tipin')) goal = GOAL_BY_ID.onetimer; // (only one-timers count)
   return { date, teamId, arena, mods, goal: goal.id, seed: hash('seed-' + date) };
 }
 

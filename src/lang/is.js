@@ -1739,6 +1739,7 @@ export const IS = {
   "Win and deke past defenders 5 times.": "Vinndu og leiktu á varnarmenn 5 sinnum.",
   "Win and score a chemistry combo goal.": "Vinndu og skoraðu úr samspilsskoti.",
   "Win and score a one-timer.": "Vinndu og skoraðu úr viðstöðulausu skoti.",
+  "Win and score on a tip-in: shoot from the point with a teammate in front.": "Vinndu og skoraðu með stýringu: skjóttu af bláu línunni með liðsfélaga fyrir framan markið.",
   "Win and shield the puck from a defender 8 times.": "Vinndu og skýldu pökknum fyrir varnarmanni 8 sinnum.",
   "Win and take 3 faceoffs clean, right on the drop.": "Vinndu og vinndu 3 uppköst hreint, um leið og pökkurinn lendir.",
   "Win by 2 goals or more.": "Vinndu með 2 marka mun eða meira.",
