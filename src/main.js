@@ -12,6 +12,7 @@ import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as clou
 import { ARENA_MUSIC } from './songs.js';
 import { ResurfacerLap } from './scenery.js';
 import { UI, controlsHtml, crest, ruleIconSrc, cupPlaceImg, portrait, shotMapSvg, esc, hintKeys } from './ui.js';
+import { chantBoost, trainingSessions } from './facilities.js';
 import { isKey, setKeyMap, setPadMap } from './keys.js';
 import { HUD } from './hud.js';
 import { toScreen } from './rink.js';
@@ -1048,7 +1049,7 @@ class App {
     this.ach.endMatch(summary, { league: !c.exhibition && !allstar, exhibition: c.exhibition, mods: c.mods });
     if (summary.goalieMode) { s.goalieGames = (s.goalieGames || 0) + 1; if (rewards.won) this.ach.unlock('between-pipes'); }
     this.ach.checkMeta();
-    s.training.sessions = 2;
+    s.training.sessions = trainingSessions(s);
     writeSave(s);
     this.wake?.release?.().catch(() => {});
     this.hud.hide();
@@ -1139,12 +1140,15 @@ class App {
     this.chantCool -= dt;
     if (this.chantCool > 0 || m.state !== 'play' || this.fx.chant) return;
     const trailingBy = m.score[0] - m.score[1];
+    // (the Stands facility: at home, our fans get going sooner and keep at it longer)
+    const boost = chantBoost(this.save, this.arena === 'home' && !this.attract && !(this.cur && this.cur.versus));
     let team = null;
     if (this.fx.excite > 0.55) team = trailingBy <= -2 ? 1 : 0;
+    else if (boost.excite && this.fx.excite > 0.55 - boost.excite && trailingBy > -2) team = 0;
     if (team === null) return;
-    this.chantCool = 30;
+    this.chantCool = 30 - (team === 0 ? boost.cool : 0);
     this.fx.chant = { team, t: 0 };
-    m.hype = { team, t: 7 };
+    m.hype = { team, t: 7 + (team === 0 ? boost.longer : 0) };
     const away = teamInfo(this.awayTeamId);
     const name = team === 0 ? CLUB.nick.toUpperCase() : (away.nick || away.name.split(' ').slice(-1)[0]).toUpperCase();
     audio.chant(team === 0 ? 0.9 : 0.6);

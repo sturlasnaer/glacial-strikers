@@ -8,6 +8,7 @@ import { CHARACTERS, KIT_OF_ROLE, STAT_KEYS, ARCHETYPES, ELEMENTS, GOALIE_STYLES
 import { joinLevel, PERK_LEVELS, newMember, rosterIds } from './progress.js';
 import { randomLook, randomMask, maskFor } from './modular.js';
 import { addNews } from './news.js';
+import { extraAgents } from './facilities.js';
 
 export const MARKET_FROM = 3; // matches played before the agent calls
 export const REFRESH = 5; // new faces every this many matches
@@ -73,6 +74,7 @@ export function refreshAgents(save, rnd = Math.random) {
   const taken = new Set([...rosterIds(save).map((id) => (save.rookies && save.rookies[id] && save.rookies[id].name) || id),
     ...Object.values(save.freeGoalies || {}).map((g) => g.name)]);
   st.list = ['C', 'W', 'D'].map((role) => skater(save, role, taken, rnd));
+  for (let i = 0; i < extraAgents(save); i++) st.list.push(skater(save, ['C', 'W', 'D'][Math.floor(rnd() * 3)], taken, rnd)); // (the scouting office finds another)
   if (rnd() < GOALIE_CHANCE) st.list.push(goalie(save, taken, rnd));
   st.until = played + REFRESH;
   return true;

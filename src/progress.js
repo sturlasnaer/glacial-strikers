@@ -10,6 +10,7 @@ import { seasonStats } from './awards.js';
 import { rivalSub, setFills, agedStats, grown, goalieGrowth, leagueGrowth, seasonBoost, GOALIE_CAP } from './slots.js';
 import { leagueRivals } from './league.js';
 import { t } from './i18n.js';
+import { drillExpMul, staminaRegenMul } from './facilities.js';
 import { addNews } from './news.js';
 
 const KEY = 'glacial-strikers-save-v1';
@@ -405,7 +406,7 @@ export function matchConfig(save, teamId, stage, opts = {}) {
   return {
     assist: save.settings.assist || 'normal',
     plans: opts.plans || ['balanced', 'balanced'],
-    buffs: fx ? { ultStart: fx.ultStart, staminaMul: fx.staminaMul, oppGoalieMul: fx.oppGoalieMul, stealMul: fx.stealMul } : {},
+    buffs: { ...(fx ? { ultStart: fx.ultStart, staminaMul: fx.staminaMul, oppGoalieMul: fx.oppGoalieMul, stealMul: fx.stealMul } : {}), regenMul: staminaRegenMul(save) }, // (and the physio room)
     teams: [home, away],
     humanTeam: opts.attract ? null : 0,
     goalieMode: !!opts.goalieMode && !opts.attract, // the player in goal, the AI skating
@@ -580,7 +581,7 @@ export function drillRewards(save, id, charId, score, medal, tables, opts = {}) 
   for (let t = prevMedal + 1; t <= medal; t++) bonus += tables.firstMedal[t];
   if (medal > prevMedal) tr.medals[id] = medal;
   const rewarded = !opts.practice && tr.sessions > 0; // (Skills Night runs don't use a session)
-  const exp = rewarded ? tables.exp[medal] : 0;
+  const exp = rewarded ? Math.round(tables.exp[medal] * drillExpMul(save)) : 0; // (the training centre adds to it)
   const coins = (rewarded ? tables.coins[medal] : 0) + bonus;
   if (rewarded) tr.sessions--;
   save.coins += coins;

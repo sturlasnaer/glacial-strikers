@@ -8,6 +8,7 @@ import { randomLook } from './modular.js';
 import { leagueRivals } from './league.js';
 import { rivalDraft } from './moves.js';
 import { addNews } from './news.js';
+import { scoutedProspects } from './facilities.js';
 import { freshName, leagueNames } from './league_names.js';
 
 const NAMES = {
@@ -39,10 +40,10 @@ function potentialRoll(rnd) {
 
 // One prospect: the kit's base stats, a specialty a point higher, and the rawer the higher the
 // potential (1 + potential points taken off, at most two from a stat and never below 2).
-function prospect(role, taken, rnd) {
+function prospect(role, taken, rnd, scouted = false) {
   const kit = KIT_OF_ROLE[role];
   const base = { ...CHARACTERS[kit].base };
-  const potential = potentialRoll(rnd);
+  const potential = scouted ? Math.max(potentialRoll(rnd), potentialRoll(rnd)) : potentialRoll(rnd); // (the scouting office looks twice)
   const top = [...STAT_KEYS].sort((a, b) => base[b] - base[a]).slice(0, 3);
   const special = pick(top, rnd);
   base[special] = Math.min(10, base[special] + 1);
@@ -64,7 +65,9 @@ function prospect(role, taken, rnd) {
 // The season's three prospects, and the two rivals who pick after you.
 export function makeDraft(save, season, rnd = Math.random) {
   const taken = leagueNames(save);
-  const prospects = ['C', 'W', 'D'].map((role) => prospect(role, taken, rnd));
+  // (the club's scouting office: one of them, or all three at its top level, scouted twice)
+  const n = scoutedProspects(save), one = n === 1 ? Math.floor(rnd() * 3) : -1;
+  const prospects = ['C', 'W', 'D'].map((role, i) => prospect(role, taken, rnd, n >= 3 || (n === 1 && i === one)));
   const rivals = [...leagueRivals(save.league)].sort(() => rnd() - 0.5).slice(0, 2);
   return { season, prospects, rivals, picked: null };
 }

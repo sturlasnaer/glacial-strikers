@@ -299,6 +299,12 @@ img { image-rendering: auto; max-width: 100%; }
 .item img { width: 64px; height: 64px; background: var(--navy); border-radius: 6px; }
 .item h4 { margin: 0; font-family: var(--display); font-weight: normal; font-size: 22px; line-height: 1; }
 .item p { margin: 2px 0 6px; font-size: 12px; color: #c3d3ea; }
+/* Shop › Club facilities: the level meter */
+.fac-pips { display: inline-flex; gap: 3px; vertical-align: middle; margin-left: 4px; }
+.item img.fac-pip { width: 12px; height: 12px; background: none; border-radius: 0; image-rendering: pixelated; }
+span.fac-pip { display: inline-block; width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--gold); box-sizing: border-box; }
+span.fac-pip.on { background: var(--gold); }
+.item.fac .good { color: #7fe08a; }
 .item .buy { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
 .price { font-family: var(--display); font-size: 22px; color: var(--gold); display: inline-flex; align-items: center; gap: 3px; }
 .price img { width: 20px; height: 20px; background: none; }

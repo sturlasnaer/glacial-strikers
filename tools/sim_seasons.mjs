@@ -17,6 +17,7 @@ import { retireRivals } from '../src/slots.js';
 import { makeDraft, draftPick } from '../src/draft.js';
 import { recordCareer } from '../src/career.js';
 import { updateSeasonGoals, goalStates, seasonGoals } from '../src/goals.js';
+import { FACILITY_IDS, nextCost, buildFacility, facilityLevel } from '../src/facilities.js';
 import { RECRUITS, GOALIE_RECRUITS, CHARACTERS, GEAR, member, setRookies, setFreeGoalies, TOURNAMENT } from '../src/data.js';
 import { DRILL_REWARDS } from '../src/drills.js';
 import { useModular } from '../src/modular.js';
@@ -66,6 +67,13 @@ function manage(s, log) {
   const g = goalieStats(s, starterId(s));
   const gk = Object.keys(GOALIE_RECRUITS).filter((k) => goalieStatus(s, k) === 'open' && GOALIE_RECRUITS[k].price + 100 <= s.coins && GOALIE_RECRUITS[k].base.rfx + GOALIE_RECRUITS[k].base.pos > g.rfx + g.pos + 1)[0];
   if (gk) { const price = GOALIE_RECRUITS[gk].price; if (signGoalie(s, gk)) { setStarter(s, gk); log.signed.push(GOALIE_RECRUITS[gk].name); log.spent += price; } }
+  // with the line set, the club's facilities: the cheapest next level, keeping 2,500 for signings
+  // (FAC=0 leaves them, to compare)
+  for (let guard = 0; process.env.FAC !== '0' && guard < 4; guard++) {
+    const next = FACILITY_IDS.map((id) => [id, nextCost(s, id)]).filter(([, c]) => c != null).sort((a, b) => a[1] - b[1])[0];
+    if (!next || s.coins - next[1] < 2500) break;
+    buildFacility(s, next[0]); log.spent += next[1]; log.built = (log.built || 0) + 1;
+  }
 }
 
 function season(s, rnd, out) {
@@ -122,6 +130,7 @@ function season(s, rnd, out) {
   out.push({ season: s.season, teams: L.teams.length, record: `${log.w}-${log.l}`, goals: `${log.gf}:${log.ga}`, place: order.indexOf('home') + 1, result: log.result || 'playoffs',
     goalsMet: (() => { const g = goalStates(s); return `${g.filter((x) => x.done).length}/${g.length}`; })(),
     which: goalStates(s).map((x) => x.id + (x.done ? '+' : '-')).join(' '),
+    facilities: FACILITY_IDS.map((id) => facilityLevel(s, id)).join(''),
     coinsStart: coins0, earned: log.earned, spent: log.spent, coinsEnd: s.coins, levels: line.join('/'), signed: log.signed.join(', ') || '-', trades: log.trades,
     sumUs: +ours.toFixed(1), sumThem: +theirs.toFixed(1), us: +strength('home', s).toFixed(2), rivals: +(rivals.reduce((a, id) => a + strength(id, s), 0) / rivals.length).toFixed(2), retired: retired.length, edge: s.leagueEdge || 0,
     gUs: (() => { const g = goalieStats(s, starterId(s)); return g.rfx + g.pos; })(), gThem: +(rivals.reduce((a, id) => { const g = matchConfig(s, id, TOURNAMENT.stages.find((x) => x.team === id) || TOURNAMENT.stages[0]).teams[1].goalie.stats; return a + g.rfx + g.pos; }, 0) / rivals.length).toFixed(1) });

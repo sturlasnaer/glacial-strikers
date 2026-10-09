@@ -97,6 +97,7 @@ export class Match {
     for (const s of this.teamSkaters(0)) {
       if (this.buffs.ultStart) s.ult = this.buffs.ultStart;
       if (this.buffs.staminaMul) { s.d.staminaMax *= this.buffs.staminaMul; s.stamina = s.d.staminaMax; }
+      if (this.buffs.regenMul) s.d.regen *= this.buffs.regenMul; // (the club's physio room)
     }
     this.faceoffWinnerHint = null;
     this.drill = cfg.drill || null;

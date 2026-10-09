@@ -28,6 +28,7 @@ import { agentState, marketOpen, agentsLeft, signAgent } from './agents.js';
 import { latestNews } from './news.js';
 import { audio } from './audio.js';
 import { t } from './i18n.js';
+import { FACILITIES, FACILITY_IDS, MAX_FACILITY, facilityLevel, nextCost, buildFacility } from './facilities.js';
 import { ACTIONS, LOCKED, keyMap, keyName, keyNames, firstKey, moveGroups, groupText, setKeyMap, bindKey, canBind, sideless, isDefault,
   PAD_ACTIONS, PAD_LOCKED, padMap, padName, padNames, firstPad, setPadMap, bindPad, canBindPad, isPadDefault } from './keys.js';
 import { RINK, GOAL_X, BLUE_X, CREASE, MOUTH, NET_DEPTH } from './rink.js';
@@ -228,6 +229,8 @@ function badge(name, size, cls = 'badge', fallback = '') {
   return src ? `<img class="${cls}" src="${src}" alt="">` : fallback;
 }
 const padGlyphs = (text) => text.replace(/✕|○|□|△|\b(?:L1|R1|L2|R2|LB|RB|LT|RT|Options|Create|Start|Back|[ABXY])\b/g, (m) => promptImg(PAD_PROMPT[m], m));
+// the shop's filters: the gear slots, then the club's facilities
+const shopFilters = (filter) => `<div class="filters">${['all', 'stick', 'skates', 'armor', 'goalie'].map((f) => `<button class="chip" data-f="${f}" aria-pressed="${filter === f}">${f === 'all' ? t('All') : t(SLOT_NAMES[f])}</button>`).join('')}<button class="chip" data-f="club" aria-pressed="${filter === 'club'}">${t('Club facilities')}</button></div>`;
 // a key by name ('J', 'Space', '↑') as a keycap (keys without art stay text)
 const ARROW_KEYS = { '↑': 'up', '←': 'left', '↓': 'down', '→': 'right' };
 export function keyCap(name) {
@@ -2035,12 +2038,49 @@ export class UI {
     });
   }
 
+  // Shop › Club facilities: four buildings, three levels each, bought with coins.
+  tabFacilities(body) {
+    const s = this.app.save;
+    const pips = (L) => Array.from({ length: MAX_FACILITY }, (_, i) => { const id = i < L ? 'icons/facility_pip_full' : 'icons/facility_pip_empty'; return Assets.atlas.frames[id] ? `<img class="fac-pip" src="${ico(id, 32)}" alt="">` : `<span class="fac-pip${i < L ? ' on' : ''}"></span>`; }).join('');
+    body.innerHTML = `
+      ${shopFilters('club')}
+      ${npc('shopkeeper', pick([t('Coins in the bank don\'t win games. Put them into the club.'), t('Build it once and it works every match.')]))}
+      <p class="muted" style="margin:0 0 10px;font-size:13px">${t('Build up the club. Each facility has three levels, and each level helps a little, for good.')}</p>
+      <div class="shop">${FACILITY_IDS.map((id) => {
+        const F = FACILITIES[id], L = facilityLevel(s, id), cost = nextCost(s, id), afford = cost != null && s.coins >= cost;
+        return `<div class="item fac" tabindex="0" data-pad-press="[data-build]" aria-label="${esc(t(F.name))}">
+          <img src="${ico(Assets.atlas.frames[F.icon] ? F.icon : F.stand, 128)}" alt="">
+          <div style="min-width:0">
+            <div class="label" style="font-size:13px">${t('Level {n} of {max}', { n: L, max: MAX_FACILITY })} <span class="fac-pips" aria-hidden="true">${pips(L)}</span></div>
+            <h4>${esc(t(F.name))}</h4>
+            <p>${esc(t(F.text))}</p>
+            ${L ? `<p class="good" style="margin:2px 0;font-size:12.5px">${t('Now')}: ${esc(t(F.levels[L - 1]))}</p>` : ''}
+            ${cost != null ? `<p class="muted" style="margin:2px 0;font-size:12.5px">${t('Next')}: ${esc(t(F.levels[L]))}</p>` : ''}
+            <div class="buy">${cost == null ? `<span class="good">${t('Fully built')}</span>`
+              : `<span class="price">${cost}</span><button class="btn small ${afford ? 'gold' : ''}" data-build="${id}" ${afford ? '' : 'disabled'}>${L ? t('Upgrade') : t('Build')}</button>`}</div>
+          </div>
+        </div>`;
+      }).join('')}</div>`;
+    this.click('[data-f]', (el) => { this.shopFilter = el.dataset.f; audio.sfx('click'); this.tabShop(body); }, body);
+    this.click('[data-build]', (el) => {
+      const id = el.dataset.build;
+      if (!buildFacility(s, id)) return;
+      writeSave(s);
+      audio.sfx('purchase');
+      this.app.ach.checkMeta();
+      const F = FACILITIES[id], L = facilityLevel(s, id);
+      this.app.toast(ico(Assets.atlas.frames[F.icon] ? F.icon : F.stand, 72), t('Club facilities'), t('{name}: level {n}', { name: t(F.name), n: L }), t(F.levels[L - 1]));
+      this.hub('shop');
+    }, body);
+  }
+
   tabShop(body) {
     const s = this.app.save;
     const filter = this.shopFilter || 'all';
+    if (filter === 'club') return this.tabFacilities(body);
     const items = GEAR.filter((g) => g.price > 0 && (filter === 'all' || g.slot === filter));
     body.innerHTML = `
-      <div class="filters">${['all', 'stick', 'skates', 'armor', 'goalie'].map((f) => `<button class="chip" data-f="${f}" aria-pressed="${filter === f}">${f === 'all' ? t('All') : t(SLOT_NAMES[f])}</button>`).join('')}</div>
+      ${shopFilters(filter)}
       ${npc('shopkeeper', s.coins < 150 ? pick([t('Short on coins? Win a few and come back. I\'ll keep it polished.'), t('Browsing is free. Buying is not.')]) : pick([t('Every piece trades something away. Ask what it costs you, not just the coins.'), t('Forged it myself. Well, most of it.'), t('That stick? Lightning in a bottle. Mind the recoil.')]))}
       <p class="muted" style="margin:0 0 10px;font-size:13px">${t('Every item trades something away. Bought gear unlocks for the whole team; equip it from the Team tab.')}</p>
       <div class="shop">${items.map((g) => {

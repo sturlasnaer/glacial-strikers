@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10',
+    items: [
+      { icon: 'icons/friends', text: 'Club facilities, in the shop: build up the Stands, a Training centre, a Scouting office and a Physio room, three levels each, for a louder home crowd, more EXP from drills, better prospects and fresher legs.' },
+    ],
+  },
+  {
     id: '2026-10-09g',
     items: [
       { icon: 'icons/respec', text: 'Settings › Gamepad: put any button on any action, as with the keyboard. With a pad in hand, the tips name your buttons.' },
