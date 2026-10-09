@@ -812,6 +812,7 @@ class App {
         setTimeout(() => this.hud.hint(this.isTouch ? t('Only check the puck carrier. Hits away from the puck draw penalties.') : t('Only check the puck carrier. Hits away from the puck draw penalties.'), 5), 2200);
       }
     });
+    m.on('plan_change', (e) => { if (!m.humans.includes(e.team)) this.hud.ticker(t('The {team} switch to {plan}!', { team: e.team === 1 ? (teamInfo(this.awayTeamId).nick || teamInfo(this.awayTeamId).name.split(' ').slice(-1)[0]) : CLUB.nick, plan: t(GAME_PLANS[e.id].name) })); });
     m.on('tip', (e) => audio.sfx('stick', at(e.s.x, e.s.y, 0.7)));
     m.on('penalty_delayed', (e) => {
       audio.crowdOoh(0.4);

@@ -274,6 +274,17 @@ const mk = (seed = 5) => new Match({ teams: [team(), team()], humanTeam: null, s
   check('game plan: switching to forecheck slows recovery, and back', Math.abs(fc - base * 0.88) < 1e-9 && Math.abs(s.d.regen - base) < 1e-9 && m.plans[0] === 'trap' && m.ai[0].gamePlan === 'trap', [base, fc, s.d.regen]);
 }
 
+// the AI's bench: two down late, it goes to Run-and-gun (once); the player's plan is the player's
+{
+  const m = new Match({ teams: [team(), team()], humanTeam: 0, seed: 91, powers: [], diff: [0.6, 0.6] });
+  const seen = [];
+  m.on('plan_change', (e) => seen.push(e));
+  m.state = 'play'; m.score = [2, 0];
+  m.goal(1, 0); // 3-0 for us
+  m.state = 'play'; m.score[1] = 1; m.goal(-1, 0); // 3-2: back in it, no change again
+  check('AI bench: two down late, Run-and-gun, once; never for the player', seen.length === 1 && seen[0].team === 1 && m.plans[1] === 'rungun' && m.plans[0] === 'balanced', seen);
+}
+
 // delayed penalties: play goes on while the fouled side has the puck, the whistle comes when the
 // other side touches it, and a goal by the fouled side wipes the minor out
 {

@@ -1522,6 +1522,7 @@ export const IS = {
   "The {team} posted a video laughing at the last time we played them.": "Liðið {team} birti myndband þar sem gert er grín að síðasta leik okkar gegn því.",
   "The {team} signed {name} ({role}) to fill the gap.": "{team} sömdu við {name} ({role}) til að fylla skarðið.",
   "The {team} signed {name} ({role}).": "{team} sömdu við {name} ({role}).",
+  "The {team} switch to {plan}!": "{team} skipta yfir í {plan}!",
   "The {team} took {name} to fill the gap you left.": "{team} völdu {name} til að fylla skarðið sem þú skildir eftir.",
   "The {team} took {name} to replace {old}, who retired.": "{team} völdu {name} í stað {old}, sem lagði skautana á hilluna.",
   "The {team} took {name}.": "{team} völdu {name}.",

@@ -1310,6 +1310,7 @@ export class Match {
     }
     this.endPenaltyShot(); // (everyone off the benches to celebrate)
     this.emit('goal', info);
+    for (const t of [0, 1]) this.aiAdjustPlan(t);
     if (scorer && scorer.stats_.goals === 3) this.emit('hat_trick', { s: scorer, team }); // (the hats come down)
   }
 
@@ -1791,6 +1792,17 @@ export class Match {
     for (const s of this.teamSkaters(team)) { if (was === 'forecheck') s.d.regen /= 0.88; if (id === 'forecheck') s.d.regen *= 0.88; }
     this.plans = this.plans.map((p, i) => (i === team ? id : p));
     this.emit('plan_change', { team, id });
+  }
+
+  // The AI's bench adjusts once a match: two down late, it goes to Run-and-gun. (Sitting back in
+  // the Trap two up as well made the comebacks too easy: Run-and-gun beats it.)
+  aiAdjustPlan(t) {
+    if (this.humans.includes(t) || this.drill || this.winner !== null || this.winScore < 3 || (this.planSwitched && this.planSwitched[t])) return;
+    const d = this.score[t] - this.score[1 - t], late = Math.max(...this.score) >= this.winScore - 2;
+    const want = !late ? null : d <= -2 ? 'rungun' : null;
+    if (!want || this.plans[t] === want) return;
+    (this.planSwitched ||= [false, false])[t] = true;
+    this.setPlan(t, want);
   }
 
   // +1 when this team's plan beats the opponent's, -1 when it's beaten.
