@@ -281,6 +281,12 @@ export const shotMapSvg = (list, ours, theirs) => {
 function coachNote(sm) {
   const [shotsUs, shotsThem] = sm.shots, pims = (sm.pen && sm.pen[0] && sm.pen[0].pims) || 0;
   const draws = sm.draws || [0, 0], poss = sm.possession || [1, 1], share = poss[0] / Math.max(1, poss[0] + poss[1]);
+  if (sm.goalieMode) { // the player was in goal: about the goaltending
+    const sv = sm.saves[0], ga = sm.score[1];
+    if (sv >= 18) return t('{n} saves. That one\'s on the skaters in front of you, not you.', { n: sv });
+    if (ga >= 4 && sv < ga * 3) return t('{n} got past you. Hold the angle and let them come to you: the butterfly covers the ice but leaves the top open.', { n: ga });
+    return t('Close one in net. Shake it off: we go again next time.');
+  }
   if (pims >= 2) return t('{n} trips to the box. Every penalty is a power play against us: hit the puck carrier, and don\'t reach in from behind.', { n: pims });
   if (sm.saves[1] >= 14 && sm.score[0] <= 2) return t('Their goalie saw everything. Get bodies in front: a screen or a tip beats a hot goalie.');
   if (shotsUs * 1.5 < shotsThem) return t('They outshot us {b}–{a}. Get pucks on net, even from the point: the winger goes to the front for it.', { a: shotsUs, b: shotsThem });
