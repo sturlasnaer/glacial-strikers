@@ -732,6 +732,9 @@ class App {
     this.ach.attachMatch(m);
     this.replayPending = false;
     this.commentary.attach(m, teamId);
+    // one of ours on a scoring streak in league games: the booth mentions it at the first faceoff
+    const hot = !exhibition && m.teamSkaters(0).map((k) => ({ k, n: (s.goalStreaks || {})[k.who] || 0 })).filter((x) => x.n >= 3).sort((a, b) => b.n - a.n)[0];
+    if (hot) { const once = () => { m.events.off && m.events.off('drop', once); if (!once.done) { once.done = true; this.commentary.say(t('{name} has scored in {n} straight games. Can they make it {next}?', { name: hot.k.name, n: hot.n, next: hot.n + 1 }), 2); } }; m.on('drop', once); }
     this.chantCool = 25;
     this.ui.clear();
     this.scene = 'match';
