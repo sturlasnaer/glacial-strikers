@@ -334,6 +334,17 @@ img { image-rendering: auto; max-width: 100%; }
 .toggle { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--navy-3); }
 .keys { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13px; }
 .keys kbd { font-family: var(--display); font-size: 17px; background: var(--navy); border: 2px solid var(--navy-3); border-bottom-width: 4px; border-radius: 4px; padding: 0 6px; color: var(--cream); white-space: nowrap; }
+/* a key without keycap art, drawn as one (Settings › Keyboard lets players pick any key) */
+.keycap { display: inline-block; min-width: 1.25em; height: 1.3em; line-height: 1.1em; padding: 0 3px; margin: 0 1px; vertical-align: middle; text-align: center; font-family: var(--display); font-size: 0.95em; color: var(--cream); background: var(--navy); border: 2px solid #c9d6e8; border-bottom-width: 3px; border-radius: 3px; box-sizing: border-box; }
+.keys kbd .keycap { border-color: var(--navy-3); }
+/* Settings › Keyboard */
+.keymap { display: grid; grid-template-columns: 1fr auto auto; gap: 5px 8px; align-items: center; font-size: 13.5px; }
+.keymap .keyslot { display: inline-flex; align-items: center; justify-content: center; min-width: 84px; min-height: 34px; }
+.keymap .keyslot .pb-prompt { height: 1.6em; }
+.keymap .keyslot[disabled] { opacity: 0.55; cursor: default; }
+.keymap .keyslot.listening { border-color: var(--gold); color: var(--gold); animation: keypulse 0.9s ease-in-out infinite alternate; }
+@keyframes keypulse { from { box-shadow: 0 0 0 0 rgba(255, 212, 94, 0); } to { box-shadow: 0 0 0 3px rgba(255, 212, 94, 0.45); } }
+@media (prefers-reduced-motion: reduce) { .keymap .keyslot.listening { animation: none; } }
 
 /* dialogue */
 .dlg { position: relative; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; padding: calc(10px + var(--safe-t)) calc(14px + var(--safe-r)) calc(14px + var(--safe-b)) calc(14px + var(--safe-l)); cursor: pointer; }
@@ -453,6 +464,8 @@ img { image-rendering: auto; max-width: 100%; }
 /* commentary ticker */
 .ticker { position: absolute; left: calc(8px + var(--safe-l)); top: calc(62px + var(--safe-t)); display: flex; align-items: center; gap: 6px; max-width: min(46vw, 420px); min-height: 30px; padding: 1px 8px 0 0; border: 6px solid transparent; border-left-width: 42px; border-image: url(../assets/gfx/hud-kit/images/ticker_frame.png) 18 18 18 126 / 6px 6px 6px 42px stretch; background: #14233b padding-box; font-family: var(--display); font-size: 19px; line-height: 1.05; }
 .ticker.in { animation: tick-in 0.25s ease-out; }
+/* a hint while the ticker is up goes below it (an arena's rules can run to three lines) */
+@media (min-height: 481px) { #hud:has(.ticker:not([hidden])) .hint { top: calc(150px + var(--safe-t)); } }
 .ticker .tk-ico { width: 26px; height: 26px; flex: none; image-rendering: auto; }
 .ticker .live { font-family: var(--body); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #ff6f7d; }
 @keyframes tick-in { from { transform: translateX(-30px); opacity: 0; } }

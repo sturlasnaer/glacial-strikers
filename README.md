@@ -34,6 +34,8 @@ The game needs to be served over http; opening `index.html` straight from disk w
 | Ultimate | I or E | Y | Star button |
 | Pause | Esc / P | Start | Pause icon |
 
+**Your own keys:** Settings › Keyboard puts any key on any action (two keys each; a key already in use swaps over, and Esc always pauses). The tutorial tips, key hints and controls page name your keys. Local versus keeps its fixed split layout.
+
 **Pull the goalie:** H on keyboard, Back/View (Create on PlayStation) on a gamepad, or the PULL GOALIE touch button. It's available when you're behind and the other team needs one more goal.
 
 Hold shoot while a pass is on its way to fire a **one-timer**. Your skates plant while you hold it, so steering only aims.

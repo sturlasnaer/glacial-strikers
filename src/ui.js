@@ -28,6 +28,7 @@ import { agentState, marketOpen, agentsLeft, signAgent } from './agents.js';
 import { latestNews } from './news.js';
 import { audio } from './audio.js';
 import { t } from './i18n.js';
+import { ACTIONS, LOCKED, keyMap, keyName, keyNames, firstKey, moveGroups, groupText, setKeyMap, bindKey, canBind, sideless, isDefault } from './keys.js';
 import { RINK, GOAL_X, BLUE_X, CREASE, MOUTH, NET_DEPTH } from './rink.js';
 import { goalStates, ALL_GOALS_BONUS } from './goals.js';
 const VOLUMES = () => [[0, t('Off')], [0.35, t('Low')], [0.7, t('Mid')], [1, t('Full')]];
@@ -226,14 +227,21 @@ function badge(name, size, cls = 'badge', fallback = '') {
   return src ? `<img class="${cls}" src="${src}" alt="">` : fallback;
 }
 const padGlyphs = (text) => text.replace(/✕|○|□|△|\b(?:L1|R1|L2|R2|LB|RB|LT|RT|Options|Create|Start|Back|[ABXY])\b/g, (m) => promptImg(PAD_PROMPT[m], m));
-// a keyboard label like 'J / Space' or 'WASD / Arrows' as keycaps (keys without art stay text)
-export function keyGlyphs(label) {
-  return label.split(' / ').map((part) => {
-    if (part === 'WASD') return ['w', 'a', 's', 'd'].map((k) => promptImg('key_' + k, k.toUpperCase())).join('');
-    if (part === t('Arrows')) return ['up', 'left', 'down', 'right'].map((k) => promptImg('key_' + k, part)).join('');
-    const k = part.toLowerCase();
-    return KEYS.includes(k) ? promptImg('key_' + k, part) : esc(part);
-  }).join(' / ');
+// a key by name ('J', 'Space', '↑') as a keycap (keys without art stay text)
+const ARROW_KEYS = { '↑': 'up', '←': 'left', '↓': 'down', '→': 'right' };
+export function keyCap(name) {
+  if (ARROW_KEYS[name]) return promptImg('key_' + ARROW_KEYS[name], name);
+  const k = String(name).toLowerCase();
+  return KEYS.includes(k) ? promptImg('key_' + k, name) : `<span class="keycap">${esc(name)}</span>`;
+}
+// an action's keys as keycaps, 'J / Space'
+export const actionGlyphs = (action) => keyMap()[action].filter(Boolean).map((c) => keyCap(keyName(c))).join(' / ') || '—';
+// the skating keys: WASD / arrows
+const moveGlyphs = () => moveGroups().map((g) => (g === 'arrows' ? ['up', 'left', 'down', 'right'].map((k) => promptImg('key_' + k, t('Arrows'))).join('') : g.map(keyCap).join(''))).join(' / ');
+// The keys the hints name, from the player's key map: {shoot} 'J', {move} 'WASD or the arrow keys'.
+export function hintKeys() {
+  const g = moveGroups().map((x) => (x === 'arrows' ? t('the arrow keys') : groupText(x)));
+  return { move: g.length > 1 ? t('{a} or {b}', { a: g[0], b: g[1] }) : g[0] || '—', shoot: firstKey('a'), pass: firstKey('b'), sprint: firstKey('sprint'), skill: firstKey('skill'), ult: firstKey('ult'), pull: firstKey('pull') };
 }
 
 // A small icon for an arena rule (Batch O), or nothing without the art.
@@ -1755,7 +1763,7 @@ export class UI {
     const pair = (a, b) => COMBOS[pairKey(a, b)];
     audio.sfx('click');
     this.modal(`<h2>${t('How supers work')}</h2>
-      <p style="margin:0;font-size:13.5px">${t('Every player has a position, a style and a super. The style is how they play: a trait that\'s always on, and their middle perk choice. The super comes from their element: a skill on U, an ultimate on I when the meter is full, and the first and last perk choices.')}</p>
+      <p style="margin:0;font-size:13.5px">${t('Every player has a position, a style and a super. The style is how they play: a trait that\'s always on, and their middle perk choice. The super comes from their element: a signature skill, an ultimate when the meter is full, and the first and last perk choices.')}</p>
       <div class="label" style="margin:10px 0 4px">${t('Styles')}</div>
       <div class="help-grid">${arch.map((a) => `<div>${smallIcon('icons/arch_' + a.id)}<b>${esc(t(a.name))}</b><span>${esc(t(a.trait))}</span></div>`).join('')}</div>
       <div class="label" style="margin:10px 0 4px">${t('Supers')}</div>
@@ -2454,6 +2462,7 @@ export class UI {
       ${row(t('Touch layout'), seg('lefty', [[false, t('Stick left')], [true, t('Stick right')]]))}
       ${row(t('Play offline'), `<span style="font-size:13px;text-align:right;max-width:30ch">${installHelp(this.app)}</span>`)}
       <div class="label">${t('Controls')}</div>
+      ${this.app.isTouch ? '' : row(t('Keyboard'), `<button class="btn small ghost" id="s-keys">${t('Change keys')}</button>`, isDefault() ? t('The keys as they came.') : t('Your own keys.'))}
       ${controlsHtml(this.app.isTouch)}
       <div class="toggle"><span class="muted">${t('Erase the save and start over')}</span><button class="btn small ghost" id="s-reset">${t('Reset save')}</button></div>
       <button class="btn small" id="s-close">${t('Close')}</button>`;
@@ -2479,6 +2488,7 @@ export class UI {
         this.click('#s-install', async () => { await this.app.install(); m.innerHTML = body(); bind(); }, m);
         this.click('#s-close', () => { audio.sfx('back'); close(); }, m);
         this.click('#s-jukebox', () => { audio.sfx('click'); this.jukebox(); }, m);
+        this.click('#s-keys', () => { audio.sfx('click'); this.keyboard(() => { const y = m.scrollTop; m.innerHTML = body(); bind(); m.scrollTop = y; }); }, m);
         this.click('#s-code', () => { audio.sfx('click'); this.cloudCode(); }, m);
         this.click('#s-restore', () => { audio.sfx('click'); this.cloudRestore(); }, m);
         this.click('#s-reset', (el) => {
@@ -2488,6 +2498,57 @@ export class UI {
       };
       bind();
     });
+  }
+
+  // Settings › Keyboard: two keys for each action. Click one, press the new key; a key that
+  // was doing something else swaps over. Esc cancels (it always pauses, so it can't be taken).
+  keyboard(onClose) {
+    const st = this.app.save.settings;
+    const NAMES = { up: t('Skate up'), left: t('Skate left'), down: t('Skate down'), right: t('Skate right'), a: t('Shoot / check'), b: t('Pass / switch'), sprint: t('Sprint'), skill: t('Signature ability'), ult: t('Ultimate'), pull: t('Pull the goalie'), pause: t('Pause') };
+    let listen = null; // [action, slot] waiting for a key
+    const slot = (a, i) => {
+      const code = keyMap()[a][i], locked = LOCKED[a] === i, on = listen && listen[0] === a && listen[1] === i;
+      return `<button class="chip keyslot${on ? ' listening' : ''}" data-key="${a}:${i}" ${locked ? 'disabled' : ''} aria-label="${esc(NAMES[a])}: ${esc(code ? keyName(code) : t('none'))}">${on ? t('Press a key…') : code ? keyCap(keyName(code)) : '—'}</button>`;
+    };
+    const body = (msg = '') => `<h2>${t('Keyboard')}</h2>
+      <p class="muted" style="font-size:13px;margin:0 0 8px">${t('Click a key, then press the one you want. A key that was doing something else swaps over. Esc cancels.')}</p>
+      <div class="keymap">${ACTIONS.map((a) => `<span>${esc(NAMES[a])}</span>${slot(a, 0)}${slot(a, 1)}`).join('')}</div>
+      <p class="muted" id="kb-msg" style="font-size:12.5px;min-height:1.3em;margin:6px 0">${msg}</p>
+      <p class="muted" style="font-size:12px;margin:0 0 8px">${t('Local versus keeps its own keys: WASD and F, G for player 1, the arrows and K, L for player 2.')}</p>
+      <div class="row" style="justify-content:space-between"><button class="btn small ghost" id="kb-reset" ${isDefault() ? 'disabled' : ''}>${t('Reset to defaults')}</button><button class="btn small" id="kb-done" data-close>${t('Done')}</button></div>`;
+    let bg = null;
+    const render = (msg) => { const m = bg.querySelector('.modal'); m.innerHTML = body(msg); wire(m); };
+    const save = (custom) => { st.keys = custom; setKeyMap(custom); writeSave(this.app.save); };
+    // the next key goes to the waiting slot (before the game or the menus see it)
+    const onKey = (e) => {
+      if (!listen) return;
+      if (!document.body.contains(bg)) { window.removeEventListener('keydown', onKey, true); return; }
+      e.preventDefault(); e.stopImmediatePropagation();
+      if (e.repeat) return;
+      const [a, i] = listen;
+      listen = null;
+      if (e.code === 'Escape') { audio.sfx('back'); render(); return; }
+      const custom = canBind(sideless(e.code)) ? bindKey(st.keys, a, i, e.code) : null;
+      if (!custom) { audio.sfx('deny'); render(t('{key} is kept for the browser. Try another.', { key: keyName(e.code) })); return; }
+      save(custom);
+      audio.sfx('click');
+      render();
+    };
+    const wire = (m) => {
+      m.querySelectorAll('[data-key]').forEach((el) => el.addEventListener('click', () => {
+        const [a, i] = el.dataset.key.split(':');
+        listen = [a, +i];
+        audio.sfx('click');
+        render();
+        m.querySelector(`[data-key="${a}:${i}"]`)?.blur(); // (a Space on it mustn't press it again)
+      }));
+      this.click('#kb-reset', () => { save({}); audio.sfx('click'); render(); }, m);
+      // (the first Done is the modal's own; a redrawn one needs wiring)
+      if (bg) this.click('#kb-done', () => { audio.sfx('back'); bg.remove(); done(); }, m);
+    };
+    const done = () => { window.removeEventListener('keydown', onKey, true); onClose?.(); };
+    window.addEventListener('keydown', onKey, true);
+    bg = this.modal(body(), (m) => wire(m), true, done);
   }
 
   // -------------------------------------------------------------- dialogue
@@ -2759,7 +2820,7 @@ function chemCard(k, xp) {
 
 // The moves on top of the buttons, in the pause menu under the controls.
 function movesHtml(touch, pad) {
-  const k = touch ? { sprint: t('SPRINT'), shoot: t('SHOOT'), pass: t('PASS') } : pad ? (psPad() ? { sprint: 'R1', shoot: '□', pass: '✕' } : { sprint: 'RB', shoot: 'X', pass: 'A' }) : { sprint: 'Shift', shoot: 'J', pass: 'K' };
+  const k = touch ? { sprint: t('SPRINT'), shoot: t('SHOOT'), pass: t('PASS') } : pad ? (psPad() ? { sprint: 'R1', shoot: '□', pass: '✕' } : { sprint: 'RB', shoot: 'X', pass: 'A' }) : hintKeys();
   const g = pad && !touch ? padGlyphs : (x) => x;
   return `<div class="label" style="margin:10px 0 4px">${t('Moves')}</div><div class="keys moves">
     <kbd>${t('Deke')}</kbd><span>${g(t('Tap {sprint} with a defender in front to cut past them; near the goalie it can make them bite.', k))}</span>
@@ -2783,14 +2844,14 @@ export function controlsHtml(touch, pad = false) {
   </div>${movesHtml(true)}`;
   }
   return `<div class="keys">
-    <kbd>${keyGlyphs(`WASD / ${t('Arrows')}`)}</kbd><span>${t('Skate')}</span>
-    <kbd>${keyGlyphs('Shift')}</kbd><span>${t('Sprint (uses stamina)')}</span>
-    <kbd>${keyGlyphs('J / Space')}</kbd><span>${t('Shoot: tap for a wrist shot, hold for a slapshot. Without the puck: check')}</span>
-    <kbd>${keyGlyphs('K / Enter')}</kbd><span>${t('Pass (aim with movement). Without the puck: switch player')}</span>
-    <kbd>${keyGlyphs('U / Q')}</kbd><span>${t('Signature ability')}</span>
-    <kbd>${keyGlyphs('I / E')}</kbd><span>${t('Ultimate (when the gold meter is full)')}</span>
-    <kbd>${keyGlyphs('H')}</kbd><span>${t('Pull the goalie for an extra attacker (when trailing and they need one more goal)')}</span>
-    <kbd>${keyGlyphs('Esc / P')}</kbd><span>${t('Pause')}</span>
+    <kbd>${moveGlyphs()}</kbd><span>${t('Skate')}</span>
+    <kbd>${actionGlyphs('sprint')}</kbd><span>${t('Sprint (uses stamina)')}</span>
+    <kbd>${actionGlyphs('a')}</kbd><span>${t('Shoot: tap for a wrist shot, hold for a slapshot. Without the puck: check')}</span>
+    <kbd>${actionGlyphs('b')}</kbd><span>${t('Pass (aim with movement). Without the puck: switch player')}</span>
+    <kbd>${actionGlyphs('skill')}</kbd><span>${t('Signature ability')}</span>
+    <kbd>${actionGlyphs('ult')}</kbd><span>${t('Ultimate (when the gold meter is full)')}</span>
+    <kbd>${actionGlyphs('pull')}</kbd><span>${t('Pull the goalie for an extra attacker (when trailing and they need one more goal)')}</span>
+    <kbd>${actionGlyphs('pause')}</kbd><span>${t('Pause')}</span>
     ${psPad()
     ? `<kbd>${t('PlayStation pad')}</kbd><span>${padGlyphs(t('Left stick to skate · □ or R2 shoot-check · ✕ pass-switch · R1 or L2 sprint · ○ or L1 skill · △ ultimate · Options pause · Create pull goalie'))}</span>`
     : `<kbd>${t('Gamepad')}</kbd><span>${padGlyphs(t('Left stick to skate · X or RT shoot-check · A pass-switch · RB or LT sprint · B or LB skill · Y ultimate · Start pause · Back pull goalie'))}</span>`}

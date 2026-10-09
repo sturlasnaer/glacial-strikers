@@ -11,7 +11,8 @@ import { firstTime } from './guide.js';
 import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as cloudBackup, settleCups } from './online.js';
 import { ARENA_MUSIC } from './songs.js';
 import { ResurfacerLap } from './scenery.js';
-import { UI, controlsHtml, crest, ruleIconSrc, cupPlaceImg, portrait, shotMapSvg, esc } from './ui.js';
+import { UI, controlsHtml, crest, ruleIconSrc, cupPlaceImg, portrait, shotMapSvg, esc, hintKeys } from './ui.js';
+import { isKey, setKeyMap } from './keys.js';
 import { HUD } from './hud.js';
 import { toScreen } from './rink.js';
 import { Replay } from './replay.js';
@@ -207,6 +208,7 @@ class App {
   // Apply comfort / accessibility settings everywhere they matter.
   applySettings() {
     const st = this.save.settings;
+    setKeyMap(st.keys);
     audio.setMusic(st.music !== false && (st.musicVol ?? 1) > 0, st.musicVol ?? 1); audio.setSfx(st.sfx !== false && (st.sfxVol ?? 1) > 0, st.sfxVol ?? 1);
     audio.setQuality(st.audioQuality || 'auto');
     this.fx.shakeMul = st.shake ?? 1;
@@ -258,7 +260,7 @@ class App {
   }
 
   onKey(code) {
-    const enter = code === 'Enter' || code === 'Space' || code === 'KeyJ';
+    const enter = code === 'Enter' || code === 'Space' || isKey('a', code);
     if (this.scene === 'title' && code === 'Enter' && !document.querySelector('.modal-bg')) this.startCampaign();
     else if (this.scene === 'dialogue' && enter) this.ui.dialogueAdvance?.();
     else if (this.scene === 'results' && code === 'Enter' && !document.querySelector('.modal-bg')) document.getElementById('r-go')?.click();
@@ -778,20 +780,20 @@ class App {
   }
 
   tutorialTips() {
-    const touch = this.isTouch;
+    const touch = this.isTouch, k = hintKeys();
     if (this.match && this.match.goalieMode) return [
-      touch ? t('You\'re in goal! Drag your left thumb to move Halla: she holds the angle, you nudge her.') : t('You\'re in goal! Move Halla with WASD or the arrows: she holds the angle, you nudge her.'),
-      touch ? t('Shot coming? BLOCK drops into the butterfly, DIVE throws Halla across the net.') : t('Shot coming? J drops into the butterfly, K dives across the net.'),
-      touch ? t('Caught it? PASS goes toward your thumb, CLEAR rims it around the boards.') : t('Caught it? J passes toward where you\'re steering, K rims it around the boards.'),
-      touch ? t('The round button pokes the puck off a close carrier. Saves charge Wall of Ice: fire it with the star.') : t('U pokes the puck off a close carrier. Saves charge Wall of Ice: fire it with I.'),
+      touch ? t('You\'re in goal! Drag your left thumb to move Halla: she holds the angle, you nudge her.') : t('You\'re in goal! Move Halla with {move}: she holds the angle, you nudge her.', k),
+      touch ? t('Shot coming? BLOCK drops into the butterfly, DIVE throws Halla across the net.') : t('Shot coming? {shoot} drops into the butterfly, {pass} dives across the net.', k),
+      touch ? t('Caught it? PASS goes toward your thumb, CLEAR rims it around the boards.') : t('Caught it? {shoot} passes toward where you\'re steering, {pass} rims it around the boards.', k),
+      touch ? t('The round button pokes the puck off a close carrier. Saves charge Wall of Ice: fire it with the star.') : t('{skill} pokes the puck off a close carrier. Saves charge Wall of Ice: fire it with {ult}.', k),
     ];
     return [
-      touch ? t('Drag your left thumb to skate. Hold SPRINT for a burst of speed.') : t('Skate with WASD or the arrow keys. Hold Shift to sprint.'),
-      touch ? t('With the puck: tap SHOOT for a wrist shot, hold it to charge a slapshot.') : t('With the puck: tap J for a wrist shot, hold J to charge a slapshot.'),
-      touch ? t('Defender in your face? Tap SPRINT to deke past them. Near the goalie, a deke can make them bite.') : t('Defender in your face? Tap Shift to deke past them. Near the goalie, a deke can make them bite.'),
-      touch ? t('PASS goes to the teammate you\'re steering toward: the gold ring at their feet. Hold SHOOT as it arrives for a one-timer.') : t('K passes toward the teammate you\'re steering at: the gold ring at their feet. Hold J as it arrives for a one-timer.'),
-      touch ? t('No puck? SHOOT becomes CHECK and PASS switches to the skater nearest the puck.') : t('No puck? J checks and K switches to the skater nearest the puck.'),
-      touch ? t('The round button above SHOOT is your signature skill. The star fires your ultimate when it glows.') : t('U fires your signature skill. I fires your ultimate when the gold bar is full.'),
+      touch ? t('Drag your left thumb to skate. Hold SPRINT for a burst of speed.') : t('Skate with {move}. Hold {sprint} to sprint.', k),
+      touch ? t('With the puck: tap SHOOT for a wrist shot, hold it to charge a slapshot.') : t('With the puck: tap {shoot} for a wrist shot, hold {shoot} to charge a slapshot.', k),
+      touch ? t('Defender in your face? Tap SPRINT to deke past them. Near the goalie, a deke can make them bite.') : t('Defender in your face? Tap {sprint} to deke past them. Near the goalie, a deke can make them bite.', k),
+      touch ? t('PASS goes to the teammate you\'re steering toward: the gold ring at their feet. Hold SHOOT as it arrives for a one-timer.') : t('{pass} passes toward the teammate you\'re steering at: the gold ring at their feet. Hold {shoot} as it arrives for a one-timer.', k),
+      touch ? t('No puck? SHOOT becomes CHECK and PASS switches to the skater nearest the puck.') : t('No puck? {shoot} checks and {pass} switches to the skater nearest the puck.', k),
+      touch ? t('The round button above SHOOT is your signature skill. The star fires your ultimate when it glows.') : t('{skill} fires your signature skill. {ult} fires your ultimate when the gold bar is full.', k),
     ];
   }
 
@@ -843,7 +845,7 @@ class App {
     m.on('screen', (e) => { if (e.g.human && !this.attract && !(this.cur && this.cur.versus) && firstTime(this.save, 'screened')) this.hud.hint(t('Screened! A body in front hides the puck until it\'s past them. Watch for it coming out.'), 4); });
     m.on('penalty_delayed', (e) => {
       audio.crowdOoh(0.4);
-      if (!this.attract && e.team === 1 && !m.goalieMode && !(this.cur && this.cur.versus) && firstTime(this.save, 'delayed')) this.hud.hint(this.isTouch ? t('Delayed penalty! The whistle waits until they touch the puck. Keep it, and tap PULL GOALIE for a free extra attacker.') : this.input.lastDevice === 'gamepad' ? t('Delayed penalty! The whistle waits until they touch the puck. Keep it, and press Back for a free extra attacker.') : t('Delayed penalty! The whistle waits until they touch the puck. Keep it, and press H for a free extra attacker.'), 6);
+      if (!this.attract && e.team === 1 && !m.goalieMode && !(this.cur && this.cur.versus) && firstTime(this.save, 'delayed')) this.hud.hint(this.isTouch ? t('Delayed penalty! The whistle waits until they touch the puck. Keep it, and tap PULL GOALIE for a free extra attacker.') : this.input.lastDevice === 'gamepad' ? t('Delayed penalty! The whistle waits until they touch the puck. Keep it, and press Back for a free extra attacker.') : t('Delayed penalty! The whistle waits until they touch the puck. Keep it, and press {pull} for a free extra attacker.', hintKeys()), 6);
     });
     m.on('penalty_over', (e) => { if (!e.byGoal) this.hud.ticker(t('{name} is out of the box. Back to full strength.', { name: e.s.name })); });
     m.on('goalie_pulled', (e) => {
@@ -855,7 +857,7 @@ class App {
         if (this.match !== m || this.pullTipShown || this.cur.versus) return;
         if (m.canPullGoalie && m.score[0] < m.score[1] && m.score[1] >= m.winScore - 1) {
           this.pullTipShown = true;
-          this.hud.hint(this.isTouch ? t('Desperate? Tap PULL GOALIE for an extra attacker.') : t('Desperate? Press H (gamepad: Back) to pull your goalie for an extra attacker.'), 6);
+          this.hud.hint(this.isTouch ? t('Desperate? Tap PULL GOALIE for an extra attacker.') : t('Desperate? Press {pull} (gamepad: Back) to pull your goalie for an extra attacker.', hintKeys()), 6);
         }
       }, 4200);
     });
@@ -889,7 +891,7 @@ class App {
     m.on('faceoff', () => audio.sfx('whistle', { vol: 0.55 }));
     m.on('penalty_shot', (e) => {
       this.replay.clear(); // (its replay starts at centre ice, not before the foul)
-      if (m.pshot && m.pshot.keeper && !(this.cur && this.cur.versus)) this.hud.hint(this.isTouch ? t('You\'re in goal! BLOCK drops to the butterfly, DIVE dives across.') : this.input.lastDevice === 'gamepad' ? t('You\'re in goal! X / □ drops to the butterfly, A / ✕ dives.') : t('You\'re in goal! J drops to the butterfly, K dives.'), 4);
+      if (m.pshot && m.pshot.keeper && !(this.cur && this.cur.versus)) this.hud.hint(this.isTouch ? t('You\'re in goal! BLOCK drops to the butterfly, DIVE dives across.') : this.input.lastDevice === 'gamepad' ? t('You\'re in goal! X / □ drops to the butterfly, A / ✕ dives.') : t('You\'re in goal! {shoot} drops to the butterfly, {pass} dives.', hintKeys()), 4);
     });
     m.on('hat_trick', () => setTimeout(() => { if (this.match === m) audio.crowdCheer(1); }, 400)); // (the hats come down to a roar)
     // how the draw is won: shown once, on the first early press or the first faceoff after a goal
@@ -897,7 +899,7 @@ class App {
       if (this.attract || (this.cur && this.cur.versus) || m.goalieMode || !firstTime(this.save, 'faceoff')) return; // (versus has its own keys)
       this.hud.hint(this.isTouch ? t('Wait for the puck to touch the ice, then tap SHOOT or PASS to win the draw.')
         : this.input.lastDevice === 'gamepad' ? t('Wait for the puck to touch the ice, then press SHOOT or PASS to win the draw.')
-          : t('Wait for the puck to touch the ice, then press J or K to win the draw.'), 5);
+          : t('Wait for the puck to touch the ice, then press {shoot} or {pass} to win the draw.', hintKeys()), 5);
     };
     m.on('faceoff_early', (e) => { audio.sfx('deny', { vol: 0.5 }); if (e.s.team === 0) drawHint(); });
     m.on('faceoff', () => { if (m.score[0] + m.score[1] > 0 && !m.drill) drawHint(); });

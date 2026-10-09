@@ -137,3 +137,15 @@ And in the hub portrait style (`hub_npcs/portrait/coach`), same size and framing
 - `hub_npcs/portrait/coach_stern`: Coach Brekka after a loss, arms folded or a hand on the whistle, a firm but fair look (not angry), as `npcs.coach_stern` in the atlas.
 
 4 frames.
+
+---
+
+## Batch BQ: the rest of the keyboard keycaps
+
+Settings › Keyboard now lets players put any key on any action, and the controls page, the in-match key hints and the Keyboard screen show each key as a keycap. Batch U drew the default keys (`key_w`, `key_a`, `key_s`, `key_d`, `key_j`, `key_k`, `key_l`, `key_u`, `key_i`, `key_o`, `key_p`, `key_h`, `key_shift`, `key_space`, `key_enter`, `key_esc` and the four arrows); any other key is drawn as a plain box with its letter for now. Please draw the rest in exactly the Batch U keycap style, size and padding, as PNGs in `assets/gfx/ui-kit/images/`:
+- letters: `key_b`, `key_c`, `key_e`, `key_f`, `key_g`, `key_m`, `key_n`, `key_q`, `key_r`, `key_t`, `key_v`, `key_x`, `key_y`, `key_z`
+- digits: `key_0` to `key_9`
+- punctuation (the US-layout symbol on the cap): `key_semicolon` (;), `key_quote` ('), `key_comma` (,), `key_period` (.), `key_slash` (/), `key_backslash` (\), `key_bracketleft` ([), `key_bracketright` (]), `key_minus` (-), `key_equal` (=), `key_backquote` (`)
+- wide keys, in the width of `key_shift`: `key_ctrl`, `key_alt`, `key_backspace`
+
+38 images.

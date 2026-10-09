@@ -1,16 +1,8 @@
 // Keyboard, gamepad and touch controls merged into one raw input state:
 // { mx, my, sprint, a, b, skill, ult, pause }
 //   a = shoot (hold to charge) / check     b = pass / switch player
-
-const KEYMAP = {
-  a: ['KeyJ', 'Space'],
-  b: ['KeyK', 'Enter'],
-  sprint: ['ShiftLeft', 'ShiftRight', 'KeyL'],
-  skill: ['KeyU', 'KeyQ'],
-  ult: ['KeyI', 'KeyE'],
-  pause: ['Escape', 'KeyP'],
-  pull: ['KeyH'],
-};
+// The keyboard's keys come from keys.js (the defaults, or the player's own from Settings).
+import { ACTIONS, keyMap, isKey } from './keys.js';
 
 // Local versus: player 1 on the left of the keyboard, player 2 around the arrows.
 export const SPLIT = {
@@ -34,7 +26,10 @@ export class Input {
     this.listeners = [];
     window.addEventListener('keydown', (e) => {
       if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
-      if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+      // (the game's keys don't scroll the page or open the browser's quick find; Enter still
+      // presses buttons, and with Cmd, Ctrl or Alt held a key is the browser's)
+      const ours = !e.metaKey && !e.ctrlKey && !e.altKey && e.code !== 'Enter' && ACTIONS.some((a) => isKey(a, e.code));
+      if (ours || ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
       if (!e.repeat) this.listeners.forEach((f) => f(e.code));
       this.keys.add(e.code);
       this.lastDevice = 'keyboard';
@@ -55,7 +50,8 @@ export class Input {
     }
   }
 
-  key(name) { return KEYMAP[name].some((k) => this.keys.has(k)); }
+  // Is one of an action's keys down? ('Shift' is either Shift.)
+  key(name) { return keyMap()[name].some((k) => k && (/^(Shift|Control|Alt)$/.test(k) ? this.keys.has(k + 'Left') || this.keys.has(k + 'Right') : this.keys.has(k))); }
 
   // Connected gamepads in index order.
   pads() { return [...(navigator.getGamepads ? navigator.getGamepads() : [])].filter(Boolean); }
@@ -85,11 +81,10 @@ export class Input {
 
   read() {
     let mx = 0, my = 0;
-    const K = this.keys;
-    if (K.has('KeyA') || K.has('ArrowLeft')) mx -= 1;
-    if (K.has('KeyD') || K.has('ArrowRight')) mx += 1;
-    if (K.has('KeyW') || K.has('ArrowUp')) my -= 1;
-    if (K.has('KeyS') || K.has('ArrowDown')) my += 1;
+    if (this.key('left')) mx -= 1;
+    if (this.key('right')) mx += 1;
+    if (this.key('up')) my -= 1;
+    if (this.key('down')) my += 1;
     if (mx && my) { mx *= Math.SQRT1_2; my *= Math.SQRT1_2; }
     const st = {
       mx, my,

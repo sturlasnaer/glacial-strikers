@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-09e',
+    items: [
+      { icon: 'icons/respec', text: 'Settings › Keyboard: put any key on any action, two keys each. The hints and the controls page follow your keys.' },
+    ],
+  },
+  {
     id: '2026-10-09d',
     items: [
       { icon: 'badges/cup_small', text: 'From Monday 12 October, Faceoffs and Tip-Ins count in the Weekly Cup too: six drills, six chances at points.' },

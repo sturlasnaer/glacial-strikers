@@ -2,7 +2,8 @@
 
 import { Assets } from './assets.js';
 import { POWER_INFO, TEAMS, ART_NAME, RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, teamInfo } from './data.js';
-import { portrait, crest, keyGlyphs, portraitCanvas } from './ui.js';
+import { portrait, crest, keyCap, portraitCanvas } from './ui.js';
+import { firstKey } from './keys.js';
 import { t } from './i18n.js';
 import { isPartsArt } from './modular.js';
 
@@ -33,6 +34,7 @@ export class HUD {
     this.drill = drill;
     this.versus = !!opts.versus;
     const team = teamInfo(teamId);
+    const K = (action) => keyCap(firstKey(action)); // (the player's own keys, Settings › Keyboard)
     this.el.hidden = false;
     this.el.innerHTML = `
       ${drill ? '<div class="drillbar"><div class="t"></div><div class="m"></div><div class="s"></div><div class="n"></div></div>' : ''}
@@ -62,8 +64,8 @@ export class HUD {
       <div class="keyhints" id="keyhints" ${this.app.isTouch ? 'hidden' : ''}>
         ${opts.versus ? `<b style="color:var(--ice)">P1</b> WASD · <kbd>F</kbd> ${t('shoot')} · <kbd>G</kbd> ${t('pass')} · <kbd>L-Shift</kbd> ${t('sprint')} · <kbd>R</kbd>/<kbd>T</kbd> ${t('skill/ult')}<br>
         <b style="color:var(--coral)">P2</b> ${t('Arrows')} · <kbd>K</kbd> ${t('shoot')} · <kbd>L</kbd> ${t('pass')} · <kbd>R-Shift</kbd> ${t('sprint')} · <kbd>O</kbd>/<kbd>P</kbd> ${t('skill/ult')}`
-        : match.goalieMode ? `${keyGlyphs('J')} ${t('block / pass')} · ${keyGlyphs('K')} ${t('dive / clear')} · ${keyGlyphs('Shift')} ${t('quick feet')}<br>${keyGlyphs('U')} ${t('poke check')} · ${keyGlyphs('I')} ${t('Wall of Ice')} · ${keyGlyphs('Esc')} ${t('pause')}`
-        : `${keyGlyphs('J')} ${t('shoot/check')} · ${keyGlyphs('K')} ${t('pass/switch')} · ${keyGlyphs('Shift')} ${t('sprint')}<br>${keyGlyphs('U')} ${t('skill')} · ${keyGlyphs('I')} ${t('ultimate')} · ${keyGlyphs('Esc')} ${t('pause')}`}</div>`;
+        : match.goalieMode ? `${K('a')} ${t('block / pass')} · ${K('b')} ${t('dive / clear')} · ${K('sprint')} ${t('quick feet')}<br>${K('skill')} ${t('poke check')} · ${K('ult')} ${t('Wall of Ice')} · ${K('pause')} ${t('pause')}`
+        : `${K('a')} ${t('shoot/check')} · ${K('b')} ${t('pass/switch')} · ${K('sprint')} ${t('sprint')}<br>${K('skill')} ${t('skill')} · ${K('ult')} ${t('ultimate')} · ${K('pause')} ${t('pause')}`}</div>`;
     this.el.querySelector('#pause-btn').addEventListener('click', (e) => { e.stopPropagation(); e.currentTarget.blur(); this.app.pause(); }); // (no focus left on it: Enter is the pass key)
     for (const i of [0, 1]) paint(this.el.querySelector('#d' + i), digit(match.score[i]));
     // every cut-in banner this match can show, recoloured before play rather than at the first ultimate
