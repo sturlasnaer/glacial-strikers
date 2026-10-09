@@ -383,6 +383,7 @@ export class Match {
     if (b.def.arch === 'dangler' && this.puck.owner === b && this.rng() < 0.2 + (b.hasPerk('Slippery') ? 0.15 : 0)) { this.emit('deke', { s: b, by: a }); return; } // (slipped the check)
     const hadPuck = this.puck.owner === b || this.time - (b.lastPuckT ?? -9) < 0.5;
     const puckDist = Math.hypot(this.puck.x - b.x, this.puck.y - b.y);
+    const before = { vx: b.vx, vy: b.vy }; // (the knockback below changes it: the ref judges what he saw)
     const dir = norm(b.x - a.x, b.y - a.y);
     const rel = Math.max(0, (a.vx - b.vx) * dir.x + (a.vy - b.vy) * dir.y);
     let power = a.d.checkPower * clamp(0.55 + rel / 480, 0.6, 1.45) * (this.mods.has('heavy') ? 1.5 : 1);
@@ -413,7 +414,7 @@ export class Match {
     }
     if (b.ultWindup > 0 && b.def.ult.id === 'thunderclap') b.ult = 50;
     this.emit('hit', { a, b, power: kb, stripped });
-    this.judgeHit(a, b, kb, hadPuck, puckDist);
+    this.judgeHit(a, b, kb, hadPuck, puckDist, before);
   }
 
   // The deke: with someone right in front (a skater, or the goalie), the carrier cuts away from
@@ -967,6 +968,7 @@ export class Match {
           const vn = p.vx * nx + p.vy * ny;
           if (vn < 0) { p.vx -= 1.8 * vn * nx; p.vy -= 1.8 * vn * ny; }
           if (-vn > 150) this.emit('post', { x: p.x, y: p.y, power: -vn });
+          if (this.pshot && p.owner !== this.pshot.s) this.pshot.done = true;
           if (p.shot) p.shot.post = true;
         }
       }
@@ -1093,6 +1095,7 @@ export class Match {
     p.noPickup.set(g, 0.4);
     p.rolled.clear();
     g.saveHigh = p.z > 14; g.saveUp = p.y < g.y;
+    if (this.pshot) this.pshot.done = true; // (a penalty shot has no rebounds)
     if (g.state !== 'skate_in') g.setState(Math.abs(off) > 10 ? 'glove' : 'butterfly');
     this.emit('save', { g, caught: false, speed, x: p.x, y: p.y });
     return false;
@@ -1104,6 +1107,7 @@ export class Match {
     p.shot = null; p.pass = null; p.curve = null;
     p.vx = 0; p.vy = 0; p.vz = 0; p.z = 0;
     g.setState('hold');
+    if (this.pshot) this.pshot.done = true;
     g.holdT = g.human ? 2.5 : 0.9; // the player gets a moment to pick a pass
     g.stopPose = !fromShot;
     g.track = null; g.react = null;
@@ -1244,7 +1248,6 @@ export class Match {
         if (assists.length >= 2) break;
       }
       scorer.stats_.goals++;
-      if (scorer.stats_.goals === 3) this.emit('hat_trick', { s: scorer, team }); // (the hats come down)
       this.addUlt(scorer, 15);
       if (sh && sh.power) scorer.stats_.powerGoals++;
       for (const a of assists) { a.stats_.assists++; this.addUlt(a, 8); this.chemStat(team, a, scorer).assists++; }
@@ -1267,7 +1270,9 @@ export class Match {
       s.charging = false; s.ultWindup = 0;
       if (s.team === team) s.celebrate = 3;
     }
+    this.endPenaltyShot(); // (everyone off the benches to celebrate)
     this.emit('goal', info);
+    if (scorer && scorer.stats_.goals === 3) this.emit('hat_trick', { s: scorer, team }); // (the hats come down)
   }
 
   // -------------------------------------------------------- power pucks
@@ -1511,14 +1516,15 @@ export class Match {
   // ------------------------------------------------------------ penalties
   // Decide whether the ref calls this hit. Hits on the puck carrier are clean unless
   // they're brutal; hitting someone away from the puck is interference.
-  judgeHit(a, b, power, hadPuck, puckDist) {
+  judgeHit(a, b, power, hadPuck, puckDist, before = b) {
     if (!this.penaltiesOn || this.state !== 'play' || this.pendingPenalty) return;
     if (this.teamSkaters(a.team).some((k) => k.boxT > 0)) return; // one in the box at a time
     let reason = null;
     // taken down from behind on a breakaway (nobody else back, in the attacking half, going
     // in): a penalty shot instead of the power play
-    if (hadPuck && b.speed > 120 && b.x * b.side > 0 && Math.cos(Math.atan2(a.y - b.y, a.x - b.x) - Math.atan2(b.vy, b.vx)) < -0.3
-      && !this.skaters.some((o) => o.team === a.team && o !== a && !o.parked && (o.x - b.x) * b.side > 0) && this.rng() < 0.3) {
+    const bsp = Math.hypot(before.vx, before.vy);
+    if (hadPuck && bsp > 120 && before.vx * b.side > 0 && b.x * b.side > 0 && (a.x - b.x) * b.side < 0 && Math.cos(Math.atan2(a.y - b.y, a.x - b.x) - Math.atan2(before.vy, before.vx)) < -0.3
+      && !this.skaters.some((o) => o.team === a.team && o !== a && !o.parked && (o.x - b.x) * b.side > 0) && !this.mods.has('onetimers') && this.rng() < 0.5) {
       this.pendingPenalty = { s: a, reason: 'Hooking', shot: b };
       return;
     }
@@ -1535,6 +1541,7 @@ export class Match {
     const s = this.penaltyShotFor;
     this.penaltyShotFor = null;
     if (!s || s.parked) { this.setupFaceoff(); return; }
+    if (this.extra[1 - s.team]) this.returnGoalie(1 - s.team, true); // (no penalty shot on an empty net)
     const benched = [];
     let n = [0, 0];
     for (const o of this.skaters) {
@@ -1549,7 +1556,7 @@ export class Match {
     Object.assign(s, { x: -s.side * 30, y: 0, vx: 0, vy: 0, face: s.side > 0 ? 0 : Math.PI, stun: 0, charging: false, ultWindup: 0, dashT: 0, state: 'skate' });
     p.x = s.x + s.side * 20; p.y = 0; p.z = 0; p.vx = p.vy = p.vz = 0;
     p.shot = null; p.pass = null; p.curve = null; p.trail.length = 0; p.inNet = null; p.power = null; p.powerT = 0;
-    p.noPickup.clear(); p.rolled.clear();
+    p.noPickup.clear(); p.rolled.clear(); p.touches = []; p.lastTouch = null; // (nobody assists a penalty shot)
     this.barriers.length = 0; this.cyclones.length = 0; this.trails.length = 0;
     if (this.humans.includes(s.team)) for (const o of this.teamSkaters(s.team)) o.controlled = o === s;
     this.takePossession(s, 'faceoff');
@@ -1566,7 +1573,7 @@ export class Match {
     ps.t += dt;
     if (p.owner !== s) ps.gone += dt;
     const back = p.x * s.side < -60; // (taken back past centre)
-    const dead = ps.gone > 0 && (ps.gone > 1.8 || (p.owner && p.owner.isGoalie) || (!p.owner && Math.hypot(p.vx, p.vy) < 40 && ps.gone > 0.4));
+    const dead = ps.done || (ps.gone > 0 && (ps.gone > 1.8 || (p.owner && p.owner.isGoalie) || (!p.owner && Math.hypot(p.vx, p.vy) < 40 && ps.gone > 0.4)));
     if (!(dead || back || ps.t > 10)) return false;
     this.emit('penalty_shot_over', { s, scored: false });
     this.setupFaceoff();
@@ -1603,6 +1610,7 @@ export class Match {
     const { s, reason, shot } = this.pendingPenalty;
     this.pendingPenalty = null;
     if (shot) { // a penalty shot: nobody to the box; the linesman signals, then it's taken
+      this.penStats[s.team].pims++; // (still a penalty taken)
       if (this.puck.owner) this.loosePuck(this.puck.owner);
       this.penaltyShotFor = shot;
       this.state = 'penalty'; this.stateT = 0; this.penaltyReason = reason;

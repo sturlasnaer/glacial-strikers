@@ -138,7 +138,41 @@ const mk = (seed = 5) => new Match({ teams: [team(), team()], humanTeam: null, s
     m.judgeHit(d, c, 300, true, 10);
     if (m.pendingPenalty && m.pendingPenalty.shot === c) called++;
   }
-  check('...called on about a third of breakaway hits from behind', called >= 4 && called <= 16, called);
+  check('...called on about half the breakaway hits from behind', called >= 8 && called <= 22, called);
+  // ...but never on a head-on or side check (the ref judges the play before the knockback)
+  let wrong = 0;
+  for (let seed = 0; seed < 40; seed++) for (const ang of [0, Math.PI / 2, -Math.PI / 2]) {
+    const m = mk(300 + seed);
+    m.state = 'play';
+    const c = m.teamSkaters(0)[0], d = m.teamSkaters(1)[0];
+    for (const o of m.skaters) if (o !== c && o !== d) { o.x = -400; o.y = o.slot * 60 - 60; }
+    c.x = 200; c.y = 0; c.vx = 260; c.vy = 0;
+    d.x = c.x + Math.cos(ang) * 28; d.y = c.y + Math.sin(ang) * 28; d.vx = -Math.cos(ang) * 200; d.vy = -Math.sin(ang) * 200;
+    m.takePossession(c, 'catch');
+    m.hit(d, c);
+    if (m.pendingPenalty && m.pendingPenalty.shot) wrong++;
+  }
+  check('...and never on a head-on or side check', wrong === 0, wrong);
+  // the shot itself: one chance (a save ends it), nobody assists it, and a pulled goalie goes back in
+  let rebound = 0, assisted = 0, empty = 0, done = 0;
+  for (let seed = 0; seed < 40; seed++) {
+    const m = mk(400 + seed);
+    m.state = 'play';
+    const shooter = m.teamSkaters(0)[1], mate = m.teamSkaters(0)[2], foul = m.teamSkaters(1)[0];
+    m.takePossession(mate, 'catch'); m.pass(mate, shooter); // (a pass before the foul: no assist from it)
+    if (seed % 4 === 0) { m.score = [4, 3]; m.pullGoalie(1); }
+    m.pendingPenalty = { s: foul, reason: 'Hooking', shot: shooter };
+    m.whistlePenalty();
+    let saved = false, live = true;
+    m.on('penalty_shot', () => { if (m.goalieAt(1).disabled) empty++; });
+    m.on('save', () => { saved = true; });
+    m.on('goal', (g) => { if (live) { if (saved) rebound++; if (g.assists && g.assists.length) assisted++; } });
+    m.on('penalty_shot_over', () => { live = false; done++; });
+    for (let i = 0; i < 60 * 20 && (live || m.state !== 'faceoff'); i++) { m.update(1 / 60); if (m.state === 'faceoff' || m.state === 'over') live = false; }
+  }
+  check('...a penalty shot is one chance: no goals off a rebound', rebound === 0, rebound);
+  check('...nobody gets an assist on it', assisted === 0, assisted);
+  check('...and it\'s never on an empty net', empty === 0, empty);
 }
 
 // whole matches: skaters never end up in the boards or a net

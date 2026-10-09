@@ -395,11 +395,11 @@ export class FX {
       p.t += dt;
       if (p.kind === 'ghost') continue;
       p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
-      p.vz -= (p.kind === 'confetti' ? 260 : 520) * dt;
-      if (p.z < 0) { p.z = 0; p.vz *= -0.3; p.vx *= 0.6; p.vy *= 0.6; }
+      if (!(p.kind === 'hat' && p.rest)) p.vz -= (p.kind === 'confetti' ? 260 : 520) * dt;
+      if (p.z < 0) { p.z = 0; p.vz *= -0.3; p.vx *= 0.6; p.vy *= 0.6; if (p.kind === 'hat' && p.vz < 60) { p.vz = 0; p.rest = true; } } // (a hat comes to rest)
       const drag = p.kind === 'confetti' ? 1.8 : p.kind === 'hat' && p.z === 0 ? 5 : 2.6; // (a hat on the ice slides to a stop)
       p.vx *= Math.exp(-drag * dt); p.vy *= Math.exp(-drag * dt);
-      p.rot += dt * (p.kind === 'hat' ? (p.z > 0 ? 6 : 0) : 8);
+      p.rot += dt * (p.kind === 'hat' ? (p.rest ? 0 : 6) : 8);
     }
     this.parts = this.parts.filter((p) => p.t < p.life);
     for (const a of this.anims) { a.t += dt; if (a.follow) { a.x = a.follow.x; a.y = a.follow.y; } }
