@@ -944,6 +944,18 @@ export class Renderer {
         ctx.beginPath(); ctx.ellipse(p.x, p.y + 1, 24 * pulse, 9 * pulse, 0, 0, Math.PI * 2); ctx.stroke();
       } else Assets.draw(ctx, 'hud_elements/misc/selection_ring', p.x, p.y + 1, 0.2 * pulse * persp(c.y), { alpha: 0.95 });
     }
+    // the teammate a pass would go to right now (one player, with the puck): a thin ring at their feet
+    const ctrl = !versus && match.state === 'play' && match.controlled();
+    const target = ctrl && ctrl.hasPuck ? match.choosePassTarget(ctrl) : null;
+    if (target) {
+      const p = toScreen(target.x, target.y), k = persp(target.y), pulse = 1 + Math.sin(fx.time * 6) * 0.06;
+      ctx.save();
+      ctx.beginPath(); ctx.ellipse(p.x, p.y + 1, 22 * k * pulse, 8 * k * pulse, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(20,35,59,0.45)'; ctx.lineWidth = 4.5; ctx.stroke();
+      ctx.setLineDash([7, 5]); ctx.lineDashOffset = -fx.time * 20;
+      ctx.strokeStyle = '#ffd45e'; ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.restore();
+    }
     // loose puck highlight so it never gets lost
     const pk = match.puck;
     if (!pk.owner && match.state === 'play') {

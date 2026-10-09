@@ -48,7 +48,7 @@ Hold shoot while a pass is on its way to fire a **one-timer**. Your skates plant
 
 ## What's in this build
 
-- **Match:** first to 5, 3 skaters + AI goalie per side, possession, passing with lead, wrist/slap/one-timer shots, smart aim with manual corner aim, checks with hit-stop, stick-checks, shot blocks, rebounds, posts, goalie dives and freezes, faceoffs.
+- **Match:** first to 5, 3 skaters + AI goalie per side, possession, passing with lead (a dashed gold ring at a teammate's feet shows who a pass would go to right now), wrist/slap/one-timer shots, smart aim with manual corner aim, checks with hit-stop, stick-checks, shot blocks, rebounds, posts, goalie dives and freezes, faceoffs.
 - **Characters:** Nix (Glacier Glide trail / Absolute Zero), Volta (Bolt Dash / Thunderclap with a telegraphed wind-up), Bram (Bedrock / Monolith wall).
 - **Power pucks:** fire, ice, lightning, gravity. Orbs spawn in contested spots and the power belongs to the puck.
 - **Arena twists:** speed lanes (semifinal), cracked ice (final).
