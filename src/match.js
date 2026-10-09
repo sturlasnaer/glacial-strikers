@@ -1684,6 +1684,8 @@ export class Match {
       skaters: this.skaters.filter((s) => !s.extraAttacker).map((s) => ({ id: s.who, kit: s.def.id, team: s.team, name: s.name, ...s.stats_ })),
       saves: this.goalies.map((g) => g.saves),
       goalie: this.goalies[0].who || 'halla', // who was in our net
+      goalieNames: this.goalies.map((g) => g.name || ''),
+      goalieWho: this.goalies.map((g) => g.who || null),
       time: this.time,
     };
   }

@@ -2447,8 +2447,12 @@ export class UI {
     const tm = teamInfo(teamId);
     const won = summary.winner === 0;
     const mine = summary.skaters.filter((s) => s.team === 0);
-    const score = (s) => s.goals * 3 + s.assists * 2 + s.steals + s.blocks + s.hits * 0.5;
-    const mvp = [...summary.skaters].sort((a, b) => score(b) - score(a))[0];
+    const score = (s) => (s.goalie ? (s.saves >= 12 && s.saves >= 9 * s.ga ? s.saves * 0.3 + (s.ga === 0 ? 4 : 0) : -1) // (a goalie who stood on their head)
+      : s.goals * 3 + s.assists * 2 + s.steals + s.blocks + s.hits * 0.5);
+    const goalies = [0, 1].map((tm) => ({ goalie: true, team: tm, saves: summary.saves[tm], ga: summary.score[1 - tm],
+      id: tm === 0 ? summary.goalie || 'halla' : (summary.goalieWho && summary.goalieWho[1]) === 'sub_goalie' ? 'sub_goalie' : 'goalie',
+      name: (summary.goalieNames && summary.goalieNames[tm]) || (tm === 0 ? goalieInfo(summary.goalie || 'halla').name : t('Goalie')) }));
+    const mvp = [...summary.skaters, ...goalies].sort((a, b) => score(b) - score(a))[0];
     const s = this.app.save;
     const r = this.set(`
       <div class="dim"></div>
