@@ -202,8 +202,12 @@ export async function settleCups(save, now = Date.now()) {
   for (const g of groupsOf(save)) {
     if (st.cups[g.code] === last) continue;
     const r = await fetchCup(save, g.code).catch(() => null);
-    if (!r) continue;
+    if (!r || !r.last || !Array.isArray(r.last.standings)) continue;
+    // (the server's week, which a device with its clock off can disagree with: a cup is
+    // only ever handed out once)
+    const seen = st.cups[g.code] === r.last.week || (save.weeklyCups || []).some((c) => c.code === g.code && c.week === r.last.week);
     st.cups[g.code] = r.last.week;
+    if (seen) continue;
     const me = r.last.standings.find((x) => x.me);
     if (!me || me.place > 3 || r.last.standings.length < 2) continue;
     const won = { week: r.last.week, code: g.code, name: r.name, place: me.place, of: r.last.standings.length, points: me.points };

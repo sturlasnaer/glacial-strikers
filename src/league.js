@@ -10,7 +10,7 @@
 import { TEAMS, TOURNAMENT, RIVAL_IDS, FOUNDING_RIVALS } from './data.js';
 import { makeRng } from './util.js';
 import { recordSimGame } from './awards.js';
-import { rosterShift } from './slots.js';
+import { rosterShift, seasonBoost } from './slots.js';
 import { t } from './i18n.js';
 
 export const FOUNDING_TEAMS = ['home', ...FOUNDING_RIVALS];
@@ -29,7 +29,7 @@ export function strength(teamId, save) {
     return 0.45 + lv * 0.06;
   }
   const t = TEAMS[teamId];
-  return 0.35 + t.diff * 0.75 + (save.season - 1) * 0.08 + rosterShift(save, teamId); // (weaker for the players you took)
+  return 0.35 + t.diff * 0.75 + seasonBoost(save) + rosterShift(save, teamId); // (weaker for the players you took)
 }
 
 // Round-robin schedule where our opponents come in order (an odd number of them).
@@ -234,11 +234,9 @@ export function rivalPlan(save, teamId, PLANS) {
 // Older saves used a 5-stage ladder: rebuild a league from how far they got.
 export function migrateLeague(save) {
   const L = newLeague(save.season || 1);
-  const done = Math.min(5, save.stage || 0);
-  for (let i = 0; i < done; i++) recordOurGame(L, save, 5, 3);
-  if (save.champion && L.phase === 'playoffs') {
-    recordOurGame(L, save, 5, 3);
-    if (L.phase === 'playoffs') recordOurGame(L, save, 5, 3);
-  }
+  // (a champion played the whole season, however many rounds it has now, and the playoffs)
+  const done = save.champion ? 99 : Math.min(5, save.stage || 0);
+  for (let i = 0; i < done && L.phase === 'regular'; i++) recordOurGame(L, save, 5, 3);
+  for (let i = 0; save.champion && i < 4 && L.phase === 'playoffs'; i++) recordOurGame(L, save, 5, 3);
   return L;
 }

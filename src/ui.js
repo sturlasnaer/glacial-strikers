@@ -855,7 +855,8 @@ export class UI {
     await Promise.all([Assets.loadGroup('newcomers'), d.prospects.some((p) => p.parts) && Assets.loadGroup('parts'), Assets.loadGroup('awards')].filter(Boolean)).catch(() => {});
     if (!d.met) {
       d.met = true; writeSave(s);
-      this.dialogue(DRAFT_LINES, 'home', null, () => this.draftDay());
+      this.app.scene = 'dialogue'; // (so Enter and the pad move it along)
+      this.dialogue(DRAFT_LINES, 'home', null, () => { this.app.scene = 'hub'; this.draftDay(); });
       return;
     }
     const H = Assets.atlas.draft_hall; // the draft hall and the card rims (Batch AD)
@@ -1192,7 +1193,7 @@ export class UI {
         <div class="locker-faces">${who.map((id) => `<img src="${portrait(id, 0, null, 152)}" alt="">`).join('') || `<img src="${portrait('goalie', 0, null, 152)}" alt="">`}</div>
         <div><h2>${esc(t(m.title))}</h2><p style="margin:6px 0 0">${esc(clubText(t(m.text(ctx))))}</p></div>
       </div>
-      <div class="choice" id="lm-choices">${m.choices.map((c, i) => `<button class="btn ghost" data-lm="${i}"><b>${esc(t(c.label))}</b>${esc(t(c.fx))}</button>`).join('')}</div>
+      <div class="choice" id="lm-choices">${m.choices.map((c, i) => `<button class="btn ghost" data-lm="${i}" ${c.cost && this.app.save.coins < c.cost ? 'disabled' : ''}><b>${esc(t(c.label))}</b>${esc(t(c.fx))}</button>`).join('')}</div>
       <div id="lm-reply" hidden></div>`, (el, close) => {
       this.click('[data-lm]', (b) => {
         const reply = choose(+b.dataset.lm);
@@ -1306,7 +1307,7 @@ export class UI {
     this.click('#t-supers', () => this.supersHelp(), body);
     this.click('[data-gear]', (el) => { const [id, slot] = el.dataset.gear.split(':'); this.gearPicker(id, slot); }, body);
     this.click('[data-dress]', (el) => { setLineup(s, el.dataset.dress); writeSave(s); audio.sfx('confirm'); this.hub('team'); }, body);
-    this.click('[data-start]', (el) => { setStarter(s, el.dataset.start); writeSave(s); audio.sfx('confirm'); Assets.ensureKit(homeKitGroups(s)).then(() => this.hub('team')); }, body);
+    this.click('[data-start]', (el) => { setStarter(s, el.dataset.start); writeSave(s); audio.sfx('confirm'); Assets.ensureKit(homeKitGroups(s)).then(() => { if (this.app.scene === 'hub') this.hub('team'); }); }, body);
     this.click('[data-gsign]', (el) => this.goalieOffer(el.dataset.gsign), body);
     this.click('[data-agent]', (el) => this.agentOffer(+el.dataset.agent), body);
     this.click('[data-gcamp]', (el) => this.goalieCamp(el.dataset.gcamp), body);
@@ -1319,6 +1320,7 @@ export class UI {
       writeSave(s);
       audio.jingle('sign');
       Assets.ensureKit(homeKitGroups(s)).then(() => {
+        if (this.app.scene !== 'hub') return; // (gone somewhere else while the art loaded)
         this.hub('team');
         this.modal(`<h2>${t('{name} signs!', { name: esc(L.name) })}</h2>
           <p>${t('{name} joins the {club} on your bench.', { name: esc(L.name), club: esc(CLUB.nick) })} ${s.roster[L.twin] ? t('The twins are together: dress them both for Ragnarök.') : ''}</p>
@@ -1517,6 +1519,7 @@ export class UI {
         audio.jingle('sign');
         close();
         Assets.ensureKit(homeKitGroups(s)).then(() => {
+          if (this.app.scene !== 'hub') return; // (gone somewhere else while the art loaded)
           this.hub('team');
           if (a.goalie) {
             this.modal(`<h2>${t('{name} signs!', { name: esc(a.name) })}</h2>
@@ -1579,6 +1582,7 @@ export class UI {
         audio.jingle('sign');
         close();
         Assets.ensureKit(homeKitGroups(s)).then(() => {
+          if (this.app.scene !== 'hub') return; // (gone somewhere else while the art loaded)
           this.hub('team');
           this.modal(`<h2>${t('{name} signs!', { name: esc(G.name) })}</h2>
             <p>${t('{name} joins the {club} in goal. Who starts?', { name: esc(G.name), club: esc(CLUB.nick) })}</p>
@@ -1616,7 +1620,7 @@ export class UI {
         writeSave(s);
         audio.jingle('sign');
         close();
-        Assets.ensureKit(homeKitGroups(s)).then(() => this.hub('team'));
+        Assets.ensureKit(homeKitGroups(s)).then(() => { if (this.app.scene === 'hub') this.hub('team'); });
         this.modal(`<h2>${t('{name} signs!', { name: esc(r.name) })}</h2>
           <p>${t('{name} joins the {club} on your bench.', { name: esc(r.name), club: esc(CLUB.nick) })} ${t('Dress {name} at {role} from the Team tab, or before a match.', { name: esc(r.name), role: t(ROLE_NAME[r.role]).toLowerCase() })}</p>
           <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Later')}</button><button class="btn gold" id="dress-now">${t('Dress now')}</button></div>`, (m2, close2) => {
@@ -1798,6 +1802,7 @@ export class UI {
         audio.jingle('sign');
         close();
         Assets.ensureKit(homeKitGroups(s)).then(() => {
+          if (this.app.scene !== 'hub') return; // (gone somewhere else while the art loaded)
           this.hub('team');
           this.modal(`<h2>${t('{name} signs!', { name: esc(r.name) })}</h2>
             <p>${t('{name} heads to the {team}.', { name: esc(name), team: esc(team.name) })} ${t('Dress {name} at {role} from the Team tab, or before a match.', { name: esc(r.name), role: t(ROLE_NAME[r.role]).toLowerCase() })}</p>
@@ -1833,6 +1838,7 @@ export class UI {
         writeSave(s);
         audio.jingle('sign');
         close();
+        done?.(); // (close from here skips the modal's onClose)
         Assets.ensureKit(homeKitGroups(s));
       }, mm);
     }, false, done);
@@ -1875,6 +1881,7 @@ export class UI {
       <div class="choice">${opts.map((p, i) => `<button class="btn ghost" data-pick="${i}"><b>${esc(t(p).split(':')[0])}</b>${esc(cap((t(p).split(':')[1] || '').trim()))}</button>`).join('')}</div>`,
     (m, close) => {
       this.click('[data-pick]', (el) => {
+        if (r.pendingPerk === null) { close(); return; } // (picked already, in another copy of this)
         r.perks.push(opts[+el.dataset.pick]);
         r.pendingPerk = null;
         writeSave(s);
@@ -2028,10 +2035,12 @@ export class UI {
     let ghost = null;
     if (pick === 'mine') ghost = { ...s.ghosts[id], label: t('Your best'), mine: true };
     else if (pick !== 'off') {
+      if (btn.disabled) return; // (looking already)
       const label = btn.textContent;
-      btn.textContent = t('Looking…');
+      btn.textContent = t('Looking…'); btn.disabled = true;
       const g = await fetchGhost(s, id, 'week', pick.startsWith('g:') ? pick.slice(2) : null).catch(() => undefined);
-      btn.textContent = label;
+      btn.textContent = label; btn.disabled = false;
+      if (this.app.scene !== 'hub') return; // (gone somewhere else meanwhile)
       const msg = body.querySelector('#ghost-msg-' + id);
       if (!g) { audio.sfx('deny'); if (msg) msg.textContent = g === null ? t('No run to race on that board yet. Set one!') : t('Couldn\'t reach the server. Try again in a moment.'); return; }
       ghost = { ...g, label: g.name };
@@ -2491,7 +2500,7 @@ export class UI {
     }, r);
     requestAnimationFrame(() => r.querySelectorAll('[data-w]').forEach((el) => { el.style.width = el.dataset.w + '%'; }));
     if (won) audio.jingle('win'); else audio.jingle('lose');
-    this.click('#r-go', () => { audio.sfx('confirm'); onContinue(); });
+    this.click('#r-go', (el) => { if (el.disabled) return; el.disabled = true; audio.sfx('confirm'); onContinue(); }); // (once)
   }
 
   chemUnlocked(ups, done) {

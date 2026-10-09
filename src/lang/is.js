@@ -1391,6 +1391,7 @@ export const IS = {
   "Takeaway by {name}!": "{name} vinnur pökkinn!",
   "Talent Scout": "Hæfileikaleitari",
   "Tap again to confirm": "Ýttu aftur til að staðfesta",
+  "Tap again: it counts as a loss": "Ýttu aftur: það telst sem tap",
   "Tap again to erase": "Ýttu aftur til að eyða",
   "Tap again to pay {n} coins.": "Ýttu aftur til að borga {n} peninga.",
   "Tap again to send {name} to the {team}.": "Ýttu aftur til að senda {name} til {team}.",

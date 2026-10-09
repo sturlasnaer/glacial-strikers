@@ -7,7 +7,7 @@ import {
 import { newLeague, migrateLeague } from './league.js';
 import { lookFor, maskFor, goalieArt, isPartsArt } from './modular.js';
 import { seasonStats } from './awards.js';
-import { rivalSub, setFills, agedStats, grown, goalieGrowth, leagueGrowth, GOALIE_CAP } from './slots.js';
+import { rivalSub, setFills, agedStats, grown, goalieGrowth, leagueGrowth, seasonBoost, GOALIE_CAP } from './slots.js';
 import { leagueRivals } from './league.js';
 import { t } from './i18n.js';
 import { addNews } from './news.js';
@@ -56,13 +56,15 @@ export function newSave() {
 }
 
 export function loadSave() {
+  let raw = null;
   try {
-    const raw = localStorage.getItem(KEY);
+    raw = localStorage.getItem(KEY);
     if (!raw) return null;
     const s = JSON.parse(raw);
     if (!s || s.v !== 1) return null;
     // players who already know their way around don't need the coach's first-time tips
     if (!s.guide && s.record && s.record.played >= 3) s.guide = { done: GUIDE.map((g) => g.id), off: false, hints: ['ult', 'combo'] };
+    const legacy = !s.league || !s.league.schedule; // (from before the league: see below)
     // fill fields added later
     const base = newSave();
     for (const k of Object.keys(base)) if (s[k] === undefined) s[k] = base[k];
@@ -84,9 +86,15 @@ export function loadSave() {
       if (!s.roster[who] || !m || m.role !== role) s.lineup[role] = base.lineup[role];
     }
     for (const k of CAST_PAIRS) if (typeof s.chem[k] !== 'number') s.chem[k] = 0;
-    if (!s.league || !s.league.schedule) s.league = migrateLeague(s);
+    if (legacy) s.league = migrateLeague(s);
     return s;
-  } catch { return null; }
+  } catch (e) {
+    // a save this version can't read: kept aside (never overwritten by the fresh one that
+    // starts now), so a fix can bring it back
+    console.error('save not loaded', e);
+    try { if (raw && !localStorage.getItem(KEY + '.unread')) localStorage.setItem(KEY + '.unread', raw); } catch { /* storage full */ }
+    return null;
+  }
 }
 
 // A test run (?twins=1) plays on a copy: nothing is written.
@@ -193,7 +201,7 @@ export function campChange(save, id, kind, value) {
 }
 
 // What a rival's star costs now: their price, more each season as the league gets better.
-export const recruitPrice = (save, key) => Math.round((RECRUITS[key].price * (1 + 0.12 * ((save.season || 1) - 1))) / 10) * 10;
+export const recruitPrice = (save, key) => Math.round((RECRUITS[key].price * (1 + 0.12 * Math.min(8, (save.season || 1) - 1))) / 10) * 10; // (for eight seasons)
 export function signRecruit(save, key) {
   const r = RECRUITS[key];
   if (!r || recruitStatus(save, key) !== 'open' || save.coins < recruitPrice(save, key)) return null;
@@ -375,7 +383,6 @@ export function matchConfig(save, teamId, stage, opts = {}) {
     goalie: homeGoalie(save),
     chem: lineChem(save, line),
   };
-  const seasonBoost = (save.season - 1) * 0.08;
   const away = {
     skaters: ids.map((id) => {
       const stats = { ...CHARACTERS[id].base };
@@ -388,7 +395,7 @@ export function matchConfig(save, teamId, stage, opts = {}) {
     goalie: rivalGoalie(save, teamId),
     chem: Object.fromEntries(CAST_PAIRS.map((k) => [k, Math.min(3, (t.chem || 0) + (save.season > 1 ? 1 : 0))])),
   };
-  const diff = Math.min(1, Math.max(0, t.diff + (DIFF_OFFSET[save.settings.difficulty] || 0) + seasonBoost));
+  const diff = Math.min(1, Math.max(0, t.diff + (DIFF_OFFSET[save.settings.difficulty] || 0) + seasonBoost(save)));
   // locker-room buffs: stat bumps and goalie reflex land here, the rest goes to the match
   const fx = opts.buffs;
   if (fx) {
@@ -460,8 +467,7 @@ export function allStarConfig(save, vote, opts = {}) {
       sprite: m.sprite, look: m.look, parts: m.parts, gear: { ...save.roster[who].gear } };
   };
   const g = TEAMS[vote.goalie], rg = rivalGoalie(save, vote.goalie); // (their backup, if we signed theirs)
-  const seasonBoost = (save.season - 1) * 0.08;
-  const diff = Math.min(1, Math.max(0, (TEAMS[vote.teams[0]].diff + TEAMS[vote.teams[1]].diff) / 2 + 0.08 + (DIFF_OFFSET[save.settings.difficulty] || 0) + seasonBoost));
+  const diff = Math.min(1, Math.max(0, (TEAMS[vote.teams[0]].diff + TEAMS[vote.teams[1]].diff) / 2 + 0.08 + (DIFF_OFFSET[save.settings.difficulty] || 0) + seasonBoost(save)));
   return {
     assist: save.settings.assist || 'normal',
     plans: ['balanced', 'balanced'],

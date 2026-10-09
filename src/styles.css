@@ -67,6 +67,11 @@ img { image-rendering: auto; max-width: 100%; }
 #loading .fox { width: 224px; height: 144px; margin: 0 auto 8px; background: url(../assets/gfx/loading/snow_fox_loading.png) 0 0 / 896px 144px no-repeat; image-rendering: pixelated; animation: fox-run 0.5s steps(4) infinite; } /* Batch AC */
 @keyframes fox-run { to { background-position: -896px 0; } }
 @media (prefers-reduced-motion: reduce) { #loading .fox { animation: none; } }
+/* art loading for a match: the fox runs in the corner, and taps wait */
+#busy { position: absolute; inset: 0; z-index: 45; cursor: progress; }
+#busy .fox { position: absolute; right: max(12px, env(safe-area-inset-right)); bottom: max(10px, env(safe-area-inset-bottom)); width: 112px; height: 72px; background: url(../assets/gfx/loading/snow_fox_loading.png) 0 0 / 448px 72px no-repeat; image-rendering: pixelated; animation: fox-run-s 0.5s steps(4) infinite; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.4)); }
+@keyframes fox-run-s { to { background-position: -448px 0; } }
+@media (prefers-reduced-motion: reduce) { #busy .fox { animation: none; } }
 #loading .bar { width: min(320px, 70vw); height: 14px; border: 3px solid var(--ice); background: var(--navy); margin: 18px auto 0; }
 #loading .bar i { display: block; height: 100%; width: 0; background: var(--ice); transition: width 0.2s; }
 #loading .err { color: var(--coral); max-width: 40ch; text-align: center; margin-top: 12px; }

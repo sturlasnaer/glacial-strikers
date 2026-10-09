@@ -37,6 +37,9 @@ export const formShift = (save, key) => Math.round(curve(ageOf(save, key)) - cur
 // stats per season after the first (four seasons at most), each rival goalie a point every
 // other season.
 export const leagueGrowth = (save) => Math.max(0, Math.min(4, (save.season || 1) - 1));
+// The rivals play sharper each season too, for the same four seasons (after that the
+// difficulty setting still has its say).
+export const seasonBoost = (save) => leagueGrowth(save) * 0.08;
 // On top of that, the league keeps up with a club that has run away from it: set each season
 // from how far our line was ahead (see setLeagueEdge in progress.js), 0 to 3.
 export const leagueEdge = (save) => save.leagueEdge || 0;

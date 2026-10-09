@@ -53,7 +53,7 @@ export const MOMENTS = [
     title: 'After the loss',
     text: (c) => t('Nobody talks much after a {ga}–{gf} loss. Nix breaks the silence: "We need to look at the tape."', { ga: c.ga, gf: c.gf }),
     choices: [
-      { label: 'Film session (40 coins)', fx: 'Every skater +25 EXP', apply: all(coins(-40), exp(['frost', 'thunder', 'stone'], 25)), reply: 'Three hours of rewinding. Everyone sees something they\'ll fix.' },
+      { label: 'Film session (40 coins)', fx: 'Every skater +25 EXP', cost: 40, apply: all(coins(-40), exp(['frost', 'thunder', 'stone'], 25)), reply: 'Three hours of rewinding. Everyone sees something they\'ll fix.' },
       { label: 'Team dinner instead', fx: '+6 chemistry for every pair', apply: chem(ALL_PAIRS, 6), reply: 'Bram orders for the table. By dessert everyone is laughing again.' },
     ],
   },

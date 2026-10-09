@@ -128,7 +128,7 @@ class App {
     const unlock = () => { audio.unlock(); audio.play(this.track || 'title'); };
     window.addEventListener('pointerdown', unlock, { once: true });
     window.addEventListener('keydown', unlock, { once: true });
-    window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' && !this.isTouch) { this.isTouch = true; if (this.scene === 'match') this.hud.show(this.match, this.cur.teamId); } });
+    window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' && !this.isTouch) { this.isTouch = true; if (this.scene === 'match') this.hud.show(this.match, this.cur.teamId, this.cur.ctrl || null, { versus: !!this.cur.versus }); } });
     this.input.onKey((code) => this.onKey(code));
     // newcomer art (Batch AA) is needed once a rival slot has been signed away, or for drafted rookies
     // (a signed goalie leaves a backup in their old net: the newcomer goalie, Batch AN)
@@ -243,12 +243,11 @@ class App {
     const enter = code === 'Enter' || code === 'Space' || code === 'KeyJ';
     if (this.scene === 'title' && code === 'Enter' && !document.querySelector('.modal-bg')) this.startCampaign();
     else if (this.scene === 'dialogue' && enter) this.ui.dialogueAdvance?.();
-    else if (this.scene === 'results' && code === 'Enter') document.getElementById('r-go')?.click();
+    else if (this.scene === 'results' && code === 'Enter' && !document.querySelector('.modal-bg')) document.getElementById('r-go')?.click();
     else if (this.scene === 'hub' && code === 'Enter' && !document.querySelector('.modal-bg')) document.getElementById('h-play')?.click();
-    if (code === 'Escape') {
-      const m = document.querySelector('.modal-bg');
-      if (m && this.scene !== 'paused') m.remove();
-    }
+    // Esc does what the pad's B does: closes the top pop-up the way its own close button would
+    // (one that has to be answered stays)
+    if (code === 'Escape' && this.scene !== 'paused' && document.querySelector('.modal-bg')) this.padnav.back();
   }
 
   // Slow device? quality.js steps the detail down (resolution, then effects, crowd and snow)
@@ -350,7 +349,24 @@ class App {
     this.goHub();
   }
 
+  // Art to load before something starts: one thing at a time (taps meanwhile wait under the
+  // running fox), and nothing at all if the player has gone somewhere else in the meantime.
+  loadThen(promise, go) {
+    if (this.loading) return;
+    const token = this.loading = { scene: this.scene };
+    const busy = document.getElementById('busy');
+    const show = setTimeout(() => { if (busy) busy.hidden = false; }, 150);
+    return Promise.race([Promise.resolve(promise).catch(() => {}), new Promise((r) => setTimeout(r, 15000))]).then(() => { // (never stuck on a load that hangs)
+      clearTimeout(show);
+      if (busy) busy.hidden = true;
+      if (this.loading !== token) return;
+      this.loading = null;
+      if (this.scene === token.scene) go();
+    });
+  }
+
   startStage() {
+    if (this.loading) return;
     const f = this.fixture();
     if (!f) return;
     if (f.kind === 'allstar') return this.startAllStar(f);
@@ -362,7 +378,7 @@ class App {
     const sub = `${t(stage.round, { n: stage.roundN })} · ${powers} ${twist ? t(twist) : ''}`;
     this.scene = 'dialogue';
     this.music('story');
-    Assets.ensureTeam(team.id, arena).then(() => this.showStageDialogue(f, team, sub));
+    this.loadThen(Assets.ensureTeam(team.id, arena), () => this.showStageDialogue(f, team, sub));
   }
 
   // The All-Star Game: the fans' vote, Kip's welcome, then the game. Our guests wear our
@@ -446,7 +462,7 @@ class App {
 
   startExhibition(teamId, mods = [], arena = 'auto', rules = true) {
     const where = this.arenaFor(teamId, arena);
-    Assets.ensureTeam(teamId, where).then(() =>
+    this.loadThen(Assets.ensureTeam(teamId, where), () =>
       this.beginMatch(teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 120, round: 'Exhibition' }, true, mods, { arena: where, rules }));
   }
 
@@ -454,15 +470,15 @@ class App {
   startDrill(id, charId, opts = {}) {
     audio.unlock();
     const ghostTeam = opts.ghost && RECRUITS[opts.ghost.char] && id !== 'shootout' ? RECRUITS[opts.ghost.char].team : null;
-    if (ghostTeam && !opts.awayTeam) return Assets.ensureTeam(ghostTeam).catch(() => {}).then(() => this.startDrill(id, charId, { ...opts, awayTeam: ghostTeam }));
+    if (this.loading) return;
+    if (ghostTeam && !opts.awayTeam) return this.loadThen(Assets.ensureTeam(ghostTeam), () => this.startDrill(id, charId, { ...opts, awayTeam: ghostTeam }));
     const { cfg, ctrl, def, awayTeam } = createDrill(id, this.save, charId, opts);
     this.cur = { drill: id, char: charId, teamId: awayTeam, ctrl, def, opts };
     this.attract = false;
     const m = this.makeMatch(cfg, awayTeam);
     this.hookMatch(m);
     this.hookDrill(m);
-    this.replay.clear();
-    this.replayPending = false;
+    this.resetReplay();
     this.ui.clear();
     this.scene = 'match';
     this.hud.show(m, awayTeam, ctrl);
@@ -474,13 +490,13 @@ class App {
     this.checkRotate();
   }
 
-  startShootout(teamId) { Assets.ensureTeam(teamId).then(() => this.startDrill('shootout', lineupIds(this.save)[0], { teamId })); }
+  startShootout(teamId) { this.loadThen(Assets.ensureTeam(teamId), () => this.startDrill('shootout', lineupIds(this.save)[0], { teamId })); }
 
   // Local versus: player 1 is our club, player 2 picks a rival. Both use base stats.
   startVersus(teamId) {
     audio.unlock();
     const arena = this.arenaFor(teamId);
-    Assets.ensureTeam(teamId, arena).then(() => this.beginVersus(teamId, arena));
+    this.loadThen(Assets.ensureTeam(teamId, arena), () => this.beginVersus(teamId, arena));
   }
 
   beginVersus(teamId, arena) {
@@ -500,8 +516,7 @@ class App {
     this.attract = false;
     const m = this.makeMatch(cfg, teamId, arena);
     this.hookMatch(m);
-    this.replay.clear();
-    this.replayPending = false;
+    this.resetReplay();
     this.commentary.attach(m, teamId);
     this.chantCool = 25;
     this.ui.clear();
@@ -608,14 +623,14 @@ class App {
     submitScore(this.save, board, score, char, ghost).then((r) => {
       writeSave(this.save);
       const el = where && document.querySelector(where);
-      if (!el || !r) return;
-      const info = BOARD_INFO[board];
+      if (!el || !r || r.rank == null) return;
+      const info = BOARD_INFO[board], fmt = (v) => (typeof v === 'number' ? info.fmt(v) : '–'); // (a partial answer shows what it has)
       const all = r.improved
         ? t('Online: {rank} of {total} · new personal best posted', { rank: `<b>#${r.rank}</b>`, total: r.total })
-        : t('Online: {rank} of {total} · your best {best}', { rank: `<b>#${r.rank}</b>`, total: r.total, best: info.fmt(r.best) });
-      const wk = r.week ? t(r.week.improved ? 'This week: {rank} of {total} · new weekly best' : 'This week: {rank} of {total} · your best {best}', { rank: `<b>#${r.week.rank}</b>`, total: r.week.total, best: info.fmt(r.week.best) }) : '';
+        : t('Online: {rank} of {total} · your best {best}', { rank: `<b>#${r.rank}</b>`, total: r.total, best: fmt(r.best) });
+      const wk = r.week && r.week.rank != null ? t(r.week.improved ? 'This week: {rank} of {total} · new weekly best' : 'This week: {rank} of {total} · your best {best}', { rank: `<b>#${r.week.rank}</b>`, total: r.week.total, best: fmt(r.week.best) }) : '';
       el.innerHTML = wk ? `${wk}<br>${all}` : all;
-    });
+    }).catch(() => {});
   }
 
   // Gamepad rumble for one team's player (or everyone when team is undefined).
@@ -694,7 +709,7 @@ class App {
     if (m.goalieMode) Assets.loadGroup('goalie').catch(() => {}); // Wall of Ice
     if (extra.allstar) Assets.dropOriginals(ALLSTAR.groups.filter((g) => g !== 'parts' && g !== 'goalie_parts')); // only the recoloured copies are drawn (heads and masks recolour from the originals)
     this.hookMatch(m);
-    this.replay.clear();
+    this.resetReplay();
     this.clips.clear();
     this.ach.attachMatch(m);
     this.replayPending = false;
@@ -886,6 +901,7 @@ class App {
 
   endMatch() {
     if (this.scene !== 'match' && this.scene !== 'paused') return;
+    if (this.scene === 'paused') { this.pauseModal?.remove(); this.autoPaused = false; } // (paused just after the final whistle)
     const m = this.match, s = this.save, c = this.cur;
     const summary = m.summary();
     if (c.versus) return this.endVersus(summary);
@@ -1007,6 +1023,15 @@ class App {
     this.clips.start({ scorer, line: `${who(scorer)}${kind}. ${score}`, team: g.team, score });
   }
 
+  // Drop any replay (and the clip it was recording) for good: a new match, or leaving one.
+  resetReplay() {
+    this.replay.clear();
+    this.replayPending = false;
+    this.clips.stop();
+    this.renderer.clipOverlay = null;
+    this.hud.replayMode(false);
+  }
+
   endReplay() {
     const m = this.match;
     this.clips.stop();
@@ -1061,6 +1086,7 @@ class App {
   }
 
   newSeason() {
+    if (this.loading) return; // (a second tap while the new clubs' art loads)
     const s = this.save;
     s.season++;
     s.stage = 0; s.beaten = []; s.champion = false;
@@ -1075,7 +1101,8 @@ class App {
       s.expansionSeen = true;
       addNews(s, { k: 'expansion', teams: fresh });
       writeSave(s);
-      Promise.all(fresh.map((id) => Assets.ensureTeam(id))).then(() => {
+      this.ui.clear(); // (the hub, and its New season button, go while the art loads)
+      this.loadThen(Promise.all(fresh.map((id) => Assets.ensureTeam(id))), () => {
         this.scene = 'dialogue';
         this.ui.dialogue(EXPANSION_LINES, fresh[0], null, () => this.goHub('tournament'));
       });
@@ -1132,7 +1159,7 @@ class App {
       m.querySelector('#p-music').addEventListener('click', (e) => { st.music = !st.music; if (st.music && !st.musicVol) st.musicVol = 1; this.applySettings(); writeSave(this.save); e.target.textContent = st.music ? t('Music on') : t('Music off'); e.target.className = 'btn small ' + (st.music ? 'cream' : 'ghost'); });
       m.querySelector('#p-sfx').addEventListener('click', (e) => { st.sfx = !st.sfx; if (st.sfx && !st.sfxVol) st.sfxVol = 1; this.applySettings(); writeSave(this.save); e.target.textContent = st.sfx ? t('Sound on') : t('Sound off'); e.target.className = 'btn small ' + (st.sfx ? 'cream' : 'ghost'); });
       m.querySelector('#p-quit').addEventListener('click', (e) => {
-        if (!e.target.dataset.armed) { e.target.dataset.armed = '1'; e.target.textContent = t('Tap again to confirm'); return; }
+        if (!e.target.dataset.armed) { e.target.dataset.armed = '1'; e.target.textContent = this.forfeitLoses() ? t('Tap again: it counts as a loss') : t('Tap again to confirm'); return; }
         close();
         this.forfeit();
       });
@@ -1148,10 +1175,26 @@ class App {
     this.scene = 'match';
     this.touch.reset();
     this.acc = 0;
+    this.heldFromPause = new Set(['a', 'b', 'skill', 'ult', 'pull']); // (the button that pressed Resume isn't a pass)
+  }
+
+  // A league, playoff or Winter Classic game given up is lost (the other side gets to the
+  // winning score): it can't be quit and played again for a better result.
+  forfeitLoses() {
+    const c = this.cur, m = this.match;
+    return !!(c && !c.drill && !c.versus && !c.exhibition && c.fixture && c.fixture.kind !== 'allstar' && m && m.winner === null);
   }
 
   forfeit() {
     const drill = this.cur && this.cur.drill;
+    this.resetReplay(); // (a goal's replay could still be running)
+    if (this.forfeitLoses()) {
+      const m = this.match;
+      m.score[1] = Math.max(m.score[1], m.winScore, m.score[0] + 1);
+      m.winner = 1; m.state = 'over';
+      this.scene = 'match';
+      return this.endMatch();
+    }
     this.hud.hide();
     this.wake?.release?.().catch(() => {});
     this.startAttract();
@@ -1160,6 +1203,7 @@ class App {
 
   goTitle() {
     this.scene = 'title';
+    this.resetReplay();
     this.hud.hide();
     if (!this.attract) this.startAttract();
     this.ui.title();
@@ -1170,12 +1214,13 @@ class App {
 
   goHub(tab) {
     this.scene = 'hub';
+    this.resetReplay();
     this.hud.hide();
     this.rotateEl.hidden = true;
     if (!this.attract) this.startAttract();
     audio.setArena('menu');
-    flushScores(this.save).then((n) => { if (n) writeSave(this.save); });
-    cloudBackup(this.save).then((t) => { if (t) writeSave(this.save); });
+    flushScores(this.save).then((n) => { if (n) writeSave(this.save); }).catch(() => {});
+    cloudBackup(this.save).then((t) => { if (t) writeSave(this.save); }).catch(() => {});
     // last week's friends-board cups: a top-three finish gets a toast and a place in the trophies
     settleCups(this.save).then((won) => {
       if (!won.length) return;
@@ -1183,7 +1228,7 @@ class App {
       writeSave(this.save);
       won.forEach((w, i) => setTimeout(() => this.toast(cupPlaceImg(w.place, 72), t('Weekly Cup · {name}', { name: w.name }),
         w.place === 1 ? t('You won the Weekly Cup!') : w.place === 2 ? t('Second in the Weekly Cup') : t('Third in the Weekly Cup'), t('{n} points last week', { n: w.points })), 800 + i * 2600));
-    });
+    }).catch(() => {});
     this.ui.guideBudget = 1; // one new coach's tip per visit
     if (refreshAgents(this.save)) { this.agentNews = true; writeSave(this.save); }
     if (this.agentNews && !this.testRun) {
@@ -1219,7 +1264,7 @@ class App {
     this.renderer.clearCaches();
     const kit = homeKitGroups(this.save);
     // once our pages are recoloured, the hub again (cards and portraits drawn before kept the old kit)
-    if (kit.length) Assets.ensureKit(kit).then(() => { Assets.prepareTeam(PALETTES.homekit); if (this.scene === 'hub') this.ui.hub(this.ui.tab); }).catch(() => {});
+    if (kit.length) Assets.ensureKit(kit).then(() => { if (this.scene === 'hub') this.ui.hub(this.ui.tab); }).catch(() => {});
   }
 
   // Once a season is over: hand out the awards (once) and hold the ceremony.
@@ -1254,10 +1299,11 @@ class App {
 
   // Today's daily challenge: fixed rival, arena, modifiers and goal.
   startDaily() {
+    if (this.loading) return;
     const d = dailyFor(dayKey());
     noteAttempt(this.save, d.date);
     writeSave(this.save);
-    Assets.ensureTeam(d.teamId, d.arena).then(() => {
+    this.loadThen(Assets.ensureTeam(d.teamId, d.arena), () => {
       this.beginMatch(d.teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 120, round: 'Daily challenge' }, true, d.mods, { arena: d.arena, daily: d });
     });
   }
@@ -1325,6 +1371,10 @@ class App {
           else if (pads.length === 1) p2 = mergeInputs(p2, this.input.readPad(pads[0]));
           m.setHumanInput(p1, 0); m.setHumanInput(p2, 1);
         } else if (this.scene === 'match') {
+          if (this.heldFromPause) { // buttons still down from the pause menu count once they're let go
+            for (const k of this.heldFromPause) if (raw[k]) raw[k] = false; else this.heldFromPause.delete(k);
+            if (!this.heldFromPause.size) this.heldFromPause = null;
+          }
           raw.sprintBtn = raw.sprint; // (the button itself: a quick tap of it dekes, even with auto-sprint)
           if (this.save.settings.autoSprint && Math.hypot(raw.mx, raw.my) > 0.92) raw.sprint = true;
           m.setHumanInput(raw);

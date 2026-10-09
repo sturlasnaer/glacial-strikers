@@ -86,7 +86,9 @@ export class PadNav {
     } else this.held = null;
 
     if (Math.abs(scroll) > 0.25) {
-      const panel = this.layer().querySelector('.modal') || this.layer();
+      // the pop-up, else the panel the highlight is in (a hub tab's body), else the screen
+      const root = this.layer(), f = this.focused(root);
+      const panel = root.querySelector('.modal') || (f && this.scroller(f)) || root.querySelector('#hub-body') || root;
       panel.scrollBy(0, scroll * 900 * dt);
     }
     if (pressed(0)) this.confirm();
@@ -119,8 +121,9 @@ export class PadNav {
   // pop-up, its main button.
   keepFocus() {
     const root = this.layer();
-    const fresh = root !== this.lastLayer;
-    this.lastLayer = root;
+    // a new pop-up, or a new screen drawn into the same layer (the title, then the hub)
+    const fresh = root !== this.lastLayer || root.firstElementChild !== this.lastScreen;
+    this.lastLayer = root; this.lastScreen = root.firstElementChild;
     if (this.focused(root)) return;
     const key = this.keys.get(root);
     let el = key ? root.querySelector(key) : null;
