@@ -1458,7 +1458,7 @@ class App {
       const t = teamInfo(this.awayTeamId);
       const lap = this.lap && this.attract ? this.lap : null;
       const focus = lap && toScreen(lap.pos().x, lap.pos().y);
-      this.renderer.updateCamera(m, this.fx, realDt, { attract: this.attract, focus, zoom: this.attract ? 0.9 : this.replay.active ? 1.15 : 1 });
+      this.renderer.updateCamera(m, this.fx, realDt, { attract: this.attract, focus, zoom: this.attract ? 0.9 : this.replay.active ? 1.15 : m.pshot ? 1.12 : 1 });
       this.renderer.render(m, this.fx, { awayTeamId: this.awayTeamId, awayColor: t.color, awayColor2: t.color2, arena: this.arena, replay: this.replay.active, lap });
       this.clips.frame();
       this.hud.update(realDt);
