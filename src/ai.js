@@ -97,9 +97,12 @@ export class TeamAI {
       roles.set(p.pass.to, { kind: 'receive' });
     }
 
-    if (ours && owner.isSkater) {
+    // our own pass on its way: the others keep supporting, round the receiver (dropping into
+    // loose-puck mode for the flight of every pass had them twitch back and forth)
+    const flight = !owner && p.pass && p.pass.from && p.pass.from.team === this.team && p.pass.to && p.pass.to.team === this.team && !p.pass.to.parked ? p.pass.to : null;
+    if ((ours && owner.isSkater) || flight) {
       // support the carrier
-      const c = owner;
+      const c = owner || flight;
       const spots = this.supportSpots(c);
       const avail = free.filter((s) => s !== c && !roles.has(s));
       // a fourth skater (pulled goalie) parks in front of their net
