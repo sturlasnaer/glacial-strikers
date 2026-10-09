@@ -570,26 +570,6 @@ export class Goalie {
     // the player in goal (goalie mode)
     if (this.human) { this.updateHuman(dt, gx); return; }
 
-    // player-controlled goalie (shootout)
-    if (this.manual) {
-      const mm = this.manual;
-      if (mm.dive) {
-        this.diveDir = mm.dive; mm.dive = false;
-        this.setState('dive'); this.vy = this.diveDir * 420;
-        m.emit('goalie_dive', { g: this });
-        return;
-      }
-      if (this.stateT < 0.05 && this.state === 'ready') mm.ty = this.y; // just got up from a dive
-      if (mm.butterfly > 0) { mm.butterfly -= dt; if (this.state !== 'butterfly') this.setState('butterfly'); }
-      else if (this.state === 'butterfly' || this.state === 'glove') this.setState('ready');
-      const lat = this.lat * 1.2;
-      this.vy = clamp((mm.ty - this.y) * 12, -lat, lat);
-      this.y += this.vy * dt;
-      this.x += clamp((gx - this.goalSide * 28 - this.x) * 6, -120, 120) * dt;
-      this.shuffle = Math.abs(this.vy) > 40 ? Math.sign(this.vy) : 0;
-      return;
-    }
-
     // out of position (played the puck behind the net, or knocked off it): back to the crease
     if (this.state === 'ready' && this.stateT > 0.25 && pathLength(this.goalSide, this.x, this.y, this.goalSide * (GOAL_X - 28), 0, this.r + 6) > 70) { this.setState('return'); return; }
     this.roamCd = Math.max(0, (this.roamCd || 0) - dt);

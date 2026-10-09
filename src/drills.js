@@ -94,6 +94,7 @@ export function createDrill(id, save, charId, opts = {}) {
     twist: 'none',
     diff: [0.6, id === 'shootout' ? t.diff : 0.55],
     seed: opts.seed ?? (Math.random() * 1e9) >>> 0,
+    assist: id === 'shootout' ? (save.settings && save.settings.assist) || 'normal' : 'normal', // (the shootout goalie's help; drills keep one setting for their boards)
     drill: ctrl,
   };
   return { cfg, ctrl, def: DRILLS[id], awayTeam };
@@ -492,6 +493,9 @@ class ShootoutDrill extends DrillBase {
     this.round = 0; this.turn = 'us'; this.goals = [0, 0]; this.log = [[], []];
     this.rng = makeRng(23);
     this.phase = 'run';
+    // one chance each: a save or a poke check ends the attempt (no rebounds, no second go)
+    const over = () => { if (this.phase === 'run') this.dead = true; };
+    m.on('save', over); m.on('poke_check', over);
     this.setup(m);
     this.startCountdown(m);
   }
@@ -523,13 +527,14 @@ class ShootoutDrill extends DrillBase {
       g.x = g.goalSide * (GOAL_X - 28); g.y = 0; g.vy = 0; g.setState('ready'); g.holdT = 0; g.react = null; g.track = null; g.slowT = 0;
       g.disabled = us ? g.goalSide !== 1 : g.goalSide !== -1;
       // the player's goalie on their turn: goal mode's controls and its help (Settings › Aim assist)
-      g.manual = null; g.human = !us && g.goalSide === -1; g.prevHuman = { a: true, b: true, skill: true, ult: true };
+      g.human = !us && g.goalSide === -1;
+      Object.assign(g, { prevHuman: { a: true, b: true, skill: true, ult: true }, butterflyT: 0, hx: undefined, hy: undefined, wallT: 0 });
       if (g.disabled) { g.x = g.goalSide * 900; g.y = 900; }
     }
     p.inNet = null; p.shot = null; p.pass = null;
     m.takePossession(shooter, 'drill');
     this.active = shooter;
-    this.attT = 0; this.idle = 0; this.phase = 'run';
+    this.attT = 0; this.idle = 0; this.phase = 'run'; this.dead = false;
     m.emit('shootout_turn', { us, shooter, round: this.round });
   }
   tick(m, dt) {
@@ -548,7 +553,7 @@ class ShootoutDrill extends DrillBase {
       if (s.hasPuck && this.attT > 4.5 && !s.prevIn.shoot) { s.in.shoot = true; }
     }
     const defending = this.turn === 'us' ? m.goalieAt(1) : g;
-    if (p.owner === defending) return this.end(m, false);
+    if (p.owner === defending || this.dead) return this.end(m, false);
     if (!p.owner) {
       const behind = this.turn === 'us' ? p.x > GOAL_X + 4 : p.x < -GOAL_X - 4;
       const stopped = p.speed < 60 || behind;

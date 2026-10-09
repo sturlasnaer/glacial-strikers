@@ -1058,7 +1058,7 @@ export class Match {
     // the goalie covers a disc, not a line across the crease: what counts is how close the
     // puck's path passes him (so a sharp angle doesn't slip by a goalie it hits square)
     const across = Math.abs(off) * Math.max(0.3, Math.abs(p.vx) / Math.max(1, Math.hypot(p.vx, p.vy)));
-    if (across > reach * (g.human || g.manual ? 1 : GOALIE_DISC) + PUCK_R) return false; // (a player in goal, or the shootout's, keeps their full reach)
+    if (across > reach * (g.human ? 1 : GOALIE_DISC) + PUCK_R) return false; // (a player in goal: their own reach, HUMAN_REACH, on the full disc)
     // saved
     if (sh) this.shotOnGoal(sh);
     const speed = p.speed;
@@ -1568,7 +1568,7 @@ export class Match {
     const def = 1 - s.team;
     if (!this.goalieMode && this.humans.includes(def)) {
       const gk = this.goalies.find((k) => k.team === def);
-      if (gk && !gk.human) { gk.human = true; gk.prevHuman = { a: true, b: true, skill: true, ult: true }; this.pshot.keeper = gk; }
+      if (gk && !gk.human) { Object.assign(gk, { human: true, prevHuman: { a: true, b: true, skill: true, ult: true }, butterflyT: 0, hx: undefined, hy: undefined, wallT: 0 }); this.pshot.keeper = gk; }
     }
     this.stall = null;
     this.state = 'play'; this.stateT = 0;

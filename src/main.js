@@ -850,7 +850,7 @@ class App {
     m.on('faceoff', () => audio.sfx('whistle', { vol: 0.55 }));
     m.on('penalty_shot', (e) => {
       this.replay.clear(); // (its replay starts at centre ice, not before the foul)
-      if (m.pshot && m.pshot.keeper && !(this.cur && this.cur.versus)) this.hud.hint(this.isTouch ? t('You\'re in goal! SHOOT drops to the butterfly, PASS dives.') : this.input.lastDevice === 'gamepad' ? t('You\'re in goal! X drops to the butterfly, A dives.') : t('You\'re in goal! J drops to the butterfly, K dives.'), 4);
+      if (m.pshot && m.pshot.keeper && !(this.cur && this.cur.versus)) this.hud.hint(this.isTouch ? t('You\'re in goal! BLOCK drops to the butterfly, DIVE dives across.') : this.input.lastDevice === 'gamepad' ? t('You\'re in goal! X / □ drops to the butterfly, A / ✕ dives.') : t('You\'re in goal! J drops to the butterfly, K dives.'), 4);
     });
     m.on('hat_trick', () => setTimeout(() => { if (this.match === m) audio.crowdCheer(1); }, 400)); // (the hats come down to a roar)
     m.on('faceoff_early', (e) => {

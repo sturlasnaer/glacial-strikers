@@ -231,6 +231,12 @@ export class HUD {
     }
     // player card
     const c = m.controlled();
+    if (c && this.gkTemp) { // back from a penalty shot in goal: the skater's buttons again
+      this.gkTemp = false;
+      this.touch.classList.remove('gk');
+      this.touch.querySelectorAll('.gk-ico').forEach((i) => i.remove());
+      this.last.ctrl = null; this.last.a = this.last.b = null;
+    }
     if (c) {
       if (this.last.ctrl !== c) {
         this.last.ctrl = c;
@@ -247,6 +253,10 @@ export class HUD {
       ub.classList.toggle('full', c.ult >= 100);
       this.updateTouch(c, m);
     } else if (m.goalieMode) this.updateGoalie(m.goalies[0], m);
+    else if (m.pshot && m.pshot.keeper && m.pshot.keeper.team === 0 && !this.versus) { // a penalty shot against us: in goal for it
+      if (!this.gkTemp) { this.gkTemp = true; this.touch.classList.add('gk'); this.last.a = this.last.b = null; }
+      this.updateGoalie(m.pshot.keeper, m);
+    }
     if (this.versus) {
       const c2 = m.controlled(1);
       if (c2) {
