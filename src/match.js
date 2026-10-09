@@ -29,6 +29,8 @@ const lv3 = (level) => (level - 1) * 0.03;
 
 export let STEAL_BASE = 0.47; // a defender's stick on the puck: steals a second at the base rate
 export const setStealBase = (v) => { STEAL_BASE = v; }; // (for balance runs)
+export let PLAYER_STEAL_MUL = 1.5; // AI sticks on the player's carrier (puck protection made carrying easy: 1-1.8 steals a minute)
+export const setPlayerStealMul = (v) => { PLAYER_STEAL_MUL = v; };
 export let TIP_BASE = 0.25; // an AI stick in the slot redirecting a teammate's shot going by
 export const setTipBase = (v) => { TIP_BASE = v; };
 export let HOOK_RATE = 0.6; // a stick reaching round a carrier in full flight from behind: hooking calls a second
@@ -508,7 +510,9 @@ export class Match {
       }
       const shielded = c.dekeT > 0 || (d.x - c.x) * (p.x - c.x) + (d.y - c.y) * (p.y - c.y) < 0; // reaching round the carrier's body (or a deke going by)
       // (the base was 0.8 when the puck sat in front of the body: out on the blade it's easier to reach)
-      const rate = STEAL_BASE * (shielded ? 0.58 : 1) * (1 + (d.stats.chk - c.stats.pas) * 0.06) * this.ai[d.team].stealMul() * (d.def.arch === 'grinder' ? 1.08 : 1) * (d.hasPerk('Pickpocket') ? 1.1 : 1);
+      // (an AI stick on the player's carrier: a little sharper, since the player shields well)
+      const vsPlayer = c.controlled && this.humans.includes(c.team) && !this.humans.includes(d.team) ? PLAYER_STEAL_MUL : 1;
+      const rate = STEAL_BASE * vsPlayer * (shielded ? 0.58 : 1) * (1 + (d.stats.chk - c.stats.pas) * 0.06) * this.ai[d.team].stealMul() * (d.def.arch === 'grinder' ? 1.08 : 1) * (d.hasPerk('Pickpocket') ? 1.1 : 1);
       const r = this.rng();
       if (r < rate * dt) {
         this.takePossession(d, 'steal');
