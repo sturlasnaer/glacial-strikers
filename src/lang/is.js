@@ -1,6 +1,7 @@
 // Íslenska. Keys are the English text exactly as written in the game (with {braces} for
 // values); values are the Icelandic. Names of people, teams and the club stay as they are.
 export const IS = {
+  "Careful chasing a breakaway: haul them down from behind and the ref can give them a penalty shot. If it's against us, you're in goal for it.": "Farðu varlega þegar þú eltir leikmann sem er sloppinn í gegn: ef þú fellir hann aftan frá getur dómarinn dæmt vítaskot. Ef það er á okkur ert þú í markinu.",
   "One on one: you're in goal!": "Einn á móti einum: þú ert í markinu!",
   "You're in goal! J drops to the butterfly, K dives.": "Þú ert í markinu! J fer niður í fiðrildið og K stekkur þvert yfir markið.",
   "You're in goal! X drops to the butterfly, A dives.": "Þú ert í markinu! X fer niður í fiðrildið og A stekkur þvert yfir markið.",
