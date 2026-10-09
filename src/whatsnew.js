@@ -11,6 +11,7 @@ export const WHATS_NEW = [
       { icon: 'achievements/off_the_drop', text: 'New at the training rink: the Faceoffs drill, ten draws against a centre who gets quicker every time.' },
       { icon: 'equipment_items/stick/slapshot', text: 'And Tip-Ins: ten point shots to redirect from in front of the net.' },
       { icon: 'icons/share', text: 'Pause › Game plan changes your plan mid-match, and Pause › Photo saves a picture of the ice (or shares it, on a phone).' },
+      { icon: 'achievements/lamp_lighter', text: 'Settings › Our goal horn: pick the horn that goes off when we score at home.' },
       { icon: 'hud_elements/misc/selection_ring', text: 'A dashed gold ring at a teammate\'s feet shows who your pass will go to. Pause › Match stats shows the box score and shot map mid-game.' },
     ],
   },

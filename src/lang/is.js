@@ -1345,6 +1345,7 @@ export const IS = {
   "Separate warm-ups. Both come back with something to prove.": "Hvort hitar upp í sínu horni. Bæði mæta með eitthvað að sanna.",
   "Session coins": "Æfingamynt",
   "Settings": "Stillingar",
+  "Settings › Our goal horn: pick the horn that goes off when we score at home.": "Stillingar › Markahornið okkar: veldu hornið sem fer í gang þegar við skorum heima.",
   "Seven rounds now. More games, more chances. Let's go.": "Sjö umferðir núna. Fleiri leikir, fleiri tækifæri. Áfram!",
   "SH": "SK",
   "Shadow": "Skuggi",
