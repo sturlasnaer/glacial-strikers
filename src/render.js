@@ -1618,6 +1618,9 @@ export class Renderer {
     // Eclipse (and a shadow combo) hides the puck for the start of its flight
     const hid = p.shot && p.shot.special && (p.shot.special.eclipse ? 0.4 : p.shot.special.hidden || 0);
     if (hid && match.time - p.shot.t < hid) ctx.globalAlpha = 0.07;
+    // a screened shot at the player in goal: faint until it's past the body in the way
+    const sc = p.shot && p.shot.screener;
+    if (sc && p.shot.screenedG && p.shot.screenedG.human && (p.x - sc.x) * p.shot.screenedG.goalSide < 0) ctx.globalAlpha = Math.min(ctx.globalAlpha, 0.3);
     // trail
     if (p.trail.length > 1) {
       const cb = p.shot && p.shot.special && p.shot.special.combo;

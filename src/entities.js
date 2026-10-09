@@ -536,7 +536,7 @@ export class Goalie {
       const dg = Math.hypot(k.x - this.x, k.y - this.y);
       if (dg < 40 || dg > 150) continue;
       const sd = segDist(k.x, k.y, p.x, p.y, this.x, this.y);
-      if (sd.d < 24 && sd.t > 0.3) { delay += SCREEN_DELAY; shot.screened = true; this.match.emit('screen', { g: this, s: k }); break; }
+      if (sd.d < 24 && sd.t > 0.3) { delay += SCREEN_DELAY; shot.screened = true; shot.screener = k; shot.screenedG = this; this.match.emit('screen', { g: this, s: k }); break; }
     }
     this.react = { t: delay, shot };
   }
