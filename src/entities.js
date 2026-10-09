@@ -4,6 +4,9 @@ import { clamp, norm, angDiff, segDist } from './util.js';
 import { constrainToRink, collideNets, RINK, GOAL_X, MOUTH, NET_DEPTH, POST_R, CROSSBAR, persp } from './rink.js';
 import { GOALIE_STYLES } from './data.js';
 
+export let SCREEN_DELAY = 0.05; // a goalie reading a shot through a body in front: this much later
+export const setScreenDelay = (v) => { SCREEN_DELAY = v; };
+
 export const SKATER_R = 15;
 export const PUCK_R = 6;
 export const GOALIE_R = 21;
@@ -526,6 +529,14 @@ export class Goalie {
     else if (this.match.twists && this.match.twists.beam && this.match.inBeam(p.x, p.y)) { // ...or out of the moonbeam: it glares
       delay += 0.07;
       this.match.emit('glare', { x: p.x, y: p.y, g: this });
+    }
+    // a screen: somebody (either side) standing in the shot's way in front of the goalie
+    for (const k of this.match.skaters) {
+      if (k === shot.by || k.parked) continue;
+      const dg = Math.hypot(k.x - this.x, k.y - this.y);
+      if (dg < 40 || dg > 150) continue;
+      const sd = segDist(k.x, k.y, p.x, p.y, this.x, this.y);
+      if (sd.d < 24 && sd.t > 0.3) { delay += SCREEN_DELAY; shot.screened = true; this.match.emit('screen', { g: this, s: k }); break; }
     }
     this.react = { t: delay, shot };
   }

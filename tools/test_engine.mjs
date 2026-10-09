@@ -244,6 +244,27 @@ const mk = (seed = 5) => new Match({ teams: [team(), team()], humanTeam: null, s
   setTipBase(base);
 }
 
+// screens: a body in the shot's way in front of the goalie makes the read later; one off to the
+// side doesn't
+{
+  const screen = (my) => {
+    const m = mk(71);
+    m.state = 'play';
+    for (const a of m.ai) a.update = () => {};
+    const [shooter] = m.teamSkaters(0), d = m.teamSkaters(1)[0];
+    for (const o of m.skaters) if (o !== shooter && o !== d) { o.x = -500; o.y = o.slot * 60 - 60; }
+    const g = m.goalieAt(1);
+    shooter.x = 330; shooter.y = 0; shooter.face = 0; d.x = g.x - 90; d.y = my;
+    m.takePossession(shooter, 'catch');
+    let seen = null; m.on('screen', (e) => { seen = e; });
+    m.shoot(shooter, { kind: 'wrist' });
+    return { seen, screened: !!(m.puck.shot && m.puck.shot.screened), t: g.react && g.react.t };
+  };
+  const a = screen(0), b = screen(120);
+  check('screens: a skater in the shot\'s way screens the goalie', a.seen && a.screened, a);
+  check('...one off to the side doesn\'t', !b.seen && !b.screened, b);
+}
+
 // delayed penalties: play goes on while the fouled side has the puck, the whistle comes when the
 // other side touches it, and a goal by the fouled side wipes the minor out
 {

@@ -31,6 +31,7 @@ export class Commentary {
       else if (this.plankT !== undefined && m.time - this.plankT < 2.5) line = t('Off the loose boards and in! {name} will take it!', { name: n(s) });
       else if (g.kind === 'onetimer') line = pick([t('ONE-TIMER! {name} buries it!', { name: n(s) }), t('{name} one-times it home!', { name: n(s) })]);
       else if (g.kind === 'tip') line = pick([t('Tipped in! {name} gets a piece of it in front!', { name: n(s) }), t('{name} redirects it past the goalie!', { name: n(s) })]);
+      else if (g.screened && Math.random() < 0.6) line = pick([t('Through the screen! {name} scores!', { name: n(s) }), t('The goalie never saw it! {name} scores through traffic!', { name: n(s) })]);
       else if (g.kind === 'zero') line = t('{name} freezes the whole defense! GOAL!', { name: n(s) });
       else if (g.kind === 'thunderclap') line = t('THUNDERCLAP! {name} lights the lamp!', { name: n(s) });
       else if (g.powerPlay) line = t('Power-play goal! {name} makes them pay.', { name: n(s) });

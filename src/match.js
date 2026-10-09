@@ -1288,7 +1288,7 @@ export class Match {
     }
     const info = {
       team, scorer, assists, kind: sh ? sh.kind : 'scramble', power: sh ? sh.power : null,
-      special: sh ? sh.special : null, time: this.time, y: yc, side,
+      special: sh ? sh.special : null, time: this.time, y: yc, side, screened: !!(sh && sh.screened),
     };
     this.lastGoal = info;
     this.goalLog.push(info);
