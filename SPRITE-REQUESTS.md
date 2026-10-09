@@ -9,6 +9,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Next batches:**
 1. **BH**: stick handling for the rest of the league (the rival players, the expansion captains and the legends), like BD.
 2. **BI**: crossovers for the same players, like BE.
+3. **BJ**: blade contact points for the skating frames everyone already has (data only, no new drawing).
 
 ## Format notes
 
@@ -95,3 +96,7 @@ Each is drawn once in their own club's colours, like their skating sets (the gam
 The BE crossovers for the same 19 players: two frames (step over, push out) for the six directions that aren't straight north or south, turning left and turning right, with `blade_pixels` per frame and gear masks, as in BE. Frame names `<key>/crossover/<direction>/<left|right>_a` and `_b`. About 456 frames plus masks.
 
 ---
+
+## Batch BJ: blade points for the existing skating frames (data only)
+
+With BD/BE the game draws the carried puck exactly where the pose's `blade_pixels` say. In every other frame it still draws the puck where the physics carries it, which misses the painted blade by up to a puck's width or two (most on the diagonals and facing north). No new art is needed: please measure and deliver **`blade_pixels` (x, y in the frame's own pixels, the centre of the blade's contact with the ice) for every existing skating frame** that shows a stick on the ice: `idle`, `skate_a`, `skate_b`, `glide` in all eight directions, the side `stride` frames (four, plus `stop` and `glide`, and the `stride_west` sets), and `shot_windup` where the blade is down. For every character with skating sets: our cast, the founding rivals, the newcomers, the parts bodies, the legends and the expansion captains. As a JSON file keyed by the atlas frame id (`{ "<frame id>": { "x": …, "y": … } }`), in the frames' source pixels like BD's, with a preview sheet marking each point so we can check it.
