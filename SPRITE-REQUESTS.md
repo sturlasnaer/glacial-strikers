@@ -10,7 +10,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 1. **BH, the rest:** stick handling for the 13 players still to come (Part 1 brought six): `aurora_royals_d`, `ember_comets_c`, `ember_comets_w`, `gilded_rams_w`, `gilded_rams_d`, `obsidian_ravens_c`, `obsidian_ravens_d`, `pinewood_lynx_c`, `pinewood_lynx_w`, `glacier_owls_c`, `thunder_moose_c`, `fafnir` and `fenrir`, as in the BH section below.
 2. **BI, the rest:** Fáfnir's crossovers (held for his northwest right-turn stick). Fenrir's southeast backhand blade correction remains part of BH.
 3. **BN:** the linesman skating with his arm up, for delayed penalties (8 frames), as in the BN section below.
-4. **BO:** five achievement icons, a season-goals icon, a Faceoffs drill icon and two league-news icons (9 frames), as in the BO section below.
+4. **BO:** five achievement icons, a season-goals icon and a Faceoffs drill icon (7 frames), as in the BO section below.
+5. **BP:** gold, silver and bronze stars for the three stars of the game, and a stern Coach Brekka for the note after a loss (4 frames), as in the BP section below.
 
 Native generation reached its daily quota; pending art and masks are saved for the reset at **2026-10-09 18:10:25 UTC**.
 
@@ -101,12 +102,12 @@ The BE crossovers for the same 19 players: two frames (step over, push out) for 
 
 ## Batch BN: the linesman's arm up on the move
 
-Penalties are now **delayed**, as in real hockey: when a team fouls while the other has the puck, the linesman raises an arm and play goes on until the offending team touches the puck (a goal by the fouled team wipes the penalty out). Standing still he uses the AS `penalty_a` pose (one arm straight up), but while he follows play he has to drop the arm and use his ordinary stride, so the signal disappears just when the play is moving. Please draw him **skating with one arm raised straight up**, in the AG linesman's style, scale and pivots:
+Penalties are now **delayed**, as in real hockey: when a team fouls while the other has the puck, the linesman raises an arm and play goes on until the offending team touches the puck (a goal by the fouled team wipes the penalty out). Standing still, the linesman uses the AS `penalty_a` pose (one arm straight up), but following play the game has to drop the arm and use the ordinary stride, so the signal disappears just when the play is moving. Please draw the linesman **skating with one arm raised straight up**, in the AG linesman's style, scale and pivots:
 - `linesman_delayed/linesman/stride_a` to `stride_d`: the four-frame side stride facing right (the game mirrors it for skating left), the raised arm steady through the stride, the other arm swinging as in the ordinary stride.
 - `linesman_delayed/linesman/glide_north`, `glide_south`, `glide_east`: the three glides with the arm up.
-- `linesman_delayed/linesman/stop`: a hockey stop facing right with the arm up (he pulls up when the whistle goes).
+- `linesman_delayed/linesman/stop`: a hockey stop facing right with the arm up (pulling up when the whistle goes).
 
-In the atlas, a `linesman.delayed` map: `{ "stride": [the four], "glides": { "north", "south", "east" }, "stop": ... }`, with the linesman's usual recolour masks if his stripes need them. 8 frames.
+In the atlas, a `linesman.delayed` map: `{ "stride": [the four], "glides": { "north", "south", "east" }, "stop": ... }`, with the linesman's usual recolour masks if the stripes need them. 8 frames.
 
 ## Batch BO: icons for tip-ins, delayed penalties, season goals and the faceoff drill
 
@@ -121,10 +122,16 @@ And two icons in the icons_z style (the league news and rule icons):
 - `icons/season_goals`: the same clipboard, smaller and simpler, three boxes (for the Season goals panel and its toast).
 - `equipment_items/hub/faceoffs`: a puck dropping between two crossed stick blades on a faceoff dot, matching the other drill cards' icons (the cone, the target, the passing stick, the goalie gloves).
 
-And two league-news icons in the AV style (`icons/news_sign` and the rest), mapped as `news_icons.hat_trick` and `news_icons.streak` in the atlas:
-- `icons/news_hat_trick`: three hats in a little pile on the ice.
-- `icons/news_streak`: a stick blade with a small flame trailing off it (a scoring streak: one of ours scoring in game after game).
-
-9 frames.
+7 frames.
 
 ---
+
+## Batch BP: the three stars and a stern coach
+
+After every match the results now name **the three stars of the game** (the hockey tradition: the best players from either side, announced third star first), each card with the daily-challenge star for now; and after a loss **Coach Brekka** gives one thing to work on, with the ordinary hub portrait. Please draw, in the Batch X badge style and size (`badges/daily_star`, `badges/rank_1`):
+- `badges/star_1`, `badges/star_2`, `badges/star_3`: a gold, a silver and a bronze star (1st, 2nd and 3rd star), each with a small "1", "2" or "3" on it or under it.
+
+And in the hub portrait style (`hub_npcs/portrait/coach`), same size and framing:
+- `hub_npcs/portrait/coach_stern`: Coach Brekka after a loss, arms folded or a hand on the whistle, a firm but fair look (not angry), as `npcs.coach_stern` in the atlas.
+
+4 frames.

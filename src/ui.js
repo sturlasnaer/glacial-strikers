@@ -191,7 +191,8 @@ const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 // The league news icon for each kind of story (Batch AV).
-const NEWS_ICON = { edge: 'edge', rivalSign: 'sign', weSign: 'sign', weGoalie: 'sign', weAgent: 'sign', weLegend: 'sign', rivalDraft: 'draft', weDraft: 'draft', trade: 'trade', retire: 'retire', champion: 'cup', expansion: 'new_club', hatTrick: 'hat_trick', streak: 'streak' }; // (the last two: Batch BO, when it's in)
+const NEWS_ICON = { edge: 'edge', rivalSign: 'sign', weSign: 'sign', weGoalie: 'sign', weAgent: 'sign', weLegend: 'sign', rivalDraft: 'draft', weDraft: 'draft', trade: 'trade', retire: 'retire', champion: 'cup', expansion: 'new_club' };
+const NEWS_ART = { hatTrick: 'achievements/hat_trick', streak: 'badges/streak_flame' }; // (news without a news icon of its own)
 // The locker room hub: stations in the painting, in % of the 16:9 image.
 const STATIONS = [
   { tab: 'team', label: 'Team', icon: 'equipment_items/hub/locker', rect: [19, 2, 47, 27], at: [42, 15], tip: 'Lockers: line-up, stats, gear and scouting' },
@@ -313,7 +314,7 @@ function logoHtml() {
 const rowFace = (r, size) => (r.team === 'home' ? portrait(r.face, 0, null, size) : portrait(r.face, 1, r.team, size));
 
 // Hub characters: a portrait and a line of chatter at the top of their tab.
-const NPC_NAMES = { coach: 'Coach Brekka', shopkeeper: 'Gearsmith Ottar', announcer: 'Kip Vance, PA', agent: 'Vigga, the agent' };
+const NPC_NAMES = { coach: 'Coach Brekka', coach_stern: 'Coach Brekka', shopkeeper: 'Gearsmith Ottar', announcer: 'Kip Vance, PA', agent: 'Vigga, the agent' };
 function npc(key, text) {
   const id = Assets.atlas.npcs && Assets.atlas.npcs[key];
   const img = id && Assets.icon(id, 128);
@@ -778,7 +779,7 @@ export class UI {
       }
     };
     // what happened (Batch AV's icons) and whose crest it is
-    const kind = (n) => { const icons = Assets.atlas.news_icons; const id = icons && (icons[NEWS_ICON[n.k]] || (n.k === 'edge' && icons.new_club)); return id && Assets.frame(id) ? Assets.icon(id, 48) : ''; };
+    const kind = (n) => { const icons = Assets.atlas.news_icons; const id = (icons && (icons[NEWS_ICON[n.k]] || (n.k === 'edge' && icons.new_club))) || NEWS_ART[n.k]; return id && Assets.frame(id) ? Assets.icon(id, 48) : ''; };
     const pics = (n) => {
       const k = kind(n), team = n.team && (TEAMS[n.team] || n.team === 'home') ? crest(n.team, 40) : '';
       const list = [k, team || (k ? '' : Assets.icon(Assets.atlas.frames['icons/free_agents'] ? 'icons/free_agents' : 'icons/contract', 40))].filter(Boolean);
@@ -2552,7 +2553,7 @@ export class UI {
           <div class="score">${esc(CLUB.nick)} ${summary.score[0]} – ${summary.score[1]} ${esc(tm.name.split(' ').slice(-1)[0])}</div>
           <div class="muted">${exhibition ? t('Exhibition') : esc(data.round ? t(data.round, { n: data.roundN }) : '')} · ${t('Shots on goal {a}–{b}', { a: summary.shots[0], b: summary.shots[1] })}${summary.draws ? ` · ${t('Faceoffs {a}–{b}', { a: summary.draws[0], b: summary.draws[1] })}` : ''}</div>
         </div>
-        ${note ? npc('coach', note) : ''}
+        ${note ? npc(Assets.atlas.npcs && Assets.atlas.npcs.coach_stern ? 'coach_stern' : 'coach', note) : ''}
         <div class="res-grid">
           <div>
             <div class="label">${t('Box score')}</div>
@@ -2561,7 +2562,7 @@ export class UI {
             </tbody></table>
             <div class="label" style="margin-top:10px">${t('Three stars')}</div>
             <div class="stars3">${stars.map((k, i) => `<div class="star3${i === 0 ? ' first' : ''}">
-              <div class="st-tag">${smallIcon('badges/daily_star', 24, 'st-ico')}${[t('1st star'), t('2nd star'), t('3rd star')][i]}</div>
+              <div class="st-tag">${smallIcon(Assets.atlas.frames[`badges/star_${i + 1}`] ? `badges/star_${i + 1}` : 'badges/daily_star', 24, 'st-ico')}${[t('1st star'), t('2nd star'), t('3rd star')][i]}</div>
               <img src="${portrait(k.id, k.team, teamId, 128)}" alt="">
               <div class="st-nm" style="color:${k.team === 0 ? 'var(--cream)' : '#f5b3bb'}">${esc(k.name)}</div>
               <div class="muted">${starLine(k)}</div></div>`).join('')}</div>
