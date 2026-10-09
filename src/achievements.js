@@ -58,6 +58,9 @@ export const ACHIEVEMENTS = [
   { id: 'protector', name: 'Puck Protector', text: 'Shield the puck from a defender 15 times in one match.', icon: 'achievements/pickpocket', art: 'achievements/puck_protector', coins: 70 },
   { id: 'game-face', name: 'Game Face', text: 'Pick a new mask for a goalie at goalie camp.', icon: 'icons/gstyle_hybrid', art: 'achievements/game_face', coins: 30 },
   { id: 'new-colours', name: 'New Colours', text: 'Give the club a new crest.', icon: 'hud_elements/misc/home_crest', art: 'achievements/new_colours', coins: 30 },
+  // the deke and the faceoff (Batch BK art; a stand-in until then)
+  { id: 'sold-it', name: 'Sold It', text: 'Score right after a deke makes the goalie bite.', icon: 'icons/arch_dangler', art: 'achievements/sold_it', coins: 70 },
+  { id: 'off-the-drop', name: 'Off the Drop', text: 'Win three faceoffs clean in one match.', icon: 'power_pucks/plain/phase_1', art: 'achievements/off_the_drop', coins: 60 },
   { id: 'weekly-cup', name: 'Cup of the Week', text: 'Win a Weekly Cup on a friends board.', icon: 'badges/rank_1', art: 'achievements/cup_of_the_week', coins: 100 },
 ];
 // Batch AF: the achievements that borrowed a gear or HUD picture get their own.
@@ -116,7 +119,9 @@ export class AchievementTracker {
   // Watch a real match (not drills or versus) for in-game achievements.
   attachMatch(m) {
     this.minDiff = 0;
-    let glareT = -9, plankT = -9, shields = 0;
+    let glareT = -9, plankT = -9, shields = 0, biteT = -9, clean = 0;
+    m.on('deke_goalie', (e) => { if (e.s.team === 0) biteT = m.time; });
+    m.on('faceoff_win', (e) => { if (e.clean && e.s.team === 0 && ++clean >= 3) this.unlock('off-the-drop'); });
     m.on('glare', (e) => { if (e.g.team === 1) glareT = m.time; }); // (their goalie, dazzled by our shot)
     m.on('plank', () => { plankT = m.time; });
     m.on('shield', (e) => { if (e.s.team === 0 && ++shields >= 15) this.unlock('protector'); });
@@ -138,6 +143,7 @@ export class AchievementTracker {
       if (m.extra && m.extra[0]) this.unlock('extra-attacker');
       if (m.time - glareT < 1.5) this.unlock('moonstruck');
       if (m.time - plankT < 2.5) this.unlock('splinters');
+      if (m.time - biteT < 2) this.unlock('sold-it');
     });
     m.on('no_goal', () => { this.minDiff = Math.min(this.minDiff, m.score[0] - m.score[1]); });
     m.on('chain', (e) => { if (e.team === 0 && e.n >= 5) this.unlock('tic-tac-toe'); });

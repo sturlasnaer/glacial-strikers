@@ -10,6 +10,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 1. **BH**: stick handling for the rest of the league (the rival players, the expansion captains and the legends), like BD.
 2. **BI**: crossovers for the same players, like BE.
 3. **BJ**: the stick in the gear masks of 27 early skating frames (masks only, no new art).
+4. **BK**: two achievement icons: Sold It and Off the Drop.
 
 ## Format notes
 
@@ -128,3 +129,11 @@ The game now draws the carried puck on the painted blade in every skating frame.
 - `thunder_winger/home_north/idle`
 - `thunder_winger/home_north/skate_a`
 - `thunder_winger/home_north/skate_b`
+
+## Batch BK: two achievement icons
+
+In the style and size of the BF achievement icons (about 200 px source, reading at 48 px), sheet `icons_bk.png`:
+- `achievements/sold_it`: a goalie sprawled the wrong way while a puck slides into the open side of the net (score right after a deke makes the goalie bite).
+- `achievements/off_the_drop`: a puck dropping between two crossed sticks on a faceoff dot, a little burst of motion lines as one stick snaps it back (win three faceoffs clean in one match).
+
+2 frames.

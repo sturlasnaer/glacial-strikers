@@ -105,9 +105,9 @@ for (const key of ['glacier_owls_c', 'thunder_moose_c']) {
 useAchievementArt(F);
 check('every achievement icon exists', ACHIEVEMENTS.every((a) => F[a.icon]), ACHIEVEMENTS.filter((a) => !F[a.icon]).map((a) => a.id));
 const own = (a) => a.icon.startsWith('achievements/') || a.icon.startsWith('allstar/');
-// (Batch BF's five are requested: a stand-in until their art arrives)
-const PENDING = new Set(['moonstruck', 'splinters', 'protector', 'game-face', 'new-colours']);
-check('every achievement has its own icon (AF, AN; BF pending)', ACHIEVEMENTS.every((a) => own(a) || (PENDING.has(a.id) && !F[a.art])), ACHIEVEMENTS.filter((a) => !own(a) && !PENDING.has(a.id)).map((a) => a.id));
+// (requested ones show a stand-in until their art arrives: BF's five, in; BK's two)
+const PENDING = new Set(['moonstruck', 'splinters', 'protector', 'game-face', 'new-colours', 'sold-it', 'off-the-drop']);
+check('every achievement has its own icon (AF, AN, BF; BK pending)', ACHIEVEMENTS.every((a) => own(a) || (PENDING.has(a.id) && !F[a.art])), ACHIEVEMENTS.filter((a) => !own(a) && !PENDING.has(a.id)).map((a) => a.id));
 
 // the linesman
 const KITS = ['frost', 'thunder', 'stone'];

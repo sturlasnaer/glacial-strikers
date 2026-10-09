@@ -1,6 +1,10 @@
 // Íslenska. Keys are the English text exactly as written in the game (with {braces} for
 // values); values are the Icelandic. Names of people, teams and the club stay as they are.
 export const IS = {
+  "Win three faceoffs clean in one match.": "Vinndu þrjú uppköst hreint í einum leik.",
+  "Off the Drop": "Beint úr uppkastinu",
+  "Score right after a deke makes the goalie bite.": "Skoraðu strax eftir að gabb fær markvörðinn til að bíta á agnið.",
+  "Sold It": "Seldi honum",
   "Practise the deke in the Breakaway drill: tap SPRINT close to the goalie, and if they bite, shoot the other way.": "Æfðu gabbið í æfingunni Sloppinn í gegn: pikkaðu á SPRETTUR nálægt markverðinum og ef hann bítur á agnið skaltu skjóta hinum megin.",
   "Wait for the puck to touch the ice, then press SHOOT or PASS to win the draw.": "Bíddu þar til pökkurinn lendir á ísnum og ýttu þá á SKJÓTA eða SENDA til að vinna uppkastið.",
   "Whistled dead: nobody can get to it.": "Flautað af: enginn kemst að pökknum.",
