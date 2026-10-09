@@ -395,6 +395,7 @@ img { image-rendering: auto; max-width: 100%; }
 .sm-key span { display: inline-flex; align-items: center; gap: 5px; }
 .sm-key i { width: 10px; height: 10px; border-radius: 50%; border: 1px solid #16223d; }
 .sm-key i.goal { background: transparent; border: 3px solid #ffd45e; width: 12px; height: 12px; }
+.sm-key i.tip { border-radius: 1px; transform: rotate(45deg); background: #c3d3ea; width: 9px; height: 9px; }
 
 /* ---------- HUD ---------- */
 #hud { position: absolute; inset: 0; pointer-events: none; z-index: 10; }

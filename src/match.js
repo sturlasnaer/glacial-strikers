@@ -1151,7 +1151,7 @@ export class Match {
     if (sh.onNet) return;
     sh.onNet = true;
     this.shotsOnGoal[sh.team]++;
-    if (sh.x0 !== undefined) this.shotLog.push(sh.log = { team: sh.team, x: Math.round(sh.x0), y: Math.round(sh.y0), goal: false });
+    if (sh.x0 !== undefined) this.shotLog.push(sh.log = { team: sh.team, x: Math.round(sh.x0), y: Math.round(sh.y0), goal: false, ...(sh.kind === 'tip' ? { tip: true } : {}) });
     this.addUlt(sh.by, 5);
   }
 

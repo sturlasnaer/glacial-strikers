@@ -264,9 +264,11 @@ const rimFor = (potential) => CARD_RIMS[potential >= 4 ? 'gold' : potential === 
 // (ours attack the right-hand net), goals ringed in gold.
 export const shotMapSvg = (list, ours, theirs) => {
   const { minX, maxX, minY, maxY, r } = RINK, col = (k) => (k.team === 0 ? ours : theirs);
-  const dots = [...list].sort((a, b) => a.goal - b.goal).map((k) => (k.goal
-    ? `<circle cx="${k.x}" cy="${k.y}" r="22" fill="${col(k)}" stroke="#ffd45e" stroke-width="10"/>`
-    : `<circle cx="${k.x}" cy="${k.y}" r="13" fill="${col(k)}" fill-opacity="0.85" stroke="#16223d" stroke-width="3"/>`)).join('');
+  // (a tip-in is a diamond: where the stick in front redirected it)
+  const dot = (k, r, stroke, w, extra = '') => (k.tip
+    ? `<rect x="${k.x - r * 0.8}" y="${k.y - r * 0.8}" width="${r * 1.6}" height="${r * 1.6}" transform="rotate(45 ${k.x} ${k.y})" fill="${col(k)}" stroke="${stroke}" stroke-width="${w}"${extra}/>`
+    : `<circle cx="${k.x}" cy="${k.y}" r="${r}" fill="${col(k)}" stroke="${stroke}" stroke-width="${w}"${extra}/>`);
+  const dots = [...list].sort((a, b) => a.goal - b.goal).map((k) => (k.goal ? dot(k, 22, '#ffd45e', 10) : dot(k, 13, '#16223d', 3, ' fill-opacity="0.85"'))).join('');
   const end = (sx) => `<line x1="${sx * GOAL_X}" y1="${minY + 40}" x2="${sx * GOAL_X}" y2="${maxY - 40}" stroke="#e05a6a" stroke-width="4"/>
     <path d="M ${sx * GOAL_X} ${-CREASE.ry} A ${CREASE.rx} ${CREASE.ry} 0 0 ${sx > 0 ? 0 : 1} ${sx * GOAL_X} ${CREASE.ry} Z" fill="#9fd3f2"/>
     <rect x="${sx > 0 ? GOAL_X : -GOAL_X - NET_DEPTH}" y="${-MOUTH}" width="${NET_DEPTH}" height="${MOUTH * 2}" fill="none" stroke="#16223d" stroke-width="6"/>
@@ -2574,7 +2576,7 @@ export class UI {
               <div class="muted">${starLine(k)}</div></div>`).join('')}</div>
             ${map.length ? `<div class="label" style="margin-top:10px">${t('Shot map')}</div>
             ${shotMapSvg(map, CLUB.trim || '#71dce8', tm.color || '#f5b3bb')}
-            <div class="sm-key"><span><i style="background:${CLUB.trim || '#71dce8'}"></i>${esc(CLUB.nick)}</span><span><i style="background:${tm.color || '#f5b3bb'}"></i>${esc(tm.name.split(' ').slice(-1)[0])}</span><span><i class="goal"></i>${t('Goal')}</span></div>` : ''}
+            <div class="sm-key"><span><i style="background:${CLUB.trim || '#71dce8'}"></i>${esc(CLUB.nick)}</span><span><i style="background:${tm.color || '#f5b3bb'}"></i>${esc(tm.name.split(' ').slice(-1)[0])}</span><span><i class="goal"></i>${t('Goal')}</span>${map.some((k) => k.tip) ? `<span><i class="tip"></i>${t('Tip-in')}</span>` : ''}</div>` : ''}
           </div>
           <div>
             <div class="label">${t('Rewards')}</div>
