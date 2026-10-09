@@ -35,12 +35,12 @@ export const DRILLS = {
     medals: [2, 3, 4],
   },
   tips: {
-    id: 'tips', name: 'Tip-Ins', trains: 'Net front', icon: 'equipment_items/stick/slapshot', art: 'equipment_items/hub/tips', unit: 'tips', offline: true, // (art: Batch BO)
+    id: 'tips', name: 'Tip-Ins', trains: 'Net front', icon: 'equipment_items/stick/slapshot', art: 'equipment_items/hub/tips', unit: 'tips', // (art: Batch BO)
     text: 'Ten shots from the point. Get your stick in the lane in front of the net and press SHOOT as the puck comes by to tip it past the goalie.',
     medals: [2, 4, 6],
   },
   faceoffs: {
-    id: 'faceoffs', name: 'Faceoffs', trains: 'Draws', icon: 'achievements/off_the_drop', art: 'equipment_items/hub/faceoffs', unit: 'draws', offline: true, // (art: Batch BO, when it's in)
+    id: 'faceoffs', name: 'Faceoffs', trains: 'Draws', icon: 'achievements/off_the_drop', art: 'equipment_items/hub/faceoffs', unit: 'draws', // (art: Batch BO, when it's in)
     text: 'Ten draws against a centre who gets quicker every time. Press SHOOT or PASS as the puck touches the ice: go while it\'s still in the air and you\'re held back.',
     medals: [5, 7, 9],
   },

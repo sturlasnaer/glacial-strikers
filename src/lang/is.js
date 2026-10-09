@@ -1588,6 +1588,7 @@ export const IS = {
   "The Cup Final. Everything comes down to tonight.": "Bikarúrslitin. Allt ræðst í kvöld.",
   "The cup is yours, Foxes. Enjoy it while it lasts.": "Bikarinn er ykkar, Foxes. Njótið hans meðan það varir.",
   "The cup is yours. You earned every inch of it.": "Bikarinn er ykkar. Þið unnuð fyrir hverjum millimetra af honum.",
+  "The Faceoffs and Tip-Ins drills have online leaderboards now: this week's and all time, and on your friends boards.": "Uppkasta- og stýringaæfingarnar eru nú með stigatöflur á netinu: þessarar viku og frá upphafi, og á vinatöflunum þínum.",
   "The fans have voted! {name} leads the home bench, with two of the league's stars in your colours. The rest of the league's best wear the All-Star navy.": "Áhorfendur hafa kosið! {name} fer fyrir heimabekknum, með tvær af stjörnum deildarinnar í ykkar litum. Hin bestu í deildinni klæðast dökkbláum stjörnubúningum.",
   "the fans vote in the league's stars": "áhorfendur kjósa stjörnur deildarinnar",
   "The first star of the game: {name}!": "Fyrsta stjarna leiksins: {name}!",

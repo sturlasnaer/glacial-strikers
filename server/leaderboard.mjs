@@ -27,8 +27,8 @@ import { createHash, randomInt } from 'crypto';
 // Challenges: any run (not just a best) can be filed under a short code for a friend to
 // race: POST {op: 'challenge_put'} returns the code, GET ?challenge=CODE the run.
 //
-// The Weekly Cup: every friends board runs one, Monday to Sunday, over the group's four
-// weekly drill boards. GET ?cup=CODE returns this week's standings and last week's.
+// The Weekly Cup: every friends board runs one, Monday to Sunday, over the group's first
+// four weekly drill boards. GET ?cup=CODE returns this week's standings and last week's.
 // Nothing new is stored: past weeks' group boards are still there to read.
 
 export const BOARDS = {
@@ -36,11 +36,15 @@ export const BOARDS = {
   sniper: { better: 'higher', min: 0, max: 10000, decimals: 0 },
   rondo: { better: 'higher', min: 0, max: 1000, decimals: 0 },
   breakaway: { better: 'higher', min: 0, max: 5, decimals: 0 },
+  faceoffs: { better: 'higher', min: 0, max: 10, decimals: 0 }, // draws won of ten
+  tips: { better: 'higher', min: 0, max: 10, decimals: 0 }, // tip-in goals of ten shots
   shootout_wins: { better: 'higher', min: 0, max: 100000, decimals: 0 },
   daily_streak: { better: 'higher', min: 0, max: 10000, decimals: 0 },
 };
 
-export const WEEKLY = new Set(['cones', 'sniper', 'rondo', 'breakaway']);
+export const WEEKLY = new Set(['cones', 'sniper', 'rondo', 'breakaway', 'faceoffs', 'tips']);
+// The Weekly Cup's drills: the first four (Faceoffs and Tip-Ins have weekly boards, not cup points)
+export const CUP = ['cones', 'sniper', 'rondo', 'breakaway'];
 const DAY = 86400000;
 
 // The ISO week (UTC) a time falls in, e.g. '2026-W41', and when that week ends.
@@ -250,7 +254,7 @@ export function rankKey(board, score, at) {
 const CUP_POINTS = [5, 3, 2];
 async function cupTable(store, code, wk, player) {
   const table = new Map();
-  for (const board of WEEKLY) {
+  for (const board of CUP) {
     const rows = await store.top(groupKey(weekBoard(board, wk), code), TOP);
     rows.forEach((r, i) => {
       const e = table.get(r.player) || { player: r.player, points: 0, firsts: 0, places: {} };

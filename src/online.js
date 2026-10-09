@@ -20,6 +20,8 @@ export const BOARD_INFO = {
   sniper: { name: 'Sniper', better: 'higher', weekly: true, fmt: (v) => t('{n} pts', { n: v }) },
   rondo: { name: 'Keep-Away', better: 'higher', weekly: true, fmt: (v) => t('{n} pts', { n: v }) },
   breakaway: { name: 'Breakaway', better: 'higher', weekly: true, fmt: (v) => `${v}/5` },
+  faceoffs: { name: 'Faceoffs', better: 'higher', weekly: true, fmt: (v) => `${v}/10` },
+  tips: { name: 'Tip-Ins', better: 'higher', weekly: true, fmt: (v) => `${v}/10` },
   shootout_wins: { name: 'Shootout wins', better: 'higher', fmt: (v) => t(v === 1 ? '{n} win' : '{n} wins', { n: v }) },
   daily_streak: { name: 'Daily streak', better: 'higher', fmt: (v) => t(v === 1 ? '{n} day' : '{n} days', { n: v }) },
 };

@@ -40,6 +40,15 @@ check('bad player', (await post({ board: 'sniper', player: 'x', score: 1 })).sta
 check('score too high', (await post({ board: 'breakaway', player: id(4), score: 6 })).status === 400);
 check('fractional goals', (await post({ board: 'breakaway', player: id(4), score: 2.5 })).status === 400);
 check('cones too fast', (await post({ board: 'cones', player: id(4), score: 2 })).status === 400);
+// the Faceoffs and Tip-Ins drills: whole numbers out of ten, weekly boards too
+r = await post({ board: 'faceoffs', player: id(5), name: 'Draws', score: 7 });
+check('faceoffs board', r.status === 200 && r.body.rank === 1 && r.body.week && r.body.week.rank === 1, r.body);
+r = await post({ board: 'tips', player: id(5), name: 'Draws', score: 4 });
+check('tips board', r.status === 200 && r.body.rank === 1, r.body);
+check('faceoffs out of ten', (await post({ board: 'faceoffs', player: id(6), score: 11 })).status === 400);
+check('tips whole numbers', (await post({ board: 'tips', player: id(6), score: 2.5 })).status === 400);
+r = await handle({ method: 'GET', query: { board: 'tips', period: 'week', player: id(5) } }, store, clock);
+check('tips weekly board', r.status === 200 && r.body.top.length === 1 && r.body.resetsAt, r.body);
 check('bad json', (await handle({ method: 'POST', query: {}, body: '{' }, store)).status === 400);
 // rate limit: two posts from one player within 2 s
 clock += 10000;
@@ -240,10 +249,14 @@ check('Monday starts the next', weekOf(Date.UTC(2026, 9, 12)).key === '2026-W42'
   await score(1, 'sniper', 900); await score(2, 'sniper', 1200); await score(3, 'sniper', 400);
   await score(1, 'cones', 15.5); await score(2, 'cones', 19);
   await score(1, 'rondo', 30);
+  await score(3, 'faceoffs', 9); // (a weekly board, but not in the cup)
   r = await cupGet(code, id(1));
   const st = r.body.standings;
   check('cup standings', r.status === 200 && st.length === 3 && st[0].name === 'P1' && st[0].points === 13 && st[0].me && st[1].name === 'P2' && st[1].points === 8 && st[2].points === 2, st);
   check('cup places per board', st[0].places.sniper === 2 && st[0].places.cones === 1 && st[0].firsts === 2, st[0]);
+  check('Faceoffs is not a cup drill', st[2].places.faceoffs === undefined && st[2].points === 2, st[2]);
+  const fr = await handle({ method: 'GET', query: { board: 'faceoffs', period: 'week', group: code, player: id(3) } }, ws, now);
+  check("...but has the group's weekly board", fr.status === 200 && fr.body.top.length === 1 && fr.body.top[0].score === 9, fr.body);
   check('cup name and week', r.body.name === 'Pond Crew' && r.body.week === '2026-W41' && r.body.last.week === '2026-W40' && r.body.last.standings.length === 0, r.body);
   now += 7 * 86400000; // next week: last week's cup is settled, this week's is empty
   r = await cupGet(code, id(2));

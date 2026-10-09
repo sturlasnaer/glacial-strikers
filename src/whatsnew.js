@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-09c',
+    items: [
+      { icon: 'badges/cup_small', text: 'The Faceoffs and Tip-Ins drills have online leaderboards now: this week\'s and all time, and on your friends boards.' },
+    ],
+  },
+  {
     id: '2026-10-09b',
     items: [
       { icon: 'equipment_items/stick/slapshot', text: 'Tip-ins: shoot from the point and your winger heads to the front of the net to redirect it. In front yourself? Press SHOOT as a teammate\'s shot goes by.' },
