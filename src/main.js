@@ -848,6 +848,7 @@ class App {
       setTimeout(() => { if (this.match === m) audio.sfx('whistle', { vol: 0.5 }); }, 2600);
     });
     m.on('faceoff', () => audio.sfx('whistle', { vol: 0.55 }));
+    m.on('penalty_shot', () => this.replay.clear()); // (its replay starts at centre ice, not before the foul)
     m.on('faceoff_early', (e) => {
       audio.sfx('deny', { vol: 0.5 });
       if (this.attract || e.s.team !== 0 || (this.cur && this.cur.versus) || !firstTime(this.save, 'faceoff')) return; // (versus has its own keys)
