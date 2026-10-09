@@ -53,16 +53,26 @@ export const bodySprite = (look) => (look && MODULAR.bodies.includes(look.body) 
 // Goalies from parts (Batch AT): a body drawn without the mask, and painted masks that sit on
 // it. A goalie's look is { mask: 'flame', paint: '#e7bf52' }; the paint goes where the mask's
 // paint layer is red. Set from the atlas at start; empty without the art.
-export const GOALIE_PARTS = { masks: [] };
+export const GOALIE_PARTS = { masks: [], builds: ['std'] };
 export const PAINTS = ['#e7bf52', '#c9d6e3', '#7fd16b', '#ff6f7d', '#9b8cff', '#71dce8', '#f2a93b', '#e8eef5', '#2a2f3d'];
 export function useGoalieParts(atlas) {
   GOALIE_PARTS.masks = atlas && atlas.goalie_parts ? Object.keys(atlas.goalie_parts.masks) : [];
+  GOALIE_PARTS.builds = (atlas && atlas.goalie_parts && atlas.goalie_parts.builds) || ['std'];
   return GOALIE_PARTS.masks.length > 0;
 }
+// A goalie's look: a mask, its paint, and a build (Batch AX: half are the standard build, the
+// rest big or small).
 export function randomMask(rnd = Math.random) {
   if (!GOALIE_PARTS.masks.length) return null;
-  return { mask: pick(GOALIE_PARTS.masks, rnd), paint: pick(PAINTS, rnd) };
+  const look = { mask: pick(GOALIE_PARTS.masks, rnd), paint: pick(PAINTS, rnd) };
+  const others = GOALIE_PARTS.builds.filter((b) => b !== 'std');
+  const r = rnd();
+  if (others.length && r >= 0.5) look.body = others[Math.min(others.length - 1, Math.floor(((r - 0.5) / 0.5) * others.length))];
+  return look;
 }
+// The goalie art a look is drawn with: the standard build is 'parts', the others 'parts_<build>'.
+export const goalieArt = (look) => (look && look.body && look.body !== 'std' ? 'parts_' + look.body : 'parts');
+export const isPartsArt = (art) => typeof art === 'string' && art.startsWith('parts');
 // The same mask every time for an id (free-agent goalies signed before the art was in).
 export function maskFor(id) {
   let h = 2166136261;

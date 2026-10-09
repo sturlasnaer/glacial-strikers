@@ -58,9 +58,9 @@ check('the backup goalie in every view', G.every((k) => A[k].newcomer) && F[A.go
 check('...the size of a younger goalie', (() => { const b = F[A.goalies_side.newcomer.ready], h = F[A.goalies_side.home.ready]; return b[4] / b[7] < h[4] / h[7] && b[4] / b[7] > (h[4] / h[7]) * 0.7; })(), [F[A.goalies_side.newcomer.ready], F[A.goalies_side.home.ready]]);
 check('...recoloured with the newcomers', A.pages[F[A.goalies_side.newcomer.ready][0]].group === 'newcomers');
 check('goaltending style icons', ['hybrid', 'scrambler', 'butterfly', 'wall', 'reader', 'puckhandler'].every((k) => F['icons/gstyle_' + k]) && F['icons/contract']);
-// AO: three builds, ten heads, shoulders per build, the jersey moment
+// AO: three builds, ten heads (sixteen with AZ's), shoulders per build, the jersey moment
 check('three builds', ['body_std', 'body_big', 'body_small'].every((k) => A.skaters[k] && EIGHT.every((d) => A.skaters[k].home[d])), Object.keys(A.skaters).filter((k) => k.startsWith('body_')));
-check('ten heads', Object.keys(M.heads).length === 10, Object.keys(M.heads));
+check('sixteen heads, each with its faces and masks', Object.keys(M.heads).length === 16 && Object.keys(M.heads).every((h) => M.portraits.faces[h] && Object.values(M.heads[h]).every((v) => Object.values(v).every((f) => F[f] && F[M.masks[f]]))), Object.keys(M.heads));
 check('shoulders per build', ['std', 'big', 'small'].every((b) => M.portraits.bodies[b] && F[M.portraits.bodies[b].body]));
 const JM = M.jersey_moments && M.jersey_moments.body_std;
 check('the parts jersey moment', JM && JM.length === 3 && JM.every((f) => F[f] && M.anchors[f]) && M.anchors[JM[1]].hide_head && A.draft_animations.body_std && A.draft_animations.newcomer_c, JM);
@@ -77,6 +77,15 @@ check('goalies from parts: every pose anchored, six masks with paint', Object.va
 check('...drawn at the backup goalie\'s scale', Math.abs(F[A.goalies_side.parts.ready][7] - F[A.goalies_side.newcomer.ready][7]) < 1e-6);
 check('the clubs\' crests, buildings, mascots, boards and banners', ['glacier_owls', 'thunder_moose'].every((m) => F[A.crests[m]] && A.arena.rival_mascots[m] && A.arena.banners[m] && A.banners[m + '_c']) && ['owl_observatory', 'moose_longhouse'].every((k) => A.arenas[k] && A.arena.scoreboards[k] && A.arena.mascot_arenas[k]));
 check('...on their own pages', A.pages[F[A.arena.rival_mascots.glacier_owls.idle][0]].group === 'rival_glacier_owls');
+
+// AV to AZ
+check('news icons', ['sign', 'draft', 'trade', 'retire', 'cup', 'new_club'].every((k) => F[A.news_icons[k]] && A.pages[F[A.news_icons[k]][0]].group === 'icons_z'));
+check('club crests on the home pages', Object.keys(A.club_crests).length === 6 && Object.values(A.club_crests).every((f) => F[f] && A.pages[F[f][0]].group === 'home'));
+check('goalie builds: every pose anchored, with shoulders', ['big', 'small'].every((b) => ['goalies_side', 'goalies_side_west', 'goalies_front', 'goalies_back', 'goalies_puck_handling', 'goalies_puck_handling_west'].every((k) => Object.values(A[k]['parts_' + b]).every((f) => GP.anchors[f])) && GP.portraits.bodies[b] && F[GP.portraits.bodies[b].body]) && GP.builds.join() === 'std,big,small');
+check('...at the standard build\'s scale', F[A.goalies_side.parts_big.ready][7] === F[A.goalies_side.parts.ready][7]);
+const ER = A.expansion_rules;
+check('moonbeam, glare, planks and splinters with the rule art', ER.moonbeams.moonbeams.length === 4 && ER.moonbeams.glare.length === 3 && ER.loose_planks.planks_side.length === 3 && ER.loose_planks.planks_end.length === 3 && ER.loose_planks.splinters.length === 4 && [...ER.moonbeams.moonbeams, ...ER.loose_planks.splinters].every((f) => A.pages[F[f][0]].group === 'rules'));
+check('...and their rule icons', F[A.rule_icons.moonbeams] && F[A.rule_icons.loose_planks]);
 
 // achievements: own icons for the old borrowers
 useAchievementArt(F);

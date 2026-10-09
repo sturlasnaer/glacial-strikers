@@ -714,8 +714,9 @@ PART2 = sys.argv[15] if len(sys.argv) > 15 else '../assets/Puckbound-Part-2-and-
 AN_AO = sys.argv[16] if len(sys.argv) > 16 else '../assets/Puckbound-Batches-AN-AO'
 AP = sys.argv[17] if len(sys.argv) > 17 else '../assets/Puckbound-AP-Jersey-Moments'
 AP_AU = sys.argv[18] if len(sys.argv) > 18 else '../assets/Puckbound-Batches-AP-AU'
+AV_AZ = sys.argv[19] if len(sys.argv) > 19 else '../assets/Puckbound-Batches-AV-AZ'
 from merge_part2 import merge_part2
-atlas = merge_part2(atlas, OUT, [PART2, AN_AO, AP, AP_AU], v1_h, v1_goalie_h)
+atlas = merge_part2(atlas, OUT, [PART2, AN_AO, AP, AP_AU, AV_AZ], v1_h, v1_goalie_h)
 with open(os.path.join(OUT, 'atlas.json'), 'w') as fh:
     json.dump(atlas, fh, separators=(',', ':'))
 

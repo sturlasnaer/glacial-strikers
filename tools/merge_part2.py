@@ -11,10 +11,10 @@ from PIL import Image
 # Adapted from the pack's integration/compile_additions.py, with our compression: art pages
 # lossy like the rest, lossless only where exact channels matter (masks, the parts and the
 # newcomers, which are recoloured by hue).
-BATCHES = ('AD', 'AE', 'AF', 'AG', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU')
+BATCHES = ('AD', 'AE', 'AF', 'AG', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ')
 # the expansion clubs' identity art (Batch AU), by its key, and the arena each one hosts in
 AU_ARENAS = {'glacier_owls': 'owl_observatory', 'thunder_moose': 'moose_longhouse'}
-PARTS = ('AJ', 'AO', 'AP')  # the batches of players made from parts
+PARTS = ('AJ', 'AO', 'AP', 'AZ')  # the batches of players made from parts
 GOALIE_S = 0.5  # (as in build_assets.py)
 BACKUP_HEIGHT = 0.87  # the backup goalie stands this tall next to a starter
 ROLE_V1 = {'c': 'frost_captain', 'w': 'thunder_winger', 'd': 'stone_defender'}
@@ -53,8 +53,14 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
             return 'hub' if cat == 'npc' else 'icons_new'
         if b == 'AS':
             return 'linesman'
-        if b == 'AT':  # goalies from parts: bodies, masks and their paint masks (recoloured by team)
+        if b in ('AT', 'AX'):  # goalies from parts: bodies, masks and their paint masks (recoloured by team); AX: two more builds
             return 'goalie_parts'
+        if b == 'AV':  # the league news icons
+            return 'icons_new'
+        if b == 'AW':  # the club's crests, on the home pages so they take the club colours
+            return 'home'
+        if b == 'AY':  # the expansion buildings' rules with the other rule art; their icons with the icons
+            return 'icons_new' if cat == 'icon' else 'rules'
         if b == 'AU':  # crests with the icons; each club's mascot with its pages (its colours); boards and banners
             return {'crest': 'icons_new', 'mascot': 'rival_' + sh[3:-7], 'scoreboard': 'arena_au', 'arena_banner': 'arena_au'}.get(cat)
         if b == 'AI':
@@ -114,8 +120,14 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
             return 1, 1
         if b == 'AS':  # the linesman's other calls: Batch AG's scale
             return 0.6 * 0.825 * v1_h[ROLE_V1['c']] / 152, 0.6
-        if b == 'AT':
+        if b in ('AT', 'AX'):
             return (1, 1) if '/portrait/' in fid else (backup_k, GOALIE_S)
+        if b in ('AV', 'AY'):
+            return 1, 1
+        if b == 'AW':  # drawn as big as the Snow Fox at centre ice
+            return 0.6, 0.54
+        if b == 'AZ':  # heads at AO's scale, the portrait faces at the portraits'
+            return (1, 1) if '/portrait/' in fid else (0.6 * 0.722 * v1_h[ROLE_V1['c']] / 152, 0.6)
         if b == 'AU':  # sized like the rivals' own crests, mascots, scoreboards and banners
             return {'crest': (0.74, 0.4), 'mascot': (0.5, 0.25), 'scoreboard': (0.2, 0.2), 'arena_banner': (0.37, 0.37)}[cat]
         return None
@@ -380,9 +392,9 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
 
     # ---- AT: goalies from parts: a body drawn without a mask, and painted masks that sit on it.
     # The body's sets join the others as 'parts'; goalie_parts holds the anchors and masks.
-    if 'AT' in packs:
-        gp = packs['AT']['goalie_parts']
-        body = gp['bodies']['body_std']
+    def goalie_build(body, key):
+        """A goalie body from parts as an art key's sets (side, front, back, skating, puck
+        handling), and the anchors its masks sit on."""
         anchors = {}
         for sec in body.values():
             for poses in sec.values():
@@ -391,23 +403,55 @@ def merge_part2(atlas, out, roots, v1_h, v1_goalie_h):
                     an = v['anchor']
                     anchors[v['frame']] = {'x': round(an['x'] * kx, 2), 'y': round(an['y'] * ky, 2), 'view': an['view'], 'rot': an.get('rot', 0), **({'front': v['front']} if v.get('front') else {})}
         frames_of = lambda sec, d: {p: v['frame'] for p, v in body[sec][d].items()}
-        atlas.setdefault('goalies_side', {})['parts'] = frames_of('side', 'east')
-        atlas.setdefault('goalies_side_west', {})['parts'] = frames_of('side', 'west')
-        atlas.setdefault('goalies_front', {})['parts'] = frames_of('front', 'south')
-        atlas.setdefault('goalies_back', {})['parts'] = frames_of('back', 'north')
-        atlas.setdefault('goalies_puck_handling', {})['parts'] = frames_of('puck_handling', 'east')
-        atlas.setdefault('goalies_puck_handling_west', {})['parts'] = frames_of('puck_handling', 'west')
+        atlas.setdefault('goalies_side', {})[key] = frames_of('side', 'east')
+        atlas.setdefault('goalies_side_west', {})[key] = frames_of('side', 'west')
+        atlas.setdefault('goalies_front', {})[key] = frames_of('front', 'south')
+        atlas.setdefault('goalies_back', {})[key] = frames_of('back', 'north')
+        atlas.setdefault('goalies_puck_handling', {})[key] = frames_of('puck_handling', 'east')
+        atlas.setdefault('goalies_puck_handling_west', {})[key] = frames_of('puck_handling', 'west')
         sk, ns = body['skating'], body['skating']['north_south']
-        atlas.setdefault('goalies_skating', {})['parts'] = {
+        atlas.setdefault('goalies_skating', {})[key] = {
             'east': {'frames': [sk['east'][f'skate_{c}']['frame'] for c in 'abcd'], 'flip_x': False},
             'west': {'frames': [sk['west'][f'skate_{c}']['frame'] for c in 'abcd'], 'flip_x': False},
             'north': {'frames': [ns['north_skate_a']['frame'], ns['north_skate_b']['frame']], 'flip_x': False},
             'south': {'frames': [ns['south_skate_a']['frame'], ns['south_skate_b']['frame']], 'flip_x': False},
         }
-        pb = gp['portraits']['bodies']['body_std']
+        return anchors
+
+    def shoulders(pb):
         kx, ky = factors[pb['frame']]
+        return {'body': pb['frame'], 'anchor': {'x': round(pb['anchor']['x'] * kx, 2), 'y': round(pb['anchor']['y'] * ky, 2)}}
+
+    # ---- AT: goalies from parts: a body drawn without a mask, and painted masks that sit on it.
+    # The body's sets join the others as 'parts'; goalie_parts holds the anchors and masks.
+    if 'AT' in packs:
+        gp = packs['AT']['goalie_parts']
+        anchors = goalie_build(gp['bodies']['body_std'], 'parts')
+        std = shoulders(gp['portraits']['bodies']['body_std'])
         atlas['goalie_parts'] = {'anchors': anchors, 'masks': gp['masks'], 'paint': gp['paint_masks'],
-                                 'portraits': {'body': pb['frame'], 'anchor': {'x': round(pb['anchor']['x'] * kx, 2), 'y': round(pb['anchor']['y'] * ky, 2)}, 'faces': gp['portraits']['faces']}}
+                                 'portraits': {**std, 'bodies': {'std': std}, 'faces': gp['portraits']['faces']}}
+
+    # ---- AX: big and small goalie builds, as 'parts_big' and 'parts_small' (the AT masks fit)
+    if 'AX' in packs and 'goalie_parts' in atlas:
+        gp, GP = packs['AX']['goalie_parts'], atlas['goalie_parts']
+        for name, body in gp['bodies'].items():
+            build = name.removeprefix('body_')
+            GP['anchors'].update(goalie_build(body, 'parts_' + build))
+            GP['portraits']['bodies'][build] = shoulders(gp['portraits']['bodies'][name])
+        GP['builds'] = ['std', *[n.removeprefix('body_') for n in gp['bodies']]]
+
+    # ---- AV: the league news icons; AW: crests for the player's club
+    if 'AV' in packs:
+        atlas['news_icons'] = {k.removeprefix('news_'): v for k, v in packs['AV']['icons'].items()}
+        atlas.setdefault('achievement_icons', {}).update(packs['AV'].get('achievement_icons', {}))
+    if 'AW' in packs:
+        atlas['club_crests'] = dict(packs['AW']['club_crests'])
+
+    # ---- AY: the Observatory's moonbeam and glare, the Longhouse's planks and splinters
+    if 'AY' in packs:
+        atlas['expansion_rules'] = packs['AY']['arena_rules']
+        icons = packs['AY']['icons']
+        atlas.setdefault('rule_icons', {}).update(moonbeams=icons['rule_moonbeams'], loose_planks=icons['rule_loose_planks'])
 
     # ---- AU: the expansion clubs' crests, buildings, mascots, scoreboards, banners and captains
     if 'AU' in packs:

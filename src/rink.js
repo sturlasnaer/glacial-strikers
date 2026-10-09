@@ -106,15 +106,15 @@ export function collideNets(p, rad) {
 }
 
 // Twists: arena rules. Rivals' buildings have their own (meltwater, aurora lanes, pond
-// cracks, rumble strips, shadow zones); the old stage twists (speed lanes, cracked ice)
-// remain for the Frostline rink.
+// cracks, rumble strips, shadow zones, and the expansion clubs' moonbeams and loose planks);
+// the old stage twists (speed lanes, cracked ice) remain for the Frostline rink.
 // Dynamic twists are updated by Match.updateTwists.
 export const AURORA_ROWS = [-215, -120, 125, 245];
 const lane = (y, dir) => ({ x0: -440, x1: 440, y, h: 34, dir });
 
 export function makeTwists(kind, rng = Math.random) {
   const pick = (n) => Math.floor(rng() * n);
-  const base = { kind, lanes: [], cracks: [], pools: [], strips: [], shadows: [], t: 0 };
+  const base = { kind, lanes: [], cracks: [], pools: [], strips: [], shadows: [], planks: [], beam: null, t: 0 };
   if (kind === 'speed_lanes') return { ...base, lanes: [lane(-205, 1), lane(250, -1)] };
   if (kind === 'cracked_ice') {
     return { ...base, cracks: [{ x: -340, y: -70, r: 70 }, { x: 340, y: 90, r: 70 }, { x: 0, y: 215, r: 60 }, { x: 0, y: -190, r: 60 }] };
@@ -146,6 +146,19 @@ export function makeTwists(kind, rng = Math.random) {
       ...base,
       shadows: anchors.map(([ax, ay], i) => ({ ax, ay, x: ax, y: ay, rx: 118, ry: 72, orbit: 120 + pick(70), w: (0.16 + rng() * 0.08) * (i ? 1 : -1), ph: rng() * 6.28 })),
     };
+  }
+  if (kind === 'moonbeams') {
+    // a pool of moonlight from the telescope, sweeping slowly from end to end and wandering
+    // up and down the ice as it goes (the Observatory)
+    return { ...base, beam: { x: 0, y: 0, rx: 190, ry: 74, reach: 500, period: 22 + pick(6), ph: rng() * 6.28, drift: 120, dperiod: 13 + pick(5), dph: rng() * 6.28 } };
+  }
+  if (kind === 'loose_planks') {
+    // stretches of the wooden boards that give (the Longhouse): one along the far boards and
+    // one along the near boards in each half, and one on each end board behind the nets.
+    // a0..a1 run along the board.
+    const R = RINK.r, side = (s, dir) => { const c = dir * (140 + rng() * 270); return { side: s, a0: c - 85, a1: c + 85, rattle: 0 }; };
+    const end = (s) => { const c = RINK.minY + R + 60 + rng() * (RINK.maxY - RINK.minY - 2 * R - 120); return { side: s, a0: c - 60, a1: c + 60, rattle: 0 }; };
+    return { ...base, planks: [side('far', -1), side('far', 1), side('near', -1), side('near', 1), end('left'), end('right')] };
   }
   if (kind === 'pond_cracks') {
     // two hairline cracks to start; hits, hard shots and quakes add more

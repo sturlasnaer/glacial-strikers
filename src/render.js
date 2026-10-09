@@ -556,6 +556,78 @@ export class Renderer {
     for (const c of tw.cracks) if (art) this.drawCrackArt(ctx, c, art); else this.drawCrack(ctx, c, tw);
     for (const st of tw.strips) this.drawStrip(ctx, st, match, art);
     for (const z of tw.shadows) this.drawShadowZone(ctx, z, t, art);
+    if (tw.beam) this.drawMoonbeam(ctx, tw.beam, t);
+    for (const pl of tw.planks) this.drawPlank(ctx, pl, t);
+  }
+
+  // The expansion buildings' rule art (Batch AY), once the rule pages are in.
+  expansionArt(kind) {
+    const R = Assets.atlas.expansion_rules && Assets.atlas.expansion_rules[kind];
+    const probe = R && Object.values(R)[0][0], f = probe && Assets.frame(probe);
+    return f && Assets.pages[f[0]] ? R : null;
+  }
+
+  // Moonbeams: the shaft of light from the telescope and its pool on the ice (the pool is
+  // the bottom left of the art, the shaft rising to the right), shimmering. In code, a soft
+  // pool, until the art is in.
+  drawMoonbeam(ctx, b, t) {
+    const s = toScreen(b.x, b.y), art = this.expansionArt('moonbeams');
+    if (art) {
+      const frames = art.moonbeams, id = frames[Math.floor(t * 5) % frames.length];
+      const k = 1.06 * persp(b.y), sq = 1.35; // (the pool in the art is about 360 px wide)
+      Assets.draw(ctx, id, s.x + 36 * k, s.y - 77 * k * sq, k, { squash: sq, alpha: 0.9 });
+      return;
+    }
+    const rx = b.rx * persp(b.y), shimmer = 0.85 + Math.sin(t * 1.7) * 0.15;
+    ctx.save();
+    ctx.translate(s.x, s.y); ctx.scale(1, b.ry / rx);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+    g.addColorStop(0, `rgba(170,205,255,${0.32 * shimmer})`); g.addColorStop(0.7, `rgba(150,195,255,${0.18 * shimmer})`); g.addColorStop(1, 'rgba(150,195,255,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(0, 0, rx, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  // Loose planks: wooden stretches of the boards, rattling when the puck hits them. The side
+  // art lies along the far and near boards; the end art, a curved stretch, stands along the
+  // end boards turned toward the ice. In code until the art is in.
+  drawPlank(ctx, pl, t) {
+    const art = this.expansionArt('loose_planks'), rattling = pl.rattle > 0;
+    const side = pl.side === 'far' || pl.side === 'near';
+    if (art) {
+      const frames = side ? art.planks_side : art.planks_end;
+      const id = rattling ? frames[1 + (Math.floor(t * 18) % 2)] : frames[0];
+      if (side) {
+        const by = pl.side === 'far' ? RINK.minY : RINK.maxY, mid = toScreen((pl.a0 + pl.a1) / 2, by);
+        const k = ((pl.a1 - pl.a0) * persp(by)) / 227, sq = 0.46; // (the board in the art is 227 px long, its foot 51 px under the pivot)
+        const foot = pl.side === 'far' ? mid.y + 1 : mid.y + 20;
+        Assets.draw(ctx, id, mid.x - 14.5 * k, foot - 51 * k * sq, k, { squash: sq });
+      } else {
+        const dir = pl.side === 'left' ? -1 : 1, mid = toScreen(RINK.maxX * dir, (pl.a0 + pl.a1) / 2);
+        const k = (pl.a1 - pl.a0) / 248, sq = 0.6;
+        Assets.draw(ctx, id, mid.x + dir * 8, mid.y, k, { squash: sq, rot: dir * -Math.PI / 2 });
+      }
+      return;
+    }
+    const jig = rattling ? Math.round(Math.sin(t * 70) * 2 * Math.min(1, pl.rattle * 3)) : 0;
+    ctx.save();
+    if (side) {
+      const by = pl.side === 'far' ? RINK.minY : RINK.maxY, h = 16;
+      const a = toScreen(pl.a0, by), b = toScreen(pl.a1, by), y = (pl.side === 'far' ? a.y - h : a.y) + jig;
+      ctx.fillStyle = '#8a5a2b'; ctx.fillRect(a.x, y, b.x - a.x, h);
+      ctx.fillStyle = '#b07a3e'; ctx.fillRect(a.x, y, b.x - a.x, 3);
+      ctx.strokeStyle = '#4a2c12'; ctx.lineWidth = 1.5;
+      ctx.strokeRect(a.x + 0.5, y + 0.5, b.x - a.x - 1, h - 1);
+      for (let x = a.x + 14; x < b.x - 4; x += 14) { ctx.beginPath(); ctx.moveTo(x + 0.5, y + 1); ctx.lineTo(x + 0.5, y + h - 1); ctx.stroke(); }
+    } else {
+      const dir = pl.side === 'left' ? -1 : 1, x = RINK.maxX * dir;
+      const a = toScreen(x, pl.a0), b = toScreen(x, pl.a1), w = 9, x0 = (dir < 0 ? a.x - 2 : a.x - w + 2) + jig;
+      ctx.fillStyle = '#8a5a2b'; ctx.fillRect(x0, a.y, w, b.y - a.y);
+      ctx.strokeStyle = '#4a2c12'; ctx.lineWidth = 1.5;
+      ctx.strokeRect(x0 + 0.5, a.y + 0.5, w - 1, b.y - a.y - 1);
+      for (let y = a.y + 14; y < b.y - 4; y += 14) { ctx.beginPath(); ctx.moveTo(x0 + 1, y + 0.5); ctx.lineTo(x0 + w - 1, y + 0.5); ctx.stroke(); }
+    }
+    ctx.restore();
   }
 
   // The rule sprites (Batches I, S and T), once their pages are in (drawn in code until then).

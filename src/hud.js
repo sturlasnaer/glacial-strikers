@@ -4,6 +4,7 @@ import { Assets } from './assets.js';
 import { POWER_INFO, TEAMS, ART_NAME, RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, teamInfo } from './data.js';
 import { portrait, crest, keyGlyphs, portraitCanvas } from './ui.js';
 import { t } from './i18n.js';
+import { isPartsArt } from './modular.js';
 
 // Everything the HUD shows mid-match is drawn onto canvases: turning a picture into a PNG
 // (toDataURL) makes the browser wait for the GPU, a visible stall on phones.
@@ -135,10 +136,10 @@ export class HUD {
     if (k.team === 0 && !k.isGoalie && RECRUITS[k.who]) return k.sprite; // a signing's own banner
     if (k.team === 0 && ROOKIES[k.who]) return null; // a rookie: no banner art, the portrait band
     if (k.team === 0 && LEGENDS[k.who]) return LEGEND_ART.has(k.sprite) ? k.sprite : null;
-    if (k.team === 0 && k.isGoalie && k.art && k.art !== 'parts' && k.art !== 'newcomer') return `${k.art}_g`; // a signed rival goalie's own banner
+    if (k.team === 0 && k.isGoalie && k.art && !isPartsArt(k.art) && k.art !== 'newcomer') return `${k.art}_g`; // a signed rival goalie's own banner
     if (k.team === 0 && RECRUITS[k.who] && TEAMS[RECRUITS[k.who].team].mark && RECRUITS[k.who].kit === 'frost') return `${TEAMS[RECRUITS[k.who].team].mark}_c`; // an expansion club's captain, signed
     if (k.team === 0) return ART_NAME[k.isGoalie ? 'goalie' : k.def.id];
-    if (k.isGoalie) return k.art && k.art !== 'parts' && k.art !== 'newcomer' ? `${k.art}_g` : null;
+    if (k.isGoalie) return k.art && !isPartsArt(k.art) && k.art !== 'newcomer' ? `${k.art}_g` : null;
     const club = TEAMS[this.teamId];
     if (club && club.mark && k.who === 'frost') return `${club.mark}_c`; // an expansion club's captain (Batch AU)
     if (k.parts) return null; // made from parts: the element backdrop

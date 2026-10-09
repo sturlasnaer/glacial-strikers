@@ -478,6 +478,10 @@ export class Goalie {
     let delay = (Math.max(0.08, 0.24 - this.stats.rfx * 0.012) + this.match.rng() * 0.06) * (this.style.react || 1);
     const p = this.match.puck;
     if (this.match.twists && this.match.inShadow(p.x, p.y)) delay += 0.07; // a shot out of a raven's shadow is picked up late
+    else if (this.match.twists && this.match.twists.beam && this.match.inBeam(p.x, p.y)) { // ...or out of the moonbeam: it glares
+      delay += 0.07;
+      this.match.emit('glare', { x: p.x, y: p.y, g: this });
+    }
     this.react = { t: delay, shot };
   }
 

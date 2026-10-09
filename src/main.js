@@ -47,7 +47,7 @@ const STEP = 1 / 60;
 // Vibrate only once the player has interacted (browsers block it before that).
 const buzz = (p) => { if (navigator.userActivation?.hasBeenActive !== false) navigator.vibrate?.(p); };
 const RIVALS = RIVAL_IDS;
-const RULE_ART = ['meltwater', 'aurora_lanes', 'pond_cracks', 'cracked_ice', 'both', 'speed_lanes', 'rumble_strips', 'shadow_zones']; // rules drawn with the rule sprites
+const RULE_ART = ['meltwater', 'aurora_lanes', 'pond_cracks', 'cracked_ice', 'both', 'speed_lanes', 'rumble_strips', 'shadow_zones', 'moonbeams', 'loose_planks']; // rules drawn with the rule sprites
 
 const INTRO = [
   ['us', 'frost', 'Welcome to the Frostline Regional Cup, Foxes. Five wins and the cup comes home.'],
@@ -816,6 +816,8 @@ class App {
     m.on('ice_crack', (e) => { audio.sfx('crack', { vol: 0.5 + e.k * 0.3 }); if (!e.grow) this.rumble(0.1, 0.3, 80); });
     m.on('aurora_shift', () => audio.sfx('shimmer', { vol: 0.8 }));
     m.on('puck_hop', (e) => { audio.sfx('boards', at(e.x, e.y, 0.45)); audio.sfx('stick', at(e.x, e.y, 0.5)); });
+    m.on('plank', (e) => { audio.sfx('boards', at(e.x, e.y, Math.min(1, 0.4 + e.power / 900))); audio.sfx('stick', at(e.x, e.y, 0.6)); });
+    m.on('glare', (e) => audio.sfx('shimmer', at(e.x, e.y, 0.35)));
     m.on('stride', (e) => { if (e.s.controlled) audio.sfx('stride'); });
     m.on('pickup_spawn', () => {
       audio.sfx('pickup', { vol: 0.7 });

@@ -46,14 +46,14 @@ const s = newSave();
 s.season = 2; s.league = newLeague(2);
 const cfg = matchConfig(s, 'moose', TOURNAMENT.stages.find((x) => x.team === 'moose'));
 check('in a match: bodies and heads in their colours', cfg.teams[1].skaters.every((k) => k.sprite.startsWith('body_') && k.parts), cfg.teams[1].skaters.map((k) => k.sprite));
-check('their goalie is made from parts, with a mask of their own', cfg.teams[1].goalie.art === 'parts' && cfg.teams[1].goalie.mask && cfg.teams[1].goalie.mask.mask === TEAMS.moose.goalieLook.mask && rivalGoalie(s, 'owls').name === TEAMS.owls.names.goalie);
+check('their goalie is made from parts, with a mask of their own', cfg.teams[1].goalie.art === 'parts_big' && cfg.teams[1].goalie.mask && cfg.teams[1].goalie.mask.mask === TEAMS.moose.goalieLook.mask && rivalGoalie(s, 'owls').name === TEAMS.owls.names.goalie);
 check('a strength between the founding clubs', strength('lynx', s) < strength('owls', s) && strength('owls', s) < strength('moose', s) && strength('moose', s) < strength('royals', s));
 s.rivals = { owls: { played: 1, wins: 1, losses: 0 } };
 addRecruit(s, 'owls_c');
 const m = member('owls_c');
 check('sign one: from parts, in our colours', m.sprite.startsWith('body_') && m.parts && m.look === 'homekit' && m.name === TEAMS.owls.names.frost, m);
 check('their parts load in our kit', homeKitGroups(s).includes('parts') && !homeKitGroups(s).some((g) => g === 'rival_null'));
-check('their goalie can be signed too', GOALIE_RECRUITS.owls_g && GOALIE_RECRUITS.owls_g.art === 'parts' && GOALIE_RECRUITS.owls_g.mask && RECRUITS.moose_d.parts);
+check('their goalie can be signed too', GOALIE_RECRUITS.owls_g && GOALIE_RECRUITS.owls_g.art === 'parts_small' && GOALIE_RECRUITS.owls_g.mask && RECRUITS.moose_d.parts);
 check('the draft draws from the league\'s clubs', makeDraft(s, 2, Math.random).rivals.every((r) => s.league.teams.includes(r)));
 
 console.log(`league: ${pass} passed, ${fail} failed`);

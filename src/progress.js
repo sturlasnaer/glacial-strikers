@@ -5,7 +5,7 @@ import {
   CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE, CAST_PAIRS, makeDef, perkSlot,
   RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, setFreeGoalies, goalieInfo, areTwins, setRookies, setStyles, ELEMENTS, ARCHETYPES, member, pairKey, recruitKey, slotDef, GOALIE_STYLES, RIVAL_IDS, slotSprite, slotLook } from './data.js';
 import { newLeague, migrateLeague } from './league.js';
-import { lookFor, maskFor } from './modular.js';
+import { lookFor, maskFor, goalieArt, isPartsArt } from './modular.js';
 import { seasonStats } from './awards.js';
 import { rivalSub, setFills, agedStats, grown, goalieGrowth, leagueGrowth } from './slots.js';
 import { t } from './i18n.js';
@@ -227,7 +227,7 @@ export const homeKitGroups = (save) => {
   const ids = rosterIds(save), legends = ids.filter((id) => LEGENDS[id]);
   return [...new Set([
     ...ids.filter((id) => RECRUITS[id]).map((id) => (TEAMS[RECRUITS[id].team].art ? 'rival_' + TEAMS[RECRUITS[id].team].art : 'parts')), // (an expansion club's player: from parts)
-    ...Object.keys(save.goalies || {}).filter((k) => GOALIE_RECRUITS[k]).map((k) => ({ newcomer: 'newcomers', parts: 'goalie_parts' }[GOALIE_RECRUITS[k].art] || 'rival_' + GOALIE_RECRUITS[k].art)), // signed goalies
+    ...Object.keys(save.goalies || {}).filter((k) => GOALIE_RECRUITS[k]).map((k) => (isPartsArt(GOALIE_RECRUITS[k].art) ? 'goalie_parts' : { newcomer: 'newcomers' }[GOALIE_RECRUITS[k].art] || 'rival_' + GOALIE_RECRUITS[k].art)), // signed goalies
     ...(Object.keys(save.goalies || {}).some((k) => FREE_GOALIES[k] && FREE_GOALIES[k].look) ? ['goalie_parts'] : []), // (free agents with a mask of their own)
     ...(ids.some((id) => ROOKIES[id] && !member(id).parts) || legends.some((id) => !LEGEND_ART.has(LEGENDS[id].art)) || Object.keys(save.goalies || {}).some((k) => FREE_GOALIES[k]) ? ['newcomers'] : []), // (a free-agent goalie wears the newcomer goalie)
     ...(ids.some((id) => member(id).parts) ? ['parts'] : []), // players from parts (Batch AJ: the 'parts' page group)
@@ -268,7 +268,7 @@ export function rivalGoalie(save, teamId) {
   const t = TEAMS[teamId];
   const gg = goalieGrowth(save); // (the league gets better)
   if (isSigned(save, teamId + '_g')) return { stats: { rfx: Math.max(3, t.goalie.rfx - 1) + gg, pos: Math.max(3, t.goalie.pos - 1) + gg }, name: t.subs.goalie || t.names.goalie, art: 'newcomer', style: 'hybrid', who: 'sub_goalie' }; // (the plain away goalie until the newcomer goalie, Batch AN)
-  return { stats: { rfx: t.goalie.rfx + gg, pos: t.goalie.pos + gg }, name: t.names.goalie, art: t.art || (t.goalieLook ? 'parts' : 'newcomer'), mask: t.goalieLook || null, style: t.gstyle || 'hybrid' }; // (an expansion club's goalie: the newcomer goalie)
+  return { stats: { rfx: t.goalie.rfx + gg, pos: t.goalie.pos + gg }, name: t.names.goalie, art: t.art || (t.goalieLook ? goalieArt(t.goalieLook) : 'newcomer'), mask: t.goalieLook || null, style: t.gstyle || 'hybrid' }; // (an expansion club's goalie: the newcomer goalie)
 }
 
 export function goalieStatus(save, key) {

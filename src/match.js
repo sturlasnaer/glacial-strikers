@@ -828,6 +828,7 @@ export class Match {
         p.vx = tx * vt * 0.92 - n.nx * vn * 0.7;
         p.vy = ty * vt * 0.92 - n.ny * vn * 0.7;
         if (vn > 120) this.emit('puck_boards', { x: p.x, y: p.y, power: vn });
+        if (vn > 90 && this.twists.planks.length) { const pl = this.plankAt(p.x, p.y, n); if (pl) this.plankBounce(p, n, vn, pl); }
         if (p.shot) { p.shot.wide = true; }
       }
     }
@@ -1223,6 +1224,32 @@ export class Match {
     for (const st of this.twists.strips) if (x > st.x0 && x < st.x1 && Math.abs(y - st.y) < st.h / 2) return st;
     return null;
   }
+  // Moonbeams: inside the pool of light.
+  inBeam(x, y) {
+    const b = this.twists.beam;
+    if (!b) return false;
+    const dx = (x - b.x) / b.rx, dy = (y - b.y) / b.ry;
+    return dx * dx + dy * dy < 1;
+  }
+  // Loose planks: the plank of the board the puck just hit (n: that board's outward normal).
+  plankAt(x, y, n) {
+    for (const pl of this.twists.planks) {
+      const on = pl.side === 'far' ? n.ny < -0.97 : pl.side === 'near' ? n.ny > 0.97 : pl.side === 'left' ? n.nx < -0.97 : n.nx > 0.97;
+      const along = pl.side === 'far' || pl.side === 'near' ? x : y;
+      if (on && along > pl.a0 && along < pl.a1) return pl;
+    }
+    return null;
+  }
+  // A loose plank gives: the puck comes off at an odd angle, sometimes dead, sometimes lively.
+  plankBounce(p, n, power, pl) {
+    const sp = Math.hypot(p.vx, p.vy) * (0.7 + this.rng() * 0.45);
+    const base = Math.atan2(p.vy, p.vx), dev = (0.35 + this.rng() * 0.45) * (this.rng() < 0.5 ? -1 : 1);
+    const off = (a) => Math.cos(a) * n.nx + Math.sin(a) * n.ny < -0.25; // still coming off the boards
+    const a = off(base + dev) ? base + dev : off(base - dev) ? base - dev : base;
+    p.vx = Math.cos(a) * sp; p.vy = Math.sin(a) * sp;
+    pl.rattle = 0.5;
+    this.emit('plank', { x: p.x, y: p.y, power, pl });
+  }
   inShadow(x, y) {
     for (const z of this.twists.shadows) {
       const dx = (x - z.x) / z.rx, dy = (y - z.y) / z.ry;
@@ -1236,8 +1263,9 @@ export class Match {
     return 1;
   }
 
-  // Moving parts of the arena rules: drifting meltwater, shifting aurora lanes,
-  // spreading pond cracks, circling raven shadows, and pucks hopping on rumble strips.
+  // Moving parts of the arena rules: drifting meltwater, shifting aurora lanes, spreading
+  // pond cracks, circling raven shadows, pucks hopping on rumble strips, the sweeping
+  // moonbeam and rattling planks.
   updateTwists(dt) {
     const tw = this.twists;
     tw.t += dt;
@@ -1273,6 +1301,12 @@ export class Match {
         z.x = z.ax + Math.cos(a) * z.orbit;
         z.y = z.ay + Math.sin(a) * z.orbit * 0.6;
       }
+    } else if (tw.kind === 'moonbeams') {
+      const b = tw.beam;
+      b.x = Math.sin(b.ph + (tw.t * Math.PI * 2) / b.period) * b.reach;
+      b.y = Math.sin(b.dph + (tw.t * Math.PI * 2) / b.dperiod) * b.drift;
+    } else if (tw.kind === 'loose_planks') {
+      for (const pl of tw.planks) pl.rattle = Math.max(0, pl.rattle - dt);
     } else if (tw.kind === 'rumble_strips' && this.state === 'play') {
       // carry the puck fast over the ridges and now and then it hops off the stick
       const s = this.puck.owner;

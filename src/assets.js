@@ -419,10 +419,11 @@ export const Assets = {
     const P = this.atlas.goalie_parts && this.atlas.goalie_parts.portraits;
     const faces = P && P.faces && P.faces[look.mask];
     const faceId = faces && (faces[expr] || faces.neutral);
-    const bf = P && this.atlas.frames[P.body], ff = faceId && this.atlas.frames[faceId];
+    const sh = P && ((P.bodies && P.bodies[look.body]) || P); // the shoulders of their build (Batch AX)
+    const bf = sh && this.atlas.frames[sh.body], ff = faceId && this.atlas.frames[faceId];
     const page = bf && this.pagesFor(teamId)[bf[0]];
     if (!bf || !ff || !page) return '';
-    const key = `gparts|${look.mask}|${look.paint}|${faceId}|${size}|${teamId}${this.canvasMode ? '|c' : ''}`;
+    const key = `gparts|${look.mask}|${look.paint}|${look.body || 'std'}|${faceId}|${size}|${teamId}${this.canvasMode ? '|c' : ''}`;
     if (this.iconCache.has(key)) return this.iconCache.get(key);
     const face = this.paintCanvas(faceId, look);
     if (!face) return '';
@@ -430,7 +431,7 @@ export const Assets = {
     const ctx = c.getContext('2d');
     ctx.imageSmoothingQuality = 'high';
     const [, fx, fy, fw, fh, px] = bf;
-    const a = P.anchor || { x: px, y: 0 };
+    const a = sh.anchor || { x: px, y: 0 };
     const top = Math.min(0, a.y - ff[6]), h = fh - top, k = size / Math.max(fw, h);
     const ox = (size - fw * k) / 2, oy = (size - h * k) / 2 - top * k;
     ctx.drawImage(page, fx, fy, fw, fh, ox, oy, fw * k, fh * k);

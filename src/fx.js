@@ -2,6 +2,7 @@
 // screen shake, hit-stop and slow motion. Listens to match events.
 
 import { toScreen, persp, GOAL_X, BACKDROP } from './rink.js';
+import { Assets } from './assets.js';
 import { POWER_INFO, COMBOS, GEAR_LOOK } from './data.js';
 import { makeRng, clamp } from './util.js';
 import { t } from './i18n.js';
@@ -148,6 +149,16 @@ export class FX {
     });
     on('splash', ({ x, y }) => this.anim('arena_rules/splash/phase_', x, y + 2, 0.2, { fps: 14 }));
     on('puck_hop', ({ x, y }) => this.anim('arena_rules/puck_hop/phase_', x, y + 2, 0.085, { fps: 12, frames: [1, 2, 3] }));
+    // the expansion buildings' rules (Batch AY's art once the rule pages are in, drawn in code until then)
+    const ruleArt = (id) => { const f = Assets.frame(id); return f && Assets.pages[f[0]]; };
+    on('plank', ({ x, y, power }) => { // a puff of splinters
+      if (ruleArt('arena_rules/loose_planks/splinters_a')) this.anim('arena_rules/loose_planks/splinters_', x, y + 4, 0.42, { fps: 14, frames: ['a', 'b', 'c', 'd'], z: 10 });
+      else this.burst(x, y, 10, 4 + Math.min(6, Math.round(power / 120)), ['#a8743a', '#7a4f25', '#d9a866'], 120, 0.45);
+    });
+    on('glare', ({ x, y }) => { // moonlight flashing off the puck
+      if (ruleArt('arena_rules/moonbeams/glare_a')) this.anim('arena_rules/moonbeams/glare_', x, y, 0.42, { fps: 12, frames: ['a', 'b', 'c', 'b', 'c'], z: 8 });
+      else { this.burst(x, y, 6, 6, ['#ffffff', '#e8f4ff', '#fff6c8'], 70, 0.3); this.ring(x, y, 10, 'rgba(235,245,255,0.9)', 0.25); }
+    });
     on('goalie_dive', ({ g }) => {
       this.burst(g.x, g.y, 2, 6, ELEMENT_COLORS.snow, 160, 0.4);
       this.anim(CHIPS, g.x, g.y + 2, 0.12, { fps: 18, frames: PHASES, flip: g.diveDir < 0 });
