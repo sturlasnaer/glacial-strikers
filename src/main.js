@@ -39,7 +39,7 @@ import { offerDraft } from './draft.js';
 import { recordCareer } from './career.js';
 import {
   loadSave, newSave, writeSave, setSaveOff, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards,
-  lineupIds, homeKitGroups, allStarVote, allStarConfig, setLeagueEdge,
+  lineupIds, homeKitGroups, allStarVote, allStarVoteStands, allStarConfig, setLeagueEdge,
 } from './progress.js';
 import { t, setLang, getLang, defaultLang } from './i18n.js';
 
@@ -370,7 +370,10 @@ class App {
   // pages load and get recoloured first.
   startAllStar(f) {
     const s = this.save, L = s.league;
-    const vote = L.allstarVote || (L.allstarVote = allStarVote(s, L)); // (kept: the same benches if you come back)
+    // (kept: the same benches if you come back, unless a trade or a retirement broke it up since)
+    if (L.allstarVote && !allStarVoteStands(s, L.allstarVote)) L.allstarVote = null;
+    const vote = L.allstarVote || (L.allstarVote = allStarVote(s, L));
+    if (vote && L.skills) L.skills.star = vote.star; // (Skills Night keeps its field and its results)
     if (!vote) { recordAllStar(L, { skipped: true }); writeSave(s); return this.goHub('tournament'); }
     this.allStarFixture = f;
     this.scene = 'dialogue';
@@ -1273,7 +1276,16 @@ class App {
   }
 
   // ----------------------------------------------------------------- loop
+  // One frame. Whatever goes wrong in it, the next one is still asked for: a throw in a
+  // listener would otherwise stop the game dead.
   loop(now) {
+    try { this.frame(now); } catch (e) {
+      const key = String(e && e.stack || e).slice(0, 200);
+      if (!(this.loopErrors ||= new Set()).has(key)) { this.loopErrors.add(key); console.error(e); }
+    } finally { requestAnimationFrame((t) => this.loop(t)); }
+  }
+
+  frame(now) {
     const rawDt = (now - this.last) / 1000;
     const realDt = Math.max(0, Math.min(0.05, rawDt || 0));
     this.last = now;
@@ -1374,7 +1386,6 @@ class App {
         }
       }
     }
-    requestAnimationFrame((t) => this.loop(t));
   }
 }
 

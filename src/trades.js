@@ -16,7 +16,7 @@ export const TEAM_LIKES = {
 export const tradeable = (save) => rosterIds(save).filter((id) => (RECRUITS[id] || ROOKIES[id]) && !LEGENDS[id]);
 
 export function playerValue(save, id) {
-  const r = save.roster[id], lv = r ? r.level - 1 : 0;
+  const r = save.roster[id], lv = r ? Math.max(0, r.level - (r.joined || 1)) : 0; // (joined: the level they came in at)
   if (RECRUITS[id]) return RECRUITS[id].price + lv * 20; // (what they cost in the first season, and a bit per level)
   if (ROOKIES[id]) return ROOKIES[id].agent ? ROOKIES[id].price + lv * 20 : 100 + ROOKIES[id].potential * 40 + lv * 20; // (a free agent: what they cost)
   return 0;

@@ -1,7 +1,7 @@
 // Instant replay: records the last few seconds of a match and plays a goal back in
 // slow motion by writing recorded positions into the live entities.
 
-const SK = ['x', 'y', 'vx', 'vy', 'face', 'state', 'stateT', 'animT', 'charging', 'chargeT', 'ultWindup', 'dashT', 'stun', 'celebrate', 'flash', 'slowT', 'slowMul', 'bedrockT', 'boostT', 'trailT', 'empowered', 'igniteT', 'fadeT', 'gustT', 'controlled', 'stopping', 'gliding', 'stridePhase', 'danglePhase', 'lean', 'protect'];
+const SK = ['x', 'y', 'vx', 'vy', 'face', 'state', 'stateT', 'animT', 'charging', 'chargeT', 'ultWindup', 'dashT', 'stun', 'celebrate', 'flash', 'slowT', 'slowMul', 'bedrockT', 'boostT', 'trailT', 'empowered', 'igniteT', 'fadeT', 'gustT', 'controlled', 'stopping', 'gliding', 'stridePhase', 'danglePhase', 'lean', 'turnRate', 'protect'];
 const GK = ['x', 'y', 'vx', 'vy', 'state', 'stateT', 'prevState', 'saveHigh', 'saveUp', 'diveDir', 'shuffle', 'slowT', 'flash', 'holdT', 'stopPose', 'disabled', 'leaving', 'leaveX', 'leaveY'];
 const LERP = new Set(['x', 'y', 'face']);
 const SECONDS = 4.2;

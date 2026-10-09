@@ -102,7 +102,7 @@ export function signAgent(save, i) {
   (save.rookies ||= {})[id] = { name: a.name, kit: a.kit, arch: a.arch, elem: a.elem, hand: a.hand, parts: a.parts || null, base: a.base, potential: 1, blurb: a.blurb, season: save.season, agent: true, price: a.price };
   setRookies(save.rookies);
   const m = newMember();
-  m.level = a.level;
+  m.level = m.joined = a.level;
   m.points = m.level - 1;
   const opts = makeDef(a.kit, a.arch, a.elem).perks;
   PERK_LEVELS.forEach((lv, k) => { if (m.level >= lv) m.perks.push(opts[k][a.perks[k]]); });

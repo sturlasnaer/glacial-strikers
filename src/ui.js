@@ -18,7 +18,7 @@ import {
 } from './progress.js';
 import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave, resetsIn, groupsOf, createGroup, joinGroup, leaveGroup, inviteLink, MAX_GROUPS, fetchCup, fetchGhost, CHALLENGE_BOARDS, createChallenge, fetchChallenge, challengeLink } from './online.js';
 import { nextGuide, doneGuide, guideOff } from './guide.js';
-import { draftOpen, draftPick, otherPicks, POTENTIAL_GRADE, DRAFT_LINES } from './draft.js';
+import { draftOpen, draftPick, skipDraft, otherPicks, POTENTIAL_GRADE, DRAFT_LINES } from './draft.js';
 import { careerOf, careerRows, careerGoalies } from './career.js';
 import { legendState, legendLeft, signLegend } from './legends.js';
 import { tradeable, tradeQuote, trade, TEAM_LIKES } from './trades.js';
@@ -469,7 +469,7 @@ export class UI {
       this.modal(`<h2>${t('Draft Day isn\'t done')}</h2><p>${t('Three rookies are still waiting for your pick. Once the new season starts, they sign elsewhere.')}</p>
         <div class="row" style="justify-content:flex-end"><button class="btn small ghost" id="ns-skip">${t('Skip the draft')}</button><button class="btn gold" id="ns-draft">${btnIcon('icons/draft')}${t('Draft Day')}</button></div>`, (m, close) => {
         this.click('#ns-draft', () => { close(); audio.sfx('confirm'); this.draftDay(); }, m);
-        this.click('#ns-skip', () => { close(); s.draft.picked = -1; audio.sfx('confirm'); this.app.newSeason(); }, m);
+        this.click('#ns-skip', () => { close(); skipDraft(s); audio.sfx('confirm'); this.app.newSeason(); }, m);
       });
     });
     this.click('#h-draft', () => { audio.sfx('confirm'); this.draftDay(); });

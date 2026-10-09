@@ -181,7 +181,7 @@ export class Skater {
     this.comboFrom = null;
     this.stride = 0;
     this.animT = 0;
-    this.stridePhase = 0; this.danglePhase = (slot || 0) * 0.37 + team * 0.5; this.lean = 0; this.faceWas = 0; // (see update)
+    this.stridePhase = 0; this.danglePhase = (slot || 0) * 0.37 + team * 0.5; this.lean = 0; this.turnRate = 0; this.faceWas = this.face; // (see update)
     this.protect = 0; // 0..1: the puck pulled in to the backhand, away from a stick reaching in (see Match.protectPuck)
     this.dekeT = 0; this.dekeCd = 0; this.sprintHeld = 0; // the deke: a quick tap of sprint with someone in your face (Match.deke)
     this.controlled = false;
@@ -330,6 +330,11 @@ export class Skater {
     // a lean into the turn, by how hard they're turning at speed (the drawing skews it)
     const turn = angDiff(this.faceWas, this.face) / Math.max(dt, 1e-3);
     this.faceWas = this.face;
+    // how hard the path itself is curving (the facing follows the stick and twitches), smoothed:
+    // the crossovers read it
+    const va = Math.atan2(this.vy, this.vx), vturn = spd > 30 ? angDiff(this.headingWas ?? va, va) / Math.max(dt, 1e-3) : 0;
+    this.headingWas = va;
+    this.turnRate += (vturn - this.turnRate) * Math.min(1, dt * 10);
     const lean = spd > 60 ? clamp(0.00006 * spd * turn * -Math.sin(Math.atan2(this.vy, this.vx)), -0.13, 0.13) : 0;
     this.lean += (lean - this.lean) * Math.min(1, dt * 9);
 

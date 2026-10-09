@@ -29,6 +29,23 @@ export const DRAFT_LINES = [
 ];
 
 const pick = (list, rnd) => list[Math.floor(rnd() * list.length)];
+// A name nobody in the league has: from the list, or once it's used up, one with a number
+// after it ('Brick II').
+export function freshName(list, taken, rnd) {
+  for (const suffix of ['', ' II', ' III', ' IV', ' V']) {
+    const free = list.filter((nm) => !taken.has(nm + suffix));
+    if (free.length) return pick(free, rnd) + suffix;
+  }
+  return pick(list, rnd);
+}
+// Every name in the league now: the clubs' players and reserves, the rookies and free agents
+// who've signed anywhere.
+export function leagueNames(save) {
+  const names = new Set(Object.values(ROOKIES).map((k) => k.name));
+  for (const tm of Object.values(TEAMS)) for (const n of [...Object.values(tm.names || {}), ...Object.values(tm.subs || {})]) names.add(n);
+  for (const f of Object.values(save.rivalFills || {})) names.add(f.name);
+  return names;
+}
 
 function potentialRoll(rnd) {
   const x = rnd();
@@ -49,8 +66,7 @@ function prospect(role, taken, rnd) {
     const k = pick(STAT_KEYS, rnd);
     if (k !== special && base[k] > 2 && (cut[k] || 0) < 2) { base[k]--; cut[k] = (cut[k] || 0) + 1; n--; }
   }
-  const names = NAMES[role].filter((nm) => !taken.has(nm));
-  const name = pick(names.length ? names : NAMES[role], rnd);
+  const name = freshName(NAMES[role], taken, rnd);
   taken.add(name);
   // how they play and their super: any archetype that fits the position, any element
   const arch = pick(Object.values(ARCHETYPES).filter((a) => a.roles.includes(role)).map((a) => a.id), rnd);
@@ -62,10 +78,18 @@ function prospect(role, taken, rnd) {
 
 // The season's three prospects, and the two rivals who pick after you.
 export function makeDraft(save, season, rnd = Math.random) {
-  const taken = new Set(Object.values(ROOKIES).map((k) => k.name));
+  const taken = leagueNames(save);
   const prospects = ['C', 'W', 'D'].map((role) => prospect(role, taken, rnd));
   const rivals = [...leagueRivals(save.league)].sort(() => rnd() - 0.5).slice(0, 2);
   return { season, prospects, rivals, picked: null };
+}
+
+// Skipping Draft Day: the three of them sign with rivals, holes you left first.
+export function skipDraft(save) {
+  const d = save.draft;
+  if (!d || d.picked !== null) return;
+  d.picked = -1;
+  rivalDraft(save, d);
 }
 
 // When a season is over and this season's draft hasn't been made yet, make it. True if it did.
@@ -90,7 +114,7 @@ export function draftPick(save, i) {
   save.rookies[id] = { name: p.name, kit: p.kit, arch: p.arch, elem: p.elem, hand: p.hand, parts: p.parts || null, base: p.base, potential: p.potential, blurb: p.blurb, season: d.season };
   setRookies(save.rookies);
   const m = newMember();
-  m.level = Math.max(1, joinLevel(save) - 2);
+  m.level = m.joined = Math.max(1, joinLevel(save) - 2);
   m.points = m.level - 1;
   const opts = makeDef(p.kit, p.arch, p.elem).perks;
   PERK_LEVELS.forEach((lv, k) => { if (m.level >= lv) m.perks.push(opts[k][p.perks[k]]); });
@@ -105,5 +129,7 @@ export function draftPick(save, i) {
 export const otherPicks = (d, save = null) => d.prospects.map((p, i) => i).filter((i) => i !== d.picked).map((i, n) => {
   const f = save && save.rivalFills && save.rivalFills[`${d.rivals[n]}:${d.prospects[i].kit}`];
   const gone = save && save.retired && save.retired[recruitKey(d.rivals[n], d.prospects[i].kit)];
-  return { name: d.prospects[i].name, team: TEAMS[d.rivals[n]], fills: !!(f && f.how === 'draft' && f.name === d.prospects[i].name && f.season === d.season), replaces: gone ? RECRUITS[recruitKey(d.rivals[n], d.prospects[i].kit)].name : null };
+  const fills = !!(f && f.how === 'draft' && f.name === d.prospects[i].name && f.season === d.season);
+  // (in for a star who retired at the end of this season, not one gone seasons ago)
+  return { name: d.prospects[i].name, team: TEAMS[d.rivals[n]], fills, replaces: fills && gone === d.season ? RECRUITS[recruitKey(d.rivals[n], d.prospects[i].kit)].name : null };
 });

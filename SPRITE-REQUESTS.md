@@ -1,16 +1,14 @@
 # Sprite requests
 
-What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd), the remaining packs (Batches B, H, I, C and N-Extras), the new batches (P, R, S, K, T and M2) the D, U, Q, W, O, E, J and F delivery, V and X, the Y, Z, AA, AB and AC delivery, the twins' first look (AI part 1), Part 2 and the new additions (AD, AE, AF, AG, AI part 2, AJ, AK, AL and AM), AN, AO, AP, and AQ to AU. AH was skipped: the AJ pilot works, so new faces come from parts.
+What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd), the remaining packs (Batches B, H, I, C and N-Extras), the new batches (P, R, S, K, T and M2) the D, U, Q, W, O, E, J and F delivery, V and X, the Y, Z, AA, AB and AC delivery, the twins' first look (AI part 1), Part 2 and the new additions (AD, AE, AF, AG, AI part 2, AJ, AK, AL and AM), AN, AO, AP, AQ to AU, AV to AZ, BA to BC, and BD and BE. AH was skipped: the AJ pilot works, so new faces come from parts.
 
 The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes** (the Snow Fox is their mascot; colours unchanged). Packs can be named `Puckbound-...` from now on; older `Glacial-Strikers-...` folder names still work.
 
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **BD**: stick-handling frames: the puck dangled from forehand to backhand, in eight directions, for the players you control most.
-2. **BE**: crossovers: skaters crossing their feet through turns.
-3. **BF**: six small icons: five new achievements and a league-news icon.
-4. **BG**: goal celebrations for players made from parts (drafted rookies, free agents, the expansion clubs).
+1. **BF**: six small icons: five new achievements and a league-news icon.
+2. **BG**: goal celebrations for players made from parts (drafted rookies, free agents, the expansion clubs).
 
 ## Format notes
 
@@ -77,21 +75,9 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - **Batch AK the other hand:** our cast and the newcomers drawn facing west, so every player keeps their stick hand whichever way they skate.
 - **Batch AL:** icons for the new supers and archetypes, the combo icons, and the Firestorm, Cyclone, Eclipse, Heat Check, Tailwind and Fade effects.
 - **Batch AM:** the element stones, style camp, respec and trade icons, and Ottar holding up a stone and Brekka with the whistle in the training camp.
+- **Batches BD and BE:** stick handling (forehand and backhand, eight directions) and crossovers (six directions, both ways) for Nix, Volta, Bram, the three parts bodies and the newcomers. In the game: a carrier with time and space works the puck from forehand to backhand on the drawn blade, and skaters cross over through hard turns at speed.
 
 ---
-
-## Batch BD: stick-handling frames
-
-The game now carries the puck on the blade and dangles it from forehand to backhand when a player has time and space (and pushes it out ahead at speed). The skating frames hold the stick still, so the puck moves under a stick that doesn't. Please draw a **two-frame stick-handling pair** for each of the eight directions: **forehand** (blade out on the stick side, puck cupped) and **backhand** (blade pulled across in front of the skates), with the skater gliding upright, for:
-- our cast: Nix (left shot), Volta (right shot), Bram (left shot), in home colours;
-- the three builds made from parts (`body_std`, `body_big`, `body_small`, without a head, with head anchors like AJ/AO);
-- the newcomers `newcomer_c`, `newcomer_w`, `newcomer_d` (coral and violet).
-
-Draw them **without the puck** (the game draws it). Same scale, pivots and stick-hand rules as each character's skating sets, with gear masks (Batch M format). Frame names `<key>/stickhandling/<kit>/<direction>/forehand` and `/backhand`. About 144 frames plus masks.
-
-## Batch BE: crossovers
-
-Skaters turning hard now lean into the turn. Please draw the **crossover**: the outside skate stepping over the inside one, two frames (step over, push out) for the six directions that aren't straight north or south, turning each way (drawn both ways like AK, so left and right turns each get their own), for the same characters as BD. Frame names `<key>/crossover/<kit>/<direction>/<left|right>_a` and `_b`. About 216 frames plus masks.
 
 ## Batch BF: achievement and news icons
 

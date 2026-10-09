@@ -7,6 +7,7 @@ import { tradeable, playerValue, TEAM_LIKES, trade } from './trades.js';
 import { vacated, fillOf } from './slots.js';
 import { randomLook } from './modular.js';
 import { addNews } from './news.js';
+import { freshName, leagueNames } from './draft.js';
 
 const RIVALS = RIVAL_IDS;
 const KITS = ['frost', 'thunder', 'stone'];
@@ -51,14 +52,13 @@ export const SIGN_CHANCE = 0.15; // after each league match, if anyone has a hol
 const pick = (list, rnd) => list[Math.floor(rnd() * list.length)];
 
 function freeAgent(save, kit, rnd) {
-  const used = new Set(Object.values(save.rivalFills || {}).map((f) => f.name));
-  const names = AGENTS[kit].filter((n) => !used.has(n));
+  const used = leagueNames(save);
   const base = { ...CHARACTERS[kit].base };
   // a journeyman: a point better at one thing, a point worse at another
   const up = pick(STAT_KEYS, rnd), down = pick(STAT_KEYS.filter((k) => k !== up && base[k] > 3), rnd);
   base[up] = Math.min(10, base[up] + 1); base[down]--;
   const role = CHARACTERS[kit].role;
-  return { how: 'sign', name: pick(names.length ? names : AGENTS[kit], rnd), kit, base, potential: 1, season: save.season,
+  return { how: 'sign', name: freshName(AGENTS[kit], used, rnd), kit, base, potential: 1, season: save.season,
     arch: pick(Object.values(ARCHETYPES).filter((a) => a.roles.includes(role)).map((a) => a.id), rnd),
     elem: pick(Object.keys(ELEMENTS), rnd), hand: rnd() < 0.6 ? 'L' : 'R', parts: randomLook(rnd, role) };
 }

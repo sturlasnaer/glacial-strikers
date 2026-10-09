@@ -361,7 +361,7 @@ export class Match {
     a.hitThisCheck = b;
     if (b.dashT > 0 || b.fadeT > 0) return; // dashing through, or a shadow
     // a Dangler with the puck: some checks slide right off
-    if (b.def.arch === 'dangler' && this.puck.owner === b && this.rng() < 0.2 + (b.hasPerk('Slippery') ? 0.15 : 0)) { this.emit('deke', { a, b }); return; }
+    if (b.def.arch === 'dangler' && this.puck.owner === b && this.rng() < 0.2 + (b.hasPerk('Slippery') ? 0.15 : 0)) { this.emit('deke', { s: b, by: a }); return; } // (slipped the check)
     const hadPuck = this.puck.owner === b || this.time - (b.lastPuckT ?? -9) < 0.5;
     const puckDist = Math.hypot(this.puck.x - b.x, this.puck.y - b.y);
     const dir = norm(b.x - a.x, b.y - a.y);

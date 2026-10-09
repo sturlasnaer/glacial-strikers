@@ -214,7 +214,7 @@ export class FX {
     });
     on('scorched', ({ s }) => this.burst(s.x, s.y, 20, 16, ELEMENT_COLORS.fire, 200, 0.5));
     on('fumble', ({ s }) => this.text(s.x, s.y - 90, t('FUMBLE!'), '#bff0dc', 0.9, 16));
-    on('deke', ({ b }) => this.text(b.x, b.y - 90, t('DEKE!'), '#ffffff', 0.8, 15));
+    on('deke', ({ s }) => this.text(s.x, s.y - 90, t('DEKE!'), '#ffffff', 0.8, 15));
     on('ult_windup', ({ s, t }) => {
       this.anim('ability_effects/lightning_shot/phase_', s.x, s.y, 0.4, { fps: 6 / t, follow: s, z: 30, frames: [1, 2, 3, 4] });
       this.reticle = { side: s.side, t: 0, life: t + 0.3 };

@@ -12,6 +12,7 @@ import { handMirror } from './hands.js';
 import { Linesman } from './linesman.js';
 
 const SKATER_SCALE = 0.5; // world px per source px
+const CROSS_IN = 5, CROSS_KEEP = 3; // turn rates (radians a second) into and through a crossover
 const GOALIE_SCALE = 0.43;
 const PUCK_SCALE = 0.115;
 const DIRS8 = ['east', 'southeast', 'south', 'southwest', 'west', 'northwest', 'north', 'northeast'];
@@ -993,9 +994,53 @@ export class Renderer {
     const set = Assets.atlas.skaters[this.spriteOf(s)][s.team === 0 ? 'home' : 'away'];
     // real time, so the hold also runs during replays (match time stands still then)
     const dir = this.skaterDir(s, !!set.northeast, performance.now() / 1000);
+    const motion = this.motionFrame(s, match, set, dir);
+    if (motion) return motion;
     const md = handMirror(set.hands, dir, s.hand);
     if (md) { const fr = this.poseFrame(s, match, set, md); return { ...fr, flip: !fr.flip }; }
     return this.poseFrame(s, match, set, dir);
+  }
+
+  // Stick handling and crossovers (Batches BD and BE), for the sets drawn with them: each has
+  // its own hand map, as the poses are drawn with the character's own stick hand. Anything
+  // with its own pose (a hit, a shot, a pass, a check, a dash, a stop, a celebration) wins.
+  motionFrame(s, match, set, dir) {
+    if (s.stun > 0 || (s.celebrate > 0 && (match.state === 'goal' || match.state === 'over')) ||
+        s.ultWindup > 0 || (s.charging && s.chargeT > 0.08) || s.dashT > 0 ||
+        s.state === 'shoot' || s.state === 'pass' || s.state === 'check' || s.stopping) return null;
+    // crossovers through a hard turn at speed: two frames, stepping with the stride. Into one
+    // on a sharp curve, kept while it still curves, and held a moment so it never flickers.
+    const cross = set.crossover, tr = s.turnRate || 0, now = performance.now() / 1000;
+    if (s.speed > 70 && Math.abs(tr) > CROSS_KEEP && (Math.abs(tr) > CROSS_IN || s._crossUntil >= now)) { s._crossUntil = now + 0.2; s._crossDir = Math.sign(tr); }
+    if (cross && s.speed > 70 && s._crossUntil > now) {
+      const md = handMirror(cross.hands, dir, s.hand);
+      let turn = s._crossDir > 0 ? 'right' : 'left';
+      if (md) turn = turn === 'right' ? 'left' : 'right'; // (mirrored, a right turn is drawn as a left)
+      const seq = cross[md || dir]?.[turn];
+      if (seq) return { id: seq[Math.floor(s.stridePhase || 0) % 2], flip: !!md, pose: 'crossover' };
+    }
+    // the puck worked from forehand to backhand and back, gliding or on the move (striding
+    // hard keeps the stride)
+    const handling = set.stickhandling;
+    if (handling && s.hasPuck && s.speed > 40 && (s.gliding || s.speed < 200)) {
+      const md = handMirror(handling.hands, dir, s.hand);
+      const pose = Math.sin((s.danglePhase || 0) * Math.PI * 2) < 0 ? 'backhand' : 'forehand';
+      const id = handling[md || dir]?.[pose];
+      if (id) return { id, flip: !!md, pose: 'handling' };
+    }
+    return null;
+  }
+
+  // Where the drawn puck sits on a stick-handling or crossover pose's blade (screen space), or
+  // null for frames without one. Only the drawing moves: the puck itself stays where it is.
+  puckSpritePoint(s, match) {
+    const fr = this.skaterFrame(s, match), blade = Assets.atlas.motion_blades?.[fr.id];
+    const f = blade && Assets.frame(fr.id);
+    if (!f) return null;
+    const p = toScreen(s.x, s.y);
+    const k = SKATER_SCALE * persp(s.y) * (s.parts ? PARTS_SCALE.body : 1) / f[7];
+    const dy = (blade.y - f[6]) * k;
+    return { x: p.x + (blade.x - f[5]) * k * (fr.flip ? -1 : 1) - (fr.pose === 'handling' ? (s.lean || 0) * dy : 0), y: p.y + dy };
   }
 
   // The frame for a pose facing `dir` (skaterFrame mirrors the other facing for the other hand).
@@ -1111,7 +1156,7 @@ export class Renderer {
     if (s.fadeT > 0) ctx.globalAlpha *= 0.42 + Math.sin(fx.time * 9) * 0.06;
     // leaning into a turn: the sprite skewed about its skates (rows shift, so the pixel art
     // keeps its lines), head and gear with it; a little lift on each push of the stride
-    const skating = fr.pose === 'stride' || fr.pose === 'skate_a' || fr.pose === 'skate_b' || fr.pose === 'glide';
+    const skating = fr.pose === 'stride' || fr.pose === 'skate_a' || fr.pose === 'skate_b' || fr.pose === 'glide' || fr.pose === 'handling';
     if (s.lean && skating && !at) { ctx.translate(p.x, y); ctx.transform(1, 0, -s.lean, 1, 0, 0); ctx.translate(-p.x, -y); }
     if (fr.pose === 'stride' && Math.floor(s.stridePhase ?? 0) % 2) y -= 1;
     const geared = s.gear && this.gearFrame(fr.id, pages, s.gear);
@@ -1244,6 +1289,7 @@ export class Renderer {
             else if (k.startsWith('stride') && v) ids.push(...v.frames, v.stop, v.glide);
             else if (k === 'hit' && v) ids.push(...Object.values(v).flat());
             else if (k === 'signature' && Array.isArray(v)) ids.push(...v);
+            else if ((k === 'stickhandling' || k === 'crossover') && v) for (const [d, poses] of Object.entries(v)) if (d !== 'hands') ids.push(...Object.values(poses).flat());
           }
           for (const id of new Set(ids)) q.push(() => this.touch(this.gearFrame(id, pages, s.gear)));
         }
@@ -1560,7 +1606,16 @@ export class Renderer {
         ctx.beginPath(); ctx.moveTo(a.x, a.y - 3); ctx.lineTo(b.x, b.y - 3); ctx.stroke();
       }
     }
-    const s = toScreen(p.x, p.y, p.z);
+    // a puck on a drawn blade (stick handling, crossovers) is drawn there, easing back to where
+    // it really is once it leaves the stick
+    let s = toScreen(p.x, p.y, p.z);
+    const now = performance.now() / 1000, dt = Math.min(0.1, now - (p._drawT || now));
+    p._drawT = now;
+    const on = p.owner && p.owner.isSkater && this.puckSpritePoint(p.owner, match);
+    const off = p._drawOff ||= { x: 0, y: 0 };
+    const e = 1 - Math.exp(-dt * (on ? 30 : 18)); // (quick: it follows the blade from forehand to backhand)
+    off.x += ((on ? on.x - s.x : 0) - off.x) * e; off.y += ((on ? on.y - s.y : 0) - off.y) * e;
+    s = { x: s.x + off.x, y: s.y + off.y };
     const sp = p.shot && p.shot.special;
     const comboType = sp && sp.combo ? { 'frost+thunder': 'lightning', 'frost+stone': 'ice', 'stone+thunder': 'lightning' }[sp.combo] : null;
     const type = p.power || comboType || (sp && sp.zero ? 'ice' : sp && (sp.thunder || sp.charged) ? 'lightning' : 'plain');

@@ -208,7 +208,7 @@ export function addRecruit(save, key) {
   const r = RECRUITS[key];
   const m = newMember();
   const level = joinLevel(save);
-  m.level = level;
+  m.level = m.joined = level;
   m.points = level - 1 + 4 * leagueGrowth(save); // yours to spend (and what they've grown since the first season)
   const opts = member(key).def.perks;
   PERK_LEVELS.forEach((lv, i) => { if (level >= lv) m.perks.push(opts[i][r.perks[i]]); });
@@ -419,20 +419,30 @@ export function allStarVote(save, L) {
   const pts = (key) => { const r = st.skaters[key]; return r ? r.g * 3 + r.a * 2 + (r.hits + r.steals) * 0.25 : 0; };
   const line = lineupIds(save);
   const star = [...line].sort((a, b) => pts(`home:${b}`) - pts(`home:${a}`) || line.indexOf(a) - line.indexOf(b))[0];
-  const stars = (team) => ['frost', 'thunder', 'stone'].filter((kit) => !isSigned(save, recruitKey(team, kit)))
+  const stars = (team) => ['frost', 'thunder', 'stone'].filter((kit) => !isSigned(save, recruitKey(team, kit)) && !(save.retired && save.retired[recruitKey(team, kit)]))
     .map((kit) => ({ team, kit, who: recruitKey(team, kit), pts: pts(`${team}:${kit}`) }))
     .sort((a, b) => b.pts - a.pts || a.kit.localeCompare(b.kit));
-  const teams = RIVAL_IDS.map((team) => ({ team, list: stars(team) })).filter((x) => x.list.length >= 2)
+  const teams = leagueRivals(L).map((team) => ({ team, list: stars(team) })).filter((x) => x.list.length >= 2)
     .sort((a, b) => (b.list[0].pts + b.list[1].pts) - (a.list[0].pts + a.list[1].pts) || RIVAL_IDS.indexOf(a.team) - RIVAL_IDS.indexOf(b.team));
   let pair = null; // the best two teams that leave three for the other bench
   for (let i = 0; i < teams.length && !pair; i++) for (let j = i + 1; j < teams.length && !pair; j++) if (teams[i].list.length + teams[j].list.length >= 5) pair = [teams[i], teams[j]];
   if (!star || !pair) return null;
   const [A, B] = pair;
   const theirs = [...A.list.slice(1), ...B.list.slice(1)].sort((a, b) => b.pts - a.pts).slice(0, 3);
-  const svp = (team) => { const g = st.goalies[team]; return g && g.sa ? g.sv / g.sa : 0; };
+  // the better save percentage, and a club's own goalie over the backup in for one we signed
+  const svp = (team) => { const g = st.goalies[team]; return (g && g.sa ? g.sv / g.sa : 0) - (isSigned(save, team + '_g') ? 1 : 0); };
   const goalie = svp(B.team) > svp(A.team) ? B.team : A.team;
   return { star, ours: [star, A.list[0].who, B.list[0].who], theirs: theirs.map((x) => x.who), teams: [A.team, B.team], goalie,
     points: Object.fromEntries([[star, pts(`home:${star}`)], ...[...A.list, ...B.list].map((x) => [x.who, x.pts])]) };
+}
+
+// A vote kept from earlier in the season still stands while our star is still ours, and
+// nobody on it has since retired or left their club (signed by us: then they'd be in our
+// line-up and theirs; our guests may have joined us since, and play for us either way).
+export function allStarVoteStands(save, vote) {
+  const gone = (who) => !!(save.retired && save.retired[who]) || !!(save.tradedAway && save.tradedAway[who]);
+  return !!save.roster[vote.star] && vote.ours.slice(1).every((w) => save.roster[w] || !gone(w))
+    && vote.theirs.every((w) => !isSigned(save, w) && !gone(w));
 }
 
 // Match config for the All-Star Game (like matchConfig, from a vote).
@@ -444,12 +454,12 @@ export function allStarConfig(save, vote, opts = {}) {
     return { def: m.def, who, stats, name: m.name, perks: [], sprite: m.sprite || m.recruit.sprite, parts: m.parts || null, ...(look ? { look } : {}) };
   };
   const ours = (who) => {
-    if (!save.roster[who]) return rival(who, 'homekit');
+    if (!save.roster[who]) return rival(who, 'homekit'); // (a guest: see allStarVoteStands)
     const m = member(who);
     return { def: m.def, who, stats: effectiveStats(who, save.roster[who]), name: m.name, perks: perkNames(save.roster[who]),
       sprite: m.sprite, look: m.look, parts: m.parts, gear: { ...save.roster[who].gear } };
   };
-  const g = TEAMS[vote.goalie];
+  const g = TEAMS[vote.goalie], rg = rivalGoalie(save, vote.goalie); // (their backup, if we signed theirs)
   const seasonBoost = (save.season - 1) * 0.08;
   const diff = Math.min(1, Math.max(0, (TEAMS[vote.teams[0]].diff + TEAMS[vote.teams[1]].diff) / 2 + 0.08 + (DIFF_OFFSET[save.settings.difficulty] || 0) + seasonBoost));
   return {
@@ -458,7 +468,7 @@ export function allStarConfig(save, vote, opts = {}) {
     buffs: {},
     teams: [
       { skaters: vote.ours.map(ours), goalie: homeGoalie(save), chem: {} },
-      { skaters: vote.theirs.map((w) => rival(w)), goalie: { stats: { rfx: g.goalie.rfx + 1, pos: g.goalie.pos + 1 }, name: g.names.goalie, art: g.art || (g.goalieLook ? goalieArt(g.goalieLook) : 'newcomer'), mask: g.goalieLook || null }, chem: {} },
+      { skaters: vote.theirs.map((w) => rival(w)), goalie: { stats: { rfx: g.goalie.rfx + 1, pos: g.goalie.pos + 1 }, name: rg.name, art: rg.art, mask: rg.mask || null }, chem: {} },
     ],
     humanTeam: 0,
     goalieMode: !!opts.goalieMode,

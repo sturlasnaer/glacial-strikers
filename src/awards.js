@@ -26,6 +26,12 @@ function skaterRow(st, key, info) {
 function goalieRow(st, team, name) {
   return (st.goalies[team] ||= { team, name, gp: 0, sa: 0, sv: 0, so: 0 });
 }
+// A rival's net: their own goalie's line, or, once we've signed theirs, their backup's.
+function rivalNet(save, st, team) {
+  const t = TEAMS[team];
+  if (!(save.goalies && save.goalies[team + '_g'])) return goalieRow(st, team, t.names.goalie);
+  return (st.goalies[team + ':sub'] ||= { team, name: t.subs.goalie || t.names.goalie, face: 'sub_goalie', sub: true, gp: 0, sa: 0, sv: 0, so: 0 });
+}
 
 // Who plays a rival slot right now: the original, or whoever filled it if we signed them.
 function rivalSlot(save, teamId, kit) {
@@ -46,7 +52,7 @@ export function recordRealGame(save, L, summary, teamId) {
   }
   // our net is one line, named for whoever played in it last (face: their goalie id)
   const who = summary.goalie || 'halla';
-  const ours = Object.assign(goalieRow(st, 'home', ''), { name: goalieInfo(who).name, face: who }), theirs = goalieRow(st, teamId, TEAMS[teamId].names.goalie);
+  const ours = Object.assign(goalieRow(st, 'home', ''), { name: goalieInfo(who).name, face: who }), theirs = rivalNet(save, st, teamId);
   ours.gp++; theirs.gp++;
   ours.sa += summary.shots[1]; ours.sv += summary.saves[0];
   theirs.sa += summary.shots[0]; theirs.sv += summary.saves[1];
@@ -62,7 +68,7 @@ export function recordSimGame(save, L, g, rng) {
     if (team === 'home') return;
     const slots = KITS.map((kit) => rivalSlot(save, team, kit));
     const rows = slots.map((sl) => skaterRow(st, sl.key, sl));
-    rows.forEach((r) => { r.gp++; });
+    rows.forEach((r, i) => { r.gp++; r.name = slots[i].name; }); // (a reserve's slot: whoever fills it now)
     const pickBy = (w, not) => {
       const opts = rows.filter((r) => r !== not);
       let x = rng() * opts.reduce((s, r) => s + w[r.kit], 0);
@@ -79,7 +85,7 @@ export function recordSimGame(save, L, g, rng) {
       r.steals += Math.floor(rng() * 4);
       r.shots += Math.floor(rng() * 6) + 2;
     }
-    const gk = goalieRow(st, team, TEAMS[team].names.goalie);
+    const gk = rivalNet(save, st, team);
     const sa = ga + 24 + Math.floor(rng() * 12);
     gk.gp++; gk.sa += sa; gk.sv += sa - ga;
     if (ga === 0) gk.so++;
@@ -105,11 +111,11 @@ export function computeAwards(save, L, order) {
   const gks = Object.values(st.goalies).filter((g) => g.sa >= 60);
   if (gks.length) {
     const g = [...gks].sort((x, y) => y.sv / y.sa - x.sv / x.sa)[0];
-    out.push({ id: 'iron_wall', key: 'goalie:' + g.team, name: g.name, team: g.team, face: g.team === 'home' && g.face && g.face !== 'halla' ? g.face : 'goalie', line: `${t('{pct} save %', { pct: (g.sv / g.sa).toFixed(3).replace(/^0/, '') })} · ${t(g.sv === 1 ? '{n} save' : '{n} saves', { n: g.sv })}${g.so ? ` · ${t(g.so > 1 ? '{n} shutouts' : '{n} shutout', { n: g.so })}` : ''}` });
+    out.push({ id: 'iron_wall', key: 'goalie:' + g.team + (g.sub ? ':sub' : ''), name: g.name, team: g.team, face: g.team === 'home' ? (g.face && g.face !== 'halla' ? g.face : 'goalie') : g.face || 'goalie', line: `${t('{pct} save %', { pct: (g.sv / g.sa).toFixed(3).replace(/^0/, '') })} · ${t(g.sv === 1 ? '{n} save' : '{n} saves', { n: g.sv })}${g.so ? ` · ${t(g.so > 1 ? '{n} shutouts' : '{n} shutout', { n: g.so })}` : ''}` });
   }
   const enf = best(rows, (r) => r.hits);
   add('enforcer', enf, `${t(enf.hits === 1 ? '{n} hit' : '{n} hits', { n: enf.hits })} · ${t(enf.steals === 1 ? '{n} steal' : '{n} steals', { n: enf.steals })}`);
-  const signings = rows.filter((r) => r.team === 'home' && RECRUITS[r.face]);
+  const signings = rows.filter((r) => r.team === 'home' && RECRUITS[r.face] && save.roster[r.face]); // (still with us)
   if (signings.length) add('signing', best(signings, (r) => r.g * 3 + r.a * 2 + r.hits * 0.3));
   return out;
 }

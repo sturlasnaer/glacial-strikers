@@ -718,6 +718,11 @@ AV_AZ = sys.argv[19] if len(sys.argv) > 19 else '../assets/Puckbound-Batches-AV-
 BA_BC = sys.argv[20] if len(sys.argv) > 20 else '../assets/Puckbound-Batches-BA-BC'
 from merge_part2 import merge_part2
 atlas = merge_part2(atlas, OUT, [PART2, AN_AO, AP, AP_AU, AV_AZ, BA_BC], v1_h, v1_goalie_h)
+# Batches BD and BE: stick handling and crossovers, drawn for the originals, the parts bodies
+# and the newcomers
+BD_BE = sys.argv[21] if len(sys.argv) > 21 else '../assets/Puckbound-Batches-BD-BE'
+from merge_motion import merge_motion
+atlas = merge_motion(atlas, OUT, BD_BE)
 with open(os.path.join(OUT, 'atlas.json'), 'w') as fh:
     json.dump(atlas, fh, separators=(',', ':'))
 

@@ -389,7 +389,10 @@ export const STAR_AGES = {
   moose_c: 28, moose_w: 22, moose_d: 27,
 };
 // The kit a rival slot plays with: that player's archetype and the team's super for the slot.
-export const slotDef = (teamId, kit) => makeDef(kit, RECRUITS[recruitKey(teamId, kit)]?.arch, ((TEAMS[teamId] || {}).elems || {})[kit]);
+export const slotDef = (teamId, kit) => {
+  const r = RECRUITS[recruitKey(teamId, kit)];
+  return { ...makeDef(kit, r?.arch, ((TEAMS[teamId] || {}).elems || {})[kit]), hand: r?.hand || CHARACTERS[kit].hand };
+};
 export const KIT_OF_ROLE = { C: 'frost', W: 'thunder', D: 'stone' };
 
 // Rival goalies you can sign once you've beaten their team ('<team>_g'). Their club then plays
@@ -490,8 +493,9 @@ function memberBase(who) {
 // Everything about a member, with any change made at the training camp.
 export function member(who) {
   const m = memberBase(who), o = STYLES[who];
-  if (!m || !o) return m;
-  return { ...m, def: makeDef(m.kit, o.arch || m.def.arch, o.elem || m.def.elem) };
+  // (the def carries their own stick hand: a recruit may shoot the other way from their kit)
+  if (!m || !o) return m && m.def.hand !== m.hand ? { ...m, def: { ...m.def, hand: m.hand } } : m;
+  return { ...m, def: { ...makeDef(m.kit, o.arch || m.def.arch, o.elem || m.def.elem), hand: m.hand } };
 }
 
 // The combo two members fire comes from their kits; the bond itself is between them.
