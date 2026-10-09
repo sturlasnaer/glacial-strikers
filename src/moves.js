@@ -7,7 +7,7 @@ import { tradeable, playerValue, TEAM_LIKES, trade } from './trades.js';
 import { vacated, fillOf } from './slots.js';
 import { randomLook } from './modular.js';
 import { addNews } from './news.js';
-import { freshName, leagueNames } from './draft.js';
+import { freshName, leagueNames } from './league_names.js';
 
 const RIVALS = RIVAL_IDS;
 const KITS = ['frost', 'thunder', 'stone'];

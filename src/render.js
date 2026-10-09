@@ -996,6 +996,10 @@ export class Renderer {
     const dir = this.skaterDir(s, !!set.northeast, performance.now() / 1000);
     const motion = this.motionFrame(s, match, set, dir);
     if (motion) return motion;
+    // Parts celebrations face the camera and use their own drawn stick hand.
+    if (set.signature_hand && s.stun <= 0 && s.celebrate > 0 &&
+        (match.state === 'goal' || match.state === 'over') && match.lastGoal?.scorer === s)
+      return this.poseFrame(s, match, set, 'south');
     const md = handMirror(set.hands, dir, s.hand);
     if (md) { const fr = this.poseFrame(s, match, set, md); return { ...fr, flip: !fr.flip }; }
     return this.poseFrame(s, match, set, dir);
@@ -1064,7 +1068,7 @@ export class Renderer {
     let pose = 'idle';
     if (s.celebrate > 0 && (match.state === 'goal' || match.state === 'over') && set.signature && match.lastGoal && match.lastGoal.scorer === s) {
       const i = Math.min(3, Math.floor((3 - s.celebrate) * 6));
-      return { id: set.signature[i], flip: Math.cos(s.face) < -0.3, pose: 'signature' };
+      return { id: set.signature[i], flip: set.signature_hand ? s.hand !== set.signature_hand : Math.cos(s.face) < -0.3, pose: 'signature' };
     }
     if (s.celebrate > 0 && (match.state === 'goal' || match.state === 'over')) pose = 'celebrate';
     else if (s.stun > 0) pose = 'check';

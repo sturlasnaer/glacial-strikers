@@ -1,14 +1,12 @@
 # Sprite requests
 
-What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd), the remaining packs (Batches B, H, I, C and N-Extras), the new batches (P, R, S, K, T and M2) the D, U, Q, W, O, E, J and F delivery, V and X, the Y, Z, AA, AB and AC delivery, the twins' first look (AI part 1), Part 2 and the new additions (AD, AE, AF, AG, AI part 2, AJ, AK, AL and AM), AN, AO, AP, AQ to AU, AV to AZ, BA to BC, and BD and BE. AH was skipped: the AJ pilot works, so new faces come from parts.
+What the game needs next, in priority order. Everything delivered so far is in the game: v1, P1 gameplay, v2, the v3 arena add-on, v4 Batch A, the v5 goalies, the Batch M gear masks, Batch L (profile goalies), Batch N (near-side crowd), the remaining packs (Batches B, H, I, C and N-Extras), the new batches (P, R, S, K, T and M2) the D, U, Q, W, O, E, J and F delivery, V and X, the Y, Z, AA, AB and AC delivery, the twins' first look (AI part 1), Part 2 and the new additions (AD, AE, AF, AG, AI part 2, AJ, AK, AL and AM), AN, AO, AP, AQ to AU, AV to AZ, BA to BC, BD and BE, and BF and BG. AH was skipped: the AJ pilot works, so new faces come from parts.
 
 The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes** (the Snow Fox is their mascot; colours unchanged). Packs can be named `Puckbound-...` from now on; older `Glacial-Strikers-...` folder names still work.
 
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
-**Next batches:**
-1. **BF**: six small icons: five new achievements and a league-news icon.
-2. **BG**: goal celebrations for players made from parts (drafted rookies, free agents, the expansion clubs).
+**Next batches:** no outstanding requests as of this delivery.
 
 ## Format notes
 
@@ -77,22 +75,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 - **Batch AM:** the element stones, style camp, respec and trade icons, and Ottar holding up a stone and Brekka with the whistle in the training camp.
 - **Batches BD and BE:** stick handling (forehand and backhand, eight directions) and crossovers (six directions, both ways) for Nix, Volta, Bram, the three parts bodies and the newcomers. In the game: a carrier with time and space works the puck from forehand to backhand on the drawn blade, and skaters cross over through hard turns at speed.
 
+- **Batches BF and BG:** six achievement/news icons and three distinct four-phase goal celebrations for players from parts, with gear masks and turned/tilted head anchors. Source and ready packs: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-Batches-BF-BG`.
+
 ---
 
-## Batch BF: achievement and news icons
-
-In the style and size of the AN/AF achievement icons (about 200 px source), sheet `icons_bf.png`:
-- `achievements/moonstruck`: a puck flashing white in a shaft of moonlight (scored out of the Observatory's moonbeam).
-- `achievements/splinters`: a puck skipping off a cracked wooden board with flying splinters (scored off a loose plank's bounce at the Longhouse).
-- `achievements/puck_protector`: a gloved hand and stick blade curling a puck away from a reaching stick (shield the puck 15 times in a match).
-- `achievements/game_face`: a goalie mask on a stand with fresh paint and a brush (pick a new mask at goalie camp).
-- `achievements/new_colours`: a shield crest half repainted, with a paint roller (give the club a new crest).
-- `icons/news_edge`: for the league news line "the rivals trained hard all summer": a dumbbell or a stopwatch over a rival jersey, read at 20 to 24 px, so bold and simple like the other `icons/news_*`.
-
-6 frames.
-
-## Batch BG: goal celebrations for players from parts
-
-Drafted rookies, free agents and the expansion clubs' skaters are made from parts (Batch AJ/AO bodies with heads on anchors). The cast and the founding rivals each celebrate a goal with a four-frame signature sequence, but players from parts only have the one `celebrate` pose. Please draw a **four-frame celebration** for each of the three builds (`body_std`, `body_big`, `body_small`), without the head and with head anchors per frame like AJ/AO (the head turns and tilts with the body), facing the camera (south), in the AJ/AO palette rules (coral and violet kit for recolouring, skin and hair handled by the heads). Something different for each build, for example a fist pump and knee slide for `body_std`, a stick raised over the head and a roar for `body_big`, a spin and point to the crowd for `body_small`. Gear masks for the stick and skates (Batch M format). Frame names `modular/<body>/celebration/phase_1` to `phase_4`.
-
-12 frames plus masks and anchors.

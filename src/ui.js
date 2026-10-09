@@ -189,7 +189,7 @@ const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 // The league news icon for each kind of story (Batch AV).
-const NEWS_ICON = { edge: 'new_club', rivalSign: 'sign', weSign: 'sign', weGoalie: 'sign', weAgent: 'sign', weLegend: 'sign', rivalDraft: 'draft', weDraft: 'draft', trade: 'trade', retire: 'retire', champion: 'cup', expansion: 'new_club' };
+const NEWS_ICON = { edge: 'edge', rivalSign: 'sign', weSign: 'sign', weGoalie: 'sign', weAgent: 'sign', weLegend: 'sign', rivalDraft: 'draft', weDraft: 'draft', trade: 'trade', retire: 'retire', champion: 'cup', expansion: 'new_club' };
 // The locker room hub: stations in the painting, in % of the 16:9 image.
 const STATIONS = [
   { tab: 'team', label: 'Team', icon: 'equipment_items/hub/locker', rect: [19, 2, 47, 27], at: [42, 15], tip: 'Lockers: line-up, stats, gear and scouting' },
@@ -736,7 +736,7 @@ export class UI {
       }
     };
     // what happened (Batch AV's icons) and whose crest it is
-    const kind = (n) => { const id = Assets.atlas.news_icons && Assets.atlas.news_icons[NEWS_ICON[n.k]]; return id && Assets.frame(id) ? Assets.icon(id, 48) : ''; };
+    const kind = (n) => { const icons = Assets.atlas.news_icons; const id = icons && (icons[NEWS_ICON[n.k]] || (n.k === 'edge' && icons.new_club)); return id && Assets.frame(id) ? Assets.icon(id, 48) : ''; };
     const pics = (n) => {
       const k = kind(n), team = n.team && (TEAMS[n.team] || n.team === 'home') ? crest(n.team, 40) : '';
       const list = [k, team || (k ? '' : Assets.icon(Assets.atlas.frames['icons/free_agents'] ? 'icons/free_agents' : 'icons/contract', 40))].filter(Boolean);

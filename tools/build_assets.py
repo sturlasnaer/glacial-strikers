@@ -723,6 +723,9 @@ atlas = merge_part2(atlas, OUT, [PART2, AN_AO, AP, AP_AU, AV_AZ, BA_BC], v1_h, v
 BD_BE = sys.argv[21] if len(sys.argv) > 21 else '../assets/Puckbound-Batches-BD-BE'
 from merge_motion import merge_motion
 atlas = merge_motion(atlas, OUT, BD_BE)
+BF_BG = sys.argv[22] if len(sys.argv) > 22 else '../assets/Puckbound-Batches-BF-BG'
+from merge_polish import merge_polish
+atlas = merge_polish(atlas, OUT, BF_BG)
 with open(os.path.join(OUT, 'atlas.json'), 'w') as fh:
     json.dump(atlas, fh, separators=(',', ':'))
 
