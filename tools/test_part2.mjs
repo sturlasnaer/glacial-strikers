@@ -60,7 +60,7 @@ check('...recoloured with the newcomers', A.pages[F[A.goalies_side.newcomer.read
 check('goaltending style icons', ['hybrid', 'scrambler', 'butterfly', 'wall', 'reader', 'puckhandler'].every((k) => F['icons/gstyle_' + k]) && F['icons/contract']);
 // AO: three builds, ten heads (sixteen with AZ's), shoulders per build, the jersey moment
 check('three builds', ['body_std', 'body_big', 'body_small'].every((k) => A.skaters[k] && EIGHT.every((d) => A.skaters[k].home[d])), Object.keys(A.skaters).filter((k) => k.startsWith('body_')));
-check('sixteen heads, each with its faces and masks', Object.keys(M.heads).length === 16 && Object.keys(M.heads).every((h) => M.portraits.faces[h] && Object.values(M.heads[h]).every((v) => Object.values(v).every((f) => F[f] && F[M.masks[f]]))), Object.keys(M.heads));
+check('twenty-four heads (AJ, AO, AZ, CB), each with its faces and masks', Object.keys(M.heads).length === 24 && Object.keys(M.heads).every((h) => M.portraits.faces[h] && Object.values(M.heads[h]).every((v) => Object.values(v).every((f) => F[f] && F[M.masks[f]]))), Object.keys(M.heads));
 check('shoulders per build', ['std', 'big', 'small'].every((b) => M.portraits.bodies[b] && F[M.portraits.bodies[b].body]));
 const JM = M.jersey_moments && M.jersey_moments.body_std;
 check('the parts jersey moment', JM && JM.length === 3 && JM.every((f) => F[f] && M.anchors[f]) && M.anchors[JM[1]].hide_head && A.draft_animations.body_std && A.draft_animations.newcomer_c, JM);
