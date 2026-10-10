@@ -74,7 +74,7 @@ export function newSave() {
       music: true, sfx: true, musicVol: 1, sfxVol: 1, audioQuality: 'auto', online: true, difficulty: 'normal', tips: true, replays: true, clips: true,
       assist: 'normal', autoSprint: false, speed: 'normal',
       shake: 1, flashes: true, particles: 'full',
-      markers: 'color', passRing: true, puck: 'auto', textSize: 'normal', touchSize: 'normal', lefty: false, breakAfter: 0, simple: false, simple2: 'none',
+      markers: 'color', passRing: true, puck: 'auto', textSize: 'normal', touchSize: 'normal', lefty: false, breakAfter: 0, simple: false, simple2: 'none', little: false,
     },
     record: { played: 0, wins: 0, goals: 0 },
     rookies: {}, // drafted rookies by roster id (rk1, rk2, …), see draft.js
@@ -82,6 +82,21 @@ export function newSave() {
     goalieStarter: 'halla', // who starts in goal
     draft: null, // this season's Draft Day once it's over
   };
+}
+
+// Little player (Settings): one tap sets the game up for the youngest, and off puts the
+// player's own settings back as they were.
+export const LITTLE = { simple: true, difficulty: 'easy', speed: 'relaxed', assist: 'strong', touchSize: 'large', puck: 'ring' };
+export function setLittle(settings, on) {
+  if (on && !settings.little) {
+    settings.littlePrev = Object.fromEntries(Object.keys(LITTLE).map((k) => [k, settings[k]]));
+    Object.assign(settings, LITTLE);
+    settings.little = true;
+  } else if (!on && settings.little) {
+    Object.assign(settings, settings.littlePrev || {});
+    delete settings.littlePrev;
+    settings.little = false;
+  }
 }
 
 export function loadSave() {

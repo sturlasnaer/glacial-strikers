@@ -8,7 +8,7 @@
 import { Match } from '../src/match.js';
 import { CHARACTERS } from '../src/data.js';
 import { GOAL_X } from '../src/rink.js';
-import { newSave } from '../src/progress.js';
+import { newSave, setLittle, LITTLE } from '../src/progress.js';
 
 let pass = 0, fail = 0;
 const check = (name, cond, info) => { if (cond) pass++; else { fail++; console.log('✗', name, info ?? ''); } };
@@ -153,6 +153,18 @@ check('not in drills', !new Match({ teams: [team(), team()], humanTeam: 0, seed:
   co.setHumanInput({ ...idle(), a: true }, 0, 1);
   co.applyHuman();
   check('...player 2\'s one button picks for them', p2.simpleAct === (co.simpleShot(p2) ? 'shoot' : 'pass'));
+}
+
+// Little player: one tap sets it all up, and off puts the player's own settings back
+{
+  const st = { ...newSave().settings, difficulty: 'hard', speed: 'normal', assist: 'off', touchSize: 'huge', puck: 'normal', simple: false };
+  const before = JSON.stringify(st);
+  setLittle(st, true);
+  check('Little player: Simple controls, easy rivals and the rest', st.little && Object.entries(LITTLE).every(([k, v]) => st[k] === v));
+  setLittle(st, true);
+  check('...twice changes nothing', st.little && st.littlePrev.difficulty === 'hard');
+  setLittle(st, false);
+  check('...and off, everything as it was', JSON.stringify(st) === before && st.difficulty === 'hard' && !st.simple && st.touchSize === 'huge' && !st.little, st);
 }
 
 // whole matches, a small player pressing now and then and steering at the puck (or their net)

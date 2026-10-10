@@ -14,8 +14,7 @@ import { dailyFor, dailyGoal, dayKey, currentStreak, doneToday, dailyReward, dai
 import {
   expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave, currentProfile, setProfile, profileSummaries, eraseProfile,
   chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups, capBonus,
-  CAMP, campOpen, campChoices, campChange, recruitPrice, goalieIds, starterId, goalieRec, goalieStatus, signGoalie, setStarter, GOALIE_CAMP, goalieStyle, goalieCampOpen, goalieCampChange, canPickMask, pickMask,
-} from './progress.js';
+  CAMP, campOpen, campChoices, campChange, recruitPrice, goalieIds, starterId, goalieRec, goalieStatus, signGoalie, setStarter, GOALIE_CAMP, goalieStyle, goalieCampOpen, goalieCampChange, canPickMask, pickMask, setLittle } from './progress.js';
 import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave, resetsIn, groupsOf, createGroup, joinGroup, leaveGroup, inviteLink, MAX_GROUPS, fetchCup, fetchGhost, CHALLENGE_BOARDS, createChallenge, fetchChallenge, challengeLink } from './online.js';
 import { nextGuide, doneGuide, guideOff } from './guide.js';
 import { draftOpen, draftPick, skipDraft, otherPicks, POTENTIAL_GRADE, DRAFT_LINES } from './draft.js';
@@ -2942,6 +2941,7 @@ export class UI {
       ${row(t('Rival difficulty'), seg('difficulty', [['easy', t('Easy')], ['normal', t('Normal')], ['hard', t('Hard')]]))}
       ${row(t('Aim assist'), seg('assist', [['off', t('Off')], ['normal', t('Normal')], ['strong', t('Strong')]]), t('Strong tightens your shots and widens pass catching. Off aims dead centre unless you steer.'))}
       ${row(t('Auto-sprint'), seg('autoSprint', [[false, t('Off')], [true, t('On')]]), t('Sprint whenever the stick is pushed all the way.'))}
+      ${row(t('Little player'), `<span class="seg">${[[false, t('Off')], [true, t('On')]].map(([v, label]) => `<button class="chip" data-little="${v}" aria-pressed="${!!st.little === v}">${label}</button>`).join('')}</span>`, t('One tap for the youngest: Simple controls, easy rivals, relaxed speed, strong aim assist, big touch buttons and a large puck with a ring. Off puts your settings back.'))}
       ${row(simpleLabel(), seg('simple', [[false, t('Off')], [true, t('On')]]), t('For the youngest players: one PLAY button shoots near the net, passes further out and checks without the puck, and you always skate the player nearest the puck.'))}
       ${row(t('Break reminder'), seg('breakAfter', [[0, t('Off')], [30, t('30 min')], [60, t('1 hour')]]), t('After this much time in matches, Coach Brekka suggests a rest when a match ends.'))}
       ${row(t('Game speed'), seg('speed', [['normal', t('Normal')], ['relaxed', t('Relaxed')]]), t('Relaxed plays matches at 85% speed. Drills stay at full speed.'))}
@@ -2978,6 +2978,12 @@ export class UI {
           if (el.dataset.set === 'lang') { location.reload(); return; }
           audio.sfx('click');
           this.app.applySettings();
+          const y = m.scrollTop;
+          m.innerHTML = body(); bind(); m.scrollTop = y;
+        }, m);
+        this.click('[data-little]', (el) => { // (several settings at once)
+          setLittle(st, el.dataset.little === 'true');
+          writeSave(s); audio.sfx('click'); this.app.applySettings();
           const y = m.scrollTop;
           m.innerHTML = body(); bind(); m.scrollTop = y;
         }, m);
