@@ -2326,7 +2326,9 @@ export class UI {
       ghost = { ...g, label: g.name };
     }
     audio.sfx('confirm');
-    this.app.startDrill(id, this.drillChar, ghost ? { ghost } : {});
+    // (Sniper races your best by itself unless its ghost was turned off)
+    const off = !ghost && s.settings.ghosts && s.settings.ghosts[id] === 'off';
+    this.app.startDrill(id, this.drillChar, ghost ? { ghost } : off ? { noGhost: true } : {});
   }
 
   // A friend's challenge from a #race= link: their run, raced as a ghost with a skater you pick.

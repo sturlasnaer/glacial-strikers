@@ -92,10 +92,10 @@ check('ghost sprites draw', bb.ctrl.sprites(bb.m, { drawRaceGhost() {}, drawGhos
 
 // Sniper: the AI shoots the run (the player's skater too), it's kept with the pace, and the
 // next run brings it back as a ghost with its hits
-function sniper(best = null) {
+function sniper(best = null, opts = {}) {
   const s0 = newSave();
   if (best) s0.paces = { sniper: best };
-  const { cfg, ctrl } = createDrill('sniper', s0, 'thunder', { seed: 5 });
+  const { cfg, ctrl } = createDrill('sniper', s0, 'thunder', { seed: 5, ...opts });
   const m = new Match(cfg);
   m.humans = [];
   for (let i = 0; i < 60 * 50 && m.state !== 'drill_over'; i++) m.update(1 / 60);
@@ -109,6 +109,10 @@ const sb = sniper({ score: sa.res.score, pace: sa.res.pace, race });
 check('...comes back as a ghost', sb.ctrl.ghost && sb.ctrl.ghost.lit.length === race.lit.length && sb.ctrl.ghostS);
 check('...its sprites draw', sb.ctrl.sprites(sb.m, { drawRaceGhost() {}, drawGhostPuck() {} }).length === 2);
 check('...an old best without a run: no ghost', !sniper({ score: 100, pace: [[0, 0]] }).ctrl.ghost);
+check('...its run goes up as a ghost too (boards, challenges)', sa.res.ghost && sa.res.ghost.path === race.path && cleanRun('sniper', { ...race }, sa.res.score) !== null);
+const picked = sniper(null, { ghost: { ...race, score: sa.res.score + 300, label: 'Owls' } });
+check('...a picked ghost (a friend\'s) races, with the result against it', picked.ctrl.ghost && picked.ctrl.ghost.label === 'Owls' && /^Owls: \d+ pts ahead of you$/.test(picked.res.vsLine) && picked.res.vsWon === false, picked.res.vsLine);
+check('...turned off: none, even with a best', !sniper({ score: sa.res.score, pace: sa.res.pace, race }, { noGhost: true }).ctrl.ghost);
 
 console.log(`ghosts: ${ok} passed, ${fail} failed  (run ${a.res.score}s, ${samples.length} samples, ${path.length} chars; breakaway ${ba.res.score}/5 vs ${bb.res.score}/5)`);
 process.exit(fail ? 1 : 0);

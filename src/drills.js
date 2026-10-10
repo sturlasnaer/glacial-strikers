@@ -82,7 +82,7 @@ export function createDrill(id, save, charId, opts = {}) {
   let home = [charId], away = [], ctrl, awayTeam = opts.awayTeam || 'lynx'; // (a ghost's team, so its art stays loaded)
   switch (id) {
     case 'cones': ctrl = new ConeDrill(opts.ghost); break;
-    case 'sniper': home = [charId, opts.feeder || mates[0]]; ctrl = new SniperDrill(opts.skills ? null : save.paces && save.paces.sniper, charId); break; // (your best run: its pace, and its ghost)
+    case 'sniper': home = [charId, opts.feeder || mates[0]]; ctrl = new SniperDrill(opts.skills ? null : save.paces && save.paces.sniper, charId, opts.skills || opts.noGhost ? false : opts.ghost); break; // (your best run's pace, and a ghost: one picked or raced from a link, else your best)
     case 'rondo': home = [charId, ...mates]; away = ['frost', 'stone']; ctrl = new RondoDrill(save.paces && save.paces.rondo); break;
     case 'breakaway': ctrl = new BreakawayDrill(opts.ghost); break;
     case 'faceoffs': away = ['frost']; ctrl = new FaceoffDrill(); break;
@@ -274,12 +274,13 @@ class ConeDrill extends DrillBase {
 const TARGETS = [-26, 0, 26];
 
 class SniperDrill extends DrillBase {
-  constructor(best, char) {
+  constructor(best, char, picked = null) {
     super();
     this.setPace(best);
     this.char = char;
-    const r = best && best.race, path = r && decodeGhost(r.path), puck = r && decodeGhost(r.puck);
-    this.ghost = path && path.length && puck && puck.length ? { path, puck, lit: Array.isArray(r.lit) ? r.lit : [], char: r.char || char, label: t('Your best') } : null;
+    // the ghost: one picked (or a friend's challenge), none if turned off, else your best
+    const r = picked === false ? null : picked || (best && best.race), path = r && decodeGhost(r.path), puck = r && decodeGhost(r.puck);
+    this.ghost = path && path.length && puck && puck.length ? { path, puck, lit: Array.isArray(r.lit) ? r.lit : [], char: r.char || char, label: (picked && picked.label) || t('Your best'), score: picked ? picked.score : best && best.score } : null;
   }
   init(m) {
     this.hideGoalies(m);
@@ -325,7 +326,13 @@ class SniperDrill extends DrillBase {
       if (this.dead > (p.inNet ? 0.6 : 0.9)) this.respawn(m);
     } else this.dead = 0;
     this.rec.update(this.t, s); this.recPuck.update(this.t, { x: p.x, y: p.y, face: 0 });
-    if (this.t >= this.duration) this.finish(m, this.score, { hits: this.hits, shots: this.shots, pace: this.pace, race: { path: this.rec.encode(), puck: this.recPuck.encode(), lit: this.lit, char: this.char } });
+    if (this.t >= this.duration) {
+      const race = { path: this.rec.encode(), puck: this.recPuck.encode(), lit: this.lit, char: this.char };
+      // against a ghost with a score: by how much (the run itself goes up as a ghost and can be a challenge)
+      const vs = this.ghost && Number.isFinite(this.ghost.score) ? this.score - this.ghost.score : null;
+      const vsLine = vs === null ? null : `${this.ghost.label}: ${t(vs >= 0 ? '{n} pts behind you' : '{n} pts ahead of you', { n: Math.abs(vs) })}`;
+      this.finish(m, this.score, { hits: this.hits, shots: this.shots, pace: this.pace, race, ghost: race, vs, vsLabel: this.ghost ? this.ghost.label : null, vsLine, vsWon: vs !== null ? vs >= 0 : null });
+    }
   }
   respawn(m) {
     const p = m.puck;

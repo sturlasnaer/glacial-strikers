@@ -184,7 +184,8 @@ check('Monday starts the next', weekOf(Date.UTC(2026, 9, 12)).key === '2026-W42'
   check('only for its best', (await gpost({ op: 'ghost_put', board: 'cones', player: id(1), score: 15, played: now, ghost: { path: path(12) } })).status === 409);
   check('a run longer than its time', (await gpost({ op: 'ghost_put', board: 'cones', player: id(1), score: 18.5, played: now, ghost: { path: path(25) } })).status === 400);
   check('not base64', (await gpost({ op: 'ghost_put', board: 'cones', player: id(1), score: 18.5, ghost: { path: 'not a path!' } })).status === 400);
-  check('cones only', (await gpost({ op: 'ghost_put', board: 'sniper', player: id(1), score: 5, ghost: { path: path(1) } })).status === 400);
+  check('a Sniper run needs its puck and hits', (await gpost({ op: 'ghost_put', board: 'sniper', player: id(1), score: 5, ghost: { path: path(1) } })).status === 400);
+  check('no ghosts for Keep-Away', (await gpost({ op: 'ghost_put', board: 'rondo', player: id(1), score: 5, ghost: { path: path(1) } })).status === 400);
   check('too long a path', (await gpost({ op: 'ghost_put', board: 'cones', player: id(1), score: 18.5, ghost: { path: 'A'.repeat(7000) } })).status === 400);
   check('too big a body', (await gpost({ op: 'ghost_put', board: 'cones', player: id(1), score: 18.5, ghost: { path: 'A'.repeat(15000) } })).status === 413);
   // a better time without a run: the old run no longer matches, so there's no ghost
@@ -198,6 +199,26 @@ check('Monday starts the next', weekOf(Date.UTC(2026, 9, 12)).key === '2026-W42'
   r = await gpost({ op: 'group_new', player: id(2), name: 'Owl Club' });
   r = await gget({ board: 'cones', period: 'week', group: r.body.code, ghost: '1' });
   check('a friends board\'s leader\'s ghost', r.body.ghost && r.body.ghost.name === 'Owls' && r.body.ghost.score === 16.25, r.body);
+}
+// sniper ghosts: the skater's path, the puck's, and the targets hit (time, which), for boards and challenges
+{
+  const ss = memoryStore();
+  let now = Date.UTC(2026, 9, 7, 14);
+  const spost = (b, at = (now += 5000)) => handle({ method: 'POST', query: {}, body: JSON.stringify(b) }, ss, at);
+  const path = (secs) => Buffer.alloc(4 + Math.round(secs * 15) * 3, 3).toString('base64');
+  const run = { path: path(45), puck: path(45), lit: [[3.4, 1], [9.1, 0], [20.2, 2]], char: 'thunder' };
+  await spost({ board: 'sniper', player: id(1), name: 'Foxes', tag: 'AB12', score: 450, played: now });
+  r = await spost({ op: 'ghost_put', board: 'sniper', player: id(1), score: 450, played: now, ghost: run });
+  check('sniper ghost stored', r.status === 200 && r.body.stored === 2, r.body);
+  r = await handle({ method: 'GET', query: { board: 'sniper', period: 'week', ghost: '1' } }, ss, now);
+  check('...it comes back with its puck and hits', r.body.ghost && r.body.ghost.puck === run.puck && r.body.ghost.lit.length === 3 && r.body.ghost.lit[2][1] === 2, r.body);
+  check('...more hits than points: no', (await spost({ op: 'ghost_put', board: 'sniper', player: id(1), score: 250, played: now, ghost: run })).status === 400);
+  check('...a target that isn\'t one: no', (await spost({ op: 'challenge_put', board: 'sniper', player: id(2), score: 450, ghost: { ...run, lit: [[3, 5]] } })).status === 400);
+  check('...a run far past 45 seconds: no', (await spost({ op: 'challenge_put', board: 'sniper', player: id(2), score: 450, ghost: { ...run, path: path(60) } })).status === 400);
+  r = await spost({ op: 'challenge_put', board: 'sniper', player: id(3), name: 'Owls', score: 450, ghost: run });
+  const code = r.body.code;
+  r = await handle({ method: 'GET', query: { challenge: code } }, ss, now);
+  check('a sniper challenge comes back whole', r.body.challenge && r.body.challenge.board === 'sniper' && r.body.challenge.puck === run.puck && r.body.challenge.lit.length === 3 && r.body.challenge.char === 'thunder', r.body);
 }
 // breakaway ghosts: five attempts, each a skater path, a puck path and how it ended
 {

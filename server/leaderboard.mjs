@@ -19,7 +19,8 @@ import { createHash, randomInt } from 'crypto';
 // takes them out of the byRank index the boards are read and counted from.
 //
 // Ghost runs: a Cone Weave best can bring its run along (the skater's path, sampled 15
-// times a second, and the gate splits). It's stored beside the best it belongs to, as a
+// times a second, and the gate splits); a Sniper best too (the skater's and the puck's paths
+// and the targets hit). It's stored beside the best it belongs to, as a
 // 'ghost:<board>' or 'ghost:<board>@<week>' row, and only while it matches that best.
 // GET ?board=cones&ghost=1 (with period=week and/or group=CODE) returns the leader's run.
 // Breakaway runs are five attempts, each the skater's path, the puck's and how it ended.
@@ -76,10 +77,11 @@ const GROUP_GAP_MS = 30000; // between new groups from one player
 const validCode = (c) => typeof c === 'string' && /^[A-HJ-NP-Z2-9]{6}$/.test(c);
 const groupKey = (key, code) => `${key}#${code}`;
 const validPlayer = (p) => typeof p === 'string' && /^[a-f0-9]{16,40}$/.test(p);
-export const GHOST_BOARDS = new Set(['cones', 'breakaway']);
+export const GHOST_BOARDS = new Set(['cones', 'breakaway', 'sniper']);
 const GHOST_HZ = 15;
 export const MAX_GHOST_PATH = 6000; // base64: a 4-byte start, then 3 bytes a sample (60 s at most)
 const MAX_ATTEMPT_PATH = 1500; // a breakaway attempt is 8 s at most
+const MAX_SNIPER_PATH = 3000; // the 45-second Sniper run, the skater's path and the puck's
 const MAX_GHOST_BODY = 14000;
 const CHALLENGE_BOARD = '_challenge';
 const CHALLENGE_GAP_MS = 15000; // between challenges from one player
@@ -178,7 +180,8 @@ const pathSecs = (p, max) => {
 
 // Check a run for a board and keep only its known parts; null if it isn't one.
 // Cone Weave: { path, splits } (no longer than its time). Breakaway: { attempts: [{ path,
-// puck, result }] } (up to five, as many goals as the score).
+// puck, result }] } (up to five, as many goals as the score). Sniper: { path, puck, lit } (45
+// seconds; lit: when each target was hit and which, a hundred points at least for each).
 export function cleanRun(board, g, score) {
   if (!GHOST_BOARDS.has(board) || !g || typeof g !== 'object' || !Number.isFinite(score)) return null;
   const char = String(g.char || '').replace(/[^a-z0-9_]/g, '').slice(0, 24);
@@ -187,6 +190,13 @@ export function cleanRun(board, g, score) {
     if (secs < 0 || secs > score + 1) return null;
     const splits = Array.isArray(g.splits) ? g.splits.slice(0, 12).map(Number).filter(Number.isFinite) : [];
     return { path: g.path, splits, char };
+  }
+  if (board === 'sniper') {
+    const a = pathSecs(g.path, MAX_SNIPER_PATH), b = pathSecs(g.puck, MAX_SNIPER_PATH);
+    if (a < 0 || b < 0 || a > 46 || b > 46 || !Array.isArray(g.lit) || g.lit.length > 60 || g.lit.length * 100 > score) return null;
+    const lit = g.lit.map((x) => (Array.isArray(x) ? [Number(x[0]), Number(x[1])] : null));
+    if (lit.some((x) => !x || !Number.isFinite(x[0]) || x[0] < 0 || x[0] > 46 || ![0, 1, 2].includes(x[1]))) return null;
+    return { path: g.path, puck: g.puck, lit, char };
   }
   if (!Array.isArray(g.attempts) || !g.attempts.length || g.attempts.length > 5) return null;
   const attempts = [];
@@ -288,7 +298,7 @@ export async function handle(req, store, now = Date.now()) {
       if (!validChallenge(code)) return bad('bad code');
       const c = await store.get(CHALLENGE_BOARD, code);
       if (!c) return bad('not found', 404);
-      return ok({ challenge: { board: c.b, name: c.name, tag: c.tag, char: c.char, score: c.score, path: c.path, splits: c.splits, attempts: c.attempts, at: c.at } });
+      return ok({ challenge: { board: c.b, name: c.name, tag: c.tag, char: c.char, score: c.score, path: c.path, splits: c.splits, attempts: c.attempts, puck: c.puck, lit: c.lit, at: c.at } });
     }
     if (req.query.cup !== undefined) {
       const code = String(req.query.cup).toUpperCase();
@@ -315,7 +325,7 @@ export async function handle(req, store, now = Date.now()) {
       if (!GHOST_BOARDS.has(board)) return bad('no ghosts for that board');
       const [lead] = await store.top(key, 1);
       const g = lead && await store.get('ghost:' + (weekly ? weekBoard(board, week.key) : board), lead.player);
-      return ok({ board, ghost: g && g.score === lead.score ? { name: lead.name, tag: lead.tag, char: g.char, score: g.score, path: g.path, splits: g.splits || [], attempts: g.attempts } : null });
+      return ok({ board, ghost: g && g.score === lead.score ? { name: lead.name, tag: lead.tag, char: g.char, score: g.score, path: g.path, splits: g.splits || [], attempts: g.attempts, puck: g.puck, lit: g.lit } : null });
     }
     const top = await store.top(key, TOP);
     let me = null;

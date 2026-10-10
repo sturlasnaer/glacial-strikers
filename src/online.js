@@ -54,7 +54,8 @@ function request(method, params, body) {
 }
 
 // Record a score: queue it (keeping only the best per board), then try to post it. A Cone
-// Weave run can come along as a ghost ({ path, splits }), sent once the score is a best.
+// Weave run can come along as a ghost ({ path, splits }), sent once the score is a best (and a
+// Breakaway's attempts, and a Sniper run's paths and hits).
 // Resolves to the server's answer ({ best, rank, total, improved }) or null.
 export async function submit(save, board, score, char = '', ghost = null) {
   if (!onlineOn(save) || !BOARD_INFO[board] || !Number.isFinite(score)) return null;
@@ -108,7 +109,7 @@ export function fetchGhost(save, board, period = 'week', group = null) {
 // ------------------------------------------------------------------ challenges
 // Any Cone Weave or Breakaway run can be filed under a code for a friend to race; the link
 // opens the game at #race=CODE.
-export const CHALLENGE_BOARDS = ['cones', 'breakaway'];
+export const CHALLENGE_BOARDS = ['cones', 'breakaway', 'sniper'];
 export const challengeLink = (code) => `${location.origin}${location.pathname}#race=${code}`;
 const serverError = () => new Error(t('Couldn\'t reach the server. Try again in a moment.'));
 
