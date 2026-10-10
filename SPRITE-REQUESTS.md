@@ -7,11 +7,10 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **DB: the mascot race**
-2. **DC: tricks for the cub**
-3. **DD: the Mini Cup**
-4. **DE: night games outdoors**
-5. **DF: a trophy shelf in the locker room**
+1. **DC: tricks for the cub**
+2. **DD: the Mini Cup**
+3. **DE: night games outdoors**
+4. **DF: a trophy shelf in the locker room**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -66,6 +65,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered CZ:** Seasonal cub costumes: nine Halloween pumpkin poses and nine holiday Santa-hat/scarf poses, matching the original floor pivots. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CZ-Testing-Update`.
 
 **Delivered DA:** Cub outfit overlays: nine registered poses each for the ice-blue/cream striped scarf, snowflake beanie and gold bow tie (27 transparent frames). Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DA-Testing-Update`.
+
+**Delivered DB:** Mascot race: four rightward running poses and a winner pose for all eight clubs (40 transparent frames), plus the four-lane1536×640 ice track. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DB-Testing-Update`.
 
 ## Format notes
 
@@ -486,7 +487,7 @@ Kids want to dress the locker room's cub (CX) themselves: outfits bought in the 
 
 The Shop shows each one as soon as its frames are in (from its `sit_1`). 27 frames.
 
-## Batch DB: the mascot race
+## Batch DB ✓: the mascot race
 
 At the break in a match (once a side has scored three), the club mascots have a race across the ice, the way real arenas do it between periods. Kids pick a runner first and win coins if it wins. Please draw, in the game's style, as atlas frames on a page in a new `race` group (the game loads it for matches):
 - Running frames for all eight mascots, the same characters as in the stands (`mascot/snow_fox`, `mascot/pinewood_lynx` … `mascot/thunder_moose`): `race/<snow_fox|pinewood_lynx|ember_comets|gilded_rams|obsidian_ravens|aurora_royals|glacier_owls|thunder_moose>/run_1`..`_4`, seen from the side running to the right in big comic strides (slipping a little on the ice), about 180 px tall, pivot at the feet. 32 frames.
