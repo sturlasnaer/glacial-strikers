@@ -2,7 +2,7 @@
 
 import { FACILITY_IDS, facilityLevel, MAX_FACILITY } from './facilities.js';
 import { decorFull } from './decor.js';
-import { GEAR, CHEM_LEVELS, RECRUITS, CAST_PAIRS, LEGENDS, ELEMENTS, GOALIE_RECRUITS, RIVAL_IDS } from './data.js';
+import { GEAR, CHEM_LEVELS, RECRUITS, CAST_PAIRS, LEGENDS, ELEMENTS, GOALIE_RECRUITS, RIVAL_IDS, ALL_RIVALS } from './data.js';
 
 const TROPHY = 'equipment_items/reward/trophy', MEDAL = 'equipment_items/reward/medal', STAR = 'hud_elements/misc/level_star';
 
@@ -60,6 +60,8 @@ export const ACHIEVEMENTS = [
   { id: 'fetch-champion', name: 'Fetch Champion', text: 'Play fetch with the cub ten times.', icon: 'icons/pet', art: 'achievements/fetch_champion', coins: 30 },
   { id: 'gold-star-chart', name: 'Star Chart', text: 'Earn ten gold stars in Little player games.', icon: 'badges/daily_star', art: 'achievements/gold_star_chart', coins: 50 },
   { id: 'pet-pals', name: 'Pet Pals', text: 'Collect five pets.', icon: 'icons/pet', art: 'achievements/pet_pals', coins: 60 },
+  { id: 'elite-dynasty', name: 'Dynasty of the Elite', text: 'Win the Elite Cup three times.', icon: 'badges/elite_cup', art: 'achievements/elite_dynasty', coins: 300 },
+  { id: 'grand-tour', name: 'Grand Tour', text: 'Beat every club in the country at least once.', icon: 'icons/career', art: 'achievements/grand_tour', coins: 200 },
   { id: 'full-pet-house', name: 'Full Pet House', text: 'Collect every club\'s pet.', icon: 'icons/pet', art: 'achievements/full_pet_house', coins: 200 },
   { id: 'fresh-sheet', name: 'Fresh Sheet', text: 'Win gold in the Resurfacer drill.', icon: 'hud_elements/ability/frost', art: 'achievements/fresh_sheet', coins: 40 },
   { id: 'better-together', name: 'Better Together', text: 'Win a match with two players on the team.', icon: 'icons/friends', art: 'achievements/better_together', coins: 40 },
@@ -221,6 +223,8 @@ export class AchievementTracker {
     if (L && L.schedule && L.results.length >= L.schedule.length && L.results.slice(0, L.schedule.length).every((r) => r[0].ga > r[0].gb)) this.unlock('perfect');
     const rivals = RIVAL_IDS; // (the Frostline's: the National clubs have cups of their own)
     if (s.rivals && rivals.every((k) => s.rivals[k] && s.rivals[k].wins > 0)) this.unlock('rivals');
+    if (s.rivals && ALL_RIVALS.every((k) => s.rivals[k] && s.rivals[k].wins > 0)) this.unlock('grand-tour'); // (all three divisions' clubs)
+    if (((s.tierCups && s.tierCups.elite) || 0) >= 3) this.unlock('elite-dynasty');
     if (Object.values(s.roster).some((r) => r.level >= 10)) this.unlock('max-level');
     if (Object.values(s.chem || {}).some((x) => x >= CHEM_LEVELS[2])) this.unlock('in-sync');
     if (s.training && ['cones', 'sniper', 'rondo', 'breakaway'].every((d) => (s.training.medals[d] || 0) >= 3)) this.unlock('gold-drills');

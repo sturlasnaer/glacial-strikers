@@ -5,10 +5,11 @@
 // Only league games feel it: exhibitions, the daily challenge and the Mini Cup don't.
 
 export const TIERS = [
-  { id: 'regional', name: 'Frostline Regional Cup', cup: 'Frostline Cup', badge: 'badges/tier_regional', cupArt: 'badges/frostline_cup', purse: 1 },
-  { id: 'national', name: 'Frostline National Cup', cup: 'National Cup', badge: 'badges/tier_national', cupArt: 'badges/national_cup', purse: 1.25 },
-  { id: 'elite', name: 'Frostline Elite Cup', cup: 'Elite Cup', badge: 'badges/tier_elite', cupArt: 'badges/elite_cup', purse: 1.5 },
+  { id: 'regional', name: 'Frostline Regional Cup', cup: 'Frostline Cup', badge: 'badges/tier_regional', cupArt: 'badges/frostline_cup', purse: 1, final: 'frostline_coliseum' },
+  { id: 'national', name: 'Frostline National Cup', cup: 'National Cup', badge: 'badges/tier_national', cupArt: 'badges/national_cup', purse: 1.25, final: 'capital_dome' },
+  { id: 'elite', name: 'Frostline Elite Cup', cup: 'Elite Cup', badge: 'badges/tier_elite', cupArt: 'badges/elite_cup', purse: 1.5, final: 'diamond_arena' },
 ];
+// (final: where the division's Cup Final is played, Batch EO; the Coliseum until its art is in)
 export const TIER_MAX = TIERS.length - 1;
 export const TIER_STATS = 1; // (the rivals' four best stats, a point a level)
 export const TIER_SHARP = 0.06; // (the AI, a level)
@@ -25,7 +26,7 @@ export function moveTier(save, L, rows) {
   if (!L) return null;
   const tier = tierOf(save);
   if (L.champion === 'home') {
-    if (tier < TIER_MAX) { save.tier = tier + 1; save.upIn = (L.season || 0) + 1; return 'promoted'; }
+    if (tier < TIER_MAX) { save.tier = tier + 1; save.upIn = (L.season || 0) + 1; save.tierTop = Math.max(save.tierTop || 0, save.tier); return 'promoted'; } // (tierTop: the highest it's been)
     return null;
   }
   if (tier > 0 && rows && rows.length > 1 && rows[rows.length - 1].id === 'home' && !safeSeason(save, L)) { save.tier = tier - 1; return 'relegated'; }

@@ -146,7 +146,7 @@ export class Renderer {
       const cv = Assets.iconCanvas(hostCrest, 200, host.id, { recolor: true }), f = Assets.frame(hostCrest), w = f ? (f[3] / f[7]) * 0.26 : 96;
       if (cv) { ctx.save(); ctx.globalAlpha *= 0.3; ctx.drawImage(cv, cc.x - w / 2, cc.y + 4 - (w * 0.8) / 2, w, w * 0.8); ctx.restore(); }
     } else if (hostCrest) Assets.draw(ctx, hostCrest, cc.x, cc.y + 4, 0.26, { alpha: 0.3, squash: 0.8 });
-    else if (arena !== 'frostline_coliseum') Assets.draw(ctx, Assets.frame(TEAMS.home.crest) ? TEAMS.home.crest : 'hud_elements/misc/home_crest', cc.x, cc.y + 2, 0.5, { alpha: 0.3, squash: 0.8, pages: Assets.clubPages() }); // (our crest: the Snow Fox or the club's choice)
+    else if (!(ARENAS[arena] && ARENAS[arena].finalOnly)) Assets.draw(ctx, Assets.frame(TEAMS.home.crest) ? TEAMS.home.crest : 'hud_elements/misc/home_crest', cc.x, cc.y + 2, 0.5, { alpha: 0.3, squash: 0.8, pages: Assets.clubPages() }); // (our crest: the Snow Fox or the club's choice)
     this.drawLamps(ctx, fx);
     this.drawCrowd(ctx, fx, ui);
     if (arena === 'home') this.drawCub(ctx, fx, false, match);

@@ -4,7 +4,7 @@
 // swapped for coins, a full page and the whole album paid once, and the same luck for the same
 // rolls.
 //   node tools/test_album.mjs
-import { albumPages, albumOf, startAlbum, addPacks, openPack, progress, pageFull, PACK_SIZE, DOUBLE_COINS, PAGE_COINS, ALBUM_COINS, STARTER_PACKS } from '../src/album.js';
+import { albumPages, albumClubOpen, albumOf, startAlbum, addPacks, openPack, progress, pageFull, PACK_SIZE, DOUBLE_COINS, PAGE_COINS, ALBUM_COINS, STARTER_PACKS } from '../src/album.js';
 import { ACHIEVEMENTS } from '../src/achievements.js';
 import { makeRng } from '../src/util.js';
 
@@ -78,6 +78,25 @@ check('the mascots at the ends of their pages once drawn', withMascots.flatMap((
 }
 
 check('trophies for a page and the whole album', ['sticker-page', 'sticker-album'].every((id) => ACHIEVEMENTS.some((a) => a.id === id)));
+
+// the National and Elite clubs: their pages once the club's gone up to meet them (or played
+// them), after the legends, so the numbers before them stay put
+{
+  const s = fresh();
+  const open = (sv) => (tid) => albumClubOpen(sv, tid);
+  check('a new save: the Frostline\'s pages only', albumPages(() => false, open(s)).length === 9);
+  s.tier = 1;
+  const nat = albumPages(() => false, open(s));
+  check('up to the National: its nine clubs\' pages, after the legends', nat.length === 18 && nat[8].id === 'legends' && nat[9].team === 'capybaras' && nat.slice(9).every((p) => p.stickers.length === 4));
+  check('...the stickers before them numbered as they were', nat.slice(0, 9).flatMap((p) => p.stickers).every((st, i) => st.n === all[i].n && st.id === all[i].id) && nat.flatMap((p) => p.stickers).every((st, i) => st.n === i + 1));
+  s.tier = 0; s.tierTop = 1;
+  check('back down: the pages stay', albumPages(() => false, open(s)).length === 18);
+  const e = fresh(); e.tier = 2;
+  const el = albumPages(() => false, open(e));
+  check('the Elite: the National clubs\' and its own two', el.length === 20 && el.at(-1).team === 'pandas' && el.at(-2).team === 'tigers');
+  const met = fresh(); met.rivals = { flamingos: { played: 1, wins: 0, losses: 1 } };
+  check('a club already played: its page too', albumPages(() => false, open(met)).map((p) => p.id).join().endsWith('legends,flamingos'));
+}
 
 console.log(`Sticker album: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

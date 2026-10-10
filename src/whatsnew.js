@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10zr',
+    items: [
+      { icon: 'icons/album', alt: 'icons/stat_cups', text: 'The sticker album grows: a page for every National and Elite club, once the Foxes reach their division. And two new trophies to chase: win the Elite Cup three times, and beat every club in the country.' },
+    ],
+  },
+  {
     id: '2026-10-10zq',
     items: [
       { icon: 'badges/national_cup', alt: 'badges/tier_national', text: 'Two more clubs in the National Cup: the Birchwood Beavers, who build a dam in front of their net, and the Coral Bay Flamingos, who glide past you on one skate. The National is now ten clubs and nine rounds, like the Elite.' },

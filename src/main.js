@@ -436,7 +436,7 @@ class App {
     const stage = f.stage;
     const team = TEAMS[f.opponent];
     const powers = stage.powers.length ? t('Power pucks: {list}.', { list: stage.powers.map((p) => t(POWER_INFO[p].name)).join(', ') }) : t('No power pucks this match.');
-    const arena = stage.arena || this.arenaFor(team.id); // the Winter Classic is on Pine Pond
+    const arena = this.venue(stage.arena) || this.arenaFor(team.id); // the Winter Classic is on Pine Pond
     const twist = TWIST_INFO[this.twistFor(arena, stage)];
     const sub = `${t(stage.round, { n: stage.roundN })} · ${powers} ${twist ? t(twist) : ''}`;
     this.scene = 'dialogue';
@@ -488,6 +488,12 @@ class App {
     this.music('story');
     this.prepAllStar(vote).then(() => this.ui.dialogue(PLAYOFF_LINES.allstar.pre, 'allstar', { sub: t('No penalties, and ultimates charge twice as fast.') },
       () => this.beginMatch('allstar', f.stage, false, [], { fixture: f, allstar: vote })));
+  }
+
+  // A Cup Final's building: the division's own once its art is in, the Coliseum till then.
+  venue(arena) {
+    const A = ARENAS[arena];
+    return A && A.finalOnly && arena !== 'frostline_coliseum' && !(Assets.atlas.arenas && Assets.atlas.arenas[arena]) ? 'frostline_coliseum' : arena;
   }
 
   // Rivals with their own building host you there (a National club's once its rink's art is in).
@@ -843,7 +849,7 @@ class App {
     cfg.mods = mods;
     cfg.coop = coop; cfg.keeperCoop = keeperCoop;
     this.cur.coop = coop || keeperCoop; // (two players' input either way)
-    const arena = extra.arena || stage.arena || this.arenaFor(teamId);
+    const arena = extra.arena || this.venue(stage.arena) || this.arenaFor(teamId);
     cfg.twist = this.twistFor(arena, stage, extra.rules !== false);
     this.attract = false;
     const m = this.makeMatch(cfg, teamId, arena);

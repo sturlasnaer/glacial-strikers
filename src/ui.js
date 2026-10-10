@@ -65,7 +65,7 @@ import { tripStops, POSTCARD_TOWNS } from './trip.js';
 import { tierOf, tierInfo, tierAt, TIERS, safeSeason } from './tiers.js';
 import { newPet, stepPet, tapPet, tossPuck, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall,
   PET_KINDS, PET_KIND, PET_FRAMES, PET_WINS, PET_AREA, ROOM_MAX, petDir, petIcon, roomPets, ownedPets, petsDue, adoptPet, sendToHouse, bringToRoom, petNameOf, renamePet, winsAgainst } from './pet.js';
-import { albumPages, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
+import { albumPages, albumClubOpen, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
 
 const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
 const ROLE_NAME = { C: 'Centre', W: 'Winger', D: 'Defender' };
@@ -370,7 +370,7 @@ const cupName = (tier) => t(tierAt(tier).cup); // (the Frostline Cup, the Nation
 const vetBadge = (v) => (v ? ` <span class="vet" title="${esc(t('Veteran level {n}', { n: v }))}">${smallIcon(v >= VET_MAX && Assets.atlas.frames['badges/veteran_max'] ? 'badges/veteran_max' : 'badges/veteran', 40, 'vet-ico') || '★'}${v}</span>` : '');
 // The sticker album: the pages (a club's mascot once its sticker is drawn, Batch CR), a
 // sticker's face, and the sticker itself.
-const ALBUM_PAGES = () => albumPages((team) => !!Assets.atlas.frames[`album/mascot_${team}`]);
+const ALBUM_PAGES = (s) => albumPages((team) => !!Assets.atlas.frames[`album/mascot_${team}`], (tid) => albumClubOpen(s, tid));
 function stickerFace(st, size) {
   if (st.kind === 'mascot') return Assets.icon(`album/mascot_${st.team}`, size);
   if (st.team === 'home' || st.kind === 'legend') return portrait(st.key, 0, null, size);
@@ -571,7 +571,7 @@ export class UI {
       </div>
       <div>
         <div class="label" style="font-size:15px">${t('Arena')}</div>
-        <div class="filters" style="margin:6px 0 0">${['auto', ...Object.keys(ARENAS).filter((k) => !(ARENAS[k].exhibitionOnly || ARENAS[k].national) || (Assets.atlas.arenas && Assets.atlas.arenas[k]))].map((k) => `<button class="chip" data-arena="${k}" aria-pressed="${(this.arenaPick || 'auto') === k}">${k === 'auto' ? t('Their building') : esc(ARENAS[k].name)}${ARENAS[k] && ARENAS[k].rule ? ` <span class="muted">· ${ruleIcon(ARENAS[k].twist, 32)}${esc(t(ARENAS[k].rule))}</span>` : ''}</button>`).join('')}
+        <div class="filters" style="margin:6px 0 0">${['auto', ...Object.keys(ARENAS).filter((k) => !(ARENAS[k].exhibitionOnly || ARENAS[k].national || (ARENAS[k].finalOnly && k !== 'frostline_coliseum')) || (Assets.atlas.arenas && Assets.atlas.arenas[k]))].map((k) => `<button class="chip" data-arena="${k}" aria-pressed="${(this.arenaPick || 'auto') === k}">${k === 'auto' ? t('Their building') : esc(ARENAS[k].name)}${ARENAS[k] && ARENAS[k].rule ? ` <span class="muted">· ${ruleIcon(ARENAS[k].twist, 32)}${esc(t(ARENAS[k].rule))}</span>` : ''}</button>`).join('')}
           <button class="chip" id="arena-rules" aria-pressed="${this.arenaRules !== false}" title="${esc(t('Meltwater in the Ember Dome, aurora lanes in the Aurora Palace, pond cracks on Pine Pond, rumble strips in the Golden Hall, raven shadows in the Dark Aerie'))}">${this.arenaRules !== false ? t('Arena rules on') : t('Arena rules off')}</button>${Object.keys(Assets.atlas.arenas || {}).some((k) => k.endsWith('_night')) ? `<button class="chip" id="arena-night" aria-pressed="${!!this.nightPick}" title="${esc(t('Under the lights at the outdoor rinks (Pine Pond, the Harbour Rink, the Summit Rink).'))}">${t('Night game')}</button>` : ''}</div>
       </div>
       </details>
@@ -1239,7 +1239,7 @@ export class UI {
     const last = L.results.length ? L.results[L.results.length - 1].slice(1) : [];
     const next = this.app.fixture && this.app.fixture();
     const nt = next && teamInfo(next.opponent);
-    const venueKey = next && next.stage.arena ? next.stage.arena : nt && this.app.arenaFor(next.opponent);
+    const venueKey = next && next.stage.arena ? this.app.venue(next.stage.arena) : nt && this.app.arenaFor(next.opponent);
     const venue = venueKey ? ARENAS[venueKey].name : 'Frostline Rink';
     // their leading scorer this season, when they have one worth a mention
     const star = nt && L.stats && Object.values(L.stats.skaters).filter((r) => r.team === next.opponent && r.g >= 2).sort((a, b) => b.g - a.g)[0];
@@ -1486,7 +1486,7 @@ export class UI {
 
   // The sticker album's card in Trophies: the cover, how full it is, and the packs to open.
   albumCard(s) {
-    const a = albumOf(s), pr = albumProgress(s, ALBUM_PAGES());
+    const a = albumOf(s), pr = albumProgress(s, ALBUM_PAGES(s));
     return `<div class="album-card">
       <div class="album-cover" aria-hidden="true">${smallIcon('icons/album', 96, 'al-ico') || `<img class="al-ico" src="${crest('home', 96)}" alt="">`}</div>
       <div style="min-width:0"><b>${t('Sticker album')}</b>
@@ -1499,11 +1499,13 @@ export class UI {
   // The album, a page a club (and the legends): the stickers you have stuck in, the gaps
   // numbered with who goes there.
   album(at = 0) {
-    const s = this.app.save, pages = ALBUM_PAGES(), a = albumOf(s);
+    const s = this.app.save, pages = ALBUM_PAGES(s), a = albumOf(s);
     if (startAlbum(s)) { writeSave(s); this.app.toast(Assets.icon(Assets.atlas.npcs && Assets.atlas.npcs.coach ? Assets.atlas.npcs.coach : 'icons/stat_cups', 72), t('Sticker album'), t('Coach Brekka hands you an album'), t('…and {n} packs to start it!', { n: STARTER_PACKS })); }
     const title = (p) => (p.team ? TEAMS[p.team].name : t('Legends'));
+    let mEl = null;
     const body = (i) => {
       const p = pages[i], pr = albumProgress(s, pages), full = pageFull(s, p);
+      this.stickerTeams([p.team], () => { if (mEl && mEl.isConnected && pages[i] === p) mEl.innerHTML = body(i); }); // (a club from parts: its faces in its colours)
       return `<h2>${smallIcon('icons/album', 96, 'h-ico')}${t('Sticker album')}</h2>
         <p class="muted" style="margin:0 0 8px">${t('{n} of {total} stickers', { n: pr.got, total: pr.total })}${pr.foil ? ` · ${t('{n} shiny', { n: pr.foil })}` : ''} · ${t('A full page: +{n} coins. The whole album: +{m}.', { n: PAGE_COINS, m: ALBUM_COINS })}</p>
         <div class="album-tabs">${pages.map((q, k) => `<button class="chip" data-page="${k}" aria-pressed="${k === i}" title="${esc(title(q))}">${q.team ? `<img src="${crest(q.team, 40)}" alt="" width="20" height="20">` : '★'}${a.done.includes(q.id) ? '<span class="ok">✓</span>' : ''}</button>`).join('')}</div>
@@ -1522,6 +1524,7 @@ export class UI {
     };
     let i = Math.max(0, Math.min(pages.length - 1, at));
     this.modal(body(i), (m, close) => {
+      mEl = m;
       m.classList.add('album-modal');
       if (hasGallery() && !Assets.groupReady('gallery')) Assets.loadGroup('gallery').then(() => { if (m.isConnected) m.innerHTML = body(i); }, () => {}); // (the mascots' stickers)
       m.addEventListener('click', (e) => {
@@ -1537,9 +1540,23 @@ export class UI {
     }, true, () => { if (this.tab === 'trophies') this.hub('trophies'); });
   }
 
+  // A club made from parts shows its stickers' faces in its colours once the parts pages are in
+  // and recoloured for it: true when they are; otherwise they load and redraw() runs after
+  // (either way).
+  stickerTeams(teams, redraw) {
+    const need = [...new Set(teams)].map((id) => id && TEAMS[id]).filter((tm) => tm && tm.id !== 'home' && !tm.art);
+    if (!need.length) return true;
+    const groups = ['parts', ...(need.some((tm) => tm.goalieLook) ? ['goalie_parts'] : [])];
+    if (groups.every((g) => Assets.groupReady(g))) { need.forEach((tm) => Assets.prepareTeam(tm)); return true; }
+    const done = () => { need.forEach((tm) => Assets.prepareTeam(tm)); redraw(); };
+    Promise.all(groups.map((g) => Assets.loadGroup(g))).then(done, done);
+    return false;
+  }
+
   // Open a pack: three stickers turn over one by one: NEW!, SHINY! or a double swapped for coins.
   packOpen(page = null) {
-    const s = this.app.save, pages = ALBUM_PAGES();
+    const s = this.app.save, pages = ALBUM_PAGES(s);
+    if (!this.stickerTeams(pages.map((p) => p.team), () => this.packOpen(page))) return; // (the faces of clubs from parts first)
     startAlbum(s);
     const res = openPack(s, pages);
     if (!res) return this.album(page ?? 0);

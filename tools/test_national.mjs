@@ -65,26 +65,30 @@ check('a National fixture: their stage', f.opponent === 'capybaras' && f.stage.r
   check('stronger up here', strength('capybaras', s) > strength('capybaras', { ...s, tier: 0 }));
   const cfg = matchConfig(s, 'narwhals', stageOf('narwhals'), { league: true });
   check('a match config: three skaters from parts and a goalie', cfg.teams[1].skaters.length === 3 && cfg.teams[1].goalie.stats.rfx >= 8, cfg.teams[1].goalie.stats);
-  let guard = 0;
+  let guard = 0, finalAt = null;
   while (s.league.phase !== 'done' && guard++ < 40) {
     const fx = nextFixture(s.league);
+    if (fx && fx.kind === 'final') finalAt = fx.stage.arena;
     if (!fx || fx.kind === 'allstar' || fx.kind === 'classic') { if (fx && fx.kind === 'allstar') s.league.allstar = { skipped: true }; else if (fx) s.league.classic = { opp: fx.opponent, gf: 1, ga: 0, won: true }; continue; }
     recordOurGame(s.league, s, 5, 2);
   }
   check('a National season plays through to a champion', s.league.phase === 'done' && s.league.champion === 'home', s.league.phase);
+  check('...its Cup Final in the Capital Dome', finalAt === 'capital_dome' && ARENAS.capital_dome.finalOnly, finalAt);
   check('no holes, no signings among clubs we haven\'t touched', NATIONAL_IDS.every((id) => holes(s, id).length === 0) && rivalSigning(s, () => 0) === null);
 }
 
 // an Elite season, ten clubs, played through to the playoffs and a champion
 {
   const s = newSave(); s.tier = 2; s.season = 5; s.league = newLeague(5, 2);
-  let guard = 0;
+  let guard = 0, finalAt = null;
   while (s.league.phase !== 'done' && guard++ < 40) {
     const fx = nextFixture(s.league);
+    if (fx && fx.kind === 'final') finalAt = fx.stage.arena;
     if (fx && fx.kind === 'allstar') { s.league.allstar = { skipped: true }; continue; }
     if (fx && fx.kind === 'classic') { s.league.classic = { opp: fx.opponent, gf: 1, ga: 0, won: true }; continue; }
     recordOurGame(s.league, s, 5, 3);
   }
+  check('the Elite\'s Cup Final in Diamond Arena, the Frostline\'s still in the Coliseum', finalAt === 'diamond_arena' && newLeague(2, 0).tier === 0 && ARENAS.frostline_coliseum.finalOnly, finalAt);
   check('an Elite season of nine rounds plays through to a champion', s.league.phase === 'done' && s.league.champion === 'home' && s.league.results.length >= 9 && standings(s.league).length === 10, s.league.phase);
 }
 

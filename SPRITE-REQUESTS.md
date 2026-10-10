@@ -16,6 +16,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 7. **EK: the National clubs' pets (2)**
 8. **EL: the Elite's own clubs, the Taiga Tigers and the Bamboo Ridge Pandas**
 9. **EM: two more National clubs, the Birchwood Beavers and the Coral Bay Flamingos**
+10. **EN: the new clubs' mascot stickers for the album**
+11. **EO: the National and Elite Cup Finals' buildings**
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -870,3 +872,17 @@ For each of the two:
 - Its pet, like EH–EK: `pets/beaver/…` and `icons/pet_beaver`, a **Beaver kit** (round and brown, big front teeth, a flat tail it slaps when it hops, a wine-red bandana, a little twig to chew in one of the sit frames), and `pets/flamingo/…` and `icons/pet_flamingo`, a **Flamingo chick** (a fluffy pale-grey chick, just turning pink, with a little hooked beak and wobbly long legs; it naps standing on one leg; a palm-green bandana). On `pets` pages.
 
 2 crests, 8 + 10 mascot frames, 2 rinks, 2 postcards and 20 pet frames.
+
+## Batch EN: the new clubs' mascot stickers for the album
+
+The sticker album now has a page for each of the eleven new clubs (it appears once the Foxes reach that club's division). Like Batch CR's: `album/mascot_capybaras`, `album/mascot_beavers`, `album/mascot_puffins`, `album/mascot_grizzlies`, `album/mascot_seals`, `album/mascot_flamingos`, `album/mascot_penguins`, `album/mascot_bulls`, `album/mascot_narwhals`, `album/mascot_tigers`, `album/mascot_pandas` (11, the size and framing of the character portraits, on transparent): each club's mascot, head and shoulders, waving at the camera, in the club's colours; the same mascots that dance in the stands (EB, EL, EM). As atlas frames on a page in the `gallery` group (loaded in Trophies). Each joins the end of its club's page as soon as its frame is in. 11 frames.
+
+## Batch EO: the National and Elite Cup Finals' buildings
+
+Every Cup Final is played at the Frostline Coliseum (BX) today. The two higher divisions deserve grander ones. Please draw each exactly like BX: the 1536×1024 backdrop with the rink lines, boards, glass and benches in the same places (so the game's rink fits unchanged), its scoreboard frames (`arena.scoreboards.<key>`), near-side glass and a penalty box in the AU style, with no lettering. Each building on its own group named after it (`arena_capital_dome`, `arena_diamond_arena`), loaded only for its final:
+- `arena_capital_dome`, **the Capital Dome**, home of the National Cup Final: a huge domed national arena with a glass roof and the night sky beyond, silver and deep blue, the National crest (the `badges/tier_national` design) at centre ice and on banners, packed stands in every National club's colours, the National Cup hanging over centre ice.
+- `arena_diamond_arena`, **Diamond Arena**, home of the Elite Cup Final: the grandest building in the game, white and gold with faceted crystal light fixtures that throw rainbow sparkles, the Elite crest (`badges/tier_elite`) at centre ice, the Elite Cup hanging over centre ice, spotlights and confetti cannons waiting at the rail.
+
+And two achievement icons (128×128, like the other `achievements/…`): `achievements/elite_dynasty` (three Elite Cups in a row on a shelf) and `achievements/grand_tour` (a little team bus driving past a ring of club crests on a map).
+
+2 arenas (with their scoreboards, glass and penalty boxes) and 2 icons.

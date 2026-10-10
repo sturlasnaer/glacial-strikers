@@ -488,6 +488,9 @@ export const ARENAS = {
   moose_longhouse: { name: 'The Longhouse', lamps: '#ffb05c', flicker: 1.4, twist: 'loose_planks', rule: 'Loose planks' }, // (the Thunder Moose's)
   // the Cup Final's neutral building (Batch BX): no rule of its own; not a daily challenge's arena
   frostline_coliseum: { name: 'Frostline Coliseum', lamps: '#ffd45e', twist: 'none', finalOnly: true },
+  // the National and Elite Cup Finals' buildings (Batch EO): the Coliseum until their art is in
+  capital_dome: { name: 'The Capital Dome', lamps: '#ffe9b0', twist: 'none', finalOnly: true },
+  diamond_arena: { name: 'Diamond Arena', lamps: '#d6f0ff', twist: 'none', finalOnly: true },
   // an outdoor rink on the frozen harbour (Batch CM), for exhibitions: in Quick play once its art is in, never a daily's
   harbour_rink: { name: 'Harbour Rink', lamps: '#ffd27a', twist: 'sea_breeze', rule: 'Sea breeze', exhibitionOnly: true },
   // a rink carved inside a glacier (Batch CP), for exhibitions: in Quick play once its art is in, never a daily's

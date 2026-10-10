@@ -11,7 +11,7 @@ import { TEAMS, RIVAL_IDS, FOUNDING_RIVALS, NATIONAL_IDS, ELITE_IDS, stageOf } f
 import { makeRng } from './util.js';
 import { recordSimGame } from './awards.js';
 import { rosterShift, seasonBoost } from './slots.js';
-import { tierOf, TIER_SHARP } from './tiers.js';
+import { tierOf, tierAt, TIER_SHARP } from './tiers.js';
 import { t } from './i18n.js';
 
 export const FOUNDING_TEAMS = ['home', ...FOUNDING_RIVALS];
@@ -51,6 +51,7 @@ export function newLeague(season, tier = 0) {
   const teams = tier >= 2 ? ELITE_TEAMS : tier === 1 ? NATIONAL_TEAMS : season >= EXPANSION_SEASON ? EXPANDED_TEAMS : FOUNDING_TEAMS;
   return {
     season,
+    tier, // (its Cup Final's building: tiers.js)
     teams: [...teams],
     phase: 'regular', // 'regular' | 'playoffs' | 'done'
     round: 0,
@@ -129,7 +130,7 @@ export function nextFixture(L) {
     }
     if (po.final && !po.final.winner && (po.final.a === 'home' || po.final.b === 'home')) {
       const opp = po.final.a === 'home' ? po.final.b : po.final.a;
-      return { kind: 'final', opponent: opp, label: t('Final'), stage: { team: opp, powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'both', round: 'Cup Final', reward: 480, arena: 'frostline_coliseum' } };
+      return { kind: 'final', opponent: opp, label: t('Final'), stage: { team: opp, powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'both', round: 'Cup Final', reward: 480, arena: tierAt(L.tier).final } };
     }
   }
   return null;
