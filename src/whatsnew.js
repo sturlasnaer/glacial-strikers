@@ -2,6 +2,13 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10zh',
+    items: [
+      { icon: 'postcard/owls', alt: 'map/bus_1', text: 'Postcards from the road! Win a league game in a rival\'s town and they send one home. Collect all eight under the map in the League tab.' },
+      { icon: 'icons/cub_bed', alt: 'icons/pet', text: 'A cosy basket for the cub, in Shop › Locker room › For the cub. It naps in it, curled up, until you tap it.' },
+    ],
+  },
+  {
     id: '2026-10-10zg',
     items: [
       { icon: 'equipment_items/stick/passing', alt: 'icons/coop', text: 'Give-and-go! When a teammate passes to you, they skate hard into open ice ahead. Pass it back for the one-two.' },

@@ -1134,7 +1134,8 @@ export class UI {
     const A = Assets.atlas, towns = A.map_towns, f = Assets.frame('map/region');
     if (!towns || !f || !A.pages.some((p) => p.group === 'map')) return '';
     const cards = A.pages.some((p) => p.group === 'postcards') && Assets.frame('postcard/lynx'); // (the postcards: Batch DK)
-    if (!Assets.groupReady('map') || (cards && !Assets.groupReady('postcards'))) { Promise.all([Assets.loadGroup('map'), cards && Assets.loadGroup('postcards')]).then(() => { if (this.tab === 'tournament' && body.isConnected) this.tabTournament(body); }, () => {}); return ''; }
+    const cardArt = cards && (this.app.save.postcards || []).length > 0; // (their page only once there's one to show: it's big)
+    if (!Assets.groupReady('map') || (cardArt && !Assets.groupReady('postcards'))) { Promise.all([Assets.loadGroup('map'), cardArt && Assets.loadGroup('postcards')]).then(() => { if (this.tab === 'tournament' && body.isConnected) this.tabTournament(body); }, () => {}); return ''; }
     const W = f[3] / (f[7] || 1), H = f[4] / (f[7] || 1), { stops, at, next } = tripStops(L);
     const pt = (town) => towns[town] || towns.home || [W / 2, H / 2];
     const line = (list) => list.map((st) => pt(st.town).join(',')).join(' ');
