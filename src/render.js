@@ -137,7 +137,7 @@ export class Renderer {
       const cv = Assets.iconCanvas(hostCrest, 200, host.id, { recolor: true }), f = Assets.frame(hostCrest), w = f ? (f[3] / f[7]) * 0.26 : 96;
       if (cv) { ctx.save(); ctx.globalAlpha *= 0.3; ctx.drawImage(cv, cc.x - w / 2, cc.y + 4 - (w * 0.8) / 2, w, w * 0.8); ctx.restore(); }
     } else if (hostCrest) Assets.draw(ctx, hostCrest, cc.x, cc.y + 4, 0.26, { alpha: 0.3, squash: 0.8 });
-    else Assets.draw(ctx, Assets.frame(TEAMS.home.crest) ? TEAMS.home.crest : 'hud_elements/misc/home_crest', cc.x, cc.y + 2, 0.5, { alpha: 0.3, squash: 0.8, pages: Assets.clubPages() }); // (our crest: the Snow Fox or the club's choice)
+    else if (arena !== 'frostline_coliseum') Assets.draw(ctx, Assets.frame(TEAMS.home.crest) ? TEAMS.home.crest : 'hud_elements/misc/home_crest', cc.x, cc.y + 2, 0.5, { alpha: 0.3, squash: 0.8, pages: Assets.clubPages() }); // (our crest: the Snow Fox or the club's choice)
     this.drawLamps(ctx, fx);
     this.drawCrowd(ctx, fx, ui);
     this.drawArenaProps(ctx, match, fx, ui, arena);
@@ -200,8 +200,11 @@ export class Renderer {
     list.sort((a, b) => a.y - b.y);
     for (const d of list) d.f();
     // near glass over anyone skating along the bottom boards (Pine Pond has snowbanks)
-    if (Assets.glass && arena !== 'pine_pond') ctx.drawImage(Assets.glass, Assets.atlas.arena.glass.x, Assets.atlas.arena.glass.y);
+    const foreground = Assets.atlas.arena.glasses?.[arena];
+    if (foreground) Assets.draw(ctx, foreground.frame, foreground.x, foreground.y, 1);
+    else if (Assets.glass && arena !== 'pine_pond') ctx.drawImage(Assets.glass, Assets.atlas.arena.glass.x, Assets.atlas.arena.glass.y);
     if (arena === 'home') this.drawSupporters(ctx, fx, ui.save);
+    else this.drawRivalSupporters(ctx, fx, ui.awayTeamId, arena);
     if (match.allstar && arena === 'home') this.drawAllStarDressing(ctx, fx, true);
 
     this.drawParticles(ctx, fx);
@@ -370,6 +373,23 @@ export class Renderer {
     }
   }
 
+  drawRivalSupporters(ctx, fx, teamId, arena) {
+    const team = TEAMS[teamId], club = team && (team.art || team.mark);
+    const sets = club && team.arena === arena && Assets.atlas.rival_supporters?.[club];
+    if (!sets) return;
+    const cheering = fx.cheerTeam === 1 && fx.lamp > 0;
+    const phase = Math.floor(fx.time * (fx.chant?.team === 1 ? 4 : 1.3)) % 2;
+    for (const [role, x] of [['drummer', 575], ['capo', 675], ['banner', 820]]) {
+      const set = sets[role], id = set && (cheering ? set.cheer : set.chant[phase]);
+      if (!id) continue;
+      Assets.draw(ctx, id, x, 935, set.render_scale, { pages: Assets.pagesFor(teamId) });
+      const f = Assets.frame(id), region = Assets.atlas.overlay_regions?.[id]?.club_short_name;
+      if (role !== 'banner' || !f || !region) continue;
+      ctx.save(); ctx.fillStyle = '#fff2cb'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `9px ${this.font}`;
+      ctx.fillText(String(team.short).toUpperCase(), x + (region.x + region.w / 2 - f[5] / f[7]) * set.render_scale, 935 + (region.y + region.h / 2 - f[6] / f[7]) * set.render_scale, region.w * set.render_scale); ctx.restore();
+    }
+  }
+
   // One fan seen from behind, at (x, y) = the middle of the shoulders.
   drawNearFan(ctx, f, x, y, s, jersey, trim, up, sign) {
     const NAVY = '#14233b';
@@ -528,7 +548,8 @@ export class Renderer {
   // The penalty boxes built into the far boards (Batch P), or null without the art.
   penaltyBox() {
     const A = Assets.atlas.arena;
-    const box = A && (this.arena === ARENAS.pine_pond && A.penalty_box_pond?.frames ? A.penalty_box_pond : A.penalty_box);
+    const variant = Object.keys(ARENAS).find((key) => ARENAS[key] === this.arena);
+    const box = A && (A.penalty_boxes?.[variant] || (this.arena === ARENAS.pine_pond && A.penalty_box_pond?.frames ? A.penalty_box_pond : A.penalty_box));
     return box && box.frames ? box : null;
   }
   boxSpot(s) {
@@ -587,7 +608,7 @@ export class Renderer {
   // Scoreboard hanging over the far stairs, with the live score drawn into its displays.
   drawScoreboard(ctx, match, fx, sb) {
     const S = 0.09, X = 768, Y = 0;
-    Assets.draw(ctx, sb.frame, X, Y, S);
+    Assets.draw(ctx, sb.frames?.[Math.floor(fx.time * 2) % sb.frames.length] || sb.frame, X, Y, S);
     const put = (f, text, color) => {
       ctx.font = `${f.font_size * S}px ${this.font}`;
       ctx.fillStyle = color || sb.color;

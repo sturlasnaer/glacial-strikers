@@ -125,7 +125,7 @@ export function nextFixture(L) {
     }
     if (po.final && !po.final.winner && (po.final.a === 'home' || po.final.b === 'home')) {
       const opp = po.final.a === 'home' ? po.final.b : po.final.a;
-      return { kind: 'final', opponent: opp, label: t('Final'), stage: { team: opp, powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'both', round: 'Cup Final', reward: 480 } };
+      return { kind: 'final', opponent: opp, label: t('Final'), stage: { team: opp, powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'both', round: 'Cup Final', reward: 480, arena: 'frostline_coliseum' } };
     }
   }
   return null;

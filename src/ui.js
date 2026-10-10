@@ -1389,7 +1389,7 @@ export class UI {
     audio.sfx('blip');
     this.modal(`
       <div class="label">${t('Season {n} in review', { n: r.season })}</div>
-      ${paper ? `<div class="review-paper" style="background-image:url(${paper})">${stamp ? `<img class="review-stamp" src="${stamp}" alt="">` : ''}<h2>${esc(result)}</h2></div>` : ''}
+      ${paper ? `<div class="review-paper" style="background-image:url(${paper})">${stamp ? `<img class="review-stamp" src="${stamp}" alt="">` : ''}<h2>${esc(result)}</h2>${r.top.slice(0, 2).map((k, i) => `<div class="review-photo photo-${i + 1}"><img src="${portrait(k.id, 0, null, 180)}" alt="${esc(nm(k.id))}"><b>${esc(nm(k.id))}</b></div>`).join('')}</div>` : ''}
       <h2${paper ? ' hidden' : ''}>${esc(result)}</h2>
       <div class="review-stats">
         <div><b>${r.place}<small>/${r.teams}</small></b><span>${t('place')}</span></div>

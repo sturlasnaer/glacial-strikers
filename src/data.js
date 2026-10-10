@@ -334,6 +334,7 @@ export const ROLE = { frost: 'c', thunder: 'w', stone: 'd', goalie: 'g' };
 export const ART_NAME = { frost: 'nix', thunder: 'volta', stone: 'bram', goalie: 'halla' };
 // Arenas: rivals with their own building host you there.
 export const ARENAS = {
+  frostline_coliseum: { name: 'Frostline Coliseum', lamps: '#ffd45e', twist: 'none' },
   home: { name: 'Frostline Rink', lamps: '#ffb84d', twist: null },
   ember_dome: { name: 'Ember Dome', lamps: '#ff7a2e', flicker: 2.2, ice: 'rgba(255,140,60,0.06)', twist: 'meltwater', rule: 'Meltwater' },
   aurora_palace: { name: 'Aurora Palace', lamps: '#ffd27a', twist: 'aurora_lanes', rule: 'Aurora lanes' },

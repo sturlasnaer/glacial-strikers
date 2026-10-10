@@ -14,7 +14,7 @@ const INLINE = typeof window !== 'undefined' && window.__INLINE; // single-file 
 // Page groups loaded at start and kept through every scene; and the ones every match needs,
 // loaded with the rival's (the newer supers' effects, the linesman).
 const CORE = ['home', 'away', 'title', 'icons_z', 'allstar', 'icons_ac', 'legends', 'club_masks'];
-const MATCH = ['abilities_al', 'linesman', 'arena_au'];
+const MATCH = ['abilities_al', 'linesman', 'arena_au', 'arena_bx', 'supporter_masks'];
 // Groups whose data masks live on pages of their own (read, never team-recoloured), loaded and kept with them.
 const COMPANION = { parts: 'parts_masks', goalie_parts: 'goalie_parts_masks' };
 
@@ -225,7 +225,7 @@ export const Assets = {
   prepareTeam(team) {
     const mark = team.art || team.mark; // (an expansion club's identity art: Batch AU)
     const own = (g) => (team.groups ? team.groups.includes(g) : g === 'away' || g === 'newcomers' || (g === 'parts' && (!this.partsFor || this.partsFor(team.id))) || (g === 'goalie_parts' && !!team.goalieLook) || (mark && g === 'rival_' + mark));
-    const loaded = this.pages.filter((img, i) => img && own(this.atlas.pages[i].group)).length + '|' + (team.groups || []).join(',');
+    const loaded = this.pages.filter((img, i) => img && own(this.atlas.pages[i].group)).length + '|' + (team.groups || []).join(',') + '|supporters:' + this.groupReady('supporter_masks');
     const r = this.recolored.get(team.id);
     if (r && r.loaded === loaded) return;
     if (!team.recolor) { this.recolored.delete(team.id); return; }
@@ -233,10 +233,29 @@ export const Assets = {
       if (!own(this.atlas.pages[i].group)) return img;
       const prev = r && r.pages[i];
       if (!img) return prev || null; // the original was let go (dropOriginals): keep the copy
-      return prev && prev !== img ? prev : recolorPage(img, team.recolor);
+      const copy = prev && prev !== img ? prev : recolorPage(img, team.recolor);
+      return this.recolorSupporters(copy, img, i, team.recolor);
     });
     this.recolored.set(team.id, { pages, loaded });
     for (const k of [...this.iconCache.keys()]) if (k.includes(`|${team.id}|`)) this.iconCache.delete(k);
+  },
+
+  // Restore each supporter from the original before colouring only its native cloth mask.
+  recolorSupporters(copy, original, pi, rc) {
+    let ctx, sourceCtx;
+    const masks = new Map();
+    for (const [id, mid] of Object.entries(this.atlas.rival_art_masks || {})) {
+      const f = this.atlas.frames[id], m = this.atlas.frames[mid];
+      if (!f || !m || f[0] !== pi || !this.pages[m[0]]) continue;
+      ctx ||= cpuCanvas(copy);
+      sourceCtx ||= cpuCanvas(original);
+      if (!masks.has(m[0])) masks.set(m[0], cpuCanvas(this.pages[m[0]]));
+      const source = sourceCtx.getImageData(f[1], f[2], f[3], f[4]);
+      const mask = masks.get(m[0]).getImageData(m[1], m[2], m[3], m[4]);
+      recolorSupporterPixels(source.data, mask.data, rc);
+      ctx.putImageData(source, f[1], f[2]);
+    }
+    return ctx ? gpuCopy(ctx.canvas) : copy;
   },
 
   // A cut-in banner for a character key ('nix', 'ember_comets_c', ...) in the team's colours,
@@ -696,6 +715,22 @@ export function recolorClubPixels(d, md, rc) {
     if (!colour) continue;
     const brightness = Math.max(d[i], d[i + 1], d[i + 2]) / 255;
     const out = hsv2rgb(colour.h / 360, colour.s, Math.min(1, colour.v * (0.35 + brightness * 0.65)));
+    d[i] = out[0]; d[i + 1] = out[1]; d[i + 2] = out[2];
+  }
+}
+
+// Native rival masks select cloth; source saturation/value keep its painted shading.
+export function recolorSupporterPixels(d, md, rc) {
+  for (let i = 0; i < d.length; i += 4) {
+    if (!d[i + 3] || !md[i + 3]) continue;
+    const secondary = md[i + 1] > 200;
+    if (!secondary && md[i] <= 200) continue;
+    const max = Math.max(d[i], d[i + 1], d[i + 2]) / 255;
+    const min = Math.min(d[i], d[i + 1], d[i + 2]) / 255;
+    const saturation = max ? (max - min) / max : 0;
+    const sm = secondary ? (rc.sat2 ?? rc.sat ?? 1) : (rc.sat ?? 1);
+    const vm = secondary ? (rc.val2 ?? rc.val ?? 1) : (rc.val ?? 1);
+    const out = hsv2rgb((secondary ? (rc.h2 ?? rc.h1) : rc.h1) / 360, Math.min(1, saturation * sm), Math.min(1, max * vm));
     d[i] = out[0]; d[i + 1] = out[1]; d[i + 2] = out[2];
   }
 }
