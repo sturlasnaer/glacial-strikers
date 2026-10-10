@@ -33,7 +33,7 @@ export function profileSummaries() {
     let s = null;
     try { s = JSON.parse(localStorage.getItem(keyOf(i)) || 'null'); } catch { s = null; }
     if (!s || s.v !== 1) return { i, empty: true };
-    return { i, name: (s.club && s.club.name) || CLUB_DEFAULT.name, season: s.season || 1, played: (s.record && s.record.played) || 0, coins: s.coins || 0, cups: s.cups || 0 };
+    return { i, name: (s.club && s.club.name) || CLUB_DEFAULT.name, crest: (s.club && s.club.crest) || CLUB_DEFAULT.crest, season: s.season || 1, played: (s.record && s.record.played) || 0, coins: s.coins || 0, cups: s.cups || 0 };
   });
 }
 // Erase another profile (the one in use is reset from Settings).

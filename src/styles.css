@@ -1242,3 +1242,4 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .profile.cur { border-color: var(--gold); }
 .profile b { font-family: var(--display); font-weight: normal; font-size: 20px; }
 .profile small { font-size: 11.5px; color: var(--ice-2); }
+.profile .prof-crest { width: 26px; height: 26px; vertical-align: middle; margin-right: 6px; }

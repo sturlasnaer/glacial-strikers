@@ -414,8 +414,9 @@ export class UI {
   // Profiles: three saves on one device, each its own club. Switching reloads the game.
   profiles() {
     const cur = currentProfile();
+    const crestOf = (p) => { const id = p.empty ? null : clubCrestId(p.crest); return id && Assets.frame(id) ? `<img class="prof-crest" src="${Assets.icon(id, 64)}" alt="">` : ''; };
     const card = (p) => `<div class="profile${p.i === cur ? ' cur' : ''}">
-      <b>${t('Profile {n}', { n: p.i + 1 })}${p.i === cur ? ` <span class="gold-t">· ${t('playing now')}</span>` : ''}</b>
+      <b>${crestOf(p)}${t('Profile {n}', { n: p.i + 1 })}${p.i === cur ? ` <span class="gold-t">· ${t('playing now')}</span>` : ''}</b>
       ${p.empty ? `<span class="muted">${t('Empty: a new club starts here.')}</span>`
         : `<span>${esc(p.name)}</span><small>${t('Season {n}', { n: p.season })} · ${t(p.played === 1 ? '{n} match' : '{n} matches', { n: p.played })} · ${p.coins} ${t('coins')}${p.cups ? ` · ${t(p.cups === 1 ? '{n} Cup' : '{n} Cups', { n: p.cups })}` : ''}</small>`}
       <div class="row" style="margin:6px 0 0;gap:6px">${p.i === cur ? '' : `<button class="btn small gold" data-prof="${p.i}">${p.empty ? t('Start') : t('Play')}</button>${p.empty ? '' : `<button class="btn small ghost" data-erase="${p.i}">${t('Erase')}</button>`}`}</div>
