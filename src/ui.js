@@ -1651,11 +1651,22 @@ export class UI {
         if (!nid) { audio.sfx('deny'); return; }
         this.ownDraft = null;
         writeSave(s);
-        audio.sfx('purchase');
+        audio.jingle('sign');
         close();
-        Assets.ensureKit(homeKitGroups(s)).then(() => { if (this.app.scene === 'hub' && this.tab === 'team') this.hub('team'); }, () => {});
-        this.hub('team');
-        this.app.toast(face(c.look, 72), t('A player of your own'), t('{name} joins the {club}!', { name: esc(s.rookies[nid].name), club: esc(CLUB.nick) }), t('On the bench for now: dress them from their card.'));
+        // the jersey moment (Batch AO's, as on Draft Day): their body pulling on our jersey, their own head on it
+        const M = Assets.atlas.modular, PJ = M && M.jersey_moments && M.jersey_moments['body_' + c.look.body], name = s.rookies[nid].name;
+        Assets.ensureKit(homeKitGroups(s)).catch(() => {}).then(() => {
+          if (this.app.scene !== 'hub') return;
+          this.hub('team');
+          const moment = PJ && Assets.partsMoment(PJ, s.rookies[nid].parts, 300, 'homekit');
+          this.modal(`<h2>${t('{name} pulls on the {club} jersey!', { name: esc(name), club: esc(CLUB.nick) })}</h2>
+            ${moment ? `<div class="jersey-moment" style="aspect-ratio:${moment.w}/${moment.h}">${moment.urls.map((u, k) => `<img src="${u}" alt="" style="animation-delay:${k * 0.55}s"${k === moment.urls.length - 1 ? ' class="last"' : ''}>`).join('')}</div>`
+              : `<div class="card-head" style="margin:0;justify-content:center"><img src="${face(c.look, 152, 'grin')}" alt="" style="width:96px;height:96px"></div>`}
+            <p class="muted" style="margin:0;font-size:13px;text-align:center">${t('One of your own. Dress {name} at {role} from their card, or before a match.', { name: esc(name), role: t(ROLE_NAME[c.role]).toLowerCase() })}</p>
+            <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Later')}</button><button class="btn gold" id="own-dress">${t('Dress now')}</button></div>`, (m2, close2) => {
+            this.click('#own-dress', () => { setLineup(s, nid); writeSave(s); audio.sfx('confirm'); close2(); this.hub('team'); }, m2);
+          });
+        });
       }, m);
     });
   }
