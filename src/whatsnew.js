@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10v',
+    items: [
+      { icon: 'rules/thin_air', alt: 'hud_elements/ability/stamina', text: 'A new building for exhibitions: the Summit Rink, up a mountain at the top of a cable car. Thin air: the puck glides further and shots fly faster, but you tire sooner. It has its own alpine waltz.' },
+    ],
+  },
+  {
     id: '2026-10-10u',
     items: [
       { icon: 'fancam/fan_1_a', alt: 'icons/friends', text: 'The fan cam: after our goals at home, the big screen finds a fan holding up a sign. Write your own in Settings › Our fan sign (your name, GO MOM!).' },
