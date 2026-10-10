@@ -1322,6 +1322,29 @@ export class UI {
     }, false);
   }
 
+  // The season in review (review.js), before the next one starts.
+  seasonReview(r, done) {
+    const result = { champion: t('Frostline Cup champions!'), final: t('Lost in the Cup Final'), semi: t('Out in the semifinals'), missed: t('Missed the playoffs'), unfinished: t('The season ended early') }[r.result];
+    const nm = (id) => (member(id) ? member(id).name : '');
+    audio.sfx('blip');
+    this.modal(`
+      <div class="label">${t('Season {n} in review', { n: r.season })}</div>
+      <h2>${esc(result)}</h2>
+      <div class="review-stats">
+        <div><b>${r.place}<small>/${r.teams}</small></b><span>${t('place')}</span></div>
+        <div><b>${r.w}–${r.l}</b><span>${t('record')}</span></div>
+        <div><b>${r.gf}:${r.ga}</b><span>${t('goals')}</span></div>
+        ${r.goalsOf ? `<div><b>${r.goalsMet}/${r.goalsOf}</b><span>${t('season goals')}</span></div>` : ''}
+        ${r.cups ? `<div><b>${r.cups}</b><span>${t(r.cups === 1 ? 'Cup' : 'Cups')}</span></div>` : ''}
+      </div>
+      ${r.top.length ? `<div class="label" style="margin-top:4px">${t('Top scorers')}</div><div class="review-top">${r.top.map((k, i) => `<div><img src="${portrait(k.id, 0, null, 72)}" alt=""><b>${i + 1}. ${esc(nm(k.id))}</b><span>${t('{g} G · {a} A in {gp} games', { g: k.g, a: k.a, gp: k.gp })}</span></div>`).join('')}</div>` : ''}
+      ${r.records.length ? `<div class="label" style="margin-top:4px">${t('Club records set this season')}</div><ul class="review-list">${r.records.map((x) => `<li>${esc(t(GAME_RECORDS[x.id].name))}: ${esc(clubText(t(GAME_RECORDS[x.id].text, { ...x, n: x.n })))}</li>`).join('')}</ul>` : ''}
+      ${r.hall.length ? `<div class="label" style="margin-top:4px">${t('Into the Hall of Fame')}</div><ul class="review-list">${r.hall.map((h) => `<li>${esc(h.name)} #${h.number}</li>`).join('')}</ul>` : ''}
+      <div class="row" style="justify-content:flex-end"><button class="btn gold" id="rv-go">${t('On to season {n}', { n: r.season + 1 })}</button></div>`, (el, close) => {
+      this.click('#rv-go', () => { close(); audio.sfx('confirm'); done(); }, el);
+    }, true);
+  }
+
   // Into the Hall of Fame: one card for each new member (on the ceremony art once Batch BV is in).
   hallCeremony(list, done) {
     const h = list[0];

@@ -12,6 +12,7 @@ import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as clou
 import { ARENA_MUSIC } from './songs.js';
 import { ResurfacerLap } from './scenery.js';
 import { UI, controlsHtml, crest, ruleIconSrc, cupPlaceImg, portrait, shotMapSvg, esc, hintKeys } from './ui.js';
+import { seasonReview } from './review.js';
 import { updateRecords, GAME_RECORDS } from './records.js';
 import { noteCup, hallCandidates, induct } from './hall.js';
 import { pressWorthy, pressPlayer, answerPress } from './press.js';
@@ -1206,9 +1207,12 @@ class App {
     }, () => this.resolvePerks(done));
   }
 
-  newSeason() {
+  newSeason(reviewed = false) {
     if (this.loading) return; // (a second tap while the new clubs' art loads)
     const s = this.save;
+    // first, the season just gone in review
+    const review = !reviewed && seasonReview(s);
+    if (review) { this.ui.seasonReview(review, () => this.newSeason(true)); return; }
     s.season++;
     s.stage = 0; s.beaten = []; s.champion = false;
     const before = new Set(Object.keys((s.rivals || {}))), last = s.league;
