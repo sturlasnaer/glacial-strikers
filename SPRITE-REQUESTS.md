@@ -7,10 +7,8 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **DK: postcards from the road**
-2. **DL: a basket for the cub**
-3. **DM: the cub's victory slide**
-4. **DN: star stickers for the youngest**
+1. **DM: the cub's victory slide**
+2. **DN: star stickers for the youngest**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -77,6 +75,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered DG-DH:** Native Frostline league map with eight town anchors, two bus frames and seven home-game cub poses with a boards anchor. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DG-DH-Testing-Update`.
 
 **Delivered DI-DJ:** Eleven cub fetch frames including a loose puck and five cub coach portraits for Little player games. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DI-DJ-Testing-Update`.
+
+**Delivered DK-DL:** Eight town postcards, empty wicker cub basket, two breathing cub-in-basket frames and a Shop icon. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DK-DL-Testing-Update`.
 
 ## Format notes
 
@@ -576,14 +576,14 @@ In Little player games (Settings › Little player), the locker room's Snow Fox 
 
 As atlas frames on a page in a new `cub_coach` group (loaded for Little player games). 5 frames.
 
-## Batch DK: postcards from the road
+## Batch DK ✓: postcards from the road
 
 With the road-trip map (DG) in, winning a game in a rival's town should send a postcard home: a little collection under the map in the League tab. Please draw eight postcards, 480×320, landscape, in the game's style: a sunny or snowy view of each town's landmark from the map (DG) with a white postcard border, a stamp in the top right corner (the club's colours, a tiny picture of its mascot) and a wavy postmark, **no lettering**:
 - `postcard/lynx` (Pinewood's cabins round the frozen pond), `postcard/comets` (Ember's glowing volcano over the warm springs), `postcard/rams` (Gilded's golden-roofed hall in its valley), `postcard/ravens` (Obsidian's dark cliffs and eyrie), `postcard/royals` (Aurora's ice palace under the northern lights), `postcard/owls` (Glacier's observatory dome on the ice), `postcard/moose` (Thunder's longhouse in the stormy hills), and `postcard/home` (Snowcrest by its frozen lake, for winning the Frostline Cup at home).
 
 As atlas frames on a page in a new `postcards` group (loaded with the League tab). 8 frames.
 
-## Batch DL: a basket for the cub
+## Batch DL ✓: a basket for the cub
 
 The cub (CX) should have a bed of its own: a Shop item ("For the cub", next to the outfits), and once it's bought the basket sits in the locker room and the cub naps in it. Please draw, in the room's style and angle:
 - `decor/cub_bed`: a round wicker basket with a soft blue cushion and a little fox-paw blanket, about 120×70 room pixels, pivot at its bottom centre; and `atlas.decor_slots.cub_bed = { x, y }` with where its pivot goes in the room's 1536×864 pixels (on the open floor where it doesn't cover the skaters, the bench or a station).

@@ -776,7 +776,8 @@ DD = sys.argv[56] if len(sys.argv) > 56 else '../assets/Puckbound-Batches-DD'
 DE_DF = sys.argv[57] if len(sys.argv) > 57 else '../assets/Puckbound-Batches-DE-DF'
 DG_DH = sys.argv[58] if len(sys.argv) > 58 else '../assets/Puckbound-Batches-DG-DH'
 DI_DJ = sys.argv[59] if len(sys.argv) > 59 else '../assets/Puckbound-Batches-DI-DJ'
-atlas = merge_request_additions(atlas, OUT, [BJ, BK_BL_BM, BN_BO_BP, BR_BT, BU_BW, BX_BZ, CA, CB, CC, CD, CE, CF, CH_CI, CJ, CK_CL, CM, CN, CO, CP, CR, CS, CT, CU, CV, CW, CX, CY, CZ, DA, DB, DC, DD, DE_DF, DG_DH, DI_DJ])
+DK_DL = sys.argv[60] if len(sys.argv) > 60 else '../assets/Puckbound-Batches-DK-DL'
+atlas = merge_request_additions(atlas, OUT, [BJ, BK_BL_BM, BN_BO_BP, BR_BT, BU_BW, BX_BZ, CA, CB, CC, CD, CE, CF, CH_CI, CJ, CK_CL, CM, CN, CO, CP, CR, CS, CT, CU, CV, CW, CX, CY, CZ, DA, DB, DC, DD, DE_DF, DG_DH, DI_DJ, DK_DL])
 from merge_league_motion import merge_league_motion
 atlas = merge_league_motion(atlas, OUT, BH_BI)
 # where the blade meets the ice in the ordinary skating frames (from the gear masks)
