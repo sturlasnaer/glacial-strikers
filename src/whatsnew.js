@@ -137,10 +137,13 @@ export const WHATS_NEW = [
 
 // What to show: everything newer than the entry last seen, as one card under the latest id (or
 // null, and a new player is marked as up to date).
+export const WHATS_NEW_MAX = 8;
 export function whatsNewFor(save) {
   const latest = WHATS_NEW[0];
   if (!latest || save.seenWhatsNew === latest.id) return null;
   if (!save.record || save.record.played === 0) { save.seenWhatsNew = latest.id; return null; }
   const seen = WHATS_NEW.findIndex((e) => e.id === save.seenWhatsNew);
-  return { id: latest.id, items: (seen < 0 ? WHATS_NEW : WHATS_NEW.slice(0, seen)).flatMap((e) => e.items) };
+  const all = (seen < 0 ? WHATS_NEW : WHATS_NEW.slice(0, seen)).flatMap((e) => e.items);
+  // (back after a long time: the newest few, and how many more there are)
+  return { id: latest.id, items: all.slice(0, WHATS_NEW_MAX), more: Math.max(0, all.length - WHATS_NEW_MAX) };
 }

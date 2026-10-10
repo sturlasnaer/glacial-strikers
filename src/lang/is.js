@@ -2,6 +2,8 @@
 // values); values are the Icelandic. Names of people, teams and the club stay as they are.
 export const IS = {
   " and ": " og ",
+  "…and {n} more new things.": "…og {n} nýjungar til viðbótar.",
+  "…and one more new thing.": "…og ein nýjung til viðbótar.",
   "...Unexpected. The Royals won't make the mistakes we did.": "...Óvænt. Royals munu ekki gera sömu mistök og við.",
   "\"...Okay. That's actually a great line.\" He cracks his knuckles.": "„...Ókei. Það var reyndar vel mælt.“ Hann lætur braka í hnúunum.",
   "“{name} for {theirs}. Think it over.”": "„{name} fyrir {theirs}. Hugsaðu málið.“",

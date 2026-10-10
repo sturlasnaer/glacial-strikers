@@ -2,7 +2,7 @@
 // new one), the three stars go to the night's best from either side, and the daily challenge's
 // tip-in goal joins the draw only from its date.
 //   node tools/test_meta.mjs
-import { WHATS_NEW, whatsNewFor } from '../src/whatsnew.js';
+import { WHATS_NEW, whatsNewFor, WHATS_NEW_MAX } from '../src/whatsnew.js';
 import { threeStars } from '../src/career.js';
 import { dailyFor, dailyGoal } from '../src/daily.js';
 
@@ -15,7 +15,7 @@ const check = (name, cond, info) => { if (cond) pass++; else { fail++; console.l
   const a = whatsNewFor({ record: { played: 3 }, seenWhatsNew: WHATS_NEW[1] && WHATS_NEW[1].id });
   check("What's new: one entry behind shows just the newest", WHATS_NEW.length < 2 || (a && a.id === latest.id && a.items.length === latest.items.length), a);
   const b = whatsNewFor({ record: { played: 3 } });
-  check('...never looked: every entry', b && b.items.length === all, b && b.items.length);
+  check('...never looked: the newest eight, and how many more', b && b.items.length === Math.min(all, WHATS_NEW_MAX) && b.more === all - b.items.length && b.items[0] === WHATS_NEW[0].items[0], b && [b.items.length, b.more]);
   check('...up to date: nothing', whatsNewFor({ record: { played: 3 }, seenWhatsNew: latest.id }) === null);
   const fresh = { record: { played: 0 } };
   check('...a new player: nothing, and marked up to date', whatsNewFor(fresh) === null && fresh.seenWhatsNew === latest.id);
