@@ -85,7 +85,9 @@ export class Renderer {
     if (match.goalieMode && match.state === 'play') {
       const g = match.goalies[0], gs = toScreen(g.x, g.y);
       const near = clamp(1 - (p.x - g.x) * -g.goalSide / 700, 0, 1);
-      tx = lerp(tx, gs.x, near * 0.4);
+      tx = lerp(tx, gs.x, near * 0.6); // (well into the picture: on a phone the touch buttons cover the screen's edges)
+      const vw = this.w / (this.cam.zoom || 1), m = vw * 0.22; // (and never in the outer fifth of the view, wherever the puck is)
+      tx = clamp(tx, gs.x - vw / 2 + m, gs.x + vw / 2 - m);
     }
     if (opts.attract) { tx = lerp(tx, BACKDROP.cx, 0.5); }
     const k = 1 - Math.exp(-4.5 * dt);

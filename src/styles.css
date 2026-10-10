@@ -584,6 +584,7 @@ body.large-text .hub, body.large-text .modal, body.large-text .results, body.lar
   /* (touch, no key hints: the stick and the buttons hold the bottom and the penalty chip and PULL GOALIE the right, so
      tips go top left, under the ticker) */
   #hud:has(.keyhints[hidden]) .hint { top: calc(96px + var(--safe-t)); bottom: auto; left: calc(10px + var(--safe-l)); transform: none; max-width: min(320px, 42vw); text-align: left; }
+  #hud.gk-left:has(.keyhints[hidden]) .hint { left: auto; right: calc(10px + var(--safe-r)); text-align: right; } /* (in goal on the left: not over the net) */
   .wn-coach .npc { margin-bottom: 6px; }
   .wn-coach .npc img { width: 40px; height: 40px; }
   .wn-coach .npc .say { padding: 4px 10px; font-size: 13px; }
