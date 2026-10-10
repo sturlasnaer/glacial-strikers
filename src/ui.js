@@ -422,6 +422,7 @@ export class UI {
           <button class="btn ghost" id="t-settings">${t('Settings')}</button>
           <button class="btn ghost" id="t-profile" title="${t('Profiles')}">${t('Profile {n}', { n: currentProfile() + 1 })}</button>
           ${this.app.installPrompt && !this.app.standalone ? `<button class="btn cream" id="t-install">${t('Install app')}</button>` : ''}
+          ${this.app.isIOS && !this.app.standalone && this.app.canOffline ? `<button class="btn cream" id="t-ios">${t('Play fullscreen')}</button>` : ''}
         </div>
         ${this.app.isTouch && !padList().length ? '' : `<div class="press" id="t-press">${padList().length ? t('Press {button} or Enter to start', { button: promptImg(psPad() ? 'ps_cross' : 'xbox_a', psPad() ? '✕' : 'A') }) : t('Press Enter to start')}</div>`}
       </div>
@@ -432,6 +433,14 @@ export class UI {
     this.click('#t-settings', () => { audio.sfx('click'); this.settings(); });
     this.click('#t-profile', () => { audio.sfx('click'); this.profiles(); });
     this.click('#t-install', async () => { audio.sfx('confirm'); await this.app.install(); this.title(); });
+    // (iPhones and iPads: Safari can't go fullscreen, but the game from the Home Screen does, and plays offline)
+    this.click('#t-ios', () => {
+      audio.sfx('click');
+      this.modal(`<h2>${t('Play fullscreen')}</h2>
+        <p>${t('On an iPhone or iPad the game plays fullscreen, and offline, from the Home Screen:')}</p>
+        <ol class="ios-steps"><li>${t('Tap Share in Safari (the square with an arrow pointing up).')}</li><li>${t('Choose Add to Home Screen, then Add.')}</li><li>${t('Open Puckbound from its new icon. It keeps a save of its own: to bring this one along, use Settings › Cloud save (Backup code here, Restore there).')}</li></ol>
+        <div class="row" style="justify-content:flex-end"><button class="btn gold" data-close>${t('Got it')}</button></div>`);
+    });
     return r;
   }
 
