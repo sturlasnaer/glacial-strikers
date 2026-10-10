@@ -10,7 +10,7 @@ export const WHATS_NEW = [
   {
     id: '2026-10-10w',
     items: [
-      { icon: 'celebrations/nix/guitar_1', alt: 'icons/rookie', text: 'Pick a goal celebration for Nix, Volta and Bram in the Team tab: their own, a stick guitar solo or a snow angel.' },
+      { icon: 'celebrations/nix/guitar_1', alt: 'icons/rookie', text: 'Pick a goal celebration in the Team tab, for Nix, Volta, Bram and the players you create: their own, a stick guitar solo or a snow angel.' },
     ],
   },
   {
