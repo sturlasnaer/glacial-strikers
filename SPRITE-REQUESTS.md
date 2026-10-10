@@ -7,8 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **CA: two players on one team**
-2. **CB: more faces for players of your own**
+1. **CB: more faces for players of your own**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -17,6 +16,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered BU–BW:** twelve facility scenes, the Hall plaque, wall and ceremony, and five achievement icons. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BU-BW-Testing-Update`.
 
 **Delivered BX–BZ:** the Frostline Coliseum, seven rival supporters sections with native cloth masks, and the season-review newspaper. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BX-BZ-Testing-Update`.
+
+**Delivered CA:** the mint player card, co-op controllers icon and Better Together achievement. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CA-Testing-Update`.
 
 ## Format notes
 
@@ -218,7 +219,7 @@ Batch BS gave our home rink a supporters' section (drummer, capo, banner). The r
 
 When a new season starts the game now shows the season just gone (place, record, top scorers, records set, Hall of Fame). Please draw its frame: `review/backdrop`, a newspaper front page lying on a locker-room bench at 1280×720, with a big blank headline area at the top (the game writes the headline), two blank photo frames with paper-clip shadows (for the top scorers' portraits), and blank columns; warm overhead light. And `review/stamp_champions`, a gold "CHAMPIONS" rubber-stamp mark (for a Cup-winning season), about 300×160. 2 frames.
 
-## Batch CA: two players on one team
+## Batch CA ✓: two players on one team
 
 Local co-op is in: two players on our team (P1 ice blue, P2 mint green) against the AI. Please draw:
 - `hud-kit/images/player_card_mint.png`: the in-match player card from Batch Y (`player_card_ice.png`), recoloured mint green (#7fe08a family) for player 2 in co-op, same size and 9-slice layout.

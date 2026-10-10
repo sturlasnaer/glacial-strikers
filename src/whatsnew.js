@@ -10,7 +10,7 @@ export const WHATS_NEW = [
   {
     id: '2026-10-10i',
     items: [
-      { icon: 'icons/friends', text: 'Two players on one team: pick Play as › Two players before a match and a friend takes a skater too (the arrows and K, L on the keyboard, or a gamepad), with the AI on the third.' },
+      { icon: 'icons/coop', text: 'Two players on one team: pick Play as › Two players before a match and a friend takes a skater too (the arrows and K, L on the keyboard, or a gamepad), with the AI on the third.' },
     ],
   },
   {

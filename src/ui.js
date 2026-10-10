@@ -347,7 +347,7 @@ function playAsHtml(s, app) {
   return `<div class="play-as"><span class="label" style="font-size:14px">${t('Play as')}</span>
     <button class="chip" data-playas="skaters" aria-pressed="${as === 'skaters'}">${t('Skaters')}</button>
     <button class="chip" data-playas="goalie" aria-pressed="${as === 'goalie'}" title="${esc(t('You play your starting goalie; the AI skates your line.'))}">${t('Goalie')}</button>
-    ${two ? `<button class="chip" data-playas="coop" aria-pressed="${as === 'coop'}" title="${esc(t('Co-op: a friend takes a skater too. Player 1 on WASD, F, G (or touch), player 2 on the arrows, K, L, or a gamepad.'))}">${t('Two players')}</button>` : ''}</div>`;
+    ${two ? `<button class="chip" data-playas="coop" aria-pressed="${as === 'coop'}" title="${esc(t('Co-op: a friend takes a skater too. Player 1 on WASD, F, G (or touch), player 2 on the arrows, K, L, or a gamepad.'))}">${btnIcon('icons/coop')}${t('Two players')}</button>` : ''}</div>`;
 }
 
 // The painted logo for the title screen, or the lettering until its art has loaded.
