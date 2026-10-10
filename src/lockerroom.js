@@ -1,8 +1,8 @@
 // Locker-room moments: short scenes between league matches with a choice. Choices give
 // chemistry, EXP, coins, or a buff that lasts for the next league match.
 
-import { CHARACTERS, TEAMS, CLUB, teamInfo } from './data.js';
-import { applyExp, applyGoalieExp } from './progress.js';
+import { CHARACTERS, TEAMS, CLUB, teamInfo, pairKey } from './data.js';
+import { applyExp, applyGoalieExp, lineupIds } from './progress.js';
 import { t } from './i18n.js';
 import { goalStates } from './goals.js';
 
@@ -14,6 +14,17 @@ const exp = (ids, xp) => (save, ctx) => { for (const id of ids) ctx.ups.push(...
 const coins = (n) => (save) => { save.coins = Math.max(0, save.coins + n); return null; };
 const buff = (b) => (save) => { save.buffs = [...(save.buffs || []).filter((x) => x.id !== b.id), b]; return null; };
 const all = (...fns) => (save, ctx) => { for (const f of fns) f(save, ctx); return null; };
+// One of our own (create.js) who has just played their first league game, not yet welcomed.
+const ownDebut = (c) => {
+  const R = (c.save && c.save.rookies) || {};
+  return ((c.summary && c.summary.skaters) || []).filter((k) => k.team === 0).map((k) => k.id).find((id) => R[id] && R[id].own && !R[id].welcomed) || null;
+};
+const welcome = (more) => (save, ctx) => {
+  const id = ownDebut({ ...ctx, save });
+  if (!id) return null;
+  save.rookies[id].welcomed = true;
+  return more(save, ctx, id);
+};
 
 export const BUFF_TEXT = (b) => {
   switch (b.type) {
@@ -30,6 +41,20 @@ export const BUFF_TEXT = (b) => {
 
 // ctx: { won, gf, ga, summary, streak, next (fixture), save }
 export const MOMENTS = [
+  {
+    // one of our own just played their first league game: the room welcomes them
+    id: 'homegrown', who: [], weight: 25,
+    when: (c) => !!ownDebut(c),
+    whoFn: (c) => [ownDebut(c), 'frost'],
+    title: 'One of our own',
+    text: (c) => t('{name}\'s first league game for the {club} is in the books. Nix flips them the game puck. "Welcome to the room. Everybody signs it."', { name: c.save.rookies[ownDebut(c)].name, club: CLUB.nick }),
+    choices: [
+      { label: 'Everybody signs the puck', fx: 'The newcomer +20 EXP, and +6 chemistry with the line', reply: 'The puck goes on the shelf above their locker, covered in signatures.',
+        apply: welcome((save, ctx, id) => { ctx.ups.push(...applyExp(save, id, 20)); for (const o of lineupIds(save)) if (o !== id) { const k = pairKey(id, o); save.chem[k] = (save.chem[k] || 0) + 6; } return null; }) },
+      { label: 'A speech from the rookie', fx: 'Next match: fired up (start with 25% ultimate)', reply: 'Short, nervous and perfect. The room roars.',
+        apply: welcome((save) => buff({ id: 'fired', type: 'ult', v: 25 })(save)) },
+    ],
+  },
   {
     // one of Coach Brekka's season goals left (and at least one met): the list goes up on the board
     id: 'goal-push', who: ['frost'], weight: 5, once: true,

@@ -6,6 +6,7 @@ import { createPlayer, restyle, canCreate, ownIds, defaultChoice, stylesFor, cle
 import { newSave, matchConfig, joinLevel, PERK_LEVELS, lineupIds } from '../src/progress.js';
 import { setRookies, member, TOURNAMENT, ROOKIES } from '../src/data.js';
 import { Match } from '../src/match.js';
+import { pickMoment, MOMENTS } from '../src/lockerroom.js';
 import { useModular } from '../src/modular.js';
 import { readFileSync } from 'node:fs';
 
@@ -60,6 +61,23 @@ const PARTS = { bodies: ['std', 'big', 'small'], heads: ['braids', 'freckles', '
   check('they dress and skate', ari && ari.name === 'Ari', mt.teamSkaters(0).map((x) => x.who));
   for (let i = 0; i < 60 * 20; i++) mt.update(1 / 60);
   check('...through a match', mt.time > 19);
+}
+
+// the room welcomes them after their first league game
+{
+  const s = newSave();
+  const id = createPlayer(s, { ...defaultChoice('C', PARTS), name: 'Ari' }, PARTS);
+  s.lineup.C = id;
+  const summary = { skaters: [{ team: 0, id, goals: 0 }, { team: 0, id: 'thunder', goals: 1 }, { team: 1, id: 'frost', goals: 2 }] };
+  const ctx = { won: true, gf: 3, ga: 2, summary, streak: 1, next: null, save: s, ups: [] };
+  const m = pickMoment(s, ctx, () => 0.99);
+  check('after their first league game: "One of our own"', m && m.id === 'homegrown' && m.whoFn(ctx)[0] === id && m.text(ctx).includes('Ari'), m && m.id);
+  const lv = s.roster[id].exp + s.roster[id].level * 1000, k = ['thunder', 'stone'].map((o) => [id, o].sort().join('+'));
+  m.choices[0].apply(s, ctx);
+  check('...signing the puck: EXP and chemistry with the line', s.roster[id].exp + s.roster[id].level * 1000 > lv && k.every((x) => s.chem[x] === 6), k.map((x) => s.chem[x]));
+  check('...and only once', s.rookies[id].welcomed && !MOMENTS[0].when({ ...ctx, save: s }));
+  const s2 = newSave(), id2 = createPlayer(s2, { ...defaultChoice('W', PARTS), name: 'Bea' }, PARTS);
+  check('a player of their own who didn\'t play: not yet', !MOMENTS[0].when({ ...ctx, save: s2, summary: { skaters: [{ team: 0, id: 'frost' }] } }) && id2);
 }
 
 console.log(`Create a player: ${pass} passed, ${fail} failed`);
