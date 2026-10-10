@@ -2,6 +2,13 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10zk',
+    items: [
+      { icon: 'snowball/peek_3', alt: 'icons/pet', text: 'Snowball fun, in Training: the cub pops up from behind the snow forts and you toss soft snowballs at it. A coin for every hit, and no losing!' },
+      { icon: 'icons/gift', alt: 'icons/pet', text: 'In December, a little pile of presents in the locker room: one to open every day.' },
+    ],
+  },
+  {
     id: '2026-10-10zj',
     items: [
       { icon: 'icons/cub_ball', alt: 'icons/pet', text: 'A striped ball for the cub, in Shop › Locker room › For the cub. It pounces on it and bats it about the room.' },
