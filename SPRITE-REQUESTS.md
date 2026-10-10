@@ -8,6 +8,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 **Next batches:**
 1. **CC: the Resurfacer drill**
+2. **CD: the home rink dressed for Halloween and the holidays**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -250,3 +251,12 @@ Training has a new drill for fun: you drive the ice resurfacer (the title screen
 - `achievements/fresh_sheet` (Fresh Sheet: gold in the Resurfacer drill): a gleaming, mirror-smooth rink seen from the stands, the resurfacer parked by the gate, a gold medal hanging from its mirror.
 
 2 frames.
+
+## Batch CD: the home rink dressed for Halloween and the holidays
+
+The home rink (the Frostline Rink) will dress up by the calendar: from 20 October to 1 November for Halloween, from 1 December to 6 January for the holidays. Please draw both sets in the Batch AB All-Star dressing's format (`atlas.allstar`: two-frame banner and bunting, rects in 1536×1024 backdrop pixels, bunting clipped to the board bands and never onto the ice), so the game places them the same way:
+- **Halloween** (`seasonal.halloween`): a two-frame banner over the far stands (a grinning jack-o'-lantern with the Snow Fox in a witch's hat, "SPOOKY SEASON" lettering left blank for the game to write), two-frame bunting (orange and black pennants with little bats), two carved pumpkins for the tops of the far boards' corners (`pumpkin_a`, `pumpkin_b`, lit from inside, two flicker frames each), and four frames of a small bat flapping (`bat_1`..`bat_4`, to flit across the rafters).
+- **Holidays** (`seasonal.holiday`): a two-frame banner (the Snow Fox in a scarf and a woolly hat under falling snow, blank lettering area), two-frame bunting (a string of coloured lights, the bulbs alternating on the two frames), a decorated tree for the far corner by the benches (`tree`, two frames of twinkling lights), and a snowman for the near corner (`snowman`).
+- Kid-friendly: cheerful and cosy, nothing scary.
+
+About 22 frames, all in the `home` palette style (they're never recoloured).
