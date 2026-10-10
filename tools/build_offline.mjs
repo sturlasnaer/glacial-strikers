@@ -1,7 +1,7 @@
 // Builds dist/puckbound-offline.html: one self-contained file with every script,
 // style, font and image embedded. Double-click it to play with no server or internet.
 //   node tools/build_offline.mjs
-import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname, normalize } from 'node:path';
 
 const root = new URL('..', import.meta.url).pathname;
@@ -57,7 +57,7 @@ bundle = bundle.replace(/<\/script/gi, '<\\/script');
 // ---- styles with fonts inlined
 const fonts = read('src/fonts.css').replace(/url\(\.\.\/assets\/fonts\/([^)]+)\)/g, (_, f) => `url(data:font/woff2;base64,${b64('assets/fonts/' + f)})`);
 // the UI kit's skin images go into the stylesheet as data URIs
-const styles = read('src/styles.css').replace(/url\(\.\.\/assets\/gfx\/((?:(?:ui|touch|hud)-kit\/images|loading)\/[^)]+\.png)\)/g, (_, f) => `url(data:image/png;base64,${b64('assets/gfx/' + f)})`);
+const styles = read('src/styles.css').replace(/url\(\.\.\/assets\/gfx\/([^)]+\.png)\)/g, (original, f) => existsSync(join(root, 'assets/gfx/' + f)) ? `url(data:image/png;base64,${b64('assets/gfx/' + f)})` : original);
 
 // ---- art
 const atlas = JSON.parse(read('assets/gfx/atlas.json'));
@@ -69,6 +69,11 @@ const images = [
   atlas.draft_hall && atlas.draft_hall.image, atlas.draft_hall && atlas.draft_hall.podium_foreground && atlas.draft_hall.podium_foreground.image,
 ].filter(Boolean);
 for (const f of images) inline[f] = `data:image/webp;base64,${b64('assets/' + f)}`;
+// Plain native PNGs such as the team photo are named by source-pack metadata.
+for (const pack of Object.values(atlas.art_additions || {})) for (const dest of Object.keys(pack.external_images || {})) {
+  const file = 'gfx/' + dest;
+  if (dest.endsWith('.png') && existsSync(join(root, 'assets/' + file))) inline[file] = `data:image/png;base64,${b64('assets/' + file)}`;
+}
 // the UI kit's button prompts and keycaps (the skin's own pieces are inlined in the stylesheet)
 for (const f of readdirSync(join(root, 'assets/gfx/ui-kit/images'))) if (/^(ps|xbox|key)_.*\.png$/.test(f)) inline[`gfx/ui-kit/images/${f}`] = `data:image/png;base64,${b64('assets/gfx/ui-kit/images/' + f)}`;
 // the prospect card rims (Batch AD), set on the cards at runtime

@@ -7,8 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **CU: picture day**
-2. **CV: the Summit Rink**
+1. **CV: the Summit Rink**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -49,6 +48,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered CS:** Twenty locker-room decoration and achievement frames, including native animation pairs. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CS-Testing-Update`.
 
 **Delivered CT:** Nine Fan cam frames with four cheering fan pairs, a transparent camera border and shared blank-card text anchors. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CT-Testing-Update`.
+
+**Delivered CU:** Picture day backdrop: native 1600×1000 home rink with cheering crowd, snowflake banner and clear ice for the team. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CU-Testing-Update`.
 
 ## Format notes
 
@@ -408,7 +409,7 @@ After one of our goals at home, the arena's camera finds a fan in the crowd hold
 
 9 frames.
 
-## Batch CU: picture day
+## Batch CU ✓: picture day
 
 Every season now ends with a **team photo** (Trophies › Seasons): the line-up standing on the ice in front, up to five more behind, Coach Brekka at the side and the Cup when it's ours, with the season on a plaque. Today it stands on the home rink's empty centre ice. Please draw a backdrop for it, as a plain image (no atlas): `assets/gfx/photo/backdrop.png`, 1600×1000, no lettering: the home rink at centre ice seen from rink level, the far boards and glass, and the stands behind packed with cheering Snowcrest Foxes fans (scarves, a big banner with the snowflake crest, a few phones held up, a photographer's flash glinting), the lower 60% clean ice where the team stands. The game puts it in the photo as soon as the file is there.
 
