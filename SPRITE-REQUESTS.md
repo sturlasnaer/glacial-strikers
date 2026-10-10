@@ -7,8 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **CB: more faces for players of your own**
-2. **CC: the Resurfacer drill**
+1. **CC: the Resurfacer drill**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -19,6 +18,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered BX–BZ:** the Frostline Coliseum, seven rival supporters sections with native cloth masks, and the season-review newspaper. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BX-BZ-Testing-Update`.
 
 **Delivered CA:** the mint player card, co-op controllers icon and Better Together achievement. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CA-Testing-Update`.
+
+**Delivered CB:** eight custom-player head families, every view and effort pose, five portrait expressions and native skin/hair masks. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CB-Testing-Update`.
 
 ## Format notes
 
@@ -229,7 +230,7 @@ Local co-op is in: two players on our team (P1 ice blue, P2 mint green) against 
 
 3 frames.
 
-## Batch CB: more faces for players of your own
+## Batch CB ✓: more faces for players of your own
 
 Team › Create a player now builds a skater of your own from the parts (a build, one of the sixteen heads, a skin tone and a hair colour). Children will make themselves, so more variety matters most. Please draw **eight more heads** exactly as Batches AJ, AO and AZ did (every view and the normal/effort frames on each body anchor, the red-skin/green-hair masks, and the five portrait faces: neutral, determined, grin, shocked, defeated, on the portrait shoulders):
 - `afro_puffs` (two puffs showing under the helmet's back edge),

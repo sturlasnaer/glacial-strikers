@@ -1,0 +1,9 @@
+import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {useModular,MODULAR,recolorParts,headPlacement} from '../src/modular.js';import {validLook,createPlayer,defaultChoice} from '../src/create.js';import {newSave} from '../src/progress.js';
+const A=JSON.parse(readFileSync(new URL('../assets/gfx/atlas.json',import.meta.url)));useModular(A);const heads=['afro_puffs','sports_hijab','buzz_cut','side_part','space_buns','long_braids','gap_tooth','round_cheeks'];let checks=0;
+for(const head of heads){assert.ok(MODULAR.heads.includes(head));checks++;for(const body of MODULAR.bodies){assert.ok(validLook({head,body,skin:5,hair:7},MODULAR));checks++;}
+ const s=newSave(),c=defaultChoice('W',MODULAR);c.name='Robin';c.look.head=head;assert.ok(createPlayer(s,c,MODULAR));checks++;
+ for(const[id,a]of Object.entries(A.modular.anchors)){const f=A.frames[id];if(!f)continue;const p=headPlacement(A.modular,{head},id,f,500,400,.4,true);if(a.hide_head)assert.equal(p,null);else{assert.ok(p&&A.frames[p.head]);assert.ok(p.head.startsWith('head_'+head+'/'));assert.ok(Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.rot));}checks++;}
+ for(const fid of Object.values(A.modular.portraits.faces[head]))assert.ok(A.frames[fid]&&A.frames[A.modular.masks[fid]]);checks++;
+}
+for(const s of JSON.parse(readFileSync(process.argv[2]||'../assets/Puckbound-Batches-CB/Puckbound-Batch-CB/quality-review/runtime-samples.json'))){const d=new Uint8ClampedArray(s.pixels.flat()),m=new Uint8ClampedArray(s.masks.flat());recolorParts(d,m,{skin:0,hair:4});for(let i=0;i<s.pixels.length;i++){assert.equal(d[i*4+3],s.pixels[i][3]);if(s.label==='fixed')assert.deepEqual([...d.slice(i*4,i*4+4)],s.pixels[i]);else assert.notDeepEqual([...d.slice(i*4,i*4+3)],s.pixels[i].slice(0,3));checks+=2;}}
+console.log(`Custom head variety: ${checks} checks passed`);
