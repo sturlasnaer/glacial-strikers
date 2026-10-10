@@ -60,7 +60,7 @@ import { cleanSign, SIGN_MAX } from './fancam.js';
 import { MINI_ROUNDS, MINI_PRIZE, miniOf } from './minicup.js';
 import { MASCOTS, RACE_PRIZE, pickRunners, newRace, stepRace } from './race.js';
 import { tripStops, POSTCARD_TOWNS } from './trip.js';
-import { newPet, stepPet, tapPet, tossPuck, cleanPetName, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit } from './pet.js';
+import { newPet, stepPet, tapPet, tossPuck, cleanPetName, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit, PET_BED, ownsBed, buyBed } from './pet.js';
 import { albumPages, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
 
 const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
@@ -754,6 +754,9 @@ export class UI {
         : `<img class="decor" data-decor="${item.id}" src="${set.urls[0]}" alt="" style="${style}">`;
     }
     html += this.trophyShelf(s, at);
+    // the cub's basket, once it's bought (Batch DL)
+    const bed = Assets.atlas.decor_slots && Assets.atlas.decor_slots.cub_bed, bedSet = bed && ownsBed(s) && ['pet/bed_sleep_1', 'pet/bed_sleep_2'].every((f) => Assets.frame(f)) && Assets.spriteSet(['decor/cub_bed'], 84);
+    if (bedSet) html += `<img class="cub-bed" id="cub-bed" src="${bedSet.urls[0]}" alt="" style="${at(bed.x, bed.y)};height:${(84 / 864) * 100}%;aspect-ratio:${bedSet.w}/${bedSet.h};transform:translate(-${bedSet.fx * 100}%,-${bedSet.fy * 100}%);z-index:${bed.y / 864 < 0.66 ? 1 : 2}">`;
     // the chest glows while there are trophies you haven't looked at, and stands open after
     const got = Object.keys((s.achievements && s.achievements.unlocked) || {}).length;
     const chest = R.h_chest_open && R.chest_placement && Assets.spriteSet(R.h_chest_open, 190);
@@ -867,21 +870,27 @@ export class UI {
     const FETCH = { fetch_run: 4, fetch_carry: 4, fetch_drop: 2 };
     const fetches = dir === 'pet/' && has('pet/puck') && Object.entries(FETCH).every(([k, n]) => Array.from({ length: n }, (_, i) => `pet/${k}_${i + 1}`).every(has));
     if (fetches) for (const [k, n] of Object.entries(FETCH)) sets[k] = set(Array.from({ length: n }, (_, i) => `${k}_${i + 1}`));
+    // its basket (Batch DL): it naps in it (the frames have the basket in them)
+    const bedEl = room.querySelector('#cub-bed'), bedAt = Assets.atlas.decor_slots && Assets.atlas.decor_slots.cub_bed;
+    if (bedEl && bedAt && dir === 'pet/') sets.bed_sleep = set(['bed_sleep_1', 'bed_sleep_2']);
     if (Object.values(sets).some((x) => !x)) return;
     const s = this.app.save, name = () => (s.pet && s.pet.name) || t('Snowball');
     room.insertAdjacentHTML('beforeend', `<button class="pet" id="pet" aria-label="${esc(name())}"><img alt=""><img class="pet-acc" alt="" hidden></button><button class="pet-tag" id="pet-tag" hidden></button>${fetches ? `<img class="pet-puck" id="pet-puck" src="${Assets.sceneImage('pet/puck', 48)}" alt="" hidden>` : ''}`);
     const el = room.querySelector('#pet'), img = el.querySelector('img'), acc = el.querySelector('.pet-acc'), tag = room.querySelector('#pet-tag'), puck = room.querySelector('#pet-puck');
     this.pet ||= newPet();
+    this.pet.bed = sets.bed_sleep ? { x: (bedAt.x / 1536) * 100, y: (bedAt.y / 864) * 100 } : null;
+    if (!this.pet.bed) this.pet.inBed = false;
     let last = performance.now(), tagT = 0;
     clearInterval(this.petTimer);
     this.petTimer = setInterval(() => {
       if (!el.isConnected) { clearInterval(this.petTimer); return; }
       const now = performance.now(), dt = Math.min(0.2, (now - last) / 1000);
       last = now;
-      const p = stepPet(this.pet, dt), st = p.trickT > 0 && sets['trick_' + p.trick] ? 'trick_' + p.trick : p.fetch && sets.fetch_run ? 'fetch_' + p.fetch.phase : p.hop > 0 ? 'hop' : p.state, k = sets[st] || sets.sit;
+      const p = stepPet(this.pet, dt), st = p.trickT > 0 && sets['trick_' + p.trick] ? 'trick_' + p.trick : p.fetch && sets.fetch_run ? 'fetch_' + p.fetch.phase : p.hop > 0 ? 'hop' : p.inBed && p.state === 'sleep' && sets.bed_sleep ? 'bed_sleep' : p.state === 'tobed' ? 'walk' : p.state, k = sets[st] || sets.sit;
+      if (bedEl) bedEl.hidden = st === 'bed_sleep'; // (asleep in it: the frames have the basket)
       const i = st.startsWith('trick_') ? Math.min(k.urls.length - 1, Math.floor((1 - p.trickT / TRICK_TIME) * k.urls.length)) // (a trick plays through once)
         : st === 'fetch_drop' ? (p.fetch.t < FETCH_DROP * 0.35 ? 0 : 1) // (down it goes, then sitting proud)
-        : Math.floor((now / 1000) * (st === 'walk' ? 8 : st === 'fetch_run' ? 12 : st === 'fetch_carry' ? 9 : st === 'sleep' ? 1 : 2)) % k.urls.length;
+        : Math.floor((now / 1000) * (st === 'walk' ? 8 : st === 'fetch_run' ? 12 : st === 'fetch_carry' ? 9 : st === 'sleep' || st === 'bed_sleep' ? 1 : 2)) % k.urls.length;
       if (puck) { const f = p.fetch, on = f && f.phase !== 'carry'; puck.hidden = !on; if (on) puck.style.cssText = `left:${f.x}%;top:${f.y}%;z-index:${f.y < 66 ? 1 : 3}`; }
       if (img.dataset.k !== st + i) { img.src = k.urls[i]; img.dataset.k = st + i; acc.hidden = !k.acc; if (k.acc) acc.src = k.acc[i]; }
       const lift = p.hop > 0 ? Math.sin((1 - p.hop / 0.5) * Math.PI) * 3 : 0;
@@ -2776,7 +2785,12 @@ export class UI {
       }).join('')}</div>
       ${(() => { // outfits for the cub (Batch DA)
         const outfits = PET_OUTFITS.filter((o) => Assets.atlas.frames[`pet_acc/${o.id}/sit_1`] && Assets.atlas.frames['pet/sit_1']);
-        if (!outfits.length) return '';
+        const bed = ['decor/cub_bed', 'pet/bed_sleep_1', 'icons/cub_bed'].every((f) => Assets.atlas.frames[f]) && Assets.atlas.decor_slots && Assets.atlas.decor_slots.cub_bed; // (its basket: Batch DL)
+        if (!outfits.length && !bed) return '';
+        const bedItem = bed ? `<div class="item" tabindex="0" aria-label="${esc(t(PET_BED.name))}"><img src="${Assets.icon('icons/cub_bed', 128)}" alt="">
+            <div style="min-width:0"><div class="label" style="font-size:13px">${t('For the cub')}</div><h4>${esc(t(PET_BED.name))}</h4><div class="muted" style="font-size:12px">${t('A bed of its own, for its naps.')}</div>
+              <div class="buy">${ownsBed(s) ? `<span class="tag good">${t('In the room')}</span>` : `<span class="price">${PET_BED.price}</span><button class="btn small ${s.coins >= PET_BED.price ? 'gold' : ''}" data-bbuy="1" ${s.coins >= PET_BED.price ? '' : 'disabled'}>${t('Buy')}</button>`}</div></div>
+          </div>` : '';
         const wear = (s.pet || {}).wear;
         return `<div class="label" style="margin:14px 0 6px">${t('For the cub')}</div><div class="shop">${outfits.map((o) => {
           const pic = Assets.spriteSet(['pet/sit_1', `pet_acc/${o.id}/sit_1`], 96), own = ownsOutfit(s, o.id), on = wear === o.id, afford = s.coins >= o.price;
@@ -2786,7 +2800,7 @@ export class UI {
               <div class="buy">${own ? (on ? `<span class="tag good">${t('Wearing it')}</span><button class="btn small ghost" data-unwear="1">${t('Take off')}</button>` : `<button class="btn small" data-wear="${o.id}">${t('Put on')}</button>`)
                 : `<span class="price">${o.price}</span><button class="btn small ${afford ? 'gold' : ''}" data-obuy="${o.id}" ${afford ? '' : 'disabled'}>${t('Buy')}</button>`}</div></div>
           </div>`;
-        }).join('')}</div>`;
+        }).join('')}${bedItem}</div>`;
       })()}
       ${Assets.atlas.locker ? `<div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn small ghost" id="decor-room">${t('See the room')}</button></div>` : ''}`;
     this.click('[data-f]', (el) => { this.shopFilter = el.dataset.f; audio.sfx('click'); this.tabShop(body); }, body);
@@ -2795,6 +2809,7 @@ export class UI {
     this.click('[data-ddown]', (el) => { if (takeDown(s, el.dataset.ddown)) { writeSave(s); audio.sfx('back'); } this.tabDecor(body); }, body);
     this.click('#decor-room', () => { audio.sfx('click'); this.hub('room'); }, body);
     this.click('[data-obuy]', (el) => { if (!buyOutfit(s, el.dataset.obuy)) return; writeSave(s); audio.sfx('purchase'); this.hub('shop'); }, body);
+    this.click('[data-bbuy]', () => { if (!buyBed(s)) return; writeSave(s); audio.sfx('purchase'); this.hub('shop'); }, body);
     this.click('[data-wear]', (el) => { if (wearOutfit(s, el.dataset.wear)) { writeSave(s); audio.sfx('equip'); } this.tabDecor(body); }, body);
     this.click('[data-unwear]', () => { wearOutfit(s, null); writeSave(s); audio.sfx('back'); this.tabDecor(body); }, body);
   }

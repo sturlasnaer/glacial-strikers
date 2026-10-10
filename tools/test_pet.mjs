@@ -2,7 +2,7 @@
 // never off it, sits a while, now and then naps, wakes up and hops when tapped, and its name is
 // cleaned (12 characters at most).
 //   node tools/test_pet.mjs
-import { newPet, stepPet, tapPet, tossPuck, cleanPetName, PET_AREA, PET_NAME_MAX, TRICK_TIME, FETCH_HOME, FETCH_DROP, PET_OUTFITS, buyOutfit, wearOutfit, ownsOutfit } from '../src/pet.js';
+import { newPet, stepPet, tapPet, tossPuck, cleanPetName, PET_AREA, PET_NAME_MAX, TRICK_TIME, FETCH_HOME, FETCH_DROP, PET_BED, ownsBed, buyBed, PET_OUTFITS, buyOutfit, wearOutfit, ownsOutfit } from '../src/pet.js';
 import { makeRng } from '../src/util.js';
 
 let pass = 0, fail = 0;
@@ -77,6 +77,24 @@ check('its name: cleaned, 12 characters at most', cleanPetName('  <Snjó>\n bolt
   const q = newPet(rnd);
   tossPuck(q, 99, 5);
   check('a toss off the floor lands on it', q.fetch.x === PET_AREA.x1 && q.fetch.y === PET_AREA.y0);
+}
+
+// its basket (Batch DL): bought once; with it in the room, the cub walks to it for its naps
+{
+  const save = { coins: 100 };
+  check('the basket: bought once', buyBed(save) && ownsBed(save) && save.coins === 100 - PET_BED.price && !buyBed(save));
+  check('not without the coins', !buyBed({ coins: 10 }));
+  const rnd = makeRng(9), p = newPet(rnd);
+  p.bed = { x: 62, y: 66 };
+  let t = 0, went = false;
+  while (t < 120 && !(p.state === 'sleep' && p.inBed)) { stepPet(p, 0.1, rnd); t += 0.1; if (p.state === 'tobed') went = true; }
+  check('off to its basket for a nap', went && p.inBed && p.x === 62 && p.y === 66, t);
+  tapPet(p, rnd, []);
+  check('a tap wakes it, out of the basket', !p.inBed && p.state === 'sit');
+  const q = newPet(makeRng(9));
+  let slept = false;
+  for (let k = 0; k < 1200; k++) { stepPet(q, 0.1, rnd); if (q.state === 'sleep') { slept = true; break; } }
+  check('without one: a nap on the floor, as before', slept && !q.inBed);
 }
 
 console.log(`Pet: ${pass} passed, ${fail} failed`);

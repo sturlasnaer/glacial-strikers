@@ -24,14 +24,17 @@ export function stepPet(p, dt, rnd = Math.random) {
   if (p.trickT > 0) { p.trickT = Math.max(0, p.trickT - dt); if (!p.trickT) p.trick = null; return p; }
   if (p.fetch) return stepFetch(p, dt, rnd);
   if (p.hop > 0) { p.hop = Math.max(0, p.hop - dt); return p; }
-  if (p.state === 'walk') {
+  if (p.state === 'walk' || p.state === 'tobed') {
     const dx = p.tx - p.x, dy = p.ty - p.y, d = Math.hypot(dx, dy), v = PET_SPEED * dt;
     if (dx) p.face = dx > 0 ? 1 : -1;
-    if (d <= v) { p.x = p.tx; p.y = p.ty; p.state = 'sit'; p.t = 0; p.until = 2 + rnd() * 4; }
+    if (d <= v && p.state === 'tobed') { p.x = p.tx; p.y = p.ty; p.state = 'sleep'; p.inBed = true; p.t = 0; p.until = 8 + rnd() * 8; } // (a longer nap in its own bed)
+    else if (d <= v) { p.x = p.tx; p.y = p.ty; p.state = 'sit'; p.t = 0; p.until = 2 + rnd() * 4; }
     else { p.x += (dx / d) * v; p.y += (dy / d) * v; }
   } else if (p.t >= p.until) {
-    if (p.state === 'sit' && rnd() < 0.25) { p.state = 'sleep'; p.t = 0; p.until = 6 + rnd() * 6; }
-    else walkTo(p, rnd);
+    if (p.state === 'sit' && rnd() < 0.25) {
+      if (p.bed) { p.state = 'tobed'; p.tx = p.bed.x; p.ty = p.bed.y; p.t = 0; } // (off to its basket for the nap: Batch DL)
+      else { p.state = 'sleep'; p.t = 0; p.until = 6 + rnd() * 6; }
+    } else { p.inBed = false; walkTo(p, rnd); }
   }
   return p;
 }
@@ -41,7 +44,7 @@ export function tapPet(p, rnd = Math.random, tricks = []) {
   if (p.trickT > 0 || p.fetch) return p;
   if (tricks.length && rnd() < 0.6) { p.trick = tricks[Math.floor(rnd() * tricks.length)]; p.trickT = TRICK_TIME; }
   else p.hop = 0.5;
-  if (p.state === 'sleep' || p.state === 'walk') { p.state = 'sit'; p.t = 0; p.until = 1.5; }
+  if (p.state === 'sleep' || p.state === 'walk' || p.state === 'tobed') { p.state = 'sit'; p.t = 0; p.until = 1.5; p.inBed = false; }
   return p;
 }
 
@@ -54,7 +57,7 @@ export function tossPuck(p, x, y) {
   if (p.fetch || p.trickT > 0) return false;
   const A = PET_AREA;
   p.fetch = { x: Math.min(A.x1, Math.max(A.x0, x)), y: Math.min(A.y1, Math.max(A.y0, y)), phase: 'run', t: 0 };
-  p.state = 'fetch'; p.hop = 0;
+  p.state = 'fetch'; p.hop = 0; p.inBed = false;
   return true;
 }
 function stepFetch(p, dt, rnd) {
@@ -99,3 +102,15 @@ export function wearOutfit(save, id) {
   petOf(save).wear = id;
   return true;
 }
+
+// A basket of its own (Shop › Locker room › For the cub, Batch DL): bought once, it stands in the
+// room and the cub naps in it (p.bed: where, in % of the room, set by the room).
+export const PET_BED = { id: 'bed', name: 'Cosy basket', price: 80 };
+export const ownsBed = (save) => !!petOf(save).bed;
+export function buyBed(save) {
+  if (ownsBed(save) || (save.coins || 0) < PET_BED.price) return false;
+  save.coins -= PET_BED.price;
+  petOf(save).bed = true;
+  return true;
+}
+
