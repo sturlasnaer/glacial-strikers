@@ -1459,6 +1459,13 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 /* the locker room's pet (Batch CX) and its name tag */
 .pet { position: absolute; padding: 0; border: 0; background: none; cursor: pointer; pointer-events: auto; transform-origin: center; }
 .pet img { display: block; height: 100%; width: auto; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.35)); }
+/* the cub as coach (Little player games, Batch DJ) */
+#hud .coachcub { position: absolute; left: 24%; bottom: 0; height: min(24vh, 150px); display: flex; align-items: center; pointer-events: none; z-index: 6; }
+#hud .coachcub > img { height: 100%; width: auto; align-self: flex-end; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.35)); }
+#hud .coachcub.up { animation: cc-up 0.3s ease-out; }
+@keyframes cc-up { from { transform: translateY(60%); } to { transform: none; } }
+#hud .cc-say { margin-left: 4px; padding: 4px 12px; background: #fffdf6; color: var(--navy); border: 3px solid var(--navy); border-radius: 12px; font-family: var(--display); font-size: clamp(16px, 3.2vh, 26px); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { #hud .coachcub.up { animation: none; } }
 .pet-puck { position: absolute; height: calc(100% * 14 / 864); width: auto; transform: translate(-50%, -100%); pointer-events: none; }
 .pet-tag { position: absolute; z-index: 4; transform: translate(-50%, -100%); font-family: var(--display); font-size: calc(var(--u, 8px) * 1.6); color: var(--navy); background: #fffdf6; border: 2px solid var(--navy); border-radius: 4px; padding: 0 6px; white-space: nowrap; cursor: pointer; pointer-events: auto; }
 .pet-heart { position: absolute; z-index: 4; width: calc(var(--u, 8px) * 2.6); transform: translate(-50%, -100%); pointer-events: none; animation: pet-heart 1.2s ease-out forwards; }

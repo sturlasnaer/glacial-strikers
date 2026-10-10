@@ -6,6 +6,7 @@ import { portrait, crest, keyCap, portraitCanvas } from './ui.js';
 import { firstKey } from './keys.js';
 import { t } from './i18n.js';
 import { isPartsArt } from './modular.js';
+import { newCoach, coachStep } from './coach.js';
 
 // The fan cam (Batch CT): is the art in, loaded and ready to draw?
 export const fanCamReady = () => {
@@ -64,6 +65,10 @@ const paint = (cv, src) => {
 const digit = (n) => Assets.iconCanvas(`hud_elements/score/${Math.min(5, n)}`, 96);
 const face = (cv, ...args) => paint(cv, portraitCanvas(...args));
 
+// The cub as coach (Little player games, Batch DJ): its pose and words for each tip.
+const COACH = { pass: ['point', () => t('Pass it!')], shoot: ['point', () => t('Shoot!')], chase: ['think', () => t('Get the puck back!')], goal: ['cheer', () => t('Hooray!')], against: ['talk', () => t('Next one\'s ours!')] };
+const coachReady = () => { const f = Assets.frame('cub_coach/talk_1'); return !!(f && Assets.pages[f[0]]); };
+
 export class HUD {
   constructor(app) {
     this.app = app;
@@ -114,6 +119,7 @@ export class HUD {
       <div class="powerchip" id="power" hidden><img alt=""><span></span><span class="t"><i></i></span></div>
       <button class="pause-btn" id="pause-btn" tabindex="-1" aria-label="${t('Pause')}"></button>
       <div class="hint" id="hint" hidden></div>
+      <div class="coachcub" id="coachcub" hidden><img alt=""><span class="cc-say"></span></div>
       <div class="keyhints" id="keyhints" ${this.app.isTouch ? 'hidden' : ''}>
         ${drill && drill.keysHint ? drill.keysHint(K)
         : this.coop || this.keeper ? this.coopHints(K)
@@ -150,6 +156,21 @@ export class HUD {
     this.touch.classList.toggle('drive', !!(drill && drill.noCard)); // (the Resurfacer: just the stick and SPRINT) // goalie mode puts icons on the face buttons (keeper co-op: touch is player 1's skater)
     this.touch.querySelectorAll('.gk-ico').forEach((i) => i.remove());
     this.keyhintT = 12;
+    // Little player: the cub coaches (not in two-player versus games, drills or in goal)
+    this.coach = this.app.save && this.app.save.settings.little && !this.versus && !drill && !match.goalieMode ? newCoach() : null;
+    this.coachT = 0;
+  }
+
+  // The cub pops up with a tip (once its art's in), for a couple of seconds.
+  coachSay(k) {
+    const el = this.el.querySelector('#coachcub'), c = COACH[k];
+    if (!el || !c || !coachReady()) return;
+    this.coachPose = c[0];
+    el.querySelector('img').src = Assets.sceneImage(`cub_coach/${c[0] === 'talk' ? 'talk_1' : c[0]}`, 192);
+    el.querySelector('.cc-say').textContent = c[1]();
+    el.hidden = false;
+    el.classList.remove('up'); void el.offsetWidth; el.classList.add('up');
+    this.coachT = 2.6;
   }
 
   // Co-op's keys: a shared keyboard with no gamepad, else player 2 on a pad (player 1 on the
@@ -304,6 +325,7 @@ export class HUD {
     }
     const kind = info.kind === 'onetimer' ? t('ONE-TIMER!') : info.kind === 'zero' ? t('ABSOLUTE ZERO!') : info.kind === 'thunderclap' ? t('THUNDERCLAP!') : info.power ? t(POWER_INFO[info.power].name).toUpperCase() + '!' : '';
     this.banner(`<div class="big" style="color:${color}">${t('GOAL!')}</div>${kind ? `<div class="small">${kind}</div>` : ''}${sub}`, 3);
+    if (this.coach) this.coachSay(info.team === 0 ? 'goal' : 'against');
     if (s) face(this.bannerEl.querySelector('canvas.face'), s.who, s.team, this.teamId, 96);
   }
 
@@ -414,6 +436,15 @@ export class HUD {
       if (this.tickerT <= 0) this.el.querySelector('#ticker').hidden = true;
     }
     // hint fade
+    if (this.coach) {
+      const k = coachStep(this.coach, m, dt);
+      if (k) this.coachSay(k);
+      if (this.coachT > 0) {
+        const el = this.el.querySelector('#coachcub');
+        if ((this.coachT -= dt) <= 0) el.hidden = true;
+        else if (this.coachPose === 'talk') { const f = `cub_coach/talk_${1 + (Math.floor(this.coachT * 6) % 2)}`, img = el.querySelector('img'); if (img.dataset.f !== f) { img.dataset.f = f; img.src = Assets.sceneImage(f, 192); } }
+      }
+    }
     if (this.hintT > 0) {
       this.hintT -= dt;
       const h = this.el.querySelector('#hint');
