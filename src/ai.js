@@ -416,16 +416,19 @@ export class TeamAI {
     // contain the carrier from a gap goal-side, closing in only near our net or on the
     // forecheck: the stick still pokes at the puck, but nobody runs straight through them
     const tight = Math.abs(c.x - this.ownX) < 260 || plan === 'forecheck';
-    const gap = tight ? lerp(24, 14, this.diff) : lerp(48, 28, this.diff);
+    // (the player's carrier gets room to skate on the easier levels: a wider gap)
+    const human = c.controlled && m.humans.includes(c.team), hd = this.diff * this.diff; // (against the player: gentle for longer, the top teams still tough)
+    const gap = human ? (tight ? lerp(40, 14, hd) : lerp(82, 28, hd)) : tight ? lerp(24, 14, this.diff) : lerp(48, 28, this.diff);
     const tx = c.x + c.vx * 0.22 + g.x * gap, ty = c.y + c.vy * 0.22 + g.y * gap;
     this.seek(s, tx, ty, true, 8);
     const d = Math.hypot(c.x - s.x, c.y - s.y);
     if (decide) {
       // checks are picked moments, with a breather after each one: a chance per second in
       // reach (sharper AIs decide more often, so it's spread over their decisions)
-      const aggression = lerp(0.1, 0.28, this.diff) * this.interval * (plan === 'forecheck' ? 1.3 : plan === 'trap' ? 0.6 : 1);
+      // (on the player's carrier, far fewer on the easier levels, with a longer breather)
+      const aggression = (human ? lerp(0.035, 0.24, hd) : lerp(0.1, 0.28, this.diff)) * this.interval * (plan === 'forecheck' ? 1.3 : plan === 'trap' ? 0.6 : 1);
       if (d < 62 && s.checkCd <= 0 && !(b.checkRest > 0) && s.stamina > 35 && m.rng() < aggression) {
-        b.checkRest = lerp(3, 1.8, this.diff);
+        b.checkRest = human ? lerp(5.5, 2, hd) : lerp(3, 1.8, this.diff);
         if (s.def.skill.id === 'bedrock' && s.skillCd <= 0 && m.rng() < this.diff) s.in.skill = true;
         s.in.check = true;
         const n = norm(c.x + c.vx * 0.1 - s.x, c.y + c.vy * 0.1 - s.y);

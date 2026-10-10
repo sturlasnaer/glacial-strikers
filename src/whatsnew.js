@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10z',
+    items: [
+      { icon: 'hud_elements/ability/stamina', text: 'The rivals ease off: fewer hits and more room on the puck, most of all on Easy and against the early teams. The top teams still play hard.' },
+    ],
+  },
+  {
     id: '2026-10-10y',
     items: [
       { icon: 'icons/coop', text: 'A shootout party for two: in 2 Players › Shootout, player 1 shoots for the Foxes and player 2 for a rival, five shots each against the goalies. On a tablet, each gets a stick and a PLAY button.' },

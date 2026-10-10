@@ -208,6 +208,11 @@ node tools/sim.mjs 20 0.6 0.6
 Plays AI-vs-AI matches headless and prints goals, save percentage, match length and how often abilities are used. Use it after changing physics or AI numbers. Arguments: matches, team A difficulty, team B difficulty, chemistry level. Set `PLANS=trap,forecheck` to pit game plans against each other.
 
 ```bash
+node tools/sim_player.mjs 12 0.12 0.35 0.55 0.72
+```
+How the AI feels from the player's side: a scripted player on our team against the AI at each difficulty, printing the player's carries lost to sticks and to hits a minute, hits taken, how close defenders crowd the carrier, and the score (`SIMPLE=1` for Simple controls). Against the player's own carrier the AI's gap, its checks (how often, the breather after) and how often a hit or a stick takes the puck all follow the square of its difficulty: the early teams and Easy give a young player room (a skater wandering with the puck keeps it 15–20 s against the Lynx), the top teams still close down hard (about 4 s against the Royals). AI-vs-AI play is unchanged.
+
+```bash
 node tools/test_controls.mjs
 ```
 Scripted checks of shooting, passing, one-timers, checking, switching, abilities, combos, pass chains, versus inputs and challenges.

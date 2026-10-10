@@ -525,7 +525,9 @@ export class Match {
     this.addUlt(a, 5);
     const p = this.puck;
     let stripped = false;
-    if (p.owner === b && (a.bedrockT > 0 || ambush || kb > 150 || this.rng() < 0.75)) {
+    // (the player's carrier keeps the puck more often against the easier AIs)
+    const strip = b.controlled && this.humans.includes(b.team) && !this.humans.includes(a.team) ? 0.45 + 0.3 * this.ai[a.team].diff ** 2 : 0.75;
+    if (p.owner === b && (a.bedrockT > 0 || ambush || kb > 150 || this.rng() < strip)) {
       stripped = true;
       this.loosePuck(b);
       const perp = this.rng.range(-1, 1);
@@ -609,7 +611,7 @@ export class Match {
       const shielded = c.dekeT > 0 || (d.x - c.x) * (p.x - c.x) + (d.y - c.y) * (p.y - c.y) < 0; // reaching round the carrier's body (or a deke going by)
       // (the base was 0.8 when the puck sat in front of the body: out on the blade it's easier to reach)
       // (an AI stick on the player's carrier: a little sharper, since the player shields well)
-      const vsPlayer = c.controlled && this.humans.includes(c.team) && !this.humans.includes(d.team) ? PLAYER_STEAL_MUL : 1;
+      const vsPlayer = c.controlled && this.humans.includes(c.team) && !this.humans.includes(d.team) ? PLAYER_STEAL_MUL * (0.65 + 0.35 * this.ai[d.team].diff ** 2) : 1; // (gentler sticks on the easier levels)
       const rate = STEAL_BASE * vsPlayer * (shielded ? 0.58 : 1) * (1 + (d.stats.chk - c.stats.pas) * 0.06) * this.ai[d.team].stealMul() * (d.def.arch === 'grinder' ? 1.08 : 1) * (d.hasPerk('Pickpocket') ? 1.1 : 1);
       const r = this.rng();
       if (r < rate * dt) {
