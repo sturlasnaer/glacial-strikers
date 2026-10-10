@@ -7,9 +7,8 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **CS: decorations for the locker room**
-2. **CT: the fan cam**
-3. **CU: picture day**
+1. **CT: the fan cam**
+2. **CU: picture day**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -46,6 +45,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered CP:** Glacier Cave backdrop, scoreboard, foreground glass, penalty alcove, icicle effects and rule icon. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CP-Testing-Update`.
 
 **Delivered CR:** Sticker album mascots, feature icons, collection trophies and five album PNGs. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CR-Testing-Update`.
+
+**Delivered CS:** Twenty locker-room decoration and achievement frames, including native animation pairs. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CS-Testing-Update`.
 
 ## Format notes
 
@@ -384,7 +385,7 @@ The game now has a **sticker album** (Trophies › Sticker album): a numbered st
 
 17 images.
 
-## Batch CS: decorations for the locker room
+## Batch CS ✓: decorations for the locker room
 
 The locker room hub (`locker_room.webp`, 1536×864) is getting **decorations**: bought in the Shop, each shows in its own spot in the room, so kids can make the room their own. The code is going in now and shows each item as soon as its frame is in. Please draw them in the room's style and angle (the same light, outlines and three-quarter view as the room and its chest), as atlas frames on a page in the `hub` group, transparent, each with its pivot where it says. Sizes are in the room's pixels:
 - **Over the lockers** (pivot top centre, about 860 wide, hung from the top of the lockers around x 760, y 18): `decor/banner_pennants` (a string of pennants in the club's ice blue and cream), `decor/banner_lights_1` and `_2` (a string of warm fairy lights, two frames: twinkling), `decor/banner_snowflakes` (paper snowflakes on a string).
