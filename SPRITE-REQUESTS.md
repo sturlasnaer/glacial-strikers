@@ -7,7 +7,9 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-None currently open. Monitoring for additions.
+1. **DX: divisions and their cups**
+2. **DY: veteran stars**
+3. **DZ: the poke check**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -695,4 +697,30 @@ The cub who coaches Little player games from the corner of the screen (DJ) shoul
 - `cub_coach_holiday/talk_1`, `talk_2`, `point`, `cheer`, `think`.
 
 10 frames.
+
+## Batch DX: divisions and their cups
+
+The league is getting divisions: win the Frostline Cup and the club is promoted to a tougher level next season, with its own, grander cup; finish last and it drops back down. Three levels: **Regional** (today's league, the Frostline Cup), **National** and **Elite**. Please draw, in the style of the existing `badges/frostline_cup` and the other badges, **no lettering**, as atlas frames on a page in the `badges` group:
+- `badges/tier_regional`, `badges/tier_national`, `badges/tier_elite` (256×256): division crests: a bronze, a silver and a gold shield with a snowflake, one, two and three small stars above it, ribbons in the club's blue.
+- `badges/national_cup` and `badges/elite_cup`, framed like `badges/frostline_cup` (about 440×490): the National Cup a taller silver cup with deep blue enamel bands and a snowflake on the bowl; the Elite Cup a grand gold cup with aurora-green and violet crystal inlays and a crown of icicles. Both clearly finer than the Frostline Cup.
+- `icons/promoted` (128×128): a pennant on a pole with an up arrow and confetti; `icons/relegated` (128×128): a gentle down-arrow pennant (not sad, just "back down a level").
+
+7 frames.
+
+## Batch DY: veteran stars
+
+Players who reach level 10 keep going as veterans (veteran levels 1 to 10, each a point to push a stat further). Please draw, **no lettering** (the game writes the number beside it), as atlas frames on a page in the `badges` group:
+- `badges/veteran` (128×128): a gold star with a little laurel and a tiny Snow Fox head in its middle, for the player cards.
+- `badges/veteran_max` (128×128): the same in platinum with a sparkle, for veteran level 10.
+- `icons/veteran_up` (128×128): the gold star bursting with sparkles, for the "veteran level up" toast.
+
+3 frames.
+
+## Batch DZ: the poke check
+
+Skaters are getting a poke check: a quick jab of the stick at the carrier's puck, no body contact. The game uses the skaters' existing poses; please draw the effect that sells it, as atlas frames on a page in the `badges` group (small, used in every match):
+- `fx/poke_1`, `fx/poke_2`, `fx/poke_3` (96×48, transparent, pointing right; the game rotates it): an ice-blue swoosh of a stick jab: the start, the jab at full reach with a little streak, the fade.
+- `fx/poke_hit` (64×64): a small white-and-ice burst with a few chips of ice, when a poke knocks the puck free.
+
+4 frames.
 
