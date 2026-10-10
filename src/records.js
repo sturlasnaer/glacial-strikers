@@ -23,7 +23,7 @@ export function updateRecords(save, game) {
     const cur = R[id];
     if (cur && !better(n, cur.n)) return;
     R[id] = { n, team: game.oppName, season: game.season, ...extra };
-    if (cur) broken.push({ id, n, ...extra }); // (the first one of each isn't news)
+    if (cur) { broken.push({ id, n, ...extra }); R.brokenN = (R.brokenN || 0) + 1; } // (the first one of each isn't news)
   };
   const ours = (sm.skaters || []).filter((k) => k.team === 0);
   const margin = sm.score[0] - sm.score[1];

@@ -189,3 +189,14 @@ A player who reaches 50 league goals for the club, or wins three Frostline Cups 
 - `hall/ceremony`: the banner going up, 1280×720: the home rink in darkness, a single spotlight on a rolled banner rising to the rafters, the team standing at centre ice with sticks raised, fans holding up phone lights.
 
 3 frames.
+
+## Batch BW: achievements for the club off the ice
+
+Five new achievements go with tonight's features. They borrow other pictures for now. Please draw them in the style and size of the AF/BK/BO achievement icons:
+- `achievements/breaking_ground` (Breaking Ground: build a club facility): a shovel in fresh snow beside a little blueprint with a rink on it.
+- `achievements/built_to_last` (Built to Last: every facility at level 3): the home arena from outside at night, all lit up, four small signs over the doors (stands, training, scouting, physio).
+- `achievements/media_darling` (Media Darling: five press conferences): a bunch of microphones held out toward a player's helmet, camera flashes.
+- `achievements/raise_the_banner` (Raise the Banner: a player in the Hall of Fame): a jersey-shaped banner rising into the rafters on a rope, a spotlight on it.
+- `achievements/record_breaker` (Record Breaker: break a club record): a record book open on a stand, a gold pen, a new line written in.
+
+5 frames.

@@ -1,5 +1,6 @@
 // Achievements: tracked from match events and save progress, shown in the Trophies tab.
 
+import { FACILITY_IDS, facilityLevel, MAX_FACILITY } from './facilities.js';
 import { TEAMS, GEAR, CHEM_LEVELS, RECRUITS, CAST_PAIRS, LEGENDS, ELEMENTS, GOALIE_RECRUITS } from './data.js';
 
 const TROPHY = 'equipment_items/reward/trophy', MEDAL = 'equipment_items/reward/medal', STAR = 'hud_elements/misc/level_star';
@@ -70,6 +71,12 @@ export const ACHIEVEMENTS = [
   { id: 'hot-hand', name: 'Hot Hand', text: 'One of your players scores in five league games in a row.', icon: 'badges/streak_flame', art: 'achievements/hot_hand', coins: 80 },
   { id: 'coachs-orders', name: 'Coach\'s Orders', text: 'Meet all three of Coach Brekka\'s season goals.', icon: 'equipment_items/hub/target', art: 'achievements/coachs_orders', coins: 120 },
   { id: 'weekly-cup', name: 'Cup of the Week', text: 'Win a Weekly Cup on a friends board.', icon: 'badges/rank_1', art: 'achievements/cup_of_the_week', coins: 100 },
+  // the club off the ice: facilities, the press, the Hall of Fame and the record book (Batch BW art; a stand-in until then)
+  { id: 'breaking-ground', name: 'Breaking Ground', text: 'Build a club facility.', icon: 'icons/friends', art: 'achievements/breaking_ground', coins: 40 },
+  { id: 'built-to-last', name: 'Built to Last', text: 'Build every club facility to level 3.', icon: 'icons/friends', art: 'achievements/built_to_last', coins: 200 },
+  { id: 'media-darling', name: 'Media Darling', text: 'Answer five press conferences.', icon: 'icons/share', art: 'achievements/media_darling', coins: 60 },
+  { id: 'raise-the-banner', name: 'Raise the Banner', text: 'Put a player in the Hall of Fame.', icon: 'icons/career', art: 'achievements/raise_the_banner', coins: 120 },
+  { id: 'record-breaker', name: 'Record Breaker', text: 'Break one of the club\'s records.', icon: 'icons/stat_goals', art: 'achievements/record_breaker', coins: 50 },
 ];
 // Batch AF: the achievements that borrowed a gear or HUD picture get their own.
 const AF_ART = {
@@ -205,5 +212,11 @@ export class AchievementTracker {
     if (Object.values(s.rookies || {}).some((k) => k.agent) || Object.keys(s.freeGoalies || {}).length) this.unlock('veteran');
     if (Object.keys(LEGENDS).some((k) => s.roster[k])) this.unlock('legend');
     if ((s.weeklyCups || []).some((w) => w.place === 1)) this.unlock('weekly-cup');
+    const fac = Object.values(s.facilities || {});
+    if (fac.some(Boolean)) this.unlock('breaking-ground');
+    if (FACILITY_IDS.every((id) => facilityLevel(s, id) >= MAX_FACILITY)) this.unlock('built-to-last');
+    if ((s.pressCount || 0) >= 5) this.unlock('media-darling');
+    if ((s.hall || []).length) this.unlock('raise-the-banner');
+    if (s.records && s.records.brokenN) this.unlock('record-breaker');
   }
 }

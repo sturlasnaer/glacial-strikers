@@ -68,6 +68,7 @@ export function answerPress(save, game, who, name, i) {
   if (!a) return null;
   EDGE[a.tone](save);
   save.pressAt = (save.record && save.record.played) || 0;
+  save.pressCount = (save.pressCount || 0) + 1;
   addNews(save, { k: 'press', tone: a.tone, name, team: game.opp, who });
   return { ...(game.won ? a.win : a.loss), fx: a.fx, tone: a.tone };
 }
