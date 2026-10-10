@@ -7,13 +7,15 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **BU: the facilities as they grow**
-2. **BV: the Hall of Fame**
-3. **BW: achievements for the club off the ice**
+1. **BX: the Frostline Coliseum, a home for the Cup Final**
+2. **BY: supporters' sections for the rival rinks**
+3. **BZ: the season in review**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
 **Delivered BR–BT:** six facility icons, thirteen home-rink frames and eleven native cloth masks, and nine press-room/portrait frames. Includes an eager Kip portrait as the ninth BT image. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BR-BT-Testing-Update`.
+
+**Delivered BU–BW:** twelve facility scenes, the Hall plaque, wall and ceremony, and five achievement icons. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BU-BW-Testing-Update`.
 
 ## Format notes
 
@@ -173,7 +175,7 @@ After the big games (rivalry games, playoff games, the Winter Classic and the Al
 
 9 frames.
 
-## Batch BU: the facilities as they grow
+## Batch BU ✓: the facilities as they grow
 
 Shop › Club facilities shows each facility as a card. Please draw a small scene for each facility at each of its three levels, so the card shows what the coins built. Landscape, about 480×270, in the style of the locker-room hub and the draft hall (the same warm lights and navy tones), no text:
 - `facilities/stands_1`, `_2`, `_3`: the home rink's stands from rinkside, a few rows of fans; then a packed section with a drum and scarves held up; then full stands to the rafters with a big home banner.
@@ -183,7 +185,7 @@ Shop › Club facilities shows each facility as a card. Please draw a small scen
 
 12 frames.
 
-## Batch BV: the Hall of Fame
+## Batch BV ✓: the Hall of Fame
 
 A player who reaches 50 league goals for the club, or wins three Frostline Cups with it, now goes into the club's Hall of Fame: their banner goes up in the rafters at home (Batch BS's number banner) and they get a plaque in Trophies › Hall of Fame. Please draw:
 - `hall/plaque`: a bronze plaque on dark wood, about 360×200, with a blank oval at the left for the player's portrait (the game puts it there) and blank engraved lines on the right (the game writes the name, the years and the numbers).
@@ -192,7 +194,7 @@ A player who reaches 50 league goals for the club, or wins three Frostline Cups 
 
 3 frames.
 
-## Batch BW: achievements for the club off the ice
+## Batch BW ✓: achievements for the club off the ice
 
 Five new achievements go with tonight's features. They borrow other pictures for now. Please draw them in the style and size of the AF/BK/BO achievement icons:
 - `achievements/breaking_ground` (Breaking Ground: build a club facility): a shovel in fresh snow beside a little blueprint with a rink on it.

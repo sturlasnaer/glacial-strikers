@@ -1243,3 +1243,20 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .profile b { font-family: var(--display); font-weight: normal; font-size: 20px; }
 .profile small { font-size: 11.5px; color: var(--ice-2); }
 .profile .prof-crest { width: 26px; height: 26px; vertical-align: middle; margin-right: 6px; }
+
+/* Native Hall art keeps its original landscape composition and portrait/text slots. */
+.hall-wall { position: relative; aspect-ratio: 16 / 9; max-width: 720px; margin: 0 auto 12px; background-size: 100% 100%; border-radius: 6px; }
+.hall-wall > img { position: absolute; left: 44.53%; top: 22.22%; width: 10.94%; height: 20.83%; object-fit: contain; }
+.hall:has(.plaque.art) { grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); }
+.plaque.art { position: relative; display: block; aspect-ratio: 360 / 200; padding: 0; background-color: transparent; container-type: inline-size; }
+.plaque.art > img { position: absolute; left: 16.39%; top: 25.5%; width: 18.89%; height: 42%; object-fit: contain; border: 0; background: transparent; border-radius: 50%; }
+.plaque.art > div > b, .plaque.art > div > span, .plaque.art > div > small { position: absolute; left: 43.6%; width: 44%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1; text-shadow: 0 1px 1px #14233b; }
+.plaque.art > div > b { top: 33%; font-family: var(--body); font-size: 3.2cqw; }
+.plaque.art b .gold-t { display: inline; font-size: inherit; }
+.plaque.art > div > span { top: 46%; font-size: 2.7cqw; }
+.plaque.art > div > small { top: 58.5%; font-size: 2.7cqw; opacity: 1; }
+.hall-cer.native-scene { aspect-ratio: 16 / 9; background-size: 100% 100%; grid-template-columns: 64px minmax(0, 1fr); align-items: end; gap: 10px; }
+.hall-cer.native-scene > img { width: 64px; height: 64px; }
+.hall-cer.native-scene > div { padding: 6px; border-radius: 4px; background: #14233bd9; }
+.hall-cer.native-scene h2 { font-size: 22px; margin: 0; }
+.hall-cer.native-scene p { font-size: 12px; }

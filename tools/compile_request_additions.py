@@ -7,7 +7,7 @@ def merge_request_additions(atlas,out,sources):
  for root in map(Path,sources):
   batches=sorted(root.glob('Puckbound-Batch-*'))if not(root/'atlas.json').exists()else[root]
   for B in batches:
-   S=json.loads((B/'atlas.json').read_text());batch=B.name.split('-')[-1];assert batch in ['BJ','BK','BL','BM','BN','BO','BP','BR','BS','BT'];digest=hashlib.sha256((B/'atlas.json').read_bytes()+b''.join((B/m['image']).read_bytes()for m in S['sheets'].values())).hexdigest();digests[batch]=digest
+   S=json.loads((B/'atlas.json').read_text());batch=B.name.split('-')[-1];assert batch in ['BJ','BK','BL','BM','BN','BO','BP','BR','BS','BT','BU','BV','BW'];digest=hashlib.sha256((B/'atlas.json').read_bytes()+b''.join((B/m['image']).read_bytes()for m in S['sheets'].values())).hexdigest();digests[batch]=digest
    if A.get('request_addition_sources',{}).get(batch)==digest:continue
    if batch=='BJ':
     for fid,m in S.get('legacy_art_recovery',{}).items():
@@ -19,10 +19,10 @@ def merge_request_additions(atlas,out,sources):
      f=S['frames'][fid]
      if fid in A['frames']and batch!='BJ':continue
      if batch=='BJ':replaced.add(fid)
-     rr=f['frame'];q=page.crop((rr['x'],rr['y'],rr['x']+rr['w'],rr['y']+rr['h']));k=f.get('game_scale',1) if batch in ['BR','BS','BT'] else .6 if batch in ['BL','BN'] else .33 if fid=='hub_npcs/portrait/coach_stern' else 1;s=k*f.get('source_scale',1);size=(round(q.width*k),round(q.height*k));sx,sy=size[0]/q.width,size[1]/q.height;p=f['pivot_pixels'];group=f.get('game_group') or {'BJ':'gearmask','BK':'icons_z','BL':'linesman','BM':'home'}[batch];items.append({'id':fid,'q':q.resize(size,Image.Resampling.NEAREST),'pivot':[p['x']*sx,p['y']*sy],'scale':s,'group':group})
+     rr=f['frame'];q=page.crop((rr['x'],rr['y'],rr['x']+rr['w'],rr['y']+rr['h']));k=f.get('game_scale',1) if batch in ['BR','BS','BT','BU','BV','BW'] else .6 if batch in ['BL','BN'] else .33 if fid=='hub_npcs/portrait/coach_stern' else 1;s=k*f.get('source_scale',1);size=(round(q.width*k),round(q.height*k));sx,sy=size[0]/q.width,size[1]/q.height;p=f['pivot_pixels'];group=f.get('game_group') or {'BJ':'gearmask','BK':'icons_z','BL':'linesman','BM':'home'}[batch];items.append({'id':fid,'q':q.resize(size,Image.Resampling.NEAREST),'pivot':[p['x']*sx,p['y']*sy],'scale':s,'group':group})
    if batch=='BL':A.setdefault('linesman',{}).setdefault('calls',{}).update(S['linesman']['calls'])
    if batch=='BN':A.setdefault('linesman',{})['delayed']=copy.deepcopy(S['linesman']['delayed'])
-   if batch in ['BR','BS','BT']:
+   if batch in ['BR','BS','BT','BU','BV','BW']:
     for key in ['npcs','club_art_masks','overlay_regions','home_rafters','crowd_supporters']:
      if key in S:A.setdefault(key,{}).update(copy.deepcopy(S[key]))
    if batch=='BP':

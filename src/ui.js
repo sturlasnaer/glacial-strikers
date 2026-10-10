@@ -877,7 +877,9 @@ export class UI {
         <span class="row" style="gap:6px;margin:0"><button class="btn small ghost" id="tr-career">${btnIcon('icons/career')} ${t('Career stats')}</button><button class="btn small ghost" id="tr-lb">${badge('cup_small', 48, 'btn-ico', '🏆')} ${t('Online leaderboards')}</button></span></div>
       ${(() => { // the Hall of Fame's plaques (on Batch BV's plaque once it's in)
         const hall = s.hall || [], plaque = Assets.atlas.frames['hall/plaque'] ? Assets.sceneImage('hall/plaque', 360) : '';
-        return `<div class="label" style="margin:4px 0 6px">${t('Hall of Fame')}</div>${hall.length ? `<div class="hall">${hall.map((h) => `<div class="plaque${plaque ? ' art' : ''}"${plaque ? ` style="background-image:url(${plaque})"` : ''}>
+        const wall = Assets.atlas.frames['hall/wall'] ? Assets.sceneImage('hall/wall', 960) : '';
+        const wallScene = wall ? `<div class="hall-wall" style="background-image:url(${wall})"><img src="${crest('home', 140)}" alt=""></div>` : '';
+        return `<div class="label" style="margin:4px 0 6px">${t('Hall of Fame')}</div>${wallScene}${hall.length ? `<div class="hall">${hall.map((h) => `<div class="plaque${plaque ? ' art' : ''}"${plaque ? ` style="background-image:url(${plaque})"` : ''}>
           <img src="${portrait(h.id, 0, null, 96)}" alt=""><div><b>${esc(h.name)} <span class="gold-t">#${h.number}</span></b><span>${esc(hallWhy(h))}</span><small>${t('Inducted in season {n}', { n: h.season })}</small></div></div>`).join('')}</div>`
           : `<p class="muted" style="margin:0 0 10px;font-size:12.5px">${t('No one yet. {goals} goals or {points} points for the club, {cups} Cups with it, or {wins} wins in goal puts a player in, with a banner in the rafters at home.', { goals: HALL.goals, points: HALL.points, cups: HALL.cups, wins: HALL.goalieWins })}</p>`}`;
       })()}
@@ -1377,7 +1379,7 @@ export class UI {
     audio.jingle?.('champion');
     this.modal(`
       <div class="label">${t('Hall of Fame')}</div>
-      <div class="hall-cer"${art ? ` style="background-image:url(${art})"` : ''}>
+      <div class="hall-cer${art ? ' native-scene' : ''}"${art ? ` style="background-image:url(${art})"` : ''}>
         <img src="${portrait(h.id, 0, null, 220)}" alt="">
         <div>
           <h2>${esc(h.name)} <span class="gold-t">#${h.number}</span></h2>
