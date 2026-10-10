@@ -7,9 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **CH: Ragna, the ice-keeper**
-2. **CI: P1 and P2 tags**
-3. **CJ: trophies for players of your own**
+1. **CJ: trophies for players of your own**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -30,6 +28,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered CE:** eight resurfacer diagonal wheel frames and three Play as icons. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CE-Testing-Update`.
 
 **Delivered CF:** eight seasonal Snow Fox mascot poses with native cloth recolour masks. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CF-Testing-Update`.
+
+**Delivered CH-CI:** Ragna the ice-keeper portrait and the three P1/P2 player badges. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CH-CI-Testing-Update`.
 
 ## Format notes
 
@@ -286,11 +286,11 @@ The home rink now dresses for Halloween and the holidays (Batch CD). The Snow Fo
 
 And put them in `atlas.seasonal.halloween.mascot` and `atlas.seasonal.holiday.mascot`, keyed like `atlas.arena.mascot` (idle, wave, cheer_a, cheer_b), on the `seasonal` group's pages. 8 frames.
 
-## Batch CH: Ragna, the ice-keeper
+## Batch CH ✓: Ragna, the ice-keeper
 
 The Resurfacer drill needs a face: **Ragna, the ice-keeper**, who has looked after the Frostline Rink's ice for forty years and drives the resurfacer between periods. Kindly, weathered, a wool hat with ear flaps, a thick work jacket in the club's navy and cream, a big pair of mittens tucked in a pocket, a twinkle in the eye. Please draw her portrait in the hub NPC style (`npcs`: like Coach Brekka's, Gearsmith Ottar's and Vigga's, the same size and framing) as `npcs/icekeeper`, and add `icekeeper` to `atlas.npcs`. One frame. (The game shows her verdict on the drill's result screen once she's in.)
 
-## Batch CI: P1 and P2 tags
+## Batch CI ✓: P1 and P2 tags
 
 With two players on the ice (co-op, versus, one in goal), each player's skater has a floating "P1" or "P2" over the head, written in text today. Please draw them as small pixel badges, about 48×28, in the HUD kit's style (navy outline, a little shine): `hud_elements/tags/p1` (ice blue, #71dce8 family), `hud_elements/tags/p2_mint` (mint green, #7fe08a family, co-op) and `hud_elements/tags/p2_coral` (coral, #ff6f7d family, versus), each with a tiny downward point so it reads as "this one". Pivot at the point. 3 frames, on an `icons_z` page.
 
