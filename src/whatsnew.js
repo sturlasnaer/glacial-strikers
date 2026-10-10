@@ -2,6 +2,13 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10zf',
+    items: [
+      { icon: 'pet/fetch_carry_1', alt: 'icons/pet', text: 'Play fetch with the cub: tap the open floor in the locker room to toss a puck, and watch it run, bring it back and sit proud.' },
+      { icon: 'cub_coach/point', alt: 'icons/simple_controls', text: 'With Little player on, the cub coaches from the corner of the screen: "Pass it!", "Shoot!", and a cheer for every goal.' },
+    ],
+  },
+  {
     id: '2026-10-10ze',
     items: [
       { icon: 'map/bus_1', alt: 'icons/career', text: 'A road-trip map in the League tab: the eight towns of the league, the season\'s route between them, and the Foxes\' team bus driving on to the next game.' },
