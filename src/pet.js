@@ -1,0 +1,41 @@
+// The locker room's pet (Batch CX): a Snow Fox cub that trots about the floor, sits and wags,
+// now and then curls up for a nap, and hops when it's tapped. Positions are in % of the room.
+// rnd: () => [0, 1) (the menus' own randomness; nothing here touches a match).
+
+export const PET_AREA = { x0: 28, x1: 70, y0: 60, y1: 80 }; // (the open floor in front of the lockers)
+export const PET_SPEED = 7; // % of the room a second
+export const PET_NAME_MAX = 12;
+
+export function newPet(rnd = Math.random) {
+  return { x: 48 + rnd() * 8, y: 72, tx: 0, ty: 0, state: 'sit', t: 0, until: 1.5 + rnd() * 2, face: 1, hop: 0 };
+}
+
+const walkTo = (p, rnd) => {
+  p.state = 'walk'; p.t = 0;
+  p.tx = PET_AREA.x0 + rnd() * (PET_AREA.x1 - PET_AREA.x0);
+  p.ty = PET_AREA.y0 + rnd() * (PET_AREA.y1 - PET_AREA.y0);
+};
+
+export function stepPet(p, dt, rnd = Math.random) {
+  p.t += dt;
+  if (p.hop > 0) { p.hop = Math.max(0, p.hop - dt); return p; }
+  if (p.state === 'walk') {
+    const dx = p.tx - p.x, dy = p.ty - p.y, d = Math.hypot(dx, dy), v = PET_SPEED * dt;
+    if (dx) p.face = dx > 0 ? 1 : -1;
+    if (d <= v) { p.x = p.tx; p.y = p.ty; p.state = 'sit'; p.t = 0; p.until = 2 + rnd() * 4; }
+    else { p.x += (dx / d) * v; p.y += (dy / d) * v; }
+  } else if (p.t >= p.until) {
+    if (p.state === 'sit' && rnd() < 0.25) { p.state = 'sleep'; p.t = 0; p.until = 6 + rnd() * 6; }
+    else walkTo(p, rnd);
+  }
+  return p;
+}
+
+// Tapped: a happy hop (and awake again).
+export function tapPet(p) {
+  p.hop = 0.5;
+  if (p.state === 'sleep') { p.state = 'sit'; p.t = 0; p.until = 1.5; }
+  return p;
+}
+
+export const cleanPetName = (s) => String(s || '').replace(/\s+/g, ' ').replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, PET_NAME_MAX);

@@ -57,6 +57,7 @@ import { seasonFor } from './seasonal.js';
 import { canCreate, createPlayer, restyle, defaultChoice, stylesFor, cleanName, MAX_OWN, NAME_MAX } from './create.js';
 import { DECOR, DECOR_BY_ID, DECOR_SLOTS, SLOT_NAMES as DECOR_SLOT_NAMES, buyDecor, putUp, takeDown, owns as ownsDecor, isOn as decorOn, placed as decorPlaced } from './decor.js';
 import { cleanSign, SIGN_MAX } from './fancam.js';
+import { newPet, stepPet, tapPet, cleanPetName, PET_NAME_MAX } from './pet.js';
 import { albumPages, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
 
 const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
@@ -814,6 +815,7 @@ export class UI {
     const props = room.querySelector('#room-props');
     const bindProps = () => {
       this.click('.room-board', (el) => { audio.sfx('click'); this.hub(el.dataset.board); }, props);
+      this.startPet(room);
       // a character talks while you point at their station
       room.querySelectorAll('.spot').forEach((sp) => {
         const body = props.querySelector(`.npc-body[data-for="${sp.dataset.tab}"]`);
@@ -829,6 +831,56 @@ export class UI {
       props.innerHTML = this.roomProps(s);
       bindProps();
     }).catch(() => {});
+  }
+
+  // The locker room's pet (Batch CX): trotting about, sitting, napping, hopping when tapped (a
+  // heart and its name over it; tap the name to rename it). Its state lives across redraws.
+  startPet(room) {
+    const has = (f) => !!Assets.atlas.frames[f];
+    if (!['pet/walk_1', 'pet/sit_1', 'pet/sleep_1', 'pet/hop'].every(has) || room.querySelector('.pet')) return;
+    const H = 70, set = (ids) => Assets.spriteSet(ids.filter(has), H);
+    const sets = { walk: set(['pet/walk_1', 'pet/walk_2', 'pet/walk_3', 'pet/walk_4']), sit: set(['pet/sit_1', 'pet/sit_2']), sleep: set(['pet/sleep_1', 'pet/sleep_2']), hop: set(['pet/hop']) };
+    if (Object.values(sets).some((x) => !x)) return;
+    const s = this.app.save, name = () => (s.pet && s.pet.name) || t('Snowball');
+    room.insertAdjacentHTML('beforeend', `<button class="pet" id="pet" aria-label="${esc(name())}"><img alt=""></button><button class="pet-tag" id="pet-tag" hidden></button>`);
+    const el = room.querySelector('#pet'), img = el.querySelector('img'), tag = room.querySelector('#pet-tag');
+    this.pet ||= newPet();
+    let last = performance.now(), tagT = 0;
+    clearInterval(this.petTimer);
+    this.petTimer = setInterval(() => {
+      if (!el.isConnected) { clearInterval(this.petTimer); return; }
+      const now = performance.now(), dt = Math.min(0.2, (now - last) / 1000);
+      last = now;
+      const p = stepPet(this.pet, dt), st = p.hop > 0 ? 'hop' : p.state, k = sets[st];
+      const i = Math.floor((now / 1000) * (st === 'walk' ? 8 : st === 'sleep' ? 1 : 2)) % k.urls.length;
+      if (img.dataset.k !== st + i) { img.src = k.urls[i]; img.dataset.k = st + i; }
+      const lift = p.hop > 0 ? Math.sin((1 - p.hop / 0.5) * Math.PI) * 3 : 0;
+      el.style.cssText = `left:${p.x}%;top:${p.y - lift}%;height:${(H / 864) * 100}%;aspect-ratio:${k.w}/${k.h};transform:translate(-${k.fx * 100}%,-${k.fy * 100}%) scaleX(${p.face});z-index:${p.y < 66 ? 1 : 3}`;
+      tag.style.cssText = `left:${p.x}%;top:${p.y - 10}%`;
+      if (tagT > 0 && (tagT -= dt) <= 0) tag.hidden = true;
+    }, 80);
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      tapPet(this.pet); audio.sfx('blip');
+      tag.textContent = `${name()} ♥`; tag.hidden = false; tagT = 2.5;
+      const heart = has('pet/heart') && Assets.icon('pet/heart', 48);
+      if (heart) { room.insertAdjacentHTML('beforeend', `<img class="pet-heart" src="${heart}" alt="" style="left:${this.pet.x}%;top:${this.pet.y - 9}%">`); const h = room.lastElementChild; setTimeout(() => h.remove(), 1200); }
+    });
+    tag.addEventListener('click', (e) => { e.stopPropagation(); audio.sfx('click'); this.petName(); });
+  }
+
+  // Name the pet (12 characters at most).
+  petName() {
+    const s = this.app.save;
+    this.modal(`<h2>${smallIcon('icons/pet', 96, 'h-ico')}${t('Name your pet')}</h2>
+      <input class="sign-in" id="pet-name" maxlength="${PET_NAME_MAX}" value="${esc((s.pet && s.pet.name) || '')}" placeholder="${esc(t('Snowball'))}" autocomplete="off">
+      <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Cancel')}</button><button class="btn small gold" id="pet-ok">${t('Save')}</button></div>`, (m, close) => {
+      const inp = m.querySelector('#pet-name');
+      setTimeout(() => inp.focus(), 50);
+      const ok = () => { s.pet = { ...(s.pet || {}), name: cleanPetName(inp.value) }; writeSave(s); audio.sfx('confirm'); close(); this.hub('room'); };
+      this.click('#pet-ok', ok, m);
+      inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') ok(); });
+    });
   }
 
   tabTournament(body) {

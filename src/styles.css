@@ -1441,3 +1441,10 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .tp-plaque b { display: block; font-family: var(--display); font-weight: normal; font-size: 1.35em; color: var(--gold); }
 .cel-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 6px; font-size: 13px; }
 .cel-row .muted { margin-right: 4px; }
+/* the locker room's pet (Batch CX) and its name tag */
+.pet { position: absolute; padding: 0; border: 0; background: none; cursor: pointer; pointer-events: auto; transform-origin: center; }
+.pet img { display: block; height: 100%; width: auto; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.35)); }
+.pet-tag { position: absolute; z-index: 4; transform: translate(-50%, -100%); font-family: var(--display); font-size: calc(var(--u, 8px) * 1.6); color: var(--navy); background: #fffdf6; border: 2px solid var(--navy); border-radius: 4px; padding: 0 6px; white-space: nowrap; cursor: pointer; pointer-events: auto; }
+.pet-heart { position: absolute; z-index: 4; width: calc(var(--u, 8px) * 2.6); transform: translate(-50%, -100%); pointer-events: none; animation: pet-heart 1.2s ease-out forwards; }
+@keyframes pet-heart { to { transform: translate(-50%, -260%); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .pet-heart { animation-duration: 0.01s; } }
