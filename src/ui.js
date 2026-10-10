@@ -991,11 +991,15 @@ export class UI {
     }).join('');
     const head = result === 'champion' ? `${podium ? `<img class="mini-podium" src="${podium}" alt="">` : cup ? `<img class="mini-cup-big" src="${cup}" alt="">` : ''}<h2 class="gold-t" style="text-align:center">${t('You won the Mini Cup!')}</h2><p style="text-align:center;margin:0">${t('+{n} coins', { n: MINI_PRIZE })} · ${t(s.miniCups > 1 ? '{n} Mini Cups won' : '{n} Mini Cup won', { n: s.miniCups })}</p>`
       : result === 'out' ? `<h2 style="text-align:center">${t('Out in the {round}', { round: t(MINI_ROUNDS[c.results.length - 1]) })}</h2><p class="muted" style="text-align:center;margin:0">${t('So close! Every champion loses one. Try again?')}</p>`
-      : `<h2 style="text-align:center">${t('On to the {round}!', { round: t(MINI_ROUNDS[c.round]) })}</h2>`;
+      : `${cup ? `<img class="mini-cup-big" id="mc-cup" src="${cup}" alt="">` : ''}<h2 style="text-align:center">${t('On to the {round}!', { round: t(MINI_ROUNDS[c.round]) })}</h2>`;
     this.modal(`<div class="label" style="text-align:center">${t('Mini Cup')}</div>${head}<div class="mini-bracket">${rows}</div>
       <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="mc-done">${result === 'next' ? t('Later') : t('Done')}</button><button class="btn gold" id="mc-next">${result === 'next' ? t('Play the {round}', { round: t(MINI_ROUNDS[c.round]) }) : result === 'out' ? t('Try again') : t('Play again')}</button></div>`, (m, close) => {
-      this.click('#mc-next', () => { close(); audio.sfx('confirm'); next(); }, m);
-      this.click('#mc-done', () => { close(); audio.sfx('back'); done(); }, m);
+      const img = m.querySelector('#mc-cup'), glints = ['badges/mini_cup', 'badges/mini_cup_glint_1', 'badges/mini_cup_glint_2'];
+      const sparkle = img && glints.every((id) => Assets.frame(id)) && !matchMedia('(prefers-reduced-motion: reduce)').matches && Assets.spriteSet(glints, 220);
+      let phase = 0, timer;
+      if (sparkle) timer = setInterval(() => { if (!img.isConnected) { clearInterval(timer); return; } img.src = sparkle.urls[[0, 0, 1, 0, 2, 0][phase++ % 6]]; }, 650);
+      this.click('#mc-next', () => { clearInterval(timer); close(); audio.sfx('confirm'); next(); }, m);
+      this.click('#mc-done', () => { clearInterval(timer); close(); audio.sfx('back'); done(); }, m);
     }, false);
   }
 

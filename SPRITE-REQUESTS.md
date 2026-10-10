@@ -7,9 +7,8 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **DD: the Mini Cup**
-2. **DE: night games outdoors**
-3. **DF: a trophy shelf in the locker room**
+1. **DE: night games outdoors**
+2. **DF: a trophy shelf in the locker room**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -68,6 +67,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered DB:** Mascot race: four rightward running poses and a winner pose for all eight clubs (40 transparent frames), plus the four-lane1536×640 ice track. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DB-Testing-Update`.
 
 **Delivered DC:** Cub tricks: four tail-chase spin poses, four roll-over poses and three high-five poses (11 native frames), matching CX120×72 canvases and[60,70] foot pivots. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DC-Testing-Update`.
+
+**Delivered DD:** Mini Cup rewards: silver snowflake cup with blue ribbons, two glint frames, a menu icon and the confetti podium (5 native frames). Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DD-Testing-Update`.
 
 ## Format notes
 
@@ -506,7 +507,7 @@ The locker room's cub (CX) hops when it's tapped; now it should sometimes show o
 
 The game picks one now and then when it's tapped. 11 frames.
 
-## Batch DD: the Mini Cup
+## Batch DD ✓: the Mini Cup
 
 A short tournament for the youngest players (Quick play › Mini Cup): three quick games (first to three) against rivals getting tougher, the bracket filling in as they go, and a little cup of their own for winning all three. Please draw:
 - `badges/mini_cup` (256×256): a small, shiny silver cup with a snowflake on it and blue ribbons, cuter and smaller than the Frostline Cup.
