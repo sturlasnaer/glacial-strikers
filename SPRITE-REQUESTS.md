@@ -7,12 +7,10 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **DM: the cub's victory slide**
-2. **DN: star stickers for the youngest**
-3. **DO: a ball for the cub**
-4. **DP: the road-trip map in season**
-5. **DQ: Halloween treats in the locker room**
-6. **DR: three new trophies**
+1. **DO: a ball for the cub**
+2. **DP: the road-trip map in season**
+3. **DQ: Halloween treats in the locker room**
+4. **DR: three new trophies**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -81,6 +79,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered DI-DJ:** Eleven cub fetch frames including a loose puck and five cub coach portraits for Little player games. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DI-DJ-Testing-Update`.
 
 **Delivered DK-DL:** Eight town postcards, empty wicker cub basket, two breathing cub-in-basket frames and a Shop icon. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DK-DL-Testing-Update`.
+
+**Delivered DM-DN:** Nine rink-cub victory poses and five Little player reward stickers with two sparkle overlays. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DM-DN-Testing-Update`.
 
 ## Format notes
 
@@ -596,7 +596,7 @@ The cub (CX) should have a bed of its own: a Shop item ("For the cub", next to t
 
 As atlas frames on a page in the `hub` group. 4 frames.
 
-## Batch DM: the cub's victory slide
+## Batch DM ✓: the cub's victory slide
 
 After a home win, the cub (DH, on the boards at Frostline Rink) should hop down and celebrate with a belly slide across the ice while the players celebrate. Please draw, at the same scale and camera angle as the `pet_rink/` poses (120×80, pivot at its feet, facing right; the game flips it):
 - `pet_rink/hop_down_1`, `_2`: jumping down from the boards onto the ice.
@@ -605,7 +605,7 @@ After a home win, the cub (DH, on the boards at Frostline Rink) should hop down 
 
 On the `pet_rink` group's page. 9 frames.
 
-## Batch DN: star stickers for the youngest
+## Batch DN ✓: star stickers for the youngest
 
 After a Little player game, the results should give the young player a big gold star for something they did well. Please draw five star stickers, 256×256, each a chunky gold star with a happy face and a shiny white outline (like a sticker on a reward chart), with a small picture on it, **no lettering**:
 - `kid_stars/passer` (a puck flying between two sticks), `kid_stars/scorer` (a puck in a net), `kid_stars/defender` (a little shield), `kid_stars/hustle` (speed lines, a skate), `kid_stars/team` (three small happy faces together).
