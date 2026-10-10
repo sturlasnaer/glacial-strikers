@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10w',
+    items: [
+      { icon: 'celebrations/nix/guitar_1', alt: 'icons/rookie', text: 'Pick a goal celebration for Nix, Volta and Bram in the Team tab: their own, a stick guitar solo or a snow angel.' },
+    ],
+  },
+  {
     id: '2026-10-10v',
     items: [
       { icon: 'rules/thin_air', alt: 'hud_elements/ability/stamina', text: 'A new building for exhibitions: the Summit Rink, up a mountain at the top of a cable car. Thin air: the puck glides further and shots fly faster, but you tire sooner. It has its own alpine waltz.' },

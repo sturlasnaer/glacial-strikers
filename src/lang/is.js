@@ -1383,6 +1383,7 @@ export const IS = {
   "Phones: the menus fit a phone on its side or upright, and the puck is larger on a small screen (Settings › Puck, with a ring round it if you like).": "Símar: valmyndirnar passa á síma á hlið eða uppréttan, og pökkurinn er stærri á litlum skjá (Stillingar › Pökkur, með hring utan um ef þú vilt).",
   "Photo": "Mynd",
   "Physio room": "Sjúkraþjálfun",
+  "Pick a goal celebration for Nix, Volta and Bram in the Team tab: their own, a stick guitar solo or a snow angel.": "Veldu fögnuð fyrir Nix, Volta og Bram undir Lið: þeirra eigin, kylfugítarsóló eða snjóengil.",
   "Pick a new mask for a goalie at goalie camp.": "Veldu nýja grímu fyrir markvörð í markmannabúðum.",
   "Pick a slot, then press the button you want. A button that was doing something else swaps over. Esc cancels.": "Veldu reit og ýttu svo á hnappinn sem þú vilt nota. Hnappur sem gerði eitthvað annað skiptir um sæti. Esc hættir við.",
   "Pickpocket": "Vasaþjófur",
