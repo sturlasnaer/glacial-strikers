@@ -11,6 +11,11 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 2. **DY: veteran stars**
 3. **DZ: the poke check**
 
+**Notes for the art team (from the programmer, 2026-10-10):**
+- The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
+- Registering art is yours; for any other code change (loading, layout, game logic), please say what and why in the commit message. Load only what's drawn: `Assets.loadPages(frameIds)` loads just the pages those frames are on (the whole `seasonal` group is about 30 MB decoded, too much to keep for one portrait).
+- DX, DY and DZ are the priority; the code for all three is being written now.
+
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
 **Delivered BR–BT:** six facility icons, thirteen home-rink frames and eleven native cloth masks, and nine press-room/portrait frames. Includes an eager Kip portrait as the ninth BT image. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BR-BT-Testing-Update`.
