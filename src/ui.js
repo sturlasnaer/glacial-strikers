@@ -210,7 +210,7 @@ export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '
 
 // The league news icon for each kind of story (Batch AV).
 const NEWS_ICON = { edge: 'edge', rivalSign: 'sign', weSign: 'sign', weGoalie: 'sign', weAgent: 'sign', weOwn: 'sign', weLegend: 'sign', rivalDraft: 'draft', weDraft: 'draft', trade: 'trade', retire: 'retire', champion: 'cup', expansion: 'new_club' };
-const NEWS_ART = { hatTrick: 'achievements/hat_trick', streak: 'badges/streak_flame', press: 'icons/share', hall: 'icons/career', record: 'icons/stat_goals', facility: 'icons/friends', promoted: 'icons/promoted', relegated: 'icons/relegated' }; // (news without a news icon of its own)
+const NEWS_ART = { hatTrick: 'achievements/hat_trick', streak: 'badges/streak_flame', press: 'icons/share', hall: 'icons/career', record: 'icons/stat_goals', facility: 'icons/friends', promoted: 'icons/promoted', relegated: 'icons/relegated', rivalryWon: 'icons/rivalry', rivalryLost: 'icons/rivalry' }; // (news without a news icon of its own)
 // The locker room hub: stations in the painting, in % of the 16:9 image.
 const STATIONS = [
   { tab: 'team', label: 'Team', icon: 'equipment_items/hub/locker', rect: [19, 2, 47, 27], at: [42, 15], tip: 'Lockers: line-up, stats, gear and scouting' },
@@ -1198,7 +1198,7 @@ export class UI {
       const status = res ? (res.ga > res.gb ? `<span class="good">${t('W {a}–{b}', { a: res.ga, b: res.gb })}</span>` : `<span class="bad">${t('L {a}–{b}', { a: res.ga, b: res.gb })}</span>`) : isNext ? `<span class="gold-t">${t('NEXT')}</span>` : '<span class="muted">—</span>';
       return `<div class="fixture ${isNext ? 'next' : ''}">
         <span class="muted">${t('R{n}', { n: i + 1 })}</span><img src="${crest(opp, 48)}" alt="" width="26" height="26">
-        <span class="fx-name"><b>${esc(tm.name)}</b><span class="muted">${esc(t(GAME_PLANS[tm.plan === 'counter' ? 'balanced' : tm.plan].name))}${tm.plan === 'counter' ? ` ${t('(adapts)')}` : ''}${record(opp) ? ` · ${t('record {rec}', { rec: record(opp) })}` : ''}</span></span>
+        <span class="fx-name"><b>${esc(tm.name)}</b>${opp === L.rivalry ? ` <span class="tag gold rivalry-tag">${smallIcon('icons/rivalry', 32)}${t('Rivalry')}</span>` : ''}<span class="muted">${esc(t(GAME_PLANS[tm.plan === 'counter' ? 'balanced' : tm.plan].name))}${tm.plan === 'counter' ? ` ${t('(adapts)')}` : ''}${record(opp) ? ` · ${t('record {rec}', { rec: record(opp) })}` : ''}</span></span>
         <span class="fx-res">${status}</span></div>${i === ALLSTAR_AFTER - 1 ? allstarRow : ''}${i === CLASSIC_AFTER - 1 ? classicRow : ''}`;
     }).join('');
     let bracket = '';
@@ -1227,6 +1227,7 @@ export class UI {
     // their leading scorer this season, when they have one worth a mention
     const star = nt && L.stats && Object.values(L.stats.skaters).filter((r) => r.team === next.opponent && r.g >= 2).sort((a, b) => b.g - a.g)[0];
     const call = L.champion ? (L.champion === 'home' ? t('Champions! Ladies and gentlemen, your {club}!', { club: CLUB.name }) : t('What a season. The ice goes quiet until next year.'))
+      : nt && next.rivalry ? t('The rivalry game is next: the {team} at {venue}! Bragging rights on the line!', { team: nt.name, venue })
       : nt ? pick([...(star ? [t('Keep an eye on {name}: {n} goals for the {team} this season.', { name: star.name, n: star.g, team: nt.name })] : []),t('Next up: the {team} at {venue}! Get loud!', { team: nt.name, venue }), `${t('{team} at {venue}.', { team: nt.name, venue })} ${t(nt.style)}`, t('Tonight at {venue}: {club} versus {team}. You won\'t want to miss it.', { venue, club: CLUB.nick, team: nt.name })])
         : t('Welcome to the Frostline league!');
     body.innerHTML = `
@@ -1341,6 +1342,8 @@ export class UI {
         case 'trade': return t('Trade: {gave} to the {team} for {name}.', { gave: `<b>${esc(n.gave || '')}</b>`, team: tn(n.team), name });
         case 'champion': return n.team === 'home' ? t('The {club} win the {cup}!', { cup: cupName(n.tier), club: esc(CLUB.nick) }) : t('{team} win the {cup}.', { cup: cupName(n.tier), team: tn(n.team) });
         case 'expansion': return t('The Glacier Owls and Thunder Moose join the Frostline.');
+        case 'rivalryWon': return t('Bragging rights! The {club} beat the {team} {a}–{b} in the rivalry game.', { club: esc(CLUB.nick), team: tn(n.team), a: n.gf, b: n.ga });
+        case 'rivalryLost': return t('The {team} win the rivalry game {a}–{b}. The {club} will want that one back.', { club: esc(CLUB.nick), team: tn(n.team), a: n.ga, b: n.gf });
         case 'promoted': return t('The {club} go up to the {league}!', { club: esc(CLUB.nick), league: esc(t(tierAt(n.tier).name)) });
         case 'relegated': return t('The {club} drop back to the {league}.', { club: esc(CLUB.nick), league: esc(t(tierAt(n.tier).name)) });
         case 'edge': return t('The league has noticed the {club}: the rivals trained hard all summer.', { club: esc(CLUB.nick) });

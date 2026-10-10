@@ -12,6 +12,7 @@ import { makeRng } from './util.js';
 import { recordSimGame } from './awards.js';
 import { rosterShift, seasonBoost } from './slots.js';
 import { tierOf, tierAt, TIER_SHARP } from './tiers.js';
+import { RIVALRY_PRIZE } from './rivals.js';
 import { t } from './i18n.js';
 
 export const FOUNDING_TEAMS = ['home', ...FOUNDING_RIVALS];
@@ -117,8 +118,8 @@ export function nextFixture(L) {
   }
   if (L.phase === 'regular') {
     const opp = L.schedule[L.round].games[0].b;
-    const base = stageOf(opp);
-    return { kind: 'regular', opponent: opp, label: t('Round {n} of {total}', { n: L.round + 1, total: L.schedule.length }), stage: { ...base, round: 'League · round {n}', roundN: L.round + 1 } };
+    const base = stageOf(opp), rivalry = L.rivalry === opp; // (the season's rivalry game: rivals.js)
+    return { kind: 'regular', opponent: opp, rivalry, label: t('Round {n} of {total}', { n: L.round + 1, total: L.schedule.length }), stage: { ...base, round: rivalry ? 'Rivalry game · round {n}' : 'League · round {n}', roundN: L.round + 1, rivalry, reward: rivalry ? Math.round(base.reward * RIVALRY_PRIZE) : base.reward } };
   }
   if (L.phase === 'playoffs') {
     const po = L.playoffs;

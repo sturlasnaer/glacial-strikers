@@ -60,6 +60,7 @@ export const ACHIEVEMENTS = [
   { id: 'fetch-champion', name: 'Fetch Champion', text: 'Play fetch with the cub ten times.', icon: 'icons/pet', art: 'achievements/fetch_champion', coins: 30 },
   { id: 'gold-star-chart', name: 'Star Chart', text: 'Earn ten gold stars in Little player games.', icon: 'badges/daily_star', art: 'achievements/gold_star_chart', coins: 50 },
   { id: 'pet-pals', name: 'Pet Pals', text: 'Collect five pets.', icon: 'icons/pet', art: 'achievements/pet_pals', coins: 60 },
+  { id: 'bragging-rights', name: 'Bragging Rights', text: 'Win the season\'s rivalry game.', icon: 'icons/stat_cups', art: 'achievements/bragging_rights', coins: 60 },
   { id: 'elite-dynasty', name: 'Dynasty of the Elite', text: 'Win the Elite Cup three times.', icon: 'badges/elite_cup', art: 'achievements/elite_dynasty', coins: 300 },
   { id: 'grand-tour', name: 'Grand Tour', text: 'Beat every club in the country at least once.', icon: 'icons/career', art: 'achievements/grand_tour', coins: 200 },
   { id: 'full-pet-house', name: 'Full Pet House', text: 'Collect every club\'s pet.', icon: 'icons/pet', art: 'achievements/full_pet_house', coins: 200 },

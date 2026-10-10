@@ -16,6 +16,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 7. **EN: the new clubs' mascot stickers for the album**
 8. **EO: the National and Elite Cup Finals' buildings**
 9. **EP: supporters' sections for the new clubs' rinks**
+10. **EQ: the rivalry game's icons**
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -911,3 +912,11 @@ Like Batch BY did for the Frostline rivals: when the Foxes visit, each club's ho
 - `bamboo_ridge_pandas`: panda-ear hats, bamboo clackers, a paper-lantern banner.
 
 99 frames plus masks.
+
+## Batch EQ: the rivalry game's icons
+
+Once a season one league game is the Foxes' rivalry game, against the club that has beaten them most (for bragging rights, a bigger prize). Two icons, no lettering:
+- `icons/rivalry` (128×128, like the other `icons/…`, shown small beside the fixture in the schedule and on its news): two crossed hockey sticks with a little lightning bolt between them, fiery orange and ice blue.
+- `achievements/bragging_rights` (128×128, like the other `achievements/…`): a Snow Fox player holding up a small trophy shaped like a megaphone, confetti.
+
+2 frames.

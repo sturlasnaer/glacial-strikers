@@ -142,6 +142,7 @@ img { image-rendering: auto; max-width: 100%; }
 .stage .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .tag { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 1px 6px; border-radius: 4px; background: var(--navy); border: 1px solid var(--navy-3); }
 .tag img { width: 18px; height: 18px; }
+.rivalry-tag { color: var(--gold, #ffd45e); border-color: rgba(255, 212, 94, 0.55); font-size: 11px; padding: 0 5px; vertical-align: 1px; } /* (the season's rivalry game in the schedule) */
 .status { font-family: var(--display); font-size: 22px; }
 
 /* league */

@@ -31,7 +31,7 @@ import { ClipRecorder } from './clips.js';
 import { AchievementTracker, useAchievementArt, ACHIEVEMENTS } from './achievements.js';
 import { createDrill, medalFor, DRILL_REWARDS } from './drills.js';
 import { makeSkills, recordSkills, SKILLS_EVENTS } from './skills.js';
-import { recordRivalResult, rivalLines, rivalAfterLine, rivalRecord } from './rivals.js';
+import { recordRivalResult, rivalLines, rivalAfterLine, rivalRecord, rivalryOf } from './rivals.js';
 import { recordRealGame, computeAwards, AWARD_BY_ID } from './awards.js';
 import { dailyFor, dailyGoal, completeDaily, noteAttempt, dayKey, dailyState } from './daily.js';
 import { standings } from './league.js';
@@ -385,7 +385,7 @@ class App {
     if (Assets.atlas.art_additions && Assets.atlas.art_additions.polish) this.lap = new ResurfacerLap();
   }
 
-  fixture() { return this.save.league ? nextFixture(this.save.league) : null; }
+  fixture() { const L = this.save.league; if (!L) return null; rivalryOf(this.save, L); return nextFixture(L); } // (the season's rivalry game is picked the first time it's asked)
 
   nextStage() {
     const f = this.fixture();
@@ -500,21 +500,26 @@ class App {
     return a && (!ARENAS[a] || !ARENAS[a].national || (Assets.atlas.arenas && Assets.atlas.arenas[a])) ? a : 'home';
   }
 
-  showStageDialogue(f, t, sub) {
+  showStageDialogue(f, tm, sub) {
     const stage = f.stage;
     let lines;
-    if (f.kind === 'regular') lines = [...rivalLines(this.save, t.id), ...DIALOGUE[t.id].pre];
-    else if (f.kind === 'final' && DIALOGUE[t.id].final) lines = [...rivalLines(this.save, t.id).slice(0, 1), ...DIALOGUE[t.id].final];
-    else lines = [...rivalLines(this.save, t.id).slice(0, 1), ...PLAYOFF_LINES[f.kind].pre];
+    if (f.kind === 'regular') lines = [...rivalLines(this.save, tm.id), ...DIALOGUE[tm.id].pre];
+    else if (f.kind === 'final' && DIALOGUE[tm.id].final) lines = [...rivalLines(this.save, tm.id).slice(0, 1), ...DIALOGUE[tm.id].final];
+    else lines = [...rivalLines(this.save, tm.id).slice(0, 1), ...PLAYOFF_LINES[f.kind].pre];
+    if (f.rivalry) { // (the season's rivalry game: Kip makes the most of it)
+      const lost = rivalRecord(this.save, tm.id).losses;
+      lines = [['kip', null, lost ? t('It\'s the rivalry game! The {team} have beaten us {n} times. Tonight we settle it.', { team: tm.name, n: lost }) : t('It\'s the rivalry game! The {team}, the club everyone wants to beat. Tonight\'s the night.', { team: tm.name })], ...lines];
+    }
     // skip our lines that talk to a skater who has since signed with us
-    const gone = ['frost', 'thunder', 'stone'].filter((k) => this.save.roster[recruitKey(t.id, k)]).map((k) => t.names[k]);
+    const gone = ['frost', 'thunder', 'stone'].filter((k) => this.save.roster[recruitKey(tm.id, k)]).map((k) => tm.names[k]);
     if (gone.length) lines = lines.filter((l) => l[0] !== 'us' || !gone.some((n) => l[2].includes(n)));
-    this.ui.dialogue(lines, t.id, { sub }, () => {
-      const theirPlan = rivalPlan(this.save, t.id, GAME_PLANS);
+    this.ui.dialogue(lines, tm.id, { sub }, () => {
+      const theirPlan = rivalPlan(this.save, tm.id, GAME_PLANS);
       this.scene = 'results';
-      this.ui.planPicker(t.id, f, theirPlan, (plan) => this.beginMatch(t.id, stage, false, [], { plan, theirPlan, fixture: f }));
+      this.ui.planPicker(tm.id, f, theirPlan, (plan) => this.beginMatch(tm.id, stage, false, [], { plan, theirPlan, fixture: f }));
     });
   }
+
 
   startExhibition(teamId, mods = [], arena = 'auto', coop = false, mini = false, night = false) {
     this.lastExhibition = { teamId, mods, arena, coop, night }; // (for Play again on the results)
@@ -860,6 +865,7 @@ class App {
     this.hud.show(m, teamId, null, { coop: cfg.coop });
     if (m.keeperCoop && firstTime(s, 'keeperCoop')) setTimeout(() => { if (this.scene === 'match' && this.match === m) this.hud.hint(t('Two players! Player 1 skates, player 2 is in goal, and the AI skates the other two.'), 6); }, 2600);
     if (m.coop && firstTime(s, 'coop')) setTimeout(() => { if (this.scene === 'match' && this.match === m) this.hud.hint(t('Two players! Each of you swaps only with the skater the AI has. Pass to it and you take it over; your partner keeps theirs.'), 6); }, 2600);
+    if (stage.rivalry) setTimeout(() => { if (this.scene === 'match') this.hud.banner(`<div class="small">${t('Rivalry game')}</div><div class="big" style="font-size:clamp(40px,8vw,90px)">${t('BRAGGING RIGHTS')}</div>`, 1.8); }, 300);
     if (classic) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t('The Winter Classic! Outdoor hockey under the snow, and the whole league is watching.')); }, 500);
     if (extra.allstar) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t('The All-Star Game! The fans voted, and the league\'s best share the ice.')); }, 500);
     if (this.cur.daily) setTimeout(() => { if (this.scene === 'match') this.hud.banner(`<div class="small">${t('Daily challenge')}</div><div class="sub" style="font-size:clamp(16px,3vw,24px)">${t(dailyGoal(this.cur.daily.goal).text)}</div>`, 3); }, 300);
@@ -1148,6 +1154,10 @@ class App {
       }
       leagueOut = recordOurGame(s.league, s, summary.score[0], summary.score[1]);
       leagueOut.kind = c.fixture ? c.fixture.kind : 'regular';
+      if (c.fixture && c.fixture.rivalry) { // (the rivalry game: the league talks about it)
+        addNews(s, { k: rewards.won ? 'rivalryWon' : 'rivalryLost', team: c.teamId, gf: summary.score[0], ga: summary.score[1] });
+        if (rewards.won) this.ach.unlock('bragging-rights');
+      }
       leagueOut.won = rewards.won;
       // the rivals live too: a hole filled now and then, and maybe a call with an offer
       const move = rivalSigning(s);
