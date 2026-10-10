@@ -8,6 +8,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 **Next batches:**
 1. **CX: a pet for the locker room**
+2. **CY: celebrations to choose for players of your own**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -448,3 +449,11 @@ The locker room hub is getting a **pet**: a Snow Fox cub (the mascot's little on
 - `icons/pet` (128×128): its face, for the naming box.
 
 11 frames.
+
+## Batch CY: celebrations to choose for players of your own
+
+Batch CW's stick guitar and snow angel are lovely on the cast. Please draw the same two for the three parts builds (`std`, `big`, `small`), for the players made from parts (players of your own, drafted rookies, free agents), like Batch CO's celebrations: four looping frames each, facing the camera, drawn without the head, with each frame's head anchor in `modular.anchors` (view `s`; for the snow angel, the head lying back on the ice) and their gear masks like the other body frames:
+- `modular/body_<build>/celebration_cy/guitar_1`..`_4` and `.../angel_1`..`_4`.
+- Metadata: `skaters.body_<build>.home.celebrations = { guitar: [the four ids], angel: [the four ids] }` (and `celebrations_hand` as CW did).
+
+The Team tab offers them to those players as soon as their frames are in. 24 frames plus masks and anchors.
