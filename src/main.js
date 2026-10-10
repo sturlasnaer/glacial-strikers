@@ -803,7 +803,7 @@ class App {
     const plans = { a: t(GAME_PLANS[plan].name), b: t(GAME_PLANS[theirPlan].name) };
     const planLine = plan !== 'balanced' || theirPlan !== 'balanced'
       ? `<div class="sub" style="font-size:clamp(14px,2.4vw,20px)">${edge > 0 ? t('{a} vs {b} · your edge', plans) : edge < 0 ? t('{a} vs {b} · their edge', plans) : t('{a} vs {b}', plans)}</div>` : '';
-    const twoLine = m.coop || m.keeperCoop ? `<div class="sub" style="font-size:clamp(14px,2.4vw,20px);color:#7fe08a">${m.keeperCoop ? t('Two players, one in goal') : t('Two players')} · ${t('Play as › Skaters to play alone')}</div>` : ''; // (Play as is remembered: say so)
+    const twoLine = m.coop || m.keeperCoop ? `<div class="sub" style="font-size:clamp(14px,2.4vw,20px);color:#7fe08a">${m.keeperCoop ? t('Two players, one in goal') : t('Two players')}${extra.coop ? '' : ` · ${t('Play as › Skaters to play alone')}`}</div>` : ''; // (Play as is remembered: say so; from the title's 2 Players it isn't)
     this.hud.banner(`<div class="small">${exhibition ? t('Exhibition') : t(stage.round, { n: stage.roundN })}</div><div class="big" style="font-size:clamp(48px,10vw,110px)">${t('FACEOFF')}</div>${planLine}${twoLine}`, 2);
     if (buffs && buffs.hype) { this.chantCool = 4; this.fx.excite = 0.7; }
     this.checkRotate();
