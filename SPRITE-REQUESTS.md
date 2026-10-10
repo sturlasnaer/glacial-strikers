@@ -8,6 +8,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 **Next batches:**
 1. **CU: picture day**
+2. **CV: the Summit Rink**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -412,3 +413,12 @@ After one of our goals at home, the arena's camera finds a fan in the crowd hold
 Every season now ends with a **team photo** (Trophies › Seasons): the line-up standing on the ice in front, up to five more behind, Coach Brekka at the side and the Cup when it's ours, with the season on a plaque. Today it stands on the home rink's empty centre ice. Please draw a backdrop for it, as a plain image (no atlas): `assets/gfx/photo/backdrop.png`, 1600×1000, no lettering: the home rink at centre ice seen from rink level, the far boards and glass, and the stands behind packed with cheering Snowcrest Foxes fans (scarves, a big banner with the snowflake crest, a few phones held up, a photographer's flash glinting), the lower 60% clean ice where the team stands. The game puts it in the photo as soon as the file is there.
 
 1 image.
+
+## Batch CV: the Summit Rink
+
+A third building for exhibitions, like the Harbour Rink (CM) and the Glacier Cave (CP): **the Summit Rink**, an outdoor rink on a mountaintop, at the top station of a cable car, above the clouds. Its rule is in the code: *thin air*, the puck glides further and shots fly faster, and skaters tire sooner. Please draw, exactly like the AU arena packs (the same 1536×1024 backdrop with the rink lines, boards, glass and benches in the same places):
+- The backdrop (`arena_summit_rink`): snowy peaks all round under a deep blue sky, a sea of clouds below, the cable-car station with its big wheel at one end, wooden stands with fans in bobble hats and mittens, prayer-flag-like strings of club pennants, a few mountain goats on the rocks.
+- Its scoreboard (`arena.scoreboards.summit_rink`, the two-frame kind), near glass, a penalty box in the AU style (a little wooden hut?).
+- The rule's art, on the same page: `arena_summit/cloud_1`..`_3` (soft clouds that drift slowly past the edges of the ice, seen from above at the game's angle, semi-transparent), `arena_summit/gondola_1` and `_2` (a cable-car cabin on its cable, two frames: swaying, to glide across the sky in the backdrop), and `rule_icons.thin_air`.
+
+On a group of its own (say `arena_cv`), with `summit_rink` in `atlas.arenas`. About 6 frames plus the backdrop.
