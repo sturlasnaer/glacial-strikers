@@ -1507,6 +1507,8 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 @media (prefers-reduced-motion: reduce) { .pet-heart { animation-duration: 0.01s; } }
 .pet .pet-acc { position: absolute; left: 0; top: 0; height: 100%; width: auto; pointer-events: none; }
 .outfit-ico { position: relative; display: block; width: 64px; height: 64px; }
+.pet-house .pet-shadow { filter: brightness(0) opacity(0.3); } /* (a pet still to win: its shadow) */
+.pet-gift { display: block; width: 140px; height: auto; margin: 0 auto; }
 .outfit-ico img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 /* the mascot race at the break (Batch DB): the track (its art, or plain ice), four lanes to pick */
 /* snowball fun with the cub (Training, Batch DT) */

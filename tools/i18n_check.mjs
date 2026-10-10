@@ -30,7 +30,7 @@ for (const f of readdirSync(join(root, 'src'))) {
 for (const m of readFileSync(join(root, 'index.html'), 'utf8').matchAll(/data-i18n(?:-aria)?="([^"]+)"/g)) add(m[1], 'index.html');
 
 // 2. story and data text (shown through t() at the display site)
-const FIELDS = new Set(['name', 'text', 'desc', 'blurb', 'title', 'label', 'fx', 'reply', 'trains', 'tip', 'rule', 'round', 'sub', 'hint', 'line', 'short', 'say', 'style', 'trait', 'cup']);
+const FIELDS = new Set(['name', 'text', 'desc', 'blurb', 'title', 'label', 'fx', 'reply', 'trains', 'tip', 'rule', 'round', 'sub', 'hint', 'line', 'short', 'say', 'style', 'trait', 'cup', 'pet']);
 const LIST_FIELDS = new Set(['levels']); // lists of display lines
 const SKIP_NAMES = new Set(['GOALIE', 'CLUB', 'CLUB_DEFAULT', 'NPC_NAMES', 'PALETTES']); // (people's and team names are removed below)
 function walk(v, path, where, depth = 0) {

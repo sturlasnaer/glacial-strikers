@@ -59,6 +59,8 @@ export const ACHIEVEMENTS = [
   { id: 'postcard-collector', name: 'Postcards from the Road', text: 'Collect all eight postcards.', icon: 'icons/career', art: 'achievements/postcard_collector', coins: 100 },
   { id: 'fetch-champion', name: 'Fetch Champion', text: 'Play fetch with the cub ten times.', icon: 'icons/pet', art: 'achievements/fetch_champion', coins: 30 },
   { id: 'gold-star-chart', name: 'Star Chart', text: 'Earn ten gold stars in Little player games.', icon: 'badges/daily_star', art: 'achievements/gold_star_chart', coins: 50 },
+  { id: 'pet-pals', name: 'Pet Pals', text: 'Collect five pets.', icon: 'icons/pet', art: 'achievements/pet_pals', coins: 60 },
+  { id: 'full-pet-house', name: 'Full Pet House', text: 'Collect every club\'s pet.', icon: 'icons/pet', art: 'achievements/full_pet_house', coins: 200 },
   { id: 'fresh-sheet', name: 'Fresh Sheet', text: 'Win gold in the Resurfacer drill.', icon: 'hud_elements/ability/frost', art: 'achievements/fresh_sheet', coins: 40 },
   { id: 'better-together', name: 'Better Together', text: 'Win a match with two players on the team.', icon: 'icons/friends', art: 'achievements/better_together', coins: 40 },
   // the newer systems (art: their own icon from Batch AN; icon: a stand-in until then)

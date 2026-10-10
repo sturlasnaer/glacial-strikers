@@ -2,7 +2,9 @@
 // never off it, sits a while, now and then naps, wakes up and hops when tapped, and its name is
 // cleaned (12 characters at most).
 //   node tools/test_pet.mjs
-import { newPet, stepPet, tapPet, tossPuck, cleanPetName, PET_AREA, PET_NAME_MAX, TRICK_TIME, FETCH_HOME, FETCH_DROP, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall, PET_OUTFITS, buyOutfit, wearOutfit, ownsOutfit } from '../src/pet.js';
+// (and the collection: every club's pet, the room and the pet house)
+import { newPet, stepPet, tapPet, tossPuck, cleanPetName, PET_AREA, PET_NAME_MAX, TRICK_TIME, FETCH_HOME, FETCH_DROP, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall, PET_OUTFITS, buyOutfit, wearOutfit, ownsOutfit, PET_KINDS, PET_FRAMES, PET_WINS, ROOM_MAX, petDir, petIcon, ownedPets, roomPets, housePets, petsDue, adoptPet, sendToHouse, bringToRoom, petNameOf, renamePet, winsAgainst } from '../src/pet.js';
+import { TEAMS } from '../src/data.js';
 import { makeRng } from '../src/util.js';
 
 let pass = 0, fail = 0;
@@ -117,6 +119,25 @@ check('its name: cleaned, 12 characters at most', cleanPetName('  <Snjó>\n bolt
   q.ball = { x: 60, y: 74, v: 0 }; q.state = 'toball';
   tapPet(q, rnd, []);
   check('a tap on the way: it sits for you', q.state === 'sit');
+}
+
+// the collection: a club's pet after three wins against it (once its art is in), four in the
+// room at most and the rest in the pet house, swapped about, named
+{
+  const sv = { season: 2, rivals: { lynx: { wins: 3 }, owls: { wins: 2 }, comets: { wins: 4 }, rams: { wins: 3 }, moose: { wins: 7 }, ravens: { wins: 3 } } };
+  check('fifteen pets: Snowball and one from each club', PET_KINDS.length === 15 && PET_KINDS[0].id === 'fox' && new Set(PET_KINDS.map((k) => k.team)).size === 15 && PET_KINDS.every((k) => k.name && k.pet && (k.team === 'home' || TEAMS[k.team])));
+  check('a new save: Snowball alone, in the room', ownedPets({}).join() === 'fox' && roomPets({}).join() === 'fox' && housePets({}).length === 0);
+  check('gifts due: three wins (not two), and only with their art', petsDue(sv).join() === 'lynx,salamander,lamb,moose,raven' && petsDue(sv, (k) => k !== 'lamb').join() === 'lynx,salamander,moose,raven');
+  const where = petsDue(sv).map((k) => adoptPet(sv, k));
+  check('into the room until it\'s full, then the pet house', where.join() === 'room,room,room,house,house' && roomPets(sv).length === ROOM_MAX && housePets(sv).join() === 'moose,raven', where);
+  check('no gift twice, none due now', adoptPet(sv, 'lynx') === null && petsDue(sv).length === 0 && adoptPet(sv, 'fox') === null);
+  check('the room full: nobody comes in', !bringToRoom(sv, 'moose'));
+  check('Snowball to the pet house, the moose calf in', sendToHouse(sv, 'fox') && bringToRoom(sv, 'moose') && roomPets(sv).join() === 'lynx,salamander,lamb,moose' && housePets(sv).join() === 'fox,raven');
+  check('not twice to the pet house, nor one we haven\'t got', !sendToHouse(sv, 'fox') && !sendToHouse(sv, 'penguin') && !bringToRoom(sv, 'penguin'));
+  check('their names: the one they came with, then ours', petNameOf(sv, 'lamb') === 'Nugget' && renamePet(sv, 'lamb', '  Goldie<> ') && petNameOf(sv, 'lamb') === 'Goldie' && !renamePet(sv, 'penguin', 'X'));
+  check('Snowball\'s name where it always was', renamePet(sv, 'fox', 'Fluff') && sv.pet.name === 'Fluff' && petNameOf(sv, 'fox') === 'Fluff' && petNameOf({}, 'fox', (x) => x + '!') === 'Snowball!');
+  check('its art: Snowball\'s own, the others\' by kind', petDir('fox') === 'pet/' && petDir('seal') === 'pets/seal/' && petIcon('fox') === 'icons/pet' && petIcon('seal') === 'icons/pet_seal' && PET_FRAMES.length === 9);
+  check('wins counted from the rivals\' record', winsAgainst(sv, 'moose') === 7 && winsAgainst(sv, 'narwhals') === 0 && PET_WINS === 3);
 }
 
 console.log(`Pet: ${pass} passed, ${fail} failed`);

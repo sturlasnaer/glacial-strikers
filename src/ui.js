@@ -63,7 +63,8 @@ import { SNOW_TIME, newSnowball, stepSnowball, throwAt, snowPrize } from './snow
 import { KID_STAR_IDS } from './kidstars.js';
 import { tripStops, POSTCARD_TOWNS } from './trip.js';
 import { tierOf, tierInfo, tierAt, TIERS, safeSeason } from './tiers.js';
-import { newPet, stepPet, tapPet, tossPuck, cleanPetName, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall } from './pet.js';
+import { newPet, stepPet, tapPet, tossPuck, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall,
+  PET_KINDS, PET_KIND, PET_FRAMES, PET_WINS, PET_AREA, ROOM_MAX, petDir, petIcon, roomPets, ownedPets, petsDue, adoptPet, sendToHouse, bringToRoom, petNameOf, renamePet, winsAgainst } from './pet.js';
 import { albumPages, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
 
 const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
@@ -865,6 +866,8 @@ export class UI {
         this.app.toast(Assets.frame(A.icon) ? Assets.icon(A.icon, 72) : Assets.icon(A.full, 72), A.name(), A.got(), t('+{n} coins', { n: TREAT_COINS }));
       }, props);
       this.startPet(room);
+      this.startPets(room);
+      this.petGifts();
       // a character talks while you point at their station
       room.querySelectorAll('.spot').forEach((sp) => {
         const body = props.querySelector(`.npc-body[data-for="${sp.dataset.tab}"]`);
@@ -886,7 +889,7 @@ export class UI {
   // heart and its name over it; tap the name to rename it). Its state lives across redraws.
   startPet(room) {
     const has = (f) => !!Assets.atlas.frames[f];
-    if (!['pet/walk_1', 'pet/sit_1', 'pet/sleep_1', 'pet/hop'].every(has) || room.querySelector('.pet')) return;
+    if (!['pet/walk_1', 'pet/sit_1', 'pet/sleep_1', 'pet/hop'].every(has) || room.querySelector('#pet') || !roomPets(this.app.save).includes('fox')) return; // (unless Snowball's in the pet house)
     // in season it wears its costume (Batch CZ: pet_halloween/…, pet_holiday/…, the same frames)
     const season = seasonFor(), dressed = season && has(`pet_${season}/sit_1`), ready = dressed && Assets.pages[Assets.atlas.frames[`pet_${season}/sit_1`][0]];
     if (dressed && !ready) Assets.loadGroup('seasonal').catch(() => {}); // (in its costume from the next look in)
@@ -967,6 +970,85 @@ export class UI {
         if (tossPuck(this.pet, x, y)) audio.sfx('click');
       });
     }
+  }
+
+  // The rest of the pet collection in the room (Batches EH to EK): each wanders, sits, naps and
+  // hops like Snowball (the tricks, fetch, toys and outfits are Snowball's own). Tap one for its
+  // name; tap the name to rename it.
+  startPets(room) {
+    const s = this.app.save, has = (f) => !!Assets.atlas.frames[f];
+    const kinds = roomPets(s).filter((k) => k !== 'fox' && PET_FRAMES.every((f) => has(petDir(k) + f)));
+    if (!kinds.length || room.querySelector('.pet-x')) return;
+    const frames = kinds.flatMap((k) => PET_FRAMES.map((f) => petDir(k) + f));
+    if (Assets.framePages(frames).some((i) => !Assets.pages[i])) { // (their pages first, then round again: once)
+      if (!room.dataset.petsLoading) { room.dataset.petsLoading = '1'; Assets.loadPages(frames).then(() => { if (room.isConnected) this.startPets(room); }, () => {}); }
+      return;
+    }
+    const H = 84, list = kinds.map((k) => {
+      const set = (names) => Assets.spriteSet(names.map((f) => petDir(k) + f), H);
+      const sets = { walk: set(['walk_1', 'walk_2', 'walk_3', 'walk_4']), sit: set(['sit_1', 'sit_2']), sleep: set(['sleep_1', 'sleep_2']), hop: set(['hop']) };
+      return Object.values(sets).every(Boolean) ? { k, sets } : null;
+    }).filter(Boolean);
+    if (!list.length) return;
+    room.insertAdjacentHTML('beforeend', list.map(({ k }) => `<button class="pet pet-x" data-pet="${k}" aria-label="${esc(petNameOf(s, k, t))}"><img alt=""></button><button class="pet-tag" data-pet-tag="${k}" hidden></button>`).join(''));
+    this.pets ||= {};
+    const heart = has('pet/heart') && Assets.icon('pet/heart', 48);
+    const items = list.map(({ k, sets }) => {
+      const el = room.querySelector(`[data-pet="${k}"]`), tag = room.querySelector(`[data-pet-tag="${k}"]`);
+      if (!this.pets[k]) { const p = newPet(); p.x = PET_AREA.x0 + Math.random() * (PET_AREA.x1 - PET_AREA.x0); p.y = PET_AREA.y0 + Math.random() * (PET_AREA.y1 - PET_AREA.y0); this.pets[k] = p; } // (spread about the floor)
+      const it = { k, sets, el, img: el.querySelector('img'), tag, p: this.pets[k], tagT: 0 };
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        tapPet(it.p, Math.random); audio.sfx('blip');
+        tag.textContent = `${petNameOf(s, k, t)} ♥`; tag.hidden = false; it.tagT = 2.5;
+        if (heart) { room.insertAdjacentHTML('beforeend', `<img class="pet-heart" src="${heart}" alt="" style="left:${it.p.x}%;top:${it.p.y - 9}%">`); const h = room.lastElementChild; setTimeout(() => h.remove(), 1200); }
+      });
+      tag.addEventListener('click', (e) => { e.stopPropagation(); audio.sfx('click'); this.petName(k); });
+      return it;
+    });
+    let last = performance.now();
+    clearInterval(this.petsTimer);
+    this.petsTimer = setInterval(() => {
+      if (!items[0].el.isConnected) { clearInterval(this.petsTimer); return; }
+      const now = performance.now(), dt = Math.min(0.2, (now - last) / 1000);
+      last = now;
+      for (const it of items) {
+        const p = stepPet(it.p, dt), st = p.hop > 0 ? 'hop' : p.state === 'walk' ? 'walk' : p.state === 'sleep' ? 'sleep' : 'sit', k = it.sets[st];
+        const i = Math.floor((now / 1000) * (st === 'walk' ? 8 : st === 'sleep' ? 1 : 2)) % k.urls.length;
+        if (it.img.dataset.k !== st + i) { it.img.src = k.urls[i]; it.img.dataset.k = st + i; }
+        const lift = p.hop > 0 ? Math.sin((1 - p.hop / 0.5) * Math.PI) * 3 : 0;
+        it.el.style.cssText = `left:${p.x}%;top:${p.y - lift}%;height:${(H / 864) * 100}%;aspect-ratio:${k.w}/${k.h};transform:translate(-${k.fx * 100}%,-${k.fy * 100}%) scaleX(${p.face});z-index:${p.y < 66 ? 1 : 3}`;
+        it.tag.style.cssText = `left:${p.x}%;top:${p.y - 10}%`;
+        if (it.tagT > 0 && (it.tagT -= dt) <= 0) it.tag.hidden = true;
+      }
+    }, 80);
+  }
+
+  // A club beaten three times sends its mascot's little one (the pet collection), once its art
+  // is in: a card to meet it (and name it), then the room with it in (or the pet house, if the
+  // room's full). One at a time, when nothing else is showing.
+  petGifts() {
+    const s = this.app.save, has = (k) => [...PET_FRAMES.map((f) => petDir(k) + f), petIcon(k)].every((f) => Assets.atlas.frames[f]);
+    const due = petsDue(s, has);
+    if (!due.length || this.giftShowing || document.querySelector('.modal-bg')) return;
+    const k = due[0], K = PET_KIND[k];
+    this.giftShowing = true;
+    Assets.loadPages([petIcon(k), ...PET_FRAMES.map((f) => petDir(k) + f)]).then(() => {
+      this.giftShowing = false;
+      if (this.tab !== 'room' || document.querySelector('.modal-bg') || !petsDue(s, has).includes(k)) return;
+      const where = adoptPet(s, k);
+      writeSave(s);
+      if (ownedPets(s).length >= 5) this.app.ach.unlock('pet-pals');
+      if (ownedPets(s).length >= PET_KINDS.length) this.app.ach.unlock('full-pet-house');
+      audio.jingle('win');
+      const team = TEAMS[K.team];
+      this.modal(`<div style="text-align:center"><img class="pet-gift" src="${Assets.icon(petIcon(k), 160)}" alt="">
+          <h2 class="gold-t" style="margin:6px 0">${t('A gift from the {team}!', { team: esc(team.name) })}</h2>
+          <p style="margin:0 auto;max-width:44ch">${t('Three wins against them, and they\'ve sent their mascot\'s little one to your locker room: a {kind}. Say hello to {name}!', { kind: esc(t(K.name)), name: esc(petNameOf(s, k, t)) })}</p>
+          ${where === 'house' ? `<p class="muted" style="margin:6px auto 0;max-width:44ch">${t('The room is full, so it\'s waiting in the pet house (Shop › Locker room) until you swap it in.')}</p>` : ''}</div>
+        <div class="row" style="justify-content:center;margin-top:10px"><button class="btn ghost" id="gift-name">${t('Name it')}</button><button class="btn gold" data-close>${t('Hello!')}</button></div>`,
+      (m, close) => this.click('#gift-name', () => { close(); this.petName(k); }, m), true, () => { if (this.tab === 'room') this.hub('room'); });
+    }, () => { this.giftShowing = false; });
   }
 
   // The trophy shelf on the locker room's wall (Batch DF): the club's cups standing on it, the
@@ -1084,14 +1166,14 @@ export class UI {
   }
 
   // Name the pet (12 characters at most).
-  petName() {
-    const s = this.app.save;
-    this.modal(`<h2>${smallIcon('icons/pet', 96, 'h-ico')}${t('Name your pet')}</h2>
-      <input class="sign-in" id="pet-name" maxlength="${PET_NAME_MAX}" value="${esc((s.pet && s.pet.name) || '')}" placeholder="${esc(t('Snowball'))}" autocomplete="off">
+  petName(kind = 'fox', back = 'room') {
+    const s = this.app.save, mine = kind === 'fox' ? s.pet && s.pet.name : s.pets && s.pets.got[kind] && s.pets.got[kind].name;
+    this.modal(`<h2>${smallIcon(petIcon(kind), 96, 'h-ico')}${t('Name your pet')}</h2>
+      <input class="sign-in" id="pet-name" maxlength="${PET_NAME_MAX}" value="${esc(mine || '')}" placeholder="${esc(t(PET_KIND[kind].pet))}" autocomplete="off">
       <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Cancel')}</button><button class="btn small gold" id="pet-ok">${t('Save')}</button></div>`, (m, close) => {
       const inp = m.querySelector('#pet-name');
       setTimeout(() => inp.focus(), 50);
-      const ok = () => { s.pet = { ...(s.pet || {}), name: cleanPetName(inp.value) }; writeSave(s); audio.sfx('confirm'); close(); this.hub('room'); };
+      const ok = () => { renamePet(s, kind, inp.value); writeSave(s); audio.sfx('confirm'); close(); this.hub(back); };
       this.click('#pet-ok', ok, m);
       inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') ok(); });
     });
@@ -2874,6 +2956,7 @@ export class UI {
           </div>`;
         }).join('')}${bedItem}</div>`;
       })()}
+      ${this.petHouseHtml(s)}
       ${Assets.atlas.locker ? `<div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn small ghost" id="decor-room">${t('See the room')}</button></div>` : ''}`;
     this.click('[data-f]', (el) => { this.shopFilter = el.dataset.f; audio.sfx('click'); this.tabShop(body); }, body);
     this.click('[data-dbuy]', (el) => { if (!buyDecor(s, el.dataset.dbuy)) return; this.app.ach.checkMeta(); writeSave(s); audio.sfx('purchase'); this.hub('shop'); }, body);
@@ -2885,6 +2968,41 @@ export class UI {
     this.click('[data-lbuy]', () => { if (!buyBall(s)) return; writeSave(s); audio.sfx('purchase'); this.hub('shop'); }, body);
     this.click('[data-wear]', (el) => { if (wearOutfit(s, el.dataset.wear)) { writeSave(s); audio.sfx('equip'); } this.tabDecor(body); }, body);
     this.click('[data-unwear]', () => { wearOutfit(s, null); writeSave(s); audio.sfx('back'); this.tabDecor(body); }, body);
+    this.click('[data-pet-away]', (el) => { if (sendToHouse(s, el.dataset.petAway)) { writeSave(s); audio.sfx('back'); } this.tabDecor(body); }, body);
+    this.click('[data-pet-in]', (el) => { if (bringToRoom(s, el.dataset.petIn)) { writeSave(s); audio.sfx('equip'); } this.tabDecor(body); }, body);
+    this.click('[data-pet-name]', (el) => { audio.sfx('click'); this.petName(el.dataset.petName, 'shop'); }, body);
+  }
+
+  // The pet collection (Shop › Locker room): every club's pet whose art is in, those we have (in
+  // the room, or the pet house: swap them about) and those still to win (a shadow, and how many
+  // more wins it takes). Nothing until the first club's pet is drawn (Batch EH).
+  petHousePets() {
+    const has = (k) => [...PET_FRAMES.map((f) => petDir(k) + f), petIcon(k)].every((f) => Assets.atlas.frames[f]);
+    return PET_KINDS.filter((K) => K.id === 'fox' ? ['pet/walk_1', 'pet/sit_1', 'icons/pet'].every((f) => Assets.atlas.frames[f]) : has(K.id));
+  }
+
+  petHouseHtml(s) {
+    const kinds = this.petHousePets();
+    if (!kinds.some((K) => K.id !== 'fox')) return '';
+    const mine = ownedPets(s), room = roomPets(s), full = room.length >= ROOM_MAX;
+    return `<div class="label" style="margin:14px 0 6px">${t('Pets')} <b>${mine.filter((k) => kinds.some((K) => K.id === k)).length}/${kinds.length}</b></div>
+      <p class="muted" style="margin:0 0 8px;font-size:13px">${t('Beat a club three times and they send you their mascot\'s little one. Up to {n} can play in the locker room; the rest wait in the pet house.', { n: ROOM_MAX })}</p>
+      <div class="shop pet-house">${kinds.map((K) => {
+        const k = K.id, got = mine.includes(k), team = K.team !== 'home' && TEAMS[K.team];
+        if (!got) {
+          const left = Math.max(1, PET_WINS - winsAgainst(s, K.team));
+          return `<div class="item pet-locked" tabindex="0" aria-label="${esc(t(K.name))}"><img class="pet-shadow" src="${Assets.icon(petIcon(k), 128)}" alt="">
+            <div style="min-width:0"><div class="label" style="font-size:13px">${team ? esc(team.name) : ''}</div><h4>${esc(t(K.name))}</h4>
+              <div class="muted" style="font-size:12px">${esc(t(left > 1 ? 'Beat the {team} {n} more times.' : 'Beat the {team} once more.', { team: team ? team.name : '', n: left }))}</div></div></div>`;
+        }
+        const inRoom = room.includes(k);
+        return `<div class="item" tabindex="0" aria-label="${esc(petNameOf(s, k, t))}"><img src="${Assets.icon(petIcon(k), 128)}" alt="">
+          <div style="min-width:0"><div class="label" style="font-size:13px">${esc(t(K.name))}</div><h4>${esc(petNameOf(s, k, t))}</h4>
+            <div class="buy">${inRoom ? `<span class="tag good">${t('In the room')}</span><button class="btn small ghost" data-pet-away="${k}">${t('To the pet house')}</button>`
+              : `<span class="tag">${t('In the pet house')}</span><button class="btn small" data-pet-in="${k}" ${full ? 'disabled' : ''}>${t('Into the room')}</button>`}
+              <button class="btn small ghost" data-pet-name="${k}">${t('Rename')}</button></div></div></div>`;
+      }).join('')}</div>
+      ${full && mine.length > ROOM_MAX ? `<p class="muted" style="margin:6px 0 0;font-size:12px">${t('The room is full: send one to the pet house to bring another in.')}</p>` : ''}`;
   }
 
   tabFacilities(body) {

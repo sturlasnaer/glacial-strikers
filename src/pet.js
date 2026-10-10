@@ -143,3 +143,76 @@ function rollBall(b, dt) {
   if (Math.abs(b.v) < 0.3) b.v = 0;
 }
 
+
+// ---------------------------------------------------------------- the pet collection
+// Every club's mascot has a little one, and beat a club three times (any game: league,
+// playoffs, Quick play) and they send it to the Foxes' locker room as a gift. Snowball the
+// Snow Fox cub is there from the start. Up to ROOM_MAX of them wander the room; the rest wait
+// in the pet house (Shop › Locker room), and they swap at will. A pet comes once its art is in
+// (Batches EH to EK: pets/<kind>/walk_1.., on the `pets` pages). Their names are the player's.
+export const PET_WINS = 3;
+export const ROOM_MAX = 4;
+export const PET_KINDS = [
+  { id: 'fox', team: 'home', name: 'Snow Fox cub', pet: 'Snowball' },
+  { id: 'lynx', team: 'lynx', name: 'Lynx kitten', pet: 'Whiskers' },
+  { id: 'salamander', team: 'comets', name: 'Fire salamander', pet: 'Ember' },
+  { id: 'owlet', team: 'owls', name: 'Snowy owlet', pet: 'Hoot' },
+  { id: 'lamb', team: 'rams', name: 'Golden lamb', pet: 'Nugget' },
+  { id: 'moose', team: 'moose', name: 'Moose calf', pet: 'Twig' },
+  { id: 'raven', team: 'ravens', name: 'Raven chick', pet: 'Inky' },
+  { id: 'polar', team: 'royals', name: 'Polar bear cub', pet: 'Frosty' },
+  { id: 'capybara', team: 'capybaras', name: 'Capybara pup', pet: 'Mochi' },
+  { id: 'puffling', team: 'puffins', name: 'Puffling', pet: 'Skipper' },
+  { id: 'bear', team: 'grizzlies', name: 'Grizzly cub', pet: 'Bumble' },
+  { id: 'seal', team: 'seals', name: 'Seal pup', pet: 'Bubbles' },
+  { id: 'penguin', team: 'penguins', name: 'Penguin chick', pet: 'Waddles' },
+  { id: 'bull', team: 'bulls', name: 'Bull calf', pet: 'Chili' },
+  { id: 'narwhal', team: 'narwhals', name: 'Narwhal calf', pet: 'Sprinkle' },
+];
+export const PET_KIND = Object.fromEntries(PET_KINDS.map((k) => [k.id, k]));
+// The art a pet needs to wander the room (Snowball's are pet/…, the others' pets/<kind>/…).
+export const petDir = (kind) => (kind === 'fox' ? 'pet/' : `pets/${kind}/`);
+export const PET_FRAMES = ['walk_1', 'walk_2', 'walk_3', 'walk_4', 'sit_1', 'sit_2', 'sleep_1', 'sleep_2', 'hop'];
+export const petIcon = (kind) => (kind === 'fox' ? 'icons/pet' : `icons/pet_${kind}`);
+
+export const petsOf = (save) => (save.pets ||= { got: {}, away: [] });
+// Every pet the club has, in the collection's order (Snowball first).
+export const ownedPets = (save) => PET_KINDS.filter((k) => k.id === 'fox' || petsOf(save).got[k.id]).map((k) => k.id);
+// The ones in the room (ROOM_MAX at most), and those in the pet house.
+export const roomPets = (save) => ownedPets(save).filter((id) => !petsOf(save).away.includes(id)).slice(0, ROOM_MAX);
+export const housePets = (save) => { const room = roomPets(save); return ownedPets(save).filter((id) => !room.includes(id)); };
+// Gifts due: pets whose club we've beaten often enough, not yet ours, with their art in (has).
+export const winsAgainst = (save, team) => (save.rivals && save.rivals[team] && save.rivals[team].wins) || 0;
+export const petsDue = (save, has = () => true) => PET_KINDS.filter((k) => k.id !== 'fox' && !petsOf(save).got[k.id] && winsAgainst(save, k.team) >= PET_WINS && has(k.id)).map((k) => k.id);
+// A gift arrives: into the room if there's space, the pet house if not. 'room' | 'house' | null.
+export function adoptPet(save, kind) {
+  if (!PET_KIND[kind] || kind === 'fox' || petsOf(save).got[kind]) return null;
+  const full = roomPets(save).length >= ROOM_MAX;
+  const P = petsOf(save);
+  P.got[kind] = { name: '', season: save.season || 1 };
+  if (full) P.away.push(kind);
+  return full ? 'house' : 'room';
+}
+// To the pet house and back (the room has ROOM_MAX places).
+export function sendToHouse(save, kind) {
+  const P = petsOf(save);
+  if (!ownedPets(save).includes(kind) || P.away.includes(kind)) return false;
+  P.away.push(kind);
+  return true;
+}
+export function bringToRoom(save, kind) {
+  const P = petsOf(save);
+  if (!P.away.includes(kind) || roomPets(save).length >= ROOM_MAX) return false;
+  P.away = P.away.filter((k) => k !== kind);
+  return true;
+}
+// A pet's name: the player's, or the one it came with (Snowball's lives in save.pet).
+export const petNameOf = (save, kind, tr = (x) => x) => (kind === 'fox' ? (save.pet && save.pet.name) : petsOf(save).got[kind] && petsOf(save).got[kind].name) || tr(PET_KIND[kind].pet);
+export function renamePet(save, kind, name) {
+  const n = cleanPetName(name);
+  if (kind === 'fox') { petOf(save).name = n; return true; }
+  const g = petsOf(save).got[kind];
+  if (!g) return false;
+  g.name = n;
+  return true;
+}

@@ -11,6 +11,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 2. **EC: their mascots for the race**
 3. **ED: the National map and postcards**
 4. **EE–EG: the National rinks**
+5. **EH–EK: the pet collection** (a pet from every club for the locker room)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -776,3 +777,50 @@ Each club's home rink as an arena backdrop exactly like the existing ones (1536�
 
 Each on its own group named after it (`arena_hot_springs` …), loaded only for games there. 7 backdrops.
 
+
+## The pet collection (EH–EK)
+
+The locker room's Snow Fox cub (CX) is getting company. Every club's mascot has a little one, and when the Foxes beat a club three times, that club sends its pet to the locker room as a gift. Up to four pets wander the room at once; the rest wait in a pet house, and the player swaps them about. The game already handles it all: each pet appears as soon as its frames are in.
+
+For **each** pet below, exactly like Snowball's frames (`pet/walk_1` … on the 120×72 canvas, pivot at the feet, the middle of where it touches the floor, in the room's style and angle, about Snowball's size so they play together; the bigger animals can fill more of the canvas):
+- `pets/<kind>/walk_1`..`_4`: going to the right (the game mirrors it for left), a little bounce.
+- `pets/<kind>/sit_1`, `_2`: sitting or standing facing us, a small idle movement (a wag, a blink, a wiggle).
+- `pets/<kind>/sleep_1`, `_2`: asleep, breathing.
+- `pets/<kind>/hop`: a happy hop when it's tapped.
+- `icons/pet_<kind>` (128×128): its face, for the gift card and the pet house (like `icons/pet`).
+
+Each wears a little bandana, collar or scarf in its club's colours, so you can tell whose it is. All on pages in a new `pets` group (loaded only when they're in the room), no lettering. 10 frames a pet.
+
+## Batch EH: the Frostline's pets (1)
+
+- `lynx`: a **Lynx kitten** (Pinewood Lynx): spotted, tufted ears, huge paws, green bandana.
+- `owlet`: a **Snowy owlet** (Glacier Owls): a round white fluffball with big yellow eyes; it walks with a waddle, and the hop is a flap of its stubby wings.
+- `lamb`: a **Golden lamb** (Gilded Rams): golden curly fleece, tiny horn nubs, a gold-and-brown collar.
+- `moose`: a **Moose calf** (Thunder Moose): gangly legs, big ears, no antlers yet, a forest-green collar with an orange tag.
+
+40 frames.
+
+## Batch EI: the Frostline's pets (2)
+
+- `salamander`: a **Fire salamander** (Ember Comets): glossy black with bright orange spots and a friendly smile, walking low with a wiggle; the tip of its tail glows a little, like an ember.
+- `raven`: a **Raven chick** (Obsidian Ravens): a fluffy dark-grey chick with a too-big beak and a violet sheen; it hops and waddles.
+- `polar`: a **Polar bear cub** (Aurora Royals, whose mascot is a crowned polar bear): white and round, with a tiny gold crown that slips over one ear.
+
+And two achievement icons (128×128, like the other `achievements/…`): `achievements/pet_pals` (a few of the pets together, hearts over them) and `achievements/full_pet_house` (a little wooden pet house with many faces peeking out). 32 frames.
+
+## Batch EJ: the National clubs' pets (1)
+
+- `capybara`: a **Capybara pup** (Hot Springs Capybaras): round, brown and calm, with a little orange balanced on its head the way hot-spring capybaras do; it naps as a calm loaf. Teal collar.
+- `puffling`: a **Puffling** (Cliffside Puffins): a fluffy dark-grey ball with a small orange-tipped beak; it waddles.
+- `seal`: a **Seal pup** (Driftwood Seals): a white fluffy pup that scoots along on its belly (that's its walk), and the hop is a happy flipper clap. Slate-blue collar.
+- `penguin`: a **Penguin chick** (Pack Ice Penguins): fluffy grey with a black cap, waddling, a yellow scarf.
+
+40 frames.
+
+## Batch EK: the National clubs' pets (2)
+
+- `bear`: a **Grizzly cub** (Timberline Grizzlies): brown, round ears, a bit clumsy, green bandana.
+- `bull`: a **Bull calf** (Sunmesa Bulls): reddish-brown with tiny horn nubs and a desert-gold bandana.
+- `narwhal`: a **Narwhal calf** (Northlight Narwhals): a small grey-blue spotted narwhal with a little tusk, riding in a small wheeled tub of water that it rolls along with its flippers (that's its walk); it sleeps in the tub, and the hop is a splash. Aurora-green trim on the tub.
+
+30 frames.
