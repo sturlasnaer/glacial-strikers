@@ -332,16 +332,19 @@ class App {
     // the title and hub scenes show over the demo match, so their art stays with it
     const host = Object.values(TEAMS).find((tm) => tm.arena === arena); // its mascot dances in the stands
     const team = teamInfo(teamId); // (the All-Stars recolour the rival pages they're given)
-    const dressed = arena === 'home' && !!seasonFor();
-    const dressedCoach = !!this.save.settings.little && !!seasonFor(); // the coach keeps its costume at away games too (DW) // (the home rink's Halloween or holiday dressing, Batch CD: only in season)
-    Assets.trim({ teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(team.groups || []), ...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...((dressed || dressedCoach) ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(arena === 'home' ? ['pet_rink'] : []), ...(this.save.settings.little ? ['cub_coach', 'kid_stars'] : []), ...(!this.attract && !cfg.drill ? ['race'] : []), ...(cfg.night && Assets.frame('night/aurora_1') ? [Assets.atlas.pages[Assets.frame('night/aurora_1')[0]].group] : [])] });
+    const dressed = arena === 'home' && !!seasonFor(); // (the home rink's Halloween or holiday dressing, Batch CD: only in season)
+    // the coach cub keeps its costume at away games too (Batch DW): just its own page, not the
+    // whole seasonal group (that's some 30 MB decoded)
+    const coachCostume = this.save.settings.little && seasonFor() ? ['talk_1', 'talk_2', 'point', 'cheer', 'think'].map((f) => `cub_coach_${seasonFor()}/${f}`).filter((f) => Assets.frame(f)) : [];
+    Assets.trim({ pages: Assets.framePages(coachCostume), teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(team.groups || []), ...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(arena === 'home' ? ['pet_rink'] : []), ...(this.save.settings.little ? ['cub_coach', 'kid_stars'] : []), ...(!this.attract && !cfg.drill ? ['race'] : []), ...(cfg.night && Assets.frame('night/aurora_1') ? [Assets.atlas.pages[Assets.frame('night/aurora_1')[0]].group] : [])] });
     const fancam = arena === 'home' && !this.attract && !!Assets.atlas.fancam; // (the fan cam's fans: Batch CT)
     const cub = arena === 'home' && !!Assets.atlas.arena_spots?.home_cub && Assets.atlas.pages.some((pg) => pg.group === 'pet_rink'); // (the cub on the boards: Batch DH)
     const racing = !this.attract && !cfg.drill && Assets.atlas.pages.some((pg) => pg.group === 'race'); // (the mascot race's runners: Batch DB)
     if (racing) Assets.loadGroup('race').catch(() => {});
     if (fancam) Assets.loadGroup('fancam').catch(() => {});
     if (cub) Assets.loadGroup('pet_rink').catch(() => {});
-    if (dressed || dressedCoach) Assets.loadGroup('seasonal').then(() => { if (this.scene === 'title') this.ui.titleLogo(); }).catch(() => {}); // (the logo's trimmings too)
+    if (dressed) Assets.loadGroup('seasonal').then(() => { if (this.scene === 'title') this.ui.titleLogo(); }).catch(() => {}); // (the logo's trimmings too)
+    if (coachCostume.length) Assets.loadPages(coachCostume).catch(() => {});
     if (geared) Assets.ensureGear();
     if (rules) Assets.loadGroup('rules').catch(() => {});
     this.lap = null;

@@ -2027,6 +2027,7 @@ export const IS = {
   "the arrow keys": "örvalyklunum",
   "The best season by a Foxes signing.": "Besta tímabil leikmanns sem gekk til liðs við Foxes.",
   "The buttons as they came.": "Upprunalegu hnapparnir.",
+  "The coach cub dresses up in season as well, at every game.": "Þjálfarayrðlingurinn klæðir sig líka upp á hátíðum, í hverjum leik.",
   "The crowd is on its feet! {club} ultimates charge faster.": "Stúkan stendur á fætur! Ofurkraftar {club} hlaðast hraðar.",
   "The cub": "Yrðlingurinn",
   "The cub comes to home games! It watches from the boards, hops for every Foxes goal and droops for one against.": "Yrðlingurinn mætir á heimaleiki! Hann fylgist með við svellkantinn, hoppar af gleði við hvert mark Foxes og hengir haus þegar mótherjarnir skora.",

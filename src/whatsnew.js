@@ -5,6 +5,7 @@ export const WHATS_NEW = [
     id: '2026-10-10zl',
     items: [
       { icon: 'pet_rink/cheer_1', alt: 'icons/pet', text: 'In season the cub wears its pumpkin costume or Santa hat at home games too, and the team bus on the road-trip map dresses up as well.' },
+      { icon: 'cub_coach/cheer', alt: 'icons/simple_controls', text: 'The coach cub dresses up in season as well, at every game.' },
     ],
   },
   {

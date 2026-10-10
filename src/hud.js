@@ -69,8 +69,8 @@ const face = (cv, ...args) => paint(cv, portraitCanvas(...args));
 // The cub as coach (Little player games, Batch DJ): its pose and words for each tip.
 const COACH = { pass: ['point', () => t('Pass it!')], shoot: ['point', () => t('Shoot!')], chase: ['think', () => t('Get the puck back!')], goal: ['cheer', () => t('Hooray!')], nicepass: ['cheer', () => t('Nice pass!')], against: ['talk', () => t('Next one\'s ours!')] };
 const coachReady = () => { const f = Assets.frame('cub_coach/talk_1'); return !!(f && Assets.pages[f[0]]); };
-// in season, in its costume (Batch DW) when that page is in (it is at home games in season)
-const coachArt = (pose) => { const sz = seasonFor(), k = sz && `cub_coach_${sz}/${pose}`, f = k && Assets.frame(k); return f && Assets.pages[f[0]] ? k : `cub_coach/${pose}`; };
+// in season, in its costume (Batch DW) once its page is in (it loads with Little player games in season)
+const coachArt = (pose) => { const sz = seasonFor(), k = sz && `cub_coach_${sz}/${pose}`, f = k && Assets.frame(k); return f && Assets.pages[f[0]] ? k : `cub_coach/${pose}`; }; // (its page loads with Little player games in season)
 
 export class HUD {
   constructor(app) {

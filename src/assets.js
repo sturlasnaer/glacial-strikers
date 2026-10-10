@@ -62,6 +62,11 @@ export const Assets = {
     await Promise.all([...this.atlas.pages.map((p, i) => (p.group !== group || this.pages[i] ? null
       : this.image(p.file).then((img) => { this.pages[i] = img; }))), COMPANION[group] && this.loadGroup(COMPANION[group])]);
   },
+  // Just the pages these frames are on (not their whole group), and their indices.
+  framePages(ids) { return [...new Set(ids.map((id) => this.atlas.frames[id]).filter(Boolean).map((f) => f[0]))]; },
+  async loadPages(ids) {
+    await Promise.all(this.framePages(ids).map((i) => (this.pages[i] ? null : this.image(this.atlas.pages[i].file).then((img) => { this.pages[i] = img; }))));
+  },
   // Every page of a group decoded (false for a group the atlas doesn't have).
   groupReady(group) {
     const own = this.atlas.pages.map((p, i) => i).filter((i) => this.atlas.pages[i].group === group);
@@ -141,7 +146,8 @@ export const Assets = {
     if (keep.gear) { groups.add('gearmask'); groups.add('legends_gearmask'); if (this.needNewcomers) groups.add('newcomer_gearmask'); }
     for (const [g, c] of Object.entries(COMPANION)) if (groups.has(g)) groups.add(c); // (their masks with them)
     const released = new Set();
-    a.pages.forEach((p, i) => { if (this.pages[i] && !groups.has(p.group)) { released.add(this.pages[i]); this.pages[i] = null; this.forget(p.file); } });
+    const pages = new Set(keep.pages || []); // (single pages kept out of a group: the coach cub's costume, say)
+    a.pages.forEach((p, i) => { if (this.pages[i] && !groups.has(p.group) && !pages.has(i)) { released.add(this.pages[i]); this.pages[i] = null; this.forget(p.file); } });
     // recoloured page sets keep references to the original pages they didn't change: drop those too
     for (const r of this.recolored.values()) r.pages = r.pages.map((pg) => (released.has(pg) ? null : pg));
     for (const [k, img] of [...this.backdrops]) {
