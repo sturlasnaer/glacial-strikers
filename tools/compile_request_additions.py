@@ -13,7 +13,7 @@ def merge_request_additions(atlas,out,sources):
  for root in map(Path,sources):
   batches=sorted(root.glob('Puckbound-Batch-*'))if not(root/'atlas.json').exists()else[root]
   for B in batches:
-   S=json.loads((B/'atlas.json').read_text());batch=B.name.split('-')[-1];assert batch in ['BJ','BK','BL','BM','BN','BO','BP','BR','BS','BT','BU','BV','BW','BX','BY','BZ','CA','CB','CC','CD','CE','CF','CH','CI','CJ','CK','CL'];digest=hashlib.sha256((B/'atlas.json').read_bytes()+b''.join((B/m['image']).read_bytes()for m in S['sheets'].values())).hexdigest();digests[batch]=digest
+   S=json.loads((B/'atlas.json').read_text());batch=B.name.split('-')[-1];assert batch in ['BJ','BK','BL','BM','BN','BO','BP','BR','BS','BT','BU','BV','BW','BX','BY','BZ','CA','CB','CC','CD','CE','CF','CH','CI','CJ','CK','CL','CM'];digest=hashlib.sha256((B/'atlas.json').read_bytes()+b''.join((B/m['image']).read_bytes()for m in S['sheets'].values())).hexdigest();digests[batch]=digest
    if A.get('request_addition_sources',{}).get(batch)==digest:continue
    if batch=='BJ':
     for fid,m in S.get('legacy_art_recovery',{}).items():
@@ -25,11 +25,11 @@ def merge_request_additions(atlas,out,sources):
      f=S['frames'][fid]
      if fid in A['frames']and batch!='BJ':continue
      if batch=='BJ':replaced.add(fid)
-     rr=f['frame'];q=page.crop((rr['x'],rr['y'],rr['x']+rr['w'],rr['y']+rr['h']));k=f.get('game_scale',1) if batch in ['BR','BS','BT','BU','BV','BW','BX','BY','BZ','CA','CB','CC','CD','CE','CF','CH','CI','CJ','CK','CL'] else .6 if batch in ['BL','BN'] else .33 if fid=='hub_npcs/portrait/coach_stern' else 1;s=k*f.get('source_scale',1);size=(round(q.width*k),round(q.height*k));sx,sy=size[0]/q.width,size[1]/q.height;p=f['pivot_pixels'];group=f.get('game_group') or {'BJ':'gearmask','BK':'icons_z','BL':'linesman','BM':'home'}[batch];group='seasonal' if fid.startswith('seasonal/') else 'resurfacer' if re.match(r'polish/resurfacer/(south|north)(east|west)/',fid) else 'gallery' if fid.startswith(GALLERY) else LOADED.get(group,group);items.append({'id':fid,'q':q.resize(size,Image.Resampling.NEAREST),'pivot':[p['x']*sx,p['y']*sy],'scale':s,'group':group})
+     rr=f['frame'];q=page.crop((rr['x'],rr['y'],rr['x']+rr['w'],rr['y']+rr['h']));k=f.get('game_scale',1) if batch in ['BR','BS','BT','BU','BV','BW','BX','BY','BZ','CA','CB','CC','CD','CE','CF','CH','CI','CJ','CK','CL','CM'] else .6 if batch in ['BL','BN'] else .33 if fid=='hub_npcs/portrait/coach_stern' else 1;s=k*f.get('source_scale',1);size=(round(q.width*k),round(q.height*k));sx,sy=size[0]/q.width,size[1]/q.height;p=f['pivot_pixels'];group=f.get('game_group') or {'BJ':'gearmask','BK':'icons_z','BL':'linesman','BM':'home'}[batch];group='seasonal' if fid.startswith('seasonal/') else 'resurfacer' if re.match(r'polish/resurfacer/(south|north)(east|west)/',fid) else 'gallery' if fid.startswith(GALLERY) else LOADED.get(group,group);items.append({'id':fid,'q':q.resize(size,Image.Resampling.NEAREST),'pivot':[p['x']*sx,p['y']*sy],'scale':s,'group':group})
    if batch=='BL':A.setdefault('linesman',{}).setdefault('calls',{}).update(S['linesman']['calls'])
    if batch=='BN':A.setdefault('linesman',{})['delayed']=copy.deepcopy(S['linesman']['delayed'])
-   if batch in ['BR','BS','BT','BU','BV','BW','BX','BY','BZ','CA','CB','CC','CD','CE','CF','CH','CI','CJ','CK','CL']:
-    for key in ['npcs','club_art_masks','overlay_regions','home_rafters','crowd_supporters','rival_art_masks','rival_supporters']:
+   if batch in ['BR','BS','BT','BU','BV','BW','BX','BY','BZ','CA','CB','CC','CD','CE','CF','CH','CI','CJ','CK','CL','CM']:
+    for key in ['rule_icons','npcs','club_art_masks','overlay_regions','home_rafters','crowd_supporters','rival_art_masks','rival_supporters']:
      if key in S:A.setdefault(key,{}).update(copy.deepcopy(S[key]))
    if batch in ['CF','CK']:
     for season,values in S['seasonal'].items():A.setdefault('seasonal',{}).setdefault(season,{}).update(copy.deepcopy(values))
@@ -47,7 +47,7 @@ def merge_request_additions(atlas,out,sources):
    if batch=='CA':
     for dest,source in S.get('external_images',{}).items():
      image=Image.open(B/source).convert('RGBA');assert image.size==(660,168);p=out/dest;p.parent.mkdir(parents=True,exist_ok=True);image.save(p)
-   if batch=='BX':
+   if batch in ['BX','CM']:
     for key,values in S.get('arena',{}).items():A.setdefault('arena',{}).setdefault(key,{}).update(copy.deepcopy(values))
     for key,fid in S.get('arenas',{}).items():
      image=Image.open(B/'frames'/(fid.replace('/','_')+'.png')).convert('RGB');assert image.size==(1536,1024);name='arena_'+key+'.webp';image.save(out/name,'WEBP',lossless=True,exact=True,method=6);A.setdefault('arenas',{})[key]='gfx/'+name
