@@ -1451,3 +1451,15 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .pet .pet-acc { position: absolute; left: 0; top: 0; height: 100%; width: auto; pointer-events: none; }
 .outfit-ico { position: relative; display: block; width: 64px; height: 64px; }
 .outfit-ico img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+/* the mascot race at the break (Batch DB): the track (its art, or plain ice), four lanes to pick */
+.race { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 12px; background: rgba(11, 20, 36, 0.78); }
+.race-track { position: relative; width: min(96vw, calc((100vh - 90px) * 2.4)); aspect-ratio: 1536 / 640; border: 4px solid var(--navy); border-radius: 6px; background: #d6eef8 center / cover no-repeat; box-shadow: 0 0 0 2px var(--ice), 4px 6px 0 rgba(0, 0, 0, 0.4); overflow: hidden; }
+.race-lane { position: absolute; left: 0; right: 0; height: 19%; border: 0; border-top: 2px dashed rgba(20, 35, 59, 0.25); background: transparent; cursor: pointer; text-align: right; padding: 0 2%; }
+.race-lane:hover, .race-lane:focus-visible, .race-lane.picked { background: rgba(255, 212, 94, 0.25); }
+.race-lane.won { background: rgba(127, 224, 138, 0.35); }
+.race.running .race-lane { cursor: default; }
+.race-name { font-family: var(--display); font-size: clamp(12px, 2vw, 20px); color: var(--navy); background: rgba(255, 253, 246, 0.85); padding: 0 6px; border-radius: 3px; }
+.race-runner { position: absolute; height: 19%; width: auto; transform: translate(-50%, 0); pointer-events: none; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.3)); }
+.race-head { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; color: var(--cream); }
+.race-head b { font-family: var(--display); font-weight: normal; font-size: clamp(28px, 5vw, 48px); color: var(--gold); line-height: 1; }
+.race-head span { font-size: 15px; }

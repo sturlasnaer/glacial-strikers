@@ -57,6 +57,7 @@ import { seasonFor } from './seasonal.js';
 import { canCreate, createPlayer, restyle, defaultChoice, stylesFor, cleanName, MAX_OWN, NAME_MAX } from './create.js';
 import { DECOR, DECOR_BY_ID, DECOR_SLOTS, SLOT_NAMES as DECOR_SLOT_NAMES, buyDecor, putUp, takeDown, owns as ownsDecor, isOn as decorOn, placed as decorPlaced } from './decor.js';
 import { cleanSign, SIGN_MAX } from './fancam.js';
+import { MASCOTS, RACE_PRIZE, pickRunners, newRace, stepRace } from './race.js';
 import { newPet, stepPet, tapPet, cleanPetName, PET_NAME_MAX, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit } from './pet.js';
 import { albumPages, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
 
@@ -877,6 +878,74 @@ export class UI {
       if (heart) { room.insertAdjacentHTML('beforeend', `<img class="pet-heart" src="${heart}" alt="" style="left:${this.pet.x}%;top:${this.pet.y - 9}%">`); const h = room.lastElementChild; setTimeout(() => h.remove(), 1200); }
     });
     tag.addEventListener('click', (e) => { e.stopPropagation(); audio.sfx('click'); this.petName(); });
+  }
+
+  // The mascot race at the break (Batch DB): pick a runner (or not), watch them race across the
+  // ice, a prize if yours wins. done() gives the match back.
+  mascotRace(opp, done) {
+    const s = this.app.save, has = (team) => { const f = Assets.frame(`race/${MASCOTS[team]}/run_1`); return !!(f && Assets.pages[f[0]]); };
+    const ids = pickRunners(opp, Math.random, has);
+    if (ids.length < 2) return done();
+    const sets = Object.fromEntries(ids.map((id) => { const k = MASCOTS[id], fr = [1, 2, 3, 4].map((i) => `race/${k}/run_${i}`).filter((f) => Assets.frame(f)); return [id, Assets.spriteSet([...fr, ...(Assets.frame(`race/${k}/win`) ? [`race/${k}/win`] : [])], 180)]; }));
+    const name = (id) => (id === 'home' ? t('The Snow Fox') : TEAMS[id].name.split(' ').slice(-1)[0]);
+    const el = document.createElement('div');
+    el.className = 'race';
+    el.innerHTML = `<div class="race-track" style="background-image:url(${Assets.url('gfx/race/track.png')})">
+        ${ids.map((id, i) => `<button class="race-lane" data-pick="${id}" style="top:${18 + i * 19}%"><span class="race-name">${i + 1}. ${esc(name(id))}</span></button><img class="race-runner" data-run="${id}" src="${sets[id].urls[0]}" alt="" style="top:${18 + i * 19}%;left:4%">`).join('')}
+      </div>
+      <div class="race-head"><b>${t('MASCOT RACE!')}</b><span id="race-msg">${t('Pick a winner: tap a lane (or press 1 to {n}).', { n: ids.length })}</span></div>`;
+    document.getElementById('app').appendChild(el);
+    audio.sfx('whistle', { vol: 0.5 });
+    let pick = null, race = null, last = 0, endT = 0, raf = 0;
+    const msg = el.querySelector('#race-msg');
+    const start = () => {
+      if (race) return;
+      race = newRace(ids);
+      el.classList.add('running');
+      msg.textContent = pick ? t('You picked {name}. Go, go, go!', { name: name(pick) }) : t('And they\'re off!');
+      audio.crowdCheer(0.6);
+      last = performance.now();
+      raf = requestAnimationFrame(tick);
+    };
+    const finish = () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('keydown', onKey, true);
+      el.remove();
+      done();
+    };
+    const tick = (now) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (!race.winner) stepRace(race, dt, Math.random);
+      for (const u of race.runners) {
+        const im = el.querySelector(`[data-run="${u.id}"]`), set = sets[u.id], won = race.winner === u.id && set.urls.length > 4;
+        im.style.left = `${4 + u.x * 78}%`;
+        const src = won ? set.urls[set.urls.length - 1] : set.urls[Math.floor(now / 90) % Math.min(4, set.urls.length)];
+        if (im.getAttribute('src') !== src) im.src = src;
+      }
+      if (race.winner && !endT) {
+        endT = now;
+        const ours = pick === race.winner;
+        if (ours) { s.coins += RACE_PRIZE; writeSave(s); audio.sfx('coin'); audio.jingle('achievement'); } else audio.crowdCheer(0.8);
+        msg.innerHTML = `${esc(t('{name} wins!', { name: name(race.winner) }))}${pick ? ` ${ours ? `<b class="gold-t">${esc(t('+{n} coins', { n: RACE_PRIZE }))}</b>` : esc(t('Better luck next time.'))}` : ''}`;
+        el.querySelector(`[data-pick="${race.winner}"]`)?.classList.add('won');
+      }
+      if (endT && now - endT > 2800) return finish();
+      raf = requestAnimationFrame(tick);
+    };
+    el.addEventListener('click', (e) => {
+      const lane = e.target.closest('[data-pick]');
+      if (!race && lane) { pick = lane.dataset.pick; lane.classList.add('picked'); audio.sfx('click'); start(); }
+      else if (endT) finish();
+    });
+    const onKey = (e) => {
+      const n = +e.key;
+      if (!race && n >= 1 && n <= ids.length) { pick = ids[n - 1]; el.querySelector(`[data-pick="${pick}"]`).classList.add('picked'); audio.sfx('click'); start(); e.preventDefault(); }
+      else if (!race && (e.key === 'Enter' || e.key === ' ')) { start(); e.preventDefault(); }
+      else if (endT) finish();
+    };
+    window.addEventListener('keydown', onKey, true);
+    setTimeout(() => { if (el.isConnected) start(); }, 7000); // (nobody picked: they race anyway)
   }
 
   // Name the pet (12 characters at most).
@@ -3059,6 +3128,7 @@ export class UI {
       ${row(t('Audio quality'), seg('audioQuality', [['auto', t('Auto')], ['full', t('Full')], ['light', t('Light')]]), t('Light leaves out the backing layers and crowd voices for slower phones. Auto picks it on low-memory devices.'))}
       ${row(t('Music room'), `<button class="btn small ghost" id="s-jukebox">${t('Listen')}</button>`, t('Every track in the game, from the title theme to the Cup Final.'))}
       ${row(t('Our goal horn'), `<span class="seg">${[['home', t('Classic')], ['ember_dome', t('Volcano')], ['aurora_palace', t('Fanfare')], ['golden_hall', t('Ram\'s horn')], ['dark_aerie', t('Bell and ravens')], ['pine_pond', t('Cowbells')]].map(([v, label]) => `<button class="chip" data-horn="${v}" aria-pressed="${(st.horn || 'home') === v}">${label}</button>`).join('')}</span>`, t('At our rink. Tap one to hear it.'))}
+      ${Assets.atlas.frames['race/snow_fox/run_1'] ? row(t('Mascot race at the break'), onOff('race'), t('When a side has three, the mascots race across the ice. Pick the winner for coins.')) : ''}
       ${Assets.atlas.fancam ? row(t('Our fan sign'), `<input class="sign-in" id="s-sign" maxlength="${SIGN_MAX}" value="${esc(st.sign || '')}" placeholder="${esc(t('GO {club}!', { club: CLUB.short.toUpperCase() }))}" aria-label="${esc(t('Our fan sign'))}" autocomplete="off">`, t('A fan holds it up on the big screen after our goals at home. Leave it empty for the crowd\'s own.')) : ''}
       <div class="label">${t('Gameplay')}</div>
       ${row(t('Rival difficulty'), seg('difficulty', [['easy', t('Easy')], ['normal', t('Normal')], ['hard', t('Hard')]]))}

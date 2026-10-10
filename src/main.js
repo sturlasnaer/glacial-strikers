@@ -10,6 +10,7 @@ import { PadNav } from './padnav.js';
 import { forceSeason, seasonFor } from './seasonal.js';
 import { addPacks } from './album.js';
 import { cleanSign, CROWD_SIGNS } from './fancam.js';
+import { RACE_AT } from './race.js';
 import { firstTime } from './guide.js';
 import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as cloudBackup, settleCups } from './online.js';
 import { ARENA_MUSIC } from './songs.js';
@@ -329,8 +330,10 @@ class App {
     const host = Object.values(TEAMS).find((tm) => tm.arena === arena); // its mascot dances in the stands
     const team = teamInfo(teamId); // (the All-Stars recolour the rival pages they're given)
     const dressed = arena === 'home' && !!seasonFor(); // (the home rink's Halloween or holiday dressing, Batch CD: only in season)
-    Assets.trim({ teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(team.groups || []), ...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : [])] });
+    Assets.trim({ teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(team.groups || []), ...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(!this.attract && !cfg.drill ? ['race'] : [])] });
     const fancam = arena === 'home' && !this.attract && !!Assets.atlas.fancam; // (the fan cam's fans: Batch CT)
+    const racing = !this.attract && !cfg.drill && Assets.atlas.pages.some((pg) => pg.group === 'race'); // (the mascot race's runners: Batch DB)
+    if (racing) Assets.loadGroup('race').catch(() => {});
     if (fancam) Assets.loadGroup('fancam').catch(() => {});
     if (dressed) Assets.loadGroup('seasonal').then(() => { if (this.scene === 'title') this.ui.titleLogo(); }).catch(() => {}); // (the logo's trimmings too)
     if (geared) Assets.ensureGear();
@@ -957,6 +960,13 @@ class App {
       if (e.team === 0 && this.arena === 'home' && !this.attract && this.cur && !this.cur.drill && !this.cur.versus) this.fanCam(m, e);
     });
     m.on('faceoff', () => audio.sfx('whistle', { vol: 0.55 }));
+    // the mascot race at the break, once a side has three (Batch DB)
+    m.on('faceoff', () => {
+      if (m.raced || this.attract || !this.cur || this.cur.drill || this.save.settings.race === false || !Assets.atlas.frames['race/snow_fox/run_1'] || Math.max(...m.score) < RACE_AT || m.state === 'over') return;
+      m.raced = true;
+      this.racing = true;
+      setTimeout(() => this.ui.mascotRace(this.awayTeamId, () => { this.racing = false; }), 700);
+    });
     m.on('penalty_shot', (e) => {
       this.replay.clear(); // (its replay starts at centre ice, not before the foul)
       if (m.pshot && m.pshot.keeper && !(this.cur && this.cur.versus)) this.hud.hint(this.isTouch ? t('You\'re in goal! BLOCK drops to the butterfly, DIVE dives across.') : t('You\'re in goal! {shoot} drops to the butterfly, {pass} dives.', hintKeys(this.input.lastDevice === 'gamepad')), 4);
@@ -1627,7 +1637,7 @@ class App {
       // P is player 2's ultimate on a shared keyboard, so only Esc / Start pause
       raw.pause = this.input.keys.has('Escape') || this.input.pads().some((gp) => gp.buttons[9] && gp.buttons[9].pressed);
     }
-    if (raw.pause && !this.prevPause) {
+    if (raw.pause && !this.prevPause && !this.racing) {
       if (this.scene === 'match') this.pause();
       else if (this.scene === 'paused') this.resume();
     }
@@ -1675,7 +1685,7 @@ class App {
           else if ((this.lap.wait = (this.lap.wait || 0) + realDt) > 2) this.lap = null;
           if (this.lap && this.lap.done) this.lap = null;
         }
-        let simDt = this.lap ? 0 : realDt * this.fx.slowScale * (this.save.settings.speed === 'relaxed' && !(this.cur && this.cur.drill) && !this.attract ? 0.85 : 1);
+        let simDt = this.lap || this.racing ? 0 : realDt * this.fx.slowScale * (this.save.settings.speed === 'relaxed' && !(this.cur && this.cur.drill) && !this.attract ? 0.85 : 1);
         if (this.fx.hitstop > 0) simDt = 0;
         this.acc += simDt;
         let n = 0;
