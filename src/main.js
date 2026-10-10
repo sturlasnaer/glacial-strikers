@@ -38,6 +38,7 @@ import { standings } from './league.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan, recordClassic, recordAllStar } from './league.js';
 import { sendPostcard, postcardFor } from './trip.js';
 import { awardKidStar } from './kidstars.js';
+import { moveTier, noteTierCup, tierOf } from './tiers.js';
 import { updateSeasonGoals, goalStates } from './goals.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
@@ -833,7 +834,7 @@ class App {
     const as = extra.daily ? 'skaters' : extra.coop === 'keeper' ? 'coopGoalie' : extra.coop ? 'coop' : s.settings.playAs;
     const coop = as === 'coop', keeperCoop = as === 'coopGoalie';
     const goalieMode = as === 'goalie' || keeperCoop; // (daily goals are for skaters)
-    const cfg = extra.allstar ? allStarConfig(s, extra.allstar, { goalieMode }) : matchConfig(s, teamId, stage, { plans: [plan, theirPlan], buffs, goalieMode });
+    const cfg = extra.allstar ? allStarConfig(s, extra.allstar, { goalieMode }) : matchConfig(s, teamId, stage, { plans: [plan, theirPlan], buffs, goalieMode, league: !exhibition && !extra.daily }); // (league games feel the division)
     if (extra.mini) cfg.winScore = MINI_WIN; // (the Mini Cup: quick games)
     if (s.settings.little) cfg.comeback = true; // (Little player: the rivals ease off when they're well ahead)
     if (s.settings.little) for (const g of ['cub_coach', 'kid_stars']) if (Assets.atlas.pages.some((pg) => pg.group === g)) Assets.loadGroup(g).catch(() => {}); // (the cub coaches, and a gold star after: Batches DJ, DN)
@@ -1182,8 +1183,8 @@ class App {
       const move = rivalSigning(s);
       if (move) leagueOut.moves = [move];
       this.pendingOffer = rivalOffer(s);
-      if (leagueOut.champion === 'home') { s.champion = true; becameChampion = true; s.cups = (s.cups || 0) + 1; noteCup(s, rosterIds(s), goalieIds(s)); }
-      if (leagueOut.champion) addNews(s, { k: 'champion', team: leagueOut.champion });
+      if (leagueOut.champion === 'home') { s.champion = true; becameChampion = true; s.cups = (s.cups || 0) + 1; noteCup(s, rosterIds(s), goalieIds(s)); noteTierCup(s); if (tierOf(s) === 1) this.ach.unlock('national-champions'); if (tierOf(s) === 2) this.ach.unlock('elite-champions'); }
+      if (leagueOut.champion) addNews(s, { k: 'champion', team: leagueOut.champion, tier: tierOf(s) });
       s.stage = s.league.round;
     }
     // a win on the road sends a postcard home (Batch DK), Snowcrest's own with the Cup
@@ -1376,6 +1377,10 @@ class App {
     // first, the season just gone in review
     const review = !reviewed && seasonReview(s);
     if (review) { this.ui.seasonReview(review, () => this.newSeason(true)); return; }
+    // up a division with the Cup, down one from last place (tiers.js)
+    const moved = moveTier(s, s.league, s.league ? standings(s.league) : null);
+    if (moved) addNews(s, { k: moved, tier: tierOf(s) });
+    if (moved === 'promoted') this.ach.unlock('moving-up');
     s.season++;
     s.stage = 0; s.beaten = []; s.champion = false;
     const before = new Set(Object.keys((s.rivals || {}))), last = s.league;
@@ -1384,6 +1389,13 @@ class App {
     s.buffs = [];
     setLeagueEdge(s, last); // (the league keeps up with a club that ran away with it)
     writeSave(s);
+    if (moved) { this.ui.tierMove(moved, () => this.newSeasonOn(before)); return; } // (up or down a division: said first)
+    this.newSeasonOn(before);
+  }
+
+  // The rest of a new season's start: the expansion clubs' welcome (once), then the League tab.
+  newSeasonOn(before) {
+    const s = this.save;
     // the league grows: Kip welcomes the new clubs (once)
     const fresh = s.league.teams.filter((id) => TEAMS[id] && TEAMS[id].expansion && !before.has(id));
     if (fresh.length && !s.expansionSeen) {
@@ -1640,7 +1652,7 @@ class App {
       const gs = goalStates(s);
       s.history.push({ season: L.season, finish: order.indexOf('home') + 1, teams: order.length, w: row.w, l: row.l, gf: row.gf, ga: row.ga,
         playoff: L.champion === 'home' ? 'champion' : po && inGame(po.final) ? 'final' : po && po.semis.some(inGame) ? 'semi' : 'missed',
-        goals: gs.filter((g) => g.done).length, of: gs.length, photo: teamPhoto(s, L.champion === 'home') });
+        goals: gs.filter((g) => g.done).length, of: gs.length, photo: teamPhoto(s, L.champion === 'home'), tier: tierOf(s) });
     }
     // the season's over: the oldest rival stars retire (Draft Day fills their places)
     for (const r of retireRivals(s)) addNews(s, { k: 'retire', team: r.team, name: RECRUITS[r.key].name, kit: r.kit, n: r.seasons });

@@ -7,6 +7,7 @@ import {
 import { newLeague, migrateLeague } from './league.js';
 import { lookFor, maskFor, goalieArt, isPartsArt } from './modular.js';
 import { seasonStats } from './awards.js';
+import { tierOf, tierInfo, TIER_SHARP } from './tiers.js';
 import { rivalSub, setFills, agedStats, grown, goalieGrowth, leagueGrowth, seasonBoost, GOALIE_CAP } from './slots.js';
 import { leagueRivals } from './league.js';
 import { t } from './i18n.js';
@@ -320,14 +321,14 @@ export function setLeagueEdge(save, prevLeague = null) {
   const prev = save.leagueEdge || 0; // (last season's edge)
   save.leagueEdge = 0;
   const rivals = leagueRivals(save.league);
-  const theirs = rivals.reduce((a, id) => a + matchConfig(save, id, null).teams[1].skaters.reduce((b, k) => b + sum(k.stats), 0) / 3, 0) / Math.max(1, rivals.length);
+  const theirs = rivals.reduce((a, id) => a + matchConfig(save, id, null, { league: true }).teams[1].skaters.reduce((b, k) => b + sum(k.stats), 0) / 3, 0) / Math.max(1, rivals.length); // (as they'll play us: a division up, stronger)
   save.leagueEdge = Math.max(0, Math.min(3, Math.floor((ours - theirs - EDGE_FREE) / EDGE_STEP) + 1));
   if (ours - theirs <= EDGE_FREE) save.leagueEdge = 0;
   // the goalies the same way: our starter's reflexes and positioning against the rivals' average
   const gPrev = save.goalieEdge || 0;
   save.goalieEdge = 0;
   const g = goalieStats(save), gOurs = g.rfx + g.pos;
-  const gTheirs = rivals.reduce((a, id) => { const r = rivalGoalie(save, id).stats; return a + r.rfx + r.pos; }, 0) / Math.max(1, rivals.length);
+  const gTheirs = rivals.reduce((a, id) => { const r = rivalGoalie(save, id, tierOf(save)).stats; return a + r.rfx + r.pos; }, 0) / Math.max(1, rivals.length);
   save.goalieEdge = Math.max(0, Math.min(3, Math.floor((gOurs - gTheirs - 2) / 2)));
   if (prevLeague && lastSeasonRate(prevLeague) < 0.6) { save.leagueEdge = 0; save.goalieEdge = 0; } // (no runaway last season: no catching up)
   if (save.leagueEdge > prev || save.goalieEdge > gPrev) addNews(save, { k: 'edge', n: save.leagueEdge + save.goalieEdge });
@@ -371,9 +372,9 @@ export function homeGoalie(save) {
   return { stats: goalieStats(save, id), name: info.name, art: info.art, look: info.art ? 'homekit' : null, mask: info.mask || null, style: goalieStyle(save, id), who: id };
 }
 // A rival's goalie: their own, or a backup once you've signed theirs.
-export function rivalGoalie(save, teamId) {
+export function rivalGoalie(save, teamId, tier = 0) {
   const t = TEAMS[teamId];
-  const gg = goalieGrowth(save); // (the league gets better)
+  const gg = goalieGrowth(save) + tier; // (the league gets better; and a point a division up)
   if (isSigned(save, teamId + '_g')) return { stats: { rfx: Math.min(GOALIE_CAP, Math.max(3, t.goalie.rfx - 1) + gg), pos: Math.min(GOALIE_CAP, Math.max(3, t.goalie.pos - 1) + gg) }, name: t.subs.goalie || t.names.goalie, art: 'newcomer', style: 'hybrid', who: 'sub_goalie' }; // (the plain away goalie until the newcomer goalie, Batch AN)
   return { stats: { rfx: Math.min(GOALIE_CAP, t.goalie.rfx + gg), pos: Math.min(GOALIE_CAP, t.goalie.pos + gg) }, name: t.names.goalie, art: t.art || (t.goalieLook ? goalieArt(t.goalieLook) : 'newcomer'), mask: t.goalieLook || null, style: t.gstyle || 'hybrid' }; // (an expansion club's goalie: the newcomer goalie)
 }
@@ -430,6 +431,7 @@ const withBonus = (base, t) => { const st = { ...base }; for (const [k, v] of Ob
 // Build the Match config for a game against `teamId`.
 export function matchConfig(save, teamId, stage, opts = {}) {
   const t = TEAMS[teamId];
+  const tier = opts.league ? tierOf(save) : 0; // (a league game: tougher a division up, see tiers.js)
   const ids = ['frost', 'thunder', 'stone']; // rival slots (and kits)
   const line = lineupIds(save);
   const home = {
@@ -449,13 +451,13 @@ export function matchConfig(save, teamId, stage, opts = {}) {
       for (const [k, v] of Object.entries(t.bonus || {})) stats[k] = Math.max(1, stats[k] + v);
       // a slot whose skater you signed: whoever they brought in, a newcomer in their colours
       const sub = rivalSub(save, teamId, id);
-      if (sub) return { def: sub.def, who: 'sub_' + id, stats: grown(save, withBonus(sub.stats, t)), name: sub.name, perks: [], sprite: sub.sprite, parts: sub.parts, hand: sub.hand };
-      return { def: slotDef(teamId, id), stats: grown(save, agedStats(save, teamId, id, stats)), name: t.names[id], perks: [], sprite: slotSprite(teamId, id), parts: slotLook(teamId, id), hand: RECRUITS[recruitKey(teamId, id)]?.hand };
+      if (sub) return { def: sub.def, who: 'sub_' + id, stats: grown(save, withBonus(sub.stats, t), tier), name: sub.name, perks: [], sprite: sub.sprite, parts: sub.parts, hand: sub.hand };
+      return { def: slotDef(teamId, id), stats: grown(save, agedStats(save, teamId, id, stats), tier), name: t.names[id], perks: [], sprite: slotSprite(teamId, id), parts: slotLook(teamId, id), hand: RECRUITS[recruitKey(teamId, id)]?.hand };
     }),
-    goalie: rivalGoalie(save, teamId),
+    goalie: rivalGoalie(save, teamId, tier),
     chem: Object.fromEntries(CAST_PAIRS.map((k) => [k, Math.min(3, (t.chem || 0) + (save.season > 1 ? 1 : 0))])),
   };
-  const diff = Math.min(1, Math.max(0, t.diff + (DIFF_OFFSET[save.settings.difficulty] || 0) + seasonBoost(save)));
+  const diff = Math.min(1, Math.max(0, t.diff + (DIFF_OFFSET[save.settings.difficulty] || 0) + seasonBoost(save) + tier * TIER_SHARP));
   // locker-room buffs: stat bumps and goalie reflex land here, the rest goes to the match
   const fx = opts.buffs;
   if (fx) {
@@ -572,6 +574,7 @@ export function computeRewards(save, summary, stage, exhibition) {
     if (kills) { lines.push([t('Penalties killed x{n}', { n: kills }), kills * 10]); coins += kills * 10; }
   }
   if (exhibition) { coins = Math.round(coins * 0.5); lines.push([t('Exhibition (half rewards)'), 0]); }
+  else if (tierInfo(save).purse > 1) { const before = coins; coins = Math.round(coins * tierInfo(save).purse); lines.push([t('{league} purse x{n}', { league: t(tierInfo(save).name), n: tierInfo(save).purse }), coins - before]); } // (a division up pays more)
   const mult = (summary.mods || []).reduce((m, id) => m * ((CHALLENGES.find((c) => c.id === id) || {}).mult || 1), 1);
   if (mult !== 1) { const before = coins; coins = Math.round(coins * mult); lines.push([t('Challenges x{n}', { n: +mult.toFixed(2) }), coins - before]); }
 

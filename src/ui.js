@@ -2,7 +2,7 @@
 
 import { Assets } from './assets.js';
 import {
-  CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, TOURNAMENT, STAT_KEYS, STAT_NAMES, STAT_HINT,
+  CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
   RECRUITS, ROOKIES, setRookies, setFreeGoalies, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, RIVAL_IDS, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, CLUB_CRESTS, clubCrestId, MASK_NAMES, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
@@ -62,6 +62,7 @@ import { MASCOTS, RACE_PRIZE, pickRunners, newRace, stepRace } from './race.js';
 import { SNOW_TIME, newSnowball, stepSnowball, throwAt, snowPrize } from './snowball.js';
 import { KID_STAR_IDS } from './kidstars.js';
 import { tripStops, POSTCARD_TOWNS } from './trip.js';
+import { tierOf, tierInfo, tierAt, TIERS } from './tiers.js';
 import { newPet, stepPet, tapPet, tossPuck, cleanPetName, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall } from './pet.js';
 import { albumPages, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
 
@@ -208,7 +209,7 @@ export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '
 
 // The league news icon for each kind of story (Batch AV).
 const NEWS_ICON = { edge: 'edge', rivalSign: 'sign', weSign: 'sign', weGoalie: 'sign', weAgent: 'sign', weOwn: 'sign', weLegend: 'sign', rivalDraft: 'draft', weDraft: 'draft', trade: 'trade', retire: 'retire', champion: 'cup', expansion: 'new_club' };
-const NEWS_ART = { hatTrick: 'achievements/hat_trick', streak: 'badges/streak_flame', press: 'icons/share', hall: 'icons/career', record: 'icons/stat_goals', facility: 'icons/friends' }; // (news without a news icon of its own)
+const NEWS_ART = { hatTrick: 'achievements/hat_trick', streak: 'badges/streak_flame', press: 'icons/share', hall: 'icons/career', record: 'icons/stat_goals', facility: 'icons/friends', promoted: 'icons/promoted', relegated: 'icons/relegated' }; // (news without a news icon of its own)
 // The locker room hub: stations in the painting, in % of the 16:9 image.
 const STATIONS = [
   { tab: 'team', label: 'Team', icon: 'equipment_items/hub/locker', rect: [19, 2, 47, 27], at: [42, 15], tip: 'Lockers: line-up, stats, gear and scouting' },
@@ -363,6 +364,7 @@ function coachNote(sm) {
 }
 const smallIcon = (id, size = 40, cls = 'rule-ico') => { const src = id && Assets.icon(id, size); return src ? `<img class="${cls}" src="${src}" alt="">` : ''; };
 const btnIcon = (id) => smallIcon(id, 48, 'btn-ico'); // in front of a button's words
+const cupName = (tier) => t(tierAt(tier).cup); // (the Frostline Cup, the National Cup or the Elite Cup: tiers.js)
 // A veteran's star and level beside their level (Batch DY's star once it's in, ★ till then)
 const vetBadge = (v) => (v ? ` <span class="vet" title="${esc(t('Veteran level {n}', { n: v }))}">${smallIcon(v >= VET_MAX && Assets.atlas.frames['badges/veteran_max'] ? 'badges/veteran_max' : 'badges/veteran', 40, 'vet-ico') || '★'}${v}</span>` : '');
 // The sticker album: the pages (a club's mascot once its sticker is drawn, Batch CR), a
@@ -655,7 +657,7 @@ export class UI {
       <div class="hub">
         <div class="hub-top">
           <img class="crest" src="${crest('home', 96)}" alt="">
-          <div class="hub-title">${esc(CLUB.name)}<small>${esc(t(TOURNAMENT.name))}${s.season > 1 ? ' · ' + t('Season {n}', { n: s.season }) : ''}</small></div>
+          <div class="hub-title">${esc(CLUB.name)}<small>${esc(t(tierInfo(s).name))}${s.season > 1 ? ' · ' + t('Season {n}', { n: s.season }) : ''}</small></div>
           <div class="coins"><img src="${ico('equipment_items/reward/coins', 64)}" alt="">${s.coins}</div>
           <button class="icon-btn" id="h-settings" aria-label="${t('Settings')}">☰</button>
         </div>
@@ -969,7 +971,10 @@ export class UI {
     const icon = (ids) => { const id = ids.find((k) => Assets.frame(k)); return id ? Assets.icon(id, 96) : ''; };
     const classics = (s.classics || []).filter((c) => c.gf > c.ga).length;
     const rows = [
-      Array(Math.min(4, s.cups || 0)).fill(icon(['badges/frostline_cup', 'badges/cup_small'])),
+      (() => { // (the grander cups first: Elite, National, then the Frostline Cups)
+        const C = s.tierCups || {}, elite = C.elite || 0, national = C.national || 0, regional = Math.max(0, (s.cups || 0) - elite - national);
+        return [...Array(elite).fill(icon(['badges/elite_cup', 'badges/frostline_cup', 'badges/cup_small'])), ...Array(national).fill(icon(['badges/national_cup', 'badges/frostline_cup', 'badges/cup_small'])), ...Array(regional).fill(icon(['badges/frostline_cup', 'badges/cup_small']))].slice(0, 4);
+      })(),
       [...Array(Math.min(3, s.miniCups || 0)).fill(icon(['badges/mini_cup', 'badges/cup_small'])), ...(classics ? [icon(['achievements/winter_classic'])] : [])].slice(0, 4),
       Array(Math.min(4, (s.weeklyCups || []).length)).fill(icon(['badges/weekly_cup', 'badges/cup_small'])),
     ];
@@ -1130,7 +1135,7 @@ export class UI {
         ${[['a', 'ga'], ['b', 'gb']].map(([k, sc]) => `<div class="po-team ${g.winner === g[k] ? 'win' : g.winner ? 'lose' : ''} ${g[k] === 'home' ? 'us' : ''}"><img src="${crest(g[k], 40)}" alt="" width="22" height="22">${esc(short(g[k]))}<b>${g[sc] ?? ''}</b></div>`).join('')}</div>` : `<div class="po-game"><div class="label" style="font-size:12px">${label}</div><div class="muted" style="font-size:13px">${t('Waiting for the semifinals')}</div></div>`;
       bracket = `<div class="label" style="margin:14px 0 6px">${t('Playoffs')}</div>
         <div class="bracket-po">${game(po.semis[0], t('Semifinal · 1 v 4'))}${game(po.semis[1], t('Semifinal · 2 v 3'))}${game(po.final, t('Cup Final'))}</div>
-        ${L.champion ? `<p class="gold-t" style="font-family:var(--display);font-size:26px;text-align:center;margin:10px 0 0">${L.champion === 'home' ? t('The Frostline Cup is yours!') : t('{team} win the Frostline Cup.', { team: esc(name(L.champion)) })}</p>` : ''}`;
+        ${L.champion ? `<p class="gold-t" style="font-family:var(--display);font-size:26px;text-align:center;margin:10px 0 0">${L.champion === 'home' ? t('The {cup} is yours!', { cup: cupName(tierOf(s)) }) : t('{team} win the {cup}.', { cup: cupName(tierOf(s)), team: esc(name(L.champion)) })}</p>` : ''}`;
     }
     // Coach Brekka's goals for the season (set the first time they're shown)
     const had = !!(L.goals && L.goals.season === L.season);
@@ -1154,7 +1159,7 @@ export class UI {
     body.innerHTML = `
       ${npc('announcer', call)}
       ${this.tripHtml(L, body)}
-      <div class="label" style="margin-bottom:6px">${esc(t(TOURNAMENT.name))} · ${t('Season {n}', { n: s.season })}</div>
+      <div class="label tier-label" style="margin-bottom:6px">${smallIcon(tierInfo(s).badge, 48, 'tier-ico')}${esc(t(tierInfo(s).name))} · ${t('Season {n}', { n: s.season })}</div>
       <div class="league-grid">
         <div style="min-width:0">${table}
           ${goalsHtml}
@@ -1254,8 +1259,10 @@ export class UI {
         case 'weDraft': return t('The {club} drafted {name} ({role}).', { club: esc(CLUB.nick), name, role: role(n.kit) });
         case 'weOwn': return t('{name} ({role}) joins the {club}, one of their own.', { club: esc(CLUB.nick), name, role: role(n.kit) });
         case 'trade': return t('Trade: {gave} to the {team} for {name}.', { gave: `<b>${esc(n.gave || '')}</b>`, team: tn(n.team), name });
-        case 'champion': return n.team === 'home' ? t('The {club} win the Frostline Cup!', { club: esc(CLUB.nick) }) : t('{team} win the Frostline Cup.', { team: tn(n.team) });
+        case 'champion': return n.team === 'home' ? t('The {club} win the {cup}!', { cup: cupName(n.tier), club: esc(CLUB.nick) }) : t('{team} win the {cup}.', { cup: cupName(n.tier), team: tn(n.team) });
         case 'expansion': return t('The Glacier Owls and Thunder Moose join the Frostline.');
+        case 'promoted': return t('The {club} go up to the {league}!', { club: esc(CLUB.nick), league: esc(t(tierAt(n.tier).name)) });
+        case 'relegated': return t('The {club} drop back to the {league}.', { club: esc(CLUB.nick), league: esc(t(tierAt(n.tier).name)) });
         case 'edge': return t('The league has noticed the {club}: the rivals trained hard all summer.', { club: esc(CLUB.nick) });
         case 'streak': return t('{name} has scored in {n} straight games.', { name, n: n.n });
         case 'press': return t(pressHeadline(n.tone), { name, team: tn(n.team), club: esc(CLUB.nick) });
@@ -1333,7 +1340,7 @@ export class UI {
       <div class="seasons">${s.history.slice().reverse().map((h) => `<div class="season-row ${h.playoff === 'champion' ? 'champ' : ''}">
         <b>${t('Season {n}', { n: h.season })}</b>
         <span>${t('#{n} of {total}', { n: h.finish, total: h.teams })} · ${h.w}–${h.l} · ${h.gf}–${h.ga}</span>
-        <span class="${h.playoff === 'champion' ? 'gold-t' : h.playoff === 'missed' ? 'muted' : ''}">${{ champion: t('Frostline Cup champions'), final: t('Lost the Cup Final'), semi: t('Out in the semifinals'), missed: t('Missed the playoffs') }[h.playoff]}</span>
+        <span class="${h.playoff === 'champion' ? 'gold-t' : h.playoff === 'missed' ? 'muted' : ''}">${{ champion: t('{cup} champions', { cup: cupName(h.tier) }), final: t('Lost the Cup Final'), semi: t('Out in the semifinals'), missed: t('Missed the playoffs') }[h.playoff]}</span>
         ${h.of ? `<span class="muted">${t('Season goals {n}/{of}', { n: h.goals, of: h.of })}</span>` : ''}${h.photo ? `<button class="btn small ghost" data-photo="${h.season}">${t('Team photo')}</button>` : ''}</div>`).join('')}</div>` : ''}
       ${s.awards && s.awards.length ? `<div class="label" style="margin:4px 0 6px">${t('Award cabinet')}</div>
       <div class="aw-list cabinet">${s.awards.slice().reverse().map((w) => `
@@ -1368,7 +1375,7 @@ export class UI {
     const B = Assets.atlas.art_additions && Assets.atlas.art_additions.hub_fullbody && Assets.atlas.art_additions.hub_fullbody.brekka;
     const coach = B && Assets.spriteSet([B.idle[0]], 220);
     const cup = P.champ && Assets.frame('badges/frostline_cup') ? Assets.icon('badges/frostline_cup', 160) : '';
-    const result = { champion: t('Frostline Cup champions'), final: t('Lost the Cup Final'), semi: t('Out in the semifinals'), missed: t('Missed the playoffs') }[h.playoff] || '';
+    const result = { champion: t('{cup} champions', { cup: cupName(h.tier) }), final: t('Lost the Cup Final'), semi: t('Out in the semifinals'), missed: t('Missed the playoffs') }[h.playoff] || '';
     return `<div class="team-photo" style="background-image:url(${Assets.url('gfx/photo/backdrop.png')}),url(${Assets.backdrop.src})">
       <div class="tp-row back">${P.ids.slice(3).map(sk).join('')}</div>
       <div class="tp-row front">${gk(P.keepers[0])}${P.ids.slice(0, 3).map(sk).join('')}${gk(P.keepers[1])}</div>
@@ -1847,7 +1854,7 @@ export class UI {
     const rows = standings(L);
     const pos = rows.findIndex((r) => r.id === 'home') + 1;
     let headline = '';
-    if (out.champion === 'home') headline = t('Frostline Cup champions!');
+    if (out.champion === 'home') headline = t('{cup} champions!', { cup: cupName(tierOf(this.app.save)) });
     else if (out.eliminated && out.kind === 'regular') headline = t('Missed the playoffs');
     else if (out.eliminated) headline = t('Knocked out');
     else if (out.phaseChange === 'playoffs') headline = t('Playoffs! You\'re the #{n} seed', { n: L.playoffs.seeds.indexOf('home') + 1 });
@@ -1860,7 +1867,7 @@ export class UI {
       <h2>${esc(headline || t('League update'))}</h2>
       ${games ? `<div class="label" style="font-size:13px">${t('Around the league')}</div><div class="around">${games}</div>` : ''}
       ${L.phase === 'regular' || out.phaseChange ? `<div class="label" style="font-size:13px">${t('Standings')}</div><div class="mini-table">${top}</div>` : ''}
-      ${out.eliminated && L.champion ? `<p>${t('{team} win the Frostline Cup.', { team: esc(TEAMS[L.champion] ? TEAMS[L.champion].name : t('The {club}', { club: CLUB.nick })) })} ${t('Start a new season from the hub when you\'re ready.')}</p>` : ''}
+      ${out.eliminated && L.champion ? `<p>${t('{team} win the {cup}.', { cup: cupName(tierOf(this.app.save)), team: esc(TEAMS[L.champion] ? TEAMS[L.champion].name : t('The {club}', { club: CLUB.nick })) })} ${t('Start a new season from the hub when you\'re ready.')}</p>` : ''}
       <div class="row" style="justify-content:flex-end"><button class="btn gold" data-close>${t('Continue')}</button></div>`, null, false, done);
   }
 
@@ -1901,7 +1908,7 @@ export class UI {
   // The season in review (review.js), before the next one starts.
   seasonReview(r, done) {
     if (hasGallery() && !Assets.groupReady('gallery')) return gallery(() => this.seasonReview(r, done));
-    const result = { champion: t('Frostline Cup champions!'), final: t('Lost in the Cup Final'), semi: t('Out in the semifinals'), missed: t('Missed the playoffs'), unfinished: t('The season ended early') }[r.result];
+    const result = { champion: t('{cup} champions!', { cup: cupName(tierOf(this.app.save)) }), final: t('Lost in the Cup Final'), semi: t('Out in the semifinals'), missed: t('Missed the playoffs'), unfinished: t('The season ended early') }[r.result];
     const nm = (id) => (member(id) ? member(id).name : '');
     // (Batch BZ: a newspaper front page behind it, and a CHAMPIONS stamp for a Cup season)
     const paper = Assets.atlas.frames['review/backdrop'] ? Assets.sceneImage('review/backdrop', 960) : '';
@@ -3775,6 +3782,20 @@ export class UI {
       <button class="btn gold" data-close>${t('Got it')}</button>`, null, false, done);
   }
 
+  // Up or down a division at a new season (tiers.js): the division's crest (Batch DX), what
+  // it means, and on.
+  tierMove(kind, done) {
+    const s = this.app.save, T = tierInfo(s), up = kind === 'promoted';
+    const art = (Assets.frame(T.badge) && Assets.icon(T.badge, 220)) || (Assets.frame(up ? 'icons/promoted' : 'icons/relegated') && Assets.icon(up ? 'icons/promoted' : 'icons/relegated', 160)) || '';
+    if (up) audio.jingle('win'); else audio.sfx('blip');
+    this.modal(`<div style="text-align:center">${art ? `<img class="tier-art" src="${art}" alt="">` : ''}
+      <h2 class="${up ? 'gold-t' : ''}" style="margin:6px 0">${up ? t('Promoted!') : t('Down a division')}</h2>
+      <p style="margin:0 auto;max-width:44ch">${up ? t('Next season the {club} play in the {league}: tougher rivals, bigger purses, and the {cup} to win.', { club: esc(CLUB.nick), league: esc(t(T.name)), cup: esc(t(T.cup)) })
+        : t('Next season it\'s the {league} again. Win its Cup and the {club} go straight back up.', { club: esc(CLUB.nick), league: esc(t(T.name)) })}</p></div>
+      <div class="row" style="justify-content:center;margin-top:10px"><button class="btn gold" data-close>${up ? t('Let\'s go!') : t('Back to work')}</button></div>`, null, true, done);
+    if (up) this.fireworks?.();
+  }
+
   champion(onDone) {
     const s = this.app.save;
     // the champions painting (Batch AC) fills the screen, with the title in the calm ice it leaves for it
@@ -3784,7 +3805,7 @@ export class UI {
       ${art ? `<div class="champ-stage" id="c-stage"><div class="champ-title">${title}</div></div>` : '<div class="dim"></div>'}
       <div class="results panel${art ? ' champ-panel' : ''}" style="text-align:center;align-items:center">
         ${art ? '' : `<div class="cup-big" id="c-cup">${Assets.groupReady('badges') ? '' : `<img src="${ico('equipment_items/reward/trophy', 256)}" alt="" width="150" height="150">`}</div>${title}`}
-        <p style="max-width:46ch">${s.season > 1 ? t('The {club} win the {cup} (season {n}).', { club: esc(CLUB.name), cup: esc(t(TOURNAMENT.name)), n: s.season }) : t('The {club} win the {cup}.', { club: esc(CLUB.name), cup: esc(t(TOURNAMENT.name)) })} ${t('Nix lifts the cup while Volta does laps and Bram carries Halla around on his shoulders.')}</p>
+        <p style="max-width:46ch">${s.season > 1 ? t('The {club} win the {cup} (season {n}).', { club: esc(CLUB.name), cup: esc(t(tierInfo(s).name)), n: s.season }) : t('The {club} win the {cup}.', { club: esc(CLUB.name), cup: esc(t(tierInfo(s).name)) })} ${t('Nix lifts the cup while Volta does laps and Bram carries Halla around on his shoulders.')}</p>
         <p class="muted" style="max-width:46ch">${t('Start a new season to face every rival again with sharper AI, keeping your levels and gear.')}</p>
         <div class="row" style="justify-content:center"><button class="btn gold" id="c-go">${t('Back to the hub')}</button></div>
       </div>`);
@@ -3802,6 +3823,8 @@ export class UI {
   // The big Frostline Cup (Batch X): it rests, then a glint runs across it.
   cupShine() {
     const box = this.root.querySelector('#c-cup');
+    const T = tierInfo(this.app.save); // (a division up: its own cup, Batch DX's, once it's in)
+    if (box && tierOf(this.app.save) > 0 && Assets.frame(T.cupArt)) { const src = Assets.icon(T.cupArt, 300); if (src) { box.innerHTML = `<img src="${src}" alt="">`; return; } }
     const anim = Assets.atlas.badge_animations && Assets.atlas.badge_animations.frostline_cup_shine;
     if (!box || !anim || !Assets.groupReady('badges')) return;
     const set = Assets.spriteSet(anim.frames, 300);

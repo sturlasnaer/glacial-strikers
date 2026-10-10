@@ -51,6 +51,10 @@ export const ACHIEVEMENTS = [
   { id: 'sticker-album', name: 'Collector', text: 'Fill the whole sticker album.', icon: 'icons/stat_cups', art: 'achievements/collector', coins: 150 },
   { id: 'mini-cup', name: 'Little Champions', text: 'Win the Mini Cup.', icon: 'equipment_items/reward/trophy', art: 'badges/mini_cup', coins: 50 },
   { id: 'home-sweet-home', name: 'Home Sweet Home', text: 'Decorate every spot in the locker room.', icon: 'equipment_items/hub/locker', art: 'achievements/home_sweet_home', coins: 60 },
+  // (divisions: Batch DX's crests and cups)
+  { id: 'moving-up', name: 'Moving Up', text: 'Win promotion to a higher division.', icon: 'equipment_items/reward/trophy', art: 'icons/promoted', coins: 60 },
+  { id: 'national-champions', name: 'National Champions', text: 'Win the National Cup.', icon: 'equipment_items/reward/trophy', art: 'badges/national_cup', coins: 150 },
+  { id: 'elite-champions', name: 'Elite', text: 'Win the Elite Cup.', icon: 'equipment_items/reward/trophy', art: 'badges/elite_cup', coins: 250 },
   // (Batch DR's art for the road trip's postcards, the cub's fetch and the youngest's gold stars)
   { id: 'postcard-collector', name: 'Postcards from the Road', text: 'Collect all eight postcards.', icon: 'icons/career', art: 'achievements/postcard_collector', coins: 100 },
   { id: 'fetch-champion', name: 'Fetch Champion', text: 'Play fetch with the cub ten times.', icon: 'icons/pet', art: 'achievements/fetch_champion', coins: 30 },

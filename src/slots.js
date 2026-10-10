@@ -4,6 +4,7 @@
 // the newcomer art (Batch AA) in the team's colours, under their own name and style.
 import { TEAMS, CHARACTERS, STAT_KEYS, STAR_AGES, recruitKey, makeDef, slotDef, slotLook } from './data.js';
 import { bodySprite } from './modular.js';
+import { TIER_STATS } from './tiers.js';
 
 // The save's fills, for the portraits (which don't see the save): set when a save loads.
 export let RIVAL_FILLS = {};
@@ -43,8 +44,8 @@ export const seasonBoost = (save) => leagueGrowth(save) * 0.08;
 // On top of that, the league keeps up with a club that has run away from it: set each season
 // from how far our line was ahead (see setLeagueEdge in progress.js), 0 to 3.
 export const leagueEdge = (save) => save.leagueEdge || 0;
-export function grown(save, stats) {
-  const g = leagueGrowth(save) + leagueEdge(save);
+export function grown(save, stats, tier = 0) {
+  const g = leagueGrowth(save) + leagueEdge(save) + tier * TIER_STATS; // (and a point a division up: league games, see tiers.js)
   if (!g) return stats;
   const out = { ...stats };
   for (const k of [...STAT_KEYS].sort((a, b) => out[b] - out[a]).slice(0, 4)) out[k] = Math.min(12 + leagueEdge(save), out[k] + g);

@@ -11,6 +11,7 @@ import { TEAMS, TOURNAMENT, RIVAL_IDS, FOUNDING_RIVALS } from './data.js';
 import { makeRng } from './util.js';
 import { recordSimGame } from './awards.js';
 import { rosterShift, seasonBoost } from './slots.js';
+import { tierOf, TIER_SHARP } from './tiers.js';
 import { t } from './i18n.js';
 
 export const FOUNDING_TEAMS = ['home', ...FOUNDING_RIVALS];
@@ -29,7 +30,7 @@ export function strength(teamId, save) {
     return 0.45 + lv * 0.06;
   }
   const t = TEAMS[teamId];
-  return 0.35 + t.diff * 0.75 + seasonBoost(save) + rosterShift(save, teamId); // (weaker for the players you took)
+  return 0.35 + t.diff * 0.75 + seasonBoost(save) + tierOf(save) * TIER_SHARP + rosterShift(save, teamId); // (weaker for the players you took; a division up, stronger)
 }
 
 // Round-robin schedule where our opponents come in order (an odd number of them).

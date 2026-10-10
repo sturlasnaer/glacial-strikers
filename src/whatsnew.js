@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10zn',
+    items: [
+      { icon: 'badges/tier_national', alt: 'equipment_items/reward/trophy', text: 'Divisions! Win the Frostline Cup and you go up to the National Cup next season, then the Elite Cup: tougher rivals, bigger purses and grander cups. Finish last and you drop back down.' },
+    ],
+  },
+  {
     id: '2026-10-10zm',
     items: [
       { icon: 'equipment_items/stick/passing', alt: 'icons/coop', text: 'The poke check! Without the puck, the button now pokes at the carrier\'s puck: no body contact, no penalty. Hold SPRINT with it for a body check as before.' },

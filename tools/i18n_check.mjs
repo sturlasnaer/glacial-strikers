@@ -30,7 +30,7 @@ for (const f of readdirSync(join(root, 'src'))) {
 for (const m of readFileSync(join(root, 'index.html'), 'utf8').matchAll(/data-i18n(?:-aria)?="([^"]+)"/g)) add(m[1], 'index.html');
 
 // 2. story and data text (shown through t() at the display site)
-const FIELDS = new Set(['name', 'text', 'desc', 'blurb', 'title', 'label', 'fx', 'reply', 'trains', 'tip', 'rule', 'round', 'sub', 'hint', 'line', 'short', 'say', 'style', 'trait']);
+const FIELDS = new Set(['name', 'text', 'desc', 'blurb', 'title', 'label', 'fx', 'reply', 'trains', 'tip', 'rule', 'round', 'sub', 'hint', 'line', 'short', 'say', 'style', 'trait', 'cup']);
 const LIST_FIELDS = new Set(['levels']); // lists of display lines
 const SKIP_NAMES = new Set(['GOALIE', 'CLUB', 'CLUB_DEFAULT', 'NPC_NAMES', 'PALETTES']); // (people's and team names are removed below)
 function walk(v, path, where, depth = 0) {
@@ -49,7 +49,7 @@ function walk(v, path, where, depth = 0) {
     }
   }
 }
-const modules = ['data.js', 'facilities.js', 'press.js', 'records.js', 'achievements.js', 'awards.js', 'drills.js', 'daily.js', 'lockerroom.js', 'guide.js', 'online.js', 'songs.js', 'skills.js', 'draft.js', 'legends.js', 'agents.js', 'whatsnew.js', 'goals.js', 'decor.js', 'pet.js'];
+const modules = ['data.js', 'facilities.js', 'press.js', 'records.js', 'achievements.js', 'awards.js', 'drills.js', 'daily.js', 'lockerroom.js', 'guide.js', 'online.js', 'songs.js', 'skills.js', 'draft.js', 'legends.js', 'agents.js', 'whatsnew.js', 'goals.js', 'decor.js', 'pet.js', 'tiers.js'];
 for (const f of modules) {
   const mod = await import(join(root, 'src', f));
   for (const [name, v] of Object.entries(mod)) {
