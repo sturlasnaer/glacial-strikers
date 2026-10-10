@@ -2675,6 +2675,9 @@ export class UI {
   }
 
   // --------------------------------------------------------------- modals
+  // A hub character's line, for screens built in main.js (the break reminder).
+  npcHtml(key, text) { return npc(key, text); }
+
   modal(html, bind, dismissable = true, onClose) {
     const bg = document.createElement('div');
     bg.className = 'modal-bg';
@@ -2771,6 +2774,7 @@ export class UI {
       ${row(t('Rival difficulty'), seg('difficulty', [['easy', t('Easy')], ['normal', t('Normal')], ['hard', t('Hard')]]))}
       ${row(t('Aim assist'), seg('assist', [['off', t('Off')], ['normal', t('Normal')], ['strong', t('Strong')]]), t('Strong tightens your shots and widens pass catching. Off aims dead centre unless you steer.'))}
       ${row(t('Auto-sprint'), seg('autoSprint', [[false, t('Off')], [true, t('On')]]), t('Sprint whenever the stick is pushed all the way.'))}
+      ${row(t('Break reminder'), seg('breakAfter', [[0, t('Off')], [30, t('30 min')], [60, t('1 hour')]]), t('After this much time in matches, Coach Brekka suggests a rest when a match ends.'))}
       ${row(t('Game speed'), seg('speed', [['normal', t('Normal')], ['relaxed', t('Relaxed')]]), t('Relaxed plays matches at 85% speed. Drills stay at full speed.'))}
       ${row(t('Goal replays'), onOff('replays'))}
       ${row(t('Goal clips'), onOff('clips'), t('Record each replay as a short video you can share.'))}

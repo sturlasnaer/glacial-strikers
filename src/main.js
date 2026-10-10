@@ -1459,6 +1459,20 @@ class App {
     this.ui.hub(tab);
     this.setHubBackground();
     this.music('hub');
+    // the break reminder (Settings): after that much time in matches, at the next return to the room
+    const brk = this.save.settings.breakAfter;
+    if (brk && (this.playT || 0) >= brk * 60 && !this.testRun) {
+      const mins = Math.round(this.playT / 60);
+      this.playT = 0;
+      setTimeout(() => {
+        if (this.scene !== 'hub' || document.querySelector('.modal-bg')) { this.playT = brk * 60; return; } // (next time)
+        this.ui.modal(`<div class="wn-coach">${this.ui.npcHtml('coach', t('That\'s {n} minutes on the ice. Great session! How about a rest, a stretch and a drink of water?', { n: mins }))}</div>
+          <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Keep playing')}</button><button class="btn gold" id="brk-go">${t('Take a break')}</button></div>`, (m, close) => {
+          m.querySelector('#brk-go').addEventListener('click', () => { close(); audio.sfx('confirm'); this.startAttract(); this.goTitle(); });
+        });
+      }, 700);
+      return;
+    }
     // what's new since a returning player was last here (once)
     const was = this.save.seenWhatsNew, news = !this.testRun && whatsNewFor(this.save);
     if (news) setTimeout(() => {
@@ -1557,6 +1571,7 @@ class App {
     this.last = now;
     this.watchFrameRate(rawDt);
     const inMatch = this.scene === 'match' || this.scene === 'paused';
+    if (this.scene === 'match' && !this.attract) this.playT = (this.playT || 0) + realDt; // (for the break reminder: time in matches and drills)
     if (!inMatch && !this.rotateEl.hidden) this.rotateEl.hidden = true; // (the match is over: the results and menus work upright)
     const versus = !!(this.cur && this.cur.versus) && inMatch, coop = !!(this.cur && this.cur.coop) && inMatch;
     const raw = this.input.read();
