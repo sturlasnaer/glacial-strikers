@@ -296,7 +296,7 @@ export const IS = {
   "A shot out of the smoke: hidden at first, then too hot to hold.": "Skot út úr reyknum: falið í fyrstu, svo of heitt til að halda.",
   "A showcase: no penalties, ultimates charge twice as fast, and the standings don't change. Only your own players earn EXP.": "Sýningarleikur: engar refsingar, ofurkraftar hlaðast tvöfalt hraðar og staðan breytist ekki. Aðeins þínir leikmenn fá reynslu.",
   "A silent shot that drifts to the open corner unseen.": "Hljóðlaust skot sem svífur óséð í opna hornið.",
-  "A Snow Fox cub lives in the locker room now! It trots about, naps, and hops when you tap it. Tap its name to give it one of your own.": "Snærefsyrðlingur býr nú í búningsklefanum! Hann skokkar um, fær sér blund og hoppar þegar þú pikkar á hann. Pikkaðu á nafnið til að gefa honum þitt eigið.",
+  "A Snow Fox cub lives in the locker room now! It trots about, naps, and hops when you tap it. Tap its name to give it one of your own. From 20 October it dresses up as a pumpkin, and in December it wears a Santa hat.": "Snærefsyrðlingur býr nú í búningsklefanum! Hann skokkar um, fær sér blund og hoppar þegar þú pikkar á hann. Pikkaðu á nafnið til að gefa honum þitt eigið. Frá 20. október klæðir hann sig upp sem grasker og í desember ber hann jólasveinahúfu.",
   "A speech from the rookie": "Ræða frá nýliðanum",
   "A sticker for everyone in the league. Packs come with every match.": "Límmiði fyrir alla í deildinni. Pakkar fylgja hverjum leik.",
   "A supporters' section with a drum: sooner again, and a second longer.": "Stuðningsmannasvæði með trommu: enn fyrr, og sekúndu lengur.",

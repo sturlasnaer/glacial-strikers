@@ -4,7 +4,7 @@ export const WHATS_NEW = [
   {
     id: '2026-10-10x',
     items: [
-      { icon: 'icons/pet', alt: 'icons/friends', text: 'A Snow Fox cub lives in the locker room now! It trots about, naps, and hops when you tap it. Tap its name to give it one of your own.' },
+      { icon: 'icons/pet', alt: 'icons/friends', text: 'A Snow Fox cub lives in the locker room now! It trots about, naps, and hops when you tap it. Tap its name to give it one of your own. From 20 October it dresses up as a pumpkin, and in December it wears a Santa hat.' },
     ],
   },
   {
