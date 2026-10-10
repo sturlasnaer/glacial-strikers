@@ -331,11 +331,13 @@ class App {
     const host = Object.values(TEAMS).find((tm) => tm.arena === arena); // its mascot dances in the stands
     const team = teamInfo(teamId); // (the All-Stars recolour the rival pages they're given)
     const dressed = arena === 'home' && !!seasonFor(); // (the home rink's Halloween or holiday dressing, Batch CD: only in season)
-    Assets.trim({ teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(team.groups || []), ...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(!this.attract && !cfg.drill ? ['race'] : []), ...(cfg.night && Assets.frame('night/aurora_1') ? [Assets.atlas.pages[Assets.frame('night/aurora_1')[0]].group] : [])] });
+    Assets.trim({ teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(team.groups || []), ...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(arena === 'home' ? ['pet_rink'] : []), ...(!this.attract && !cfg.drill ? ['race'] : []), ...(cfg.night && Assets.frame('night/aurora_1') ? [Assets.atlas.pages[Assets.frame('night/aurora_1')[0]].group] : [])] });
     const fancam = arena === 'home' && !this.attract && !!Assets.atlas.fancam; // (the fan cam's fans: Batch CT)
+    const cub = arena === 'home' && !!Assets.atlas.arena_spots?.home_cub && Assets.atlas.pages.some((pg) => pg.group === 'pet_rink'); // (the cub on the boards: Batch DH)
     const racing = !this.attract && !cfg.drill && Assets.atlas.pages.some((pg) => pg.group === 'race'); // (the mascot race's runners: Batch DB)
     if (racing) Assets.loadGroup('race').catch(() => {});
     if (fancam) Assets.loadGroup('fancam').catch(() => {});
+    if (cub) Assets.loadGroup('pet_rink').catch(() => {});
     if (dressed) Assets.loadGroup('seasonal').then(() => { if (this.scene === 'title') this.ui.titleLogo(); }).catch(() => {}); // (the logo's trimmings too)
     if (geared) Assets.ensureGear();
     if (rules) Assets.loadGroup('rules').catch(() => {});

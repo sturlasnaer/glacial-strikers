@@ -146,6 +146,7 @@ export class Renderer {
     else if (arena !== 'frostline_coliseum') Assets.draw(ctx, Assets.frame(TEAMS.home.crest) ? TEAMS.home.crest : 'hud_elements/misc/home_crest', cc.x, cc.y + 2, 0.5, { alpha: 0.3, squash: 0.8, pages: Assets.clubPages() }); // (our crest: the Snow Fox or the club's choice)
     this.drawLamps(ctx, fx);
     this.drawCrowd(ctx, fx, ui);
+    if (arena === 'home') this.drawCub(ctx, fx, false);
     this.drawArenaProps(ctx, match, fx, ui, arena);
     const box = this.penaltyBox();
     if (box) this.drawPenaltyBoxes(ctx, match, fx, box);
@@ -211,7 +212,7 @@ export class Renderer {
     const foreground = Assets.atlas.arena.glasses?.[arena];
     if (foreground) Assets.draw(ctx, foreground.frame, foreground.x, foreground.y, 1);
     else if (Assets.glass && arena !== 'pine_pond') ctx.drawImage(Assets.glass, Assets.atlas.arena.glass.x, Assets.atlas.arena.glass.y);
-    if (arena === 'home') this.drawSupporters(ctx, fx, ui.save);
+    if (arena === 'home') { this.drawSupporters(ctx, fx, ui.save); this.drawCub(ctx, fx, true); }
     else this.drawRivalSupporters(ctx, fx, ui.awayTeamId, arena);
     if (match.allstar && arena === 'home') this.drawAllStarDressing(ctx, fx, true);
     else if (arena === 'home') this.drawSeasonal(ctx, fx, true);
@@ -407,6 +408,18 @@ export class Renderer {
       }
       ctx.drawImage(spr, x - 13 * s, y - 30 * s, spr.width / K, spr.height / K);
     }
+  }
+
+  // The locker room's cub at home games (Batch DH), on the boards where the artists sat it: it
+  // swishes its tail, hops for a Foxes goal and droops for one against. Drawn with the far
+  // side's crowd, or over the near glass when it sits on the near boards.
+  drawCub(ctx, fx, near) {
+    const spot = Assets.atlas.arena_spots?.home_cub, sit = Assets.frame('pet_rink/sit_1');
+    if (!spot || !sit || !Assets.pages[sit[0]] || (spot.y > 520) !== near) return;
+    const lit = fx.lamp > 0, cheer = lit && fx.cheerTeam === 0, sad = lit && fx.cheerTeam === 1;
+    const id = cheer && Assets.frame('pet_rink/cheer_1') ? `pet_rink/cheer_${1 + (Math.floor(fx.time * 8) % 4)}`
+      : sad && Assets.frame('pet_rink/sad') ? 'pet_rink/sad' : `pet_rink/sit_${1 + (Math.floor(fx.time * 1.5) % 2)}`;
+    Assets.draw(ctx, Assets.frame(id) ? id : 'pet_rink/sit_1', spot.x, spot.y, spot.scale || 1);
   }
 
   // The Stands facility unlocks the dedicated near-side supporters at home.
