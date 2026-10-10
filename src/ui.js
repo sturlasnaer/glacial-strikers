@@ -364,6 +364,23 @@ function stickerHtml(st, foil, count = 1) {
   return `<div class="stk${foil ? ' foil' : ''}${st.kind === 'legend' ? ' legend' : ''}" style="--tilt:${tilt}deg">
     <img src="${stickerFace(st, 128)}" alt=""><b>${esc(stickerName(st))}</b><small>${esc(stickerRole(st))}</small><span class="no">${st.n}</span>${count > 1 ? `<span class="dup">×${count}</span>` : ''}</div>`;
 }
+// A player standing facing us, as an image URL (the locker room's crew, the team photo): a
+// skater in their home kit (from parts: the body with their head; a legend in their own art).
+function standingSkater(id, size) {
+  const m = member(id);
+  if (!m) return '';
+  const set = Assets.atlas.skaters[m.sprite || m.def.sprite];
+  // a legend stands in their own art before their skating sets are in (Batch AI part 1)
+  const own = m.legend && Assets.atlas.legends && Assets.atlas.legends[m.legend.art] && Assets.atlas.legends[m.legend.art].idle;
+  const mo = !own && m.parts && set && Assets.partsMoment([set.home.south.frames.idle], m.parts, size, 'homekit'); // (from parts: the body with their head)
+  const src = own ? Assets.icon(own, size, 'homekit') : mo ? mo.urls[0] : set && Assets.icon(set.home.south.frames.idle, size, m.look || CLUB_PAGES());
+  return src || Assets.icon(Assets.atlas.skaters[m.def.sprite].home.south.frames.idle, size, CLUB_PAGES());
+}
+function standingGoalie(gid, size) {
+  const keeper = goalieInfo(gid), F = Assets.atlas.goalies_front || {}, own = keeper.art && F[keeper.art] && F[keeper.art].idle_a;
+  return (own && keeper.mask && Assets.goalieStanding(own, keeper.mask, size, 'homekit')) // (made from parts: the body and their mask)
+    || (own && !keeper.mask && Assets.icon(own, size, 'homekit')) || Assets.icon(F.home?.idle_a || Assets.atlas.goalies_side.home.ready, size, CLUB_PAGES());
+}
 const simpleLabel = () => `${smallIcon('icons/simple_controls', 48, 'btn-ico')} ${t('Simple controls')}`; // (its icon once Batch CQ is in)
 // A goaltending style's icon (Batch AN), the Iron Wall until it's in.
 const goalieStyleIcon = (id, size = 68) => `<img src="${ico(Assets.atlas.frames['icons/gstyle_' + id] ? 'icons/gstyle_' + id : 'icons/award_iron_wall', size)}" alt="">`;
@@ -700,21 +717,7 @@ export class UI {
     const keeper = goalieInfo(starterId(s));
     const crew = [...line, 'goalie'].map((id, i) => {
       const [x, y] = CREW_SPOTS[i];
-      let src;
-      if (id === 'goalie') {
-        const F = Assets.atlas.goalies_front || {}, own = keeper.art && F[keeper.art] && F[keeper.art].idle_a;
-        src = (own && keeper.mask && Assets.goalieStanding(own, keeper.mask, 160, 'homekit')) // (made from parts: the body and their mask)
-          || (own && !keeper.mask && Assets.icon(own, 160, 'homekit')) || Assets.icon(F.home?.idle_a || Assets.atlas.goalies_side.home.ready, 160, CLUB_PAGES());
-      }
-      else {
-        const m = member(id);
-        const set = Assets.atlas.skaters[m.sprite || m.def.sprite];
-        // a legend stands in their own art before their skating sets are in (Batch AI part 1)
-        const own = m.legend && Assets.atlas.legends && Assets.atlas.legends[m.legend.art] && Assets.atlas.legends[m.legend.art].idle;
-        const mo = !own && m.parts && set && Assets.partsMoment([set.home.south.frames.idle], m.parts, 160, 'homekit'); // (from parts: the body with their head)
-        src = own ? Assets.icon(own, 160, 'homekit') : mo ? mo.urls[0] : set && Assets.icon(set.home.south.frames.idle, 160, m.look || CLUB_PAGES());
-        if (!src) src = Assets.icon(Assets.atlas.skaters[m.def.sprite].home.south.frames.idle, 160, CLUB_PAGES());
-      }
+      const src = id === 'goalie' ? standingGoalie(starterId(s), 160) : standingSkater(id, 160);
       const name = id === 'goalie' ? keeper.name : member(id).name;
       return `<button class="crew" data-crew="${id}" style="left:${x}%;top:${y}%;animation-delay:${-i * 0.7}s" aria-label="${esc(name)}"><img src="${src}" alt=""><span>${esc(name)}</span></button>`;
     }).join('');
@@ -1004,7 +1007,7 @@ export class UI {
         <b>${t('Season {n}', { n: h.season })}</b>
         <span>${t('#{n} of {total}', { n: h.finish, total: h.teams })} · ${h.w}–${h.l} · ${h.gf}–${h.ga}</span>
         <span class="${h.playoff === 'champion' ? 'gold-t' : h.playoff === 'missed' ? 'muted' : ''}">${{ champion: t('Frostline Cup champions'), final: t('Lost the Cup Final'), semi: t('Out in the semifinals'), missed: t('Missed the playoffs') }[h.playoff]}</span>
-        ${h.of ? `<span class="muted">${t('Season goals {n}/{of}', { n: h.goals, of: h.of })}</span>` : ''}</div>`).join('')}</div>` : ''}
+        ${h.of ? `<span class="muted">${t('Season goals {n}/{of}', { n: h.goals, of: h.of })}</span>` : ''}${h.photo ? `<button class="btn small ghost" data-photo="${h.season}">${t('Team photo')}</button>` : ''}</div>`).join('')}</div>` : ''}
       ${s.awards && s.awards.length ? `<div class="label" style="margin:4px 0 6px">${t('Award cabinet')}</div>
       <div class="aw-list cabinet">${s.awards.slice().reverse().map((w) => `
         <div class="aw-row us"><img src="${rowFace({ ...w, team: 'home' }, 64)}" alt=""><div style="min-width:0"><small>${t('Season {n}', { n: w.season })} · ${esc(t(AWARD_BY_ID[w.id].name))}</small><b>${esc(w.name)}</b><span class="muted">${esc(w.line)}</span></div><img class="cr" src="${ico(AWARD_BY_ID[w.id].icon, 64)}" alt=""></div>`).join('')}</div>
@@ -1021,9 +1024,38 @@ export class UI {
         </div>`;
       }).join('')}</div>`;
     this.click('#tr-album', () => { audio.sfx('click'); this.album(); }, body);
+    this.click('[data-photo]', (el) => { audio.sfx('click'); this.teamPhoto((s.history || []).find((h) => h.season === +el.dataset.photo)); }, body);
     this.click('#tr-pack', () => { audio.sfx('click'); this.packOpen(); }, body);
     this.click('#tr-lb', () => { audio.sfx('click'); this.leaderboard('cones'); }, body);
     this.click('#tr-career', () => { audio.sfx('click'); this.careerPage(); }, body);
+  }
+
+  // The season's team photo: the line-up in front with the goalies at the ends, the rest behind,
+  // Coach Brekka at the side, the Cup if it was ours, on the home ice with the season on a plaque.
+  teamPhotoHtml(h) {
+    const P = h && h.photo;
+    if (!P) return '';
+    const person = (src, name, cls = '') => (src ? `<figure class="tp-p ${cls}"><img src="${src}" alt=""><figcaption>${esc(name)}</figcaption></figure>` : '');
+    const sk = (id) => person(standingSkater(id, 180), member(id) ? member(id).name : '');
+    const gk = (g) => (g ? person(standingGoalie(g, 180), goalieInfo(g).name, 'gk') : '');
+    const B = Assets.atlas.art_additions && Assets.atlas.art_additions.hub_fullbody && Assets.atlas.art_additions.hub_fullbody.brekka;
+    const coach = B && Assets.spriteSet([B.idle[0]], 220);
+    const cup = P.champ && Assets.frame('badges/frostline_cup') ? Assets.icon('badges/frostline_cup', 160) : '';
+    const result = { champion: t('Frostline Cup champions'), final: t('Lost the Cup Final'), semi: t('Out in the semifinals'), missed: t('Missed the playoffs') }[h.playoff] || '';
+    return `<div class="team-photo" style="background-image:url(${Assets.backdrop.src})">
+      <div class="tp-row back">${P.ids.slice(3).map(sk).join('')}</div>
+      <div class="tp-row front">${gk(P.keepers[0])}${P.ids.slice(0, 3).map(sk).join('')}${gk(P.keepers[1])}</div>
+      ${coach ? `<img class="tp-coach" src="${coach.urls[0]}" alt="">` : ''}
+      ${cup ? `<img class="tp-cup" src="${cup}" alt="">` : ''}
+      <div class="tp-plaque"><b>${esc(CLUB.name)}</b><span>${t('Season {n}', { n: h.season })} · ${t('#{n} of {total}', { n: h.finish, total: h.teams })}${result ? ` · ${esc(result)}` : ''}</span></div>
+    </div>`;
+  }
+
+  teamPhoto(h) {
+    if (!h || !h.photo) return;
+    if (!Assets.groupReady('hub')) { Assets.loadGroup('hub').then(() => this.teamPhoto(h), () => {}); return; } // (Coach Brekka)
+    this.modal(`<div class="label">${t('Team photo')}</div>${this.teamPhotoHtml(h)}
+      <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>${t('Close')}</button></div>`, (m) => m.classList.add('photo-modal'));
   }
 
   // The sticker album's card in Trophies: the cover, how full it is, and the packs to open.
@@ -1562,8 +1594,9 @@ export class UI {
       ${r.top.length ? `<div class="label" style="margin-top:4px">${t('Top scorers')}</div><div class="review-top">${r.top.map((k, i) => `<div><img src="${portrait(k.id, 0, null, 72)}" alt=""><b>${i + 1}. ${esc(nm(k.id))}</b><span>${t('{g} G · {a} A in {gp} games', { g: k.g, a: k.a, gp: k.gp })}</span></div>`).join('')}</div>` : ''}
       ${r.records.length ? `<div class="label" style="margin-top:4px">${t('Club records set this season')}</div><ul class="review-list">${r.records.map((x) => `<li>${esc(t(GAME_RECORDS[x.id].name))}: ${esc(clubText(t(GAME_RECORDS[x.id].text, { ...x, n: x.n })))}</li>`).join('')}</ul>` : ''}
       ${r.hall.length ? `<div class="label" style="margin-top:4px">${t('Into the Hall of Fame')}</div><ul class="review-list">${r.hall.map((h) => `<li>${esc(h.name)} #${h.number}</li>`).join('')}</ul>` : ''}
-      <div class="row" style="justify-content:flex-end"><button class="btn gold" id="rv-go">${t('On to season {n}', { n: r.season + 1 })}</button></div>`, (el, close) => {
+      <div class="row" style="justify-content:flex-end">${(this.app.save.history || []).some((h) => h.season === r.season && h.photo) ? `<button class="btn ghost" id="rv-photo">${t('Team photo')}</button>` : ''}<button class="btn gold" id="rv-go">${t('On to season {n}', { n: r.season + 1 })}</button></div>`, (el, close) => {
       this.click('#rv-go', () => { close(); audio.sfx('confirm'); done(); }, el);
+      this.click('#rv-photo', () => { audio.sfx('click'); this.teamPhoto((this.app.save.history || []).find((h) => h.season === r.season)); }, el);
     }, true);
   }
 

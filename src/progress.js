@@ -340,6 +340,14 @@ export function perkNames(r) { return r.perks.map((p) => p.split(':')[0]); }
 // Goalies: Halla ('halla', save.goalie) and any rival goalies signed (save.goalies).
 export const goalieIds = (save) => ['halla', ...Object.keys(save.goalies || {}).filter((k) => GOALIE_RECRUITS[k] || FREE_GOALIES[k])];
 export const starterId = (save) => (goalieIds(save).includes(save.goalieStarter) ? save.goalieStarter : 'halla');
+
+// Who's in the season's team photo (kept with the season in the club's history): the line-up
+// in front, up to five more behind, the starting goalie and one more, and the Cup if it's ours.
+export function teamPhoto(save, champ) {
+  const line = lineupIds(save), rest = rosterIds(save).filter((id) => !line.includes(id));
+  const keepers = [starterId(save), ...goalieIds(save).filter((g) => g !== starterId(save))].slice(0, 2);
+  return { ids: [...line, ...rest].slice(0, 8), keepers, champ: !!champ };
+}
 export const goalieRec = (save, id) => (id === 'halla' ? save.goalie : save.goalies && save.goalies[id]);
 
 export function goalieStats(save, id = starterId(save)) {

@@ -4,6 +4,7 @@ export const WHATS_NEW = [
   {
     id: '2026-10-10s',
     items: [
+      { icon: 'icons/stat_seasons', text: 'Every season ends with a team photo, in Trophies › Seasons: the line-up on the home ice with Coach Brekka, and the Cup if you won it.' },
       { icon: 'icons/simple_controls', text: 'Settings › Little player: one tap sets the game up for the youngest (Simple controls, easy rivals, relaxed speed, big buttons), and off puts your settings back.' },
       { icon: 'rules/icicles', alt: 'hud_elements/ability/frost', text: 'A new building for exhibitions: the Glacier Cave, a rink carved inside a glacier. Watch the ice for an icicle\'s shadow and get out from under it! The chunk it leaves bounces the puck until the next faceoff.' },
     ],

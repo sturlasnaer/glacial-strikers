@@ -49,7 +49,7 @@ import { offerDraft } from './draft.js';
 import { recordCareer, addSeatTotals } from './career.js';
 import {
   loadSave, newSave, writeSave, setSaveOff, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards,
-  lineupIds, homeKitGroups, allStarVote, allStarVoteStands, allStarConfig, setLeagueEdge, rosterIds, goalieIds,
+  lineupIds, homeKitGroups, allStarVote, allStarVoteStands, allStarConfig, setLeagueEdge, rosterIds, goalieIds, teamPhoto,
 } from './progress.js';
 import { t, setLang, getLang, defaultLang } from './i18n.js';
 import { whatsNewFor } from './whatsnew.js';
@@ -1554,7 +1554,7 @@ class App {
       const gs = goalStates(s);
       s.history.push({ season: L.season, finish: order.indexOf('home') + 1, teams: order.length, w: row.w, l: row.l, gf: row.gf, ga: row.ga,
         playoff: L.champion === 'home' ? 'champion' : po && inGame(po.final) ? 'final' : po && po.semis.some(inGame) ? 'semi' : 'missed',
-        goals: gs.filter((g) => g.done).length, of: gs.length });
+        goals: gs.filter((g) => g.done).length, of: gs.length, photo: teamPhoto(s, L.champion === 'home') });
     }
     // the season's over: the oldest rival stars retire (Draft Day fills their places)
     for (const r of retireRivals(s)) addNews(s, { k: 'retire', team: r.team, name: RECRUITS[r.key].name, kit: r.kit, n: r.seasons });
