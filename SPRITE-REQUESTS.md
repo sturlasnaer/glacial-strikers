@@ -7,7 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **CN: life at the Harbour Rink**
+None currently open. Monitoring for additions.
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -36,6 +36,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered CK-CL:** seasonal logo overlays and Power Play drill/achievement art. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CK-CL-Testing-Update`.
 
 **Delivered CM:** Harbour Rink backdrop, scoreboard, near glass, penalty hut, windsock and sea-breeze icon. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CM-Testing-Update`.
+
+**Delivered CN:** Harbour gull animation and translucent lighthouse beam. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CN-Testing-Update`.
 
 ## Format notes
 
@@ -334,7 +336,7 @@ A new building for exhibitions: **the Harbour Rink**, an outdoor rink on the fro
 
 Put the arena's art in a group of its own (say `arena_cm`) so it loads only for a match there; add `harbour_rink` to `atlas.arenas`. About 8 frames plus the backdrop.
 
-## Batch CN: life at the Harbour Rink
+## Batch CN ✓: life at the Harbour Rink
 
 The Harbour Rink (Batch CM) is in and looks lovely. Two small touches to bring it alive, both drawn by the game when they're in:
 - **Gulls:** four frames of a gull flapping and gliding, side view, flying right (`arena_harbour/gull_1`..`_4`), small (about 60 px wide at the game's scale). The game sends three across the sky over the far stands, some mirrored.
