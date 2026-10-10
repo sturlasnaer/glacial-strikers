@@ -104,6 +104,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 **Delivered EB:** Twenty-eight National club mascot poses with recolourable jerseys and fixed foot anchors, on seven club pages. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EB-Testing-Update`.
 
+**Delivered EA2:** Capybara crest updated natively to the master document’s caramel brown with teal trim. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EA2-Testing-Update`.
+
 ## Format notes
 
 - **Page groups (phones):** the groups `home`, `away`, `title`, `icons_z`, `allstar`, `icons_ac`, `legends` and `club_masks` are the startup download (about 12 MB), so only art shown from the first screens on belongs there (icons are fine: they're small). Art for one screen or one feature goes in a group of its own that the game loads when it's needed: `gallery` (the press room, facilities, Hall of Fame), `seasonal` (the calendar's dressing), `resurfacer` (the drill's diagonals), or a new group named for the feature (say which in the delivery, and the code loads it).
