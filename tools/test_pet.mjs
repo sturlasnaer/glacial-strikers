@@ -2,7 +2,7 @@
 // never off it, sits a while, now and then naps, wakes up and hops when tapped, and its name is
 // cleaned (12 characters at most).
 //   node tools/test_pet.mjs
-import { newPet, stepPet, tapPet, cleanPetName, PET_AREA, PET_NAME_MAX, PET_OUTFITS, buyOutfit, wearOutfit, ownsOutfit } from '../src/pet.js';
+import { newPet, stepPet, tapPet, cleanPetName, PET_AREA, PET_NAME_MAX, TRICK_TIME, PET_OUTFITS, buyOutfit, wearOutfit, ownsOutfit } from '../src/pet.js';
 import { makeRng } from '../src/util.js';
 
 let pass = 0, fail = 0;
@@ -26,6 +26,25 @@ check('...staying put while it hops', p.x === x && p.y === y);
 for (let i = 0; i < 60; i++) stepPet(p, 1 / 60, rnd);
 check('...and the hop is over', p.hop === 0);
 check('its name: cleaned, 12 characters at most', cleanPetName('  <Snjó>\n bolti  ') === 'Snjó bolti' && cleanPetName('x'.repeat(40)).length === PET_NAME_MAX && cleanPetName('') === '');
+
+// tricks: tapped, it does one of those drawn now and then (else a hop), stays put through it,
+// and doesn't start another mid-trick
+{
+  const q = newPet(makeRng(4));
+  const seen = new Set();
+  for (let i = 0; i < 40; i++) { tapPet(q, makeRng(i), ['spin', 'roll']); if (q.trick) seen.add(q.trick); else seen.add(q.hop > 0 ? 'hop' : '?'); for (let k = 0; k < 120; k++) stepPet(q, 1 / 60, makeRng(i)); }
+  check('tricks and hops, both tricks', seen.has('spin') && seen.has('roll') && seen.has('hop') && !seen.has('?'), [...seen]);
+  const r = newPet(makeRng(1)); r.state = 'walk'; r.tx = 30; r.ty = 70;
+  tapPet(r, () => 0, ['five']);
+  const x = r.x, tr = r.trick;
+  for (let k = 0; k < 30; k++) stepPet(r, 1 / 60, makeRng(2));
+  check('...a trick stops it and plays through', tr === 'five' && r.x === x && r.trickT > 0);
+  tapPet(r, () => 0, ['spin']);
+  check('...not another mid-trick', r.trick === 'five');
+  for (let k = 0; k < 90; k++) stepPet(r, 1 / 60, makeRng(2));
+  check('...then it carries on', r.trickT === 0 && r.trick === null);
+  check('no tricks drawn: always a hop', (() => { const z = newPet(makeRng(3)); tapPet(z, () => 0, []); return !z.trick && z.hop > 0; })());
+}
 
 // outfits: bought once with coins and worn straight away, one at a time, taken off and on again
 {

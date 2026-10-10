@@ -59,7 +59,7 @@ import { DECOR, DECOR_BY_ID, DECOR_SLOTS, SLOT_NAMES as DECOR_SLOT_NAMES, buyDec
 import { cleanSign, SIGN_MAX } from './fancam.js';
 import { MINI_ROUNDS, MINI_PRIZE, miniOf } from './minicup.js';
 import { MASCOTS, RACE_PRIZE, pickRunners, newRace, stepRace } from './race.js';
-import { newPet, stepPet, tapPet, cleanPetName, PET_NAME_MAX, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit } from './pet.js';
+import { newPet, stepPet, tapPet, cleanPetName, PET_NAME_MAX, TRICK_TIME, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit } from './pet.js';
 import { albumPages, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
 
 const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
@@ -854,6 +854,12 @@ export class UI {
       return k && { ...k, urls: k.urls.slice(0, pet.length), acc: acc.length === pet.length ? k.urls.slice(pet.length) : null };
     };
     const sets = { walk: set(['walk_1', 'walk_2', 'walk_3', 'walk_4']), sit: set(['sit_1', 'sit_2']), sleep: set(['sleep_1', 'sleep_2']), hop: set(['hop']) };
+    // its tricks (Batch DC), those drawn (not in a costume: they're drawn in its own coat)
+    const TRICKS = { spin: 4, roll: 4, five: 3 }, tricks = [];
+    for (const [k, n] of Object.entries(TRICKS)) {
+      const names = Array.from({ length: n }, (_, i) => `trick_${k}_${i + 1}`);
+      if (dir === 'pet/' && names.every((f) => has('pet/' + f))) { const ts = set(names); if (ts) { sets['trick_' + k] = ts; tricks.push(k); } }
+    }
     if (Object.values(sets).some((x) => !x)) return;
     const s = this.app.save, name = () => (s.pet && s.pet.name) || t('Snowball');
     room.insertAdjacentHTML('beforeend', `<button class="pet" id="pet" aria-label="${esc(name())}"><img alt=""><img class="pet-acc" alt="" hidden></button><button class="pet-tag" id="pet-tag" hidden></button>`);
@@ -865,8 +871,9 @@ export class UI {
       if (!el.isConnected) { clearInterval(this.petTimer); return; }
       const now = performance.now(), dt = Math.min(0.2, (now - last) / 1000);
       last = now;
-      const p = stepPet(this.pet, dt), st = p.hop > 0 ? 'hop' : p.state, k = sets[st];
-      const i = Math.floor((now / 1000) * (st === 'walk' ? 8 : st === 'sleep' ? 1 : 2)) % k.urls.length;
+      const p = stepPet(this.pet, dt), st = p.trickT > 0 && sets['trick_' + p.trick] ? 'trick_' + p.trick : p.hop > 0 ? 'hop' : p.state, k = sets[st] || sets.sit;
+      const i = st.startsWith('trick_') ? Math.min(k.urls.length - 1, Math.floor((1 - p.trickT / TRICK_TIME) * k.urls.length)) // (a trick plays through once)
+        : Math.floor((now / 1000) * (st === 'walk' ? 8 : st === 'sleep' ? 1 : 2)) % k.urls.length;
       if (img.dataset.k !== st + i) { img.src = k.urls[i]; img.dataset.k = st + i; acc.hidden = !k.acc; if (k.acc) acc.src = k.acc[i]; }
       const lift = p.hop > 0 ? Math.sin((1 - p.hop / 0.5) * Math.PI) * 3 : 0;
       el.style.cssText = `left:${p.x}%;top:${p.y - lift}%;height:${(H / 864) * 100}%;aspect-ratio:${k.w}/${k.h};transform:translate(-${k.fx * 100}%,-${k.fy * 100}%) scaleX(${p.face});z-index:${p.y < 66 ? 1 : 3}`;
@@ -875,7 +882,7 @@ export class UI {
     }, 80);
     el.addEventListener('click', (e) => {
       e.stopPropagation();
-      tapPet(this.pet); audio.sfx('blip');
+      tapPet(this.pet, Math.random, tricks); audio.sfx('blip');
       tag.textContent = `${name()} ♥`; tag.hidden = false; tagT = 2.5;
       const heart = has('pet/heart') && Assets.icon('pet/heart', 48);
       if (heart) { room.insertAdjacentHTML('beforeend', `<img class="pet-heart" src="${heart}" alt="" style="left:${this.pet.x}%;top:${this.pet.y - 9}%">`); const h = room.lastElementChild; setTimeout(() => h.remove(), 1200); }

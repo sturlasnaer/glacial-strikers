@@ -16,8 +16,11 @@ const walkTo = (p, rnd) => {
   p.ty = PET_AREA.y0 + rnd() * (PET_AREA.y1 - PET_AREA.y0);
 };
 
+export const TRICK_TIME = 1.3;
+
 export function stepPet(p, dt, rnd = Math.random) {
   p.t += dt;
+  if (p.trickT > 0) { p.trickT = Math.max(0, p.trickT - dt); if (!p.trickT) p.trick = null; return p; }
   if (p.hop > 0) { p.hop = Math.max(0, p.hop - dt); return p; }
   if (p.state === 'walk') {
     const dx = p.tx - p.x, dy = p.ty - p.y, d = Math.hypot(dx, dy), v = PET_SPEED * dt;
@@ -31,10 +34,12 @@ export function stepPet(p, dt, rnd = Math.random) {
   return p;
 }
 
-// Tapped: a happy hop (and awake again).
-export function tapPet(p) {
-  p.hop = 0.5;
-  if (p.state === 'sleep') { p.state = 'sit'; p.t = 0; p.until = 1.5; }
+// Tapped: a happy hop, or now and then one of its tricks (those drawn: Batch DC), and awake again.
+export function tapPet(p, rnd = Math.random, tricks = []) {
+  if (p.trickT > 0) return p;
+  if (tricks.length && rnd() < 0.6) { p.trick = tricks[Math.floor(rnd() * tricks.length)]; p.trickT = TRICK_TIME; }
+  else p.hop = 0.5;
+  if (p.state === 'sleep' || p.state === 'walk') { p.state = 'sit'; p.t = 0; p.until = 1.5; }
   return p;
 }
 
