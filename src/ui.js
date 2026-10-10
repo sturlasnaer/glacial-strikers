@@ -544,11 +544,12 @@ export class UI {
     if (el) el.innerHTML = logoHtml();
   }
 
-  // Who an exhibition can be against: the Frostline's clubs, and the National clubs once the
-  // club has gone up a division or played them.
+  // Who an exhibition can be against: the Frostline's clubs, the National clubs once the club
+  // has gone up a division, the Elite's own once it's at the top (or any once they've met).
   exhibitionTeams() {
-    const s = this.app.save, up = tierOf(s) > 0;
-    return Object.values(TEAMS).filter((tm) => tm.id !== 'home' && (!tm.national || up || (s.rivals && s.rivals[tm.id] && s.rivals[tm.id].played)));
+    const s = this.app.save, tier = tierOf(s);
+    const open = (tm) => (tm.elite ? tier >= 2 : tm.national ? tier >= 1 : true) || (s.rivals && s.rivals[tm.id] && s.rivals[tm.id].played);
+    return Object.values(TEAMS).filter((tm) => tm.id !== 'home' && open(tm));
   }
 
   quickMatchPicker() {

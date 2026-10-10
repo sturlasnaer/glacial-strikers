@@ -391,6 +391,32 @@ export const TEAMS = {
     gstyle: 'reader', subs: { goalie: 'Pod', frost: 'Brine', thunder: 'Streak', stone: 'Bergen' },
     style: 'Fast and flashy, the stars of the north. Their wingers are gone before you turn.',
   },
+  // The Elite division's own two clubs (tiers.js): met only at the top, the strongest in the
+  // country, the fierce one and the calm one.
+  tigers: {
+    elems: { thunder: 'ember' }, // supers other than the slot's own
+    id: 'tigers', plan: 'forecheck', chem: 3, name: 'Taiga Tigers', short: 'TIG', crest: 'hud_elements/misc/away_crest',
+    art: null, mark: 'taiga_tigers', arena: 'taiga_rink', elite: true,
+    goalieLook: { mask: 'tiger', paint: '#ff8c1a', body: 'std' },
+    looks: { frost: { body: 'std', head: 'eye_black', skin: 1, hair: 2 }, thunder: { body: 'small', head: 'ponytail', skin: 3, hair: 5 }, stone: { body: 'big', head: 'beard', skin: 4, hair: 1 } },
+    color: '#ff8c1a', color2: '#1a1a1a', recolor: { h1: 30, h2: 0, sat: 1.0, val: 1.0, sat2: 0.0, val2: 0.2 }, // (tiger orange, black stripes)
+    diff: 0.93, bonus: { spd: 1, agi: 1, sht: 1, chk: 1 }, goalie: { rfx: 8, pos: 8 },
+    names: { frost: 'Stripe', thunder: 'Pounce', stone: 'Boreal', goalie: 'Prowl' },
+    gstyle: 'scrambler', subs: { goalie: 'Snowpaw', frost: 'Saffron', thunder: 'Zigzag', stone: 'Bracken' },
+    style: 'Fierce hunters from the snowy forests of the far east. They pounce on every loose puck.',
+  },
+  pandas: {
+    elems: { thunder: 'shadow' }, // supers other than the slot's own
+    id: 'pandas', plan: 'trap', chem: 3, name: 'Bamboo Ridge Pandas', short: 'PAN', crest: 'hud_elements/misc/away_crest',
+    art: null, mark: 'bamboo_ridge_pandas', arena: 'bamboo_grove', elite: true,
+    goalieLook: { mask: 'classic', paint: '#1f1f1f', body: 'big' },
+    looks: { frost: { body: 'std', head: 'bun', skin: 2, hair: 0 }, thunder: { body: 'small', head: 'glasses', skin: 0, hair: 4 }, stone: { body: 'big', head: 'cage', skin: 3, hair: 0 } },
+    color: '#f2f2ec', color2: '#1f1f1f', recolor: { h1: 60, h2: 0, sat: 0.05, val: 1.08, sat2: 0.0, val2: 0.22 }, // (panda white, black trim)
+    diff: 0.98, bonus: { agi: 1, pas: 1, chk: 1, sta: 1 }, goalie: { rfx: 9, pos: 8 },
+    names: { frost: 'Inkwell', thunder: 'Tumble', stone: 'Bamboo', goalie: 'Summit' },
+    gstyle: 'wall', subs: { goalie: 'Lantern', frost: 'Mist', thunder: 'Sprout', stone: 'Dumpling' },
+    style: 'Calm, strong and patient. They look sleepy right up until they take the puck off you.',
+  },
 };
 // The rivals, easiest first. The first five are the league's founding clubs.
 export const RIVAL_IDS = ['lynx', 'comets', 'owls', 'rams', 'moose', 'ravens', 'royals'];
@@ -398,8 +424,11 @@ export const FOUNDING_RIVALS = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
 // The National division's clubs, easiest first, and the Elite division's: the strongest of
 // both regions (tiers.js). RIVAL_IDS stays the Frostline's own (the daily challenge draws from it).
 export const NATIONAL_IDS = ['capybaras', 'puffins', 'grizzlies', 'seals', 'penguins', 'bulls', 'narwhals'];
-export const ELITE_IDS = ['moose', 'seals', 'ravens', 'penguins', 'bulls', 'royals', 'narwhals'];
-export const ALL_RIVALS = [...RIVAL_IDS, ...NATIONAL_IDS];
+// (the Elite has two clubs of its own, the Tigers and the Pandas: nine rivals, ten clubs, nine
+// rounds; the schedule wants an odd number of rivals)
+export const ELITE_OWN_IDS = ['tigers', 'pandas'];
+export const ELITE_IDS = ['moose', 'seals', 'ravens', 'penguins', 'bulls', 'royals', 'tigers', 'narwhals', 'pandas'];
+export const ALL_RIVALS = [...RIVAL_IDS, ...NATIONAL_IDS, ...ELITE_OWN_IDS];
 // What plays a rival's roster slot: their own art, or a body from parts (an expansion club),
 // or null for our cast's art in their colours.
 export const slotLook = (teamId, kit) => { const t = TEAMS[teamId]; return t && t.looks && t.looks[kit] && bodySprite(t.looks[kit]) ? t.looks[kit] : null; };
@@ -447,6 +476,8 @@ export const ARENAS = {
   pack_ice: { name: 'Pack Ice Arena', lamps: '#e6f4ff', twist: 'none', national: true },
   sunmesa: { name: 'Sunmesa Arena', lamps: '#ffb347', twist: 'none', national: true },
   fjord_hall: { name: 'Fjord Hall', lamps: '#9fffc8', twist: 'none', national: true },
+  taiga_rink: { name: 'Taiga Rink', lamps: '#ffb36b', twist: 'none', national: true }, // (the Tigers': Batch EL)
+  bamboo_grove: { name: 'Bamboo Grove', lamps: '#ffd8a0', twist: 'none', national: true }, // (the Pandas': Batch EL)
 };
 
 // ---------------------------------------------------------------- recruitment
@@ -499,6 +530,13 @@ export const RECRUITS = {
   narwhals_c: recruit('narwhals', 'frost', { spd: 9, agi: 9, sht: 8, pas: 9, chk: 3, sta: 6 }, [1, 0, 1], 650, 'The north\'s brightest star, and dazzling with the puck.', 'dangler', 'L'),
   narwhals_w: recruit('narwhals', 'thunder', { spd: 10, agi: 9, sht: 9, pas: 5, chk: 3, sta: 6 }, [0, 1, 0], 650, 'Gone before you turn, and the puck is already in the net.', 'sniper', 'R'),
   narwhals_d: recruit('narwhals', 'stone', { spd: 7, agi: 7, sht: 8, pas: 8, chk: 7, sta: 7 }, [1, 0, 0], 650, 'Joins every rush and still beats everyone back.', 'blueliner', 'L'),
+  // the Elite's own (beat them there first)
+  tigers_c: recruit('tigers', 'frost', { spd: 9, agi: 8, sht: 9, pas: 8, chk: 6, sta: 6 }, [1, 0, 0], 680, 'Hunts the puck down and buries it.', 'sniper', 'R'),
+  tigers_w: recruit('tigers', 'thunder', { spd: 10, agi: 9, sht: 9, pas: 5, chk: 6, sta: 6 }, [0, 0, 1], 680, 'A blur of orange and black, gone before you hear the skates.', 'speedster', 'L'),
+  tigers_d: recruit('tigers', 'stone', { spd: 6, agi: 7, sht: 9, pas: 6, chk: 10, sta: 8 }, [1, 1, 0], 680, 'Pounces on anyone who comes near the net.', 'enforcer', 'R'),
+  pandas_c: recruit('pandas', 'frost', { spd: 8, agi: 9, sht: 8, pas: 10, chk: 5, sta: 6 }, [0, 1, 1], 700, 'Unhurried and unstoppable. Every pass lands right on the tape.', 'playmaker', 'L'),
+  pandas_w: recruit('pandas', 'thunder', { spd: 9, agi: 10, sht: 9, pas: 6, chk: 5, sta: 6 }, [1, 0, 1], 700, 'Rolls off checks like a panda down a hill, then scores.', 'dangler', 'R'),
+  pandas_d: recruit('pandas', 'stone', { spd: 6, agi: 7, sht: 8, pas: 7, chk: 10, sta: 8 }, [1, 1, 0], 700, 'A gentle giant, until you try to get past.', 'enforcer', 'L'),
 };
 const ROLE_TITLE = { C: 'Centre', W: 'Winger', D: 'Defender' };
 for (const [key, r] of Object.entries(RECRUITS)) {
@@ -516,7 +554,8 @@ export const STAR_AGES = {
   moose_c: 28, moose_w: 22, moose_d: 27,
   capybaras_c: 29, capybaras_w: 24, capybaras_d: 27, puffins_c: 22, puffins_w: 21, puffins_d: 25, grizzlies_c: 28, grizzlies_w: 26, grizzlies_d: 31,
   seals_c: 25, seals_w: 23, seals_d: 28, penguins_c: 30, penguins_w: 26, penguins_d: 29, bulls_c: 26, bulls_w: 22, bulls_d: 30,
-  narwhals_c: 24, narwhals_w: 23, narwhals_d: 27,
+  narwhals_c: 24, narwhals_w: 23, narwhals_d: 27, pandas_c: 27, pandas_w: 23, pandas_d: 29,
+  tigers_c: 25, tigers_w: 22, tigers_d: 28,
 };
 // The kit a rival slot plays with: that player's archetype and the team's super for the slot.
 export const slotDef = (teamId, kit) => {
@@ -528,7 +567,7 @@ export const KIT_OF_ROLE = { C: 'frost', W: 'thunder', D: 'stone' };
 // Rival goalies you can sign once you've beaten their team ('<team>_g'). Their club then plays
 // a backup. Halla is 'halla'.
 const GOALIE_PRICES = { lynx: 220, comets: 300, owls: 400, rams: 380, moose: 480, ravens: 460, royals: 560,
-  capybaras: 380, puffins: 400, grizzlies: 460, seals: 500, penguins: 540, bulls: 580, narwhals: 640 };
+  capybaras: 380, puffins: 400, grizzlies: 460, seals: 500, penguins: 540, bulls: 580, narwhals: 640, tigers: 680, pandas: 700 };
 export const GOALIE_RECRUITS = Object.fromEntries(Object.entries(GOALIE_PRICES).map(([team, price]) => {
   const t = TEAMS[team];
   return [`${team}_g`, { key: `${team}_g`, team, name: t.names.goalie, base: { ...t.goalie }, gstyle: t.gstyle, price, art: t.art || (t.goalieLook ? goalieArt(t.goalieLook) : 'newcomer'), mask: t.goalieLook || null, title: 'Goaltender' }]; // (an expansion club's goalie: made from parts)
@@ -723,7 +762,7 @@ export const TOURNAMENT = {
     { team: 'royals', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'cracked_ice', reward: 400 },
   ],
 };
-// The National clubs' match settings (the league plays them like the Frostline's: see stageOf).
+// The National clubs' match settings, and the Elite's own (the league plays them like the Frostline's: see stageOf).
 export const NATIONAL_STAGES = [
   { team: 'capybaras', round: 'Group Stage', powers: ['fire', 'ice'], twist: 'none', reward: 160 },
   { team: 'puffins', round: 'Group Stage', powers: ['fire', 'ice', 'lightning'], twist: 'none', reward: 185 },
@@ -732,6 +771,8 @@ export const NATIONAL_STAGES = [
   { team: 'penguins', round: 'Semifinal', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 270 },
   { team: 'bulls', round: 'Semifinal', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'speed_lanes', reward: 300 },
   { team: 'narwhals', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'cracked_ice', reward: 400 },
+  { team: 'tigers', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 410 }, // (the Elite's own)
+  { team: 'pandas', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 420 },
 ];
 export const stageOf = (team) => TOURNAMENT.stages.find((x) => x.team === team) || NATIONAL_STAGES.find((x) => x.team === team) || TOURNAMENT.stages[0];
 
@@ -1025,6 +1066,43 @@ export const DIALOGUE = {
     finalWin: [['them', 'frost', 'The cup is yours. The north will be back for it.']],
     finalLoss: [['them', 'frost', 'The north shines brightest. Come back next season, Foxes.']],
   },
+  // the Elite's own
+  tigers: {
+    pre: [
+      ['them', 'thunder', 'Smell that? Snow, pine needles, and Foxes. Our favourite.'],
+      ['us', 'stone', 'Big cats, big claws. Keep your sticks down and your heads up.'],
+      ['them', 'frost', 'In the taiga we hunt in the snow. We never stop until we catch something.'],
+      ['us', 'frost', 'Then keep the puck moving. You can\'t catch what you can\'t reach.'],
+    ],
+    win: [['them', 'frost', 'Grrr. You got away this time, Foxes.']],
+    loss: [['them', 'thunder', 'Pounce! Too slow, little Foxes.']],
+    final: [
+      ['them', 'frost', 'The Foxes in the final. We\'ve been tracking you all season.'],
+      ['us', 'frost', 'Then you know we don\'t back down, Stripe.'],
+      ['them', 'thunder', 'Smell that? Snow, pine needles, and Foxes. Our favourite.'],
+      ['us', 'stone', 'Everybody, together. One more win.'],
+    ],
+    finalWin: [['them', 'frost', 'The Elite Cup is yours. Hunt well, Foxes.']],
+    finalLoss: [['them', 'frost', 'The taiga wins again. Come back with sharper claws.']],
+  },
+  pandas: {
+    pre: [
+      ['them', 'frost', 'Welcome to Bamboo Grove. Take your time. We always do.'],
+      ['us', 'thunder', 'They\'re just sitting there chewing. Are they even awake?'],
+      ['them', 'stone', 'Wide awake. Come and find out.'],
+      ['us', 'frost', 'Don\'t let the calm fool you. Move the puck fast and never hand it to them.'],
+    ],
+    win: [['them', 'frost', 'Well played, Foxes. It\'s been a long time since anyone did that.']],
+    loss: [['them', 'thunder', 'Slow and steady. Every single time.']],
+    final: [
+      ['them', 'frost', 'The final, and the Foxes again. Good. We like a challenge.'],
+      ['us', 'frost', 'Then here\'s one, Inkwell. The biggest cup in the country.'],
+      ['them', 'stone', 'Wide awake. Come and find out.'],
+      ['us', 'stone', 'Everybody, together. One more win.'],
+    ],
+    finalWin: [['them', 'frost', 'The Elite Cup is yours. You earned every bit of it.']],
+    finalLoss: [['them', 'frost', 'Patience wins cups. Come back stronger, Foxes.']],
+  },
 };
 // Kip's welcome the first season up a division (main.js newSeasonOn), spoken with the
 // division's top club.
@@ -1035,11 +1113,11 @@ export const TIER_LINES = {
     ['them', 'frost', 'So these are the Frostline champions. Welcome to the National Cup, Foxes.'],
     ['us', 'frost', 'Seven clubs we\'ve never played. Let\'s go and meet them.'],
   ] },
-  elite: { team: 'royals', lines: [
+  elite: { team: 'pandas', lines: [
     ['kip', null, 'The Elite Cup! Only the very best clubs in the country play here.'],
-    ['kip', null, 'The Frostline\'s finest and the toughest of the National clubs. Every game feels like a final now.'],
-    ['them', 'frost', 'The little Foxes made it all the way up. Now let\'s see if you belong.'],
-    ['us', 'frost', 'We belong, Solenne. Watch.'],
+    ['kip', null, 'The Frostline\'s finest, the toughest of the National clubs, and two clubs who only ever play up here: the fierce Taiga Tigers from the snowy forests, and the Bamboo Ridge Pandas, down from their misty mountains.'],
+    ['them', 'frost', 'So you\'re the Foxes. We\'ve been waiting a long time for someone worth a game.'],
+    ['us', 'frost', 'Then you\'ve found one, Inkwell. Watch.'],
   ] },
 };
 

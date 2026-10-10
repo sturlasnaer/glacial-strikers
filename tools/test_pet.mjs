@@ -125,7 +125,7 @@ check('its name: cleaned, 12 characters at most', cleanPetName('  <Snjó>\n bolt
 // room at most and the rest in the pet house, swapped about, named
 {
   const sv = { season: 2, rivals: { lynx: { wins: 3 }, owls: { wins: 2 }, comets: { wins: 4 }, rams: { wins: 3 }, moose: { wins: 7 }, ravens: { wins: 3 } } };
-  check('fifteen pets: Snowball and one from each club', PET_KINDS.length === 15 && PET_KINDS[0].id === 'fox' && new Set(PET_KINDS.map((k) => k.team)).size === 15 && PET_KINDS.every((k) => k.name && k.pet && (k.team === 'home' || TEAMS[k.team])));
+  check('seventeen pets: Snowball and one from each club', PET_KINDS.length === 17 && PET_KINDS[0].id === 'fox' && new Set(PET_KINDS.map((k) => k.team)).size === 17 && PET_KINDS.every((k) => k.name && k.pet && (k.team === 'home' || TEAMS[k.team])));
   check('a new save: Snowball alone, in the room', ownedPets({}).join() === 'fox' && roomPets({}).join() === 'fox' && housePets({}).length === 0);
   check('gifts due: three wins (not two), and only with their art', petsDue(sv).join() === 'lynx,salamander,lamb,moose,raven' && petsDue(sv, (k) => k !== 'lamb').join() === 'lynx,salamander,moose,raven');
   const where = petsDue(sv).map((k) => adoptPet(sv, k));

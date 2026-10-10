@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10zp',
+    items: [
+      { icon: 'badges/elite_cup', alt: 'badges/tier_elite', text: 'Two new clubs who play only in the Elite Cup: the fierce Taiga Tigers from the snowy forests, and the Bamboo Ridge Pandas from their misty mountains, the strongest club in the country. The Elite is now ten clubs and nine rounds.' },
+    ],
+  },
+  {
     id: '2026-10-10zo',
     items: [
       { icon: 'badges/national_cup', alt: 'badges/tier_national', text: 'Seven new clubs! Go up to the National Cup to meet the Hot Springs Capybaras, Cliffside Puffins, Timberline Grizzlies, Driftwood Seals, Pack Ice Penguins, the Sunmesa Bulls from the warm canyon country and the Northlight Narwhals. The Elite Cup mixes the best of both.' },

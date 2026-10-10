@@ -14,6 +14,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 5. **EI: the Frostline's pets (2)**
 6. **EJ: the National clubs' pets (1)**
 7. **EK: the National clubs' pets (2)**
+8. **EL: the Elite's own clubs, the Taiga Tigers and the Bamboo Ridge Pandas**
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -769,7 +770,7 @@ The same seven mascots for the mascot race at the break (DB), like `race/glacier
 
 ## Batch ED: the National map and postcards
 
-- `map/region_national` (1536×864): a painted bird's-eye map of the whole country for the National road trip (like DG's `map/region`), no lettering: Snowcrest in the north-west, the seven clubs' towns spread from the frozen north (the Penguins' pack ice, the Narwhals' fjord, the Puffins' cliffs, the Seals' bay) down through the Grizzlies' mountain forest to the warm south (the Capybaras' hot springs, the Bulls' canyon town), with roads, rivers and a railway between. The Frostline region itself sits in the north-west round Snowcrest (the Elite division mixes clubs from both regions), with smaller spots for its seven clubs' towns (Pinewood, Ember, the Owls' glacier, Gilded, the Moose's hills, Obsidian, Aurora). A clear spot (about 90 px; about 60 px for the Frostline towns) in each town for the crest, and `atlas.map_towns_national = { home: [x, y], <team>: [x, y], … }` with all fifteen team keys: `capybaras`, `puffins`, `grizzlies`, `seals`, `penguins`, `bulls`, `narwhals` and `lynx`, `comets`, `owls`, `rams`, `moose`, `ravens`, `royals`. On a page in the `map` group.
+- `map/region_national` (1536×864): a painted bird's-eye map of the whole country for the National road trip (like DG's `map/region`), no lettering: Snowcrest in the north-west, the seven clubs' towns spread from the frozen north (the Penguins' pack ice, the Narwhals' fjord, the Puffins' cliffs, the Seals' bay) down through the Grizzlies' mountain forest to the warm south (the Capybaras' hot springs, the Bulls' canyon town), and in the far east the Tigers' snowy taiga forest and the Pandas' misty bamboo ridge in the mountains (see EL), with roads, rivers and a railway between. The Frostline region itself sits in the north-west round Snowcrest (the Elite division mixes clubs from both regions), with smaller spots for its seven clubs' towns (Pinewood, Ember, the Owls' glacier, Gilded, the Moose's hills, Obsidian, Aurora). A clear spot (about 90 px; about 60 px for the Frostline towns) in each town for the crest, and `atlas.map_towns_national = { home: [x, y], <team>: [x, y], … }` with all seventeen team keys: `capybaras`, `puffins`, `grizzlies`, `seals`, `penguins`, `bulls`, `narwhals`, `tigers`, `pandas` and `lynx`, `comets`, `owls`, `rams`, `moose`, `ravens`, `royals`. On a page in the `map` group.
 - `postcard/<team>` (480×320, like DK's) for each of the seven, with the stamp and postmark, **no lettering**. On a page in the `postcards` group.
 
 1 map and 7 frames.
@@ -830,3 +831,22 @@ And two achievement icons (128×128, like the other `achievements/…`): `achiev
 - `narwhal`: a **Narwhal calf** (Northlight Narwhals): a small grey-blue spotted narwhal with a little tusk, riding in a small wheeled tub of water that it rolls along with its flippers (that's its walk); it sleeps in the tub, and the hop is a splash. Aurora-green trim on the tub.
 
 30 frames.
+
+## Batch EL: the Elite's own clubs, the Taiga Tigers and the Bamboo Ridge Pandas
+
+Two new clubs that play **only in the Elite division** (it grows to ten clubs), the strongest in the country. Like the National clubs, their players are built from parts, so each needs what EA–EG drew for the others, plus its pet. Everything without lettering:
+
+| club | key (`mark`) | colours | home | character |
+|---|---|---|---|---|
+| **Taiga Tigers** | `taiga_tigers` | tiger orange and black, with white | a snowy taiga forest in the far east, pines heavy with snow | fierce hunters; they pounce on every loose puck |
+| **Bamboo Ridge Pandas** | `bamboo_ridge_pandas` | panda white and black, with bamboo green | a misty mountain ridge covered in bamboo | calm, strong and patient; they look sleepy right up until they take the puck off you |
+
+For each of the two:
+- `rival_crests/crest/<mark>` (148×148, like EA's, in its own colours: the animal's face and a hint of its home). On an `icons_z` page.
+- Its mascot in the stands, like EB (a big friendly costumed tiger, a big friendly costumed panda, each in a team jersey): `mascot/<mark>/idle`, `wave`, `cheer_a`, `cheer_b`, on the club's own group `rival_<mark>`.
+- Its mascot for the race, like EC: `race/<mark>/run_1`..`_4` and `win` (280×240), on a `race` page.
+- Its rink, like EE–EG (1536×1024), on its own group named after it: `arena_taiga_rink` (an outdoor rink in a snowy pine forest, lanterns strung between the trees) and `arena_bamboo_grove` (a timber hall open to a bamboo forest, mist on the mountains beyond, paper lanterns overhead).
+- `postcard/tigers` and `postcard/pandas` (480×320, like ED's), on a `postcards` page. (Their towns on the National map are in ED.)
+- Its pet, like EH–EK: `pets/tiger/…` and `icons/pet_tiger`, a **Tiger cub** (fluffy, oversized paws, stripes, an orange-and-black bandana, pouncing on its own tail in one of the sit frames), and `pets/panda/…` and `icons/pet_panda`, a **Panda cub** (round and fluffy, tumbling more than walking, a bamboo-green bandana, a stick of bamboo to chew in one of the sit frames). On `pets` pages.
+
+2 crests, 8 + 10 mascot frames, 2 rinks, 2 postcards and 20 pet frames.
