@@ -1042,7 +1042,7 @@ export class UI {
     const coach = B && Assets.spriteSet([B.idle[0]], 220);
     const cup = P.champ && Assets.frame('badges/frostline_cup') ? Assets.icon('badges/frostline_cup', 160) : '';
     const result = { champion: t('Frostline Cup champions'), final: t('Lost the Cup Final'), semi: t('Out in the semifinals'), missed: t('Missed the playoffs') }[h.playoff] || '';
-    return `<div class="team-photo" style="background-image:url(${Assets.backdrop.src})">
+    return `<div class="team-photo" style="background-image:url(${Assets.url('gfx/photo/backdrop.png')}),url(${Assets.backdrop.src})">
       <div class="tp-row back">${P.ids.slice(3).map(sk).join('')}</div>
       <div class="tp-row front">${gk(P.keepers[0])}${P.ids.slice(0, 3).map(sk).join('')}${gk(P.keepers[1])}</div>
       ${coach ? `<img class="tp-coach" src="${coach.urls[0]}" alt="">` : ''}

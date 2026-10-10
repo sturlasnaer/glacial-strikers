@@ -10,6 +10,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 1. **CR: the sticker album**
 2. **CS: decorations for the locker room**
 3. **CT: the fan cam**
+4. **CU: picture day**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -402,3 +403,9 @@ After one of our goals at home, the arena's camera finds a fan in the crowd hold
 - Metadata: `atlas.fancam = { fans: [ { frames: ['fancam/fan_1_a', 'fancam/fan_1_b'], sign: { x, y, w, h, rot } }, … ], frame: 'fancam/frame' }`, where `sign` is the blank part of the sign in the frame's pixels (rot: its tilt in degrees, if any), so the words land on the card.
 
 9 frames.
+
+## Batch CU: picture day
+
+Every season now ends with a **team photo** (Trophies › Seasons): the line-up standing on the ice in front, up to five more behind, Coach Brekka at the side and the Cup when it's ours, with the season on a plaque. Today it stands on the home rink's empty centre ice. Please draw a backdrop for it, as a plain image (no atlas): `assets/gfx/photo/backdrop.png`, 1600×1000, no lettering: the home rink at centre ice seen from rink level, the far boards and glass, and the stands behind packed with cheering Snowcrest Foxes fans (scarves, a big banner with the snowflake crest, a few phones held up, a photographer's flash glinting), the lower 60% clean ice where the team stands. The game puts it in the photo as soon as the file is there.
+
+1 image.
