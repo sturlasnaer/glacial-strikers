@@ -7,7 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-None currently open. Monitoring for additions.
+1. **DA: outfits for the cub**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -470,3 +470,12 @@ The locker room's Snow Fox cub (CX) is adorable. Like the home rink's seasonal d
 - `pet_holiday/walk_1`..`_4`, `sit_1`, `sit_2`, `sleep_1`, `sleep_2`, `hop`: in a Santa hat and a tiny scarf (December to 6 January).
 
 The game swaps them in by the calendar. 18 frames.
+
+## Batch DA: outfits for the cub
+
+Kids want to dress the locker room's cub (CX) themselves: outfits bought in the Shop (Shop › Locker room), one worn at a time. Please draw three, each as a **separate overlay** for every one of the cub's nine poses, on the same 120×72 canvas with the same pivot as the cub's frame it goes with, transparent except the outfit, so the game lays it over the cub: `pet_acc/<outfit>/walk_1`..`_4`, `sit_1`, `sit_2`, `sleep_1`, `sleep_2`, `hop`, as atlas frames on a page in the `hub` group, for these outfits:
+- `scarf`: a long striped scarf in the club's ice blue and cream.
+- `beanie`: a knitted bobble hat with a snowflake.
+- `bowtie`: a smart little gold bow tie.
+
+The Shop shows each one as soon as its frames are in (from its `sit_1`). 27 frames.
