@@ -752,6 +752,7 @@ export class UI {
       html += item.frames.length > 1 ? `<div class="decor anim" data-decor="${item.id}" style="${style};background-image:url(${set.url})"></div>`
         : `<img class="decor" data-decor="${item.id}" src="${set.urls[0]}" alt="" style="${style}">`;
     }
+    html += this.trophyShelf(s, at);
     // the chest glows while there are trophies you haven't looked at, and stands open after
     const got = Object.keys((s.achievements && s.achievements.unlocked) || {}).length;
     const chest = R.h_chest_open && R.chest_placement && Assets.spriteSet(R.h_chest_open, 190);
@@ -819,7 +820,7 @@ export class UI {
     const s = this.app.save;
     const props = room.querySelector('#room-props');
     const bindProps = () => {
-      this.click('.room-board', (el) => { audio.sfx('click'); this.hub(el.dataset.board); }, props);
+      this.click('.room-board, .trophy-shelf', (el) => { audio.sfx('click'); this.hub(el.dataset.board); }, props);
       this.startPet(room);
       // a character talks while you point at their station
       room.querySelectorAll('.spot').forEach((sp) => {
@@ -889,6 +890,24 @@ export class UI {
       if (heart) { room.insertAdjacentHTML('beforeend', `<img class="pet-heart" src="${heart}" alt="" style="left:${this.pet.x}%;top:${this.pet.y - 9}%">`); const h = room.lastElementChild; setTimeout(() => h.remove(), 1200); }
     });
     tag.addEventListener('click', (e) => { e.stopPropagation(); audio.sfx('click'); this.petName(); });
+  }
+
+  // The trophy shelf on the locker room's wall (Batch DF): the club's cups standing on it, the
+  // Frostline Cups on top, the Mini Cups and Winter Classics in the middle, the Weekly Cups below
+  // (four a shelf at most). Tap it for the Trophies tab.
+  trophyShelf(s, at) {
+    const sp = Assets.atlas.decor_slots && Assets.atlas.decor_slots.trophies, set = sp && Assets.spriteSet(['decor/trophy_shelf'], 160);
+    if (!set) return '';
+    const icon = (ids) => { const id = ids.find((k) => Assets.frame(k)); return id ? Assets.icon(id, 96) : ''; };
+    const classics = (s.classics || []).filter((c) => c.gf > c.ga).length;
+    const rows = [
+      Array(Math.min(4, s.cups || 0)).fill(icon(['badges/frostline_cup', 'badges/cup_small'])),
+      [...Array(Math.min(3, s.miniCups || 0)).fill(icon(['badges/mini_cup', 'badges/cup_small'])), ...(classics ? [icon(['achievements/winter_classic'])] : [])].slice(0, 4),
+      Array(Math.min(4, (s.weeklyCups || []).length)).fill(icon(['badges/weekly_cup', 'badges/cup_small'])),
+    ];
+    const shelfY = [0.31, 0.63, 0.95]; // (each shelf's top, as part of the frame's height)
+    const items = rows.map((row, r) => row.filter(Boolean).map((src, i, a) => `<img class="shelf-cup" src="${src}" alt="" style="left:${((i + 1) / (a.length + 1)) * 100}%;top:${shelfY[r] * 100}%">`).join('')).join('');
+    return `<button class="trophy-shelf" data-board="trophies" aria-label="${esc(t('Trophies'))}" style="${at(sp.x, sp.y)};height:${(160 / 864) * 100}%;aspect-ratio:${set.w}/${set.h}"><img src="${set.urls[0]}" alt="">${items}</button>`;
   }
 
   // The mascot race at the break (Batch DB): pick a runner (or not), watch them race across the
