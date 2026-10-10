@@ -16,7 +16,7 @@ export const fanCamReady = () => {
 
 // One frame of the fan cam as a data URL: the fan, the words on their sign, the screen's edge
 // and FAN CAM. font: a CSS font family; label: 'FAN CAM' in the game's language.
-function fanCamFrame(fan, i, text, font, label, frameId) {
+export function fanCamFrame(fan, i, text, font, label, frameId) {
   const id = fan.frames[i % fan.frames.length], f = Assets.frame(id);
   if (!f || !Assets.pages[f[0]]) return null;
   const w = Math.round(f[3] / f[7]), h = Math.round(f[4] / f[7]);

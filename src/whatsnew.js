@@ -4,6 +4,7 @@ export const WHATS_NEW = [
   {
     id: '2026-10-10u',
     items: [
+      { icon: 'fancam/fan_1_a', alt: 'icons/friends', text: 'The fan cam: after our goals at home, the big screen finds a fan holding up a sign. Write your own in Settings › Our fan sign (your name, GO MOM!).' },
       { icon: 'decor/poster_fox', alt: 'equipment_items/hub/locker', text: 'Decorate the locker room! Shop › Locker room has fairy lights, posters, rugs, an arcade cabinet, a boombox and more. Fill every spot for a trophy.' },
     ],
   },

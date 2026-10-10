@@ -1921,6 +1921,7 @@ export const IS = {
   "The cup is yours. You earned every inch of it.": "Bikarinn er ykkar. Þið unnuð fyrir hverjum millimetra af honum.",
   "The D-pad and left stick skate. In the menus {a} picks and {b} goes back, whatever is set here.": "Stefnuhnappar og vinstri pinni skauta. Í valmyndum velur {a} og {b} fer til baka, hvað sem er stillt hér.",
   "The Faceoffs and Tip-Ins drills have online leaderboards now: this week's and all time, and on your friends boards.": "Uppkasta- og stýringaæfingarnar eru nú með stigatöflur á netinu: þessarar viku og frá upphafi, og á vinatöflunum þínum.",
+  "The fan cam: after our goals at home, the big screen finds a fan holding up a sign. Write your own in Settings › Our fan sign (your name, GO MOM!).": "Stúkuskjárinn: eftir mörkin okkar á heimavelli sýnir stóri skjárinn einhvern í stúkunni með skilti á lofti. Skrifaðu þitt eigið undir Stillingar › Skiltið okkar í stúkunni (nafnið þitt, ÁFRAM MAMMA!).",
   "The fans have voted! {name} leads the home bench, with two of the league's stars in your colours. The rest of the league's best wear the All-Star navy.": "Áhorfendur hafa kosið! {name} fer fyrir heimabekknum, með tvær af stjörnum deildarinnar í ykkar litum. Hin bestu í deildinni klæðast dökkbláum stjörnubúningum.",
   "the fans vote in the league's stars": "áhorfendur kjósa stjörnur deildarinnar",
   "The first star of the game: {name}!": "Fyrsta stjarna leiksins: {name}!",
