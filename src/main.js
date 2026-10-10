@@ -2,7 +2,7 @@
 
 import { Assets } from './assets.js';
 import { Match, PENALTY_SECONDS } from './match.js';
-import { Renderer } from './render.js';
+import { Renderer, cubSlides } from './render.js';
 import { FX } from './fx.js';
 import { Input, TouchControls, mergeInputs } from './input.js';
 import { audio } from './audio.js';
@@ -1102,7 +1102,8 @@ class App {
     m.on('chain', (e) => { if (e.team === 0) audio.sfx('coin', { vol: 0.5 }); });
     m.on('final', () => {
       audio.sfx('whistle');
-      setTimeout(() => { if (this.match === m) this.endMatch(); }, 2600);
+      const slide = this.arena === 'home' && m.winner === 0 && cubSlides() && !!(Assets.atlas.arena_spots && Assets.atlas.arena_spots.home_cub); // (the cub's victory slide: a moment longer)
+      setTimeout(() => { if (this.match === m) this.endMatch(); }, slide ? 3600 : 2600);
     });
   }
 
