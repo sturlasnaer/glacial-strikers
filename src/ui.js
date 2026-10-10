@@ -615,8 +615,8 @@ export class UI {
         : t('Two players on one screen: {club} against a rival, same stats on both sides, first to 5. Needs a keyboard or gamepads.', { club: esc(CLUB.nick) })}</p>
       ${this.app.isTouch && !padList().length && !keeper ? `<p style="margin:0;color:#7fe08a;font-size:14px">${t('On this touch screen: player 1 on the left and player 2 on the right, each with a stick and one PLAY button.')}</p>` : ''}
       <div class="keys">
-        <kbd style="color:var(--ice)">${t('Player 1')}</kbd><span>${t('WASD skate · F shoot/check · G pass/switch · Left Shift sprint · R skill · T ultimate')}</span>
-        <kbd style="color:${coop ? '#7fe08a' : 'var(--coral)'}">${t('Player 2')}</kbd><span>${keeper ? t('Arrows move · K block/pass · L dive/clear · O poke check · P Wall of Ice') : t('Arrows skate · K shoot/check · L pass/switch · Right Shift sprint · O skill · P ultimate')}</span>
+        <kbd style="color:var(--ice)">${t('Player 1')}</kbd><span>${t('WASD skate · F shoot/poke · G pass/switch · Left Shift sprint (with F: body check) · R skill · T ultimate')}</span>
+        <kbd style="color:${coop ? '#7fe08a' : 'var(--coral)'}">${t('Player 2')}</kbd><span>${keeper ? t('Arrows move · K block/pass · L dive/clear · O poke check · P Wall of Ice') : t('Arrows skate · K shoot/poke · L pass/switch · Right Shift sprint (with K: body check) · O skill · P ultimate')}</span>
         <kbd>${t('Gamepads')}</kbd><span>${coop ? t('With one pad, player 2 has it and player 1 keeps the keyboard or touch. With two, one each.') : t('With two pads each player gets one. With one pad, it goes to player 2.')}</span>
       </div>
       <div class="label" style="font-size:15px">${simpleLabel()}</div>
@@ -3430,7 +3430,7 @@ export class UI {
       ${row(t('Aim assist'), seg('assist', [['off', t('Off')], ['normal', t('Normal')], ['strong', t('Strong')]]), t('Strong tightens your shots and widens pass catching. Off aims dead centre unless you steer.'))}
       ${row(t('Auto-sprint'), seg('autoSprint', [[false, t('Off')], [true, t('On')]]), t('Sprint whenever the stick is pushed all the way.'))}
       ${row(t('Little player'), `<span class="seg">${[[false, t('Off')], [true, t('On')]].map(([v, label]) => `<button class="chip" data-little="${v}" aria-pressed="${!!st.little === v}">${label}</button>`).join('')}</span>`, t('One tap for the youngest: Simple controls, easy rivals who ease off when they\'re well ahead, relaxed speed, strong aim assist, big touch buttons and a large puck with a ring. Off puts your settings back.'))}
-      ${row(simpleLabel(), seg('simple', [[false, t('Off')], [true, t('On')]]), t('For the youngest players: one PLAY button shoots near the net, passes further out and checks without the puck, and you always skate the player nearest the puck.'))}
+      ${row(simpleLabel(), seg('simple', [[false, t('Off')], [true, t('On')]]), t('For the youngest players: one PLAY button shoots near the net, passes further out and pokes at the puck without it, and you always skate the player nearest the puck.'))}
       ${row(t('Break reminder'), seg('breakAfter', [[0, t('Off')], [30, t('30 min')], [60, t('1 hour')]]), t('After this much time in matches, Coach Brekka suggests a rest when a match ends.'))}
       ${row(t('Game speed'), seg('speed', [['normal', t('Normal')], ['relaxed', t('Relaxed')]]), t('Relaxed plays matches at 85% speed. Drills stay at full speed.'))}
       ${row(t('Goal replays'), onOff('replays'))}
@@ -3889,10 +3889,10 @@ function movesHtml(touch, pad) {
 }
 
 // The gamepad's buttons in one line, from Settings › Gamepad: 'Left stick to skate · X or RT
-// shoot/check · …'
+// shoot/poke · …'
 function padLine() {
   const ps = psPad(), n = (a) => { const x = padNames(a, ps); return x.length > 1 ? t('{a} or {b}', { a: x[0], b: x[1] }) : x[0] || '—'; };
-  return [t('Left stick to skate'), `${n('a')} ${t('shoot/check')}`, `${n('b')} ${t('pass/switch')}`, `${n('sprint')} ${t('sprint')}`, `${n('skill')} ${t('skill')}`,
+  return [t('Left stick to skate'), `${n('a')} ${t('shoot/poke')}`, `${n('b')} ${t('pass/switch')}`, `${n('sprint')} ${t('sprint')}`, `${n('skill')} ${t('skill')}`,
     `${n('ult')} ${t('ultimate')}`, `${n('pause')} ${t('pause')}`, `${n('pull')} ${t('pull goalie')}`].join(' · ');
 }
 
@@ -3901,7 +3901,7 @@ export function controlsHtml(touch, pad = false) {
     return `<div class="keys">
     <kbd>${t('Left thumb')}</kbd><span>${t('Touch anywhere on the left half and drag to skate')}</span>
     <kbd>${t('SHOOT')}</kbd><span>${t('Tap for a wrist shot, hold for a slapshot. Hold it as a pass arrives for a one-timer')}</span>
-    <kbd>${t('CHECK')}</kbd><span>${t('Same button without the puck: shoulder check')}</span>
+    <kbd>${t('POKE')}</kbd><span>${t('Same button without the puck: a poke at the carrier\'s puck. Hold SPRINT with it for a shoulder check')}</span>
     <kbd>${t('PASS')}</kbd><span>${t('Passes toward the teammate you\'re steering at. Without the puck it switches player')}</span>
     <kbd>${t('SPRINT')}</kbd><span>${t('Hold for speed (uses stamina)')}</span>
     <kbd>${t('Snowflake')}</kbd><span>${t('Signature ability (swaps per character)')}</span>
@@ -3912,7 +3912,7 @@ export function controlsHtml(touch, pad = false) {
   return `<div class="keys">
     <kbd>${moveGlyphs()}</kbd><span>${t('Skate')}</span>
     <kbd>${actionGlyphs('sprint')}</kbd><span>${t('Sprint (uses stamina)')}</span>
-    <kbd>${actionGlyphs('a')}</kbd><span>${t('Shoot: tap for a wrist shot, hold for a slapshot. Without the puck: check')}</span>
+    <kbd>${actionGlyphs('a')}</kbd><span>${t('Shoot: tap for a wrist shot, hold for a slapshot. Without the puck: a poke check, or with sprint held a body check')}</span>
     <kbd>${actionGlyphs('b')}</kbd><span>${t('Pass (aim with movement). Without the puck: switch player')}</span>
     <kbd>${actionGlyphs('skill')}</kbd><span>${t('Signature ability')}</span>
     <kbd>${actionGlyphs('ult')}</kbd><span>${t('Ultimate (when the gold meter is full)')}</span>

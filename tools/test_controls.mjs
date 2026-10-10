@@ -32,7 +32,7 @@ const check = (name, cond) => { if (cond) ok++; else { fail++; console.log('FAIL
 // 5. check: A without puck lunges and hits carrier
 { const m = mk(); const c = m.controlled(); const opp = m.teamSkaters(1)[0]; c.x = 0; c.y = 0; opp.x = 40; opp.y = 0; m.takePossession(opp);
   let hits = 0; m.on('hit', () => hits++);
-  run(m, [raw({ a: true, mx: 1 }), ...Array(20).fill(raw({ mx: 1 }))]);
+  run(m, [raw({ a: true, mx: 1, sprint: true }), ...Array(20).fill(raw({ mx: 1 }))]); // (SPRINT held: a body check, not a poke)
   check('check hit', hits === 1); }
 // 6. switch: B without puck changes controlled skater
 { const m = mk(); const c = m.controlled(); m.puck.owner = null; m.puck.x = 400; m.puck.y = 0; const before = c;
@@ -112,7 +112,7 @@ const check = (name, cond) => { if (cond) ok++; else { fail++; console.log('FAIL
     const c = m.controlled(); const opp = m.teamSkaters(1)[1]; c.x = 0; c.y = 0; opp.x = 40; opp.y = 0;
     m.puck.owner = null; m.puck.x = 400; m.puck.y = -200; m.puck.z = 0;
     let pen = null, delayed = null; m.on('penalty', (e) => { pen = e; }); m.on('penalty_delayed', (e) => { delayed = e; });
-    run(m, [raw({ a: true, mx: 1 }), ...Array(10).fill(raw({ mx: 1 }))]);
+    run(m, [raw({ a: true, mx: 1, sprint: true }), ...Array(10).fill(raw({ mx: 1 }))]); // (a body check)
     // (called at once if we have the puck, or delayed while it's loose or theirs)
     n++; if (pen || delayed) { calls++; if (pen ? !(pen.s === c && c.boxT > 0 && m.state === 'penalty') : !(delayed.s === c && m.pendingPenalty && m.pendingPenalty.s === c)) fail++; }
   }

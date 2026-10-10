@@ -233,7 +233,7 @@ export class Match {
     if (this.simpleSeat(c.team, c.seat || 0)) return this.mapSimple(c, raw, inp);
     if (p.owner === c) {
       // a button still held from a check shouldn't start a shot
-      if (raw.a && (c.prevIn.check || c.aLatch)) c.aLatch = true;
+      if (raw.a && (c.prevIn.check || c.prevIn.poke || c.aLatch)) c.aLatch = true;
       if (!raw.a) c.aLatch = false;
       inp.shoot = raw.a && !c.aLatch;
       inp.pass = raw.b;
@@ -244,7 +244,8 @@ export class Match {
       const tip = !p.owner && p.shot && p.shot.team === c.team && p.shot.by !== c && !p.shot.tipped && Math.hypot(p.x - c.x, p.y - c.y) < 240
         && Math.hypot(c.side * GOAL_X - c.x, c.y) < 190;
       if (incoming || tip || (c.prevIn.shoot && raw.a)) inp.shoot = raw.a;
-      else inp.check = raw.a;
+      else if (raw.sprintBtn ?? raw.sprint) inp.check = raw.a; // (a body check at speed: with SPRINT held)
+      else inp.poke = raw.a; // (otherwise a poke at the puck)
       inp.switch = raw.b;
     }
     return inp;
@@ -253,7 +254,7 @@ export class Match {
   // Simple controls: any action button does the right thing. With the puck it shoots in front of
   // their net and passes anywhere else (picked on the press and kept till the release, so a held
   // press still winds up a slapper); without it, a one-timer or tip when the puck is coming to
-  // us and a check otherwise.
+  // us and a poke check otherwise.
   mapSimple(c, raw, inp) {
     const p = this.puck, btn = !!(raw.a || raw.b);
     const press = btn && !c.simpleBtn;
@@ -270,7 +271,7 @@ export class Match {
       const tip = !p.owner && p.shot && p.shot.team === c.team && p.shot.by !== c && !p.shot.tipped && Math.hypot(p.x - c.x, p.y - c.y) < 240
         && Math.hypot(c.side * GOAL_X - c.x, c.y) < 190;
       if (incoming || tip || (c.prevIn.shoot && btn)) inp.shoot = btn;
-      else inp.check = press || (btn && c.prevIn.check);
+      else inp.poke = press; // (the youngest poke at the puck: no body checks)
     }
     return inp;
   }
@@ -444,7 +445,7 @@ export class Match {
     for (const s of this.skaters) s.update(dt);
     for (const g of this.goalies) g.update(dt);
     this.collideSkaters();
-    if (live) { this.protectPuck(dt); this.stickChecks(dt); }
+    if (live) { this.protectPuck(dt); this.stickChecks(dt); this.pokeChecks(); }
     this.updatePuck(dt);
     this.updateTrails(dt);
     this.updateBarriers(dt);
@@ -634,6 +635,34 @@ export class Match {
       // (half as often for the player's own skater: the stick's out on its own, not by choice)
       const hookRate = HOOK_RATE * (d.controlled && this.humans.includes(d.team) ? 0.5 : 1);
       if (r > 1 - hookRate * dt && shielded && !(c.dekeT > 0) && this.hooking(d, c)) return;
+    }
+  }
+
+  // Poke checks, at the jab's full reach (see Skater.startPoke): the stick reaches a little past
+  // the usual, and if it finds the carrier's puck it knocks it loose back toward the poker:
+  // likelier the better their agility and checking against the carrier's agility and passing,
+  // not round the carrier's body or through a deke, a little less against the top teams. Never a
+  // penalty. (The AI doesn't poke: AI-vs-AI play is as it was.)
+  pokeChecks() {
+    const p = this.puck;
+    for (const s of this.skaters) {
+      if (s.state !== 'poke' || s.pokeDone || s.stateT < 0.08) continue;
+      s.pokeDone = true;
+      const c = p.owner;
+      if (!c || !c.isSkater || c.team === s.team || c.parked) continue;
+      const sp = s.stickPoint(40); // (anywhere along the stick to a little past its usual reach)
+      if (segDist(p.x, p.y, s.x, s.y, sp.x, sp.y).d > 24 || c.dekeT > 0) { this.emit('poke_miss', { s }); continue; }
+      const behind = (s.x - c.x) * (p.x - c.x) + (s.y - c.y) * (p.y - c.y) < 0; // (reaching round the carrier's body)
+      let chance = 0.45 + (s.stats.agi + s.stats.chk - c.stats.agi - c.stats.pas) * 0.025 + (s.hasPerk('Pickpocket') ? 0.08 : 0);
+      if (behind) chance *= 0.45;
+      if (!this.humans.includes(c.team) && this.ai[c.team]) chance *= 1 - 0.3 * this.ai[c.team].diff ** 2;
+      if (this.rng() >= clamp(chance, 0.1, 0.8)) { this.emit('poke_miss', { s }); continue; }
+      const x = p.x, y = p.y, d = norm(s.x - p.x, s.y - p.y);
+      this.loosePuck(c);
+      p.vx = d.x * 160 + c.vx * 0.3; p.vy = d.y * 160 + c.vy * 0.3;
+      p.noPickup.set(c, 0.5);
+      this.pendingSteal = { by: s.team, from: c, t: this.time };
+      this.emit('poke_hit', { s, c, x, y });
     }
   }
 

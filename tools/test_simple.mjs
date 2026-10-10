@@ -77,14 +77,14 @@ for (const key of ['a', 'b']) {
 
 // no puck: the button checks
 {
-  const m = make(6), c = m.controlled(), checks = events(m, 'check_start');
+  const m = make(6), c = m.controlled(), checks = events(m, 'poke');
   m.state = 'play';
   const opp = m.teamSkaters(1)[0];
   c.x = 0; c.y = 0; opp.x = 300; opp.y = 0;
   for (const s of m.teamSkaters(0)) if (s !== c) { s.x = -500; s.y = 250; }
   m.takePossession(opp, 'test');
   step(m, { ...idle(), a: true });
-  check('no puck: a press checks', checks.length === 1 && checks[0].s === c, checks.length);
+  check('no puck: a press pokes at the puck (no body checks for the youngest)', checks.length === 1 && checks[0].s === c && c.state === 'poke', checks.length);
 }
 
 // the nearest skater to the puck is ours when they have it

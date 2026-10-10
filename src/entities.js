@@ -178,6 +178,7 @@ export class Skater {
     this.empowered = 0; // lightning-pass shot boost (seconds)
     this.ultWindup = 0;
     this.checkCd = 0;
+    this.pokeCd = 0; this.pokeDone = true; // (the poke check: see startPoke)
     this.hitThisCheck = null;
     this.oneTimerArmed = 0;
     this.comboT = 0; // window to fire a chemistry combo after a teammate's pass
@@ -194,7 +195,7 @@ export class Skater {
   }
 
   static blankInput() {
-    return { mx: 0, my: 0, sprint: false, sprintBtn: false, deke: false, shoot: false, pass: false, check: false, skill: false, ult: false, a: false, b: false, switch: false, aimX: 0, aimY: 0, passTo: null };
+    return { mx: 0, my: 0, sprint: false, sprintBtn: false, deke: false, shoot: false, pass: false, check: false, poke: false, skill: false, ult: false, a: false, b: false, switch: false, aimX: 0, aimY: 0, passTo: null };
   }
 
   get hasPuck() { return this.match.puck.owner === this; }
@@ -228,6 +229,7 @@ export class Skater {
     if (this.celebrate > 0) this.celebrate -= dt;
     this.skillCd = Math.max(0, this.skillCd - dt);
     this.checkCd = Math.max(0, this.checkCd - dt);
+    this.pokeCd = Math.max(0, this.pokeCd - dt);
     this.slowT = Math.max(0, this.slowT - dt);
     this.boostT = Math.max(0, this.boostT - dt);
     this.empowered = Math.max(0, this.empowered - dt);
@@ -416,7 +418,25 @@ export class Skater {
       this.sprintHeld = 0;
       if (inp.shoot) this.oneTimerArmed = 0.3;
       if (this.pressed('check') && this.checkCd <= 0 && this.stamina >= 12) this.startCheck();
+      else if (this.pressed('poke') && this.pokeCd <= 0 && this.state !== 'check') this.startPoke();
     }
+  }
+
+  // The poke check: a quick jab of the stick at the carrier's puck with a little lunge, no body
+  // contact (it lands at full reach: Match.pokeChecks). Toward the puck when it's close by, and
+  // a breath before the next.
+  startPoke() {
+    const inp = this.in, p = this.match.puck, c = p.owner;
+    let dir = norm(inp.mx, inp.my);
+    if (dir.l < 0.2) dir = { x: Math.cos(this.face), y: Math.sin(this.face) };
+    if (c && c.team !== this.team && Math.hypot(p.x - this.x, p.y - this.y) < 90) dir = norm(p.x - this.x, p.y - this.y);
+    this.face = Math.atan2(dir.y, dir.x);
+    this.vx += dir.x * 90; this.vy += dir.y * 90;
+    this.stamina = Math.max(0, this.stamina - 4);
+    this.regenDelay = Math.max(this.regenDelay || 0, 0.3);
+    this.pokeCd = 0.6; this.pokeDone = false;
+    this.setState('poke', 0.28);
+    this.match.emit('poke', { s: this });
   }
 
   startCheck() {

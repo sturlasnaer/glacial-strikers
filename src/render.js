@@ -210,6 +210,7 @@ export class Renderer {
     for (const pt of fx.parts) if (pt.kind === 'ghost') list.push({ y: pt.s.y - 1, f: () => this.drawGhost(ctx, pt, match) });
     list.sort((a, b) => a.y - b.y);
     for (const d of list) d.f();
+    if (!lap) for (const k of match.skaters) if (k.state === 'poke' && !k.parked) this.drawPoke(ctx, k); // (the poke check's swoosh)
     if (!lap && match.twists.ice) for (const f of match.twists.ice.falls) this.drawIcicleFall(ctx, f); // (from the ceiling, over everyone)
     // near glass over anyone skating along the bottom boards (Pine Pond has snowbanks)
     const foreground = Assets.atlas.arena.glasses?.[arena];
@@ -411,6 +412,20 @@ export class Renderer {
       }
       ctx.drawImage(spr, x - 13 * s, y - 30 * s, spr.width / K, spr.height / K);
     }
+  }
+
+  // The poke check (Batch DZ's swoosh once it's in, an ice-blue streak till then): from the blade
+  // out along the jab, through the poke's short life.
+  drawPoke(ctx, s) {
+    const k = Math.min(1, s.stateT / (s.stateLen || 0.28)), a = s.face, sp = s.stickPoint(22), b = toScreen(sp.x, sp.y);
+    const id = `fx/poke_${k < 0.3 ? 1 : k < 0.65 ? 2 : 3}`, f = Assets.frame(id);
+    if (f && Assets.pages[f[0]]) { ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(a); Assets.draw(ctx, id, 0, 0, 0.5); ctx.restore(); return; }
+    const reach = 26 * Math.sin(Math.PI * Math.min(1, k * 1.4));
+    ctx.save();
+    ctx.globalAlpha = 0.8 * (1 - k);
+    ctx.strokeStyle = '#bfefff'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x + Math.cos(a) * reach, b.y + Math.sin(a) * reach * 0.85); ctx.stroke();
+    ctx.restore();
   }
 
   // The locker room's cub at home games (Batch DH), on the boards where the artists sat it: it
@@ -1354,7 +1369,7 @@ export class Renderer {
   motionFrame(s, match, set, dir) {
     if (s.stun > 0 || (s.celebrate > 0 && (match.state === 'goal' || match.state === 'over')) ||
         s.ultWindup > 0 || (s.charging && s.chargeT > 0.08) || s.dashT > 0 ||
-        s.state === 'shoot' || s.state === 'pass' || s.state === 'check' || s.stopping) return null;
+        s.state === 'shoot' || s.state === 'pass' || s.state === 'poke' || s.state === 'check' || s.stopping) return null;
     // crossovers through a hard turn at speed: two frames, stepping with the stride. Into one
     // on a sharp curve, kept while it still curves, and held a moment so it never flickers.
     const cross = set.crossover, tr = s.turnRate || 0, now = performance.now() / 1000;
@@ -1426,7 +1441,7 @@ export class Renderer {
     else if (s.ultWindup > 0 || (s.charging && s.chargeT > 0.08)) pose = 'shot_windup';
     else if (s.dashT > 0) pose = 'check';
     else if (s.state === 'shoot') pose = 'shot_release';
-    else if (s.state === 'pass') pose = 'pass';
+    else if (s.state === 'pass' || s.state === 'poke') pose = 'pass'; // (a poke: the stick out in front)
     else if (s.state === 'check') pose = 'check';
     else if (sp > 40) {
       // side-on skating has a 4-frame stride, a glide and a hockey stop

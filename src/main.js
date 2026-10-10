@@ -946,6 +946,8 @@ class App {
     m.on('pass', (e) => audio.sfx('pass', at(e.s.x, e.s.y)));
     m.on('receive', (e) => { if (e.from.controlled && e.s.team === 0) this.hud.coachPass(); }); // (the cub as coach: "Nice pass!")
     m.on('givego', () => { if (!this.attract && !this.save.settings.little && firstTime(this.save, 'givego')) this.hud.hint(t('Give-and-go! Your teammate is skating into space: pass it back.'), 4); });
+    m.on('poke', (e) => audio.sfx('poke', at(e.s.x, e.s.y, 0.7)));
+    m.on('poke_hit', (e) => { audio.sfx('stick', at(e.x, e.y)); if (e.s.controlled) this.rumble(0.25, 0.4, 70, e.s.team, e.s.seat); });
     m.on('saucer', (e) => { if (e.s.controlled && !this.attract && firstTime(this.save, 'saucer')) this.hud.hint(t('Saucer pass! With a rival right on you, your pass hops over their stick.'), 4); });
     m.on('receive', (e) => audio.sfx('receive', at(e.s.x, e.s.y)));
     m.on('goalie_pass', (e) => audio.sfx('pass', at(e.g.x, e.g.y, 0.6)));

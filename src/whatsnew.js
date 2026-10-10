@@ -2,6 +2,13 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10zm',
+    items: [
+      { icon: 'equipment_items/stick/passing', alt: 'icons/coop', text: 'The poke check! Without the puck, the button now pokes at the carrier\'s puck: no body contact, no penalty. Hold SPRINT with it for a body check as before.' },
+      { icon: 'hud_elements/misc/level_star', alt: 'icons/rookie', text: 'Veteran levels: past level 10 your players keep growing, up to ten veteran stars, each a point to push a stat past its usual limit. Goalies grow too.' },
+    ],
+  },
+  {
     id: '2026-10-10zl',
     items: [
       { icon: 'pet_rink/cheer_1', alt: 'icons/pet', text: 'In season the cub wears its pumpkin costume or Santa hat at home games too, and the team bus on the road-trip map dresses up as well.' },

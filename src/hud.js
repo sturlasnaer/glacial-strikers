@@ -128,9 +128,9 @@ export class HUD {
         : this.coop || this.keeper ? this.coopHints(K)
         : opts.versus ? `<b style="color:var(--ice)">P1</b> WASD · <kbd>F</kbd> ${t('shoot')} · <kbd>G</kbd> ${t('pass')} · <kbd>L-Shift</kbd> ${t('sprint')} · <kbd>R</kbd>/<kbd>T</kbd> ${t('skill/ult')}<br>
         <b style="color:var(--coral)">P2</b> ${t('Arrows')} · <kbd>K</kbd> ${t('shoot')} · <kbd>L</kbd> ${t('pass')} · <kbd>R-Shift</kbd> ${t('sprint')} · <kbd>O</kbd>/<kbd>P</kbd> ${t('skill/ult')}`
-        : match.simple && !match.simpleKeys && !match.goalieMode ? `${K('a')} ${t('or')} ${K('b')} ${t('plays: shoots near the net, passes further out, checks without the puck')} · ${K('pause')} ${t('pause')}`
+        : match.simple && !match.simpleKeys && !match.goalieMode ? `${K('a')} ${t('or')} ${K('b')} ${t('plays: shoots near the net, passes further out, pokes at the puck without it')} · ${K('pause')} ${t('pause')}`
         : match.goalieMode ? `${K('a')} ${t('block / pass')} · ${K('b')} ${t('dive / clear')} · ${K('sprint')} ${t('quick feet')}<br>${K('skill')} ${t('poke check')} · ${K('ult')} ${t('Wall of Ice')} · ${K('pause')} ${t('pause')}`
-        : `${K('a')} ${t('shoot/check')} · ${K('b')} ${t('pass/switch')} · ${K('sprint')} ${t('sprint')}<br>${K('skill')} ${t('skill')} · ${K('ult')} ${t('ultimate')} · ${K('pause')} ${t('pause')}`}</div>`;
+        : `${K('a')} ${t('shoot/poke')} · ${K('b')} ${t('pass/switch')} · ${K('sprint')} ${t('sprint')} (${t('with shoot: body check')})<br>${K('skill')} ${t('skill')} · ${K('ult')} ${t('ultimate')} · ${K('pause')} ${t('pause')}`}</div>`;
     this.el.querySelector('#pause-btn').addEventListener('click', (e) => { e.stopPropagation(); e.currentTarget.blur(); this.app.pause(); }); // (no focus left on it: Enter is the pass key)
     for (const i of [0, 1]) paint(this.el.querySelector('#d' + i), digit(match.score[i]));
     // every cut-in banner this match can show, recoloured before play rather than at the first ultimate
@@ -188,7 +188,7 @@ export class HUD {
     if (!n) return `${P1} WASD · <kbd>F</kbd> ${t('shoot')} · <kbd>G</kbd> ${t('pass')} · <kbd>L-Shift</kbd> ${t('sprint')} · <kbd>R</kbd>/<kbd>T</kbd> ${t('skill/ult')}<br>
         ${P2} ${t('Arrows')} · <kbd>K</kbd> ${t('shoot')} · <kbd>L</kbd> ${t('pass')} · <kbd>R-Shift</kbd> ${t('sprint')} · <kbd>O</kbd>/<kbd>P</kbd> ${t('skill/ult')}`;
     if (n >= 2) return `${P1} ${t('first gamepad')} · ${P2} ${t('second gamepad')}`;
-    return `${P1} ${K('a')} ${t('shoot/check')} · ${K('b')} ${t('pass/switch')} · ${K('sprint')} ${t('sprint')} · ${K('skill')}/${K('ult')} ${t('skill/ult')}<br>${P2} ${t('gamepad')}`;
+    return `${P1} ${K('a')} ${t('shoot/poke')} · ${K('b')} ${t('pass/switch')} · ${K('sprint')} ${t('sprint')} · ${K('skill')}/${K('ult')} ${t('skill/ult')}<br>${P2} ${t('gamepad')}`;
   }
 
   hide() {
@@ -533,7 +533,7 @@ export class HUD {
     const incoming = !m.puck.owner && m.puck.pass && m.puck.pass.to === c;
     const comboIncoming = incoming && m.chemLevel(m.puck.pass.from, c) > 0;
     const dl = this.drill && this.drill.touchLabels ? this.drill.touchLabels(m) : null;
-    const aLbl = m.simple && m.simpleSeat(0, 0) ? t('PLAY') : dl ? dl.a : has ? (c.comboT > 0 ? t('COMBO') : t('SHOOT')) : comboIncoming ? t('COMBO') : incoming ? t('ONE-T') : t('CHECK');
+    const aLbl = m.simple && m.simpleSeat(0, 0) ? t('PLAY') : dl ? dl.a : has ? (c.comboT > 0 ? t('COMBO') : t('SHOOT')) : comboIncoming ? t('COMBO') : incoming ? t('ONE-T') : c.in.sprintBtn ? t('CHECK') : t('POKE');
     const bLbl = dl ? dl.b : has ? t('PASS') : t('SWITCH');
     if (this.last.a !== aLbl) { this.last.a = aLbl; this.touch.querySelector('.t-a span').textContent = aLbl; }
     if (this.last.b !== bLbl) { this.last.b = bLbl; this.touch.querySelector('.t-b span').textContent = bLbl; }
