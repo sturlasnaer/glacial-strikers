@@ -7,8 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **CE: a resurfacer that turns smoothly, and icons for Play as**
-2. **CF: the Snow Fox dresses up too**
+1. **CF: the Snow Fox dresses up too**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -25,6 +24,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered CC:** the Resurfacer drill icon and Fresh Sheet achievement art. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CC-Testing-Update`.
 
 **Delivered CD:** Halloween and holiday rink dressing: animated banners, bunting, pumpkins, bats, tree lights and a snowman. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CD-Testing-Update`.
+
+**Delivered CE:** eight resurfacer diagonal wheel frames and three Play as icons. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CE-Testing-Update`.
 
 ## Format notes
 
@@ -265,7 +266,7 @@ The home rink (the Frostline Rink) will dress up by the calendar: from 20 Octobe
 
 About 22 frames, all in the `home` palette style (they're never recoloured), on `home` group pages. The game's code is ready (`drawSeasonal` in src/render.js, the dates in src/seasonal.js): it reads `atlas.seasonal.halloween` and `atlas.seasonal.holiday`, each with `banner`, `bunting`, `banner_rect_backdrop` and `bunting_rects_backdrop` exactly as `atlas.allstar` has them, plus `props: [{ frames: [ids], x, y, scale, fps }]` (the pumpkins, the tree and the snowman at backdrop pixels, never on the ice) and `flyers: [{ frames: [ids], y, scale, speed, fps }]` (the bats, crossing the rafters). Open the game with `?season=halloween` or `?season=holiday` to see them out of season.
 
-## Batch CE: a resurfacer that turns smoothly, and icons for Play as
+## Batch CE ✓: a resurfacer that turns smoothly, and icons for Play as
 
 1. **The resurfacer's diagonals.** In the Resurfacer drill the machine drives in any direction, but its art (`polish/resurfacer`, from the title screen's lap) has only east, south, west and north, so it snaps between them. Please add `southeast`, `southwest`, `northwest` and `northeast`, two wheel frames each (`phase_1`, `phase_2`), matching the existing eight frames' size, scale, pivot and lighting: 8 frames. The game picks the nearest of the eight once they're in.
 2. **Play as icons**, 128×128 like `icons/coop`, for the chips before a match: `icons/play_skaters` (a skater with the puck, our colours), `icons/play_goalie` (Halla in the butterfly) and `icons/coop_keeper` (two controllers, one ice blue, one mint, with a goalie mask between them). 3 frames.
