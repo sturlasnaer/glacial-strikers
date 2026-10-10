@@ -9,6 +9,7 @@ import { audio } from './audio.js';
 import { PadNav } from './padnav.js';
 import { forceSeason, seasonFor } from './seasonal.js';
 import { addPacks } from './album.js';
+import { cleanSign, CROWD_SIGNS } from './fancam.js';
 import { firstTime } from './guide.js';
 import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as cloudBackup, settleCups } from './online.js';
 import { ARENA_MUSIC } from './songs.js';
@@ -20,7 +21,7 @@ import { noteCup, hallCandidates, induct } from './hall.js';
 import { pressWorthy, pressPlayer, answerPress } from './press.js';
 import { chantBoost, trainingSessions } from './facilities.js';
 import { isKey, setKeyMap, setPadMap } from './keys.js';
-import { HUD } from './hud.js';
+import { HUD, fanCamReady } from './hud.js';
 import { toScreen } from './rink.js';
 import { Replay } from './replay.js';
 import { Commentary } from './commentary.js';
@@ -328,7 +329,9 @@ class App {
     const host = Object.values(TEAMS).find((tm) => tm.arena === arena); // its mascot dances in the stands
     const team = teamInfo(teamId); // (the All-Stars recolour the rival pages they're given)
     const dressed = arena === 'home' && !!seasonFor(); // (the home rink's Halloween or holiday dressing, Batch CD: only in season)
-    Assets.trim({ teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(team.groups || []), ...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : [])] });
+    Assets.trim({ teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(team.groups || []), ...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : [])] });
+    const fancam = arena === 'home' && !this.attract && !!Assets.atlas.fancam; // (the fan cam's fans: Batch CT)
+    if (fancam) Assets.loadGroup('fancam').catch(() => {});
     if (dressed) Assets.loadGroup('seasonal').then(() => { if (this.scene === 'title') this.ui.titleLogo(); }).catch(() => {}); // (the logo's trimmings too)
     if (geared) Assets.ensureGear();
     if (rules) Assets.loadGroup('rules').catch(() => {});
@@ -849,6 +852,18 @@ class App {
     ];
   }
 
+  // The fan cam after our goal at home (Batch CT): the player's own sign, or now and then one
+  // of the crowd's.
+  fanCam(m, e) {
+    if (!fanCamReady()) return;
+    const own = cleanSign(this.save.settings.sign);
+    if (!own && Math.random() > 0.4) return;
+    const F = Assets.atlas.fancam, fan = F.fans[Math.floor(Math.random() * F.fans.length)];
+    const crowd = CROWD_SIGNS[Math.floor(Math.random() * CROWD_SIGNS.length)];
+    const text = own || t(crowd, { club: CLUB.short.toUpperCase(), name: e.scorer ? e.scorer.name.toUpperCase() : CLUB.short.toUpperCase() });
+    setTimeout(() => { if (this.match === m && this.scene === 'match') this.hud.fanCam(fan, F.frame, text); }, 900);
+  }
+
   hookMatch(m) {
     const cam = () => this.renderer.cam;
     const vol = (x, y) => {
@@ -939,6 +954,7 @@ class App {
       this.hud.goal(e);
       if (e.team === 0) buzz([30, 40, 60]);
       setTimeout(() => { if (this.match === m) audio.sfx('whistle', { vol: 0.5 }); }, 2600);
+      if (e.team === 0 && this.arena === 'home' && !this.attract && this.cur && !this.cur.drill && !this.cur.versus) this.fanCam(m, e);
     });
     m.on('faceoff', () => audio.sfx('whistle', { vol: 0.55 }));
     m.on('penalty_shot', (e) => {

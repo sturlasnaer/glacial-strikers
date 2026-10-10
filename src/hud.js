@@ -7,6 +7,52 @@ import { firstKey } from './keys.js';
 import { t } from './i18n.js';
 import { isPartsArt } from './modular.js';
 
+// The fan cam (Batch CT): is the art in, loaded and ready to draw?
+export const fanCamReady = () => {
+  const F = Assets.atlas && Assets.atlas.fancam;
+  const loaded = (id) => { const f = Assets.frame(id); return !!(f && Assets.pages[f[0]]); }; // (whatever page group the art came on)
+  return !!(F && F.fans && F.fans.length && F.fans.every((f) => f.frames.every(loaded)));
+};
+
+// One frame of the fan cam as a data URL: the fan, the words on their sign, the screen's edge
+// and FAN CAM. font: a CSS font family; label: 'FAN CAM' in the game's language.
+function fanCamFrame(fan, i, text, font, label, frameId) {
+  const id = fan.frames[i % fan.frames.length], f = Assets.frame(id);
+  if (!f || !Assets.pages[f[0]]) return null;
+  const w = Math.round(f[3] / f[7]), h = Math.round(f[4] / f[7]);
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d');
+  Assets.draw(ctx, id, f[5] / f[7], f[6] / f[7], 1);
+  const sg = fan.sign;
+  if (sg) {
+    ctx.save();
+    ctx.translate(sg.x + sg.w / 2, sg.y + sg.h / 2);
+    ctx.rotate(((sg.rot || 0) * Math.PI) / 180);
+    ctx.fillStyle = '#14233b'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const words = text.split(' ');
+    // one line as big as fits; two if that comes out too small
+    let lines = [text];
+    const fit = (ls) => { let s = Math.min(sg.h * (ls.length > 1 ? 0.42 : 0.7), 200); ctx.font = `${s}px ${font}`; const widest = Math.max(...ls.map((l) => ctx.measureText(l).width)); if (widest > sg.w * 0.9) s *= (sg.w * 0.9) / widest; return s; };
+    let size = fit(lines);
+    if (size < sg.h * 0.32 && words.length > 1) {
+      const half = Math.ceil(words.length / 2), two = [words.slice(0, half).join(' '), words.slice(half).join(' ')], s2 = fit(two);
+      if (s2 > size) { lines = two; size = s2; }
+    }
+    ctx.font = `${size}px ${font}`;
+    lines.forEach((l, k) => ctx.fillText(l, 0, (k - (lines.length - 1) / 2) * size * 0.95));
+    ctx.restore();
+  }
+  if (frameId && Assets.frame(frameId)) {
+    const g = Assets.frame(frameId), k = w / (g[3] / g[7]); // (stretched across the fan's frame)
+    Assets.draw(ctx, frameId, (g[5] / g[7]) * k, (g[6] / g[7]) * k, k);
+  }
+  ctx.font = `${Math.round(h * 0.08)}px ${font}`; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillStyle = 'rgba(20,35,59,0.6)'; ctx.fillText(label, w * 0.06 + 2, h * 0.05 + 2);
+  ctx.fillStyle = '#fff2cb'; ctx.fillText(label, w * 0.06, h * 0.05);
+  return c.toDataURL('image/png');
+}
+
 // Everything the HUD shows mid-match is drawn onto canvases: turning a picture into a PNG
 // (toDataURL) makes the browser wait for the GPU, a visible stall on phones.
 const paint = (cv, src) => {
@@ -62,6 +108,7 @@ export class HUD {
         <div class="rp-bar bottom"><button class="rp-skip" id="rp-skip">${t('Skip')} ▸</button></div>
       </div>
       <div class="cutins" id="cutins"></div>
+      <div class="fancam" id="fancam" hidden><img alt=""></div>
       <div class="ticker" id="ticker" hidden><span class="live">${t('LIVE')}</span><img class="tk-ico" alt="" hidden><span class="tx"></span></div>
       <div class="penchip" id="penchip" hidden></div>
       <div class="powerchip" id="power" hidden><img alt=""><span></span><span class="t"><i></i></span></div>
@@ -137,6 +184,22 @@ export class HUD {
   }
 
   // Ultimate cut-in: the character's banner art (or a portrait band) sliding across.
+  // The fan cam (Batch CT): a fan's sign on the big screen for a few seconds, the sign bobbing.
+  fanCam(fan, frameId, text) {
+    const box = this.el.querySelector('#fancam');
+    if (!box) return;
+    const font = this.app.renderer.font, label = t('FAN CAM');
+    const urls = [0, 1].map((i) => fanCamFrame(fan, i, text, font, label, frameId)).filter(Boolean);
+    if (!urls.length) return;
+    const img = box.querySelector('img');
+    let i = 0;
+    img.src = urls[0];
+    box.hidden = false; box.classList.remove('out'); void box.offsetWidth; box.classList.add('in');
+    clearInterval(this.fanTimer); clearTimeout(this.fanOut);
+    this.fanTimer = setInterval(() => { i ^= 1; img.src = urls[i % urls.length]; }, 380);
+    this.fanOut = setTimeout(() => { box.classList.add('out'); setTimeout(() => { box.hidden = true; clearInterval(this.fanTimer); }, 350); }, 3000);
+  }
+
   cutin(s, partner, title) {
     const box = this.el.querySelector('#cutins');
     if (!box) return;

@@ -56,6 +56,7 @@ import { PAINTS, MODULAR, SKIN_TONES, HAIR_COLORS } from './modular.js';
 import { seasonFor } from './seasonal.js';
 import { canCreate, createPlayer, restyle, defaultChoice, stylesFor, cleanName, MAX_OWN, NAME_MAX } from './create.js';
 import { DECOR, DECOR_BY_ID, DECOR_SLOTS, SLOT_NAMES as DECOR_SLOT_NAMES, buyDecor, putUp, takeDown, owns as ownsDecor, isOn as decorOn, placed as decorPlaced } from './decor.js';
+import { cleanSign, SIGN_MAX } from './fancam.js';
 import { albumPages, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
 
 const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
@@ -2937,6 +2938,7 @@ export class UI {
       ${row(t('Audio quality'), seg('audioQuality', [['auto', t('Auto')], ['full', t('Full')], ['light', t('Light')]]), t('Light leaves out the backing layers and crowd voices for slower phones. Auto picks it on low-memory devices.'))}
       ${row(t('Music room'), `<button class="btn small ghost" id="s-jukebox">${t('Listen')}</button>`, t('Every track in the game, from the title theme to the Cup Final.'))}
       ${row(t('Our goal horn'), `<span class="seg">${[['home', t('Classic')], ['ember_dome', t('Volcano')], ['aurora_palace', t('Fanfare')], ['golden_hall', t('Ram\'s horn')], ['dark_aerie', t('Bell and ravens')], ['pine_pond', t('Cowbells')]].map(([v, label]) => `<button class="chip" data-horn="${v}" aria-pressed="${(st.horn || 'home') === v}">${label}</button>`).join('')}</span>`, t('At our rink. Tap one to hear it.'))}
+      ${Assets.atlas.fancam ? row(t('Our fan sign'), `<input class="sign-in" id="s-sign" maxlength="${SIGN_MAX}" value="${esc(st.sign || '')}" placeholder="${esc(t('GO {club}!', { club: CLUB.short.toUpperCase() }))}" aria-label="${esc(t('Our fan sign'))}" autocomplete="off">`, t('A fan holds it up on the big screen after our goals at home. Leave it empty for the crowd\'s own.')) : ''}
       <div class="label">${t('Gameplay')}</div>
       ${row(t('Rival difficulty'), seg('difficulty', [['easy', t('Easy')], ['normal', t('Normal')], ['hard', t('Hard')]]))}
       ${row(t('Aim assist'), seg('assist', [['off', t('Off')], ['normal', t('Normal')], ['strong', t('Strong')]]), t('Strong tightens your shots and widens pass catching. Off aims dead centre unless you steer.'))}
@@ -2981,6 +2983,7 @@ export class UI {
           const y = m.scrollTop;
           m.innerHTML = body(); bind(); m.scrollTop = y;
         }, m);
+        m.querySelector('#s-sign')?.addEventListener('input', (e) => { st.sign = cleanSign(e.target.value); writeSave(s); });
         this.click('[data-little]', (el) => { // (several settings at once)
           setLittle(st, el.dataset.little === 'true');
           writeSave(s); audio.sfx('click'); this.app.applySettings();
