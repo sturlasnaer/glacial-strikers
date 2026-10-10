@@ -12,6 +12,12 @@ const raw = (o = {}) => ({ mx: 0, my: 0, sprint: false, a: false, b: false, skil
 const toward = (s, x, y) => { const dx = x - s.x, dy = y - s.y, l = Math.hypot(dx, dy) || 1; return { mx: dx / l, my: dy / l, l }; };
 
 const bots = {
+  // Puck Party: to the puck, then to the nearer net, shooting in close
+  puckparty: (m, ctrl, st) => {
+    const c = m.controlled(), q = m.puck, side = q.x >= 0 ? 1 : -1, tx = c.hasPuck ? side * GOAL_X : q.x, ty = c.hasPuck ? 0 : q.y, d = Math.hypot(tx - c.x, ty - c.y) || 1;
+    st.f = (st.f || 0) + 1;
+    return { ...raw(), mx: (tx - c.x) / d, my: (ty - c.y) / d, sprint: true, a: c.hasPuck && Math.abs(side * GOAL_X - c.x) < 200 && st.f % 12 < 2 };
+  },
   // Power Play: carry toward the slot, shoot from in close; pass across now and then when pressed
   powerplay: (m, ctrl, st) => {
     const s = m.controlled(), p = m.puck;
