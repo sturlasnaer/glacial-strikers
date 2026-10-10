@@ -202,13 +202,21 @@ export class TeamAI {
     const first = kept && kept.t < times[0].t + 0.15 ? kept : times[0];
     this.chaser = null;
     if (!(ctrls.length && ctrlT + 0.25 < first.t)) {
-      roles.set(first.s, { kind: 'chase', x: first.x, y: first.y });
+      // the player's pass: rather than charging the teammate as they take it, a gap goal-side of
+      // them (closer on the stronger teams); cutting it off out in the lane is still fair game
+      const to = p.pass && p.pass.to && p.pass.from.team !== this.team && m.humans.includes(p.pass.from.team) ? p.pass.to : null;
+      if (to && Math.hypot(first.x - to.x, first.y - to.y) < 70) {
+        const hd = this.diff * this.diff, g = norm(this.ownX - to.x, -to.y), gap = lerp(95, 30, hd);
+        roles.set(first.s, { kind: 'spot', x: to.x + g.x * gap, y: to.y + g.y * gap, sprint: hd > 0.3 });
+      } else roles.set(first.s, { kind: 'chase', x: first.x, y: first.y });
       times.splice(times.indexOf(first), 1);
       this.chaser = first.s;
     }
     // their pass on its way: the rest keep marking, goal side, as if it had arrived
     if (p.pass && p.pass.from && p.pass.from.team !== this.team) {
-      const marks = opps.filter((o) => o !== p.pass.from).map((o) => { const g = norm(this.ownX - o.x, -o.y); return { x: o.x + g.x * 48, y: o.y + g.y * 48, kind: 'mark', who: o, sprint: true }; });
+      // (the player's side: marked from as far off as when they have the puck, see above)
+      const md = this.m.humans.includes(p.pass.from.team) ? Math.max(48, lerp(115, 55, this.diff * this.diff)) : 48;
+      const marks = opps.filter((o) => o !== p.pass.from).map((o) => { const g = norm(this.ownX - o.x, -o.y); return { x: o.x + g.x * md, y: o.y + g.y * md, kind: 'mark', who: o, sprint: true }; });
       this.assign(times.map((t) => t.s), marks, roles);
       return roles;
     }

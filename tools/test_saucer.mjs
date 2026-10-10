@@ -1,6 +1,7 @@
 // The saucer pass: a pass from the player's side lifts over the stick of a rival right on the
 // passer (closer in against the top teams), so being pressed isn't losing the puck; rivals
-// further out can still read the lane. Never in AI-vs-AI or two-player versus games.
+// further out can still read the lane. Never in AI-vs-AI or two-player versus games. And the
+// teammate taking the pass isn't charged as they catch it (see ai.js plan).
 //   node tools/test_saucer.mjs
 import { Match } from '../src/match.js';
 import { CHARACTERS } from '../src/data.js';
@@ -53,6 +54,20 @@ const setup = (cfg, near = 40) => {
   v.m.pass(v.c, v.mate);
   check('two players against each other: as it was', !v.m.puck.pass.over);
 }
+
+// room at the catch: while the player's pass is on its way, the rival nearest the teammate
+// taking it holds a gap goal-side of them (it charged at the catch before), and in AI-vs-AI play
+// it still goes for the puck
+const nearCatch = (cfg) => {
+  const { m, c, mate, o } = setup(cfg, 300);
+  o.x = mate.x + 60; o.y = mate.y + 30; // (beside the teammate, quicker to the puck than anyone)
+  m.pass(c, mate);
+  m.puck.pass.over = null;
+  m.setHumanInput(idle()); m.update(1 / 60);
+  return m.ai[1].brain(o).role;
+};
+check('the player\'s teammate: a gap, not a charge', nearCatch({ humanTeam: 0, diff: [0.5, 0.3] }) === 'spot', nearCatch({ humanTeam: 0, diff: [0.5, 0.3] }));
+check('AI against AI: it still goes for the puck', nearCatch({ humanTeam: null, diff: [0.5, 0.3] }) === 'chase', nearCatch({ humanTeam: null, diff: [0.5, 0.3] }));
 
 console.log(`Saucer pass: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
