@@ -331,7 +331,7 @@ class App {
     const host = Object.values(TEAMS).find((tm) => tm.arena === arena); // its mascot dances in the stands
     const team = teamInfo(teamId); // (the All-Stars recolour the rival pages they're given)
     const dressed = arena === 'home' && !!seasonFor(); // (the home rink's Halloween or holiday dressing, Batch CD: only in season)
-    Assets.trim({ teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(team.groups || []), ...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(!this.attract && !cfg.drill ? ['race'] : [])] });
+    Assets.trim({ teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(team.groups || []), ...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(!this.attract && !cfg.drill ? ['race'] : []), ...(cfg.night && Assets.frame('night/aurora_1') ? [Assets.atlas.pages[Assets.frame('night/aurora_1')[0]].group] : [])] });
     const fancam = arena === 'home' && !this.attract && !!Assets.atlas.fancam; // (the fan cam's fans: Batch CT)
     const racing = !this.attract && !cfg.drill && Assets.atlas.pages.some((pg) => pg.group === 'race'); // (the mascot race's runners: Batch DB)
     if (racing) Assets.loadGroup('race').catch(() => {});
@@ -351,6 +351,7 @@ class App {
       if (this.duo) cfg.simple = ['p1', 'p2'];
       else if (two) { if (st.simple2 && st.simple2 !== 'none') cfg.simple = st.simple2 === 'both' ? ['p1', 'p2'] : [st.simple2]; } else if (st.simple) cfg.simple = true;
     }
+    this.night = !!cfg.night && !this.attract; // (a night game: its backdrop and the northern lights)
     const m = new Match(cfg);
     this.match = m;
     if (!this.attract) { // the title screen's match shows no cut-ins
@@ -513,11 +514,14 @@ class App {
     });
   }
 
-  startExhibition(teamId, mods = [], arena = 'auto', rules = true, coop = false, mini = false) {
-    this.lastExhibition = { teamId, mods, arena, rules, coop }; // (for Play again on the results)
+  startExhibition(teamId, mods = [], arena = 'auto', rules = true, coop = false, mini = false, night = false) {
+    this.lastExhibition = { teamId, mods, arena, rules, coop, night }; // (for Play again on the results)
     const where = this.arenaFor(teamId, arena);
-    this.loadThen(Assets.ensureTeam(teamId, where), () =>
-      this.beginMatch(teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 120, round: 'Exhibition' }, true, mods, { arena: where, rules, coop, mini }));
+    // a night game (Batch DE): the rink's night backdrop and the northern lights, where there are some
+    const dark = night && Assets.atlas.arenas && Assets.atlas.arenas[where + '_night'] ? where + '_night' : null;
+    const aurora = dark && Assets.frame('night/aurora_1');
+    this.loadThen(Promise.all([Assets.ensureTeam(teamId, where), dark && Assets.ensureArena(dark), aurora && Assets.loadGroup(Assets.atlas.pages[aurora[0]].group)]), () =>
+      this.beginMatch(teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 120, round: 'Exhibition' }, true, mods, { arena: where, rules, coop, mini, night: !!dark }));
   }
 
   // The Mini Cup's next game (a new cup if there's none on, or the last one's over).
@@ -823,6 +827,7 @@ class App {
     const goalieMode = as === 'goalie' || keeperCoop; // (daily goals are for skaters)
     const cfg = extra.allstar ? allStarConfig(s, extra.allstar, { goalieMode }) : matchConfig(s, teamId, stage, { plans: [plan, theirPlan], buffs, goalieMode });
     if (extra.mini) cfg.winScore = MINI_WIN; // (the Mini Cup: quick games)
+    cfg.night = !!extra.night;
     cfg.mods = mods;
     cfg.coop = coop; cfg.keeperCoop = keeperCoop;
     this.cur.coop = coop || keeperCoop; // (two players' input either way)
@@ -1212,7 +1217,7 @@ class App {
       const finish = () => {
         // Play again: the same exhibition straight away
         if (c.mini) return this.miniNext(rewards.won); // (the Mini Cup: the bracket, or the cup)
-        if (this.rematchNext) { this.rematchNext = false; const e = this.lastExhibition; return this.startExhibition(e.teamId, e.mods, e.arena, e.rules, e.coop); }
+        if (this.rematchNext) { this.rematchNext = false; const e = this.lastExhibition; return this.startExhibition(e.teamId, e.mods, e.arena, e.rules, e.coop, false, e.night); }
         if (becameChampion) { this.scene = 'results'; this.music('final'); audio.jingle('champion'); this.ui.champion(() => this.goHub('tournament')); } else this.goHub(rewards.won ? 'tournament' : 'team');
       };
       const call = (next) => { const o = this.pendingOffer; this.pendingOffer = null; return o ? this.ui.rivalCall(o, next) : next(); };
@@ -1763,7 +1768,7 @@ class App {
       const lap = this.lap && this.attract ? this.lap : (m && m.drill && m.drill.machine) || null; // (the title's lap, or the Resurfacer drill's machine)
       const focus = lap && toScreen(lap.pos().x, lap.pos().y);
       this.renderer.updateCamera(m, this.fx, realDt, { attract: this.attract, focus, zoom: this.attract ? 0.9 : this.replay.active ? 1.15 : m.pshot ? 1.12 : 1 });
-      this.renderer.render(m, this.fx, { awayTeamId: this.awayTeamId, awayColor: t.color, awayColor2: t.color2, arena: this.arena, replay: this.replay.active, lap, save: this.save }); // (save: the rafters' banners at home)
+      this.renderer.render(m, this.fx, { awayTeamId: this.awayTeamId, awayColor: t.color, awayColor2: t.color2, arena: this.arena, replay: this.replay.active, lap, save: this.save, night: this.night }); // (save: the rafters' banners at home)
       this.clips.frame();
       this.hud.update(realDt);
       this.crowdT = (this.crowdT || 0) - realDt;

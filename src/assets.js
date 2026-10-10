@@ -145,7 +145,7 @@ export const Assets = {
     // recoloured page sets keep references to the original pages they didn't change: drop those too
     for (const r of this.recolored.values()) r.pages = r.pages.map((pg) => (released.has(pg) ? null : pg));
     for (const [k, img] of [...this.backdrops]) {
-      if (k === 'home' || k === keep.arena) continue;
+      if (k === 'home' || k === keep.arena || k === keep.arena + '_night') continue; // (a night game's backdrop too)
       this.backdrops.delete(k); if (a.arenas && a.arenas[k]) this.forget(a.arenas[k]);
     }
     for (const k of [...this.recolored.keys()]) if (k !== 'club' && k !== 'homekit' && !(keep.teams || []).includes(k)) this.recolored.delete(k);

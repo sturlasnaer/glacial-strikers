@@ -535,7 +535,7 @@ export class UI {
     const mult = () => [...this.challenges].reduce((m, id) => m * CHALLENGES.find((c) => c.id === id).mult, 1);
     // the challenges and the arena fold away (shut by default on a phone on its side, so the rivals come first)
     this.qpOpen ??= !(typeof matchMedia === 'function' && matchMedia('(max-height: 480px)').matches);
-    const optsLine = () => `${t('Match options')}: ${(this.arenaPick || 'auto') === 'auto' ? t('Their building') : esc(ARENAS[this.arenaPick].name)}${this.arenaRules === false ? ` · ${t('Arena rules off')}` : ''}${this.challenges.size ? ` · ${t(this.challenges.size > 1 ? '{n} challenges' : '{n} challenge', { n: this.challenges.size })} (${t('coins x{n}', { n: +mult().toFixed(2) })})` : ''}`;
+    const optsLine = () => `${t('Match options')}: ${(this.arenaPick || 'auto') === 'auto' ? t('Their building') : esc(ARENAS[this.arenaPick].name)}${this.arenaRules === false ? ` · ${t('Arena rules off')}` : ''}${this.nightPick ? ` · ${t('Night game')}` : ''}${this.challenges.size ? ` · ${t(this.challenges.size > 1 ? '{n} challenges' : '{n} challenge', { n: this.challenges.size })} (${t('coins x{n}', { n: +mult().toFixed(2) })})` : ''}`;
     this.modal(`
       <h2>${t('Quick play')}</h2>
       <p class="muted" style="margin:0">${t('Exhibitions use your current team and pay half rewards. A shootout is five penalty shots each way: you shoot, then you play goalie.')}</p>
@@ -548,7 +548,7 @@ export class UI {
       <div>
         <div class="label" style="font-size:15px">${t('Arena')}</div>
         <div class="filters" style="margin:6px 0 0">${['auto', ...Object.keys(ARENAS).filter((k) => !ARENAS[k].exhibitionOnly || (Assets.atlas.arenas && Assets.atlas.arenas[k]))].map((k) => `<button class="chip" data-arena="${k}" aria-pressed="${(this.arenaPick || 'auto') === k}">${k === 'auto' ? t('Their building') : esc(ARENAS[k].name)}${ARENAS[k] && ARENAS[k].rule ? ` <span class="muted">· ${ruleIcon(ARENAS[k].twist, 32)}${esc(t(ARENAS[k].rule))}</span>` : ''}</button>`).join('')}
-          <button class="chip" id="arena-rules" aria-pressed="${this.arenaRules !== false}" title="${esc(t('Meltwater in the Ember Dome, aurora lanes in the Aurora Palace, pond cracks on Pine Pond, rumble strips in the Golden Hall, raven shadows in the Dark Aerie'))}">${this.arenaRules !== false ? t('Arena rules on') : t('Arena rules off')}</button></div>
+          <button class="chip" id="arena-rules" aria-pressed="${this.arenaRules !== false}" title="${esc(t('Meltwater in the Ember Dome, aurora lanes in the Aurora Palace, pond cracks on Pine Pond, rumble strips in the Golden Hall, raven shadows in the Dark Aerie'))}">${this.arenaRules !== false ? t('Arena rules on') : t('Arena rules off')}</button>${Object.keys(Assets.atlas.arenas || {}).some((k) => k.endsWith('_night')) ? `<button class="chip" id="arena-night" aria-pressed="${!!this.nightPick}" title="${esc(t('Under the lights at the outdoor rinks (Pine Pond, the Harbour Rink, the Summit Rink).'))}">${t('Night game')}</button>` : ''}</div>
       </div>
       </details>
       <div class="choice">${opts.map((tm) => `
@@ -581,7 +581,8 @@ export class UI {
         el.textContent = this.arenaRules ? t('Arena rules on') : t('Arena rules off');
         audio.sfx('click'); upd();
       }, m);
-      this.click('[data-team]', (el) => { close(); this.app.startExhibition(el.dataset.team, [...this.challenges], this.arenaPick || 'auto', this.arenaRules !== false); }, m);
+      this.click('#arena-night', (el) => { this.nightPick = !this.nightPick; el.setAttribute('aria-pressed', this.nightPick); audio.sfx('click'); upd(); }, m);
+      this.click('[data-team]', (el) => { close(); this.app.startExhibition(el.dataset.team, [...this.challenges], this.arenaPick || 'auto', this.arenaRules !== false, false, false, !!this.nightPick); }, m);
       this.click('[data-so]', (el) => { close(); this.app.startShootout(el.dataset.so); }, m);
     });
   }

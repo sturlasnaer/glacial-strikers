@@ -132,8 +132,9 @@ export class Renderer {
     // backdrop
     ctx.imageSmoothingEnabled = z * dpr < 1.3;
     ctx.imageSmoothingQuality = 'medium';
-    ctx.drawImage(Assets.backdropFor(arena), 0, 0);
+    ctx.drawImage(Assets.backdropFor(ui.night && Assets.backdrops.has(arena + '_night') ? arena + '_night' : arena), 0, 0); // (a night game's own, Batch DE)
     ctx.imageSmoothingEnabled = true;
+    if (ui.night) this.drawAurora(ctx, fx);
     // team logo painted under the ice at centre
     const cc = toScreen(0, 0);
     const host = arena !== 'home' && TEAMS[ui.awayTeamId] && TEAMS[ui.awayTeamId].arena === arena ? TEAMS[ui.awayTeamId] : null;
@@ -539,6 +540,14 @@ export class Renderer {
     if (board) this.drawScoreboard(ctx, match, fx, board);
     this.drawGlassFans(ctx, fx);
     this.drawCameraFlashes(ctx, fx);
+  }
+
+  // Northern lights over a night game (Batch DE): four frames, each fading into the next.
+  drawAurora(ctx, fx) {
+    const ids = [1, 2, 3, 4].map((i) => `night/aurora_${i}`), f = Assets.frame(ids[0]);
+    if (!f || !Assets.pages[f[0]]) return;
+    const u = (fx.time / 3) % 4, i = Math.floor(u), k = u - i, w = f[3] / f[7];
+    for (const [id, a] of [[ids[i], 1 - k], [ids[(i + 1) % 4], k]]) Assets.draw(ctx, id, (f[5] / f[7]) * (1536 / w), (f[6] / f[7]) * (1536 / w), 1536 / w, { alpha: 0.55 * a, blend: 'lighter' }); // (across the top, whatever its pivot)
   }
 
   // The Summit Rink (Batch CV): a cable car gliding across the sky, swaying, and clouds drifting
