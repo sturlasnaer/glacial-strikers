@@ -1965,6 +1965,7 @@ export const IS = {
   "The season in review: before a new season starts, a look back at the last one: the place, the record, the top scorers, the goals met, the records set and who went into the Hall of Fame.": "Tímabilið í hnotskurn: áður en nýtt tímabil hefst er litið um öxl: sætið, árangurinn, markahæstu leikmennirnir, markmiðin sem náðust, metin sem voru sett og hver fór inn í Frægðarhöllina.",
   "The Snow Fox": "Snærefurinn",
   "The Snow Fox isn't the only crest: Team › Customise club has six more, all in your colours.": "Snærefurinn er ekki eina merkið: Lið › Sérsníða félag er með sex í viðbót, öll í þínum litum.",
+  "The sticker album has its own look now (shiny foil, packs to tear open) and eight more stickers: every club's mascot, the Snow Fox too.": "Límmiðaalbúmið hefur fengið nýtt útlit (glansandi filmu og pakka til að rífa upp) og átta límmiða í viðbót: lukkudýr allra liðanna, Snærefinn líka.",
   "The sticker album, in Trophies: a sticker for everyone in the league. Every match brings a pack, two for a win. Look out for shiny ones!": "Límmiðaalbúmið, undir Verðlaun: límmiði fyrir alla í deildinni. Hverjum leik fylgir pakki, tveir fyrir sigur. Haltu augunum opnum fyrir glansandi límmiðum!",
   "The trophy chest": "Verðlaunakistan",
   "The twins are together: dress them both for Ragnarök.": "Tvíburarnir eru saman: settu þá báða í liðið fyrir Ragnarök.",

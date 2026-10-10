@@ -1085,7 +1085,7 @@ export class UI {
           <h3>${p.team ? `<img src="${crest(p.team, 64)}" alt="" width="30" height="30">` : '★'} ${esc(title(p))}</h3>
           <div class="stickers">${p.stickers.map((st) => (a.got[st.id] ? stickerHtml(st, a.foil[st.id], a.got[st.id])
             : `<div class="stk empty"><span class="big-no">${st.n}</span><small>${st.kind === 'legend' ? '???' : esc(stickerName(st))}</small></div>`)).join('')}</div>
-          ${full ? `<div class="album-seal">${t('Page complete!')}</div>` : ''}
+          ${full ? `<div class="album-seal"><i></i><span>${t('Page complete!')}</span></div>` : ''}
         </div>
         <div class="row" style="justify-content:space-between;margin-top:10px">
           <button class="btn small ghost" data-step="-1" ${i === 0 ? 'disabled' : ''}>◂</button>

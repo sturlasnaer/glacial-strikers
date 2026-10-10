@@ -1376,7 +1376,9 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 @media (prefers-reduced-motion: reduce) { .stk.foil::after { animation: none; } }
 .stk.empty { background: transparent; box-shadow: none; border: 2px dashed rgba(90, 60, 30, 0.45); min-height: 150px; justify-content: center; color: #6b5236; transform: none; }
 .stk.empty .big-no { font-family: var(--display); font-size: 34px; line-height: 1; opacity: 0.6; }
-.album-seal { position: absolute; right: 10px; top: 6px; transform: rotate(8deg); font-family: var(--display); font-size: 18px; color: #7a4b00; padding: 18px 10px; border-radius: 50%; background: #ffd45e url(../assets/gfx/album/seal.png) center / contain no-repeat; box-shadow: 0 0 0 3px #e0a92a, 2px 3px 0 3px rgba(60, 40, 20, 0.35); }
+.album-seal { position: absolute; right: 10px; top: -16px; transform: rotate(8deg); display: flex; flex-direction: column; align-items: center; pointer-events: none; }
+.album-seal i { width: 52px; height: 52px; border-radius: 50%; background: #ffd45e url(../assets/gfx/album/seal.png) center / contain no-repeat; filter: drop-shadow(2px 3px 0 rgba(60, 40, 20, 0.35)); }
+.album-seal span { margin-top: -10px; font-family: var(--display); font-size: 15px; color: #fff2cb; background: #b8473a; padding: 1px 8px; border-radius: 3px; white-space: nowrap; box-shadow: 1px 2px 0 rgba(60, 40, 20, 0.35); }
 .modal.pack-modal { width: min(620px, 100%); }
 .pack-reveal { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; padding: 6px 4px; }
 .pk { perspective: 700px; }

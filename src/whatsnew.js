@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10t',
+    items: [
+      { icon: 'icons/album', text: 'The sticker album has its own look now (shiny foil, packs to tear open) and eight more stickers: every club\'s mascot, the Snow Fox too.' },
+    ],
+  },
+  {
     id: '2026-10-10s',
     items: [
       { icon: 'icons/stat_seasons', text: 'Every season ends with a team photo, in Trophies › Seasons: the line-up on the home ice with Coach Brekka, and the Cup if you won it.' },
