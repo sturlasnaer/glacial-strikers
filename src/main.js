@@ -949,6 +949,7 @@ class App {
     });
     m.on('ice_crack', (e) => { audio.sfx('crack', { vol: 0.5 + e.k * 0.3 }); if (!e.grow) this.rumble(0.1, 0.3, 80); });
     m.on('aurora_shift', () => audio.sfx('shimmer', { vol: 0.8 }));
+    m.on('gust', (e) => { audio.sfx('whoosh', { vol: 0.9 }); if (!this.attract) this.hud.ticker(e.dir > 0 ? t('A gust off the sea, blowing to the right!') : t('A gust off the sea, blowing to the left!')); });
     m.on('puck_hop', (e) => { audio.sfx('boards', at(e.x, e.y, 0.45)); audio.sfx('stick', at(e.x, e.y, 0.5)); });
     m.on('deke', (e) => audio.sfx('glide', at(e.s.x, e.s.y, 0.55)));
     m.on('plank', (e) => { audio.sfx('boards', at(e.x, e.y, Math.min(1, 0.4 + e.power / 900))); audio.sfx('stick', at(e.x, e.y, 0.6)); });

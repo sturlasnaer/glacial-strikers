@@ -12,6 +12,7 @@ import { TeamAI } from './ai.js';
 import { pairKey, GAME_PLANS, COMBOS, CAST_PAIRS } from './data.js';
 
 const CRACK_MAX = 72; // pond cracks stop spreading at this radius
+const WIND_PUCK = 170, WIND_SKATER = 90; // a gust's push (units/s²) on a loose puck, and on a skater heading into it
 
 export const WIN_SCORE = 5;
 export const PENALTY_SECONDS = 15;
@@ -1516,6 +1517,21 @@ export class Match {
       b.y = Math.sin(b.dph + (tw.t * Math.PI * 2) / b.dperiod) * b.drift;
     } else if (tw.kind === 'loose_planks') {
       for (const pl of tw.planks) pl.rattle = Math.max(0, pl.rattle - dt);
+    } else if (tw.kind === 'sea_breeze' && this.state === 'play') {
+      // a gust: loose pucks (passes, shots, rebounds) drift with it, and skaters going into it
+      // slow a little; between gusts the next is 10 to 18 seconds away
+      const w = tw.wind;
+      if (w.gust > 0) {
+        w.gust = Math.max(0, w.gust - dt);
+        const k = Math.min(1, w.gust / 0.6, (w.len - w.gust) / 0.6); // (eases in and out)
+        const p = this.puck;
+        if (!p.owner && !p.inNet) p.vx += w.dir * WIND_PUCK * k * dt;
+        for (const s of this.skaters) if (!s.parked && s.vx * w.dir < 0) s.vx += w.dir * WIND_SKATER * k * dt;
+        if (!w.gust) w.next = 10 + this.rng() * 8;
+      } else if ((w.next -= dt) <= 0) {
+        w.dir = this.rng() < 0.5 ? -1 : 1; w.len = 2.5 + this.rng() * 1.5; w.gust = w.len;
+        this.emit('gust', { dir: w.dir });
+      }
     } else if (tw.kind === 'rumble_strips' && this.state === 'play') {
       // carry the puck fast over the ridges and now and then it hops off the stick
       const s = this.puck.owner;

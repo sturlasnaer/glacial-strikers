@@ -512,6 +512,12 @@ export class Renderer {
       Assets.draw(ctx, mascot[pose], mascot.foot.x, mascot.foot.y - (party ? Math.abs(Math.sin(t * 8)) * 6 : 0), mascot.source_scale, { pages: Assets.pagesFor(hostTeam.id) });
     }
     if (match.classic && arena === 'pine_pond') this.drawWinterClassic(ctx, fx);
+    // the Harbour Rink's windsock (Batch CM): limp, lifting, then streaming in a gust
+    const sock = arena === 'harbour_rink' && A.windsock, wind = match.twists && match.twists.wind;
+    if (sock && sock.frames) {
+      const k = wind && wind.gust > 0 ? Math.min(1, wind.gust / 0.6, (wind.len - wind.gust) / 0.6) : 0;
+      Assets.draw(ctx, sock.frames[k > 0.66 ? 2 : k > 0.2 ? 1 : 0], sock.x, sock.y, sock.scale || 0.5, { flip: !!(wind && wind.dir < 0 && k > 0.2) });
+    }
     if (match.allstar && arena === 'home') this.drawAllStarDressing(ctx, fx, false);
     else if (arena === 'home') this.drawSeasonal(ctx, fx, false); // (Halloween, the holidays: Batch CD)
     const board = (A.scoreboards && A.scoreboards[arena]) || (arena === 'ember_dome' ? A.scoreboard_volcanic : A.scoreboard);
@@ -731,6 +737,24 @@ export class Renderer {
     for (const z of tw.shadows) this.drawShadowZone(ctx, z, t, art);
     if (tw.beam) this.drawMoonbeam(ctx, tw.beam, t);
     for (const pl of tw.planks) this.drawPlank(ctx, pl, t);
+    if (tw.wind && tw.wind.gust > 0) this.drawGust(ctx, tw.wind, t);
+  }
+
+  // A gust off the sea (the Harbour Rink): streaks of blown snow racing down the ice, thicker
+  // as it builds and thinning as it dies.
+  drawGust(ctx, w, t) {
+    const k = Math.min(1, w.gust / 0.6, (w.len - w.gust) / 0.6);
+    ctx.save();
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 46; i++) {
+      const y = -260 + ((i * 97) % 560), speed = 900 + (i % 5) * 160, len = 40 + (i % 7) * 14;
+      const x = ((((t * speed + i * 211) % 1700) + 1700) % 1700) - 850; // (wrapping round the rink)
+      const a = toScreen(w.dir * x, y), b = toScreen(w.dir * (x - len), y + 6);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+      ctx.strokeStyle = `rgba(70,110,150,${0.22 * k})`; ctx.lineWidth = 4 + (i % 2); ctx.stroke(); // (a soft shadow, so it reads on white ice)
+      ctx.strokeStyle = `rgba(255,255,255,${(0.55 + (i % 3) * 0.15) * k})`; ctx.lineWidth = 1.6 + (i % 2); ctx.stroke();
+    }
+    ctx.restore();
   }
 
   // The expansion buildings' rule art (Batch AY), once the rule pages are in.

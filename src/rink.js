@@ -160,6 +160,11 @@ export function makeTwists(kind, rng = Math.random) {
     const end = (s) => { const c = RINK.minY + R + 60 + rng() * (RINK.maxY - RINK.minY - 2 * R - 120); return { side: s, a0: c - 60, a1: c + 60, rattle: 0 }; };
     return { ...base, planks: [side('far', -1), side('far', 1), side('near', -1), side('near', 1), end('left'), end('right')] };
   }
+  if (kind === 'sea_breeze') {
+    // gusts off the sea down the length of the ice now and then (the Harbour Rink): next is
+    // the wait before the first, gust the seconds left of one, dir +1 or -1 (towards which end)
+    return { ...base, wind: { next: 7 + rng() * 5, gust: 0, len: 0, dir: 1 } };
+  }
   if (kind === 'pond_cracks') {
     // two hairline cracks to start; hits, hard shots and quakes add more
     const cracks = [];

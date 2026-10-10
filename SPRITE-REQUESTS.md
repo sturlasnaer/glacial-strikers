@@ -7,7 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-None currently open. Monitoring for additions.
+1. **CM: the Harbour Rink**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -321,3 +321,13 @@ Training has a new drill, the **Power Play**: your line of three against two pen
 - `achievements/special_teams` (Special Teams: gold in the Power Play drill): a penalty box door swinging shut on an empty bench, the clock over it at 0:00, our player celebrating out on the ice beyond.
 
 2 frames, on an `icons_z` page.
+
+## Batch CM: the Harbour Rink
+
+A new building for exhibitions: **the Harbour Rink**, an outdoor rink on the frozen harbour of a little fishing town at dusk. Its rule is already in the game: *sea breeze*, gusts off the sea that blow down the length of the ice now and then (snow streaks race across, passes drift). Please draw it exactly like the AU arena packs (the Observatory, the Longhouse): the same 1536×1024 backdrop with the rink lines, boards, glass and benches in the same places, so the game's rink fits it unchanged:
+- The backdrop (`arena_harbour_rink`): wooden boards weathered by salt, the harbour wall behind the far side with a red lighthouse blinking, fishing boats frozen in the ice beyond, colourful wooden houses up the hill with lit windows, string lights round the rink, a few gulls on the posts; fans on benches and on the harbour wall in warm woollens.
+- Its scoreboard (`arena.scoreboards.harbour_rink`, the score windows where the others have theirs), near-side glass, and a penalty box in the AU style (a little fishing hut?).
+- A windsock on the near boards (`arena_harbour/windsock_1`..`_3`: hanging limp, half up and streaming to the right; the game raises it during a gust and mirrors it for a gust to the left), with `atlas.arena.windsock = { frames: [the three ids], x, y, scale }` in backdrop pixels.
+- The rule's icon (`rule_icons.sea_breeze`, like the other rule icons): a gust swirl with a snowflake.
+
+Put the arena's art in a group of its own (say `arena_cm`) so it loads only for a match there; add `harbour_rink` to `atlas.arenas`. About 8 frames plus the backdrop.

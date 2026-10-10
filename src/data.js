@@ -344,6 +344,8 @@ export const ARENAS = {
   moose_longhouse: { name: 'The Longhouse', lamps: '#ffb05c', flicker: 1.4, twist: 'loose_planks', rule: 'Loose planks' }, // (the Thunder Moose's)
   // the Cup Final's neutral building (Batch BX): no rule of its own; not a daily challenge's arena
   frostline_coliseum: { name: 'Frostline Coliseum', lamps: '#ffd45e', twist: 'none', finalOnly: true },
+  // an outdoor rink on the frozen harbour (Batch CM), for exhibitions: in Quick play once its art is in, never a daily's
+  harbour_rink: { name: 'Harbour Rink', lamps: '#ffd27a', twist: 'sea_breeze', rule: 'Sea breeze', exhibitionOnly: true },
 };
 
 // ---------------------------------------------------------------- recruitment
@@ -712,6 +714,7 @@ export const TWIST_INFO = {
   shadow_zones: 'Dark Aerie rules: ravens circle overhead. The puck is hard to see in their shadows, and goalies pick up shots from them late.',
   moonbeams: 'Observatory rules: a beam of moonlight sweeps slowly across the ice. A shot from inside it glares in the goalie\'s eyes.',
   loose_planks: 'Longhouse rules: some of the wooden boards are loose. A puck that hits one comes off at an odd angle.',
+  sea_breeze: 'Harbour Rink rules: now and then a gust blows in off the sea, down the length of the ice. Passes and loose pucks drift with it, and skating into it is slower.',
 };
 
 // Pre- and post-match scenes. speaker: 'us' (our captain), 'them' (their captain),
