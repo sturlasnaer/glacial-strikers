@@ -60,7 +60,7 @@ import { cleanSign, SIGN_MAX } from './fancam.js';
 import { MINI_ROUNDS, MINI_PRIZE, miniOf } from './minicup.js';
 import { MASCOTS, RACE_PRIZE, pickRunners, newRace, stepRace } from './race.js';
 import { tripStops } from './trip.js';
-import { newPet, stepPet, tapPet, cleanPetName, PET_NAME_MAX, TRICK_TIME, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit } from './pet.js';
+import { newPet, stepPet, tapPet, tossPuck, cleanPetName, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit } from './pet.js';
 import { albumPages, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
 
 const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
@@ -863,10 +863,14 @@ export class UI {
       const names = Array.from({ length: n }, (_, i) => `trick_${k}_${i + 1}`);
       if (dir === 'pet/' && names.every((f) => has('pet/' + f))) { const ts = set(names); if (ts) { sets['trick_' + k] = ts; tricks.push(k); } }
     }
+    // fetch (Batch DI): tap the open floor to toss it a puck (in its own coat, like the tricks)
+    const FETCH = { fetch_run: 4, fetch_carry: 4, fetch_drop: 2 };
+    const fetches = dir === 'pet/' && has('pet/puck') && Object.entries(FETCH).every(([k, n]) => Array.from({ length: n }, (_, i) => `pet/${k}_${i + 1}`).every(has));
+    if (fetches) for (const [k, n] of Object.entries(FETCH)) sets[k] = set(Array.from({ length: n }, (_, i) => `${k}_${i + 1}`));
     if (Object.values(sets).some((x) => !x)) return;
     const s = this.app.save, name = () => (s.pet && s.pet.name) || t('Snowball');
-    room.insertAdjacentHTML('beforeend', `<button class="pet" id="pet" aria-label="${esc(name())}"><img alt=""><img class="pet-acc" alt="" hidden></button><button class="pet-tag" id="pet-tag" hidden></button>`);
-    const el = room.querySelector('#pet'), img = el.querySelector('img'), acc = el.querySelector('.pet-acc'), tag = room.querySelector('#pet-tag');
+    room.insertAdjacentHTML('beforeend', `<button class="pet" id="pet" aria-label="${esc(name())}"><img alt=""><img class="pet-acc" alt="" hidden></button><button class="pet-tag" id="pet-tag" hidden></button>${fetches ? `<img class="pet-puck" id="pet-puck" src="${Assets.sceneImage('pet/puck', 48)}" alt="" hidden>` : ''}`);
+    const el = room.querySelector('#pet'), img = el.querySelector('img'), acc = el.querySelector('.pet-acc'), tag = room.querySelector('#pet-tag'), puck = room.querySelector('#pet-puck');
     this.pet ||= newPet();
     let last = performance.now(), tagT = 0;
     clearInterval(this.petTimer);
@@ -874,9 +878,11 @@ export class UI {
       if (!el.isConnected) { clearInterval(this.petTimer); return; }
       const now = performance.now(), dt = Math.min(0.2, (now - last) / 1000);
       last = now;
-      const p = stepPet(this.pet, dt), st = p.trickT > 0 && sets['trick_' + p.trick] ? 'trick_' + p.trick : p.hop > 0 ? 'hop' : p.state, k = sets[st] || sets.sit;
+      const p = stepPet(this.pet, dt), st = p.trickT > 0 && sets['trick_' + p.trick] ? 'trick_' + p.trick : p.fetch && sets.fetch_run ? 'fetch_' + p.fetch.phase : p.hop > 0 ? 'hop' : p.state, k = sets[st] || sets.sit;
       const i = st.startsWith('trick_') ? Math.min(k.urls.length - 1, Math.floor((1 - p.trickT / TRICK_TIME) * k.urls.length)) // (a trick plays through once)
-        : Math.floor((now / 1000) * (st === 'walk' ? 8 : st === 'sleep' ? 1 : 2)) % k.urls.length;
+        : st === 'fetch_drop' ? (p.fetch.t < FETCH_DROP * 0.35 ? 0 : 1) // (down it goes, then sitting proud)
+        : Math.floor((now / 1000) * (st === 'walk' ? 8 : st === 'fetch_run' ? 12 : st === 'fetch_carry' ? 9 : st === 'sleep' ? 1 : 2)) % k.urls.length;
+      if (puck) { const f = p.fetch, on = f && f.phase !== 'carry'; puck.hidden = !on; if (on) puck.style.cssText = `left:${f.x}%;top:${f.y}%;z-index:${f.y < 66 ? 1 : 3}`; }
       if (img.dataset.k !== st + i) { img.src = k.urls[i]; img.dataset.k = st + i; acc.hidden = !k.acc; if (k.acc) acc.src = k.acc[i]; }
       const lift = p.hop > 0 ? Math.sin((1 - p.hop / 0.5) * Math.PI) * 3 : 0;
       el.style.cssText = `left:${p.x}%;top:${p.y - lift}%;height:${(H / 864) * 100}%;aspect-ratio:${k.w}/${k.h};transform:translate(-${k.fx * 100}%,-${k.fy * 100}%) scaleX(${p.face});z-index:${p.y < 66 ? 1 : 3}`;
@@ -891,6 +897,16 @@ export class UI {
       if (heart) { room.insertAdjacentHTML('beforeend', `<img class="pet-heart" src="${heart}" alt="" style="left:${this.pet.x}%;top:${this.pet.y - 9}%">`); const h = room.lastElementChild; setTimeout(() => h.remove(), 1200); }
     });
     tag.addEventListener('click', (e) => { e.stopPropagation(); audio.sfx('click'); this.petName(); });
+    // a tap on the open floor (not a station, a skater or a board) tosses the puck there
+    if (fetches && !room.dataset.fetch) {
+      room.dataset.fetch = '1';
+      room.addEventListener('click', (e) => {
+        if (e.target.closest('button, a, input') || !this.pet || !room.querySelector('#pet')) return;
+        const r = room.getBoundingClientRect(), x = ((e.clientX - r.left) / r.width) * 100, y = ((e.clientY - r.top) / r.height) * 100;
+        if (x < 24 || x > 70 || y < 50 || y > 80) return; // (the floor in front of the lockers)
+        if (tossPuck(this.pet, x, y)) audio.sfx('click');
+      });
+    }
   }
 
   // The trophy shelf on the locker room's wall (Batch DF): the club's cups standing on it, the

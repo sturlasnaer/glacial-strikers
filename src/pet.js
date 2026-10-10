@@ -1,5 +1,6 @@
 // The locker room's pet (Batch CX): a Snow Fox cub that trots about the floor, sits and wags,
-// now and then curls up for a nap, and hops when it's tapped. Positions are in % of the room.
+// now and then curls up for a nap, hops when it's tapped and fetches a puck tossed on the floor.
+// Positions are in % of the room.
 // rnd: () => [0, 1) (the menus' own randomness; nothing here touches a match).
 
 export const PET_AREA = { x0: 28, x1: 70, y0: 60, y1: 80 }; // (the open floor in front of the lockers)
@@ -21,6 +22,7 @@ export const TRICK_TIME = 1.3;
 export function stepPet(p, dt, rnd = Math.random) {
   p.t += dt;
   if (p.trickT > 0) { p.trickT = Math.max(0, p.trickT - dt); if (!p.trickT) p.trick = null; return p; }
+  if (p.fetch) return stepFetch(p, dt, rnd);
   if (p.hop > 0) { p.hop = Math.max(0, p.hop - dt); return p; }
   if (p.state === 'walk') {
     const dx = p.tx - p.x, dy = p.ty - p.y, d = Math.hypot(dx, dy), v = PET_SPEED * dt;
@@ -36,10 +38,39 @@ export function stepPet(p, dt, rnd = Math.random) {
 
 // Tapped: a happy hop, or now and then one of its tricks (those drawn: Batch DC), and awake again.
 export function tapPet(p, rnd = Math.random, tricks = []) {
-  if (p.trickT > 0) return p;
+  if (p.trickT > 0 || p.fetch) return p;
   if (tricks.length && rnd() < 0.6) { p.trick = tricks[Math.floor(rnd() * tricks.length)]; p.trickT = TRICK_TIME; }
   else p.hop = 0.5;
   if (p.state === 'sleep' || p.state === 'walk') { p.state = 'sit'; p.t = 0; p.until = 1.5; }
+  return p;
+}
+
+// Fetch (Batch DI): a puck tossed onto the floor; the cub runs for it, trots back to the middle
+// of the room with it and drops it there, pleased with itself. fetch: { x, y, phase, t } with
+// the puck at x, y (in its mouth while it carries it).
+export const FETCH_RUN = 18, FETCH_CARRY = 9, FETCH_DROP = 1.4; // (% of the room a second; the drop's seconds)
+export const FETCH_HOME = { x: 50, y: 72 };
+export function tossPuck(p, x, y) {
+  if (p.fetch || p.trickT > 0) return false;
+  const A = PET_AREA;
+  p.fetch = { x: Math.min(A.x1, Math.max(A.x0, x)), y: Math.min(A.y1, Math.max(A.y0, y)), phase: 'run', t: 0 };
+  p.state = 'fetch'; p.hop = 0;
+  return true;
+}
+function stepFetch(p, dt, rnd) {
+  const f = p.fetch;
+  f.t += dt;
+  if (f.phase === 'drop') {
+    if (f.t >= FETCH_DROP) { p.fetch = null; p.state = 'sit'; p.t = 0; p.until = 2 + rnd() * 3; }
+    return p;
+  }
+  const [tx, ty, v] = f.phase === 'run' ? [f.x, f.y, FETCH_RUN] : [FETCH_HOME.x, FETCH_HOME.y, FETCH_CARRY];
+  const dx = tx - p.x, dy = ty - p.y, d = Math.hypot(dx, dy), step = v * dt;
+  if (Math.abs(dx) > 0.2) p.face = dx > 0 ? 1 : -1;
+  if (d > step) { p.x += (dx / d) * step; p.y += (dy / d) * step; return p; }
+  p.x = tx; p.y = ty;
+  if (f.phase === 'run') { f.phase = 'carry'; f.t = 0; }
+  else { f.phase = 'drop'; f.t = 0; f.x = p.x + p.face * 4; f.y = p.y; } // (set down in front of it)
   return p;
 }
 

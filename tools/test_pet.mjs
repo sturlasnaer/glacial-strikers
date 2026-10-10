@@ -2,7 +2,7 @@
 // never off it, sits a while, now and then naps, wakes up and hops when tapped, and its name is
 // cleaned (12 characters at most).
 //   node tools/test_pet.mjs
-import { newPet, stepPet, tapPet, cleanPetName, PET_AREA, PET_NAME_MAX, TRICK_TIME, PET_OUTFITS, buyOutfit, wearOutfit, ownsOutfit } from '../src/pet.js';
+import { newPet, stepPet, tapPet, tossPuck, cleanPetName, PET_AREA, PET_NAME_MAX, TRICK_TIME, FETCH_HOME, FETCH_DROP, PET_OUTFITS, buyOutfit, wearOutfit, ownsOutfit } from '../src/pet.js';
 import { makeRng } from '../src/util.js';
 
 let pass = 0, fail = 0;
@@ -57,6 +57,26 @@ check('its name: cleaned, 12 characters at most', cleanPetName('  <Snjó>\n bolt
   check('only one worn: the new one', buyOutfit(sv, 'bowtie') && sv.pet.wear === 'bowtie');
   check('taken off, and the old one put on again', wearOutfit(sv, null) && sv.pet.wear === null && wearOutfit(sv, 'scarf') && sv.pet.wear === 'scarf');
   check('not one it doesn\'t own', !wearOutfit(sv, 'beanie') && sv.pet.wear === 'scarf');
+}
+
+// fetch (Batch DI): runs to the puck, carries it back to the middle, drops it, then sits
+{
+  const rnd = makeRng(5), p = newPet(rnd);
+  p.x = 40; p.y = 70;
+  check('a toss starts a fetch', tossPuck(p, 65, 62) && p.fetch.phase === 'run' && p.state === 'fetch');
+  check('one puck at a time', !tossPuck(p, 30, 70));
+  let t = 0;
+  while (p.fetch && p.fetch.phase === 'run' && t < 10) { stepPet(p, 0.05, rnd); t += 0.05; }
+  check('runs to it and picks it up', p.fetch && p.fetch.phase === 'carry' && Math.abs(p.x - 65) < 0.01 && p.face === 1 && t < 2, t);
+  tapPet(p, rnd, ['spin']);
+  check('a tap meanwhile: busy fetching', !p.trick && !p.hop);
+  while (p.fetch && p.fetch.phase === 'carry' && t < 20) { stepPet(p, 0.05, rnd); t += 0.05; }
+  check('carries it back to the middle', p.fetch && p.fetch.phase === 'drop' && p.x === FETCH_HOME.x && p.y === FETCH_HOME.y && p.face === -1);
+  for (let k = 0; k < FETCH_DROP / 0.05 + 2; k++) stepPet(p, 0.05, rnd);
+  check('drops it and sits', !p.fetch && p.state === 'sit');
+  const q = newPet(rnd);
+  tossPuck(q, 99, 5);
+  check('a toss off the floor lands on it', q.fetch.x === PET_AREA.x1 && q.fetch.y === PET_AREA.y0);
 }
 
 console.log(`Pet: ${pass} passed, ${fail} failed`);
