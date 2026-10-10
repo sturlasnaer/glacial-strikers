@@ -1997,6 +1997,7 @@ export const IS = {
   "the left stick": "vinstri pinnanum",
   "The list stays on the board. Everybody reads it on the way out.": "Listinn hangir áfram á töflunni. Allir lesa hann á leiðinni út.",
   "The Longhouse boards take a bite out of that one!": "Battinn í Longhouse tók sinn toll af þessum!",
+  "The mascot race! When a side gets to three, the club mascots race across the ice. Pick the winner for coins.": "Lukkudýrakapphlaupið! Þegar annað liðið nær þremur mörkum hlaupa lukkudýrin yfir svellið. Veldu sigurvegarann og fáðu mynt.",
   "The Mini Cup, in Quick play: three quick games, first to three, against rivals getting tougher. Win them all for a cup of your own!": "Litli bikarinn, í Stökum leik: þrír stuttir leikir, fyrst í þrjú mörk, gegn sífellt sterkari andstæðingum. Vinndu þá alla og fáðu þinn eigin bikar!",
   "The morning paper: \"{club} ROLL {gf}–{ga}.\" Volta has already framed it.": "Blöðin í morgun: „{club} MEÐ STÓRSIGUR, {gf}–{ga}.“ Volta er þegar búin að ramma fyrirsögnina inn.",
   "The most valuable skater in the Frostline.": "Mikilvægasti skautarinn í Frostline-deildinni.",

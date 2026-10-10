@@ -921,7 +921,7 @@ export class UI {
     const el = document.createElement('div');
     el.className = 'race';
     el.innerHTML = `<div class="race-track" style="background-image:url(${Assets.url('gfx/race/track.png')})">
-        ${ids.map((id, i) => `<button class="race-lane" data-pick="${id}" style="top:${18 + i * 19}%"><span class="race-name">${i + 1}. ${esc(name(id))}</span></button><img class="race-runner" data-run="${id}" src="${sets[id].urls[0]}" alt="" style="top:${18 + i * 19}%;left:4%">`).join('')}
+        ${ids.map((id, i) => `<button class="race-lane" data-pick="${id}" style="top:${22 + i * 19}%"><span class="race-name">${i + 1}. ${esc(name(id))}</span></button><img class="race-runner" data-run="${id}" src="${sets[id].urls[0]}" alt="" style="top:${22 + i * 19}%;left:4%">`).join('')}
       </div>
       <div class="race-head"><b>${t('MASCOT RACE!')}</b><span id="race-msg">${t('Pick a winner: tap a lane (or press 1 to {n}).', { n: ids.length })}</span></div>`;
     document.getElementById('app').appendChild(el);
