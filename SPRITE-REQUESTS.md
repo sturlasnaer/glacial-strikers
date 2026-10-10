@@ -7,8 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **CK: the title logo in season**
-2. **CL: the Power Play drill**
+None currently open. Monitoring for additions.
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -33,6 +32,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered CH-CI:** Ragna the ice-keeper portrait and the three P1/P2 player badges. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CH-CI-Testing-Update`.
 
 **Delivered CJ:** One of Our Own and Homegrown Hero custom-player achievement art. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CJ-Testing-Update`.
+
+**Delivered CK-CL:** seasonal logo overlays and Power Play drill/achievement art. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CK-CL-Testing-Update`.
 
 ## Format notes
 
@@ -305,7 +306,7 @@ Two new achievements go with Create a player. They borrow the rookie icon until 
 
 2 frames, on an `icons_z` page.
 
-## Batch CK: the title logo in season
+## Batch CK ✓: the title logo in season
 
 The title screen's logo (`polish/title_logo`, 1804×329 at its source scale) should join in with the home rink's Halloween and holiday dressing (Batch CD). Please draw two see-through overlays exactly the logo's size and pivot, transparent everywhere except the trimmings, so the game lays them straight over the logo:
 - `seasonal/halloween/logo`: a little witch's hat tipped on the "P", a cobweb in one corner, a small bat perched on the last letter, two tiny pumpkins at the foot.
@@ -313,7 +314,7 @@ The title screen's logo (`polish/title_logo`, 1804×329 at its source scale) sho
 
 Set `atlas.seasonal.halloween.logo` and `atlas.seasonal.holiday.logo` to their ids, on a `seasonal` group page (the title loads that group in season). 2 frames.
 
-## Batch CL: the Power Play drill
+## Batch CL ✓: the Power Play drill
 
 Training has a new drill, the **Power Play**: your line of three against two penalty killers, their third in the box. Please draw:
 - `equipment_items/hub/powerplay`: the drill card's icon, 128×128 like the others (`equipment_items/hub/target`, `.../tips`): three pucks in an umbrella shape with dotted pass lines between them and a goal light glowing behind.
