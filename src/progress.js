@@ -3,7 +3,7 @@
 import { GUIDE } from './guide.js';
 import {
   CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE, CAST_PAIRS, makeDef, perkSlot,
-  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, setFreeGoalies, setGoalieLooks, goalieInfo, areTwins, setRookies, setStyles, ELEMENTS, ARCHETYPES, member, pairKey, recruitKey, slotDef, GOALIE_STYLES, RIVAL_IDS, slotSprite, slotLook } from './data.js';
+  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, setFreeGoalies, setGoalieLooks, goalieInfo, areTwins, setRookies, setStyles, ELEMENTS, ARCHETYPES, member, pairKey, recruitKey, slotDef, GOALIE_STYLES, RIVAL_IDS, slotSprite, slotLook, CLUB_DEFAULT } from './data.js';
 import { newLeague, migrateLeague } from './league.js';
 import { lookFor, maskFor, goalieArt, isPartsArt } from './modular.js';
 import { seasonStats } from './awards.js';
@@ -13,7 +13,35 @@ import { t } from './i18n.js';
 import { drillExpMul, staminaRegenMul } from './facilities.js';
 import { addNews } from './news.js';
 
-const KEY = 'glacial-strikers-save-v1';
+// Profiles: up to three saves on one device (a family sharing a tablet), each its own club, cloud
+// backup and leaderboard name. The first is the save from before there were profiles.
+const BASE_KEY = 'glacial-strikers-save-v1', PROFILE_KEY = 'puckbound-profile';
+export const PROFILES = 3;
+const keyOf = (i) => (i ? `${BASE_KEY}-p${i + 1}` : BASE_KEY);
+let profile = 0;
+try { if (typeof window !== 'undefined') profile = Math.max(0, Math.min(PROFILES - 1, (+localStorage.getItem(PROFILE_KEY)) | 0)); } catch { /* storage unavailable */ }
+let KEY = keyOf(profile);
+export const currentProfile = () => profile;
+// Switch profiles (the game reloads to pick the new one up).
+export function setProfile(i) {
+  profile = Math.max(0, Math.min(PROFILES - 1, i | 0)); KEY = keyOf(profile);
+  try { localStorage.setItem(PROFILE_KEY, String(profile)); } catch { /* storage unavailable */ }
+}
+// What's in each: [{ i, empty } | { i, name, season, played, coins, cups }].
+export function profileSummaries() {
+  return Array.from({ length: PROFILES }, (_, i) => {
+    let s = null;
+    try { s = JSON.parse(localStorage.getItem(keyOf(i)) || 'null'); } catch { s = null; }
+    if (!s || s.v !== 1) return { i, empty: true };
+    return { i, name: (s.club && s.club.name) || CLUB_DEFAULT.name, season: s.season || 1, played: (s.record && s.record.played) || 0, coins: s.coins || 0, cups: s.cups || 0 };
+  });
+}
+// Erase another profile (the one in use is reset from Settings).
+export function eraseProfile(i) {
+  if (i === profile || saveOff) return false;
+  try { localStorage.removeItem(keyOf(i)); localStorage.removeItem(keyOf(i) + '.unread'); } catch { return false; }
+  return true;
+}
 export const MAX_LEVEL = 10;
 export const PERK_LEVELS = [3, 5, 7];
 export const STAT_CAP_BONUS = 3; // points you can add to a stat above its base

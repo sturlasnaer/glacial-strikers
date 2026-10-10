@@ -12,7 +12,7 @@ import { ACHIEVEMENTS } from './achievements.js';
 import { AWARDS, AWARD_BY_ID, seasonStats } from './awards.js';
 import { dailyFor, dailyGoal, dayKey, currentStreak, doneToday, dailyReward, dailyState } from './daily.js';
 import {
-  expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave,
+  expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave, currentProfile, setProfile, profileSummaries, eraseProfile,
   chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups, capBonus,
   CAMP, campOpen, campChoices, campChange, recruitPrice, goalieIds, starterId, goalieRec, goalieStatus, signGoalie, setStarter, GOALIE_CAMP, goalieStyle, goalieCampOpen, goalieCampChange, canPickMask, pickMask,
 } from './progress.js';
@@ -396,6 +396,7 @@ export class UI {
           <button class="btn" id="t-quick">${t('Quick Match')}</button>
           <button class="btn" id="t-versus">${t('2 Players')}</button>
           <button class="btn ghost" id="t-settings">${t('Settings')}</button>
+          <button class="btn ghost" id="t-profile" title="${t('Profiles')}">${t('Profile {n}', { n: currentProfile() + 1 })}</button>
           ${this.app.installPrompt && !this.app.standalone ? `<button class="btn cream" id="t-install">${t('Install app')}</button>` : ''}
         </div>
         ${this.app.isTouch && !padList().length ? '' : `<div class="press" id="t-press">${padList().length ? t('Press {button} or Enter to start', { button: promptImg(psPad() ? 'ps_cross' : 'xbox_a', psPad() ? '✕' : 'A') }) : t('Press Enter to start')}</div>`}
@@ -405,8 +406,30 @@ export class UI {
     this.click('#t-quick', () => { audio.sfx('confirm'); this.quickMatchPicker(); });
     this.click('#t-versus', () => { audio.sfx('confirm'); this.versusPicker(); });
     this.click('#t-settings', () => { audio.sfx('click'); this.settings(); });
+    this.click('#t-profile', () => { audio.sfx('click'); this.profiles(); });
     this.click('#t-install', async () => { audio.sfx('confirm'); await this.app.install(); this.title(); });
     return r;
+  }
+
+  // Profiles: three saves on one device, each its own club. Switching reloads the game.
+  profiles() {
+    const cur = currentProfile();
+    const card = (p) => `<div class="profile${p.i === cur ? ' cur' : ''}">
+      <b>${t('Profile {n}', { n: p.i + 1 })}${p.i === cur ? ` <span class="gold-t">· ${t('playing now')}</span>` : ''}</b>
+      ${p.empty ? `<span class="muted">${t('Empty: a new club starts here.')}</span>`
+        : `<span>${esc(p.name)}</span><small>${t('Season {n}', { n: p.season })} · ${t(p.played === 1 ? '{n} match' : '{n} matches', { n: p.played })} · ${p.coins} ${t('coins')}${p.cups ? ` · ${t(p.cups === 1 ? '{n} Cup' : '{n} Cups', { n: p.cups })}` : ''}</small>`}
+      <div class="row" style="margin:6px 0 0;gap:6px">${p.i === cur ? '' : `<button class="btn small gold" data-prof="${p.i}">${p.empty ? t('Start') : t('Play')}</button>${p.empty ? '' : `<button class="btn small ghost" data-erase="${p.i}">${t('Erase')}</button>`}`}</div>
+    </div>`;
+    this.modal(`<h2>${t('Profiles')}</h2>
+      <p class="muted" style="margin:0;font-size:13px">${t('Three saves on this device, each with its own club, cloud backup and name on the leaderboards. Handy when the family shares a tablet.')}</p>
+      <div class="profiles">${profileSummaries().map(card).join('')}</div>
+      <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>${t('Close')}</button></div>`, (m, close) => {
+      this.click('[data-prof]', (el) => { audio.sfx('confirm'); writeSave(this.app.save); setProfile(+el.dataset.prof); location.reload(); }, m);
+      this.click('[data-erase]', (el) => {
+        if (!el.dataset.armed) { el.dataset.armed = '1'; el.textContent = t('Tap again to erase'); el.classList.add('gold'); return; }
+        eraseProfile(+el.dataset.erase); audio.sfx('back'); close(); this.profiles();
+      }, m);
+    });
   }
 
   // The painted logo replaces the lettering once the title art has loaded.

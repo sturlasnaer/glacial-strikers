@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10g',
+    items: [
+      { icon: 'icons/friends', text: 'Profiles, on the title screen: three saves on one device, each with its own club, cloud backup and name on the leaderboards.' },
+    ],
+  },
+  {
     id: '2026-10-10f',
     items: [
       { icon: 'icons/stat_seasons', text: 'The season in review: before a new season starts, a look back at the last one: the place, the record, the top scorers, the goals met, the records set and who went into the Hall of Fame.' },
