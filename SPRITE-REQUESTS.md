@@ -7,8 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **CD: the home rink dressed for Halloween and the holidays**
-2. **CE: a resurfacer that turns smoothly, and icons for Play as**
+1. **CE: a resurfacer that turns smoothly, and icons for Play as**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -23,6 +22,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered CB:** eight custom-player head families, every view and effort pose, five portrait expressions and native skin/hair masks. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CB-Testing-Update`.
 
 **Delivered CC:** the Resurfacer drill icon and Fresh Sheet achievement art. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CC-Testing-Update`.
+
+**Delivered CD:** Halloween and holiday rink dressing: animated banners, bunting, pumpkins, bats, tree lights and a snowman. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CD-Testing-Update`.
 
 ## Format notes
 
@@ -254,7 +255,7 @@ Training has a new drill for fun: you drive the ice resurfacer (the title screen
 
 2 frames.
 
-## Batch CD: the home rink dressed for Halloween and the holidays
+## Batch CD ✓: the home rink dressed for Halloween and the holidays
 
 The home rink (the Frostline Rink) will dress up by the calendar: from 20 October to 1 November for Halloween, from 1 December to 6 January for the holidays. Please draw both sets in the Batch AB All-Star dressing's format (`atlas.allstar`: two-frame banner and bunting, rects in 1536×1024 backdrop pixels, bunting clipped to the board bands and never onto the ice), so the game places them the same way:
 - **Halloween** (`seasonal.halloween`): a two-frame banner over the far stands (a grinning jack-o'-lantern with the Snow Fox in a witch's hat, "SPOOKY SEASON" lettering left blank for the game to write), two-frame bunting (orange and black pennants with little bats), two carved pumpkins for the tops of the far boards' corners (`pumpkin_a`, `pumpkin_b`, lit from inside, two flicker frames each), and four frames of a small bat flapping (`bat_1`..`bat_4`, to flit across the rafters).
