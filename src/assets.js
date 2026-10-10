@@ -14,7 +14,9 @@ const INLINE = typeof window !== 'undefined' && window.__INLINE; // single-file 
 // Page groups loaded at start and kept through every scene; and the ones every match needs,
 // loaded with the rival's (the newer supers' effects, the linesman).
 const CORE = ['home', 'away', 'title', 'icons_z', 'allstar', 'icons_ac', 'legends', 'club_masks'];
-const MATCH = ['abilities_al', 'linesman', 'arena_au', 'arena_bx', 'supporter_masks'];
+const MATCH = ['abilities_al', 'linesman', 'arena_au', 'supporter_masks'];
+// A building's own layers, loaded only for a match there (the Cup Final's Coliseum: a big page).
+const ARENA_GROUPS = { frostline_coliseum: ['arena_bx'] };
 // Groups whose data masks live on pages of their own (read, never team-recoloured), loaded and kept with them.
 const COMPANION = { parts: 'parts_masks', goalie_parts: 'goalie_parts_masks' };
 
@@ -72,7 +74,7 @@ export const Assets = {
     const jobs = [];
     if (t && (t.art || t.mark)) jobs.push(this.loadGroup('rival_' + (t.art || t.mark)));
     if (t && t.goalieLook) jobs.push(this.loadGroup('goalie_parts')); // (their goalie, made from parts)
-    for (const g of MATCH) jobs.push(this.loadGroup(g));
+    for (const g of [...MATCH, ...(ARENA_GROUPS[arena] || [])]) jobs.push(this.loadGroup(g));
     if (t && (t.art || t.mark) && this.needNewcomers) jobs.push(this.loadGroup('newcomers')); // (a signed slot's newcomer, or the backup goalie)
     if (this.partsFor && this.partsFor(teamId)) jobs.push(this.loadGroup('parts')); // (a fill made from parts, in their colours)
     if (arena && arena !== 'home') jobs.push(this.ensureArena(arena));
@@ -127,7 +129,7 @@ export const Assets = {
     for (const id of keep.teams || []) { const t = TEAMS[id]; if (t && (t.art || t.mark)) groups.add('rival_' + (t.art || t.mark)); if (t && t.goalieLook) groups.add('goalie_parts'); }
     if (this.needNewcomers && (keep.teams || []).length) groups.add('newcomers');
     if (this.partsFor && (keep.teams || []).some(this.partsFor)) groups.add('parts');
-    if ((keep.teams || []).length) for (const g of MATCH) groups.add(g); // (in a match)
+    if ((keep.teams || []).length) for (const g of [...MATCH, ...(ARENA_GROUPS[keep.arena] || [])]) groups.add(g); // (in a match)
     if (keep.gear) { groups.add('gearmask'); groups.add('legends_gearmask'); if (this.needNewcomers) groups.add('newcomer_gearmask'); }
     for (const [g, c] of Object.entries(COMPANION)) if (groups.has(g)) groups.add(c); // (their masks with them)
     const released = new Set();

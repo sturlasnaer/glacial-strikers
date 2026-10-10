@@ -49,7 +49,7 @@ export function dailyFor(date = dayKey()) {
   const pick = (arr) => arr[Math.floor(rng() * arr.length)];
   const teamId = pick(RIVAL_IDS);
   // usually their building; sometimes somewhere else
-  const arena = rng() < 0.65 ? (TEAMS[teamId].arena || 'home') : pick(Object.keys(ARENAS));
+  const arena = rng() < 0.65 ? (TEAMS[teamId].arena || 'home') : pick(Object.keys(ARENAS).filter((k) => !ARENAS[k].finalOnly)); // (the Cup Final's building isn't one: the list, and so every day's pick, stays as it was)
   const pool = CHALLENGES.filter((c) => c.id !== 'sudden');
   const mods = [];
   const n = rng() < 0.45 ? 2 : 1;

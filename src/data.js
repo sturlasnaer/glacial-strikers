@@ -334,7 +334,6 @@ export const ROLE = { frost: 'c', thunder: 'w', stone: 'd', goalie: 'g' };
 export const ART_NAME = { frost: 'nix', thunder: 'volta', stone: 'bram', goalie: 'halla' };
 // Arenas: rivals with their own building host you there.
 export const ARENAS = {
-  frostline_coliseum: { name: 'Frostline Coliseum', lamps: '#ffd45e', twist: 'none' },
   home: { name: 'Frostline Rink', lamps: '#ffb84d', twist: null },
   ember_dome: { name: 'Ember Dome', lamps: '#ff7a2e', flicker: 2.2, ice: 'rgba(255,140,60,0.06)', twist: 'meltwater', rule: 'Meltwater' },
   aurora_palace: { name: 'Aurora Palace', lamps: '#ffd27a', twist: 'aurora_lanes', rule: 'Aurora lanes' },
@@ -343,6 +342,8 @@ export const ARENAS = {
   pine_pond: { name: 'Pine Pond', lamps: null, twist: 'pond_cracks', rule: 'Pond cracks' },
   owl_observatory: { name: 'The Observatory', lamps: '#bfe8ff', twist: 'moonbeams', rule: 'Moonbeams' }, // (the Glacier Owls')
   moose_longhouse: { name: 'The Longhouse', lamps: '#ffb05c', flicker: 1.4, twist: 'loose_planks', rule: 'Loose planks' }, // (the Thunder Moose's)
+  // the Cup Final's neutral building (Batch BX): no rule of its own; not a daily challenge's arena
+  frostline_coliseum: { name: 'Frostline Coliseum', lamps: '#ffd45e', twist: 'none', finalOnly: true },
 };
 
 // ---------------------------------------------------------------- recruitment
