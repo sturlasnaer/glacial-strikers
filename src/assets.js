@@ -13,7 +13,7 @@ const INLINE = typeof window !== 'undefined' && window.__INLINE; // single-file 
 
 // Page groups loaded at start and kept through every scene; and the ones every match needs,
 // loaded with the rival's (the newer supers' effects, the linesman).
-const CORE = ['home', 'away', 'title', 'icons_z', 'allstar', 'icons_ac', 'legends'];
+const CORE = ['home', 'away', 'title', 'icons_z', 'allstar', 'icons_ac', 'legends', 'club_masks'];
 const MATCH = ['abilities_al', 'linesman', 'arena_au'];
 // Groups whose data masks live on pages of their own (read, never team-recoloured), loaded and kept with them.
 const COMPANION = { parts: 'parts_masks', goalie_parts: 'goalie_parts_masks' };
@@ -177,6 +177,21 @@ export const Assets = {
       rects.get(f[0]).push([f[1], f[2], f[3], f[4]]);
     }
     const pages = this.pages.map((img, i) => (img && rects.has(i) ? recolorHome(img, rc, rects.get(i)) : img));
+    // Native cloth masks isolate these banners and supporters from props and faces.
+    const masked = new Map(), maskSources = new Map();
+    for (const [id, mid] of Object.entries(this.atlas.club_art_masks || {})) {
+      const f = this.atlas.frames[id], m = this.atlas.frames[mid];
+      if (!f || !m || !pages[f[0]] || !this.pages[m[0]]) continue;
+      if (!masked.has(f[0])) masked.set(f[0], cpuCanvas(pages[f[0]]));
+      const ctx = masked.get(f[0]);
+      const data = ctx.getImageData(f[1], f[2], f[3], f[4]);
+      if (!maskSources.has(m[0])) maskSources.set(m[0], cpuCanvas(this.pages[m[0]]));
+      const mc = maskSources.get(m[0]);
+      const mask = mc.getImageData(m[1], m[2], m[3], m[4]);
+      recolorClubPixels(data.data, mask.data, rc);
+      ctx.putImageData(data, f[1], f[2]);
+    }
+    for (const [pi, ctx] of masked) pages[pi] = gpuCopy(ctx.canvas);
     this.recolored.set('club', { pages, loaded: 'club' });
   },
 
@@ -559,6 +574,17 @@ export const Assets = {
     return url;
   },
 
+  // A backdrop in its native aspect ratio, without the square icon's padding.
+  sceneImage(id, width = 640) {
+    const key = `scene|${id}|${width}`;
+    if (this.iconCache.has(key)) return this.iconCache.get(key);
+    const f = this.atlas.frames[id];
+    if (!f || !this.pages[f[0]]) return '';
+    const c = document.createElement('canvas'); c.width = width; c.height = Math.round(width * f[4] / f[3]);
+    c.getContext('2d').drawImage(this.pages[f[0]], f[1], f[2], f[3], f[4], 0, 0, c.width, c.height);
+    const url = c.toDataURL('image/png'); this.iconCache.set(key, url); return url;
+  },
+
   iconDraw(id, size, teamId, opts) {
     const f = this.atlas.frames[id];
     if (!f) return null;
@@ -657,6 +683,20 @@ function recolorHomeIn(ctx, rc, rects) {
       memo.set(rgb, (d[i] << 16) | (d[i + 1] << 8) | d[i + 2]); // as stored (rounded)
     }
     ctx.putImageData(data, x, y);
+  }
+}
+
+
+// Pure-channel native club masks: red is teal cloth, green is cream trim.
+// Keep source shading and alpha; unlabelled skin, hair, instruments and rails stay intact.
+export function recolorClubPixels(d, md, rc) {
+  for (let i = 0; i < d.length; i += 4) {
+    if (!d[i + 3] || !md[i + 3]) continue;
+    const colour = md[i] > 200 ? rc.trim : md[i + 1] > 200 ? rc.jersey : null;
+    if (!colour) continue;
+    const brightness = Math.max(d[i], d[i + 1], d[i + 2]) / 255;
+    const out = hsv2rgb(colour.h / 360, colour.s, Math.min(1, colour.v * (0.35 + brightness * 0.65)));
+    d[i] = out[0]; d[i + 1] = out[1]; d[i + 2] = out[2];
   }
 }
 

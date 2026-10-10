@@ -3,7 +3,7 @@
 import { Assets } from './assets.js';
 import { toScreen, persp, BACKDROP, GOAL_X, MOUTH, NET_DEPTH, RINK } from './rink.js';
 import { clamp, lerp, makeRng } from './util.js';
-import { POWER_INFO, COMBOS, TEAMS, ARENAS, PALETTES, GEAR_LOOK } from './data.js';
+import { POWER_INFO, COMBOS, TEAMS, ARENAS, PALETTES, GEAR_LOOK, CLUB } from './data.js';
 import { ELEMENT_COLORS } from './fx.js';
 import { NetRenderer, SpriteNets } from './net.js';
 import { t } from './i18n.js';
@@ -199,6 +199,7 @@ export class Renderer {
     for (const d of list) d.f();
     // near glass over anyone skating along the bottom boards (Pine Pond has snowbanks)
     if (Assets.glass && arena !== 'pine_pond') ctx.drawImage(Assets.glass, Assets.atlas.arena.glass.x, Assets.atlas.arena.glass.y);
+    if (arena === 'home') this.drawSupporters(ctx, fx, ui.save);
     if (match.allstar && arena === 'home') this.drawAllStarDressing(ctx, fx, true);
 
     this.drawParticles(ctx, fx);
@@ -348,6 +349,25 @@ export class Renderer {
     }
   }
 
+  // The Stands facility unlocks the dedicated near-side supporters at home.
+  drawSupporters(ctx, fx, save) {
+    const level = (save?.facilities?.stands || 0), sets = Assets.atlas.crowd_supporters;
+    if (level < 2 || !sets) return;
+    const cheering = fx.cheerTeam === 0 && fx.lamp > 0;
+    const phase = Math.floor(fx.time * (fx.chant?.team === 0 ? 4 : 1.3)) % 2;
+    const positions = level >= 3 ? [['drummer', 575], ['capo', 675], ['banner', 820]] : [['drummer', 630], ['capo', 735]];
+    for (const [key, x] of positions) {
+      const set = sets[key], id = set && (cheering ? set.cheer : set.chant[phase]);
+      if (id) Assets.draw(ctx, id, x, 935, set.render_scale, { pages: Assets.clubPages() });
+      if (key === 'banner' && id) {
+        const f = Assets.frame(id), region = Assets.atlas.overlay_regions?.[id]?.club_short_name;
+        if (!f || !region) continue;
+        ctx.save(); ctx.fillStyle = '#fff2cb'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `9px ${this.font}`;
+        ctx.fillText(String(CLUB.short).toUpperCase().slice(0, 14), x + (region.x + region.w / 2 - f[5] / f[7]) * set.render_scale, 935 + (region.y + region.h / 2 - f[6] / f[7]) * set.render_scale, region.w * set.render_scale); ctx.restore();
+      }
+    }
+  }
+
   // One fan seen from behind, at (x, y) = the middle of the shoulders.
   drawNearFan(ctx, f, x, y, s, jersey, trim, up, sign) {
     const NAVY = '#14233b';
@@ -446,9 +466,17 @@ export class Renderer {
       // the words: the cup banner's band, the number banner's chest and name strip
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = id && kind === 'cup' ? '#14233b' : '#ffd45e';
       // (the cup's season goes low on the cloth, clear of the scoreboard over the top of the screen)
-      ctx.font = `${kind === 'number' ? 30 : 15}px ${this.font}`;
-      ctx.fillText(big, 0, kind === 'number' ? 30 : id ? 70 : 52);
-      if (small) { ctx.font = `11px ${this.font}`; ctx.fillStyle = '#fff2cb'; ctx.fillText(small, 0, kind === 'number' ? 55 : id ? 82 : 26); }
+      const f = id && Assets.frame(id), regions = id && Assets.atlas.overlay_regions?.[id];
+      const r = regions?.[kind === 'number' ? 'number' : 'season'];
+      ctx.font = `${r ? (kind === 'number' ? 22 : 9) : kind === 'number' ? 30 : 15}px ${this.font}`;
+      if (r) ctx.fillText(big, (r.x + r.w / 2 - f[5] / f[7]) * 0.185, (r.y + r.h / 2 - f[6] / f[7]) * 0.185, r.w * 0.185);
+      else ctx.fillText(big, 0, kind === 'number' ? 30 : id ? 70 : 52);
+      if (small && (!regions || kind === 'number')) {
+        ctx.font = `${regions ? 8 : 11}px ${this.font}`; ctx.fillStyle = '#14233b';
+        const n = regions?.name;
+        if (n) ctx.fillText(small, (n.x + n.w / 2 - f[5] / f[7]) * 0.185, (n.y + n.h / 2 - f[6] / f[7]) * 0.185, n.w * 0.185);
+        else ctx.fillText(small, 0, kind === 'number' ? 55 : id ? 82 : 26);
+      }
       ctx.restore();
     };
     cups.slice().reverse().forEach((season, i) => one(LEFT[i], i, 'cup', season ? t('SEASON {n}', { n: season }) : t('CHAMPIONS'), t('FROSTLINE CUP')));

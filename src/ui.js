@@ -1295,11 +1295,12 @@ export class UI {
   pressConference(game, who, vars, answer, done) {
     const npcs = Assets.atlas.npcs || {}, kipId = npcs.announcer_press || npcs.announcer;
     const kip = kipId ? Assets.icon(kipId, 152) : '';
-    const room = Assets.atlas.frames['press/room'] ? Assets.icon('press/room', 640) : '';
+    const room = Assets.atlas.frames['press/room'] ? Assets.sceneImage('press/room', 640) : '';
     audio.sfx('blip');
     this.modal(`
       <div class="label">${t('Press conference')}</div>
-      <div class="locker press-conf"${room ? ` style="background-image:url(${room})"` : ''}>
+      <div class="locker press-conf"${room ? ` style="background-image:url(${room});background-size:100% 100%;aspect-ratio:16/9;position:relative;align-items:end;padding:12px;border-radius:8px"` : ''}>
+        ${room ? `<img src="${crest('home', 96)}" alt="" style="position:absolute;left:32.9%;top:17.2%;width:12.65%;aspect-ratio:1;object-fit:contain;opacity:.9;pointer-events:none">` : ''}
         <div class="locker-faces">${kip ? `<img src="${kip}" alt="">` : ''}<img src="${portrait(who, 0, null, 152)}" alt=""></div>
         <div><h2>${esc(t('Kip Vance asks'))}</h2><p style="margin:6px 0 0">${esc(clubText(t(pressQuestion(game), vars)))}</p></div>
       </div>
@@ -1312,7 +1313,10 @@ export class UI {
         el.querySelector('#pc-choices').hidden = true;
         const r = el.querySelector('#pc-reply');
         r.hidden = false;
-        r.innerHTML = `<p style="margin:0 0 6px"><b>${esc(vars.name)}:</b> ${esc(clubText(t(a.reply, vars)))}</p><p class="gold-t" style="margin:0 0 6px">${esc(t(a.fx))}</p><p class="muted" style="margin:0 0 10px;font-size:12.5px">${t('Tomorrow\'s headline')}: ${esc(clubText(t(pressHeadline(a.tone), vars)))}</p><div class="row" style="justify-content:flex-end"><button class="btn gold" id="pc-go">${t('Continue')}</button></div>`;
+        const reporter = ['radio', 'paper', 'tv'][+b.dataset.pc];
+        const reporterId = npcs['reporter_' + reporter + (a.tone === 'fiery' ? '_eager' : '')];
+        const reporterImg = reporterId ? Assets.icon(reporterId, 88) : '';
+        r.innerHTML = `${reporterImg ? `<img src="${reporterImg}" alt="" style="float:right;width:60px;height:60px;object-fit:contain;margin:0 0 6px 8px">` : ''}<p style="margin:0 0 6px"><b>${esc(vars.name)}:</b> ${esc(clubText(t(a.reply, vars)))}</p><p class="gold-t" style="margin:0 0 6px">${esc(t(a.fx))}</p><p class="muted" style="margin:0 0 10px;font-size:12.5px">${t('Tomorrow\'s headline')}: ${esc(clubText(t(pressHeadline(a.tone), vars)))}</p><div class="row" style="justify-content:flex-end"><button class="btn gold" id="pc-go">${t('Continue')}</button></div>`;
         r.querySelector('#pc-go').addEventListener('click', () => { close(); done(); });
       }, el);
     }, false);

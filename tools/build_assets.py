@@ -744,7 +744,8 @@ BJ = sys.argv[24] if len(sys.argv) > 24 else '../assets/Puckbound-Batch-BJ'
 BK_BL_BM = sys.argv[25] if len(sys.argv) > 25 else '../assets/Puckbound-Batches-BK-BL-BM'
 from compile_request_additions import merge_request_additions
 BN_BO_BP = sys.argv[26] if len(sys.argv) > 26 else '../assets/Puckbound-Batches-BN-BP'
-atlas = merge_request_additions(atlas, OUT, [BJ, BK_BL_BM, BN_BO_BP])
+BR_BT = sys.argv[28] if len(sys.argv) > 28 else '../assets/Puckbound-Batches-BR-BT'
+atlas = merge_request_additions(atlas, OUT, [BJ, BK_BL_BM, BN_BO_BP, BR_BT])
 from merge_league_motion import merge_league_motion
 atlas = merge_league_motion(atlas, OUT, BH_BI)
 # where the blade meets the ice in the ordinary skating frames (from the gear masks)

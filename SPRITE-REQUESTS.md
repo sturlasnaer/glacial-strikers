@@ -7,11 +7,13 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **BR:** the six club facility icons.
-2. **BS:** championship and retired-number banners, and the home supporters' section (13 frames plus masks).
-3. **BT:** the press room, Kip interviewing, and the three reporters' neutral/eager portraits (9 frames).
+1. **BU: the facilities as they grow**
+2. **BV: the Hall of Fame**
+3. **BW: achievements for the club off the ice**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
+
+**Delivered BR–BT:** six facility icons, thirteen home-rink frames and eleven native cloth masks, and nine press-room/portrait frames. Includes an eager Kip portrait as the ninth BT image. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BR-BT-Testing-Update`.
 
 ## Format notes
 
@@ -142,7 +144,7 @@ And Settings › Gamepad lets a player put an action on a stick click, which has
 
 ---
 
-## Batch BR: club facility icons
+## Batch BR ✓: club facility icons
 
 After two or three seasons a club sits on 8,000–14,000 coins with nothing worth buying, so the club can now build **facilities** (in Ottar's shop, under Club facilities), each with three levels: the **Stands** (a louder home crowd: chants come sooner and last longer at home), the **Training centre** (more EXP from drills, and at level 3 a third rewarded session), the **Scouting office** (a fourth prospect on Draft Day, and the rival's game plan shown before a match) and the **Physio room** (stamina comes back a little faster in matches). They show as cards with a level meter, using borrowed icons for now. Please draw, in the icons_z style and size (`icons/scout`, `icons/draft`, `icons/career`):
 - `icons/facility_stands`: a slice of packed home stands with a scarf held up
@@ -153,7 +155,7 @@ After two or three seasons a club sits on 8,000–14,000 coins with nothing wort
 
 6 frames.
 
-## Batch BS: the home rink grows with the club
+## Batch BS ✓: the home rink grows with the club
 
 The home rink should show the club's history and its supporters. Please draw, for the home arena:
 - **Championship banners** in the rafters, one for each Frostline Cup won: `rafters/cup_banner_a` and `_b` (two sway frames), navy cloth with the gold Frostline Cup and a blank gold band near the bottom where the game writes the season ("SEASON 2"). Same size and hanging style as the AV team banners (`arena.banners`, about 150×187 source px at 0.37). They hang over the far stands between the two team banners.
@@ -162,7 +164,7 @@ The home rink should show the club's history and its supporters. Please draw, fo
 
 13 frames plus masks.
 
-## Batch BT: press conferences
+## Batch BT ✓: press conferences
 
 After the big games (rivalry games, playoff games, the Winter Classic and the All-Star Game), Kip Vance now holds a short press conference. One of our players answers a question by picking one of three replies (humble, confident or fiery), with a small effect on the next game. Until the art comes, it plays as a dialogue scene with Kip's ordinary portrait. Please draw:
 - `press/room`: a press room backdrop at 1280×720 like the draft hall and the legends' reveal: a table with microphones in front of a sponsor wall that has a blank square for the club crest (the game draws the crest on it) and the Frostline league logo, warm TV lights, a camera at the edge of the frame.
