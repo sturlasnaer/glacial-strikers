@@ -7,8 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **DS: a present a day in December**
-2. **DT: snowball fun with the cub**
+None currently open. Monitoring for additions.
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -81,6 +80,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered DM-DN:** Nine rink-cub victory poses and five Little player reward stickers with two sparkle overlays. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DM-DN-Testing-Update`.
 
 **Delivered DO-DR:** Cub ball and play poses, two seasonal map overlays, Halloween candy bowl and three achievement icons. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DO-DR-Testing-Update`.
+
+**Delivered DS-DT:** December daily presents and a snowball yard with five forts, cub peek and hit reactions and snowball effects. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DS-DT-Testing-Update`.
 
 ## Format notes
 
@@ -648,7 +649,7 @@ Three achievement badges in the same style, size and frame as the other `achieve
 
 As atlas frames on the page with the other achievement icons (or a new page in the same group). 3 frames.
 
-## Batch DS: a present a day in December
+## Batch DS ✓: a present a day in December
 
 The holiday twin of DQ's treat bowl: in December (when the room and the cub wear their holiday dressing), a little pile of wrapped presents sits on the locker room floor; tap it once a day for a small gift (a few coins). Please draw, in the room's style and angle, as atlas frames on a page in the `seasonal` group:
 - `seasonal_room/gift_pile`: three or four wrapped presents in the club's blue and white and in red and gold, ribbons and bows, about 90×70 room pixels, pivot at its bottom centre; and `seasonal_room/gift_pile_empty`: the same with one present opened (paper and ribbon spilled), the rest still wrapped.
@@ -657,7 +658,7 @@ The holiday twin of DQ's treat bowl: in December (when the room and the cub wear
 
 3 frames.
 
-## Batch DT: snowball fun with the cub
+## Batch DT ✓: snowball fun with the cub
 
 A gentle mini-game for the youngest, in Training: the cub (CX) pops up from behind snow forts and you tap it to toss a soft snowball; it giggles and ducks back down, a minute of play, no losing. Please draw, as atlas frames on a page in a new `snowball` group:
 - `snowball/yard` (1536×864): a snowy backyard in the game's style, seen from the front: three low snow forts in a row across the middle (left, centre, right) and two further back, a fence, pine trees, a soft winter sky, no lettering. And `atlas.snowball_spots = [{ x, y }, …]`: the five spots (in the yard's pixels) where the cub's feet are when it pops up behind each fort.
