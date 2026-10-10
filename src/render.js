@@ -547,7 +547,7 @@ export class Renderer {
     const ids = [1, 2, 3, 4].map((i) => `night/aurora_${i}`), f = Assets.frame(ids[0]);
     if (!f || !Assets.pages[f[0]]) return;
     const u = (fx.time / 3) % 4, i = Math.floor(u), k = u - i, w = f[3] / f[7];
-    for (const [id, a] of [[ids[i], 1 - k], [ids[(i + 1) % 4], k]]) Assets.draw(ctx, id, (f[5] / f[7]) * (1536 / w), (f[6] / f[7]) * (1536 / w), 1536 / w, { alpha: 0.55 * a, blend: 'lighter' }); // (across the top, whatever its pivot)
+    for (const [id, a] of [[ids[i], 1 - k], [ids[(i + 1) % 4], k]]) Assets.draw(ctx, id, (f[5] / f[7]) * (1536 / w), (f[6] / f[7]) * (1536 / w) - 100, 1536 / w, { alpha: 0.2 * a, blend: 'lighter' }); // (subtle sky light above the boards, whatever its pivot)
   }
 
   // The Summit Rink (Batch CV): a cable car gliding across the sky, swaying, and clouds drifting

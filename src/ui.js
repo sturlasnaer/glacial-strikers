@@ -719,7 +719,7 @@ export class UI {
       const [x, y, w, h] = st.rect;
       const img = st.npc && npcs[st.npc] ? Assets.icon(npcs[st.npc], 72) : st.icon ? ico(st.icon, 64) : '';
       const b = badge[st.tab];
-      const [ax, ay] = st.at;
+      const [ax, ay] = st.tab === 'training' && Assets.atlas.decor_slots?.trophies ? [11.5, 25] : st.at;
       return `<button class="spot" data-tab="${st.tab}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%" title="${esc(t(st.tip))}" aria-label="${esc(t(st.label))}: ${esc(t(st.tip))}">
         <span class="spot-label" style="left:${((ax - x) / w) * 100}%;top:${((ay - y) / h) * 100}%">${img ? `<img src="${img}" alt="">` : ''}<b>${esc(t(st.label))}</b>${b ? `<small class="${st.tab === 'trophies' ? '' : 'hot'}">${esc(b)}</small>` : ''}</span></button>`;
     }).join('');
@@ -905,7 +905,7 @@ export class UI {
       [...Array(Math.min(3, s.miniCups || 0)).fill(icon(['badges/mini_cup', 'badges/cup_small'])), ...(classics ? [icon(['achievements/winter_classic'])] : [])].slice(0, 4),
       Array(Math.min(4, (s.weeklyCups || []).length)).fill(icon(['badges/weekly_cup', 'badges/cup_small'])),
     ];
-    const shelfY = [0.31, 0.63, 0.95]; // (each shelf's top, as part of the frame's height)
+    const shelfY = [0.35, 0.58, 0.81]; // (each shelf's top, as part of the frame's height)
     const items = rows.map((row, r) => row.filter(Boolean).map((src, i, a) => `<img class="shelf-cup" src="${src}" alt="" style="left:${((i + 1) / (a.length + 1)) * 100}%;top:${shelfY[r] * 100}%">`).join('')).join('');
     return `<button class="trophy-shelf" data-board="trophies" aria-label="${esc(t('Trophies'))}" style="${at(sp.x, sp.y)};height:${(160 / 864) * 100}%;aspect-ratio:${set.w}/${set.h}"><img src="${set.urls[0]}" alt="">${items}</button>`;
   }
