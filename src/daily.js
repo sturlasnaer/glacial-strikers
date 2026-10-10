@@ -19,7 +19,15 @@ export const DAILY_GOALS = [
   { id: 'draws', from: '2026-10-10', text: 'Win and take 3 faceoffs clean, right on the drop.', check: (s) => s.winner === 0 && s.skaters.filter((k) => k.team === 0).reduce((a, k) => a + (k.cleanDraws || 0), 0) >= 3 },
   { id: 'spread', text: 'Win with all three skaters scoring a point.', check: (s) => s.winner === 0 && s.skaters.filter((k) => k.team === 0 && !k.extra).every((k) => k.goals + k.assists > 0) },
   { id: 'tipin', from: '2026-10-11', text: 'Win and score on a tip-in: shoot from the point with a teammate in front.', check: (s) => s.winner === 0 && (s.goals || []).some((g) => g.team === 0 && g.kind === 'tip') },
+  { id: 'tight', from: '2026-10-12', text: 'Win and let in one goal at most.', check: (s) => s.winner === 0 && s.score[1] <= 1 },
+  { id: 'comeback', from: '2026-10-12', text: 'Come back from two goals down and win.', check: (s) => s.winner === 0 && trailedBy(s.goals || []) >= 2 },
 ];
+// The furthest behind we were at any point (the goals in order).
+function trailedBy(goals) {
+  let us = 0, them = 0, worst = 0;
+  for (const g of goals) { if (g.team === 0) us++; else them++; worst = Math.max(worst, them - us); }
+  return worst;
+}
 const GOAL_BY_ID = Object.fromEntries(DAILY_GOALS.map((g) => [g.id, g]));
 
 export function dayKey(d = new Date()) {

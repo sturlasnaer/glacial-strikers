@@ -1358,10 +1358,14 @@ export class UI {
   seasonReview(r, done) {
     const result = { champion: t('Frostline Cup champions!'), final: t('Lost in the Cup Final'), semi: t('Out in the semifinals'), missed: t('Missed the playoffs'), unfinished: t('The season ended early') }[r.result];
     const nm = (id) => (member(id) ? member(id).name : '');
+    // (Batch BZ: a newspaper front page behind it, and a CHAMPIONS stamp for a Cup season)
+    const paper = Assets.atlas.frames['review/backdrop'] ? Assets.sceneImage('review/backdrop', 960) : '';
+    const stamp = r.result === 'champion' && Assets.atlas.frames['review/stamp_champions'] ? Assets.sceneImage('review/stamp_champions', 300) : '';
     audio.sfx('blip');
     this.modal(`
       <div class="label">${t('Season {n} in review', { n: r.season })}</div>
-      <h2>${esc(result)}</h2>
+      ${paper ? `<div class="review-paper" style="background-image:url(${paper})">${stamp ? `<img class="review-stamp" src="${stamp}" alt="">` : ''}<h2>${esc(result)}</h2></div>` : ''}
+      <h2${paper ? ' hidden' : ''}>${esc(result)}</h2>
       <div class="review-stats">
         <div><b>${r.place}<small>/${r.teams}</small></b><span>${t('place')}</span></div>
         <div><b>${r.w}–${r.l}</b><span>${t('record')}</span></div>

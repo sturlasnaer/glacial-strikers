@@ -1260,3 +1260,8 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .hall-cer.native-scene > div { padding: 6px; border-radius: 4px; background: #14233bd9; }
 .hall-cer.native-scene h2 { font-size: 22px; margin: 0; }
 .hall-cer.native-scene p { font-size: 12px; }
+
+/* the season in review on Batch BZ's newspaper: the headline across the top of the page */
+.review-paper { position: relative; aspect-ratio: 16 / 6; background-size: cover; background-position: top center; border-radius: 6px; display: flex; align-items: flex-start; justify-content: center; padding-top: 4%; }
+.review-paper h2 { color: #14233b; text-shadow: none; font-size: clamp(22px, 4vw, 38px); }
+.review-stamp { position: absolute; right: 4%; bottom: 8%; width: 26%; transform: rotate(-8deg); opacity: 0.9; }

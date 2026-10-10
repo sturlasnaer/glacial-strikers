@@ -4,7 +4,7 @@
 //   node tools/test_meta.mjs
 import { WHATS_NEW, whatsNewFor } from '../src/whatsnew.js';
 import { threeStars } from '../src/career.js';
-import { dailyFor } from '../src/daily.js';
+import { dailyFor, dailyGoal } from '../src/daily.js';
 
 let pass = 0, fail = 0;
 const check = (name, cond, info) => { if (cond) pass++; else { fail++; console.log('✗', name, info ?? ''); } };
@@ -46,6 +46,18 @@ const check = (name, cond, info) => { if (cond) pass++; else { fail++; console.l
   const later = goals(11, 200);
   check('...it comes up after', later.some((d) => d.goal === 'tipin'));
   check('...and never with one-timers only', later.every((d) => !(d.goal === 'tipin' && d.mods.includes('onetimers'))));
+}
+
+// the tight-game and comeback goals from 12 October
+{
+  const goals = (from, days) => Array.from({ length: days }, (_, i) => dailyFor(new Date(Date.UTC(2026, 9, from + i)).toISOString().slice(0, 10)));
+  check('daily: no tight or comeback goal before 12 October', goals(1, 11).every((d) => !['tight', 'comeback'].includes(d.goal)));
+  const later = goals(12, 300);
+  check('...both come up after', later.some((d) => d.goal === 'tight') && later.some((d) => d.goal === 'comeback'));
+  const g = (team) => ({ team });
+  check('comeback: two down, then a win', dailyGoal('comeback').check({ winner: 0, score: [5, 3], goals: [g(1), g(1), g(0), g(0), g(0), g(1), g(0), g(0)] }));
+  check('...one down isn\'t a comeback', !dailyGoal('comeback').check({ winner: 0, score: [5, 1], goals: [g(1), g(0), g(0), g(0), g(0), g(0)] }));
+  check('tight: 5–1 yes, 5–2 no', dailyGoal('tight').check({ winner: 0, score: [5, 1] }) && !dailyGoal('tight').check({ winner: 0, score: [5, 2] }));
 }
 
 console.log(`meta: ${pass} passed, ${fail} failed`);
