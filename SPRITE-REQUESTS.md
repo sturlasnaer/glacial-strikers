@@ -7,7 +7,9 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-None currently open. Monitoring for additions.
+1. **CO: goal celebrations for players of your own**
+2. **CP: the Glacier Cave**
+3. **CQ: Simple controls**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -343,3 +345,24 @@ The Harbour Rink (Batch CM) is in and looks lovely. Two small touches to bring i
 - **The lighthouse's beam:** one soft, see-through cone of light (`arena_harbour/beam`) that sweeps from the red lighthouse on the far harbour wall; the game fades it in and out and mirrors it as it turns.
 
 Metadata: `atlas.arena.harbour = { gulls: { frames: [the four ids], y, scale, speed, fps }, beam: { frame, x, y, scale, period } }` in backdrop pixels, on the `arena_cm` group. 5 frames.
+
+## Batch CO: goal celebrations for players of your own
+
+Players made from parts (drafted rookies, free agents, and now the players of your own from Team › Create a player) only have one "celebrate" frame, so they bounce on the spot after scoring while the cast and the rivals have their signature celebrations. Please draw a 4-frame celebration for each parts build (`std`, `big`, `small`), facing the camera, in the style of the rival celebrations (`art_additions.rival_polish.<club>_<role>.signature`): a big fist pump into a knee slide, the stick held up. Like every parts body frame they're drawn without the head, so give each frame its head anchor in `modular.anchors` (view `s`) and their gear masks like the other body frames. Add them to each build's skater set as `skaters.body_<build>.signature` (the four ids, `signature_hand` if they're drawn with one hand), which the game already uses for a scorer's celebration. 12 frames plus masks and anchors.
+
+## Batch CP: the Glacier Cave
+
+A second building for exhibitions (like the Harbour Rink, Batch CM): **the Glacier Cave**, a rink carved inside a blue glacier, lit by lanterns and the glow of the ice. Its rule is coming in the code: *icicles*, now and then an icicle drops from the ceiling (its shadow grows on the ice first), shatters, and leaves a chunk of ice that deflects the puck until the next faceoff. Please draw, exactly like the AU arena packs (the same 1536×1024 backdrop with the rink lines, boards, glass and benches in the same places):
+- The backdrop (`arena_glacier_cave`): walls and a ceiling of layered blue ice with icicles hanging, lanterns along the boards, fans in thick coats on benches cut into the ice, frozen waterfalls, a few glowing crystals.
+- Its scoreboard (`arena.scoreboards.glacier_cave`), near glass, a penalty box in the AU style (an ice alcove?).
+- The rule's art: `arena_glacier/icicle_fall_1`..`_3` (an icicle dropping, seen from above at the game's angle), `arena_glacier/icicle_shatter_1`..`_3` (it bursts into shards), `arena_glacier/ice_chunk` (the chunk left on the ice, about the size of a skater's boot), and `rule_icons.icicles`.
+
+On a group of its own (say `arena_cp`), with `glacier_cave` in `atlas.arenas`. About 9 frames plus the backdrop.
+
+## Batch CQ: Simple controls
+
+For the youngest players the game is getting a *Simple controls* setting: one big action button does the right thing (shoot when you're in range, pass when you're not, check or take the puck without it) and the game switches to the nearest skater by itself. Please draw, in the touch kit's style (`touch-kit/images`, the same size and look as the SHOOT button, with its pressed state):
+- `touch-kit/images/btn_play.png` and `btn_play_pressed.png`: a big round gold button with a puck-and-stick symbol, no lettering (the game writes PLAY or SPILA in it).
+- `icons/simple_controls` (128×128, for Settings): a single big gold button with a small hand pressing it.
+
+3 images.
