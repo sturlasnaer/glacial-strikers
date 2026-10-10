@@ -1201,6 +1201,10 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
   .medal-big, .medal-big img { max-height: 64px; width: auto; }
   .modal .reward-lines { font-size: 12.5px; }
   .hall-cer { grid-template-columns: 84px minmax(0, 1fr); }
+  .car-tiles { grid-template-columns: repeat(auto-fit, minmax(78px, 1fr)); gap: 4px; }
+  .car-tile { padding: 3px 2px; }
+  .car-tile b { font-size: 20px; }
+  .car-tile .h-ico { width: 20px; height: 20px; }
   .hall-cer img { width: 84px; height: 84px; }
   /* after a match: a smaller headline, so the box score shows without scrolling */
   .results { width: min(860px, calc(100% - 16px)); max-height: calc(100% - 8px); padding: 8px 12px; gap: 8px; }

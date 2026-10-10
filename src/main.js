@@ -199,7 +199,7 @@ class App {
     const [img, small, title, line] = q.shift();
     let box = document.getElementById('toasts');
     if (!box) { box = document.createElement('div'); box.id = 'toasts'; document.getElementById('app').appendChild(box); }
-    const side = !!document.querySelector('.results');
+    const side = !!document.querySelector('.results, .modal-bg'); // (over a results screen or a pop-up: small, in the corner)
     box.classList.toggle('side', side);
     const el = document.createElement('div');
     el.className = 'toast';
