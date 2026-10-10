@@ -82,3 +82,12 @@ export function careerRows(save, ids) {
     .map((r) => ({ ...r, pts: r.g + r.a }))
     .sort((a, b) => b.pts - a.pts || b.g - a.g || b.gp - a.gp);
 }
+
+// Two players' running totals (career page): matches, wins, and each player's goals and
+// assists (P2's saves when they kept goal).
+export function addSeatTotals(save, summary) {
+  const T = (save.coopTotals ||= { played: 0, won: 0, p1: { g: 0, a: 0 }, p2: { g: 0, a: 0, saves: 0 } }), S = summary.seats;
+  T.played++; if (summary.winner === 0) T.won++;
+  T.p1.g += S.p1.g; T.p1.a += S.p1.a;
+  if (S.keeper) T.p2.saves = (T.p2.saves || 0) + S.p2.saves; else { T.p2.g += S.p2.g; T.p2.a += S.p2.a; }
+}

@@ -5,6 +5,7 @@
 import { Match } from '../src/match.js';
 import { CHARACTERS } from '../src/data.js';
 import { GOAL_X } from '../src/rink.js';
+import { addSeatTotals } from '../src/career.js';
 
 let pass = 0, fail = 0;
 const check = (name, cond, info) => { if (cond) pass++; else { fail++; console.log('✗', name, info ?? ''); } };
@@ -151,6 +152,15 @@ const seatsOk = (m) => {
   ks.goalies[0].saves = 7;
   check('...and the summary gives player 2 the saves', ks.summary().seats.keeper && ks.summary().seats.p2.saves === 7);
   check('one player: no seats in the summary', make(1, false).summary().seats === null);
+}
+
+// two players' running totals for the career page
+{
+  const save = {};
+  addSeatTotals(save, { winner: 0, seats: { keeper: false, p1: { g: 2, a: 1 }, p2: { g: 1, a: 2 } } });
+  addSeatTotals(save, { winner: 1, seats: { keeper: true, p1: { g: 1, a: 0 }, p2: { saves: 9 } } });
+  const T = save.coopTotals;
+  check('running totals: matches, wins, each player\'s goals and assists, and P2\'s saves in goal', T.played === 2 && T.won === 1 && T.p1.g === 3 && T.p1.a === 1 && T.p2.g === 1 && T.p2.a === 2 && T.p2.saves === 9, T);
 }
 
 console.log(`Co-op: ${pass} passed, ${fail} failed`);

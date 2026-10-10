@@ -44,7 +44,7 @@ import { teamHasParts, setFills, retireRivals } from './slots.js';
 import { useModular, useGoalieParts, goalieArt } from './modular.js';
 import { Quality } from './quality.js';
 import { offerDraft } from './draft.js';
-import { recordCareer } from './career.js';
+import { recordCareer, addSeatTotals } from './career.js';
 import {
   loadSave, newSave, writeSave, setSaveOff, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards,
   lineupIds, homeKitGroups, allStarVote, allStarVoteStands, allStarConfig, setLeagueEdge, rosterIds, goalieIds,
@@ -1094,6 +1094,7 @@ class App {
       } else rewards.lines.push([met ? t('Daily challenge (already done today)') : t('Daily goal missed: {goal}', { goal: t(goal.text) }), 0]);
     }
     this.ach.endMatch(summary, { league: !c.exhibition && !allstar, exhibition: c.exhibition, mods: c.mods, coop: !!c.coop });
+    if (summary.seats) addSeatTotals(s, summary); // (two players: who's ahead, over every co-op match)
     if (summary.goalieMode) { s.goalieGames = (s.goalieGames || 0) + 1; if (rewards.won) this.ach.unlock('between-pipes'); }
     this.ach.checkMeta();
     s.training.sessions = trainingSessions(s);
