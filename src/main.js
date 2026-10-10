@@ -83,7 +83,7 @@ class App {
     const bar = this.loadingEl.querySelector('.bar i');
     try {
       await Assets.load((f) => { bar.style.width = Math.round(f * 100) + '%'; });
-      setTimeout(() => Assets.prefetch(), 1200);
+      setTimeout(() => { if (!this.canOffline) Assets.prefetch(); }, 1200); // (with the service worker, its offline cache downloads everything instead)
       // the legends wear their own art once it's in (?legends=1 previews them before it is)
       for (const L of Object.values(LEGENDS)) {
         if (Assets.atlas.skaters && Assets.atlas.skaters[L.art]) LEGEND_ART.add(L.art);
