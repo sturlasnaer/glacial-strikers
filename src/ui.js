@@ -838,8 +838,12 @@ export class UI {
   startPet(room) {
     const has = (f) => !!Assets.atlas.frames[f];
     if (!['pet/walk_1', 'pet/sit_1', 'pet/sleep_1', 'pet/hop'].every(has) || room.querySelector('.pet')) return;
-    const H = 84, set = (ids) => Assets.spriteSet(ids.filter(has), H); // (a bit bigger than drawn for: it reads on a phone)
-    const sets = { walk: set(['pet/walk_1', 'pet/walk_2', 'pet/walk_3', 'pet/walk_4']), sit: set(['pet/sit_1', 'pet/sit_2']), sleep: set(['pet/sleep_1', 'pet/sleep_2']), hop: set(['pet/hop']) };
+    // in season it wears its costume (Batch CZ: pet_halloween/…, pet_holiday/…, the same frames)
+    const season = seasonFor(), dressed = season && has(`pet_${season}/sit_1`), ready = dressed && Assets.pages[Assets.atlas.frames[`pet_${season}/sit_1`][0]];
+    if (dressed && !ready) Assets.loadGroup('seasonal').catch(() => {}); // (in its costume from the next look in)
+    const dir = ready ? `pet_${season}/` : 'pet/';
+    const H = 84, set = (ids) => Assets.spriteSet(ids.map((f) => dir + f).filter(has), H); // (a bit bigger than drawn for: it reads on a phone)
+    const sets = { walk: set(['walk_1', 'walk_2', 'walk_3', 'walk_4']), sit: set(['sit_1', 'sit_2']), sleep: set(['sleep_1', 'sleep_2']), hop: set(['hop']) };
     if (Object.values(sets).some((x) => !x)) return;
     const s = this.app.save, name = () => (s.pet && s.pet.name) || t('Snowball');
     room.insertAdjacentHTML('beforeend', `<button class="pet" id="pet" aria-label="${esc(name())}"><img alt=""></button><button class="pet-tag" id="pet-tag" hidden></button>`);

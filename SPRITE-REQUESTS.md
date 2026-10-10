@@ -8,6 +8,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 **Next batches:**
 1. **CY: celebrations to choose for players of your own**
+2. **CZ: the cub's costumes**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -458,3 +459,11 @@ Batch CW's stick guitar and snow angel are lovely on the cast. Please draw the s
 - Metadata: `skaters.body_<build>.home.celebrations = { guitar: [the four ids], angel: [the four ids] }` (and `celebrations_hand` as CW did).
 
 The Team tab offers them to those players as soon as their frames are in. 24 frames plus masks and anchors.
+
+## Batch CZ: the cub's costumes
+
+The locker room's Snow Fox cub (CX) is adorable. Like the home rink's seasonal dressing (CD), please give it a costume for each season, the same nine poses at the same size and pivots, as atlas frames on a page in the `seasonal` group (loaded in season):
+- `pet_halloween/walk_1`..`_4`, `sit_1`, `sit_2`, `sleep_1`, `sleep_2`, `hop`: in a little pumpkin costume (from 20 October to 1 November).
+- `pet_holiday/walk_1`..`_4`, `sit_1`, `sit_2`, `sleep_1`, `sleep_2`, `hop`: in a Santa hat and a tiny scarf (December to 6 January).
+
+The game swaps them in by the calendar. 18 frames.
