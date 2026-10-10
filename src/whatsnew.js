@@ -6,6 +6,7 @@ export const WHATS_NEW = [
     items: [
       { icon: 'icons/rookie', text: 'Players of your own (and the drafted rookies and free agents) celebrate their goals in style: a fist pump into a knee slide.' },
       { icon: 'icons/simple_controls', text: 'Simple controls in two-player games: pick who gets the one big button, player 1, player 2 or both.' },
+      { icon: 'icons/coop', text: 'Two players on one tablet: in 2 Players, player 1 plays on the left side of the screen and player 2 on the right, each with a stick and a PLAY button.' },
     ],
   },
   {

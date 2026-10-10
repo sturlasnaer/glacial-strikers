@@ -519,7 +519,7 @@ span.fac-pip.on { background: var(--gold); }
 #touch.replaying { display: none; }
 
 /* ---------- touch controls ---------- */
-#touch { position: absolute; inset: 0; z-index: 11; pointer-events: none; }
+#touch, #touch2 { position: absolute; inset: 0; z-index: 11; pointer-events: none; }
 .stick-zone { position: absolute; left: 0; bottom: 0; width: 48%; height: 78%; pointer-events: auto; touch-action: none; }
 .stick { position: absolute; width: 124px; height: 124px; margin: -62px 0 0 -62px; border-radius: 50%; border: 3px solid rgba(113, 220, 232, 0.55); background: rgba(20, 35, 59, 0.35); left: 110px; top: calc(100% - 110px); opacity: 0.55; pointer-events: none; transition: opacity 0.15s; }
 .stick.active { opacity: 1; }
@@ -538,8 +538,8 @@ span.fac-pip.on { background: var(--gold); }
 .t-skill.ready, .t-ult.ready { border-color: var(--gold); box-shadow: 0 0 14px var(--gold), inset 0 -5px 0 rgba(0, 0, 0, 0.25); }
 
 /* touch size + left-handed layout (stick on the right) */
-#touch[data-size="large"] .tbtn { zoom: 1.18; }
-#touch[data-size="huge"] .tbtn { zoom: 1.35; }
+#touch[data-size="large"] .tbtn, #touch2[data-size="large"] .tbtn { zoom: 1.18; }
+#touch[data-size="huge"] .tbtn, #touch2[data-size="huge"] .tbtn { zoom: 1.35; }
 #touch.lefty .stick-zone { left: auto; right: 0; }
 #touch.lefty .t-a { right: auto; left: calc(22px + var(--safe-l)); }
 #touch.lefty .t-b { right: auto; left: calc(118px + var(--safe-l)); }
@@ -945,21 +945,21 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .fb-form .fb-name { text-transform: none; font-family: inherit; }
 .fb-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 /* ---------- Batch V: sprite touch controls (positions, sizes and hit areas stay as above) ---------- */
-#touch .stick { border: 0; background: transparent url(../assets/gfx/touch-kit/images/stick_base_idle.png) center / 100% 100% no-repeat; opacity: 0.75; image-rendering: pixelated; }
-#touch .stick.active { background-image: url(../assets/gfx/touch-kit/images/stick_base_active.png); opacity: 1; }
-#touch .stick-knob { border: 0; background: transparent url(../assets/gfx/touch-kit/images/stick_knob_idle.png) center / 100% 100% no-repeat; image-rendering: pixelated; }
-#touch .stick.active .stick-knob { background-image: url(../assets/gfx/touch-kit/images/stick_knob_active.png); }
-#touch .tbtn { border: 0; box-shadow: none; background-color: transparent; background-size: 100% 100%; background-position: center; background-repeat: no-repeat; image-rendering: pixelated; isolation: isolate; }
-#touch .tbtn.down { transform: none; filter: none; }
-#touch .t-a { background-image: url(../assets/gfx/touch-kit/images/btn_round_coral_normal.png); }
-#touch .t-a.down { background-image: url(../assets/gfx/touch-kit/images/btn_round_coral_pressed.png); }
+#touch .stick, #touch2 .stick { border: 0; background: transparent url(../assets/gfx/touch-kit/images/stick_base_idle.png) center / 100% 100% no-repeat; opacity: 0.75; image-rendering: pixelated; }
+#touch .stick.active, #touch2 .stick.active { background-image: url(../assets/gfx/touch-kit/images/stick_base_active.png); opacity: 1; }
+#touch .stick-knob, #touch2 .stick-knob { border: 0; background: transparent url(../assets/gfx/touch-kit/images/stick_knob_idle.png) center / 100% 100% no-repeat; image-rendering: pixelated; }
+#touch .stick.active .stick-knob, #touch2 .stick.active .stick-knob { background-image: url(../assets/gfx/touch-kit/images/stick_knob_active.png); }
+#touch .tbtn, #touch2 .tbtn { border: 0; box-shadow: none; background-color: transparent; background-size: 100% 100%; background-position: center; background-repeat: no-repeat; image-rendering: pixelated; isolation: isolate; }
+#touch .tbtn.down, #touch2 .tbtn.down { transform: none; filter: none; }
+#touch .t-a, #touch2 .t-a { background-image: url(../assets/gfx/touch-kit/images/btn_round_coral_normal.png); }
+#touch .t-a.down, #touch2 .t-a.down { background-image: url(../assets/gfx/touch-kit/images/btn_round_coral_pressed.png); }
 #touch .t-b { background-image: url(../assets/gfx/touch-kit/images/btn_round_ice_normal.png); }
 #touch .t-b.down { background-image: url(../assets/gfx/touch-kit/images/btn_round_ice_pressed.png); }
 #touch .t-sprint { background-image: url(../assets/gfx/touch-kit/images/btn_round_cream_normal.png); }
 #touch .t-sprint.down { background-image: url(../assets/gfx/touch-kit/images/btn_round_cream_pressed.png); }
 #touch .t-skill, #touch .t-ult { background-image: url(../assets/gfx/touch-kit/images/btn_round_navy_normal.png); }
 #touch .t-skill.down, #touch .t-ult.down { background-image: url(../assets/gfx/touch-kit/images/btn_round_navy_pressed.png); }
-#touch .tbtn > img, #touch .tbtn > span { position: relative; z-index: 2; }
+#touch .tbtn > img, #touch .tbtn > span, #touch2 .tbtn > img, #touch2 .tbtn > span { position: relative; z-index: 2; }
 #touch .tbtn > .lbl { position: absolute; }
 #touch .tbtn > .cd { z-index: 1; }
 #touch .t-skill::after, #touch .t-ult::after { content: ''; position: absolute; inset: 0; background: url(../assets/gfx/touch-kit/images/cooldown_ring.png) center / 100% 100% no-repeat; pointer-events: none; z-index: 2; }
@@ -1398,3 +1398,18 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .decor.anim { background: 0 0 / 200% 100% no-repeat; animation: decor-2 0.9s step-end infinite; }
 @keyframes decor-2 { 0% { background-position: 0% 0; } 50% { background-position: 100% 0; } }
 @media (prefers-reduced-motion: reduce) { .decor.anim { animation: none; } }
+/* two players on one touch screen (2 Players on a tablet, no gamepads): player 1 the left side,
+   player 2 the right, each a stick and one PLAY button near the middle (Simple controls) */
+#touch.duo .stick-zone { width: 32%; }
+#touch2 .stick-zone { left: auto; right: 0; width: 32%; }
+#touch2 .stick { left: calc(100% - 110px); filter: hue-rotate(150deg) saturate(1.3); } /* (player 2's in coral) */
+#touch.duo.simple .t-a, #touch2 .t-a { width: 112px; height: 112px; bottom: calc(30px + var(--safe-b)); font-size: 26px; }
+#touch.duo.simple .t-a { right: auto; left: calc(33% + var(--safe-l)); }
+#touch2 .t-a { right: calc(33% + var(--safe-r)); }
+#touch2 .t-a { background-image: url(../assets/gfx/touch-kit/images/btn_round_coral_normal.png); }
+#touch2.play-art .t-a { background-image: url(../assets/gfx/touch-kit/images/btn_play.png); }
+#touch2.play-art .t-a.down { background-image: url(../assets/gfx/touch-kit/images/btn_play_pressed.png); }
+#touch2.play-art .t-a > span { position: absolute; left: 0; right: 0; bottom: 15%; font-size: 16px; color: #4a2c00; text-shadow: 0 1px 0 rgba(255, 240, 190, 0.8); }
+#touch.duo .t-a::after, #touch2 .t-a::after { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-family: var(--display); font-size: 16px; text-shadow: 0 2px 0 var(--navy); z-index: 3; }
+#touch.duo .t-a::after { content: 'P1'; color: var(--ice); }
+#touch2 .t-a::after { content: 'P2'; color: var(--coral); }

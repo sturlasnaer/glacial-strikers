@@ -122,6 +122,7 @@ class App {
     this.applyQuality(); // where this device settled last time
     this.input = new Input();
     this.touch = new TouchControls(document.getElementById('touch'), this.input);
+    this.touch2 = new TouchControls(document.getElementById('touch2'), this.input, { key: 'touch2' }); // (two players on one touch screen: player 2's side)
     this.ui = new UI(this);
     this.padnav = new PadNav(this);
     window.addEventListener('pointerdown', () => { this.padnav.used = false; document.body.classList.remove('pad-nav'); });
@@ -338,7 +339,10 @@ class App {
     this.arena = arena;
     if (!this.attract) { // Simple controls: one button for the youngest players (in a two-player game, for whichever players have them)
       const st = this.save.settings, two = cfg.coop || cfg.keeperCoop || (cfg.humans && cfg.humans.length > 1);
-      if (two) { if (st.simple2 && st.simple2 !== 'none') cfg.simple = st.simple2 === 'both' ? ['p1', 'p2'] : [st.simple2]; } else if (st.simple) cfg.simple = true;
+      // two players on one touch screen (no gamepads): a stick and one PLAY button each, so Simple controls for both
+      this.duo = !!two && !cfg.keeperCoop && this.isTouch && !this.input.pads().length;
+      if (this.duo) cfg.simple = ['p1', 'p2'];
+      else if (two) { if (st.simple2 && st.simple2 !== 'none') cfg.simple = st.simple2 === 'both' ? ['p1', 'p2'] : [st.simple2]; } else if (st.simple) cfg.simple = true;
     }
     const m = new Match(cfg);
     this.match = m;
@@ -527,7 +531,7 @@ class App {
     this.ui.clear();
     this.scene = 'match';
     this.hud.show(m, awayTeam, ctrl);
-    this.touch.reset();
+    this.touch.reset(); this.touch2.reset();
     this.drillShown = false;
     this.tutorial = -1;
     this.music(id === 'shootout' ? 'shootout' : id === 'resurface' ? 'waltz' : 'training'); // (the Resurfacer: the arena organ's waltz)
@@ -567,7 +571,7 @@ class App {
     this.ui.clear();
     this.scene = 'match';
     this.hud.show(m, teamId, null, { versus: true });
-    this.touch.reset();
+    this.touch.reset(); this.touch2.reset();
     this.tutorial = -1;
     this.music(ARENA_MUSIC[arena] || 'frostline');
     audio.setArena(arena);
@@ -609,7 +613,7 @@ class App {
   // arrows); with one, player 2 has it and player 1 their own keys or touch; with two, one each.
   coopInputs() {
     const I = this.input, pads = I.pads();
-    if (!pads.length) return [mergeInputs(I.readLayout('p1'), I.readTouch()), I.readLayout('p2')];
+    if (!pads.length) return [mergeInputs(I.readLayout('p1'), I.readTouch()), mergeInputs(I.readLayout('p2'), I.readTouch(2))];
     const p2 = pads[pads.length >= 2 ? 1 : 0];
     return [I.read({ skipPad: p2.index }), I.readPad(p2)];
   }
@@ -801,7 +805,7 @@ class App {
     if (extra.allstar) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t('The All-Star Game! The fans voted, and the league\'s best share the ice.')); }, 500);
     this.announceRule(cfg.twist, arena);
     if (this.cur.daily) setTimeout(() => { if (this.scene === 'match') this.hud.banner(`<div class="small">${t('Daily challenge')}</div><div class="sub" style="font-size:clamp(16px,3vw,24px)">${t(dailyGoal(this.cur.daily.goal).text)}</div>`, 3); }, 300);
-    this.touch.reset();
+    this.touch.reset(); this.touch2.reset();
     this.music(classic ? 'classic' : /\bFinal$/.test(stage.round || '') ? 'final' : ARENA_MUSIC[arena] || 'frostline');
     audio.setArena(arena);
     const edge = m.planEdge(0);
@@ -1327,7 +1331,7 @@ class App {
   pause(auto) {
     if (this.scene !== 'match') return;
     this.scene = 'paused';
-    this.touch.reset();
+    this.touch.reset(); this.touch2.reset();
     const st = this.save.settings;
     // two players (versus, co-op): both players' keys above the usual list
     const two = this.cur && (this.cur.versus || this.cur.coop) ? `<p class="two-keys">${this.hud.el.querySelector('#keyhints')?.innerHTML || ''}</p>` : '';
@@ -1403,7 +1407,7 @@ class App {
     if (this.isTouch && window.innerHeight > window.innerWidth) return;
     this.pauseModal?.remove();
     this.scene = 'match';
-    this.touch.reset();
+    this.touch.reset(); this.touch2.reset();
     this.acc = 0;
     this.heldFromPause = new Set(['a', 'b', 'skill', 'ult', 'pull']); // (the button that pressed Resume isn't a pass)
   }
@@ -1634,6 +1638,7 @@ class App {
           let p1 = this.input.readLayout('p1'), p2 = this.input.readLayout('p2');
           if (pads.length >= 2) { p1 = mergeInputs(p1, this.input.readPad(pads[0])); p2 = mergeInputs(p2, this.input.readPad(pads[1])); }
           else if (pads.length === 1) p2 = mergeInputs(p2, this.input.readPad(pads[0]));
+          if (this.isTouch) { p1 = mergeInputs(p1, this.input.readTouch()); p2 = mergeInputs(p2, this.input.readTouch(2)); } // (one touch screen shared: player 1's side and player 2's)
           this.releaseHeld(p1, p2);
           [p1, p2].forEach((i, team) => { i.sprintBtn = i.sprint; if (m.simpleSeat(team, 0) && Math.hypot(i.mx, i.my) > 0.92) i.sprint = true; }); // (Simple controls sprint by themselves)
           m.setHumanInput(p1, 0); m.setHumanInput(p2, 1);

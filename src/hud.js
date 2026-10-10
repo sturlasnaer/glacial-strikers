@@ -23,6 +23,7 @@ export class HUD {
     this.app = app;
     this.el = document.getElementById('hud');
     this.touch = document.getElementById('touch');
+    this.touch2 = document.getElementById('touch2'); // (player 2's side of a shared touch screen)
     this.bannerEl = document.getElementById('banner');
     this.last = {};
     this.hintT = 0;
@@ -86,13 +87,17 @@ export class HUD {
     rp.addEventListener('pointerdown', (e) => { e.preventDefault(); this.app.skipReplay(); });
     this.tickerT = 0;
     this.last = { s0: 0, s1: 0 };
-    this.touch.hidden = !this.app.isTouch || this.versus;
+    this.duo = !!this.app.duo && (this.versus || this.coop); // two players on one touch screen: each a stick and a PLAY button
+    this.touch.hidden = !this.app.isTouch || (this.versus && !this.duo);
+    this.touch.classList.toggle('duo', this.duo);
+    this.touch2.hidden = !this.duo;
+    this.touch2.classList.toggle('play-art', this.duo && this.touch.classList.contains('play-art'));
     this.touch.classList.toggle('gk', !!match.goalieMode && !this.keeper);
     const simple = !!match.simple && match.simpleSeat(0, 0) && (!match.goalieMode || this.keeper); // Simple controls: the stick and one PLAY button (player 1's)
     this.touch.classList.toggle('simple', simple);
     if (simple && !this.playArt) { // (the gold PLAY button once Batch CQ is in; the SHOOT button's look till then)
       this.playArt = new Image();
-      this.playArt.onload = () => this.touch.classList.add('play-art');
+      this.playArt.onload = () => { this.touch.classList.add('play-art'); this.touch2.classList.add('play-art'); };
       this.playArt.src = Assets.url('gfx/touch-kit/images/btn_play.png');
     }
     this.touch.classList.toggle('drive', !!(drill && drill.noCard)); // (the Resurfacer: just the stick and SPRINT) // goalie mode puts icons on the face buttons (keeper co-op: touch is player 1's skater)
@@ -115,6 +120,7 @@ export class HUD {
   hide() {
     this.el.hidden = true;
     this.touch.hidden = true;
+    this.touch2.hidden = true;
     this.bannerEl.innerHTML = '';
   }
 

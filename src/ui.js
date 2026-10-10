@@ -573,6 +573,7 @@ export class UI {
       <p class="muted" style="margin:0">${keeper ? t('Two players on the {club}: player 1 skates and player 2 is in goal, the AI on the other two skaters, against a rival: an exhibition with your own players. Needs a keyboard or a gamepad.', { club: esc(CLUB.nick) })
         : coop ? t('Two players on the {club}, each with a skater of their own and the AI on the third, against a rival: an exhibition with your own players, their levels and gear. Needs a keyboard or a gamepad.', { club: esc(CLUB.nick) })
         : t('Two players on one screen: {club} against a rival, same stats on both sides, first to 5. Needs a keyboard or gamepads.', { club: esc(CLUB.nick) })}</p>
+      ${this.app.isTouch && !padList().length && !keeper ? `<p style="margin:0;color:#7fe08a;font-size:14px">${t('On this touch screen: player 1 on the left and player 2 on the right, each with a stick and one PLAY button.')}</p>` : ''}
       <div class="keys">
         <kbd style="color:var(--ice)">${t('Player 1')}</kbd><span>${t('WASD skate · F shoot/check · G pass/switch · Left Shift sprint · R skill · T ultimate')}</span>
         <kbd style="color:${coop ? '#7fe08a' : 'var(--coral)'}">${t('Player 2')}</kbd><span>${keeper ? t('Arrows move · K block/pass · L dive/clear · O poke check · P Wall of Ice') : t('Arrows skate · K shoot/check · L pass/switch · Right Shift sprint · O skill · P ultimate')}</span>

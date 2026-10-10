@@ -25,6 +25,7 @@ export class Input {
   constructor() {
     this.keys = new Set();
     this.touch = { mx: 0, my: 0, a: false, b: false, sprint: false, skill: false, ult: false, pause: false, pull: false };
+    this.touch2 = { ...this.touch }; // (player 2's side of a shared touch screen)
     this.lastDevice = 'keyboard';
     this.listeners = [];
     window.addEventListener('keydown', (e) => {
@@ -83,8 +84,8 @@ export class Input {
   }
 
   // The touch controls alone (co-op's player 1 on a shared keyboard can use them too).
-  readTouch() {
-    const t = this.touch;
+  readTouch(player = 1) {
+    const t = player === 2 ? this.touch2 : this.touch;
     return { mx: t.mx, my: t.my, a: t.a, b: t.b, sprint: t.sprint, skill: t.skill, ult: t.ult, pause: t.pause, pull: t.pull };
   }
 
@@ -130,6 +131,7 @@ export class TouchControls {
   constructor(root, input, opts = {}) {
     this.root = root;
     this.input = input;
+    this.key = opts.key || 'touch'; // (the input state it writes: 'touch2' for player 2's side)
     this.stick = root.querySelector('.stick');
     this.knob = root.querySelector('.stick-knob');
     this.zone = root.querySelector('.stick-zone');
@@ -148,14 +150,14 @@ export class TouchControls {
       const down = (e) => {
         e.preventDefault();
         el.setPointerCapture?.(e.pointerId);
-        this.input.touch[name] = true;
+        this.input[this.key][name] = true;
         el.classList.add('down');
         this.input.lastDevice = 'touch';
         navigator.vibrate?.(8);
       };
       const up = (e) => {
         e.preventDefault();
-        this.input.touch[name] = false;
+        this.input[this.key][name] = false;
         el.classList.remove('down');
       };
       el.addEventListener('pointerdown', down);
@@ -197,21 +199,21 @@ export class TouchControls {
     const nx = dd ? dx / dd : 0, ny = dd ? dy / dd : 0;
     this.knob.style.transform = `translate(calc(-50% + ${nx * cl}px), calc(-50% + ${ny * cl}px))`;
     const mag = Math.min(1, Math.max(0, (dd - 6) / (this.radius - 6)));
-    this.input.touch.mx = nx * mag;
-    this.input.touch.my = ny * mag;
+    this.input[this.key].mx = nx * mag;
+    this.input[this.key].my = ny * mag;
   }
 
   stickUp(e) {
     if (e.pointerId !== this.stickId) return;
     this.stickId = null;
-    this.input.touch.mx = 0; this.input.touch.my = 0;
+    this.input[this.key].mx = 0; this.input[this.key].my = 0;
     this.stick.classList.remove('active');
     this.knob.style.transform = 'translate(-50%, -50%)';
   }
 
   reset() {
-    for (const k of ['a', 'b', 'sprint', 'skill', 'ult', 'pause', 'pull']) this.input.touch[k] = false;
-    this.input.touch.mx = 0; this.input.touch.my = 0;
+    for (const k of ['a', 'b', 'sprint', 'skill', 'ult', 'pause', 'pull']) this.input[this.key][k] = false;
+    this.input[this.key].mx = 0; this.input[this.key].my = 0;
     this.stickId = null;
     this.stick.classList.remove('active');
     this.root.querySelectorAll('.down').forEach((el) => el.classList.remove('down'));
