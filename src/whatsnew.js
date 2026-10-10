@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10p',
+    items: [
+      { icon: 'icons/simple_controls', text: 'Settings › Simple controls, for the youngest players: one PLAY button shoots near the net, passes further out and checks without the puck, and you always skate the player nearest the puck.' },
+    ],
+  },
+  {
     id: '2026-10-10o',
     items: [
       { icon: 'hud_elements/ability/stamina', text: 'A new building for exhibitions: the Harbour Rink, out on the frozen harbour. Watch for gusts off the sea: passes and loose pucks drift with the wind.' },

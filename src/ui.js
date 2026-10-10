@@ -340,6 +340,7 @@ function coachNote(sm) {
 }
 const smallIcon = (id, size = 40, cls = 'rule-ico') => { const src = id && Assets.icon(id, size); return src ? `<img class="${cls}" src="${src}" alt="">` : ''; };
 const btnIcon = (id) => smallIcon(id, 48, 'btn-ico'); // in front of a button's words
+const simpleLabel = () => `${smallIcon('icons/simple_controls', 48, 'btn-ico')} ${t('Simple controls')}`; // (its icon once Batch CQ is in)
 // A goaltending style's icon (Batch AN), the Iron Wall until it's in.
 const goalieStyleIcon = (id, size = 68) => `<img src="${ico(Assets.atlas.frames['icons/gstyle_' + id] ? 'icons/gstyle_' + id : 'icons/award_iron_wall', size)}" alt="">`;
 function ruleIcon(twist, size = 40) {
@@ -2785,6 +2786,7 @@ export class UI {
       ${row(t('Rival difficulty'), seg('difficulty', [['easy', t('Easy')], ['normal', t('Normal')], ['hard', t('Hard')]]))}
       ${row(t('Aim assist'), seg('assist', [['off', t('Off')], ['normal', t('Normal')], ['strong', t('Strong')]]), t('Strong tightens your shots and widens pass catching. Off aims dead centre unless you steer.'))}
       ${row(t('Auto-sprint'), seg('autoSprint', [[false, t('Off')], [true, t('On')]]), t('Sprint whenever the stick is pushed all the way.'))}
+      ${row(simpleLabel(), seg('simple', [[false, t('Off')], [true, t('On')]]), t('For the youngest players: one PLAY button shoots near the net, passes further out and checks without the puck, and you always skate the player nearest the puck.'))}
       ${row(t('Break reminder'), seg('breakAfter', [[0, t('Off')], [30, t('30 min')], [60, t('1 hour')]]), t('After this much time in matches, Coach Brekka suggests a rest when a match ends.'))}
       ${row(t('Game speed'), seg('speed', [['normal', t('Normal')], ['relaxed', t('Relaxed')]]), t('Relaxed plays matches at 85% speed. Drills stay at full speed.'))}
       ${row(t('Goal replays'), onOff('replays'))}

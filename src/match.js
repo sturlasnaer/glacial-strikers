@@ -56,6 +56,8 @@ export class Match {
     this.trails = [];
     this.pickups = [];
     this.assist = cfg.assist || 'normal'; // aim assist for human players
+    this.simple = !!cfg.simple && !cfg.drill; // Simple controls: one button, and the skater nearest the puck (for the youngest players)
+    this.simpleT = {}; // seat key -> when Simple controls last switched skaters
     this.mods = new Set(cfg.mods || []); // challenge modifiers, see CHALLENGES in data.js
     this.plans = cfg.plans || ['balanced', 'balanced']; // game plans, see GAME_PLANS in data.js
     this.buffs = cfg.buffs || {}; // locker-room buffs for the home team
@@ -218,6 +220,7 @@ export class Match {
     const inp = Skater.blankInput();
     inp.mx = raw.mx; inp.my = raw.my; inp.sprint = raw.sprint; inp.sprintBtn = raw.sprintBtn ?? raw.sprint;
     inp.skill = raw.skill; inp.ult = raw.ult; inp.a = raw.a; inp.b = raw.b;
+    if (this.simple) return this.mapSimple(c, raw, inp);
     if (p.owner === c) {
       // a button still held from a check shouldn't start a shot
       if (raw.a && (c.prevIn.check || c.aLatch)) c.aLatch = true;
@@ -237,6 +240,50 @@ export class Match {
     return inp;
   }
 
+  // Simple controls: any action button does the right thing. With the puck it shoots in front of
+  // their net and passes anywhere else (picked on the press and kept till the release, so a held
+  // press still winds up a slapper); without it, a one-timer or tip when the puck is coming to
+  // us and a check otherwise.
+  mapSimple(c, raw, inp) {
+    const p = this.puck, btn = !!(raw.a || raw.b);
+    const press = btn && !c.simpleBtn;
+    c.simpleBtn = btn;
+    inp.a = btn; inp.b = false;
+    if (p.owner === c) {
+      if (press) c.simpleAct = this.simpleShot(c) || !this.choosePassTarget(c) ? 'shoot' : 'pass';
+      if (!btn) c.simpleAct = null;
+      inp.shoot = c.simpleAct === 'shoot';
+      inp.pass = c.simpleAct === 'pass';
+    } else {
+      c.simpleAct = null;
+      const incoming = !p.owner && p.pass && p.pass.to === c;
+      const tip = !p.owner && p.shot && p.shot.team === c.team && p.shot.by !== c && !p.shot.tipped && Math.hypot(p.x - c.x, p.y - c.y) < 240
+        && Math.hypot(c.side * GOAL_X - c.x, c.y) < 190;
+      if (incoming || tip || (c.prevIn.shoot && btn)) inp.shoot = btn;
+      else inp.check = press || (btn && c.prevIn.check);
+    }
+    return inp;
+  }
+
+  // In front of their net, with an angle on it: a wedge out from the goal line.
+  simpleShot(c) {
+    const dx = (c.side * GOAL_X - c.x) * c.side;
+    return dx > 25 && dx < 400 && Math.abs(c.y) < 80 + dx * 0.6;
+  }
+
+  // Simple controls: the skater nearest the puck is ours whenever the other side has it or it's
+  // loose (not while our own pass or shot is on its way), and not more than every 0.6 seconds.
+  simpleSwitch(c, team, seat) {
+    const p = this.puck, key = this.seatKey(team, seat);
+    if (this.state !== 'play' || (p.owner && p.owner.team === team) || (p.pass && p.pass.to && p.pass.to.team === team) || (p.shot && p.shot.team === team)) return;
+    if (c.state === 'check' || this.time - (this.simpleT[key] ?? -1) < 0.6) return;
+    const near = (s) => Math.hypot(s.x - p.x, s.y - p.y);
+    const best = this.teamSkaters(team).filter((s) => s !== c && !s.parked && !s.controlled && !s.scripted).sort((a, b) => near(a) - near(b))[0];
+    if (!best || near(best) > near(c) - 70) return;
+    this.simpleT[key] = this.time;
+    this.switchControl(best, team, seat);
+  }
+
   applyHuman() {
     for (const team of this.humans) {
       for (let seat = 0; seat < this.seatsOf(team); seat++) {
@@ -247,6 +294,7 @@ export class Match {
         if (this.drill && this.state !== 'play' && !(this.state === 'faceoff' && this.drill.faceoffs)) { c.in = Skater.blankInput(); continue; }
         c.in = this.mapHuman(c, raw);
         if (this.state === 'play' && c.in.switch && !c.prevIn.switch && !c.prevIn.b && !(this.drill && this.drill.noSwitch)) this.switchControl(null, team, seat);
+        if (this.simple) this.simpleSwitch(c, team, seat);
         if (raw.pull && !this.prevPull[key]) this.togglePull(team);
         this.prevPull[key] = !!raw.pull;
       }
@@ -257,7 +305,7 @@ export class Match {
     const p = this.puck, near = (s) => Math.hypot(s.x - p.x, s.y - p.y);
     const s = this.teamSkaters(team).filter((k) => !k.parked && !k.controlled && !k.scripted).sort((a, b) => near(a) - near(b))[0];
     if (!s) return null;
-    s.controlled = true; s.seat = seat; s.oneTimerArmed = 0;
+    s.controlled = true; s.seat = seat; s.oneTimerArmed = 0; s.simpleBtn = true;
     s.prevIn = { ...s.in, a: true, b: true, pass: true, check: true, switch: true };
     return s;
   }
@@ -280,6 +328,7 @@ export class Match {
     cur.in = Skater.blankInput();
     next.controlled = true; next.seat = seat;
     next.oneTimerArmed = 0; // only the player's own button arms a one-timer
+    next.simpleBtn = true; // (Simple controls: a held button is no fresh press for them)
     // carry the held buttons over so the new skater doesn't see a fresh press
     next.in = this.mapHuman(next, this.humanInputs[this.seatKey(t, seat)] || {});
     next.prevIn = { ...next.in, a: true, b: true, shoot: next.in.shoot, pass: true, check: true, switch: true };

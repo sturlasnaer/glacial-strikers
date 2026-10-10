@@ -1318,6 +1318,12 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .review-photo b { font-size: clamp(9px, 2.2cqw, 16px); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .review-paper .review-stamp { position: absolute; width: 25%; height: auto; right: 8%; bottom: 4%; }
 
+/* Simple controls: the stick and one big PLAY button (gold once Batch CQ's art is in) */
+#touch.simple .t-b, #touch.simple .t-sprint, #touch.simple .t-skill, #touch.simple .t-ult, #touch.simple .t-pull { display: none !important; }
+#touch.simple .t-a { width: 124px; height: 124px; right: calc(34px + var(--safe-r)); bottom: calc(40px + var(--safe-b)); font-size: 28px; }
+#touch.simple.lefty .t-a { right: auto; left: calc(34px + var(--safe-l)); }
+#touch.simple.play-art .t-a { background-image: url(../assets/gfx/touch-kit/images/btn_play.png); }
+#touch.simple.play-art .t-a.down { background-image: url(../assets/gfx/touch-kit/images/btn_play_pressed.png); }
 /* the Resurfacer drill: only the stick and SPRINT do anything */
 .drive .t-a, .drive .t-b, .drive .t-skill, .drive .t-ult, .drive .t-pull { display: none !important; }
 /* the pause menu with two players: both players' keys first */
