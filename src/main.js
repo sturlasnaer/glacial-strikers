@@ -748,11 +748,14 @@ class App {
       writeSave(s);
     }
     this.cur = { teamId, stage, exhibition, stageIndex: exhibition ? -1 : s.stage, mods, plan, theirPlan, fixture: extra.fixture, daily: extra.daily || null, allstar: extra.allstar || null };
-    const coop = (!!extra.coop || s.settings.playAs === 'coop') && !extra.daily; // (two players from the title, or Play as; the daily challenge is for one)
-    const goalieMode = !coop && s.settings.playAs === 'goalie' && !extra.daily; // (daily goals are for skaters)
+    // two players from the title or Play as (the daily challenge is for one): both skating, or player 2 in goal
+    const as = extra.daily ? 'skaters' : extra.coop === 'keeper' ? 'coopGoalie' : extra.coop ? 'coop' : s.settings.playAs;
+    const coop = as === 'coop', keeperCoop = as === 'coopGoalie';
+    const goalieMode = as === 'goalie' || keeperCoop; // (daily goals are for skaters)
     const cfg = extra.allstar ? allStarConfig(s, extra.allstar, { goalieMode }) : matchConfig(s, teamId, stage, { plans: [plan, theirPlan], buffs, goalieMode });
     cfg.mods = mods;
-    cfg.coop = this.cur.coop = coop;
+    cfg.coop = coop; cfg.keeperCoop = keeperCoop;
+    this.cur.coop = coop || keeperCoop; // (two players' input either way)
     const arena = extra.arena || stage.arena || this.arenaFor(teamId);
     cfg.twist = this.twistFor(arena, stage, extra.rules !== false);
     this.attract = false;
@@ -778,6 +781,7 @@ class App {
     m.allstar = !!extra.allstar; // the home rink is dressed for it
     m.bigGame = classic || m.allstar || /\bFinal$/.test(stage.round || ''); // the gold scoreboard
     this.hud.show(m, teamId, null, { coop: cfg.coop });
+    if (m.keeperCoop && firstTime(s, 'keeperCoop')) setTimeout(() => { if (this.scene === 'match' && this.match === m) this.hud.hint(t('Two players! Player 1 skates, player 2 is in goal, and the AI skates the other two.'), 6); }, 2600);
     if (m.coop && firstTime(s, 'coop')) setTimeout(() => { if (this.scene === 'match' && this.match === m) this.hud.hint(t('Two players! Each of you swaps only with the skater the AI has. Pass to it and you take it over; your partner keeps theirs.'), 6); }, 2600);
     if (classic) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t('The Winter Classic! Outdoor hockey under the snow, and the whole league is watching.')); }, 500);
     if (extra.allstar) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t('The All-Star Game! The fans voted, and the league\'s best share the ice.')); }, 500);
@@ -798,7 +802,7 @@ class App {
       // fullscreen, then held on its side where the phone allows it (Android; iPhones ignore it and the rotate prompt shows)
       document.documentElement.requestFullscreen({ navigationUI: 'hide' }).then(() => screen.orientation?.lock?.('landscape')).catch(() => {});
     }
-    this.tutorial = !m.coop && (goalieMode ? (this.save.goalieGames || 0) : this.save.record.played) < 2 ? 0 : -1; // (co-op: the key hints show both players' keys)
+    this.tutorial = !this.cur.coop && (goalieMode ? (this.save.goalieGames || 0) : this.save.record.played) < 2 ? 0 : -1; // (co-op: the key hints show both players' keys)
     this.tutT = 1.5;
   }
 
@@ -892,7 +896,7 @@ class App {
       audio.sfx('freeze'); audio.sfx('ult');
       this.hud.cutin(e.g, null, t('WALL OF ICE'));
       this.hud.ticker(t('{name} puts up the Wall of Ice!', { name: e.g.name }));
-      this.rumble(0.5, 0.7, 260, 0);
+      this.rumble(0.5, 0.7, 260, 0, m.keeperCoop ? 1 : 0); // (keeper co-op: player 2's pad)
     });
     m.on('block', () => audio.sfx('save', { vol: 0.6 }));
     m.on('goal', (e) => {

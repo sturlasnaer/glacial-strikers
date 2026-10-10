@@ -118,5 +118,34 @@ const seatsOk = (m) => {
   check('...and control moves around', switches > 20, switches);
 }
 
+// keeper co-op: player 1 skates, player 2 is in goal
+{
+  const m = new Match({ teams: [team(), team()], humanTeam: 0, keeperCoop: true, seed: 21, powers: [], diff: [0.5, 0.5] });
+  check('keeper co-op: player 2 in goal, player 1 on one skater', m.goalieMode && m.keeperCoop && !m.coop && m.goalies[0].human && m.humans.length === 1 && m.teamSkaters(0).filter((s) => s.controlled).length === 1);
+  const p1 = { ...idle(), mx: 1 }, p2 = { ...idle(), my: -1, a: true };
+  m.setHumanInput(p1, 0, 0); m.setHumanInput(p2, 0, 1);
+  check('...the goalie reads player 2\'s buttons, the skater player 1\'s', m.keeperInput(0) === p2 && m.humanInputs[0] === p1);
+  m.state = 'play'; m.applyHuman();
+  check('...player 1\'s stick moves their skater', m.controlled(0).in.mx === 1);
+  check('...the other team\'s goalie is the AI\'s', !m.goalies[1].human && m.keeperInput(1) !== p2);
+  const solo = new Match({ teams: [team(), team()], humanTeam: 0, goalieMode: true, seed: 21, powers: [], diff: [0.5, 0.5] });
+  solo.setHumanInput(p1);
+  check('goalie mode alone: the one player is in goal, nobody skates for them', solo.goalieMode && !solo.keeperCoop && !solo.humans.length && solo.keeperInput(0) === p1);
+  let over = 0, seed = 5;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+  for (let i = 0; i < 4; i++) {
+    const k = new Match({ teams: [team(), team()], humanTeam: 0, keeperCoop: true, seed: 300 + i, powers: [], diff: [0.5, 0.5] });
+    for (let t = 0, n = 0; t < 1500 && k.state !== 'over'; t += 1 / 60, n++) {
+      const c = k.controlled(0), p = k.puck, out = idle();
+      if (c) { const dx = (p.owner === c ? GOAL_X - 120 : p.x) - c.x, dy = (p.owner === c ? 0 : p.y) - c.y, d = Math.hypot(dx, dy) || 1; out.mx = dx / d; out.my = dy / d; out.a = p.owner === c ? d < 140 : rnd() < 0.05; }
+      k.setHumanInput(out, 0, 0);
+      if (n % 10 === 0) k.setHumanInput({ ...idle(), my: rnd() * 2 - 1, a: rnd() < 0.2, b: rnd() < 0.05 }, 0, 1);
+      k.update(1 / 60);
+    }
+    if (k.state === 'over') over++;
+  }
+  check('...four keeper co-op matches finish', over === 4, over);
+}
+
 console.log(`Co-op: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

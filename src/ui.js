@@ -343,11 +343,11 @@ function ruleIcon(twist, size = 40) {
 // settings. Two players needs a keyboard or a gamepad, so a phone or tablet without a pad
 // doesn't offer it.
 function playAsHtml(s, app) {
-  const as = s.settings.playAs || 'skaters', two = as === 'coop' || !app.isTouch || app.input.pads().length > 0;
+  const as = s.settings.playAs || 'skaters', two = as === 'coop' || as === 'coopGoalie' || !app.isTouch || app.input.pads().length > 0;
   return `<div class="play-as"><span class="label" style="font-size:14px">${t('Play as')}</span>
     <button class="chip" data-playas="skaters" aria-pressed="${as === 'skaters'}">${t('Skaters')}</button>
     <button class="chip" data-playas="goalie" aria-pressed="${as === 'goalie'}" title="${esc(t('You play your starting goalie; the AI skates your line.'))}">${t('Goalie')}</button>
-    ${two ? `<button class="chip" data-playas="coop" aria-pressed="${as === 'coop'}" title="${esc(t('Co-op: a friend takes a skater too. Player 1 on WASD, F, G (or touch), player 2 on the arrows, K, L, or a gamepad.'))}">${btnIcon('icons/coop')}${t('Two players')}</button>` : ''}</div>`;
+    ${two ? `<button class="chip" data-playas="coop" aria-pressed="${as === 'coop'}" title="${esc(t('Co-op: a friend takes a skater too. Player 1 on WASD, F, G (or touch), player 2 on the arrows, K, L, or a gamepad.'))}">${btnIcon('icons/coop')}${t('Two players')}</button><button class="chip" data-playas="coopGoalie" aria-pressed="${as === 'coopGoalie'}" title="${esc(t('Co-op with player 2 in goal: player 1 skates, the AI skates the other two.'))}">${btnIcon('icons/coop')}${t('Two, one in goal')}</button>` : ''}</div>`;
 }
 
 // The painted logo for the title screen, or the lettering until its art has loaded.
@@ -511,15 +511,16 @@ export class UI {
     const opts = Object.values(TEAMS).filter((t) => t.id !== 'home');
     this.vsTeam ||= 'comets';
     this.vsMode ||= 'versus';
-    const coop = this.vsMode === 'coop';
+    const coop = this.vsMode !== 'versus', keeper = this.vsMode === 'keeper';
     this.modal(`
       <h2>${t('2 Players')}</h2>
-      <div class="filters" style="margin:0"><button class="chip" data-vsmode="versus" aria-pressed="${!coop}">${t('Against each other')}</button><button class="chip" data-vsmode="coop" aria-pressed="${coop}">${t('Together against the AI')}</button></div>
-      <p class="muted" style="margin:0">${coop ? t('Two players on the {club}, each with a skater of their own and the AI on the third, against a rival: an exhibition with your own players, their levels and gear. Needs a keyboard or a gamepad.', { club: esc(CLUB.nick) })
+      <div class="filters" style="margin:0"><button class="chip" data-vsmode="versus" aria-pressed="${!coop}">${t('Against each other')}</button><button class="chip" data-vsmode="coop" aria-pressed="${this.vsMode === 'coop'}">${t('Together against the AI')}</button><button class="chip" data-vsmode="keeper" aria-pressed="${this.vsMode === 'keeper'}">${t('Together, one in goal')}</button></div>
+      <p class="muted" style="margin:0">${keeper ? t('Two players on the {club}: player 1 skates and player 2 is in goal, the AI on the other two skaters, against a rival: an exhibition with your own players. Needs a keyboard or a gamepad.', { club: esc(CLUB.nick) })
+        : coop ? t('Two players on the {club}, each with a skater of their own and the AI on the third, against a rival: an exhibition with your own players, their levels and gear. Needs a keyboard or a gamepad.', { club: esc(CLUB.nick) })
         : t('Two players on one screen: {club} against a rival, same stats on both sides, first to 5. Needs a keyboard or gamepads.', { club: esc(CLUB.nick) })}</p>
       <div class="keys">
         <kbd style="color:var(--ice)">${t('Player 1')}</kbd><span>${t('WASD skate · F shoot/check · G pass/switch · Left Shift sprint · R skill · T ultimate')}</span>
-        <kbd style="color:${coop ? '#7fe08a' : 'var(--coral)'}">${t('Player 2')}</kbd><span>${t('Arrows skate · K shoot/check · L pass/switch · Right Shift sprint · O skill · P ultimate')}</span>
+        <kbd style="color:${coop ? '#7fe08a' : 'var(--coral)'}">${t('Player 2')}</kbd><span>${keeper ? t('Arrows move · K block/pass · L dive/clear · O poke check · P Wall of Ice') : t('Arrows skate · K shoot/check · L pass/switch · Right Shift sprint · O skill · P ultimate')}</span>
         <kbd>${t('Gamepads')}</kbd><span>${coop ? t('With one pad, player 2 has it and player 1 keeps the keyboard or touch. With two, one each.') : t('With two pads each player gets one. With one pad, it goes to player 2.')}</span>
       </div>
       <div class="label" style="font-size:15px">${coop ? t('Against') : t('Player 2 plays as')}</div>
@@ -531,7 +532,7 @@ export class UI {
         audio.sfx('click');
       }, m);
       this.click('[data-vsmode]', (el) => { this.vsMode = el.dataset.vsmode; audio.sfx('click'); close(); this.versusPicker(); }, m);
-      this.click('#vs-go', () => { close(); if (this.vsMode === 'coop') this.app.startExhibition(this.vsTeam, [], 'auto', true, true); else this.app.startVersus(this.vsTeam); }, m);
+      this.click('#vs-go', () => { close(); if (this.vsMode !== 'versus') this.app.startExhibition(this.vsTeam, [], 'auto', true, this.vsMode === 'keeper' ? 'keeper' : true); else this.app.startVersus(this.vsTeam); }, m);
     });
   }
 

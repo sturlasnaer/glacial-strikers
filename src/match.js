@@ -74,8 +74,11 @@ export class Match {
     // every team with a human player (two in local versus)
     this.humans = cfg.humans ?? (this.humanTeam !== null ? [this.humanTeam] : []);
     // goalie mode: the player is in goal for team 0 and the AI skates all three skaters
-    this.goalieMode = !!cfg.goalieMode && this.humanTeam === 0;
-    if (this.goalieMode) this.humans = [];
+    // keeper co-op: player 1 skates, player 2 is in goal (goalie mode with a skater too)
+    this.keeperCoop = !!cfg.keeperCoop && this.humanTeam === 0;
+    this.goalieMode = (!!cfg.goalieMode || this.keeperCoop) && this.humanTeam === 0;
+    if (this.goalieMode) this.humans = this.keeperCoop ? [0] : [];
+    this.keeperKey = this.keeperCoop ? '0:1' : null; // (player 2's buttons: seat 1's)
     // local co-op: two players on our team, each with a skater of their own (a seat), the AI on the third
     this.coop = !!cfg.coop && this.humanTeam === 0 && !this.goalieMode;
     this.lastSeat = 0; // (the seat that last had the puck: it takes over a teammate's pickup)
@@ -136,6 +139,11 @@ export class Match {
     return this.skaters.find((s) => s.controlled && s.team === team && (s.seat || 0) === seat);
   }
   seatsOf(team) { return this.coop && team === 0 ? 2 : 1; }
+  // The buttons a goalie in human hands reads: its team's player, or in keeper co-op player 2's.
+  keeperInput(team) {
+    if (team === 0 && this.keeperKey) return this.humanInputs[this.keeperKey] || {};
+    return this.humanInputs[team] || this.humanInput || {};
+  }
   seatKey(team, seat) { return seat ? `${team}:${seat}` : team; }
 
   // ------------------------------------------------------------------ flow

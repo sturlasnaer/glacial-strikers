@@ -34,6 +34,7 @@ export class HUD {
     this.drill = drill;
     this.versus = !!opts.versus;
     this.coop = !!opts.coop && !!match.coop;
+    this.keeper = !!match.keeperCoop; // (player 2 in goal: their card is the goalie's)
     const team = teamInfo(teamId);
     const K = (action) => keyCap(firstKey(action)); // (the player's own keys, Settings › Keyboard)
     this.el.hidden = false;
@@ -50,7 +51,7 @@ export class HUD {
       </div>
       <div class="pcard"><canvas id="pc-img" width="88" height="88"></canvas><div><div class="nm" id="pc-name"></div>
         <div class="bars"><div class="bar" id="pc-sta"><i></i></div><div class="bar ult" id="pc-ult"><i></i></div></div></div></div>
-      ${this.versus || this.coop ? `<div class="pcard p2${this.coop ? ' coop' : ''}"><div><div class="nm" id="pc2-name"></div>
+      ${this.versus || this.coop || this.keeper ? `<div class="pcard p2${this.coop || this.keeper ? ' coop' : ''}"><div><div class="nm" id="pc2-name"></div>
         <div class="bars"><div class="bar" id="pc2-sta"><i></i></div><div class="bar ult" id="pc2-ult"><i></i></div></div></div><canvas id="pc2-img" width="88" height="88"></canvas></div>` : ''}
       <div class="replay" id="replay" hidden>
         <div class="rp-bar top"><span class="rp-tag"><i></i>${t('REPLAY')}</span></div>
@@ -63,7 +64,7 @@ export class HUD {
       <button class="pause-btn" id="pause-btn" tabindex="-1" aria-label="${t('Pause')}"></button>
       <div class="hint" id="hint" hidden></div>
       <div class="keyhints" id="keyhints" ${this.app.isTouch ? 'hidden' : ''}>
-        ${this.coop ? this.coopHints(K)
+        ${this.coop || this.keeper ? this.coopHints(K)
         : opts.versus ? `<b style="color:var(--ice)">P1</b> WASD · <kbd>F</kbd> ${t('shoot')} · <kbd>G</kbd> ${t('pass')} · <kbd>L-Shift</kbd> ${t('sprint')} · <kbd>R</kbd>/<kbd>T</kbd> ${t('skill/ult')}<br>
         <b style="color:var(--coral)">P2</b> ${t('Arrows')} · <kbd>K</kbd> ${t('shoot')} · <kbd>L</kbd> ${t('pass')} · <kbd>R-Shift</kbd> ${t('sprint')} · <kbd>O</kbd>/<kbd>P</kbd> ${t('skill/ult')}`
         : match.goalieMode ? `${K('a')} ${t('block / pass')} · ${K('b')} ${t('dive / clear')} · ${K('sprint')} ${t('quick feet')}<br>${K('skill')} ${t('poke check')} · ${K('ult')} ${t('Wall of Ice')} · ${K('pause')} ${t('pause')}`
@@ -81,7 +82,7 @@ export class HUD {
     this.tickerT = 0;
     this.last = { s0: 0, s1: 0 };
     this.touch.hidden = !this.app.isTouch || this.versus;
-    this.touch.classList.toggle('gk', !!match.goalieMode); // goalie mode puts icons on the face buttons
+    this.touch.classList.toggle('gk', !!match.goalieMode && !this.keeper); // goalie mode puts icons on the face buttons (keeper co-op: touch is player 1's skater)
     this.touch.querySelectorAll('.gk-ico').forEach((i) => i.remove());
     this.keyhintT = 12;
   }
@@ -89,7 +90,9 @@ export class HUD {
   // Co-op's keys: a shared keyboard with no gamepad, else player 2 on a pad (player 1 on the
   // keyboard, or the first pad of two).
   coopHints(K) {
-    const n = this.app.input.pads().length, P1 = '<b style="color:var(--ice)">P1</b>', P2 = '<b style="color:#7fe08a">P2</b>';
+    const n = this.app.input.pads().length, P1 = '<b style="color:var(--ice)">P1</b>', P2 = `<b style="color:#7fe08a">P2${this.keeper ? ` · ${t('in goal')}` : ''}</b>`;
+    if (!n && this.keeper) return `${P1} WASD · <kbd>F</kbd> ${t('shoot')} · <kbd>G</kbd> ${t('pass')} · <kbd>L-Shift</kbd> ${t('sprint')} · <kbd>R</kbd>/<kbd>T</kbd> ${t('skill/ult')}<br>
+        ${P2} ${t('Arrows')} · <kbd>K</kbd> ${t('block / pass')} · <kbd>L</kbd> ${t('dive / clear')} · <kbd>O</kbd> ${t('poke check')} · <kbd>P</kbd> ${t('Wall of Ice')}`;
     if (!n) return `${P1} WASD · <kbd>F</kbd> ${t('shoot')} · <kbd>G</kbd> ${t('pass')} · <kbd>L-Shift</kbd> ${t('sprint')} · <kbd>R</kbd>/<kbd>T</kbd> ${t('skill/ult')}<br>
         ${P2} ${t('Arrows')} · <kbd>K</kbd> ${t('shoot')} · <kbd>L</kbd> ${t('pass')} · <kbd>R-Shift</kbd> ${t('sprint')} · <kbd>O</kbd>/<kbd>P</kbd> ${t('skill/ult')}`;
     if (n >= 2) return `${P1} ${t('first gamepad')} · ${P2} ${t('second gamepad')}`;
@@ -257,7 +260,7 @@ export class HUD {
       if (this.last.ctrl !== c) {
         this.last.ctrl = c;
         face(this.el.querySelector('#pc-img'), c.who, 0, null, 88);
-        this.el.querySelector('#pc-name').textContent = (this.versus || this.coop ? 'P1 · ' : '') + c.name;
+        this.el.querySelector('#pc-name').textContent = (this.versus || this.coop || this.keeper ? 'P1 · ' : '') + c.name;
         this.updateTouchIcons(c);
       }
       const sta = c.stamina / c.d.staminaMax;
@@ -268,10 +271,22 @@ export class HUD {
       ub.firstChild.style.transform = `scaleX(${c.ult / 100})`;
       ub.classList.toggle('full', c.ult >= 100);
       this.updateTouch(c, m);
-    } else if (m.goalieMode) this.updateGoalie(m.goalies[0], m);
+    } else if (m.goalieMode && !this.keeper) this.updateGoalie(m.goalies[0], m);
     else if (m.pshot && m.pshot.keeper && m.pshot.keeper.team === 0 && !this.versus) { // a penalty shot against us: in goal for it
       if (!this.gkTemp) { this.gkTemp = true; this.touch.classList.add('gk'); this.last.a = this.last.b = null; }
       this.updateGoalie(m.pshot.keeper, m);
+    }
+    if (this.keeper) { // player 2's card: the goalie, and the Wall of Ice charging
+      const g = m.goalies[0];
+      if (this.last.ctrl2 !== g) {
+        this.last.ctrl2 = g;
+        face(this.el.querySelector('#pc2-img'), g.who || 'goalie', 0, null, 88);
+        this.el.querySelector('#pc2-name').textContent = 'P2 · ' + g.name;
+        this.el.querySelector('#pc2-sta').firstChild.style.transform = 'scaleX(1)';
+      }
+      const ub = this.el.querySelector('#pc2-ult');
+      ub.firstChild.style.transform = `scaleX(${g.wallT > 0 ? g.wallT / 5 : g.ult / 100})`;
+      ub.classList.toggle('full', g.ult >= 100 || g.wallT > 0);
     }
     if (this.versus || this.coop) {
       const c2 = this.coop ? m.controlled(0, 1) : m.controlled(1);

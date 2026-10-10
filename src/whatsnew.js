@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10k',
+    items: [
+      { icon: 'icons/coop', text: 'Two players, one in goal: Play as › Two, one in goal (or 2 Players › Together, one in goal on the title). Player 1 skates, player 2 keeps the net.' },
+    ],
+  },
+  {
     id: '2026-10-10j',
     items: [
       { icon: 'icons/rookie', text: 'Create a player (Team tab): make up to two skaters of your own, with a face, skin, hair, build, name, position, style, super and stick hand. They join at the line-up\'s level, and their look can change any time.' },

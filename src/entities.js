@@ -555,7 +555,7 @@ export class Goalie {
       this.holdT -= dt;
       if (this.human && m.state === 'play') {
         // the player decides: A passes (toward the stick, or to the open teammate), B rims it
-        const inp = (m.humanInputs && m.humanInputs[this.team]) || m.humanInput || {}, was = this.prevHuman || {}; // (versus: each player's own)
+        const inp = m.keeperInput(this.team), was = this.prevHuman || {}; // (versus: each player's own; keeper co-op: player 2's)
         this.prevHuman = { a: !!inp.a, b: !!inp.b, skill: !!inp.skill, ult: !!inp.ult };
         const aim = Math.hypot(inp.mx || 0, inp.my || 0) > 0.4 ? { x: inp.mx, y: inp.my } : null;
         const go = inp.a && !was.a ? 'pass' : inp.b && !was.b ? 'rim' : this.holdT <= 0 ? 'auto' : null;
@@ -657,7 +657,7 @@ export class Goalie {
   // also drifts her toward where a shot will cross. A: butterfly. B: dive (toward the stick,
   // else toward the shot). Skill: poke check. Ultimate: Wall of Ice, charged by saves.
   updateHuman(dt, gx) {
-    const m = this.match, p = m.puck, inp = (m.humanInputs && m.humanInputs[this.team]) || m.humanInput || {}, was = this.prevHuman || {};
+    const m = this.match, p = m.puck, inp = m.keeperInput(this.team), was = this.prevHuman || {};
     const pressed = (k) => !!inp[k] && !was[k];
     this.prevHuman = { a: !!inp.a, b: !!inp.b, skill: !!inp.skill, ult: !!inp.ult };
     this.react = null; // no automatic reactions: the saves are yours

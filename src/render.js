@@ -67,7 +67,7 @@ export class Renderer {
     const p = match.puck;
     const sp = toScreen(p.x, p.y);
     let tx = sp.x, ty = sp.y;
-    const ctrl = (match.humans && match.humans.length > 1) || match.coop ? null : match.controlled(); // (two players: the puck)
+    const ctrl = (match.humans && match.humans.length > 1) || match.coop || match.keeperCoop ? null : match.controlled(); // (two players: the puck)
     if (ctrl && !ctrl.parked && match.state === 'play') {
       const cs = toScreen(ctrl.x, ctrl.y);
       tx = lerp(tx, cs.x, 0.3); ty = lerp(ty, cs.y, 0.3);
@@ -1023,7 +1023,7 @@ export class Renderer {
       if (!c.controlled || c.parked || match.state === 'over') continue;
       const p = toScreen(c.x, c.y);
       const pulse = 1 + Math.sin(fx.time * 6) * 0.05;
-      if ((versus && c.team === 1) || (match.coop && c.team === 0)) {
+      if ((versus && c.team === 1) || ((match.coop || match.keeperCoop) && c.team === 0)) {
         ctx.strokeStyle = seatColour(match, c); ctx.lineWidth = 4;
         ctx.beginPath(); ctx.ellipse(p.x, p.y + 1, 24 * pulse, 9 * pulse, 0, 0, Math.PI * 2); ctx.stroke();
       } else Assets.draw(ctx, 'hud_elements/misc/selection_ring', p.x, p.y + 1, 0.2 * pulse * persp(c.y), { alpha: 0.95 });
@@ -1891,7 +1891,7 @@ export class Renderer {
       if (!c.controlled || c.parked || match.state === 'over' || match.state === 'goal') continue;
       const p = toScreen(c.x, c.y);
       const bob = Math.sin(fx.time * 6) * 3;
-      if (versus || match.coop) {
+      if (versus || match.coop || match.keeperCoop) {
         const tag = c.team === 1 || c.seat ? 'P2' : 'P1';
         ctx.font = `bold 16px ${this.font}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.lineWidth = 4; ctx.strokeStyle = '#14233b'; ctx.strokeText(tag, p.x, p.y - 104 + bob);
@@ -1904,6 +1904,13 @@ export class Renderer {
         ctx.fillStyle = 'rgba(20,35,59,0.85)'; ctx.fillRect(x - 2, y - 2, w + 4, 8);
         ctx.fillStyle = v >= 1 ? '#ffd45e' : '#71dce8'; ctx.fillRect(x, y, w * v, 4);
       }
+    }
+    // keeper co-op: player 2's tag over our goalie
+    if (match.keeperCoop && match.state !== 'over' && match.state !== 'goal') {
+      const g = match.goalies[0], p = toScreen(g.x, g.y), bob = Math.sin(fx.time * 6) * 3;
+      ctx.font = `bold 16px ${this.font}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.lineWidth = 4; ctx.strokeStyle = '#14233b'; ctx.strokeText('P2', p.x, p.y - 110 + bob);
+      ctx.fillStyle = '#7fe08a'; ctx.fillText('P2', p.x, p.y - 110 + bob);
     }
     // penalty box timers and the extra attacker tag
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
