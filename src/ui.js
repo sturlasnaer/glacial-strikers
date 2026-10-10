@@ -3485,6 +3485,22 @@ export class UI {
   }
 
   // --------------------------------------------------------------- results
+  // Little player's gold star after a game (Batch DN), twinkling.
+  kidStarHtml(id) {
+    const f = id && Assets.frame('kid_stars/' + id);
+    if (!f || !Assets.pages[f[0]]) return '';
+    const say = { passer: t('Great passing!'), scorer: t('Super scorer!'), defender: t('Super defender!'), hustle: t('Hustle star!'), team: t('Great teamwork!') }[id];
+    const shine = ['kid_stars/shine_1', 'kid_stars/shine_2'].every((k) => Assets.frame(k)) ? `<img class="ks-shine" src="${Assets.icon('kid_stars/shine_1', 160)}" alt="" data-b="${Assets.icon('kid_stars/shine_2', 160)}">` : '';
+    const n = (this.app.save.kidStars && this.app.save.kidStars.n) || 1;
+    setTimeout(() => { // (the sparkle moves across it)
+      const el = document.querySelector('.ks-shine');
+      if (!el || typeof matchMedia === 'undefined' || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const a = el.src, b = el.dataset.b, tick = setInterval(() => { if (!el.isConnected) return clearInterval(tick); el.src = el.src === a ? b : a; }, 700);
+    }, 0);
+    return `<div class="kid-star"><span class="ks-art"><img src="${Assets.icon('kid_stars/' + id, 160)}" alt="">${shine}</span>
+      <div><b class="gold-t">${say}</b><div class="muted">${t(n > 1 ? '{n} gold stars so far' : 'Your first gold star!', { n })}</div></div></div>`;
+  }
+
   results(data, onContinue) {
     const { summary, rewards, ups, teamId, exhibition } = data;
     const tm = teamInfo(teamId);
@@ -3510,6 +3526,7 @@ export class UI {
           <div class="muted">${exhibition ? t('Exhibition') : esc(data.round ? t(data.round, { n: data.roundN }) : '')} · ${t('Shots on goal {a}–{b}', { a: summary.shots[0], b: summary.shots[1] })}${summary.draws ? ` · ${t('Faceoffs {a}–{b}', { a: summary.draws[0], b: summary.draws[1] })}` : ''}</div>
         </div>
         ${note ? npc(Assets.atlas.npcs && Assets.atlas.npcs.coach_stern ? 'coach_stern' : 'coach', note) : ''}
+        ${this.kidStarHtml(data.kidStar)}
         <div class="res-grid">
           <div>
             <div class="label">${t('Box score')}</div>
