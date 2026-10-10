@@ -79,6 +79,9 @@ export class Match {
     this.goalieMode = (!!cfg.goalieMode || this.keeperCoop) && this.humanTeam === 0;
     if (this.goalieMode) this.humans = this.keeperCoop ? [0] : [];
     this.keeperKey = this.keeperCoop ? '0:1' : null; // (player 2's buttons: seat 1's)
+    // two players: whose goals and assists (the seat holding each skater when they last had the puck)
+    this.seatStats = [{ g: 0, a: 0 }, { g: 0, a: 0 }];
+    this.touchSeat = new Map();
     // local co-op: two players on our team, each with a skater of their own (a seat), the AI on the third
     this.coop = !!cfg.coop && this.humanTeam === 0 && !this.goalieMode;
     this.lastSeat = 0; // (the seat that last had the puck: it takes over a teammate's pickup)
@@ -620,6 +623,7 @@ export class Match {
       // (in co-op, whoever passed it follows the pass; a loose puck goes to whoever had it last)
       if (this.humans.includes(s.team) && !s.controlled && !s.scripted && this.controlled(s.team)) this.switchControl(s, s.team, !this.coop ? 0 : passInfo && passInfo.from.controlled && passInfo.from.team === s.team ? passInfo.from.seat || 0 : this.lastSeat);
       if (s.controlled && this.coop) this.lastSeat = s.seat || 0;
+      if (this.coop || this.keeperCoop) this.touchSeat.set(s, s.team === 0 && s.controlled ? s.seat || 0 : null);
       // one-timer
       if (how === 'catch' && passInfo && passInfo.from.team === s.team && (s.oneTimerArmed > 0 || s.in.shoot) && this.inShootingRange(s)) {
         s.charging = false;
@@ -1336,6 +1340,11 @@ export class Match {
       this.addUlt(scorer, 15);
       if (sh && sh.power) scorer.stats_.powerGoals++;
       for (const a of assists) { a.stats_.assists++; this.addUlt(a, 8); this.chemStat(team, a, scorer).assists++; }
+      if (this.coop || this.keeperCoop) {
+        const seat = (k) => (k.team === 0 && k.controlled ? k.seat || 0 : this.touchSeat.get(k)); // (a tip: whoever has that skater now)
+        if (seat(scorer) != null) this.seatStats[seat(scorer)].g++;
+        for (const a of assists) if (seat(a) != null) this.seatStats[seat(a)].a++;
+      }
       if (sh && sh.special && sh.special.combo) this.chemStat(team, null, null, sh.special.comboPair).comboGoals++;
     }
     const info = {
@@ -1914,6 +1923,7 @@ export class Match {
   summary() {
     return {
       goalieMode: this.goalieMode,
+      seats: this.coop || this.keeperCoop ? { keeper: this.keeperCoop, p1: { ...this.seatStats[0] }, p2: this.keeperCoop ? { saves: this.goalies[0].saves } : { ...this.seatStats[1] } } : null, // (two players: who did what)
       pen: this.penStats,
       mods: [...this.mods],
       chem: this.chemStats[0],

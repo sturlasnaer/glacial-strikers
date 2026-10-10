@@ -1320,3 +1320,6 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
   #hud.two .pcard .bars { width: 100%; }
   #hud.two .scoreboard .crest { display: none; }
 }
+/* after a two-player match: what each of them did */
+.seat-line { display: flex; justify-content: center; gap: 22px; margin: 2px 0 4px; font-family: var(--display); font-size: 21px; }
+

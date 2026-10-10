@@ -248,6 +248,13 @@ const gallery = (fn) => {
   setTimeout(go, 1500);
 };
 
+// Two players on our team: what each of them did (their goals and assists, or the saves of
+// player 2 in goal), under the score.
+const seatLine = (S) => {
+  if (!S) return '';
+  const ga = (x) => `${t('{n} G', { n: x.g })} · ${t('{n} A', { n: x.a })}`;
+  return `<div class="seat-line"><span><b style="color:var(--ice)">P1</b> ${ga(S.p1)}</span><span><b style="color:#7fe08a">P2</b> ${S.keeper ? t('{n} saves', { n: S.p2.saves }) : ga(S.p2)}</span></div>`;
+};
 // the shop's filters: the gear slots, then the club's facilities
 const shopFilters = (filter) => `<div class="filters">${['all', 'stick', 'skates', 'armor', 'goalie'].map((f) => `<button class="chip" data-f="${f}" aria-pressed="${filter === f}">${f === 'all' ? t('All') : t(SLOT_NAMES[f])}</button>`).join('')}<button class="chip" data-f="club" aria-pressed="${filter === 'club'}">${t('Club facilities')}</button></div>`;
 // a key by name ('J', 'Space', '↑') as a keycap (keys without art stay text)
@@ -2967,6 +2974,7 @@ export class UI {
         <div class="res-head">
           <h1 class="${won ? 'gold-t' : ''}">${won ? t('Victory!') : t('Defeat')}</h1>
           <div class="score">${esc(CLUB.nick)} ${summary.score[0]} – ${summary.score[1]} ${esc(tm.name.split(' ').slice(-1)[0])}</div>
+          ${seatLine(summary.seats)}
           <div class="muted">${exhibition ? t('Exhibition') : esc(data.round ? t(data.round, { n: data.roundN }) : '')} · ${t('Shots on goal {a}–{b}', { a: summary.shots[0], b: summary.shots[1] })}${summary.draws ? ` · ${t('Faceoffs {a}–{b}', { a: summary.draws[0], b: summary.draws[1] })}` : ''}</div>
         </div>
         ${note ? npc(Assets.atlas.npcs && Assets.atlas.npcs.coach_stern ? 'coach_stern' : 'coach', note) : ''}

@@ -100,7 +100,7 @@ const seatsOk = (m) => {
     out.skill = rnd() < 0.01; out.ult = rnd() < 0.01;
     return out;
   };
-  let over = 0, bad = 0, goals = [0, 0], switches = 0;
+  let over = 0, bad = 0, goals = [0, 0], switches = 0; const seatsSeen = [];
   for (let i = 0; i < 8; i++) {
     const m = make(100 + i);
     m.on('switch', () => switches++);
@@ -111,11 +111,13 @@ const seatsOk = (m) => {
     }
     if (m.state === 'over') over++;
     goals[0] += m.score[0]; goals[1] += m.score[1];
+    if (m.score[0]) seatsSeen.push([m.summary()]);
   }
   check('eight co-op matches finish', over === 8, over);
   check('...the seats never share a skater or cross over', bad === 0, bad);
   check('...goals at both ends', goals[0] > 0 && goals[1] > 0, goals);
   check('...and control moves around', switches > 20, switches);
+  check('...each player\'s goals and assists add up to no more than the team\'s', seatsSeen.every(([sm]) => sm.seats && sm.seats.p1.g + sm.seats.p2.g <= sm.score[0] && sm.seats.p1.g + sm.seats.p2.g > 0), seatsSeen.map(([sm]) => [sm.seats, sm.score]));
 }
 
 // keeper co-op: player 1 skates, player 2 is in goal
@@ -145,6 +147,10 @@ const seatsOk = (m) => {
     if (k.state === 'over') over++;
   }
   check('...four keeper co-op matches finish', over === 4, over);
+  const ks = new Match({ teams: [team(), team()], humanTeam: 0, keeperCoop: true, seed: 9, powers: [], diff: [0.5, 0.5] });
+  ks.goalies[0].saves = 7;
+  check('...and the summary gives player 2 the saves', ks.summary().seats.keeper && ks.summary().seats.p2.saves === 7);
+  check('one player: no seats in the summary', make(1, false).summary().seats === null);
 }
 
 console.log(`Co-op: ${pass} passed, ${fail} failed`);
