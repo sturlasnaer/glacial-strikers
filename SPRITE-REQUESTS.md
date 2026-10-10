@@ -8,6 +8,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 **Next batches:**
 1. **CA: two players on one team**
+2. **CB: more faces for players of your own**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -225,3 +226,16 @@ Local co-op is in: two players on our team (P1 ice blue, P2 mint green) against 
 - `achievements/better_together` (Better Together: win a match with two players on the team): two Foxes skaters bumping gloves after a goal, the goal lamp lit behind them.
 
 3 frames.
+
+## Batch CB: more faces for players of your own
+
+Team › Create a player now builds a skater of your own from the parts (a build, one of the sixteen heads, a skin tone and a hair colour). Children will make themselves, so more variety matters most. Please draw **eight more heads** exactly as Batches AJ, AO and AZ did (every view and the normal/effort frames on each body anchor, the red-skin/green-hair masks, and the five portrait faces: neutral, determined, grin, shocked, defeated, on the portrait shoulders):
+- `afro_puffs` (two puffs showing under the helmet's back edge),
+- `sports_hijab` (a fitted sports hijab under the helmet, the hair mask's green on the fabric so it takes the hair colour as its colour),
+- `buzz_cut`, `side_part` (short hair, a neat side parting),
+- `space_buns` (two small buns at the back),
+- `long_braids` (two long braids over the shoulders),
+- `gap_tooth` (a big grin with a missing front tooth, short messy hair),
+- `round_cheeks` (a younger, rounder face with a fringe).
+
+8 heads, with masks and portraits, like AZ.
