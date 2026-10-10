@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10zc',
+    items: [
+      { icon: 'equipment_items/stick/passing', alt: 'icons/coop', text: 'Saucer passes! With a rival right on you, your pass lifts over their stick to your teammate. A rival out in the passing lane can still pick it off, so look for the open one.' },
+    ],
+  },
+  {
     id: '2026-10-10zb',
     items: [
       { icon: 'pet/trick_five_2', alt: 'icons/pet', text: 'The cub has tricks! Tap it in the locker room and now and then it chases its tail, rolls over or gives you a high five.' },

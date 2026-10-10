@@ -32,6 +32,7 @@ export let STEAL_BASE = 0.47; // a defender's stick on the puck: steals a second
 export const setStealBase = (v) => { STEAL_BASE = v; }; // (for balance runs)
 export let PLAYER_STEAL_MUL = 1.5; // AI sticks on the player's carrier (puck protection made carrying easy: 1-1.8 steals a minute)
 export const setPlayerStealMul = (v) => { PLAYER_STEAL_MUL = v; };
+const SAUCER_T = 0.25; // (a pass lifted over the stick on the passer: that long past it)
 export let TIP_BASE = 0.25; // an AI stick in the slot redirecting a teammate's shot going by
 export const setTipBase = (v) => { TIP_BASE = v; };
 export let HOOK_RATE = 0.6; // a stick reaching round a carrier in full flight from behind: hooking calls a second
@@ -918,6 +919,14 @@ export class Match {
     this.loosePuck(s);
     p.vx = dir.x * speed; p.vy = dir.y * speed; p.vz = 0;
     p.pass = { from: s, to: target, t: this.time };
+    // the player's side saucers it over the stick that's right on them (the rivals further out
+    // can still read it): a wider reach against the easier teams, only the closest at the top
+    const foe = this.humans.includes(s.team) && !this.humans.includes(1 - s.team) && this.ai[1 - s.team];
+    if (foe) {
+      const r = 80 - 40 * foe.diff ** 2;
+      const over = this.skaters.filter((o) => o.team !== s.team && !o.parked && Math.hypot(o.x - s.x, o.y - s.y) < r);
+      if (over.length) { p.pass.over = over; p.vz = 140; } // (a hop it lands from before the catch height)
+    }
     p.shot = null;
     p.noPickup.set(s, 0.3);
     p.rolled.clear();
@@ -1294,6 +1303,8 @@ export class Match {
       if (s.stun > 0 || p.noPickup.has(s) || s.dashT > 0 || s.parked) { p.rolled.delete(s); continue; }
       // a pass sails past teammates it wasn't meant for
       if (p.pass && p.pass.from.team === s.team && p.pass.to !== s && p.pass.to && !p.pass.to.parked) { p.rolled.delete(s); continue; }
+      // saucered over the stick that was on the passer (see pass)
+      if (p.pass && p.pass.over && p.pass.over.includes(s) && this.time - p.pass.t < SAUCER_T) { p.rolled.delete(s); continue; }
       // Fade: nobody picks off a pass to or from a shadow
       if (p.pass && p.pass.from.team !== s.team && (p.pass.from.fadeT > 0 || (p.pass.to && p.pass.to.fadeT > 0))) { p.rolled.delete(s); continue; }
       const st = s.stickPoint();

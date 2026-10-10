@@ -1601,6 +1601,7 @@ export const IS = {
   "S{s}": "T{s}",
   "Same button without the puck: shoulder check": "Sami hnappur án pökksins: axlartækling",
   "Sandstorm": "Sandstormur",
+  "Saucer passes! With a rival right on you, your pass lifts over their stick to your teammate. A rival out in the passing lane can still pick it off, so look for the open one.": "Lyftar sendingar! Þegar mótherji er alveg ofan í þér lyftist sendingin yfir kylfu mótherjans til liðsfélagans. Mótherji úti í sendingarlínunni getur samt komist inn í hana, svo leitaðu að opnu svæði.",
   "Save": "Vista",
   "save % {n}": "varsla {n}",
   "Save club": "Vista félag",
