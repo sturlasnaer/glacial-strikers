@@ -63,7 +63,7 @@ export class Match {
     this.mods = new Set(cfg.mods || []); // challenge modifiers, see CHALLENGES in data.js
     this.plans = cfg.plans || ['balanced', 'balanced']; // game plans, see GAME_PLANS in data.js
     this.buffs = cfg.buffs || {}; // locker-room buffs for the home team
-    this.winScore = this.mods.has('sudden') ? 1 : WIN_SCORE;
+    this.winScore = this.mods.has('sudden') ? 1 : cfg.winScore || WIN_SCORE; // (the Mini Cup's games are to three)
     this.powers = this.mods.has('iceage') ? ['ice'] : cfg.powers || [];
     this.twists = makeTwists(cfg.twist || 'none', this.rng);
     if (this.twists.kind === 'pond_cracks') {

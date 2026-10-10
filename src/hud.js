@@ -440,7 +440,7 @@ export class HUD {
   // Under the score: what wins it (or a penalty shot on now).
   midLabel(m) {
     if (m.pshot) return t('PENALTY{br}SHOT', { br: '<br>' });
-    return m.winScore === 1 ? t('NEXT GOAL{br}WINS', { br: '<br>' }) : t('FIRST{br}TO 5', { br: '<br>' });
+    return m.winScore === 1 ? t('NEXT GOAL{br}WINS', { br: '<br>' }) : m.winScore === 3 ? t('FIRST{br}TO 3', { br: '<br>' }) : t('FIRST{br}TO 5', { br: '<br>' });
   }
 
   updateGoalie(g, m) {

@@ -4,6 +4,7 @@ export const WHATS_NEW = [
   {
     id: '2026-10-10z',
     items: [
+      { icon: 'icons/mini_cup', alt: 'badges/cup_small', text: 'The Mini Cup, in Quick play: three quick games, first to three, against rivals getting tougher. Win them all for a cup of your own!' },
       { icon: 'hud_elements/ability/stamina', text: 'The rivals ease off: fewer hits and more room on the puck, most of all on Easy and against the early teams. The top teams still play hard.' },
     ],
   },

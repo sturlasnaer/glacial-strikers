@@ -11,6 +11,7 @@ import { forceSeason, seasonFor } from './seasonal.js';
 import { addPacks } from './album.js';
 import { cleanSign, CROWD_SIGNS } from './fancam.js';
 import { RACE_AT } from './race.js';
+import { MINI_ROUNDS, MINI_WIN, miniOf, newMiniCup, miniResult } from './minicup.js';
 import { firstTime } from './guide.js';
 import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as cloudBackup, settleCups } from './online.js';
 import { ARENA_MUSIC } from './songs.js';
@@ -512,11 +513,27 @@ class App {
     });
   }
 
-  startExhibition(teamId, mods = [], arena = 'auto', rules = true, coop = false) {
+  startExhibition(teamId, mods = [], arena = 'auto', rules = true, coop = false, mini = false) {
     this.lastExhibition = { teamId, mods, arena, rules, coop }; // (for Play again on the results)
     const where = this.arenaFor(teamId, arena);
     this.loadThen(Assets.ensureTeam(teamId, where), () =>
-      this.beginMatch(teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 120, round: 'Exhibition' }, true, mods, { arena: where, rules, coop }));
+      this.beginMatch(teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 120, round: 'Exhibition' }, true, mods, { arena: where, rules, coop, mini }));
+  }
+
+  // The Mini Cup's next game (a new cup if there's none on, or the last one's over).
+  startMini() {
+    const s = this.save;
+    let c = miniOf(s);
+    if (!c || c.over) { c = newMiniCup(s); writeSave(s); }
+    this.startExhibition(c.opps[c.round], [], 'auto', true, false, true);
+  }
+
+  // After a Mini Cup game: the cup and its prize, the bracket and the next game, or out.
+  miniNext(won) {
+    const s = this.save, r = miniResult(s, won), c = miniOf(s);
+    writeSave(s);
+    if (r === 'champion') { this.ach.unlock('mini-cup'); audio.jingle('champion'); this.ui.fireworks?.(); }
+    this.ui.miniCup(r, () => this.startMini(), () => { this.startAttract(); this.goHub(); });
   }
 
   // Training drills and the shootout run on the match engine with a drill controller.
@@ -792,12 +809,13 @@ class App {
       s.lastPlan = plan;
       writeSave(s);
     }
-    this.cur = { teamId, stage, exhibition, stageIndex: exhibition ? -1 : s.stage, mods, plan, theirPlan, fixture: extra.fixture, daily: extra.daily || null, allstar: extra.allstar || null };
+    this.cur = { teamId, stage, exhibition, stageIndex: exhibition ? -1 : s.stage, mods, plan, theirPlan, fixture: extra.fixture, daily: extra.daily || null, allstar: extra.allstar || null, mini: !!extra.mini };
     // two players from the title or Play as (the daily challenge is for one): both skating, or player 2 in goal
     const as = extra.daily ? 'skaters' : extra.coop === 'keeper' ? 'coopGoalie' : extra.coop ? 'coop' : s.settings.playAs;
     const coop = as === 'coop', keeperCoop = as === 'coopGoalie';
     const goalieMode = as === 'goalie' || keeperCoop; // (daily goals are for skaters)
     const cfg = extra.allstar ? allStarConfig(s, extra.allstar, { goalieMode }) : matchConfig(s, teamId, stage, { plans: [plan, theirPlan], buffs, goalieMode });
+    if (extra.mini) cfg.winScore = MINI_WIN; // (the Mini Cup: quick games)
     cfg.mods = mods;
     cfg.coop = coop; cfg.keeperCoop = keeperCoop;
     this.cur.coop = coop || keeperCoop; // (two players' input either way)
@@ -840,7 +858,7 @@ class App {
     const planLine = plan !== 'balanced' || theirPlan !== 'balanced'
       ? `<div class="sub" style="font-size:clamp(14px,2.4vw,20px)">${edge > 0 ? t('{a} vs {b} · your edge', plans) : edge < 0 ? t('{a} vs {b} · their edge', plans) : t('{a} vs {b}', plans)}</div>` : '';
     const twoLine = m.coop || m.keeperCoop ? `<div class="sub" style="font-size:clamp(14px,2.4vw,20px);color:#7fe08a">${m.keeperCoop ? t('Two players, one in goal') : t('Two players')}${extra.coop ? '' : ` · ${t('Play as › Skaters to play alone')}`}</div>` : ''; // (Play as is remembered: say so; from the title's 2 Players it isn't)
-    this.hud.banner(`<div class="small">${exhibition ? t('Exhibition') : t(stage.round, { n: stage.roundN })}</div><div class="big" style="font-size:clamp(48px,10vw,110px)">${t('FACEOFF')}</div>${planLine}${twoLine}`, 2);
+    this.hud.banner(`<div class="small">${extra.mini ? `${t('Mini Cup')} · ${t(MINI_ROUNDS[miniOf(s).round])}` : exhibition ? t('Exhibition') : t(stage.round, { n: stage.roundN })}</div><div class="big" style="font-size:clamp(48px,10vw,110px)">${t('FACEOFF')}</div>${planLine}${twoLine}`, 2);
     if (buffs && buffs.hype) { this.chantCool = 4; this.fx.excite = 0.7; }
     this.checkRotate();
     navigator.wakeLock?.request?.('screen').then((l) => { this.wake = l; }).catch(() => {});
@@ -1180,12 +1198,13 @@ class App {
     this.scene = 'results';
     this.music(rewards.won ? 'victory' : 'defeat');
     if (ups.length) setTimeout(() => audio.jingle('level'), 2600);
-    const rematch = c.exhibition && !c.daily && !c.fixture && !c.versus && this.lastExhibition && this.lastExhibition.teamId === c.teamId;
+    const rematch = c.exhibition && !c.daily && !c.fixture && !c.versus && !c.mini && this.lastExhibition && this.lastExhibition.teamId === c.teamId;
     this.rematchNext = false;
     this.ui.results({ summary, rewards, ups, chemUps, teamId: c.teamId, exhibition: c.exhibition, round: c.stage.round, roundN: c.stage.roundN, gUp, clips: this.clips, rematch }, () => {
       this.fx.heavySnow = false;
       const finish = () => {
         // Play again: the same exhibition straight away
+        if (c.mini) return this.miniNext(rewards.won); // (the Mini Cup: the bracket, or the cup)
         if (this.rematchNext) { this.rematchNext = false; const e = this.lastExhibition; return this.startExhibition(e.teamId, e.mods, e.arena, e.rules, e.coop); }
         if (becameChampion) { this.scene = 'results'; this.music('final'); audio.jingle('champion'); this.ui.champion(() => this.goHub('tournament')); } else this.goHub(rewards.won ? 'tournament' : 'team');
       };
@@ -1392,7 +1411,7 @@ class App {
       <button class="btn small ghost" id="p-photo">${t('Photo')}</button></div>
       ${this.cur && !this.cur.drill && !this.cur.versus && !this.cur.allstar && !this.match.goalieMode ? `<div class="row p-plans"><span class="label">${t('Game plan')}</span>${Object.values(GAME_PLANS).map((p) => `<button class="btn small ${this.match.plans[0] === p.id ? 'cream' : 'ghost'}" data-pplan="${p.id}">${esc(t(p.name))}</button>`).join('')}<span class="muted" style="font-size:12.5px">${(() => { const theirs = this.match.plans[1], beat = Object.values(GAME_PLANS).find((p) => p.beats === theirs); return beat ? t('They\'re playing {plan}; {beat} beats it.', { plan: esc(t(GAME_PLANS[theirs].name)), beat: esc(t(beat.name)) }) : t('They\'re playing {plan}.', { plan: esc(t(GAME_PLANS[theirs].name)) }); })()}</span></div>` : ''}
       <div id="p-body">${controls()}</div>
-      <div class="row" style="justify-content:space-between"><span class="muted" style="font-size:13px">${this.cur && this.cur.drill ? t('Quitting a drill gives no rewards.') : t(this.match.winScore === 1 ? 'Score {a}–{b}, next goal wins.' : 'Score {a}–{b}, first to 5 wins.', { a: this.match.score[0], b: this.match.score[1] })}</span>
+      <div class="row" style="justify-content:space-between"><span class="muted" style="font-size:13px">${this.cur && this.cur.drill ? t('Quitting a drill gives no rewards.') : (this.match.winScore === 1 ? t('Score {a}–{b}, next goal wins.', { a: this.match.score[0], b: this.match.score[1] }) : this.match.winScore === 3 ? t('Score {a}–{b}, first to 3 wins.', { a: this.match.score[0], b: this.match.score[1] }) : t('Score {a}–{b}, first to 5 wins.', { a: this.match.score[0], b: this.match.score[1] }))}</span>
       <button class="btn small ghost" id="p-quit">${this.cur && this.cur.drill ? t('Quit') : t('Forfeit match')}</button></div>`, (m, close) => {
       const resume = () => { close(); this.resume(); };
       m.querySelector('#p-resume').addEventListener('click', resume);

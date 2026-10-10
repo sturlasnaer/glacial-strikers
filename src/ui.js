@@ -57,6 +57,7 @@ import { seasonFor } from './seasonal.js';
 import { canCreate, createPlayer, restyle, defaultChoice, stylesFor, cleanName, MAX_OWN, NAME_MAX } from './create.js';
 import { DECOR, DECOR_BY_ID, DECOR_SLOTS, SLOT_NAMES as DECOR_SLOT_NAMES, buyDecor, putUp, takeDown, owns as ownsDecor, isOn as decorOn, placed as decorPlaced } from './decor.js';
 import { cleanSign, SIGN_MAX } from './fancam.js';
+import { MINI_ROUNDS, MINI_PRIZE, miniOf } from './minicup.js';
 import { MASCOTS, RACE_PRIZE, pickRunners, newRace, stepRace } from './race.js';
 import { newPet, stepPet, tapPet, cleanPetName, PET_NAME_MAX, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit } from './pet.js';
 import { albumPages, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
@@ -538,6 +539,7 @@ export class UI {
     this.modal(`
       <h2>${t('Quick play')}</h2>
       <p class="muted" style="margin:0">${t('Exhibitions use your current team and pay half rewards. A shootout is five penalty shots each way: you shoot, then you play goalie.')}</p>
+      <div class="mini-row"><span class="mini-ico">${smallIcon('icons/mini_cup', 96, 'btn-ico') || smallIcon('badges/cup_small', 96, 'btn-ico')}</span><span style="min-width:0"><b>${t('Mini Cup')}</b><span class="muted" style="font-size:12.5px">${t('Three quick games, first to three, against rivals getting tougher. Win them all for a cup of your own!')}</span></span><button class="btn small gold" id="qp-mini">${miniOf(this.app.save) && !miniOf(this.app.save).over ? t('Next game') : t('Play')}</button></div>
       <details class="qp-opts" ${this.qpOpen ? 'open' : ''}><summary id="qp-sum">${optsLine()}</summary>
       <div>
         <div class="label" style="font-size:15px">${t('Match challenges')} <span class="muted" id="ch-mult" style="font-family:var(--body);font-size:12px;letter-spacing:0;text-transform:none"></span></div>
@@ -558,6 +560,7 @@ export class UI {
       </div>
       <div class="row" style="justify-content:space-between;align-items:center">${playAsHtml(this.app.save, this.app)}<button class="btn small ghost" data-close>${t('Back')}</button></div>`, (m, close) => {
       this.bindPlayAs(m);
+      this.click('#qp-mini', () => { audio.sfx('confirm'); close(); this.app.startMini(); }, m);
       const upd = () => { const x = mult(); m.querySelector('#ch-mult').textContent = this.challenges.size ? t('coins x{n}', { n: +x.toFixed(2) }) : ''; m.querySelector('#qp-sum').textContent = optsLine(); };
       m.querySelector('.qp-opts').addEventListener('toggle', (e) => { this.qpOpen = e.target.open; });
       upd();
@@ -948,6 +951,27 @@ export class UI {
     setTimeout(() => { if (el.isConnected) start(); }, 7000); // (nobody picked: they race anyway)
   }
 
+  // The Mini Cup between games: the bracket (each round's rival, won or lost), the cup and its
+  // prize, or out with a try again.
+  miniCup(result, next, done) {
+    const s = this.app.save, c = miniOf(s);
+    if (!c) return done();
+    const cup = (Assets.frame('badges/mini_cup') && Assets.icon('badges/mini_cup', 220)) || (Assets.frame('badges/frostline_cup') && Assets.icon('badges/frostline_cup', 220)) || '';
+    const podium = Assets.frame('minicup/podium') ? Assets.icon('minicup/podium', 360) : '';
+    const rows = MINI_ROUNDS.map((rd, i) => {
+      const r = c.results[i], tm = TEAMS[c.opps[i]];
+      return `<div class="mini-step ${r === true ? 'won' : r === false ? 'lost' : i === c.round && !c.over ? 'now' : ''}"><span class="mini-rd">${t(rd)}</span><img src="${crest(tm.id, 48)}" alt="" width="28" height="28"><b>${esc(tm.name)}</b><span class="mini-res">${r === true ? '✓' : r === false ? '✗' : i === c.round && !c.over ? '▸' : ''}</span></div>`;
+    }).join('');
+    const head = result === 'champion' ? `${podium ? `<img class="mini-podium" src="${podium}" alt="">` : cup ? `<img class="mini-cup-big" src="${cup}" alt="">` : ''}<h2 class="gold-t" style="text-align:center">${t('You won the Mini Cup!')}</h2><p style="text-align:center;margin:0">${t('+{n} coins', { n: MINI_PRIZE })} · ${t(s.miniCups > 1 ? '{n} Mini Cups won' : '{n} Mini Cup won', { n: s.miniCups })}</p>`
+      : result === 'out' ? `<h2 style="text-align:center">${t('Out in the {round}', { round: t(MINI_ROUNDS[c.results.length - 1]) })}</h2><p class="muted" style="text-align:center;margin:0">${t('So close! Every champion loses one. Try again?')}</p>`
+      : `<h2 style="text-align:center">${t('On to the {round}!', { round: t(MINI_ROUNDS[c.round]) })}</h2>`;
+    this.modal(`<div class="label" style="text-align:center">${t('Mini Cup')}</div>${head}<div class="mini-bracket">${rows}</div>
+      <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="mc-done">${result === 'next' ? t('Later') : t('Done')}</button><button class="btn gold" id="mc-next">${result === 'next' ? t('Play the {round}', { round: t(MINI_ROUNDS[c.round]) }) : result === 'out' ? t('Try again') : t('Play again')}</button></div>`, (m, close) => {
+      this.click('#mc-next', () => { close(); audio.sfx('confirm'); next(); }, m);
+      this.click('#mc-done', () => { close(); audio.sfx('back'); done(); }, m);
+    }, false);
+  }
+
   // Name the pet (12 characters at most).
   petName() {
     const s = this.app.save;
@@ -1117,7 +1141,7 @@ export class UI {
     if ((s.trophiesSeen || 0) !== got.length) { s.trophiesSeen = got.length; writeSave(s); } // the chest in the room stops glowing
     body.innerHTML = `
       <div class="train-top"><div><div class="label">${t('Trophy case')}</div>
-        <p style="margin:2px 0 0;font-size:13px">${t('{n} of {total} unlocked', { n: got.length, total: ACHIEVEMENTS.length })} · ${t('{n} coins earned', { n: earned })}${s.cups ? ` · ${t(s.cups > 1 ? '{n} cups won' : '{n} cup won', { n: s.cups })}` : ''}${classicWins ? ` · ${t(classicWins > 1 ? '{n} Winter Classics won' : '{n} Winter Classic won', { n: classicWins })}` : ''}${allstarWins ? ` · ${t(allstarWins > 1 ? '{n} All-Star Games won' : '{n} All-Star Game won', { n: allstarWins })}` : ''}</p></div>
+        <p style="margin:2px 0 0;font-size:13px">${t('{n} of {total} unlocked', { n: got.length, total: ACHIEVEMENTS.length })} · ${t('{n} coins earned', { n: earned })}${s.cups ? ` · ${t(s.cups > 1 ? '{n} cups won' : '{n} cup won', { n: s.cups })}` : ''}${s.miniCups ? ` · ${t(s.miniCups > 1 ? '{n} Mini Cups won' : '{n} Mini Cup won', { n: s.miniCups })}` : ''}${classicWins ? ` · ${t(classicWins > 1 ? '{n} Winter Classics won' : '{n} Winter Classic won', { n: classicWins })}` : ''}${allstarWins ? ` · ${t(allstarWins > 1 ? '{n} All-Star Games won' : '{n} All-Star Game won', { n: allstarWins })}` : ''}</p></div>
         <span class="row" style="gap:6px;margin:0"><button class="btn small ghost" id="tr-career">${btnIcon('icons/career')} ${t('Career stats')}</button><button class="btn small ghost" id="tr-lb">${badge('cup_small', 48, 'btn-ico', '🏆')} ${t('Online leaderboards')}</button></span></div>
       ${this.albumCard(s)}
       ${(() => { // the Hall of Fame's plaques (on Batch BV's plaque once it's in)

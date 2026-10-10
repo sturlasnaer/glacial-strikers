@@ -49,6 +49,7 @@ export const ACHIEVEMENTS = [
   { id: 'special-teams', name: 'Special Teams', text: 'Win gold in the Power Play drill.', icon: 'hud_elements/ability/fire', art: 'achievements/special_teams', coins: 60 },
   { id: 'sticker-page', name: 'Got the Set', text: 'Fill a page of the sticker album.', icon: 'icons/friends', art: 'achievements/got_the_set', coins: 40 },
   { id: 'sticker-album', name: 'Collector', text: 'Fill the whole sticker album.', icon: 'icons/stat_cups', art: 'achievements/collector', coins: 150 },
+  { id: 'mini-cup', name: 'Little Champions', text: 'Win the Mini Cup.', icon: 'equipment_items/reward/trophy', art: 'badges/mini_cup', coins: 50 },
   { id: 'home-sweet-home', name: 'Home Sweet Home', text: 'Decorate every spot in the locker room.', icon: 'equipment_items/hub/locker', art: 'achievements/home_sweet_home', coins: 60 },
   { id: 'fresh-sheet', name: 'Fresh Sheet', text: 'Win gold in the Resurfacer drill.', icon: 'hud_elements/ability/frost', art: 'achievements/fresh_sheet', coins: 40 },
   { id: 'better-together', name: 'Better Together', text: 'Win a match with two players on the team.', icon: 'icons/friends', art: 'achievements/better_together', coins: 40 },
