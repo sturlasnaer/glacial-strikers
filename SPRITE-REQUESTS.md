@@ -7,7 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **## Batches EE, EF, EG: the National rinks**
+1. **EE–EG: the National rinks**
 2. **EH: the Frostline's pets (1)**
 3. **EI: the Frostline's pets (2)**
 4. **EJ: the National clubs' pets (1)**
@@ -16,6 +16,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 7. **EM: two more National clubs, the Birchwood Beavers and the Coral Bay Flamingos**
 8. **EN: the new clubs' mascot stickers for the album**
 9. **EO: the National and Elite Cup Finals' buildings**
+10. **EP: supporters' sections for the new clubs' rinks**
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -888,3 +889,20 @@ Every Cup Final is played at the Frostline Coliseum (BX) today. The two higher d
 And two achievement icons (128×128, like the other `achievements/…`): `achievements/elite_dynasty` (three Elite Cups in a row on a shelf) and `achievements/grand_tour` (a little team bus driving past a ring of club crests on a map).
 
 2 arenas (with their scoreboards, glass and penalty boxes) and 2 icons.
+
+## Batch EP: supporters' sections for the new clubs' rinks
+
+Like Batch BY did for the Frostline rivals: when the Foxes visit, each club's home rink has its own supporters' section cheering for the home side (the game draws it once that club's rink backdrop is in, EE–EG, EL, EM). For each of the eleven new clubs, in the BS/BY supporters' style, scale and recolour approach (their kit, with masks), three figures that suit the club. Names `crowd_supporters_<mark>/drummer_a`, `_b`, `capo_a`, `_b`, `banner_a`, `_b` and the three `_cheer` frames, with `atlas.rival_supporters.<mark>` metadata like BY's, on each club's own group `rival_<mark>`:
+- `hot_springs_capybaras`: fans in bathrobes with towels on their heads, a hand drum, a banner with steam rising off it.
+- `birchwood_beavers`: lumberjack-plaid fans, a hollow-log drum, a banner hung between two birch branches.
+- `cliffside_puffins`: fans in puffin-beak hats, a whistle, a banner with a puffin in flight.
+- `timberline_grizzlies`: big bear-paw foam hands, a wooden drum, a honey-pot banner.
+- `driftwood_seals`: fans in yellow rain slickers, a foghorn, fish-shaped balloons.
+- `coral_bay_flamingos`: pink sunglasses and flower garlands, maracas, a flamingo-shaped flag.
+- `pack_ice_penguins`: fans in little bow ties, a drum, a big fish banner.
+- `sunmesa_bulls`: wide-brimmed sun hats, a cowbell, a banner with horns on it.
+- `northlight_narwhals`: tusk hats, glow sticks in aurora green, a banner of waves under the northern lights.
+- `taiga_tigers`: striped face paint, a gong, a claw-mark banner.
+- `bamboo_ridge_pandas`: panda-ear hats, bamboo clackers, a paper-lantern banner.
+
+99 frames plus masks.
