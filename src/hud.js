@@ -49,7 +49,7 @@ export class HUD {
         <span class="abbr" style="color:${team.color}">${team.short}</span>
         <img class="crest" src="${crest(teamId, 72)}" alt="">
       </div>
-      <div class="pcard"><canvas id="pc-img" width="88" height="88"></canvas><div><div class="nm" id="pc-name"></div>
+      <div class="pcard" ${drill && drill.noCard ? 'hidden' : ''}><canvas id="pc-img" width="88" height="88"></canvas><div><div class="nm" id="pc-name"></div>
         <div class="bars"><div class="bar" id="pc-sta"><i></i></div><div class="bar ult" id="pc-ult"><i></i></div></div></div></div>
       ${this.versus || this.coop || this.keeper ? `<div class="pcard p2${this.coop || this.keeper ? ' coop' : ''}"><div><div class="nm" id="pc2-name"></div>
         <div class="bars"><div class="bar" id="pc2-sta"><i></i></div><div class="bar ult" id="pc2-ult"><i></i></div></div></div><canvas id="pc2-img" width="88" height="88"></canvas></div>` : ''}
@@ -64,7 +64,8 @@ export class HUD {
       <button class="pause-btn" id="pause-btn" tabindex="-1" aria-label="${t('Pause')}"></button>
       <div class="hint" id="hint" hidden></div>
       <div class="keyhints" id="keyhints" ${this.app.isTouch ? 'hidden' : ''}>
-        ${this.coop || this.keeper ? this.coopHints(K)
+        ${drill && drill.keysHint ? drill.keysHint(K)
+        : this.coop || this.keeper ? this.coopHints(K)
         : opts.versus ? `<b style="color:var(--ice)">P1</b> WASD · <kbd>F</kbd> ${t('shoot')} · <kbd>G</kbd> ${t('pass')} · <kbd>L-Shift</kbd> ${t('sprint')} · <kbd>R</kbd>/<kbd>T</kbd> ${t('skill/ult')}<br>
         <b style="color:var(--coral)">P2</b> ${t('Arrows')} · <kbd>K</kbd> ${t('shoot')} · <kbd>L</kbd> ${t('pass')} · <kbd>R-Shift</kbd> ${t('sprint')} · <kbd>O</kbd>/<kbd>P</kbd> ${t('skill/ult')}`
         : match.goalieMode ? `${K('a')} ${t('block / pass')} · ${K('b')} ${t('dive / clear')} · ${K('sprint')} ${t('quick feet')}<br>${K('skill')} ${t('poke check')} · ${K('ult')} ${t('Wall of Ice')} · ${K('pause')} ${t('pause')}`

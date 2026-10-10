@@ -11,6 +11,7 @@ import { headPlacement, PARTS_SCALE } from './modular.js';
 import { handMirror } from './hands.js';
 import { Linesman } from './linesman.js';
 import { cupBanners } from './hall.js';
+import { DRIVE } from './scenery.js';
 
 const SKATER_SCALE = 0.5; // world px per source px
 const CROSS_IN = 5, CROSS_KEEP = 3; // turn rates (radians a second) into and through a crossover
@@ -248,6 +249,7 @@ export class Renderer {
 
   // Freshly flooded ice: a wet sheen along the machine's path that dries over a few seconds.
   drawLapSheen(ctx, lap) {
+    if (lap.persist) return this.drawCleanIce(ctx, lap);
     const tr = lap.trail;
     if (tr.length < 2) return;
     ctx.save();
@@ -257,6 +259,51 @@ export class Renderer {
       if (!a) continue;
       ctx.strokeStyle = `rgba(232,248,255,${0.38 * a})`;
       ctx.beginPath(); ctx.moveTo(tr[i - 1].x, tr[i - 1].y - 6); ctx.lineTo(tr[i].x, tr[i].y - 6); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // The Resurfacer drill: a frosty, scraped haze over the ice still to do, wiped clean (with a
+  // wet sheen) wherever the machine has been. Kept on a canvas of its own, a stroke per new
+  // stretch of its path.
+  drawCleanIce(ctx, lap) {
+    let L = lap.layer;
+    if (!L) {
+      const c = document.createElement('canvas'); c.width = BACKDROP.w; c.height = BACKDROP.h;
+      const g = c.getContext('2d');
+      // the haze over the area the drill counts: the drive area grown by the sweep
+      const { X, Y0, Y1, R, SWEEP } = DRIVE, x = X + SWEEP, y0 = Y0 - SWEEP, y1 = Y1 + SWEEP, r = R + SWEEP, pts = [];
+      const arc = (cx, cy, a0) => { for (let i = 0; i <= 8; i++) { const a = a0 + (Math.PI / 2) * (i / 8); pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); } };
+      arc(x - r, y0 + r, -Math.PI / 2); arc(x - r, y1 - r, 0); arc(-(x - r), y1 - r, Math.PI / 2); arc(-(x - r), y0 + r, Math.PI);
+      g.beginPath();
+      pts.forEach(([px, py], i) => { const s = toScreen(px, py); if (i) g.lineTo(s.x, s.y); else g.moveTo(s.x, s.y); });
+      g.closePath();
+      g.fillStyle = 'rgba(150,168,188,0.42)'; g.fill();
+      g.save(); g.clip(); // skate scratches and snow in the haze
+      const rng = makeRng(7);
+      g.fillStyle = 'rgba(240,246,252,0.5)';
+      for (let i = 0; i < 160; i++) { const s = toScreen((rng() * 2 - 1) * x, y0 + rng() * (y1 - y0)); g.beginPath(); g.ellipse(s.x, s.y, 6 + rng() * 14, 2 + rng() * 5, 0, 0, Math.PI * 2); g.fill(); }
+      g.strokeStyle = 'rgba(110,130,152,0.45)'; g.lineWidth = 1.5;
+      for (let i = 0; i < 320; i++) { const s = toScreen((rng() * 2 - 1) * x, y0 + rng() * (y1 - y0)), a = rng() * Math.PI, l = 10 + rng() * 30; g.beginPath(); g.moveTo(s.x, s.y); g.lineTo(s.x + Math.cos(a) * l, s.y + Math.sin(a) * l * 0.5); g.stroke(); }
+      g.restore();
+      L = lap.layer = { c, g, n: 1 };
+    }
+    const tr = lap.trail, g = L.g;
+    if (tr.length >= 2 && L.n < tr.length) {
+      g.save(); g.lineCap = 'round'; g.lineJoin = 'round'; g.lineWidth = DRIVE.SWEEP * 2;
+      g.globalCompositeOperation = 'destination-out'; g.strokeStyle = '#000';
+      g.beginPath(); g.moveTo(tr[L.n - 1].x, tr[L.n - 1].y); for (let i = L.n; i < tr.length; i++) g.lineTo(tr[i].x, tr[i].y); g.stroke();
+      g.restore();
+      L.n = tr.length;
+    }
+    ctx.drawImage(L.c, 0, 0);
+    // a wet sheen on the last few seconds of the path
+    ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = DRIVE.SWEEP * 1.6;
+    for (let i = Math.max(1, tr.length - 120); i < tr.length; i++) {
+      const a = Math.max(0, 1 - (lap.t - tr[i].t) / 4);
+      if (!a) continue;
+      ctx.strokeStyle = `rgba(232,248,255,${0.32 * a})`;
+      ctx.beginPath(); ctx.moveTo(tr[i - 1].x, tr[i - 1].y - 4); ctx.lineTo(tr[i].x, tr[i].y - 4); ctx.stroke();
     }
     ctx.restore();
   }

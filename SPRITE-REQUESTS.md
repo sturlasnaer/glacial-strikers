@@ -8,6 +8,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 **Next batches:**
 1. **CB: more faces for players of your own**
+2. **CC: the Resurfacer drill**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -240,3 +241,11 @@ Team › Create a player now builds a skater of your own from the parts (a build
 - `round_cheeks` (a younger, rounder face with a fringe).
 
 8 heads, with masks and portraits, like AZ.
+
+## Batch CC: the Resurfacer drill
+
+Training has a new drill for fun: you drive the ice resurfacer (the title screen's machine) round the rink to clean the ice. Please draw:
+- `equipment_items/hub/resurface`: the drill card's icon, 128×128 like the other drill icons (`equipment_items/hub/target`, `.../tips`): the resurfacer from a three-quarter view with a shiny fresh strip of ice behind it.
+- `achievements/fresh_sheet` (Fresh Sheet: gold in the Resurfacer drill): a gleaming, mirror-smooth rink seen from the stands, the resurfacer parked by the gate, a gold medal hanging from its mirror.
+
+2 frames.

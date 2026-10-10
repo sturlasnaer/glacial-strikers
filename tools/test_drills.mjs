@@ -12,6 +12,16 @@ const raw = (o = {}) => ({ mx: 0, my: 0, sprint: false, a: false, b: false, skil
 const toward = (s, x, y) => { const dx = x - s.x, dy = y - s.y, l = Math.hypot(dx, dy) || 1; return { mx: dx / l, my: dy / l, l }; };
 
 const bots = {
+  // Resurfacer: lanes up and down the rink, then a slow spiral for what's left
+  resurface: (m, ctrl, st) => {
+    const M = ctrl.machine, lanes = st.lanes ||= [-220, -160, -100, -40, 20, 80, 140, 200, 255];
+    st.i ??= 0; st.dir ??= 1;
+    const ty = lanes[Math.min(st.i, lanes.length - 1)], tx = st.dir * 520;
+    const dx = tx - M.x, dy = ty - M.y;
+    if (Math.abs(dx) < 40 && st.i < lanes.length) { st.i++; st.dir = -st.dir; }
+    const d = Math.hypot(dx, dy) || 1;
+    return st.i >= lanes.length ? { ...raw(), mx: Math.cos(ctrl.t), my: Math.sin(ctrl.t * 0.7) } : { ...raw(), mx: dx / d, my: dy / d, sprint: Math.abs(dy) < 20 };
+  },
   cones(m, c, st) {
     const s = m.controlled();
     const g = c.gates[c.next];

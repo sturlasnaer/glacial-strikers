@@ -43,6 +43,7 @@ export const ACHIEVEMENTS = [
   { id: 'daily', name: 'Daily Grind', text: 'Beat a daily challenge.', icon: 'achievements/daily_grind', coins: 40 },
   { id: 'daily-streak', name: 'On a Roll', text: 'Beat the daily challenge seven days in a row.', icon: 'achievements/on_a_roll', coins: 200 },
   { id: 'versus', name: 'Couch Champion', text: 'Win a local versus match.', icon: 'hud_elements/misc/home_crest', coins: 30 },
+  { id: 'fresh-sheet', name: 'Fresh Sheet', text: 'Win gold in the Resurfacer drill.', icon: 'hud_elements/ability/frost', art: 'achievements/fresh_sheet', coins: 40 },
   { id: 'better-together', name: 'Better Together', text: 'Win a match with two players on the team.', icon: 'icons/friends', art: 'achievements/better_together', coins: 40 },
   // the newer systems (art: their own icon from Batch AN; icon: a stand-in until then)
   { id: 'first-pick', name: 'First Pick', text: 'Draft a rookie on Draft Day.', icon: 'achievements/free_agent', art: 'achievements/first_pick', coins: 60 },
@@ -203,6 +204,7 @@ export class AchievementTracker {
     if (Object.values(s.roster).some((r) => r.level >= 10)) this.unlock('max-level');
     if (Object.values(s.chem || {}).some((x) => x >= CHEM_LEVELS[2])) this.unlock('in-sync');
     if (s.training && ['cones', 'sniper', 'rondo', 'breakaway'].every((d) => (s.training.medals[d] || 0) >= 3)) this.unlock('gold-drills');
+    if (s.training && (s.training.medals.resurface || 0) >= 3) this.unlock('fresh-sheet');
     if (GEAR.every((g) => s.owned.includes(g.id))) this.unlock('kitted');
     const signed = Object.keys(RECRUITS).filter((k) => s.roster[k]);
     if (signed.length) this.unlock('signing');

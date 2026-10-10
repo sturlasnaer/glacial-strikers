@@ -319,7 +319,7 @@ class App {
     // the title and hub scenes show over the demo match, so their art stays with it
     const host = Object.values(TEAMS).find((tm) => tm.arena === arena); // its mascot dances in the stands
     const team = teamInfo(teamId); // (the All-Stars recolour the rival pages they're given)
-    Assets.trim({ teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(team.groups || []), ...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : [])] });
+    Assets.trim({ teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(team.groups || []), ...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || [])] });
     if (geared) Assets.ensureGear();
     if (rules) Assets.loadGroup('rules').catch(() => {});
     this.lap = null;
@@ -503,6 +503,7 @@ class App {
     if (this.loading) return;
     if (ghostTeam && !opts.awayTeam) return this.loadThen(Assets.ensureTeam(ghostTeam), () => this.startDrill(id, charId, { ...opts, awayTeam: ghostTeam }));
     if (id === 'faceoffs' && !opts.awayTeam) return this.loadThen(Assets.ensureTeam('lynx'), () => this.startDrill(id, charId, { ...opts, awayTeam: 'lynx' })); // (with the linesman)
+    if (id === 'resurface' && !Assets.groupReady('title')) return this.loadThen(Assets.loadGroup('title'), () => this.startDrill(id, charId, opts)); // (the machine's art)
     const { cfg, ctrl, def, awayTeam } = createDrill(id, this.save, charId, opts);
     this.cur = { drill: id, char: charId, teamId: awayTeam, ctrl, def, opts };
     this.attract = false;
@@ -1626,7 +1627,7 @@ class App {
         if (this.scene === 'match' && isDrill && m.state === 'drill_over' && m.stateT > 1.1 && !this.drillShown) { this.drillShown = true; this.finishDrill(); }
       }
       const t = teamInfo(this.awayTeamId);
-      const lap = this.lap && this.attract ? this.lap : null;
+      const lap = this.lap && this.attract ? this.lap : (m && m.drill && m.drill.machine) || null; // (the title's lap, or the Resurfacer drill's machine)
       const focus = lap && toScreen(lap.pos().x, lap.pos().y);
       this.renderer.updateCamera(m, this.fx, realDt, { attract: this.attract, focus, zoom: this.attract ? 0.9 : this.replay.active ? 1.15 : m.pshot ? 1.12 : 1 });
       this.renderer.render(m, this.fx, { awayTeamId: this.awayTeamId, awayColor: t.color, awayColor2: t.color2, arena: this.arena, replay: this.replay.active, lap, save: this.save }); // (save: the rafters' banners at home)

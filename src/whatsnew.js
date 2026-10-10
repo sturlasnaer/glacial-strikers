@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10l',
+    items: [
+      { icon: 'polish/resurfacer/east/phase_1', text: 'A new drill for fun: the Resurfacer. Drive the ice resurfacer and clean the rink in a minute. Gold earns the Fresh Sheet trophy.' },
+    ],
+  },
+  {
     id: '2026-10-10k',
     items: [
       { icon: 'icons/coop', text: 'Two players, one in goal: Play as › Two, one in goal (or 2 Players › Together, one in goal on the title). Player 1 skates, player 2 keeps the net.' },

@@ -12,6 +12,7 @@ import { norm, clamp, makeRng } from './util.js';
 import { Skater } from './entities.js';
 import { t } from './i18n.js';
 import { GhostRecorder, decodeGhost, ghostAt } from './ghost.js';
+import { DrivenResurfacer, DRIVE } from './scenery.js';
 
 export const DRILLS = {
   cones: {
@@ -44,6 +45,11 @@ export const DRILLS = {
     text: 'Ten draws against a centre who gets quicker every time. Press SHOOT or PASS as the puck touches the ice: go while it\'s still in the air and you\'re held back.',
     medals: [5, 7, 9],
   },
+  resurface: {
+    id: 'resurface', name: 'Resurfacer', trains: 'Ice care', icon: 'polish/resurfacer/east/phase_1', art: 'equipment_items/hub/resurface', unit: 'percent', offline: true, // (no online board: a drill for fun; art: Batch CC, when it's in)
+    text: 'The ice needs a fresh coat. Drive the resurfacer with the stick (SPRINT is quicker but turns wider) and clean as much of the rink between the goal lines as you can in a minute.',
+    medals: [60, 78, 90],
+  },
 };
 
 export const MEDAL_NAMES = ['No medal', 'Bronze', 'Silver', 'Gold'];
@@ -61,6 +67,7 @@ export function formatScore(def, score) {
   if (def.unit === 'goals') return `${score}/5`;
   if (def.unit === 'draws') return `${score}/${FACEOFF_DRAWS}`;
   if (def.unit === 'tips') return `${score}/${TIP_SHOTS}`;
+  if (def.unit === 'percent') return `${score}%`;
   return t('{n} pts', { n: score });
 }
 
@@ -87,6 +94,7 @@ export function createDrill(id, save, charId, opts = {}) {
     case 'breakaway': ctrl = new BreakawayDrill(opts.ghost); break;
     case 'faceoffs': away = ['frost']; ctrl = new FaceoffDrill(); break;
     case 'tips': home = [charId, opts.feeder || mates.find((k) => member(k).role === 'D') || mates[0]]; ctrl = new TipDrill(); break;
+    case 'resurface': ctrl = new ResurfaceDrill(); break;
     case 'shootout': home = line; awayTeam = opts.teamId || 'comets'; away = ids; ctrl = new ShootoutDrill(opts.teamId); break;
     default: throw new Error('Unknown drill ' + id);
   }
@@ -673,6 +681,59 @@ class FaceoffDrill extends DrillBase {
   hud() {
     const dots = Array.from({ length: FACEOFF_DRAWS }, (_, i) => (this.results[i] === 'won' ? '●' : this.results[i] ? '○' : '·')).join(' ');
     return { title: t('Faceoffs'), main: t('{n} won', { n: this.wins }), sub: `${t('Draw {n} of {total}', { n: Math.min(FACEOFF_DRAWS, this.n + 1), total: FACEOFF_DRAWS })}  ${dots}`, note: this.clean ? t('{n} clean', { n: this.clean }) : '' };
+  }
+}
+
+// ----------------------------------------------------------- Resurfacer
+// Nobody on the ice: the player drives the resurfacer (scenery.js) and the score is how much of
+// the rink between the goal lines it has cleaned, counted on a grid of 16-unit cells (a cell
+// is clean once the machine's middle passes within the sweep of its centre).
+const RESURFACE_SECONDS = 60, CELL = 16;
+class ResurfaceDrill extends DrillBase {
+  constructor() { super(); this.noSwitch = true; this.noCard = true; this.machine = new DrivenResurfacer(); this.keepGroups = ['title']; } // (its art lives with the title screen's; nobody's card on the HUD)
+  init(m) {
+    this.hideGoalies(m);
+    for (const s of m.skaters) { s.parked = true; s.x = 0; s.y = -900; s.vx = s.vy = 0; }
+    const p = m.puck;
+    p.owner = null; p.x = 0; p.y = 0; p.vx = p.vy = 0;
+    const { X, Y0, Y1, R, SWEEP } = DRIVE;
+    this.x0 = -X - SWEEP; this.y0 = Y0 - SWEEP;
+    this.cols = Math.ceil((2 * (X + SWEEP)) / CELL); this.rows = Math.ceil((Y1 - Y0 + 2 * SWEEP) / CELL);
+    this.cells = new Uint8Array(this.cols * this.rows); // 0 outside, 1 to clean, 2 clean
+    this.total = 0;
+    for (let r = 0; r < this.rows; r++) for (let c = 0; c < this.cols; c++) {
+      const x = this.x0 + (c + 0.5) * CELL, y = this.y0 + (r + 0.5) * CELL;
+      // inside the drive area grown by the sweep (its rounded corners too)
+      const cx = Math.sign(x) * (X - R), cy = y < Y0 + R ? Y0 + R : y > Y1 - R ? Y1 - R : null;
+      const inside = Math.abs(x) <= X + SWEEP && y >= Y0 - SWEEP && y <= Y1 + SWEEP && (cy === null || Math.abs(x) <= X - R || Math.hypot(x - cx, y - cy) <= R + SWEEP);
+      if (inside) { this.cells[r * this.cols + c] = 1; this.total++; }
+    }
+    this.clean = 0; this.mark = 0;
+    this.sweep();
+    this.startCountdown(m);
+  }
+  get pct() { return Math.floor((this.clean / this.total) * 100); }
+  sweep() {
+    const M = this.machine, s = DRIVE.SWEEP;
+    const c0 = Math.max(0, Math.floor((M.x - s - this.x0) / CELL)), c1 = Math.min(this.cols - 1, Math.floor((M.x + s - this.x0) / CELL));
+    const r0 = Math.max(0, Math.floor((M.y - s - this.y0) / CELL)), r1 = Math.min(this.rows - 1, Math.floor((M.y + s - this.y0) / CELL));
+    for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+      const i = r * this.cols + c;
+      if (this.cells[i] !== 1) continue;
+      if (Math.hypot(this.x0 + (c + 0.5) * CELL - M.x, this.y0 + (r + 0.5) * CELL - M.y) <= s) { this.cells[i] = 2; this.clean++; }
+    }
+  }
+  tick(m, dt) {
+    const raw = m.humanInputs[0] || {};
+    this.machine.drive(dt, raw.mx || 0, raw.my || 0, !!raw.sprint);
+    this.sweep();
+    const pct = this.pct;
+    if (pct >= this.mark + 10) { this.mark = pct - (pct % 10); m.emit('gate_ok', { x: this.machine.x, y: this.machine.y, pct: this.mark }); }
+    if (pct >= 100 || this.t >= RESURFACE_SECONDS) this.finish(m, Math.min(100, pct), { time: Math.round(Math.min(this.t, RESURFACE_SECONDS) * 10) / 10 });
+  }
+  keysHint(K) { return `${t('Steer with {move}', { move: K('up') + K('left') + K('down') + K('right') })} · ${K('sprint')} ${t('faster, wider turns')}`; }
+  hud() {
+    return { title: t('Resurfacer'), main: `${this.pct}%`, sub: t('{seconds}s left', { seconds: Math.max(0, Math.ceil(RESURFACE_SECONDS - this.t)) }), note: '' };
   }
 }
 

@@ -41,9 +41,59 @@ export class ResurfacerLap {
     return SEGS[SEGS.length - 1].at(1);
   }
   // atlas frame for the machine's heading, wheels turning at 2 frames a second
-  frame(ids) {
-    const p = this.pos();
-    const dir = Math.abs(p.dx) >= Math.abs(p.dy) ? (p.dx > 0 ? 'east' : 'west') : (p.dy > 0 ? 'south' : 'north');
-    return ids[DIRS.indexOf(dir) + (Math.floor(this.t * 2) % 2) * 4];
+  frame(ids) { return machineFrame(ids, this.pos(), this.t); }
+}
+
+function machineFrame(ids, p, t) {
+  const dir = Math.abs(p.dx) >= Math.abs(p.dy) ? (p.dx > 0 ? 'east' : 'west') : (p.dy > 0 ? 'south' : 'north');
+  return ids[DIRS.indexOf(dir) + (Math.floor(t * 2) % 2) * 4];
+}
+
+// The resurfacer in the player's hands (Training › Resurfacer): it heads where the stick points,
+// turning like a machine rather than a skater, and stays between the goal lines (the nets are
+// in the way beyond them). Its fresh ice stays (persist): the drill counts it.
+export const DRIVE = { X: 560, Y0: -240, Y1: 275, R: 120, SWEEP: 32, SPEED: 240, FAST: 300, TURN: 3, TURN_FAST: 2 };
+export class DrivenResurfacer {
+  constructor() {
+    this.x = -DRIVE.X + 40; this.y = 0; this.heading = 0; this.speed = 0;
+    this.t = 0; this.wheelT = 0;
+    this.trail = []; // { x, y, t } screen points of fresh ice
+    this.persist = true;
   }
+  pos() { return { x: this.x, y: this.y, dx: Math.cos(this.heading), dy: Math.sin(this.heading) }; }
+  frame(ids) { return machineFrame(ids, this.pos(), this.wheelT); }
+  // mx, my: the stick; fast: SPRINT (quicker, but it turns wider)
+  drive(dt, mx, my, fast) {
+    this.t += dt;
+    const push = Math.min(1, Math.hypot(mx, my));
+    if (push > 0.25) {
+      const want = Math.atan2(my, mx);
+      let d = want - this.heading;
+      d = Math.atan2(Math.sin(d), Math.cos(d));
+      const turn = (fast ? DRIVE.TURN_FAST : DRIVE.TURN) * dt;
+      this.heading += Math.max(-turn, Math.min(turn, d));
+      const top = (fast ? DRIVE.FAST : DRIVE.SPEED) * push;
+      this.speed = Math.min(top, this.speed + 500 * dt);
+    } else this.speed = Math.max(0, this.speed - 600 * dt);
+    if (this.speed > 0) {
+      this.wheelT += dt;
+      const c = clampDrive(this.x + Math.cos(this.heading) * this.speed * dt, this.y + Math.sin(this.heading) * this.speed * dt);
+      this.x = c.x; this.y = c.y;
+    }
+    const s = toScreen(this.x, this.y);
+    const last = this.trail[this.trail.length - 1];
+    if (this.speed > 0 && (!last || Math.hypot(s.x - last.x, s.y - last.y) > 6)) this.trail.push({ x: s.x, y: s.y, t: this.t });
+  }
+}
+
+// Keep a point inside the drive area: a rectangle with rounded corners.
+export function clampDrive(x, y) {
+  const { X, Y0, Y1, R } = DRIVE;
+  x = Math.max(-X, Math.min(X, x)); y = Math.max(Y0, Math.min(Y1, y));
+  const cx = Math.sign(x) * (X - R), cy = y < Y0 + R ? Y0 + R : y > Y1 - R ? Y1 - R : null;
+  if (cy !== null && Math.abs(x) > X - R) {
+    const d = Math.hypot(x - cx, y - cy);
+    if (d > R) { x = cx + ((x - cx) / d) * R; y = cy + ((y - cy) / d) * R; }
+  }
+  return { x, y };
 }
