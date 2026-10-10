@@ -990,6 +990,7 @@ class App {
     const oppName = teamInfo(c.teamId) ? teamInfo(c.teamId).name : '';
     for (const r of updateRecords(s, { summary, won: rewards.won, opp: c.teamId, oppName, season: s.season, nameOf: (id) => (member(id) ? member(id).name : ''), goalieName: (summary.goalieNames && summary.goalieNames[0]) || goalieInfo(summary.goalie || 'halla').name })) {
       const R = GAME_RECORDS[r.id];
+      addNews(s, { k: 'record', rec: r.id, n: r.n, name: r.name || '', team: c.teamId });
       setTimeout(() => this.toast(Assets.icon(Assets.atlas.frames['icons/career'] ? 'icons/career' : 'icons/stat_goals', 72), t('New club record'), t(R.name), t(R.text, { ...s.records[r.id], n: s.records[r.id].n })), 3000);
     }
     // now and then a legend turns up in Scouting
@@ -1042,6 +1043,7 @@ class App {
     }
     // the Hall of Fame: anyone who's earned it goes in (the ceremony comes after the results)
     this.pendingHall = hallCandidates(s, rosterIds(s), goalieIds(s)).map((h) => induct(s, h, h.goalie ? goalieInfo(h.id).name : member(h.id).name));
+    for (const h of this.pendingHall) addNews(s, { k: 'hall', name: h.name, n: h.number });
     if (!c.exhibition && s.league) { // Coach Brekka's season goals: paid as they're met
       const sg = updateSeasonGoals(s, { kind: c.fixture ? c.fixture.kind : 'regular', won: rewards.won, summary, opp: c.teamId });
       for (const g of sg.met) rewards.lines.push([t('Season goal: {goal}', { goal: t(g.text, { n: g.n }) }), g.coins]);

@@ -25,7 +25,7 @@ import { tradeable, tradeQuote, trade, TEAM_LIKES } from './trades.js';
 import { rivalSub, fillLook, vacated, ageOf, RETIRE_AT, leagueGrowth } from './slots.js';
 import { acceptOffer } from './moves.js';
 import { agentState, marketOpen, agentsLeft, signAgent } from './agents.js';
-import { latestNews } from './news.js';
+import { latestNews, addNews } from './news.js';
 import { audio } from './audio.js';
 import { t } from './i18n.js';
 import { FACILITIES, FACILITY_IDS, MAX_FACILITY, facilityLevel, nextCost, buildFacility } from './facilities.js';
@@ -198,7 +198,7 @@ export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '
 
 // The league news icon for each kind of story (Batch AV).
 const NEWS_ICON = { edge: 'edge', rivalSign: 'sign', weSign: 'sign', weGoalie: 'sign', weAgent: 'sign', weLegend: 'sign', rivalDraft: 'draft', weDraft: 'draft', trade: 'trade', retire: 'retire', champion: 'cup', expansion: 'new_club' };
-const NEWS_ART = { hatTrick: 'achievements/hat_trick', streak: 'badges/streak_flame', press: 'icons/share' }; // (news without a news icon of its own)
+const NEWS_ART = { hatTrick: 'achievements/hat_trick', streak: 'badges/streak_flame', press: 'icons/share', hall: 'icons/career', record: 'icons/stat_goals', facility: 'icons/friends' }; // (news without a news icon of its own)
 // The locker room hub: stations in the painting, in % of the 16:9 image.
 const STATIONS = [
   { tab: 'team', label: 'Team', icon: 'equipment_items/hub/locker', rect: [19, 2, 47, 27], at: [42, 15], tip: 'Lockers: line-up, stats, gear and scouting' },
@@ -831,6 +831,12 @@ export class UI {
         case 'edge': return t('The league has noticed the {club}: the rivals trained hard all summer.', { club: esc(CLUB.nick) });
         case 'streak': return t('{name} has scored in {n} straight games.', { name, n: n.n });
         case 'press': return t(pressHeadline(n.tone), { name, team: tn(n.team), club: esc(CLUB.nick) });
+        case 'hall': return t('{name} goes into the {club} Hall of Fame. Number {n} hangs in the rafters.', { name, club: esc(CLUB.nick), n: n.n });
+        case 'record': {
+          const R = GAME_RECORDS[n.rec], v = { club: esc(CLUB.nick), record: R ? t(R.name).toLowerCase() : '', n: n.rec === 'fastestGoal' ? t('{n}s', { n: n.n }) : n.n, name };
+          return !R ? '' : n.name ? t('A new {club} record: {record}, {n}, by {name}.', v) : t('A new {club} record: {record}, {n}.', v);
+        }
+        case 'facility': return t('The {club} open their new {facility}.', { club: esc(CLUB.nick), facility: t(FACILITIES[n.f] ? FACILITIES[n.f].name : '').toLowerCase() });
         case 'hatTrick': return t(n.n > 3 ? '{name} scores {n} against the {team}. The hats are still coming down.' : '{name} scores a hat trick against the {team}. Hats everywhere!', { name, team: tn(n.team), n: n.n });
         default: return '';
       }
@@ -2191,6 +2197,7 @@ export class UI {
     this.click('[data-build]', (el) => {
       const id = el.dataset.build;
       if (!buildFacility(s, id)) return;
+      if (facilityLevel(s, id) === 1) addNews(s, { k: 'facility', f: id, team: 'home' });
       writeSave(s);
       audio.sfx('purchase');
       this.app.ach.checkMeta();
