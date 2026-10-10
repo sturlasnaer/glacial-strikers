@@ -489,11 +489,11 @@ class App {
     });
   }
 
-  startExhibition(teamId, mods = [], arena = 'auto', rules = true) {
-    this.lastExhibition = { teamId, mods, arena, rules }; // (for Play again on the results)
+  startExhibition(teamId, mods = [], arena = 'auto', rules = true, coop = false) {
+    this.lastExhibition = { teamId, mods, arena, rules, coop }; // (for Play again on the results)
     const where = this.arenaFor(teamId, arena);
     this.loadThen(Assets.ensureTeam(teamId, where), () =>
-      this.beginMatch(teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 120, round: 'Exhibition' }, true, mods, { arena: where, rules }));
+      this.beginMatch(teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 120, round: 'Exhibition' }, true, mods, { arena: where, rules, coop }));
   }
 
   // Training drills and the shootout run on the match engine with a drill controller.
@@ -748,10 +748,11 @@ class App {
       writeSave(s);
     }
     this.cur = { teamId, stage, exhibition, stageIndex: exhibition ? -1 : s.stage, mods, plan, theirPlan, fixture: extra.fixture, daily: extra.daily || null, allstar: extra.allstar || null };
-    const goalieMode = s.settings.playAs === 'goalie' && !extra.daily; // (daily goals are for skaters)
+    const coop = (!!extra.coop || s.settings.playAs === 'coop') && !extra.daily; // (two players from the title, or Play as; the daily challenge is for one)
+    const goalieMode = !coop && s.settings.playAs === 'goalie' && !extra.daily; // (daily goals are for skaters)
     const cfg = extra.allstar ? allStarConfig(s, extra.allstar, { goalieMode }) : matchConfig(s, teamId, stage, { plans: [plan, theirPlan], buffs, goalieMode });
     cfg.mods = mods;
-    cfg.coop = this.cur.coop = s.settings.playAs === 'coop' && !extra.daily; // (and the daily challenge is for one)
+    cfg.coop = this.cur.coop = coop;
     const arena = extra.arena || stage.arena || this.arenaFor(teamId);
     cfg.twist = this.twistFor(arena, stage, extra.rules !== false);
     this.attract = false;
@@ -1093,7 +1094,7 @@ class App {
       this.fx.heavySnow = false;
       const finish = () => {
         // Play again: the same exhibition straight away
-        if (this.rematchNext) { this.rematchNext = false; const e = this.lastExhibition; return this.startExhibition(e.teamId, e.mods, e.arena, e.rules); }
+        if (this.rematchNext) { this.rematchNext = false; const e = this.lastExhibition; return this.startExhibition(e.teamId, e.mods, e.arena, e.rules, e.coop); }
         if (becameChampion) { this.scene = 'results'; this.music('final'); audio.jingle('champion'); this.ui.champion(() => this.goHub('tournament')); } else this.goHub(rewards.won ? 'tournament' : 'team');
       };
       const call = (next) => { const o = this.pendingOffer; this.pendingOffer = null; return o ? this.ui.rivalCall(o, next) : next(); };

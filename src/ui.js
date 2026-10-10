@@ -504,18 +504,24 @@ export class UI {
     });
   }
 
+  // Two players from the title: against each other (local versus) or together on our team
+  // against the AI (co-op, an exhibition with the club's own players).
   versusPicker() {
     const opts = Object.values(TEAMS).filter((t) => t.id !== 'home');
     this.vsTeam ||= 'comets';
+    this.vsMode ||= 'versus';
+    const coop = this.vsMode === 'coop';
     this.modal(`
-      <h2>${t('Local versus')}</h2>
-      <p class="muted" style="margin:0">${t('Two players on one screen: {club} against a rival, same stats on both sides, first to 5. Needs a keyboard or gamepads.', { club: esc(CLUB.nick) })}</p>
+      <h2>${t('2 Players')}</h2>
+      <div class="filters" style="margin:0"><button class="chip" data-vsmode="versus" aria-pressed="${!coop}">${t('Against each other')}</button><button class="chip" data-vsmode="coop" aria-pressed="${coop}">${t('Together against the AI')}</button></div>
+      <p class="muted" style="margin:0">${coop ? t('Two players on the {club}, each with a skater of their own and the AI on the third, against a rival: an exhibition with your own players, their levels and gear. Needs a keyboard or a gamepad.', { club: esc(CLUB.nick) })
+        : t('Two players on one screen: {club} against a rival, same stats on both sides, first to 5. Needs a keyboard or gamepads.', { club: esc(CLUB.nick) })}</p>
       <div class="keys">
         <kbd style="color:var(--ice)">${t('Player 1')}</kbd><span>${t('WASD skate · F shoot/check · G pass/switch · Left Shift sprint · R skill · T ultimate')}</span>
-        <kbd style="color:var(--coral)">${t('Player 2')}</kbd><span>${t('Arrows skate · K shoot/check · L pass/switch · Right Shift sprint · O skill · P ultimate')}</span>
-        <kbd>${t('Gamepads')}</kbd><span>${t('With two pads each player gets one. With one pad, it goes to player 2.')}</span>
+        <kbd style="color:${coop ? '#7fe08a' : 'var(--coral)'}">${t('Player 2')}</kbd><span>${t('Arrows skate · K shoot/check · L pass/switch · Right Shift sprint · O skill · P ultimate')}</span>
+        <kbd>${t('Gamepads')}</kbd><span>${coop ? t('With one pad, player 2 has it and player 1 keeps the keyboard or touch. With two, one each.') : t('With two pads each player gets one. With one pad, it goes to player 2.')}</span>
       </div>
-      <div class="label" style="font-size:15px">${t('Player 2 plays as')}</div>
+      <div class="label" style="font-size:15px">${coop ? t('Against') : t('Player 2 plays as')}</div>
       <div class="filters" style="margin:0">${opts.map((t) => `<button class="chip" data-vs="${t.id}" aria-pressed="${this.vsTeam === t.id}" style="display:inline-flex;gap:6px;align-items:center"><img src="${crest(t.id, 40)}" width="20" height="20" alt="">${esc(t.name)}</button>`).join('')}</div>
       <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Back')}</button><button class="btn gold" id="vs-go">${t('Start')}</button></div>`, (m, close) => {
       this.click('[data-vs]', (el) => {
@@ -523,7 +529,8 @@ export class UI {
         m.querySelectorAll('[data-vs]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.vs === this.vsTeam));
         audio.sfx('click');
       }, m);
-      this.click('#vs-go', () => { close(); this.app.startVersus(this.vsTeam); }, m);
+      this.click('[data-vsmode]', (el) => { this.vsMode = el.dataset.vsmode; audio.sfx('click'); close(); this.versusPicker(); }, m);
+      this.click('#vs-go', () => { close(); if (this.vsMode === 'coop') this.app.startExhibition(this.vsTeam, [], 'auto', true, true); else this.app.startVersus(this.vsTeam); }, m);
     });
   }
 

@@ -587,7 +587,8 @@ body.large-text .hub, body.large-text .modal, body.large-text .results, body.lar
   .whatsnew { max-height: calc(100vh - 200px - var(--safe-t) - var(--safe-b)); margin-bottom: 8px; }
   .wn-row { font-size: 13px; }
   .wn-ico { width: 28px; height: 28px; }
-  .ticker { font-size: 16px; max-width: min(40vw, 360px); }
+  .ticker { font-size: 14px; line-height: 1.1; max-width: min(40vw, 340px); min-height: 26px; }
+  .ticker .tk-ico { width: 20px; height: 20px; }
   .penchip { top: calc(50px + var(--safe-t)); }
 }
 @media (prefers-reduced-motion: reduce) {
