@@ -7,12 +7,8 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **DO: a ball for the cub**
-2. **DP: the road-trip map in season**
-3. **DQ: Halloween treats in the locker room**
-4. **DR: three new trophies**
-5. **DS: a present a day in December**
-6. **DT: snowball fun with the cub**
+1. **DS: a present a day in December**
+2. **DT: snowball fun with the cub**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -83,6 +79,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered DK-DL:** Eight town postcards, empty wicker cub basket, two breathing cub-in-basket frames and a Shop icon. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DK-DL-Testing-Update`.
 
 **Delivered DM-DN:** Nine rink-cub victory poses and five Little player reward stickers with two sparkle overlays. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DM-DN-Testing-Update`.
+
+**Delivered DO-DR:** Cub ball and play poses, two seasonal map overlays, Halloween candy bowl and three achievement icons. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DO-DR-Testing-Update`.
 
 ## Format notes
 
@@ -615,7 +613,7 @@ After a Little player game, the results should give the young player a big gold 
 
 As atlas frames on a page in a new `kid_stars` group (loaded for Little player games). 7 frames.
 
-## Batch DO: a ball for the cub
+## Batch DO ✓: a ball for the cub
 
 A toy for the cub (CX): a Shop item ("For the cub"); once bought, the ball lies on the locker room floor and the cub now and then trots over and plays with it. Please draw, in the room's style and angle:
 - `decor/cub_ball`: a small striped ball in the club's blue and white, about 28×28 room pixels, pivot at its bottom centre.
@@ -624,7 +622,7 @@ A toy for the cub (CX): a Shop item ("For the cub"); once bought, the ball lies 
 
 As atlas frames on a page in the `hub` group. 6 frames.
 
-## Batch DP: the road-trip map in season
+## Batch DP ✓: the road-trip map in season
 
 The road-trip map (DG) should dress up like the rest of the game in season. Please draw two transparent overlays, exactly the map's 1536×864 size and lined up with it, as atlas frames on a page in the `seasonal` group:
 - `map_halloween/overlay` (from 20 October): pumpkins with glowing faces at each town's edge (not over the towns' clear spots, where the crests go), a few bats over the forests, a thin orange mist in the valleys, a big harvest moon in a corner.
@@ -632,7 +630,7 @@ The road-trip map (DG) should dress up like the rest of the game in season. Plea
 
 2 frames.
 
-## Batch DQ: Halloween treats in the locker room
+## Batch DQ ✓: Halloween treats in the locker room
 
 From 20 October (when the room and the cub dress up, CD/CZ), a bowl of treats should sit on the locker room floor: tap it once a day for a treat (a few coins) and the cub in its pumpkin costume does a little happy hop. Please draw, in the room's style and angle, as atlas frames on a page in the `seasonal` group:
 - `seasonal_room/candy_bowl`: a carved pumpkin bowl heaped with wrapped sweets, about 90×70 room pixels, pivot at its bottom centre; and `seasonal_room/candy_bowl_empty`: the same with only a few sweets left (after today's treat).
@@ -641,7 +639,7 @@ From 20 October (when the room and the cub dress up, CD/CZ), a bowl of treats sh
 
 3 frames.
 
-## Batch DR: three new trophies
+## Batch DR ✓: three new trophies
 
 Three achievement badges in the same style, size and frame as the other `achievements/` icons (256×256), for the newest features, **no lettering**:
 - `achievements/postcard_collector`: a fan of postcards with stamps, a little bus in front (all eight postcards from the road, DK).
