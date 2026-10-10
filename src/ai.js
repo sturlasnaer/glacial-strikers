@@ -453,7 +453,7 @@ export class TeamAI {
     const human = c.controlled && m.humans.includes(c.team), hd = this.diff * this.diff; // (against the player: gentle for longer, the top teams still tough)
     const hunts = plan === 'forecheck' && (!human || hd > 0.36);
     const tight = Math.abs(c.x - this.ownX) < 260 || hunts;
-    const gap = human ? (tight ? lerp(58, 16, hd) : lerp(110, 32, hd)) : tight ? lerp(24, 14, this.diff) : lerp(48, 28, this.diff);
+    const gap = human ? (tight ? lerp(85, 20, hd) : lerp(110, 32, hd)) : tight ? lerp(24, 14, this.diff) : lerp(48, 28, this.diff);
     const tx = c.x + c.vx * 0.22 + g.x * gap, ty = c.y + c.vy * 0.22 + g.y * gap;
     this.seek(s, tx, ty, !human || tight || hd > 0.3, 8); // (no sprinting up to the player out in the open on the easier levels)
     const d = Math.hypot(c.x - s.x, c.y - s.y);

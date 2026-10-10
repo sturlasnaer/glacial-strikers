@@ -138,7 +138,7 @@ const seatsOk = (m) => {
   const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
   for (let i = 0; i < 4; i++) {
     const k = new Match({ teams: [team(), team()], humanTeam: 0, keeperCoop: true, seed: 300 + i, powers: [], diff: [0.5, 0.5] });
-    for (let t = 0, n = 0; t < 1500 && k.state !== 'over'; t += 1 / 60, n++) {
+    for (let t = 0, n = 0; t < 2400 && k.state !== 'over'; t += 1 / 60, n++) { // (a slow one is fine: player 2's random goalie stops a lot)
       const c = k.controlled(0), p = k.puck, out = idle();
       if (c) { const dx = (p.owner === c ? GOAL_X - 120 : p.x) - c.x, dy = (p.owner === c ? 0 : p.y) - c.y, d = Math.hypot(dx, dy) || 1; out.mx = dx / d; out.my = dy / d; out.a = p.owner === c ? d < 140 : rnd() < 0.05; }
       k.setHumanInput(out, 0, 0);
