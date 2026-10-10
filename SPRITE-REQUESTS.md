@@ -7,11 +7,13 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **EB: their mascots in the stands**
-2. **EC: their mascots for the race**
-3. **ED: the National map and postcards**
-4. **EE–EG: the National rinks**
-5. **EH–EK: the pet collection** (a pet from every club for the locker room)
+1. **EC: their mascots for the race**
+2. **ED: the National map and postcards**
+3. **## Batches EE, EF, EG: the National rinks**
+4. **EH: the Frostline's pets (1)**
+5. **EI: the Frostline's pets (2)**
+6. **EJ: the National clubs' pets (1)**
+7. **EK: the National clubs' pets (2)**
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -99,6 +101,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered DX-DZ:** Fourteen division crests, cups, movement icons, veteran badges and poke-check effects. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DX-DZ-Testing-Update`.
 
 **Delivered EA:** Seven National club crests in their own palettes, with home-region details and native-colour registration. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EA-Testing-Update`.
+
+**Delivered EB:** Twenty-eight National club mascot poses with recolourable jerseys and fixed foot anchors, on seven club pages. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EB-Testing-Update`.
 
 ## Format notes
 
@@ -753,7 +757,7 @@ Divisions are in (DX): win the Frostline Cup and the club is promoted to the **N
 
 `rival_crests/crest/<mark>` for each of the seven (148×148, like `rival_crests/crest/glacier_owls`), drawn in the club's own colours, each with its animal and a hint of its home (steam, a cliff, pines, a floe, an iceberg, a mesa, a fjord). As atlas frames on a page in the `icons_z` group. 7 frames.
 
-## Batch EB: their mascots in the stands
+## Batch EB ✓: their mascots in the stands
 
 Each club's costumed mascot, dancing in the stands at their home rink, like `mascot/aurora_royals/…` (about 72×102, the same scale and pivot): `mascot/<mark>/idle`, `wave`, `cheer_a`, `cheer_b` (a friendly costumed capybara, puffin, grizzly, seal, penguin, bull and narwhal, each in a team jersey). Each club's four frames on a page in that club's own group `rival_<mark>` (the game loads it for games against them). 28 frames.
 
