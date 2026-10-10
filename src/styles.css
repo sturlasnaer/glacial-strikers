@@ -1313,4 +1313,10 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .drive .t-a, .drive .t-b, .drive .t-skill, .drive .t-ult, .drive .t-pull { display: none !important; }
 /* the pause menu with two players: both players' keys first */
 .two-keys { margin: 0 0 8px; font-size: 13px; line-height: 1.7; }
-
+/* two players on a narrow phone: compact cards and a scoreboard without its crests, so the three fit */
+@media (max-width: 760px) and (orientation: landscape) {
+  #hud.two .pcard { min-width: 0; width: 132px; }
+  #hud.two .pcard .nm { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #hud.two .pcard .bars { width: 100%; }
+  #hud.two .scoreboard .crest { display: none; }
+}

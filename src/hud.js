@@ -35,6 +35,8 @@ export class HUD {
     this.versus = !!opts.versus;
     this.coop = !!opts.coop && !!match.coop;
     this.keeper = !!match.keeperCoop; // (player 2 in goal: their card is the goalie's)
+    this.el.classList.toggle('two', this.versus || this.coop || this.keeper); // (two player cards: compact on a narrow phone)
+    document.querySelectorAll('#toasts .toast').forEach((el) => el.remove()); // (a menu's note doesn't follow onto the ice)
     const team = teamInfo(teamId);
     const K = (action) => keyCap(firstKey(action)); // (the player's own keys, Settings › Keyboard)
     this.el.hidden = false;

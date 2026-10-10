@@ -195,6 +195,7 @@ class App {
     const q = this.toastQ;
     if (!q.length) { this.toastBusy = false; return; }
     if (document.querySelector('.whatsnew')) { setTimeout(() => this.nextToast(), 500); return; } // (after the what's-new card, not over it)
+    if (this.scene === 'match') { setTimeout(() => this.nextToast(), 800); return; } // (never over the ice: they wait for the results)
     const [img, small, title, line] = q.shift();
     let box = document.getElementById('toasts');
     if (!box) { box = document.createElement('div'); box.id = 'toasts'; document.getElementById('app').appendChild(box); }
