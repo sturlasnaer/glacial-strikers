@@ -1674,6 +1674,7 @@ export class UI {
         const nid = createPlayer(s, c, MODULAR);
         if (!nid) { audio.sfx('deny'); return; }
         this.ownDraft = null;
+        this.app.ach.checkMeta(); // (One of Our Own)
         writeSave(s);
         audio.jingle('sign');
         close();

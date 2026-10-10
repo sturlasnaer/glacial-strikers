@@ -80,5 +80,24 @@ const PARTS = { bodies: ['std', 'big', 'small'], heads: ['braids', 'freckles', '
   check('a player of their own who didn\'t play: not yet', !MOMENTS[0].when({ ...ctx, save: s2, summary: { skaters: [{ team: 0, id: 'frost' }] } }) && id2);
 }
 
+// the achievements: making one, and one of them scoring in the league
+{
+  const { AchievementTracker } = await import('../src/achievements.js');
+  const s = newSave(), got = [];
+  const tr = new AchievementTracker(s, (a) => got.push(a.id));
+  tr.checkMeta();
+  check('no player of your own: no trophy yet', !got.includes('one-of-our-own'));
+  const id = createPlayer(s, { ...defaultChoice('C', PARTS), name: 'Ari' }, PARTS);
+  tr.checkMeta();
+  check('...one made: One of Our Own', got.includes('one-of-our-own'));
+  const sm = (goals, league) => tr.endMatch({ winner: 0, score: [3, 1], time: 300, skaters: [{ team: 0, id, goals, assists: 0, hits: 0, steals: 0 }, { team: 0, id: 'thunder', goals: 3 - goals, assists: 0, hits: 0, steals: 0 }], pen: [{ pims: 1 }, { pims: 0 }] }, { league, exhibition: !league, mods: [] });
+  sm(1, false);
+  check('...a goal in an exhibition: not yet Homegrown Hero', !got.includes('homegrown-hero'));
+  sm(0, true);
+  check('...a league match without one: not yet', !got.includes('homegrown-hero'));
+  sm(1, true);
+  check('...their goal in a league match: Homegrown Hero', got.includes('homegrown-hero'));
+}
+
 console.log(`Create a player: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

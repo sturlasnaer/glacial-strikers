@@ -9,6 +9,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Next batches:**
 1. **CH: Ragna, the ice-keeper**
 2. **CI: P1 and P2 tags**
+3. **CJ: trophies for players of your own**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -292,3 +293,11 @@ The Resurfacer drill needs a face: **Ragna, the ice-keeper**, who has looked aft
 ## Batch CI: P1 and P2 tags
 
 With two players on the ice (co-op, versus, one in goal), each player's skater has a floating "P1" or "P2" over the head, written in text today. Please draw them as small pixel badges, about 48×28, in the HUD kit's style (navy outline, a little shine): `hud_elements/tags/p1` (ice blue, #71dce8 family), `hud_elements/tags/p2_mint` (mint green, #7fe08a family, co-op) and `hud_elements/tags/p2_coral` (coral, #ff6f7d family, versus), each with a tiny downward point so it reads as "this one". Pivot at the point. 3 frames, on an `icons_z` page.
+
+## Batch CJ: trophies for players of your own
+
+Two new achievements go with Create a player. They borrow the rookie icon until theirs are in; please draw them like the other `achievements/` icons (same size, frame and style):
+- `achievements/one_of_our_own` (One of Our Own: create a player of your own): a fresh jersey on a hanger in the locker room with a blank name bar, a spotlight on it, a pair of new skates below.
+- `achievements/homegrown_hero` (Homegrown Hero: a player of your own scores in a league match): a young skater in our kit, arms up, the goal lamp red behind them, the crowd's scarves in the air.
+
+2 frames, on an `icons_z` page.
