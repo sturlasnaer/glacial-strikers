@@ -9,6 +9,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Next batches:**
 1. **DE: night games outdoors**
 2. **DF: a trophy shelf in the locker room**
+3. **DG: the road-trip map**
+4. **DH: the cub at home games**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -528,3 +530,23 @@ Quick play is getting a **Day / Night** choice for the three outdoor rinks. Plea
 ## Batch DF: a trophy shelf in the locker room
 
 The locker room should show off what the club has won. Please draw an empty wooden **trophy shelf** for the room's left wall (the side wall by the stick rack, above the trophy chest), in the room's style and angle: `decor/trophy_shelf`, about 300 room pixels wide and 160 high, three shelves, a little brass plate on the front (no lettering), pivot at its top left, as an atlas frame on a page in the `hub` group; and add `atlas.decor_slots.trophies = { x, y }` with where its top left goes in the room's 1536×864 pixels. The game stands the club's trophies on it (the Frostline Cups, Mini Cups, Weekly Cups and the Winter Classic's) from the trophy art already in. 1 frame.
+
+## Batch DG: the road-trip map
+
+The League tab is getting a map of the league's towns, with the Foxes' team bus driving to wherever the next game is. Please draw:
+- `map/region` (1536×864): a painted bird's-eye map of the Frostline region in the game's style, no lettering. Eight towns, one for each club, each with its own look: **Snowcrest** (the Foxes: a snowy hill town by a frozen lake, the home rink's roof), **Pinewood** (the Lynx: cabins in a pine forest round a frozen pond), **Ember** (the Comets: a town by warm springs and a glowing volcano), **Gilded** (the Rams: a golden-roofed hall in a mountain valley), **Obsidian** (the Ravens: dark cliffs with an eyrie on top), **Aurora** (the Royals: an ice palace under northern lights), **Glacier** (the Owls: an observatory dome up on the glacier) and **Thunder** (the Moose: a longhouse in stormy hills). Roads wind between them, with frozen rivers, forests and mountains between; the harbour and the summit cable car can be in the corners. Leave a clear spot in each town (about 90 px across) where the game puts the club's crest.
+- `atlas.map_towns = { home: [x, y], lynx: [x, y], comets: …, rams: …, ravens: …, royals: …, owls: …, moose: … }`: where each town's clear spot is, in the map's pixels.
+- `map/bus_1`, `map/bus_2` (about 120×80): the Foxes' team bus in the club's blue and white with a fox on the side, seen from the side facing right, two frames of a little bounce on the road; pivot at the bottom centre. The game flips it to drive left.
+
+All on a page in a new `map` group (the League tab loads it). 3 frames and 1 map.
+
+## Batch DH: the cub at home games
+
+The locker room's Snow Fox cub (CX) should come to the Foxes' home games and watch from the boards. Please draw it at the home rink's scale (as small next to the skaters as it is next to the players in the locker room) and from the rink camera's angle, facing the ice:
+- `pet_rink/sit_1`, `pet_rink/sit_2`: sitting on top of the boards, tail swishing.
+- `pet_rink/cheer_1`..`_4`: hopping up with its paws in the air, for a Foxes goal.
+- `pet_rink/sad`: ears down, for a goal against.
+- `atlas.arena_spots = { home_cub: { x, y } }`: where it sits (its feet) in the home rink's 1536×1024 backdrop pixels: on the boards by the Foxes' bench, or wherever a cub can sit and see the game without covering the ice.
+
+On a page in a new `pet_rink` group (loaded only for home games). 7 frames.
+
