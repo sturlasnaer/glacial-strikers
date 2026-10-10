@@ -29,6 +29,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 ## Format notes
 
+- **Page groups (phones):** the groups `home`, `away`, `title`, `icons_z`, `allstar`, `icons_ac`, `legends` and `club_masks` are the startup download (about 12 MB), so only art shown from the first screens on belongs there (icons are fine: they're small). Art for one screen or one feature goes in a group of its own that the game loads when it's needed: `gallery` (the press room, facilities, Hall of Fame), `seasonal` (the calendar's dressing), `resurfacer` (the drill's diagonals), or a new group named for the feature (say which in the delivery, and the code loads it).
 - Transparent PNG sheets plus an add-on `atlas.json` in the v2 format. Batch A's layout worked perfectly: add-on atlas, `<team>_<role>_<kind>.png` sheets, wide gutters, tight frame rectangles, and a builder patch. Please keep that.
 - Same camera (45° overhead), chibi proportions, navy outlines and palette.
 - Skaters about 152 px standing (`recommended_standing_height`), skates on a consistent baseline.
