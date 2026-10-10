@@ -2,6 +2,14 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10zi',
+    items: [
+      { icon: 'pet_rink/slide_2', alt: 'icons/pet', text: 'Win at home and the cub hops down onto the ice for a belly slide and a spin on its back.' },
+      { icon: 'kid_stars/passer', alt: 'badges/daily_star', text: 'Gold stars for the youngest: after every Little player game, a star sticker for something the team did well. Can you collect ten?' },
+      { icon: 'hud_elements/ability/stamina', text: 'Keep your feet moving! A player who stands still with the puck now gets it poked away after a moment, on every level.' },
+    ],
+  },
+  {
     id: '2026-10-10zh',
     items: [
       { icon: 'postcard/owls', alt: 'map/bus_1', text: 'Postcards from the road! Win a league game in a rival\'s town and they send one home. Collect all eight under the map in the League tab.' },
