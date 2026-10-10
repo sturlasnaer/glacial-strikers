@@ -2,6 +2,14 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10ze',
+    items: [
+      { icon: 'map/bus_1', alt: 'icons/career', text: 'A road-trip map in the League tab: the eight towns of the league, the season\'s route between them, and the Foxes\' team bus driving on to the next game.' },
+      { icon: 'pet_rink/cheer_1', alt: 'icons/pet', text: 'The cub comes to home games! It watches from the boards, hops for every Foxes goal and droops for one against.' },
+      { icon: 'equipment_items/stick/passing', alt: 'icons/coop', text: 'More room to take a pass: the rivals no longer charge your teammate as the puck arrives.' },
+    ],
+  },
+  {
     id: '2026-10-10zd',
     items: [
       { icon: 'rules/aurora_lanes', alt: 'icons/quick', text: 'Night games! In Quick play › Match options, pick Night game and play the outdoor rinks under the lights: Pine Pond beneath the northern lights, the Harbour Rink by moonlight, the Summit Rink above the clouds.' },
