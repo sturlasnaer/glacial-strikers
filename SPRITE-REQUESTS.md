@@ -7,17 +7,16 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **EC: their mascots for the race**
-2. **ED: the National map and postcards**
-3. **## Batches EE, EF, EG: the National rinks**
-4. **EH: the Frostline's pets (1)**
-5. **EI: the Frostline's pets (2)**
-6. **EJ: the National clubs' pets (1)**
-7. **EK: the National clubs' pets (2)**
-8. **EL: the Elite's own clubs, the Taiga Tigers and the Bamboo Ridge Pandas**
-9. **EM: two more National clubs, the Birchwood Beavers and the Coral Bay Flamingos**
-10. **EN: the new clubs' mascot stickers for the album**
-11. **EO: the National and Elite Cup Finals' buildings**
+1. **ED: the National map and postcards**
+2. **## Batches EE, EF, EG: the National rinks**
+3. **EH: the Frostline's pets (1)**
+4. **EI: the Frostline's pets (2)**
+5. **EJ: the National clubs' pets (1)**
+6. **EK: the National clubs' pets (2)**
+7. **EL: the Elite's own clubs, the Taiga Tigers and the Bamboo Ridge Pandas**
+8. **EM: two more National clubs, the Birchwood Beavers and the Coral Bay Flamingos**
+9. **EN: the new clubs' mascot stickers for the album**
+10. **EO: the National and Elite Cup Finals' buildings**
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -109,6 +108,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered EB:** Twenty-eight National club mascot poses with recolourable jerseys and fixed foot anchors, on seven club pages. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EB-Testing-Update`.
 
 **Delivered EA2:** Capybara crest updated natively to the master document’s caramel brown with teal trim. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EA2-Testing-Update`.
+
+**Delivered EC:** Thirty-five National club race mascot frames, with four native running phases and a winner pose for each club. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EC-Testing-Update`.
 
 ## Format notes
 
@@ -767,7 +768,7 @@ Divisions are in (DX): win the Frostline Cup and the club is promoted to the **N
 
 Each club's costumed mascot, dancing in the stands at their home rink, like `mascot/aurora_royals/…` (about 72×102, the same scale and pivot): `mascot/<mark>/idle`, `wave`, `cheer_a`, `cheer_b` (a friendly costumed capybara, puffin, grizzly, seal, penguin, bull and narwhal, each in a team jersey). Each club's four frames on a page in that club's own group `rival_<mark>` (the game loads it for games against them). 28 frames.
 
-## Batch EC: their mascots for the race
+## Batch EC ✓: their mascots for the race
 
 The same seven mascots for the mascot race at the break (DB), like `race/glacier_owls/…` (280×240, running to the right): `race/<mark>/run_1`..`_4` and `race/<mark>/win`. On a page in the `race` group. 35 frames.
 
