@@ -7,8 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **DU: the cub's costumes at home games**
-2. **DV: the team bus in season**
+None currently open. Monitoring for additions.
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -83,6 +82,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered DO-DR:** Cub ball and play poses, two seasonal map overlays, Halloween candy bowl and three achievement icons. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DO-DR-Testing-Update`.
 
 **Delivered DS-DT:** December daily presents and a snowball yard with five forts, cub peek and hit reactions and snowball effects. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DS-DT-Testing-Update`.
+
+**Delivered DU-DV:** Thirty-two seasonal home-game cub poses and four seasonal team-bus frames. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DU-DV-Testing-Update`.
 
 ## Format notes
 
@@ -669,7 +670,7 @@ A gentle mini-game for the youngest, in Training: the cub (CX) pops up from behi
 
 11 frames and 1 image.
 
-## Batch DU: the cub's costumes at home games
+## Batch DU ✓: the cub's costumes at home games
 
 In season the locker room's cub wears its pumpkin costume (from 20 October) and its Santa hat (December) (CZ); it should wear them on the boards at home games too. Please redraw the home-game poses (DH) and the victory slide (DM) in each costume, exactly matching the originals' canvas (120×80), pivot and timing, as atlas frames on a page in the `seasonal` group:
 - `pet_rink_halloween/sit_1`, `_2`, `cheer_1`..`_4`, `sad`, `hop_down_1`, `_2`, `slide_1`..`_4`, `spin_1`..`_3` (the pumpkin costume),
@@ -677,7 +678,7 @@ In season the locker room's cub wears its pumpkin costume (from 20 October) and 
 
 32 frames.
 
-## Batch DV: the team bus in season
+## Batch DV ✓: the team bus in season
 
 The Foxes' bus on the road-trip map (DG) should dress up in season too. Please redraw `map/bus_1` and `_2` (the same 120×80 canvas, pivot and bounce) as atlas frames on a page in the `seasonal` group:
 - `map_halloween/bus_1`, `_2`: a carved pumpkin on the roof and a few orange lights.
