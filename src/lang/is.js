@@ -1970,6 +1970,7 @@ export const IS = {
   "Tap again: it counts as a loss": "Ýttu aftur: það telst sem tap",
   "Tap for a wrist shot, hold for a slapshot. Hold it as a pass arrives for a one-timer": "Ýttu snöggt fyrir úlnliðsskot, haltu inni fyrir slagskot. Haltu inni þegar sending berst fyrir viðstöðulaust skot",
   "Tap Share in Safari (the square with an arrow pointing up).": "Ýttu á Deila í Safari (ferningurinn með örinni upp).",
+  "Tap the floor to toss a puck!": "Pikkaðu á gólfið til að kasta pökk!",
   "tape": "límband",
   "Tape-blue glow on the puck and shot trail": "Límbandsblár bjarmi á pökknum og skotslóðinni",
   "Tape-to-Tape": "Beint á blaðið",

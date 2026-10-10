@@ -16,7 +16,7 @@ import {
   chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups, capBonus,
   CAMP, campOpen, campChoices, campChange, recruitPrice, goalieIds, starterId, goalieRec, goalieStatus, signGoalie, setStarter, GOALIE_CAMP, goalieStyle, goalieCampOpen, goalieCampChange, canPickMask, pickMask, setLittle } from './progress.js';
 import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave, resetsIn, groupsOf, createGroup, joinGroup, leaveGroup, inviteLink, MAX_GROUPS, fetchCup, fetchGhost, CHALLENGE_BOARDS, createChallenge, fetchChallenge, challengeLink } from './online.js';
-import { nextGuide, doneGuide, guideOff } from './guide.js';
+import { nextGuide, doneGuide, guideOff, firstTime } from './guide.js';
 import { draftOpen, draftPick, skipDraft, otherPicks, POTENTIAL_GRADE, DRAFT_LINES } from './draft.js';
 import { careerOf, careerRows, careerGoalies, threeStars } from './career.js';
 import { legendState, legendLeft, signLegend } from './legends.js';
@@ -942,6 +942,7 @@ export class UI {
       if (heart) { room.insertAdjacentHTML('beforeend', `<img class="pet-heart" src="${heart}" alt="" style="left:${this.pet.x}%;top:${this.pet.y - 9}%">`); const h = room.lastElementChild; setTimeout(() => h.remove(), 1200); }
     });
     tag.addEventListener('click', (e) => { e.stopPropagation(); audio.sfx('click'); this.petName(); });
+    if (fetches && firstTime(s, 'fetch')) setTimeout(() => { if (!tag.isConnected) return; tag.textContent = t('Tap the floor to toss a puck!'); tag.hidden = false; tagT = 6; writeSave(s); }, 1500); // (how fetch starts: the first time it's there)
     // a tap on the open floor (not a station, a skater or a board) tosses the puck there
     if (fetches && !room.dataset.fetch) {
       room.dataset.fetch = '1';
