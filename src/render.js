@@ -142,7 +142,7 @@ export class Renderer {
     const cc = toScreen(0, 0);
     const host = arena !== 'home' && TEAMS[ui.awayTeamId] && TEAMS[ui.awayTeamId].arena === arena ? TEAMS[ui.awayTeamId] : null;
     const hostCrest = host && Assets.atlas.crests && Assets.atlas.crests[host.art || host.mark];
-    if (hostCrest && !host.art) { // an expansion club's crest, drawn in coral and violet: in their colours (cached)
+    if (hostCrest && !host.art && !Assets.atlas.crest_native?.[host.mark]) { // an expansion club's crest, drawn in coral and violet: in their colours (cached)
       const cv = Assets.iconCanvas(hostCrest, 200, host.id, { recolor: true }), f = Assets.frame(hostCrest), w = f ? (f[3] / f[7]) * 0.26 : 96;
       if (cv) { ctx.save(); ctx.globalAlpha *= 0.3; ctx.drawImage(cv, cc.x - w / 2, cc.y + 4 - (w * 0.8) / 2, w, w * 0.8); ctx.restore(); }
     } else if (hostCrest) Assets.draw(ctx, hostCrest, cc.x, cc.y + 4, 0.26, { alpha: 0.3, squash: 0.8 });

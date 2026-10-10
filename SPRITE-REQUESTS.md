@@ -7,10 +7,10 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **EA: the National clubs' crests**
-2. **EB: their mascots in the stands**
-3. **EC: their mascots for the race**
-4. **ED: the National map and postcards**
+1. **EB: their mascots in the stands**
+2. **EC: their mascots for the race**
+3. **ED: the National map and postcards**
+4. **## Batches EE, EF, EG: the National rinks**
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -96,6 +96,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered DW:** Ten seasonal coach-cub portraits matching the original framing and bottom edge. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DW-Testing-Update`.
 
 **Delivered DX-DZ:** Fourteen division crests, cups, movement icons, veteran badges and poke-check effects. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DX-DZ-Testing-Update`.
+
+**Delivered EA:** Seven National club crests in their own palettes, with home-region details and native-colour registration. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EA-Testing-Update`.
 
 ## Format notes
 
@@ -746,7 +748,7 @@ Divisions are in (DX): win the Frostline Cup and the club is promoted to the **N
 | **Sunmesa Bulls** | `sunmesa_bulls` | brick red and desert gold | a warm canyon town with adobe walls and cacti | charge straight at you |
 | **Northlight Narwhals** | `northlight_narwhals` | deep sea blue and aurora green | a fjord under the northern lights | fast and flashy |
 
-## Batch EA: the National clubs' crests
+## Batch EA ✓: the National clubs' crests
 
 `rival_crests/crest/<mark>` for each of the seven (148×148, like `rival_crests/crest/glacier_owls`), drawn in the club's own colours, each with its animal and a hint of its home (steam, a cliff, pines, a floe, an iceberg, a mesa, a fjord). As atlas frames on a page in the `icons_z` group. 7 frames.
 

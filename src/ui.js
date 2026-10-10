@@ -190,7 +190,7 @@ export const crest = (teamId, size = 96) => {
   if (teamId === 'allstar') return Assets.icon((Assets.atlas.allstar && Assets.atlas.allstar.crest) || 'hud_elements/misc/level_star', size); // the League All-Stars' crest
   const t = TEAMS[teamId];
   const c = t && (t.art || t.mark) && Assets.atlas.crests && Assets.atlas.crests[t.art || t.mark];
-  if (c && !t.art) return Assets.icon(c, size, teamId, { recolor: true }); // an expansion club's crest (Batch AU), drawn in coral and violet
+  if (c && !t.art && !Assets.atlas.crest_native?.[t.mark]) return Assets.icon(c, size, teamId, { recolor: true }); // an expansion club's crest (Batch AU), drawn in coral and violet
   return c ? Assets.icon(c, size) : Assets.icon('hud_elements/misc/away_crest', size, teamId);
 };
 // Expression for a dialogue line, from its punctuation and how the match went.
