@@ -581,6 +581,9 @@ body.large-text .hub, body.large-text .modal, body.large-text .results, body.lar
   .hint { top: auto; bottom: calc(10px + var(--safe-b)); font-size: 12px; max-width: min(340px, 40vw); }
   /* (a short window with a keyboard: the key hints hold the bottom right, so tips take the bottom left) */
   #hud:has(.keyhints:not([hidden])) .hint { left: calc(10px + var(--safe-l)); transform: none; max-width: min(340px, 44vw); text-align: left; }
+  /* (touch, no key hints: the stick and the buttons hold the bottom and the penalty chip and PULL GOALIE the right, so
+     tips go top left, under the ticker) */
+  #hud:has(.keyhints[hidden]) .hint { top: calc(96px + var(--safe-t)); bottom: auto; left: calc(10px + var(--safe-l)); transform: none; max-width: min(320px, 42vw); text-align: left; }
   .wn-coach .npc { margin-bottom: 6px; }
   .wn-coach .npc img { width: 40px; height: 40px; }
   .wn-coach .npc .say { padding: 4px 10px; font-size: 13px; }
@@ -1320,6 +1323,9 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .two-keys { margin: 0 0 8px; font-size: 13px; line-height: 1.7; }
 /* two players on a narrow phone: compact cards and a scoreboard without its crests, so the three fit */
 @media (max-width: 760px) and (orientation: landscape) {
+  #hud .pcard { min-width: 0; width: 150px; } /* (one player too: clear of the scoreboard) */
+  #hud .pcard .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #hud .pcard .bars { width: 100%; }
   #hud.two .pcard { min-width: 0; width: 132px; }
   #hud.two .pcard .nm { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #hud.two .pcard .bars { width: 100%; }
