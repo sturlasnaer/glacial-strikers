@@ -241,7 +241,7 @@ img { image-rendering: auto; max-width: 100%; }
 .card-head .sub img { width: 1.35em; height: 1.35em; border: 0; background: none; border-radius: 0; } /* (a badge in the line, not a portrait) */
 .lvl { font-family: var(--display); color: var(--gold); font-size: 20px; }
 .vet { display: inline-flex; align-items: center; gap: 2px; color: #fff2cb; }
-.vet .vet-ico { width: 1.1em; height: 1.1em; }
+.vet .vet-ico { width: 1.1em; height: 1.1em; border: 0; background: none; border-radius: 0; }
 .xpbar { height: 10px; background: var(--navy); border: 2px solid var(--navy-3); border-radius: 3px; overflow: hidden; }
 .xpbar i { display: block; height: 100%; background: var(--gold); width: 0; transition: width 0.6s ease-out; }
 .stats { display: grid; gap: 4px; }
