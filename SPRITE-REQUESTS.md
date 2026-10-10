@@ -9,6 +9,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Next batches:**
 1. **DA: outfits for the cub**
 2. **DB: the mascot race**
+3. **DC: tricks for the cub**
+4. **DD: the Mini Cup**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -489,3 +491,22 @@ At the break in a match (once a side has scored three), the club mascots have a 
 - A plain image (no atlas) for the race's backdrop: `assets/gfx/race/track.png`, 1536×640, no lettering: four lanes marked across the home ice in paint, a start line at the left and a chequered finish line at the right, the boards and a cheering crowd behind.
 
 The game handles the rest (the pick, the race, the prize). 40 frames and 1 image.
+
+## Batch DC: tricks for the cub
+
+The locker room's cub (CX) hops when it's tapped; now it should sometimes show off a trick instead. Please draw three, on the same 120×72 canvas and pivot as its other poses, as atlas frames on a page in the `hub` group:
+- `pet/trick_spin_1`..`_4`: chasing its tail in a quick spin.
+- `pet/trick_roll_1`..`_4`: rolling over onto its back and back up.
+- `pet/trick_five_1`..`_3`: sitting up and holding up a paw for a high five (the last frame: paw up, proud).
+
+The game picks one now and then when it's tapped. 11 frames.
+
+## Batch DD: the Mini Cup
+
+A short tournament for the youngest players (Quick play › Mini Cup): three quick games (first to three) against rivals getting tougher, the bracket filling in as they go, and a little cup of their own for winning all three. Please draw:
+- `badges/mini_cup` (256×256): a small, shiny silver cup with a snowflake on it and blue ribbons, cuter and smaller than the Frostline Cup.
+- `badges/mini_cup_glint_1` and `_2`: the same with a sparkle moving across it (to twinkle at the presentation).
+- `icons/mini_cup` (128×128): the cup as an icon, for the Quick play button and the Trophies count.
+- `minicup/podium` (512×384): the cup on a little podium with confetti, for the winner's screen.
+
+5 frames, all atlas frames on a page in the `icons_z` group (small, shown from the menus).
