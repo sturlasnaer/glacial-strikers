@@ -12,3 +12,15 @@ export function seasonFor(d = new Date()) {
   if (m === 12 || (m === 1 && day <= 6)) return 'holiday';
   return null;
 }
+
+// Halloween treats in the locker room (Batch DQ): a bowl on the floor, one treat a day in the
+// season (a few coins). The day by the device's own calendar.
+export const TREAT_COINS = 15;
+const dayKey = (d) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+export const treatTaken = (save, d = new Date()) => save.treatDay === dayKey(d);
+export function takeTreat(save, d = new Date()) {
+  if (seasonFor(d) !== 'halloween' || treatTaken(save, d)) return false;
+  save.treatDay = dayKey(d);
+  save.coins = (save.coins || 0) + TREAT_COINS;
+  return true;
+}
