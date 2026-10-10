@@ -7,8 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **CY: celebrations to choose for players of your own**
-2. **CZ: the cub's costumes**
+1. **CZ: the cub's costumes**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -57,6 +56,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered CW:** 24 native goal celebration frames: four-frame guitar and snow-angel loops for Nix, Volta and Bram, with consistent anchors and correct stick hands. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CW-Testing-Update`.
 
 **Delivered CX:** Snow Fox cub: four walking poses, two sitting/tail-wag poses, two sleeping poses, happy hop, floating heart and naming portrait. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CX-Testing-Update`.
+
+**Delivered CY:** Custom-player celebrations: six four-frame guitar/snow-angel loops for std, big and small builds, 24 native gear masks and head anchors. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CY-Testing-Update`.
 
 ## Format notes
 
@@ -452,7 +453,7 @@ The locker room hub is getting a **pet**: a Snow Fox cub (the mascot's little on
 
 11 frames.
 
-## Batch CY: celebrations to choose for players of your own
+## Batch CY ✓: celebrations to choose for players of your own
 
 Batch CW's stick guitar and snow angel are lovely on the cast. Please draw the same two for the three parts builds (`std`, `big`, `small`), for the players made from parts (players of your own, drafted rookies, free agents), like Batch CO's celebrations: four looping frames each, facing the camera, drawn without the head, with each frame's head anchor in `modular.anchors` (view `s`; for the snow angel, the head lying back on the ice) and their gear masks like the other body frames:
 - `modular/body_<build>/celebration_cy/guitar_1`..`_4` and `.../angel_1`..`_4`.
