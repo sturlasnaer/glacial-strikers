@@ -8,6 +8,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 **Next batches:**
 1. **CE: a resurfacer that turns smoothly, and icons for Play as**
+2. **CF: the Snow Fox dresses up too**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -270,3 +271,11 @@ About 22 frames, all in the `home` palette style (they're never recoloured), on 
 2. **Play as icons**, 128×128 like `icons/coop`, for the chips before a match: `icons/play_skaters` (a skater with the puck, our colours), `icons/play_goalie` (Halla in the butterfly) and `icons/coop_keeper` (two controllers, one ice blue, one mint, with a goalie mask between them). 3 frames.
 
 11 frames.
+
+## Batch CF: the Snow Fox dresses up too
+
+The home rink now dresses for Halloween and the holidays (Batch CD). The Snow Fox mascot, who dances in the near stands (`atlas.arena.mascot`: idle, wave, cheer_a, cheer_b), should join in. Please draw the same four poses, same size, scale, pivot and recolour masks as the existing mascot frames, in two costumes:
+- `seasonal/halloween/mascot_*`: the Snow Fox in a cosy pumpkin costume with a little green stem hat (cute, not scary).
+- `seasonal/holiday/mascot_*`: the Snow Fox in a red Santa hat and a long striped scarf, with a small present under one arm on the idle and wave poses.
+
+And put them in `atlas.seasonal.halloween.mascot` and `atlas.seasonal.holiday.mascot`, keyed like `atlas.arena.mascot` (idle, wave, cheer_a, cheer_b), on the `seasonal` group's pages. 8 frames.

@@ -493,7 +493,9 @@ export class Renderer {
       let pose = 'idle';
       if (party) pose = Math.floor(t * 4) % 2 ? 'cheer_a' : 'cheer_b';
       else if (fx.excite > 0.55 || Math.floor(t / 3) % 4 === 0) pose = Math.floor(t * 2) % 2 ? 'wave' : 'idle';
-      Assets.draw(ctx, A.mascot[pose], 768, 950 - (party ? Math.abs(Math.sin(t * 8)) * 6 : 0), 0.125, { pages: Assets.clubPages() });
+      const S = Assets.atlas.seasonal, sz = seasonFor(), costume = S && sz && S[sz] && S[sz].mascot; // (dressed up for the season, Batch CF)
+      const M = costume && costume[pose] && Assets.frame(costume[pose]) && Assets.pages[Assets.frame(costume[pose])[0]] ? costume : A.mascot;
+      Assets.draw(ctx, M[pose], 768, 950 - (party ? Math.abs(Math.sin(t * 8)) * 6 : 0), 0.125, M === A.mascot ? { pages: Assets.clubPages() } : {}); // (a costume: its own colours)
     }
     // the host's mascot dances where the Snow Fox does at home
     const host = A.mascot_arenas && A.mascot_arenas[arena];
@@ -588,6 +590,16 @@ export class Renderer {
     if (!A) return;
     this.drawDressing(ctx, fx, A, near);
     if (near) return;
+    // the banner's lettering: its middle is left blank for the game to write (in either language)
+    const b = A.banner_rect_backdrop, f0 = A.banner && Assets.frame(A.banner[0]);
+    if (b && f0 && Assets.pages[f0[0]]) {
+      const text = season === 'halloween' ? t('Spooky season!') : t('Happy holidays!');
+      ctx.save(); ctx.font = `22px ${this.font}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.lineWidth = 4; ctx.strokeStyle = '#14233b'; ctx.fillStyle = season === 'halloween' ? '#ffb347' : '#fff2cb';
+      const x = b.x + b.w / 2, y = b.y + b.h / 2 + 4;
+      ctx.strokeText(text, x, y, b.w * 0.5); ctx.fillText(text, x, y, b.w * 0.5);
+      ctx.restore();
+    }
     const at = (list, i, fps = 2) => list[Math.floor(fx.time * fps + i) % list.length];
     (A.props || []).forEach((p, i) => { if (p.frames && p.frames.length) Assets.draw(ctx, at(p.frames, i, p.fps), p.x, p.y, p.scale || 0.5); });
     (A.flyers || []).forEach((b, i) => {
