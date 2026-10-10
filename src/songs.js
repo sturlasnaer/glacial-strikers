@@ -423,6 +423,151 @@ export const SONGS = {
     order: ['intro', 'A', 'B', 'A', 'C'], loop: 1,
   },
 
+  // ---------------------------------------------------------------- The Observatory (Owls): starlight on celesta
+  observatory: {
+    name: 'The Observatory', bpm: 108, key: 'Am harmonic', gain: 1.4,
+    inst: { lead: 'flute', arp: 'celesta', pad: 'strings', bass: 'bass', bells: 'bell', harm: 'harm' },
+    pan: { arp: 0.35, pad: -0.3 },
+    sections: {
+      intro: {
+        bars: 2, chords: 'Am F',
+        arp: { oct: 4, pat: '1 3 5 8 5 3 1 3 5 8 5 3 1 3 5 3' },
+        pad: { pad: true, oct: 4 },
+        drums: { r: 'x.......x.......', fill: { r: 'x.......x.......', x: '............xxxx' } },
+      },
+      A: {
+        bars: 8, chords: 'Am F C G Am F G E',
+        lead: `A4:3 E4 A4:2 B4:2 C5:4 E5:4 | F5:6 E5 D5 C5:4 A4:4 | G4:3 C5 E5:2 G5:2 E5:4 C5:4 | D5:6 B4:2 G4:4 .:4 |
+               A4:3 E4 A4:2 B4:2 C5:4 A5:4 | A5:6 G5 F5 C5:4 F5:4 | G5:4 D5:4 B4:4 D5:4 | E5:8 G#4:4 B4:4`,
+        arp: { oct: 4, pat: '1 3 5 8 5 3 1 3 5 8 5 3 1 3 5 3' },
+        pad: { pad: true, oct: 4 },
+        bass: { oct: 2, pat: '1:4 5:4 1:4 5:4' },
+        drums: { k: 'x.......x..x....', x: '....x.......x...', r: 'x.x.x.x.x.x.x.x.', start: { c: 'x' }, fill: { k: 'x.......x.......', x: '....x...x.x.xxxx' } },
+        hype: { harm: { follow: 'lead' }, drums: { h: '..x...x...x...x.' } },
+      },
+      B: {
+        bars: 8, chords: 'Dm Am F C Dm Am E7 E7',
+        lead: `D5:4 F5:4 A5:8 | C6:6 B5:2 A5:4 E5:4 | F5:4 A5:4 C6:4 F6:4 | E6:12 D6:2 C6:2 |
+               D6:6 C6:2 A5:4 F5:4 | E5:6 A5:2 C6:4 E6:4 | E6:8 D6:4 B5:4 | G#5:8 B5:4 E6:4`,
+        bells: { oct: 5, pat: '8:4 5:4 3:4 5:4' },
+        pad: { pad: true, oct: 4 },
+        arp: { oct: 5, pat: '1 5 8 5 1 5 8 5 1 5 8 5 1 5 8 5' },
+        bass: { oct: 2, pat: '1:8 5:8' },
+        drums: { k: 'x.........x.....', x: '....x.......x...', r: 'x.x.x.x.x.x.x.x.', start: { c: 'x' }, fill: { k: 'x.........x.....', s: '............xXXX' } },
+        hype: { harm: { follow: 'lead' }, drums: { h: '..x...x...x...x.' } },
+      },
+    },
+    order: ['intro', 'A', 'B', 'A'], loop: 1,
+  },
+
+  // ---------------------------------------------------------------- The Longhouse (Moose): stomp, stomp, clap
+  longhouse: {
+    name: 'The Longhouse', bpm: 120, key: 'D dorian', gain: 1.3,
+    inst: { lead: 'fiddle', horn: 'brass', comp: 'organ', bass: 'sbass', bells: 'bell' },
+    pan: { horn: 0.3, comp: -0.25 },
+    sections: {
+      intro: {
+        bars: 2, chords: 'Dm C',
+        comp: { pad: true, oct: 4 },
+        bass: { oct: 2, pat: '1:16' },
+        drums: { T: 'x...x...x...x...', fill: { T: 'x...x...x.x.xxxx', p: '............x...' } },
+      },
+      A: {
+        bars: 8, chords: 'Dm C G Dm Dm C Am Dm',
+        lead: `D5:3 A4 D5:2 E5:2 F5:4 A5:4 | G5:6 E5:2 C5:4 E5:4 | B4:3 D5 G5:2 A5:2 B5:4 D6:4 | A5:4 F5:4 D5:8 |
+               D5:3 A4 D5:2 E5:2 F5:4 D6:4 | E6:6 D6 C6 G5:4 C6:4 | A5:3 G5 E5:2 C5:2 E5:4 A5:4 | D6:8 A5:4 F5:4`,
+        comp: { pad: true, oct: 4, rhythm: '!x:2 .:6 x:2 .:6' },
+        bass: { oct: 2, pat: '1:4 1:4 5:4 1:4' },
+        drums: { k: 'x.x.....x.x.....', p: '....x.......x...', start: { c: 'x', T: 'x' }, fill: { k: 'x.x.....x.x.....', T: '........x.x.xXXX' } },
+        hype: { horn: { follow: 'lead' }, drums: { h: 'x.x.x.x.x.x.x.x.' } },
+      },
+      B: {
+        bars: 8, chords: 'F C G Dm F C G A',
+        lead: `A5:6 G5:2 F5:4 C5:4 | E5:6 G5:2 C6:8 | D6:6 B5:2 G5:4 B5:4 | A5:12 F5:2 D5:2 |
+               C6:6 A5:2 F5:4 A5:4 | G5:6 E5:2 C5:4 G5:4 | B5:4 D6:4 G6:4 D6:4 | C#6:8 E6:4 A5:4`,
+        horn: { oct: 4, pat: '1:4 5:4 8:4 5:4' },
+        comp: { pad: true, oct: 4 },
+        bass: { oct: 2, pat: '1:6 1:2 5:4 8:4' },
+        bells: { oct: 5, pat: '1:8 5:8' },
+        drums: { k: 'x.x.....x.x.....', p: '....x.......x...', T: 'x...............', start: { c: 'x' }, fill: { T: 'x...x...x.x.xXXX', p: '....x.......x...' } },
+        hype: { drums: { h: 'x.x.x.x.x.x.x.x.' } },
+      },
+    },
+    order: ['intro', 'A', 'B', 'A'], loop: 1,
+  },
+
+  // ---------------------------------------------------------------- Harbour Rink: a shanty in 6/8
+  harbour: {
+    name: 'Harbour Rink', bpm: 104, beat: 3, bar: 12, key: 'Am harmonic', gain: 1.3,
+    inst: { lead: 'lead50', counter: 'fiddle', comp: 'pluck', bass: 'bass' },
+    pan: { counter: 0.35, comp: -0.3 },
+    sections: {
+      intro: {
+        bars: 2, chords: 'Am E',
+        comp: { pad: true, oct: 4, rhythm: '. x x . x x . x x . x x' },
+        bass: { oct: 2, pat: '1:3 5:3 1:3 5:3' },
+        drums: { l: 'x.....x.....', z: '.xx.xx.xx.xx', fill: { l: 'x.....x..x.x', z: '.xx.xx......' } },
+      },
+      A: {
+        bars: 8, chords: 'Am G Am E Am G C E',
+        lead: `A4:2 E4 A4:2 B4 C5:3 E5:3 | D5:2 B4 G4:3 B4:3 D5:3 | C5:2 B4 A4:3 E5:3 A5:3 | G#5:3 E5:3 B4:6 |
+               A4:2 E4 A4:2 B4 C5:3 E5:3 | D5:2 G5 B5:3 G5:3 D5:3 | E5:2 G5 C6:3 G5:3 E5:3 | E5:3 G#5:3 B5:6`,
+        comp: { pad: true, oct: 4, rhythm: '. x x . x x . x x . x x' },
+        bass: { oct: 2, pat: '1:3 5:3 1:3 5:3' },
+        drums: { l: 'x.....x.....', z: '.xx.xx.xx.xx', p: '...x.....x..', start: { c: 'x' } },
+        hype: { counter: { follow: 'lead' }, drums: { k: 'x.....x.....' } },
+      },
+      B: {
+        bars: 8, chords: 'F C G Am F C E E',
+        lead: `A5:3 F5:3 C5:3 F5:3 | G5:3 E5:3 C5:6 | B5:3 G5:3 D5:3 G5:3 | A5:6 E5:3 C5:3 |
+               F5:2 G5 A5:3 C6:3 A5:3 | E6:3 C6:3 G5:3 E5:3 | E5:3 G#5:3 B5:3 E6:3 | B5:6 G#5:3 E5:3`,
+        counter: { follow: 'lead' },
+        comp: { pad: true, oct: 4, rhythm: '. x x . x x . x x . x x' },
+        bass: { oct: 2, pat: '1:3 5:3 1:3 5:3' },
+        drums: { l: 'x.....x.....', z: '.xx.xx.xx.xx', p: '...x.....x..', fill: { l: 'x..x..x.xx.x', z: '.xx.xx......' } },
+        hype: { drums: { k: 'x.....x.....' } },
+      },
+    },
+    order: ['intro', 'A', 'B', 'A'], loop: 1,
+  },
+
+  // ---------------------------------------------------------------- Glacier Cave: drips and echoes in the ice
+  cave: {
+    name: 'Glacier Cave', bpm: 96, key: 'Bm harmonic', gain: 1.45,
+    inst: { lead: 'flute', arp: 'harp', pad: 'strings', bass: 'sub', bells: 'celesta', harm: 'harm' },
+    pan: { arp: 0.35, pad: -0.3, bells: 0.3 },
+    sections: {
+      intro: {
+        bars: 2, chords: 'Bm G',
+        arp: { oct: 4, pat: '1:2 5:2 8:2 5:2 3:2 5:2 8:2 5:2' },
+        pad: { pad: true, oct: 4 },
+        drums: { x: '....x.......x...', fill: { x: '....x...x.x.xxxx' } },
+      },
+      A: {
+        bars: 8, chords: 'Bm G D A Bm G Em F#',
+        lead: `B4:3 F#4 B4:2 C#5:2 D5:4 F#5:4 | G5:6 F#5 E5 D5:4 B4:4 | A4:3 D5 F#5:2 A5:2 F#5:4 D5:4 | E5:6 C#5:2 A4:8 |
+               B4:3 F#4 B4:2 C#5:2 D5:4 B5:4 | B5:6 A5 G5 D5:4 G5:4 | G5:4 E5:4 B4:4 E5:4 | F#5:8 A#4:4 C#5:4`,
+        arp: { oct: 4, pat: '1:2 5:2 8:2 5:2 3:2 5:2 8:2 5:2' },
+        pad: { pad: true, oct: 4 },
+        bass: { oct: 2, pat: '1:8 5:8' },
+        drums: { k: 'x.........x.....', x: '....x.......x...', h: '..x...x...x...x.', start: { c: 'x' }, fill: { l: 'x...x...x.x.x.x.', s: '............xXXX' } },
+        hype: { harm: { follow: 'lead' }, drums: { h: 'x.x.x.x.x.x.x.x.' } },
+      },
+      B: {
+        bars: 8, chords: 'G D A Bm G D Em F#',
+        lead: `D6:8 B5:4 G5:4 | A5:8 F#5:4 D5:4 | E5:4 A5:4 C#6:4 E6:4 | F#6:12 D6:2 B5:2 |
+               B5:6 A5:2 G5:4 D5:4 | F#5:6 E5:2 D5:4 A5:4 | G5:4 B5:4 E6:4 G6:4 | F#6:8 C#6:4 A#5:4`,
+        bells: { oct: 5, pat: '1:4 5:4 8:4 5:4' },
+        arp: { oct: 4, pat: '1:2 5:2 8:2 5:2 3:2 5:2 8:2 5:2' },
+        pad: { pad: true, oct: 4 },
+        bass: { oct: 2, pat: '1:4 1:4 5:4 8:4' },
+        drums: { k: 'x.........x.....', x: '....x.......x...', h: 'x.x.x.x.x.x.x.x.', start: { c: 'x' }, fill: { l: 'x...x...x.x.x.x.', s: '............xXXX' } },
+        hype: { harm: { follow: 'lead' } },
+      },
+    },
+    order: ['intro', 'A', 'B', 'A'], loop: 1,
+  },
+
   // ---------------------------------------------------------------- Winter Classic: an outdoor anthem
   classic: {
     name: 'Winter Classic', bpm: 112, key: 'G', gain: 1.15,
@@ -757,4 +902,4 @@ export const JINGLES = {
 };
 
 // Which track plays where.
-export const ARENA_MUSIC = { home: 'frostline', ember_dome: 'ember', aurora_palace: 'aurora', pine_pond: 'pine', golden_hall: 'hall', dark_aerie: 'aerie' };
+export const ARENA_MUSIC = { home: 'frostline', ember_dome: 'ember', aurora_palace: 'aurora', pine_pond: 'pine', golden_hall: 'hall', dark_aerie: 'aerie', owl_observatory: 'observatory', moose_longhouse: 'longhouse', harbour_rink: 'harbour', glacier_cave: 'cave' };

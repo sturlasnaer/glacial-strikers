@@ -4,6 +4,7 @@ export const WHATS_NEW = [
   {
     id: '2026-10-10p',
     items: [
+      { icon: 'icons/music_room', alt: 'icons/facility_stands', text: 'New music: the Observatory, the Longhouse and the Harbour Rink have match themes of their own. Hear them in Settings › Music room.' },
       { icon: 'icons/simple_controls', text: 'Settings › Simple controls, for the youngest players: one PLAY button shoots near the net, passes further out and checks without the puck, and you always skate the player nearest the puck.' },
     ],
   },

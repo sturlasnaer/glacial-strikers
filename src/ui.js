@@ -2220,7 +2220,7 @@ export class UI {
     audio.sfx('blip');
     this.modal(`<h2>${t('What\'s new')}</h2>
       <div class="wn-coach">${npc('coach', t('A few new things since you were last in the room:'))}</div>
-      <div class="whatsnew">${entry.items.map((it) => `<div class="wn-row">${smallIcon(it.icon, 64, 'wn-ico') || '<span class="wn-ico"></span>'}<span>${esc(t(it.text))}</span></div>`).join('')}${entry.more ? `<p class="muted" style="margin:4px 0 0;font-size:13px">${t(entry.more > 1 ? '…and {n} more new things.' : '…and one more new thing.', { n: entry.more })}</p>` : ''}</div>
+      <div class="whatsnew">${entry.items.map((it) => `<div class="wn-row">${smallIcon(it.icon, 64, 'wn-ico') || smallIcon(it.alt, 64, 'wn-ico') || '<span class="wn-ico"></span>'}<span>${esc(t(it.text))}</span></div>`).join('')}${entry.more ? `<p class="muted" style="margin:4px 0 0;font-size:13px">${t(entry.more > 1 ? '…and {n} more new things.' : '…and one more new thing.', { n: entry.more })}</p>` : ''}</div>
       <div class="row" style="justify-content:flex-end"><button class="btn gold" data-close>${t('Got it')}</button></div>`, null, true, done);
   }
 

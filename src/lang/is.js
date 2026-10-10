@@ -1119,6 +1119,7 @@ export const IS = {
   "New gear in reach": "Efni á nýjum búnaði",
   "New league, new rink, same old Foxes. We've been watching your tapes.": "Ný deild, nýtt svell, sömu gömlu Foxes. Við höfum horft á upptökurnar ykkar.",
   "New look": "Nýtt útlit",
+  "New music: the Observatory, the Longhouse and the Harbour Rink have match themes of their own. Hear them in Settings › Music room.": "Ný tónlist: Stjörnuturninn, Langhúsið og Hafnarsvellið hafa fengið eigin leikjalög. Hlustaðu á þau í Stillingar › Tónlistarsalur.",
   "New perk unlocked: choose one": "Nýr eiginleiki í boði: veldu einn",
   "New season": "Nýtt tímabil",
   "New Season": "Nýtt tímabil",
