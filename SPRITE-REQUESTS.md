@@ -8,6 +8,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 **Next batches:**
 1. **CW: goal celebrations to choose**
+2. **CX: a pet for the locker room**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -434,3 +435,15 @@ The cast's goal celebrations (`signature_celebrations/nix|volta|bram`) are a hit
 - Metadata: `skaters.<frost_captain|thunder_winger|stone_defender>.home.celebrations = { guitar: [the four ids], angel: [the four ids] }`.
 
 The game shows the choice as soon as a player's frames are in. 24 frames.
+
+## Batch CX: a pet for the locker room
+
+The locker room hub is getting a **pet**: a Snow Fox cub (the mascot's little one) that wanders the floor, sits and wags, curls up for a nap, and hops happily when tapped; the player can name it. Please draw it in the room's style and angle (like the crew standing in the room), about 70 room pixels tall when sitting, transparent, as atlas frames on a page in the `hub` group, each with its pivot at its feet (the middle of where it touches the floor):
+- `pet/walk_1`..`_4`: trotting to the right (the game mirrors it for left), a little bounce.
+- `pet/sit_1`, `pet/sit_2`: sitting facing us, tail wagging.
+- `pet/sleep_1`, `pet/sleep_2`: curled up asleep, breathing (a tiny Z in one, if it reads).
+- `pet/hop`: a happy hop, paws off the floor, ears up.
+- `pet/heart` (small, about 24 px): a little heart that floats up when it's tapped.
+- `icons/pet` (128×128): its face, for the naming box.
+
+11 frames.
