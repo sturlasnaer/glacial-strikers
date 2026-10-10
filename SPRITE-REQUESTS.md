@@ -7,7 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **DW: the coach cub in season**
+None currently open. Monitoring for additions.
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -84,6 +84,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered DS-DT:** December daily presents and a snowball yard with five forts, cub peek and hit reactions and snowball effects. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DS-DT-Testing-Update`.
 
 **Delivered DU-DV:** Thirty-two seasonal home-game cub poses and four seasonal team-bus frames. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DU-DV-Testing-Update`.
+
+**Delivered DW:** Ten seasonal coach-cub portraits matching the original framing and bottom edge. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DW-Testing-Update`.
 
 ## Format notes
 
@@ -686,7 +688,7 @@ The Foxes' bus on the road-trip map (DG) should dress up in season too. Please r
 
 4 frames.
 
-## Batch DW: the coach cub in season
+## Batch DW ✓: the coach cub in season
 
 The cub who coaches Little player games from the corner of the screen (DJ) should wear its costumes in season like everywhere else: the pumpkin costume from 20 October and the Santa hat with a little red scarf in December (CZ). Please redraw the five `cub_coach/` portraits (192×192, the same framing and bottom edge) in each, as atlas frames on a page in the `seasonal` group:
 - `cub_coach_halloween/talk_1`, `talk_2`, `point`, `cheer`, `think`,
