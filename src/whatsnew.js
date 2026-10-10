@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10zv',
+    items: [
+      { icon: 'map/bus_1', alt: 'icons/career', text: 'Every club plays in its own building now: the Capybaras\' steamy Hot Springs, the Puffins\' clifftop rink, the Grizzlies\' Timber Lodge, the Seals\' Floes, Pack Ice Arena, Sunmesa Arena, Fjord Hall, the Beavers\' Millpond, Coral Bay, the Taiga Rink and Bamboo Grove. Their mascots dance in the stands too.' },
+    ],
+  },
+  {
     id: '2026-10-10zu',
     items: [
       { icon: 'hud_elements/misc/away_crest', alt: 'icons/career', text: 'Plain hockey everywhere: the arena rules are gone (speed lanes, cracked ice, meltwater, aurora lanes, rumble strips, raven shadows, pond cracks, moonbeams, loose planks, the sea breeze, icicles and thin air). Every rink plays the same; the power pucks and match challenges stay.' },

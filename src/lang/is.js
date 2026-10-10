@@ -782,6 +782,7 @@ export const IS = {
   "Event Horizon": "Svarthol",
   "Ever tried to catch lightning, Blaze?": "Hefurðu einhvern tímann reynt að grípa eldingu, Blaze?",
   "Every champion needs a good poster on the locker door.": "Allir meistarar þurfa gott plakat á skápahurðina.",
+  "Every club plays in its own building now: the Capybaras' steamy Hot Springs, the Puffins' clifftop rink, the Grizzlies' Timber Lodge, the Seals' Floes, Pack Ice Arena, Sunmesa Arena, Fjord Hall, the Beavers' Millpond, Coral Bay, the Taiga Rink and Bamboo Grove. Their mascots dance in the stands too.": "Hvert félag spilar nú í sinni eigin höll: gufandi Hot Springs hjá Capybaras, svellið á bjargbrúninni hjá Puffins, Timber Lodge hjá Grizzlies, Floes hjá Seals, Pack Ice Arena, Sunmesa Arena, Fjord Hall, Millpond hjá Beavers, Coral Bay, Taiga Rink og Bamboo Grove. Lukkudýrin þeirra dansa líka í stúkunni.",
   "Every full match counts: league, playoffs, showcases, exhibitions and the daily challenge. Tap a skater for their seasons.": "Allir heilir leikir telja: deild, úrslitakeppni, sýningarleikir, æfingaleikir og dagleg áskorun. Ýttu á leikmann til að sjá tímabilin hans.",
   "Every item trades something away. Bought gear unlocks for the whole team; equip it from the Team tab.": "Hver hlutur hefur bæði kosti og galla. Keyptur búnaður opnast fyrir allt liðið; settu hann á leikmann á Lið-flipanum.",
   "Every match refills two rewarded training sessions. Grab a stick at the rack and earn some EXP.": "Hver leikur fyllir á tvær æfingar með verðlaunum. Gríptu kylfu úr rekkanum og safnaðu EXP.",
