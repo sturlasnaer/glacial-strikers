@@ -89,7 +89,7 @@ export class TeamAI {
     const m = this.m, p = this.m.puck;
     const roles = new Map();
     const free = mine.filter((s) => !(human && s.controlled) && !s.scripted && !s.parked);
-    const ctrl = human ? mine.find((s) => s.controlled) : null;
+    const ctrls = human ? mine.filter((s) => s.controlled) : []; // (the player's skater; two in co-op)
     const opps = m.skaters.filter((o) => o.team !== this.team && !o.parked);
 
     // pass coming to one of us
@@ -132,7 +132,7 @@ export class TeamAI {
       const c = owner;
       // pressure: closest free skater (unless the player is already on it)
       const dc = (s) => Math.hypot(s.x - c.x, s.y - c.y);
-      const humanClose = ctrl && dc(ctrl) < 150;
+      const ctrl = ctrls.slice().sort((a, b) => dc(a) - dc(b))[0], humanClose = ctrl && dc(ctrl) < 150;
       const sorted = free.filter((s) => !roles.has(s)).sort((a, b) => dc(a) - dc(b));
       let left = sorted;
       const plan = this.gamePlan;
@@ -193,13 +193,13 @@ export class TeamAI {
     const times = chasers.map((s) => ({ s, ...this.intercept(s) }));
     times.sort((a, b) => a.t - b.t);
     // if the player is clearly closer, let them go; we still send our closest at a lower intensity
-    const ctrlT = ctrl ? this.intercept(ctrl).t : 1e9;
+    const ctrlT = ctrls.length ? Math.min(...ctrls.map((k) => this.intercept(k).t)) : 1e9;
     // (the one already chasing keeps at it unless someone else is clearly quicker: two near
     // equal chasers swapping every tick just twitch)
     const kept = this.chaser && times.find((x) => x.s === this.chaser);
     const first = kept && kept.t < times[0].t + 0.15 ? kept : times[0];
     this.chaser = null;
-    if (!(ctrl && ctrlT + 0.25 < first.t)) {
+    if (!(ctrls.length && ctrlT + 0.25 < first.t)) {
       roles.set(first.s, { kind: 'chase', x: first.x, y: first.y });
       times.splice(times.indexOf(first), 1);
       this.chaser = first.s;

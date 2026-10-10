@@ -216,3 +216,12 @@ Batch BS gave our home rink a supporters' section (drummer, capo, banner). The r
 ## Batch BZ: the season in review
 
 When a new season starts the game now shows the season just gone (place, record, top scorers, records set, Hall of Fame). Please draw its frame: `review/backdrop`, a newspaper front page lying on a locker-room bench at 1280×720, with a big blank headline area at the top (the game writes the headline), two blank photo frames with paper-clip shadows (for the top scorers' portraits), and blank columns; warm overhead light. And `review/stamp_champions`, a gold "CHAMPIONS" rubber-stamp mark (for a Cup-winning season), about 300×160. 2 frames.
+
+## Batch CA: two players on one team
+
+Local co-op is in: two players on our team (P1 ice blue, P2 mint green) against the AI. Please draw:
+- `hud-kit/images/player_card_mint.png`: the in-match player card from Batch Y (`player_card_ice.png`), recoloured mint green (#7fe08a family) for player 2 in co-op, same size and 9-slice layout.
+- `icons/coop`: two controllers side by side, one ice blue, one mint green, with a small Snow Fox crest between them, 128×128 like the other `icons/`. For the Play as chip and What's new.
+- `achievements/better_together` (Better Together: win a match with two players on the team): two Foxes skaters bumping gloves after a goal, the goal lamp lit behind them.
+
+3 frames.

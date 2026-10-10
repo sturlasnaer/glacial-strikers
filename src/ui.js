@@ -338,12 +338,15 @@ function ruleIcon(twist, size = 40) {
   return src ? `<img class="rule-ico" src="${src}" alt="">` : '';
 }
 
-// "Play as: Skaters / Goalie" (goalie mode), remembered in the settings.
-function playAsHtml(s) {
-  const goalie = s.settings.playAs === 'goalie';
+// "Play as: Skaters / Goalie / Two players" (goalie mode, local co-op), remembered in the
+// settings. Two players needs a keyboard or a gamepad, so a phone or tablet without a pad
+// doesn't offer it.
+function playAsHtml(s, app) {
+  const as = s.settings.playAs || 'skaters', two = as === 'coop' || !app.isTouch || app.input.pads().length > 0;
   return `<div class="play-as"><span class="label" style="font-size:14px">${t('Play as')}</span>
-    <button class="chip" data-playas="skaters" aria-pressed="${!goalie}">${t('Skaters')}</button>
-    <button class="chip" data-playas="goalie" aria-pressed="${goalie}" title="${esc(t('You play your starting goalie; the AI skates your line.'))}">${t('Goalie')}</button></div>`;
+    <button class="chip" data-playas="skaters" aria-pressed="${as === 'skaters'}">${t('Skaters')}</button>
+    <button class="chip" data-playas="goalie" aria-pressed="${as === 'goalie'}" title="${esc(t('You play your starting goalie; the AI skates your line.'))}">${t('Goalie')}</button>
+    ${two ? `<button class="chip" data-playas="coop" aria-pressed="${as === 'coop'}" title="${esc(t('Co-op: a friend takes a skater too. Player 1 on WASD, F, G (or touch), player 2 on the arrows, K, L, or a gamepad.'))}">${t('Two players')}</button>` : ''}</div>`;
 }
 
 // The painted logo for the title screen, or the lettering until its art has loaded.
@@ -475,7 +478,7 @@ export class UI {
           <span class="row" style="gap:6px"><button class="btn small" data-team="${tm.id}">${t('Match')}</button><button class="btn small ghost" data-so="${tm.id}">${t('Shootout')}</button></span>
         </div>`).join('')}
       </div>
-      <div class="row" style="justify-content:space-between;align-items:center">${playAsHtml(this.app.save)}<button class="btn small ghost" data-close>${t('Back')}</button></div>`, (m, close) => {
+      <div class="row" style="justify-content:space-between;align-items:center">${playAsHtml(this.app.save, this.app)}<button class="btn small ghost" data-close>${t('Back')}</button></div>`, (m, close) => {
       this.bindPlayAs(m);
       const upd = () => { const x = mult(); m.querySelector('#ch-mult').textContent = this.challenges.size ? t('coins x{n}', { n: +x.toFixed(2) }) : ''; };
       upd();
@@ -1285,7 +1288,7 @@ export class UI {
           ${counters(p.id) ? `<span class="edge good">${t('Counters their plan')}</span>` : countered(p.id) ? `<span class="edge bad">${t('Countered by their plan')}</span>` : ''}
         </button>`).join('')}</div>
       <div class="muted" style="font-size:12px;margin-top:-4px">${t('You can change it during the match from the pause menu.')}</div>
-      <div class="row" style="justify-content:space-between;align-items:center">${playAsHtml(s)}<button class="btn gold" id="plan-go">${t('Drop the puck')}</button></div>`, (m, close) => {
+      <div class="row" style="justify-content:space-between;align-items:center">${playAsHtml(s, this.app)}<button class="btn gold" id="plan-go">${t('Drop the puck')}</button></div>`, (m, close) => {
       this.bindPlayAs(m);
       let pick = cur;
       this.click('[data-plan]', (el) => {

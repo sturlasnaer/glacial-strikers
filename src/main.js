@@ -136,7 +136,7 @@ class App {
     const unlock = () => { audio.unlock(); audio.play(this.track || 'title'); };
     window.addEventListener('pointerdown', unlock, { once: true });
     window.addEventListener('keydown', unlock, { once: true });
-    window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' && !this.isTouch) { this.isTouch = true; if (this.scene === 'match') this.hud.show(this.match, this.cur.teamId, this.cur.ctrl || null, { versus: !!this.cur.versus }); } });
+    window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' && !this.isTouch) { this.isTouch = true; if (this.scene === 'match') this.hud.show(this.match, this.cur.teamId, this.cur.ctrl || null, { versus: !!this.cur.versus, coop: !!this.cur.coop }); } });
     this.input.onKey((code) => this.onKey(code));
     // newcomer art (Batch AA) is needed once a rival slot has been signed away, or for drafted rookies
     // (a signed goalie leaves a backup in their old net: the newcomer goalie, Batch AN)
@@ -581,13 +581,23 @@ class App {
     }, false);
   }
 
-  // Which gamepad belongs to a team's player in versus (undefined = keyboard).
-  padFor(team) {
-    if (!(this.cur && this.cur.versus)) return null;
+  // Which gamepad belongs to a team's player in versus, or a seat's in co-op (undefined = keyboard).
+  padFor(team, seat = 0) {
     const pads = this.input.pads();
+    if (this.cur && this.cur.coop && team === 0) return !pads.length ? undefined : seat ? pads[pads.length >= 2 ? 1 : 0].index : pads.length >= 2 ? pads[0].index : undefined;
+    if (!(this.cur && this.cur.versus)) return null;
     if (pads.length >= 2) return pads[team === 0 ? 0 : 1].index;
     if (pads.length === 1) return team === 1 ? pads[0].index : undefined;
     return undefined;
+  }
+
+  // Co-op: with no gamepad, a shared keyboard (player 1 on the left, or touch; player 2 round the
+  // arrows); with one, player 2 has it and player 1 their own keys or touch; with two, one each.
+  coopInputs() {
+    const I = this.input, pads = I.pads();
+    if (!pads.length) return [mergeInputs(I.readLayout('p1'), I.readTouch()), I.readLayout('p2')];
+    const p2 = pads[pads.length >= 2 ? 1 : 0];
+    return [I.read({ skipPad: p2.index }), I.readPad(p2)];
   }
 
   hookDrill(m) {
@@ -677,8 +687,8 @@ class App {
   }
 
   // Gamepad rumble for one team's player (or everyone when team is undefined).
-  rumble(strong, weak, ms, team) {
-    const pad = team === undefined ? null : this.padFor ? this.padFor(team) : null;
+  rumble(strong, weak, ms, team, seat = 0) {
+    const pad = team === undefined ? null : this.padFor ? this.padFor(team, seat) : null;
     if (team !== undefined && pad === undefined) return;
     this.input.rumble(strong, weak, ms, pad);
   }
@@ -741,6 +751,7 @@ class App {
     const goalieMode = s.settings.playAs === 'goalie' && !extra.daily; // (daily goals are for skaters)
     const cfg = extra.allstar ? allStarConfig(s, extra.allstar, { goalieMode }) : matchConfig(s, teamId, stage, { plans: [plan, theirPlan], buffs, goalieMode });
     cfg.mods = mods;
+    cfg.coop = this.cur.coop = s.settings.playAs === 'coop' && !extra.daily; // (and the daily challenge is for one)
     const arena = extra.arena || stage.arena || this.arenaFor(teamId);
     cfg.twist = this.twistFor(arena, stage, extra.rules !== false);
     this.attract = false;
@@ -765,7 +776,8 @@ class App {
     this.scene = 'match';
     m.allstar = !!extra.allstar; // the home rink is dressed for it
     m.bigGame = classic || m.allstar || /\bFinal$/.test(stage.round || ''); // the gold scoreboard
-    this.hud.show(m, teamId);
+    this.hud.show(m, teamId, null, { coop: cfg.coop });
+    if (m.coop && firstTime(s, 'coop')) setTimeout(() => { if (this.scene === 'match' && this.match === m) this.hud.hint(t('Two players! Each of you swaps only with the skater the AI has. Pass to it and you take it over; your partner keeps theirs.'), 6); }, 2600);
     if (classic) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t('The Winter Classic! Outdoor hockey under the snow, and the whole league is watching.')); }, 500);
     if (extra.allstar) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t('The All-Star Game! The fans voted, and the league\'s best share the ice.')); }, 500);
     this.announceRule(cfg.twist, arena);
@@ -785,7 +797,7 @@ class App {
       // fullscreen, then held on its side where the phone allows it (Android; iPhones ignore it and the rotate prompt shows)
       document.documentElement.requestFullscreen({ navigationUI: 'hide' }).then(() => screen.orientation?.lock?.('landscape')).catch(() => {});
     }
-    this.tutorial = (goalieMode ? (this.save.goalieGames || 0) : this.save.record.played) < 2 ? 0 : -1;
+    this.tutorial = !m.coop && (goalieMode ? (this.save.goalieGames || 0) : this.save.record.played) < 2 ? 0 : -1; // (co-op: the key hints show both players' keys)
     this.tutT = 1.5;
   }
 
@@ -820,7 +832,7 @@ class App {
     };
     m.on('shot', (e) => {
       audio.sfx(e.kind === 'thunderclap' ? 'thunder' : ['slap', 'onetimer', 'zero', 'firestorm', 'eclipse'].includes(e.kind) ? 'slap' : 'stick', at(e.s.x, e.s.y));
-      if (e.s.controlled && e.kind !== 'wrist') this.rumble(0.35, 0.6, 90, e.s.team);
+      if (e.s.controlled && e.kind !== 'wrist') this.rumble(0.35, 0.6, 90, e.s.team, e.s.seat);
     });
     m.on('pass', (e) => audio.sfx('pass', at(e.s.x, e.s.y)));
     m.on('receive', (e) => audio.sfx('receive', at(e.s.x, e.s.y)));
@@ -834,7 +846,7 @@ class App {
     m.on('net_hit', (e) => { audio.sfx('net', at(e.side * GOAL_X, 0, 0.6)); this.renderer.nets.ripple(e.side, this.match.puck.y, 0.4); });
     m.on('hit', (e) => {
       audio.sfx('check', at(e.b.x, e.b.y, Math.min(1, Math.max(0.4, e.power / 450))));
-      for (const k of [e.a, e.b]) if (k.controlled) { this.rumble(Math.min(1, e.power / 400), 0.3, 130, k.team); if (k === e.b) buzz(15); }
+      for (const k of [e.a, e.b]) if (k.controlled) { this.rumble(Math.min(1, e.power / 400), 0.3, 130, k.team, k.seat); if (k === e.b) buzz(15); }
     });
     m.on('penalty', (e) => {
       const ours = e.team === 0;
@@ -906,7 +918,7 @@ class App {
     m.on('hat_trick', () => setTimeout(() => { if (this.match === m) audio.crowdCheer(1); }, 400)); // (the hats come down to a roar)
     // how the draw is won: shown once, on the first early press or the first faceoff after a goal
     const drawHint = () => {
-      if (this.attract || (this.cur && this.cur.versus) || m.goalieMode || !firstTime(this.save, 'faceoff')) return; // (versus has its own keys)
+      if (this.attract || (this.cur && this.cur.versus) || m.goalieMode || m.coop || !firstTime(this.save, 'faceoff')) return; // (versus and co-op have their own keys)
       this.hud.hint(this.isTouch ? t('Wait for the puck to touch the ice, then tap SHOOT or PASS to win the draw.')
         : t('Wait for the puck to touch the ice, then press {shoot} or {pass} to win the draw.', hintKeys(this.input.lastDevice === 'gamepad')), 5);
     };
@@ -937,7 +949,7 @@ class App {
       audio.sfx(e.id === 'monolith' ? 'stone' : 'ult');
       audio.sfx('whoosh', { vol: 0.8 });
       this.hud.cutin(e.s);
-      if (e.s.controlled) this.rumble(0.6, 0.9, 260, e.s.team);
+      if (e.s.controlled) this.rumble(0.6, 0.9, 260, e.s.team, e.s.seat);
       this.fx.slowmo = 0.45; this.fx.slowScale = 0.3;
     });
     m.on('frozen', () => audio.sfx('freeze', { vol: 0.7 }));
@@ -953,7 +965,7 @@ class App {
     m.on('combo', (e) => {
       audio.sfx('combo', { key: e.key });
       this.hud.cutin(e.s, e.from, t(COMBOS[e.key].name));
-      if (e.s.controlled) this.rumble(0.5, 0.8, 220, e.s.team);
+      if (e.s.controlled) this.rumble(0.5, 0.8, 220, e.s.team, e.s.seat);
       this.fx.slowmo = 0.3; this.fx.slowScale = 0.35;
       if (e.s.team === 0) buzz(20);
     });
@@ -1065,7 +1077,7 @@ class App {
         if (done.streak >= 7) this.ach.unlock('daily-streak');
       } else rewards.lines.push([met ? t('Daily challenge (already done today)') : t('Daily goal missed: {goal}', { goal: t(goal.text) }), 0]);
     }
-    this.ach.endMatch(summary, { league: !c.exhibition && !allstar, exhibition: c.exhibition, mods: c.mods });
+    this.ach.endMatch(summary, { league: !c.exhibition && !allstar, exhibition: c.exhibition, mods: c.mods, coop: !!c.coop });
     if (summary.goalieMode) { s.goalieGames = (s.goalieGames || 0) + 1; if (rewards.won) this.ach.unlock('between-pipes'); }
     this.ach.checkMeta();
     s.training.sessions = trainingSessions(s);
@@ -1527,10 +1539,11 @@ class App {
     const realDt = Math.max(0, Math.min(0.05, rawDt || 0));
     this.last = now;
     this.watchFrameRate(rawDt);
-    const versus = !!(this.cur && this.cur.versus) && (this.scene === 'match' || this.scene === 'paused');
+    const inMatch = this.scene === 'match' || this.scene === 'paused';
+    const versus = !!(this.cur && this.cur.versus) && inMatch, coop = !!(this.cur && this.cur.coop) && inMatch;
     const raw = this.input.read();
-    if (versus) {
-      // P is player 2's ultimate in versus, so only Esc / Start pause
+    if (versus || (coop && !this.input.pads().length)) {
+      // P is player 2's ultimate on a shared keyboard, so only Esc / Start pause
       raw.pause = this.input.keys.has('Escape') || this.input.pads().some((gp) => gp.buttons[9] && gp.buttons[9].pressed);
     }
     if (raw.pause && !this.prevPause) {
@@ -1562,6 +1575,11 @@ class App {
           else if (pads.length === 1) p2 = mergeInputs(p2, this.input.readPad(pads[0]));
           this.releaseHeld(p1, p2);
           m.setHumanInput(p1, 0); m.setHumanInput(p2, 1);
+        } else if (this.scene === 'match' && coop) {
+          const [p1, p2] = this.coopInputs();
+          this.releaseHeld(p1, p2);
+          for (const i of [p1, p2]) { i.sprintBtn = i.sprint; if (this.save.settings.autoSprint && Math.hypot(i.mx, i.my) > 0.92) i.sprint = true; }
+          m.setHumanInput(p1, 0, 0); m.setHumanInput(p2, 0, 1);
         } else if (this.scene === 'match') {
           this.releaseHeld(raw);
           raw.sprintBtn = raw.sprint; // (the button itself: a quick tap of it dekes, even with auto-sprint)

@@ -19,6 +19,8 @@ const PUCK_SCALE = 0.115;
 const DIRS8 = ['east', 'southeast', 'south', 'southwest', 'west', 'northwest', 'north', 'northeast'];
 const DIRS4 = ['east', 'south', 'west', 'north'];
 const GOAL_LIGHT = 'ice_spray_goal_lights/goal_light/phase_';
+// Each player's colour with two on the ice: P1 ice, P2 coral against them (versus) or green beside them (co-op).
+const seatColour = (match, c) => c.team === 1 ? '#ff6f7d' : match.coop && c.seat ? '#7fe08a' : '#71dce8';
 
 const LAMPS = [
   [252, 18], [697, 15], [838, 15], [1282, 18], [18, 185], [1518, 185],
@@ -65,7 +67,7 @@ export class Renderer {
     const p = match.puck;
     const sp = toScreen(p.x, p.y);
     let tx = sp.x, ty = sp.y;
-    const ctrl = match.humans && match.humans.length > 1 ? null : match.controlled();
+    const ctrl = (match.humans && match.humans.length > 1) || match.coop ? null : match.controlled(); // (two players: the puck)
     if (ctrl && !ctrl.parked && match.state === 'play') {
       const cs = toScreen(ctrl.x, ctrl.y);
       tx = lerp(tx, cs.x, 0.3); ty = lerp(ty, cs.y, 0.3);
@@ -1000,15 +1002,15 @@ export class Renderer {
       if (!c.controlled || c.parked || match.state === 'over') continue;
       const p = toScreen(c.x, c.y);
       const pulse = 1 + Math.sin(fx.time * 6) * 0.05;
-      if (versus && c.team === 1) {
-        ctx.strokeStyle = '#ff6f7d'; ctx.lineWidth = 4;
+      if ((versus && c.team === 1) || (match.coop && c.team === 0)) {
+        ctx.strokeStyle = seatColour(match, c); ctx.lineWidth = 4;
         ctx.beginPath(); ctx.ellipse(p.x, p.y + 1, 24 * pulse, 9 * pulse, 0, 0, Math.PI * 2); ctx.stroke();
       } else Assets.draw(ctx, 'hud_elements/misc/selection_ring', p.x, p.y + 1, 0.2 * pulse * persp(c.y), { alpha: 0.95 });
     }
     // the teammate a pass would go to right now (a player with the puck): a thin ring at their
     // feet, gold (in versus, each player's own colour)
-    for (const team of match.state === 'play' && this.passRing !== false ? match.humans || [] : []) {
-      const ctrl = match.controlled(team);
+    for (const [team, seat] of match.state === 'play' && this.passRing !== false ? (match.humans || []).flatMap((t) => (match.coop && t === 0 ? [0, 1] : [0]).map((k) => [t, k])) : []) {
+      const ctrl = match.controlled(team, seat);
       const target = ctrl && ctrl.hasPuck ? match.choosePassTarget(ctrl) : null;
       if (!target) continue;
       const p = toScreen(target.x, target.y), k = persp(target.y), pulse = 1 + Math.sin(fx.time * 6) * 0.06;
@@ -1016,7 +1018,7 @@ export class Renderer {
       ctx.beginPath(); ctx.ellipse(p.x, p.y + 1, 22 * k * pulse, 8 * k * pulse, 0, 0, Math.PI * 2);
       ctx.strokeStyle = 'rgba(20,35,59,0.45)'; ctx.lineWidth = 4.5; ctx.stroke();
       ctx.setLineDash([7, 5]); ctx.lineDashOffset = -fx.time * 20;
-      ctx.strokeStyle = !versus ? '#ffd45e' : team === 0 ? '#71dce8' : '#ff6f7d'; ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.strokeStyle = versus || match.coop ? seatColour(match, ctrl) : '#ffd45e'; ctx.lineWidth = 2.5; ctx.stroke();
       ctx.restore();
     }
     // loose puck highlight so it never gets lost
@@ -1868,10 +1870,11 @@ export class Renderer {
       if (!c.controlled || c.parked || match.state === 'over' || match.state === 'goal') continue;
       const p = toScreen(c.x, c.y);
       const bob = Math.sin(fx.time * 6) * 3;
-      if (versus) {
+      if (versus || match.coop) {
+        const tag = c.team === 1 || c.seat ? 'P2' : 'P1';
         ctx.font = `bold 16px ${this.font}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.lineWidth = 4; ctx.strokeStyle = '#14233b'; ctx.strokeText(c.team === 0 ? 'P1' : 'P2', p.x, p.y - 104 + bob);
-        ctx.fillStyle = c.team === 0 ? '#71dce8' : '#ff6f7d'; ctx.fillText(c.team === 0 ? 'P1' : 'P2', p.x, p.y - 104 + bob);
+        ctx.lineWidth = 4; ctx.strokeStyle = '#14233b'; ctx.strokeText(tag, p.x, p.y - 104 + bob);
+        ctx.fillStyle = seatColour(match, c); ctx.fillText(tag, p.x, p.y - 104 + bob);
       } else Assets.draw(ctx, 'hud_elements/misc/player_arrow', p.x, p.y - 96 + bob, 0.1);
       // charge meter
       if (c.charging || c.ultWindup > 0) {

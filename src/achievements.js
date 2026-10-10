@@ -43,6 +43,7 @@ export const ACHIEVEMENTS = [
   { id: 'daily', name: 'Daily Grind', text: 'Beat a daily challenge.', icon: 'achievements/daily_grind', coins: 40 },
   { id: 'daily-streak', name: 'On a Roll', text: 'Beat the daily challenge seven days in a row.', icon: 'achievements/on_a_roll', coins: 200 },
   { id: 'versus', name: 'Couch Champion', text: 'Win a local versus match.', icon: 'hud_elements/misc/home_crest', coins: 30 },
+  { id: 'better-together', name: 'Better Together', text: 'Win a match with two players on the team.', icon: 'icons/friends', art: 'achievements/better_together', coins: 40 },
   // the newer systems (art: their own icon from Batch AN; icon: a stand-in until then)
   { id: 'first-pick', name: 'First Pick', text: 'Draft a rookie on Draft Day.', icon: 'achievements/free_agent', art: 'achievements/first_pick', coins: 60 },
   { id: 'new-tricks', name: 'New Tricks', text: 'Change a player\'s style or super at training camp.', icon: 'hud_elements/misc/level_star', art: 'achievements/new_tricks', coins: 50 },
@@ -187,6 +188,7 @@ export class AchievementTracker {
     if (won && ctx.league && summary.pen && summary.pen[0].pims === 0) this.unlock('clean');
     if (won && ctx.exhibition && (ctx.mods || []).length >= 3) this.unlock('challenge');
     if (won && this.planWhileBehind) this.unlock('bench-boss');
+    if (won && ctx.coop) this.unlock('better-together');
   }
 
   // Progress-based achievements from the save itself.

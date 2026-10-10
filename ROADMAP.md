@@ -28,6 +28,8 @@ Since then: **Draft Day** (three prospects at season's end; the pick joins as a 
 
 On 9 October: **the puck on the stick** (forehand and backhand stick handling, crossovers, shielding and the **deke**), **faceoffs** decided by timing the drop (and a **Faceoffs drill**), **penalty shots**, **hooking** and **delayed penalties**, **tip-ins** and **screens** in front of the net, **season goals** from Coach Brekka (with Trophies › Seasons), **the three stars of the game** and a **shot map** after every match (and mid-match in the pause menu), a coach's note after a loss, game plans changed mid-match (and the AI's bench going to Run-and-gun when two down late), a ring under the teammate a pass will find, naming your own rookies, a **Tip-Ins drill**, racing your best pace in Sniper and Keep-Away, a free extra attacker on a delayed penalty, scoring streaks in the league news, a map of the season's goals on the career page, Pause › Photo and a choice of goal horn.
 
+On 10 October: **club facilities** (stands, training rink, scouting office and physio room, three levels each), **press conferences** after big games, the **Hall of Fame** with retired numbers and banners in the rafters, **club records**, **the season in review**, Sniper ghosts online, **profiles** (three saves on one device), **your own keys and buttons** (Settings › Keyboard and Gamepad), special teams for the AI (a penalty-kill tandem and a power-play umbrella), phone layouts for a phone on its side or upright with a bigger puck, and **two players on one team** (local co-op: Play as › Two players).
+
 Ideas for later:
 1. **Replay checks** on the server if faked scores become a problem; the stored ghost runs would help.
 

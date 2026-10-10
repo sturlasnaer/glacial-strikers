@@ -76,6 +76,10 @@ export class Match {
     // goalie mode: the player is in goal for team 0 and the AI skates all three skaters
     this.goalieMode = !!cfg.goalieMode && this.humanTeam === 0;
     if (this.goalieMode) this.humans = [];
+    // local co-op: two players on our team, each with a skater of their own (a seat), the AI on the third
+    this.coop = !!cfg.coop && this.humanTeam === 0 && !this.goalieMode;
+    this.lastSeat = 0; // (the seat that last had the puck: it takes over a teammate's pickup)
+    this.drawSeat = 1; // (the seats take turns at the faceoff dot)
     this.humanInputs = {};
     this.abilities = new Abilities(this);
     this.winner = null;
@@ -126,7 +130,13 @@ export class Match {
   opponents(s) { return this.skaters.filter((o) => o.team !== s.team); }
   // the goalie defending the net on `side`
   goalieAt(side) { return this.goalies.find((g) => g.goalSide === side); }
-  controlled(team = this.humanTeam) { return this.skaters.find((s) => s.controlled && s.team === team); }
+  // The skater a player has: seat 0 (or anyone's, given no seat) or, in co-op, seat 1.
+  controlled(team = this.humanTeam, seat = null) {
+    if (seat === null) return this.skaters.find((s) => s.controlled && s.team === team && !s.seat) || this.skaters.find((s) => s.controlled && s.team === team);
+    return this.skaters.find((s) => s.controlled && s.team === team && (s.seat || 0) === seat);
+  }
+  seatsOf(team) { return this.coop && team === 0 ? 2 : 1; }
+  seatKey(team, seat) { return seat ? `${team}:${seat}` : team; }
 
   // ------------------------------------------------------------------ flow
   // The skater who takes the draw: lowest slot not sitting in the box.
@@ -173,15 +183,22 @@ export class Match {
     this.faceoffRt = [0, 1].map((t) => this.ai[t].faceoffReaction());
     this.faceoffJump = [false, false]; // (a human who went before the puck was down)
     if (this.humans.length) {
-      for (const s of this.skaters) s.controlled = this.humans.includes(s.team) && s === this.faceoffCenter(s.team);
+      for (const s of this.skaters) { s.controlled = this.humans.includes(s.team) && s === this.faceoffCenter(s.team); s.seat = 0; }
+      if (this.coop) {
+        // co-op: one player takes the draw (turn about), the other the next skater along
+        this.drawSeat ^= 1;
+        const c = this.faceoffCenter(0), w = this.teamSkaters(0).filter((s) => !s.parked && !s.controlled).sort((a, b) => a.slot - b.slot)[0];
+        if (c) c.seat = this.drawSeat;
+        if (w) { w.controlled = true; w.seat = 1 - this.drawSeat; }
+      }
     }
     this.emit('faceoff', {});
   }
 
   // Raw buttons from the player: { mx, my, sprint, a, b, skill, ult }
-  setHumanInput(raw, team = this.humanTeam) {
-    this.humanInputs[team] = raw;
-    if (team === this.humanTeam) this.humanInput = raw;
+  setHumanInput(raw, team = this.humanTeam, seat = 0) {
+    this.humanInputs[this.seatKey(team, seat)] = raw;
+    if (team === this.humanTeam && !seat) this.humanInput = raw;
   }
 
   mapHuman(c, raw) {
@@ -210,36 +227,49 @@ export class Match {
 
   applyHuman() {
     for (const team of this.humans) {
-      const raw = this.humanInputs[team];
-      const c = this.controlled(team);
-      if (!raw || !c) continue;
-      if (this.drill && this.state !== 'play' && !(this.state === 'faceoff' && this.drill.faceoffs)) { c.in = Skater.blankInput(); continue; }
-      c.in = this.mapHuman(c, raw);
-      if (this.state === 'play' && c.in.switch && !c.prevIn.switch && !c.prevIn.b && !(this.drill && this.drill.noSwitch)) this.switchControl(null, team);
-      if (raw.pull && !this.prevPull[team]) this.togglePull(team);
-      this.prevPull[team] = !!raw.pull;
+      for (let seat = 0; seat < this.seatsOf(team); seat++) {
+        const key = this.seatKey(team, seat), raw = this.humanInputs[key];
+        // a co-op player left without a skater (back from the box, the goalie back in) takes the nearest free one
+        const c = this.controlled(team, seat) || (this.coop && raw && this.state === 'play' && !this.pshot ? this.claimSeat(team, seat) : null);
+        if (!raw || !c) continue;
+        if (this.drill && this.state !== 'play' && !(this.state === 'faceoff' && this.drill.faceoffs)) { c.in = Skater.blankInput(); continue; }
+        c.in = this.mapHuman(c, raw);
+        if (this.state === 'play' && c.in.switch && !c.prevIn.switch && !c.prevIn.b && !(this.drill && this.drill.noSwitch)) this.switchControl(null, team, seat);
+        if (raw.pull && !this.prevPull[key]) this.togglePull(team);
+        this.prevPull[key] = !!raw.pull;
+      }
     }
   }
 
-  // Hand control to the best-placed teammate (closest to the puck).
-  switchControl(to, team) {
+  claimSeat(team, seat) {
+    const p = this.puck, near = (s) => Math.hypot(s.x - p.x, s.y - p.y);
+    const s = this.teamSkaters(team).filter((k) => !k.parked && !k.controlled && !k.scripted).sort((a, b) => near(a) - near(b))[0];
+    if (!s) return null;
+    s.controlled = true; s.seat = seat; s.oneTimerArmed = 0;
+    s.prevIn = { ...s.in, a: true, b: true, pass: true, check: true, switch: true };
+    return s;
+  }
+
+  // Hand control to the best-placed teammate (closest to the puck), or to `to`. In co-op only a
+  // skater neither player has, and the seat says whose control moves.
+  switchControl(to, team, seat = 0) {
     const t = to ? to.team : team ?? this.humanTeam;
-    const cur = this.controlled(t);
+    const cur = this.controlled(t, seat);
     if (!cur) return;
     let next = to;
     if (!next) {
       const p = this.puck;
-      const mates = this.teamSkaters(cur.team).filter((s) => s !== cur && !s.parked);
+      const mates = this.teamSkaters(cur.team).filter((s) => s !== cur && !s.parked && !s.controlled);
       mates.sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y));
       next = mates[0];
     }
-    if (!next || next === cur) return;
-    cur.controlled = false;
+    if (!next || next === cur || next.controlled) return;
+    cur.controlled = false; cur.seat = 0;
     cur.in = Skater.blankInput();
-    next.controlled = true;
+    next.controlled = true; next.seat = seat;
     next.oneTimerArmed = 0; // only the player's own button arms a one-timer
     // carry the held buttons over so the new skater doesn't see a fresh press
-    next.in = this.mapHuman(next, this.humanInputs[t] || {});
+    next.in = this.mapHuman(next, this.humanInputs[this.seatKey(t, seat)] || {});
     next.prevIn = { ...next.in, a: true, b: true, shoot: next.in.shoot, pass: true, check: true, switch: true };
     this.emit('switch', { s: next });
   }
@@ -579,7 +609,9 @@ export class Match {
       }
       this.pendingSteal = null;
       p.setTouch(s);
-      if (this.humans.includes(s.team) && !s.controlled && !s.scripted && this.controlled(s.team)) this.switchControl(s);
+      // (in co-op, whoever passed it follows the pass; a loose puck goes to whoever had it last)
+      if (this.humans.includes(s.team) && !s.controlled && !s.scripted && this.controlled(s.team)) this.switchControl(s, s.team, !this.coop ? 0 : passInfo && passInfo.from.controlled && passInfo.from.team === s.team ? passInfo.from.seat || 0 : this.lastSeat);
+      if (s.controlled && this.coop) this.lastSeat = s.seat || 0;
       // one-timer
       if (how === 'catch' && passInfo && passInfo.from.team === s.team && (s.oneTimerArmed > 0 || s.in.shoot) && this.inShootingRange(s)) {
         s.charging = false;
@@ -1642,7 +1674,11 @@ export class Match {
     p.shot = null; p.pass = null; p.curve = null; p.trail.length = 0; p.inNet = null; p.power = null; p.powerT = 0;
     p.noPickup.clear(); p.rolled.clear(); p.touches = []; p.lastTouch = null; // (nobody assists a penalty shot)
     this.barriers.length = 0; this.cyclones.length = 0; this.trails.length = 0;
-    if (this.humans.includes(s.team)) for (const o of this.teamSkaters(s.team)) o.controlled = o === s;
+    if (this.humans.includes(s.team)) {
+      const seat = s.controlled ? s.seat || 0 : this.coop ? this.lastSeat : 0; // (in co-op the other player watches this one)
+      for (const o of this.teamSkaters(s.team)) { o.controlled = o === s; o.seat = 0; }
+      s.seat = seat;
+    }
     this.takePossession(s, 'faceoff');
     this.pshot = { s, t: 0, gone: 0, benched };
     // one against the player's team: they take over in goal for it (in goal mode they're there already)
@@ -1711,7 +1747,7 @@ export class Match {
       this.emit('penalty', { s, reason, team: s.team, shot: true, shooter: shot });
       return;
     }
-    if (s.controlled) this.switchControl(null, s.team);
+    if (s.controlled) this.switchControl(null, s.team, s.seat || 0);
     s.parked = true; s.boxT = PENALTY_SECONDS; s.boxReason = reason;
     s.controlled = false; s.charging = false; s.ultWindup = 0; s.dashT = 0; s.stun = 0;
     s.x = s.team === 0 ? -70 : 70; s.y = RINK.minY + 16; s.vx = 0; s.vy = 0; s.face = Math.PI / 2;
@@ -1778,7 +1814,7 @@ export class Match {
     const x = this.extra[team];
     if (!x) return;
     if (this.puck.owner === x) this.loosePuck(x);
-    if (x.controlled) { this.switchControl(null, team); x.controlled = false; }
+    if (x.controlled) { this.switchControl(null, team, x.seat || 0); x.controlled = false; }
     this.skaters.splice(this.skaters.indexOf(x), 1);
     this.extra[team] = null;
     const g = this.goalies.find((k) => k.team === team);

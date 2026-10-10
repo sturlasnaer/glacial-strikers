@@ -9,15 +9,15 @@ const padDown = (gp, action) => padMap()[action].some((i) => i != null && gp.but
 
 // Local versus: player 1 on the left of the keyboard, player 2 around the arrows.
 export const SPLIT = {
-  p1: { up: ['KeyW'], down: ['KeyS'], left: ['KeyA'], right: ['KeyD'], a: ['KeyF'], b: ['KeyG'], sprint: ['ShiftLeft'], skill: ['KeyR'], ult: ['KeyT'] },
-  p2: { up: ['ArrowUp'], down: ['ArrowDown'], left: ['ArrowLeft'], right: ['ArrowRight'], a: ['KeyK', 'Slash', 'Numpad0'], b: ['KeyL', 'Period', 'NumpadDecimal'], sprint: ['ShiftRight', 'Semicolon'], skill: ['KeyO'], ult: ['KeyP'] },
+  p1: { up: ['KeyW'], down: ['KeyS'], left: ['KeyA'], right: ['KeyD'], a: ['KeyF'], b: ['KeyG'], sprint: ['ShiftLeft'], skill: ['KeyR'], ult: ['KeyT'], pull: ['KeyH'] },
+  p2: { up: ['ArrowUp'], down: ['ArrowDown'], left: ['ArrowLeft'], right: ['ArrowRight'], a: ['KeyK', 'Slash', 'Numpad0'], b: ['KeyL', 'Period', 'NumpadDecimal'], sprint: ['ShiftRight', 'Semicolon'], skill: ['KeyO'], ult: ['KeyP'], pull: ['Quote'] },
 };
 
 export function mergeInputs(x, y) {
   if (!y) return x;
   const out = { ...x };
   if (Math.hypot(y.mx, y.my) > Math.hypot(x.mx, x.my)) { out.mx = y.mx; out.my = y.my; }
-  for (const k of ['a', 'b', 'sprint', 'skill', 'ult', 'pause']) out[k] = !!(x[k] || y[k]);
+  for (const k of ['a', 'b', 'sprint', 'skill', 'ult', 'pause', 'pull']) out[k] = !!(x[k] || y[k]);
   return out;
 }
 
@@ -68,7 +68,7 @@ export class Input {
     const btn = (i) => gp.buttons[i] && gp.buttons[i].pressed;
     if (mag > 0.2) { const k = Math.min(1, (mag - 0.2) / 0.7) / mag; st.mx = ax * k; st.my = ay * k; }
     if (btn(14)) st.mx = -1; if (btn(15)) st.mx = 1; if (btn(12)) st.my = -1; if (btn(13)) st.my = 1;
-    for (const k of ['a', 'b', 'sprint', 'skill', 'ult', 'pause']) st[k] = padDown(gp, k);
+    for (const k of ['a', 'b', 'sprint', 'skill', 'ult', 'pause', 'pull']) st[k] = padDown(gp, k);
     return st;
   }
 
@@ -79,10 +79,17 @@ export class Input {
     let mx = (has(L.right) ? 1 : 0) - (has(L.left) ? 1 : 0);
     let my = (has(L.down) ? 1 : 0) - (has(L.up) ? 1 : 0);
     if (mx && my) { mx *= Math.SQRT1_2; my *= Math.SQRT1_2; }
-    return { mx, my, a: has(L.a), b: has(L.b), sprint: has(L.sprint), skill: has(L.skill), ult: has(L.ult), pause: this.keys.has('Escape') };
+    return { mx, my, a: has(L.a), b: has(L.b), sprint: has(L.sprint), skill: has(L.skill), ult: has(L.ult), pull: has(L.pull), pause: this.keys.has('Escape') };
   }
 
-  read() {
+  // The touch controls alone (co-op's player 1 on a shared keyboard can use them too).
+  readTouch() {
+    const t = this.touch;
+    return { mx: t.mx, my: t.my, a: t.a, b: t.b, sprint: t.sprint, skill: t.skill, ult: t.ult, pause: t.pause, pull: t.pull };
+  }
+
+  // Everything at once: the keyboard, every gamepad (but skipPad's, co-op's player 2) and touch.
+  read({ skipPad = null } = {}) {
     let mx = 0, my = 0;
     if (this.key('left')) mx -= 1;
     if (this.key('right')) mx += 1;
@@ -97,7 +104,7 @@ export class Input {
     // gamepad
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     for (const gp of pads) {
-      if (!gp) continue;
+      if (!gp || gp.index === skipPad) continue;
       const ax = gp.axes[0] || 0, ay = gp.axes[1] || 0;
       const mag = Math.hypot(ax, ay);
       const btn = (i) => gp.buttons[i] && gp.buttons[i].pressed;

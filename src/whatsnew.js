@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10i',
+    items: [
+      { icon: 'icons/friends', text: 'Two players on one team: pick Play as › Two players before a match and a friend takes a skater too (the arrows and K, L on the keyboard, or a gamepad), with the AI on the third.' },
+    ],
+  },
+  {
     id: '2026-10-10h',
     items: [
       { icon: 'icons/ghost', text: 'Sniper ghosts go online: race this week\'s best or a friends board\'s best from the drill card, and send any run to a friend as a challenge.' },
