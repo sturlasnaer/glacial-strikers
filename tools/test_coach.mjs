@@ -3,7 +3,7 @@
 import { Match } from '../src/match.js';
 import { CHARACTERS } from '../src/data.js';
 import { GOAL_X } from '../src/rink.js';
-import { newCoach, coachStep, COACH_GAP, COACH_SAME } from '../src/coach.js';
+import { newCoach, coachStep, coachPraise, COACH_GAP, COACH_SAME } from '../src/coach.js';
 
 let pass = 0, fail = 0;
 const check = (name, cond, info) => { if (cond) pass++; else { fail++; console.log('✗', name, info ?? ''); } };
@@ -45,6 +45,16 @@ const run = (st, m, secs) => { let out = null; for (let i = 0; i < secs * 10 && 
 {
   const { m } = setup(-100, 0, 300), st = newCoach();
   check('nothing to say: nothing said', run(st, m, 5) === null);
+}
+
+{
+  const st = newCoach();
+  st.t = 0;
+  const said = [1, 2, 3, 4, 5, 6, 7].map(() => { const k = coachPraise(st); if (k) st.t = 0; return k; });
+  check('"Nice pass!" every third pass', said.join() === 'true,false,false,true,false,false,true', said.join());
+  st.t = 3;
+  check('not while it\'s just said something', !coachPraise(st));
+  check('and praise holds the tips back a while', (() => { const s2 = newCoach(); s2.t = 0; coachPraise(s2); return s2.t === COACH_GAP; })());
 }
 
 console.log(`Coach cub: ${pass} passed, ${fail} failed`);

@@ -2,7 +2,7 @@
 // moments, never too often. coachStep looks at the match each frame and says which tip to show
 // now, if any: 'pass' (a rival right on the player's carrier and a teammate open), 'shoot' (in
 // front of their net), 'chase' (the rivals have had the puck a while). Goals are the HUD's own
-// (a cheer, or a "next one's ours").
+// (a cheer, or a "next one's ours"), and now and then a "Nice pass!" (coachPraise).
 import { GOAL_X } from './rink.js';
 
 export const COACH_GAP = 6; // seconds between tips
@@ -32,3 +32,14 @@ export function coachStep(st, m, dt) {
   st.t = COACH_GAP; st.last = tip; st.lastT = 0;
   return tip;
 }
+
+// A pass of the player's reached a teammate: now and then a "Nice pass!" (every third one, when
+// the cub's free to talk).
+export function coachPraise(st) {
+  if (st.t > 0) return false;
+  st.praised = (st.praised || 0) + 1;
+  if (st.praised % 3 !== 1) return false;
+  st.t = COACH_GAP;
+  return true;
+}
+

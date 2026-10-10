@@ -6,7 +6,7 @@ import { portrait, crest, keyCap, portraitCanvas } from './ui.js';
 import { firstKey } from './keys.js';
 import { t } from './i18n.js';
 import { isPartsArt } from './modular.js';
-import { newCoach, coachStep } from './coach.js';
+import { newCoach, coachStep, coachPraise } from './coach.js';
 
 // The fan cam (Batch CT): is the art in, loaded and ready to draw?
 export const fanCamReady = () => {
@@ -66,7 +66,7 @@ const digit = (n) => Assets.iconCanvas(`hud_elements/score/${Math.min(5, n)}`, 9
 const face = (cv, ...args) => paint(cv, portraitCanvas(...args));
 
 // The cub as coach (Little player games, Batch DJ): its pose and words for each tip.
-const COACH = { pass: ['point', () => t('Pass it!')], shoot: ['point', () => t('Shoot!')], chase: ['think', () => t('Get the puck back!')], goal: ['cheer', () => t('Hooray!')], against: ['talk', () => t('Next one\'s ours!')] };
+const COACH = { pass: ['point', () => t('Pass it!')], shoot: ['point', () => t('Shoot!')], chase: ['think', () => t('Get the puck back!')], goal: ['cheer', () => t('Hooray!')], nicepass: ['cheer', () => t('Nice pass!')], against: ['talk', () => t('Next one\'s ours!')] };
 const coachReady = () => { const f = Assets.frame('cub_coach/talk_1'); return !!(f && Assets.pages[f[0]]); };
 
 export class HUD {
@@ -160,6 +160,9 @@ export class HUD {
     this.coach = this.app.save && this.app.save.settings.little && !this.versus && !drill && !match.goalieMode ? newCoach() : null;
     this.coachT = 0;
   }
+
+  // The player's pass reached a teammate: the cub's praise, now and then.
+  coachPass() { if (this.coach && coachPraise(this.coach)) this.coachSay('nicepass'); }
 
   // The cub pops up with a tip (once its art's in), for a couple of seconds.
   coachSay(k) {

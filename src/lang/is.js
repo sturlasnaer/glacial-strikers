@@ -1236,6 +1236,7 @@ export const IS = {
   "Next up: the {team} at {venue}! Get loud!": "Næst mætum við {team} og {venue} bíður! Látið í ykkur heyra!",
   "Next: {team}": "Næst: {team}",
   "Nice jersey, {name}. It'll look even better after we beat you.": "Flott treyja, {name}. Hún verður enn flottari eftir að við vinnum ykkur.",
+  "Nice pass!": "Flott sending!",
   "Nickname": "Gælunafn",
   "Night game": "Kvöldleikur",
   "Night games! In Quick play › Match options, pick Night game and play the outdoor rinks under the lights: Pine Pond beneath the northern lights, the Harbour Rink by moonlight, the Summit Rink above the clouds.": "Kvöldleikir! Í Stökum leik › Leikstillingum velurðu Kvöldleik og spilar á útisvellunum undir ljósum: Pine Pond undir norðurljósunum, Hafnarsvellið í tunglskini og Tindasvellið ofan við skýin.",
