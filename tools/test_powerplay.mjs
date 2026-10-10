@@ -39,7 +39,7 @@ check('the box clock counts the drill down', Math.ceil(boxed[0].boxT) === left, 
 for (let i = 0; i < 60 * 50 && !ctrl.result; i++) { m.setHumanInput(idle); m.update(1 / 60); }
 check('it ends at 45 seconds with the goals', ctrl.result && ctrl.result.score === ctrl.goals && ctrl.t >= 45, ctrl.result);
 check('medals 2, 3 and 5 goals; it says goals', medalFor(def, 1) === 0 && medalFor(def, 2) === 1 && medalFor(def, 3) === 2 && medalFor(def, 5) === 3 && formatScore(def, 1) === '1 goal' && formatScore(def, 4) === '4 goals');
-check('no online board yet: its scores stay on the device', DRILLS.powerplay.offline === true);
+check('an online board for it', !DRILLS.powerplay.offline);
 
 console.log(`Power Play: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

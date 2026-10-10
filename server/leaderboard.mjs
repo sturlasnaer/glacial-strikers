@@ -40,11 +40,12 @@ export const BOARDS = {
   breakaway: { better: 'higher', min: 0, max: 5, decimals: 0 },
   faceoffs: { better: 'higher', min: 0, max: 10, decimals: 0 }, // draws won of ten
   tips: { better: 'higher', min: 0, max: 10, decimals: 0 }, // tip-in goals of ten shots
+  powerplay: { better: 'higher', min: 0, max: 20, decimals: 0 }, // goals in the Power Play drill's 45 seconds
   shootout_wins: { better: 'higher', min: 0, max: 100000, decimals: 0 },
   daily_streak: { better: 'higher', min: 0, max: 10000, decimals: 0 },
 };
 
-export const WEEKLY = new Set(['cones', 'sniper', 'rondo', 'breakaway', 'faceoffs', 'tips']);
+export const WEEKLY = new Set(['cones', 'sniper', 'rondo', 'breakaway', 'faceoffs', 'tips', 'powerplay']); // (the Power Play isn't in the Weekly Cup)
 // The Weekly Cup's drills: the first four, and from week 42 of 2026 (Monday 12 October)
 // Faceoffs and Tip-Ins too (so no cup changed its drills part of the way through a week)
 export const CUP = ['cones', 'sniper', 'rondo', 'breakaway'];

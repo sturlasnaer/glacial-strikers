@@ -46,7 +46,7 @@ export const DRILLS = {
     medals: [5, 7, 9],
   },
   powerplay: {
-    id: 'powerplay', name: 'Power Play', trains: 'Special teams', icon: 'hud_elements/ability/fire', art: 'equipment_items/hub/powerplay', unit: 'goals45', offline: true, // (art: when it's drawn; no online board yet)
+    id: 'powerplay', name: 'Power Play', trains: 'Special teams', icon: 'hud_elements/ability/fire', art: 'equipment_items/hub/powerplay', unit: 'goals45', // (art: Batch CL, when it's in)
     text: 'Your line against two penalty killers for 45 seconds, their third in the box. Move the puck round the umbrella: a pass across to an open stick for a one-timer beats a box.',
     medals: [2, 3, 5],
   },

@@ -49,6 +49,11 @@ check('faceoffs out of ten', (await post({ board: 'faceoffs', player: id(6), sco
 check('tips whole numbers', (await post({ board: 'tips', player: id(6), score: 2.5 })).status === 400);
 r = await handle({ method: 'GET', query: { board: 'tips', period: 'week', player: id(5) } }, store, clock);
 check('tips weekly board', r.status === 200 && r.body.top.length === 1 && r.body.resetsAt, r.body);
+r = await post({ board: 'powerplay', player: id(5), name: 'Umbrella', score: 4 });
+check('powerplay board', r.status === 200 && r.body.rank === 1, r.body);
+check('powerplay whole numbers, at most 20', (await post({ board: 'powerplay', player: id(6), score: 2.5 })).status === 400 && (await post({ board: 'powerplay', player: id(6), score: 21 })).status === 400);
+r = await handle({ method: 'GET', query: { board: 'powerplay', period: 'week', player: id(5) } }, store, clock);
+check('powerplay weekly board', r.status === 200 && r.body.top.length === 1 && r.body.resetsAt, r.body);
 check('bad json', (await handle({ method: 'POST', query: {}, body: '{' }, store)).status === 400);
 // rate limit: two posts from one player within 2 s
 clock += 10000;
