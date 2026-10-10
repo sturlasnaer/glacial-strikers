@@ -71,7 +71,7 @@ export class HUD {
         : this.coop || this.keeper ? this.coopHints(K)
         : opts.versus ? `<b style="color:var(--ice)">P1</b> WASD · <kbd>F</kbd> ${t('shoot')} · <kbd>G</kbd> ${t('pass')} · <kbd>L-Shift</kbd> ${t('sprint')} · <kbd>R</kbd>/<kbd>T</kbd> ${t('skill/ult')}<br>
         <b style="color:var(--coral)">P2</b> ${t('Arrows')} · <kbd>K</kbd> ${t('shoot')} · <kbd>L</kbd> ${t('pass')} · <kbd>R-Shift</kbd> ${t('sprint')} · <kbd>O</kbd>/<kbd>P</kbd> ${t('skill/ult')}`
-        : match.simple && !match.goalieMode ? `${K('a')} ${t('or')} ${K('b')} ${t('plays: shoots near the net, passes further out, checks without the puck')} · ${K('pause')} ${t('pause')}`
+        : match.simple && !match.simpleKeys && !match.goalieMode ? `${K('a')} ${t('or')} ${K('b')} ${t('plays: shoots near the net, passes further out, checks without the puck')} · ${K('pause')} ${t('pause')}`
         : match.goalieMode ? `${K('a')} ${t('block / pass')} · ${K('b')} ${t('dive / clear')} · ${K('sprint')} ${t('quick feet')}<br>${K('skill')} ${t('poke check')} · ${K('ult')} ${t('Wall of Ice')} · ${K('pause')} ${t('pause')}`
         : `${K('a')} ${t('shoot/check')} · ${K('b')} ${t('pass/switch')} · ${K('sprint')} ${t('sprint')}<br>${K('skill')} ${t('skill')} · ${K('ult')} ${t('ultimate')} · ${K('pause')} ${t('pause')}`}</div>`;
     this.el.querySelector('#pause-btn').addEventListener('click', (e) => { e.stopPropagation(); e.currentTarget.blur(); this.app.pause(); }); // (no focus left on it: Enter is the pass key)
@@ -88,7 +88,7 @@ export class HUD {
     this.last = { s0: 0, s1: 0 };
     this.touch.hidden = !this.app.isTouch || this.versus;
     this.touch.classList.toggle('gk', !!match.goalieMode && !this.keeper);
-    const simple = !!match.simple && (!match.goalieMode || this.keeper); // Simple controls: the stick and one PLAY button
+    const simple = !!match.simple && match.simpleSeat(0, 0) && (!match.goalieMode || this.keeper); // Simple controls: the stick and one PLAY button (player 1's)
     this.touch.classList.toggle('simple', simple);
     if (simple && !this.playArt) { // (the gold PLAY button once Batch CQ is in; the SHOOT button's look till then)
       this.playArt = new Image();
@@ -427,7 +427,7 @@ export class HUD {
     const incoming = !m.puck.owner && m.puck.pass && m.puck.pass.to === c;
     const comboIncoming = incoming && m.chemLevel(m.puck.pass.from, c) > 0;
     const dl = this.drill && this.drill.touchLabels ? this.drill.touchLabels(m) : null;
-    const aLbl = m.simple ? t('PLAY') : dl ? dl.a : has ? (c.comboT > 0 ? t('COMBO') : t('SHOOT')) : comboIncoming ? t('COMBO') : incoming ? t('ONE-T') : t('CHECK');
+    const aLbl = m.simple && m.simpleSeat(0, 0) ? t('PLAY') : dl ? dl.a : has ? (c.comboT > 0 ? t('COMBO') : t('SHOOT')) : comboIncoming ? t('COMBO') : incoming ? t('ONE-T') : t('CHECK');
     const bLbl = dl ? dl.b : has ? t('PASS') : t('SWITCH');
     if (this.last.a !== aLbl) { this.last.a = aLbl; this.touch.querySelector('.t-a span').textContent = aLbl; }
     if (this.last.b !== bLbl) { this.last.b = bLbl; this.touch.querySelector('.t-b span').textContent = bLbl; }

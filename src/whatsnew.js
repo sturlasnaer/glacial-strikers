@@ -2,6 +2,13 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10r',
+    items: [
+      { icon: 'icons/rookie', text: 'Players of your own (and the drafted rookies and free agents) celebrate their goals in style: a fist pump into a knee slide.' },
+      { icon: 'icons/simple_controls', text: 'Simple controls in two-player games: pick who gets the one big button, player 1, player 2 or both.' },
+    ],
+  },
+  {
     id: '2026-10-10q',
     items: [
       { icon: 'icons/album', alt: 'icons/friends', text: 'The sticker album, in Trophies: a sticker for everyone in the league. Every match brings a pack, two for a win. Look out for shiny ones!' },

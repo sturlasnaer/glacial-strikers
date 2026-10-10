@@ -1213,7 +1213,7 @@ export class Renderer {
     // feet, gold (in versus, each player's own colour)
     for (const [team, seat] of match.state === 'play' && this.passRing !== false ? (match.humans || []).flatMap((t) => (match.coop && t === 0 ? [0, 1] : [0]).map((k) => [t, k])) : []) {
       const ctrl = match.controlled(team, seat);
-      const target = ctrl && ctrl.hasPuck && !(match.simple && match.simpleShot(ctrl)) ? match.choosePassTarget(ctrl) : null; // (Simple controls: no ring where the button shoots)
+      const target = ctrl && ctrl.hasPuck && !(match.simpleSeat && match.simpleSeat(team, seat) && match.simpleShot(ctrl)) ? match.choosePassTarget(ctrl) : null; // (Simple controls: no ring where the button shoots)
       if (!target) continue;
       const p = toScreen(target.x, target.y), k = persp(target.y), pulse = 1 + Math.sin(fx.time * 6) * 0.06;
       ctx.save();

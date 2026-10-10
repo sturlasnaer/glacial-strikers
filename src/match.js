@@ -56,7 +56,9 @@ export class Match {
     this.trails = [];
     this.pickups = [];
     this.assist = cfg.assist || 'normal'; // aim assist for human players
-    this.simple = !!cfg.simple && !cfg.drill; // Simple controls: one button, and the skater nearest the puck (for the youngest players)
+    // Simple controls (for the youngest players): one button, and the skater nearest the puck.
+    // cfg.simple: true for everyone, or the players who have them in a two-player game ('p1', 'p2')
+    this.simple = !!cfg.simple && !(Array.isArray(cfg.simple) && !cfg.simple.length) && !cfg.drill;
     this.simpleT = {}; // seat key -> when Simple controls last switched skaters
     this.mods = new Set(cfg.mods || []); // challenge modifiers, see CHALLENGES in data.js
     this.plans = cfg.plans || ['balanced', 'balanced']; // game plans, see GAME_PLANS in data.js
@@ -87,6 +89,7 @@ export class Match {
     this.touchSeat = new Map();
     // local co-op: two players on our team, each with a skater of their own (a seat), the AI on the third
     this.coop = !!cfg.coop && this.humanTeam === 0 && !this.goalieMode;
+    this.simpleKeys = this.simple && Array.isArray(cfg.simple) ? new Set(cfg.simple.map((p) => String(p === 'p1' ? this.seatKey(0, 0) : this.coop ? this.seatKey(0, 1) : this.seatKey(1, 0)))) : null;
     this.lastSeat = 0; // (the seat that last had the puck: it takes over a teammate's pickup)
     this.drawSeat = 1; // (the seats take turns at the faceoff dot)
     this.humanInputs = {};
@@ -151,6 +154,8 @@ export class Match {
     return this.humanInputs[team] || this.humanInput || {};
   }
   seatKey(team, seat) { return seat ? `${team}:${seat}` : team; }
+  // Simple controls for this player? (a seat: a team and seat, or a skater)
+  simpleSeat(team, seat = 0) { return this.simple && (!this.simpleKeys || this.simpleKeys.has(String(this.seatKey(team, seat)))); }
 
   // ------------------------------------------------------------------ flow
   // The skater who takes the draw: lowest slot not sitting in the box.
@@ -221,7 +226,7 @@ export class Match {
     const inp = Skater.blankInput();
     inp.mx = raw.mx; inp.my = raw.my; inp.sprint = raw.sprint; inp.sprintBtn = raw.sprintBtn ?? raw.sprint;
     inp.skill = raw.skill; inp.ult = raw.ult; inp.a = raw.a; inp.b = raw.b;
-    if (this.simple) return this.mapSimple(c, raw, inp);
+    if (this.simpleSeat(c.team, c.seat || 0)) return this.mapSimple(c, raw, inp);
     if (p.owner === c) {
       // a button still held from a check shouldn't start a shot
       if (raw.a && (c.prevIn.check || c.aLatch)) c.aLatch = true;
@@ -295,7 +300,7 @@ export class Match {
         if (this.drill && this.state !== 'play' && !(this.state === 'faceoff' && this.drill.faceoffs)) { c.in = Skater.blankInput(); continue; }
         c.in = this.mapHuman(c, raw);
         if (this.state === 'play' && c.in.switch && !c.prevIn.switch && !c.prevIn.b && !(this.drill && this.drill.noSwitch)) this.switchControl(null, team, seat);
-        if (this.simple) this.simpleSwitch(c, team, seat);
+        if (this.simpleSeat(team, seat)) this.simpleSwitch(c, team, seat);
         if (raw.pull && !this.prevPull[key]) this.togglePull(team);
         this.prevPull[key] = !!raw.pull;
       }

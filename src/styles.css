@@ -1324,6 +1324,7 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 #touch.simple.lefty .t-a { right: auto; left: calc(34px + var(--safe-l)); }
 #touch.simple.play-art .t-a { background-image: url(../assets/gfx/touch-kit/images/btn_play.png); }
 #touch.simple.play-art .t-a.down { background-image: url(../assets/gfx/touch-kit/images/btn_play_pressed.png); }
+#touch.simple.play-art .t-a > span { position: absolute; left: 0; right: 0; bottom: 15%; font-size: 17px; color: #4a2c00; text-shadow: 0 1px 0 rgba(255, 240, 190, 0.8); } /* (under the art's puck and stick) */
 /* the Resurfacer drill: only the stick and SPRINT do anything */
 .drive .t-a, .drive .t-b, .drive .t-skill, .drive .t-ult, .drive .t-pull { display: none !important; }
 /* the pause menu with two players: both players' keys first */

@@ -1,8 +1,9 @@
 // Simple controls (Settings, for the youngest players): one button does the right thing. With
 // the puck it shoots in front of their net and passes anywhere else; a button held while the
 // puck arrives is no fresh press; without the puck it checks; and the skater nearest the puck
-// becomes ours whenever the other side has it (not while our own pass is on its way). Drills
-// keep their own controls, and whole matches run their course.
+// becomes ours whenever the other side has it (not while our own pass is on its way). In a
+// two-player game they can be for one player only. Drills keep their own controls, and whole
+// matches run their course.
 //   node tools/test_simple.mjs
 import { Match } from '../src/match.js';
 import { CHARACTERS } from '../src/data.js';
@@ -127,6 +128,32 @@ for (const key of ['a', 'b']) {
 
 // drills keep their own controls
 check('not in drills', !new Match({ teams: [team(), team()], humanTeam: 0, seed: 1, powers: [], diff: [0.5, 0.5], simple: true, drill: { init() {}, update() {} } }).simple);
+
+// two players: Simple controls for one of them only
+{
+  const base = { teams: [team(), team()], seed: 12, powers: [], diff: [0.5, 0.5] };
+  const vs = new Match({ ...base, humanTeam: 0, humans: [0, 1], simple: ['p2'] });
+  check('against each other, player 2 only', vs.simple && !vs.simpleSeat(0, 0) && vs.simpleSeat(1, 0));
+  const co = new Match({ ...base, humanTeam: 0, coop: true, simple: ['p2'] });
+  check('together, player 2 only', co.simple && !co.simpleSeat(0, 0) && co.simpleSeat(0, 1));
+  const both = new Match({ ...base, humanTeam: 0, coop: true, simple: ['p1', 'p2'] });
+  check('...or both', both.simpleSeat(0, 0) && both.simpleSeat(0, 1));
+  check('...or nobody', !new Match({ ...base, humanTeam: 0, coop: true, simple: [] }).simple);
+  // player 1 keeps the full controls (A shoots anywhere); player 2's one button picks shoot or pass
+  co.state = 'play';
+  for (const o of co.teamSkaters(1)) { o.x = -560; o.y = 290; o.parked = true; }
+  const p1 = co.controlled(0, 0), p2 = co.controlled(0, 1);
+  p1.x = -co.teamSkaters(0)[0].side * 200; p1.y = 0;
+  co.takePossession(p1, 'test');
+  co.setHumanInput({ ...idle(), a: true }, 0, 0); co.setHumanInput(idle(), 0, 1);
+  co.applyHuman();
+  check('...player 1\'s A is still SHOOT far out', p1.in.shoot && !p1.in.pass);
+  co.setHumanInput(idle(), 0, 0); co.applyHuman(); for (const k of co.skaters) k.prevIn = { ...k.in };
+  co.takePossession(p2, 'test');
+  co.setHumanInput({ ...idle(), a: true }, 0, 1);
+  co.applyHuman();
+  check('...player 2\'s one button picks for them', p2.simpleAct === (co.simpleShot(p2) ? 'shoot' : 'pass'));
+}
 
 // whole matches, a small player pressing now and then and steering at the puck (or their net)
 {

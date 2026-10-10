@@ -336,7 +336,10 @@ class App {
     Assets.prepareTeam(team);
     this.awayTeamId = teamId;
     this.arena = arena;
-    if (!this.attract && this.save.settings.simple) cfg.simple = true; // (one button for the youngest players)
+    if (!this.attract) { // Simple controls: one button for the youngest players (in a two-player game, for whichever players have them)
+      const st = this.save.settings, two = cfg.coop || cfg.keeperCoop || (cfg.humans && cfg.humans.length > 1);
+      if (two) { if (st.simple2 && st.simple2 !== 'none') cfg.simple = st.simple2 === 'both' ? ['p1', 'p2'] : [st.simple2]; } else if (st.simple) cfg.simple = true;
+    }
     const m = new Match(cfg);
     this.match = m;
     if (!this.attract) { // the title screen's match shows no cut-ins
@@ -814,7 +817,7 @@ class App {
       // fullscreen, then held on its side where the phone allows it (Android; iPhones ignore it and the rotate prompt shows)
       document.documentElement.requestFullscreen({ navigationUI: 'hide' }).then(() => screen.orientation?.lock?.('landscape')).catch(() => {});
     }
-    const simpleFirst = m.simple && !goalieMode && !this.cur.coop && firstTime(s, 'simple'); // (Simple controls have tips of their own)
+    const simpleFirst = m.simple && !m.simpleKeys && !goalieMode && !this.cur.coop && firstTime(s, 'simple'); // (Simple controls have tips of their own)
     this.tutorial = !this.cur.coop && (simpleFirst || (goalieMode ? (this.save.goalieGames || 0) : this.save.record.played) < 2) ? 0 : -1; // (co-op: the key hints show both players' keys)
     this.tutT = 1.5;
   }
@@ -827,7 +830,7 @@ class App {
       touch ? t('Caught it? PASS goes toward your thumb, CLEAR rims it around the boards.') : t('Caught it? {shoot} passes toward where you\'re steering, {pass} rims it around the boards.', k),
       touch ? t('The round button pokes the puck off a close carrier. Saves charge Wall of Ice: fire it with the star.') : t('{skill} pokes the puck off a close carrier. Saves charge Wall of Ice: fire it with {ult}.', k),
     ];
-    if (this.match && this.match.simple) return [
+    if (this.match && this.match.simple && !this.match.simpleKeys) return [
       touch ? t('Drag your thumb to skate. Push it all the way to go fast.') : t('Skate with {move}. You go fast by yourself.', k),
       touch ? t('Near their net, PLAY shoots. Further out, PLAY passes to a teammate.') : t('Near their net, {shoot} shoots. Further out, it passes to a teammate.', k),
       touch ? t('No puck? PLAY checks, and you always skate the player nearest the puck.') : t('No puck? {shoot} checks, and you always skate the player nearest the puck.', k),
@@ -1632,16 +1635,17 @@ class App {
           if (pads.length >= 2) { p1 = mergeInputs(p1, this.input.readPad(pads[0])); p2 = mergeInputs(p2, this.input.readPad(pads[1])); }
           else if (pads.length === 1) p2 = mergeInputs(p2, this.input.readPad(pads[0]));
           this.releaseHeld(p1, p2);
+          [p1, p2].forEach((i, team) => { i.sprintBtn = i.sprint; if (m.simpleSeat(team, 0) && Math.hypot(i.mx, i.my) > 0.92) i.sprint = true; }); // (Simple controls sprint by themselves)
           m.setHumanInput(p1, 0); m.setHumanInput(p2, 1);
         } else if (this.scene === 'match' && coop) {
           const [p1, p2] = this.coopInputs();
           this.releaseHeld(p1, p2);
-          for (const i of [p1, p2]) { i.sprintBtn = i.sprint; if ((this.save.settings.autoSprint || m.simple) && Math.hypot(i.mx, i.my) > 0.92) i.sprint = true; }
+          [p1, p2].forEach((i, seat) => { i.sprintBtn = i.sprint; if ((this.save.settings.autoSprint || m.simpleSeat(0, seat)) && Math.hypot(i.mx, i.my) > 0.92) i.sprint = true; });
           m.setHumanInput(p1, 0, 0); m.setHumanInput(p2, 0, 1);
         } else if (this.scene === 'match') {
           this.releaseHeld(raw);
           raw.sprintBtn = raw.sprint; // (the button itself: a quick tap of it dekes, even with auto-sprint)
-          if ((this.save.settings.autoSprint || m.simple) && Math.hypot(raw.mx, raw.my) > 0.92) raw.sprint = true;
+          if ((this.save.settings.autoSprint || m.simpleSeat(0, 0)) && Math.hypot(raw.mx, raw.my) > 0.92) raw.sprint = true;
           m.setHumanInput(raw);
         }
         if (this.lap && this.attract) {

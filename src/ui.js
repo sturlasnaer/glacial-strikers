@@ -570,12 +570,20 @@ export class UI {
         <kbd style="color:${coop ? '#7fe08a' : 'var(--coral)'}">${t('Player 2')}</kbd><span>${keeper ? t('Arrows move · K block/pass · L dive/clear · O poke check · P Wall of Ice') : t('Arrows skate · K shoot/check · L pass/switch · Right Shift sprint · O skill · P ultimate')}</span>
         <kbd>${t('Gamepads')}</kbd><span>${coop ? t('With one pad, player 2 has it and player 1 keeps the keyboard or touch. With two, one each.') : t('With two pads each player gets one. With one pad, it goes to player 2.')}</span>
       </div>
+      <div class="label" style="font-size:15px">${simpleLabel()}</div>
+      <div class="filters" style="margin:0">${(keeper ? [['none', t('Off')], ['p1', t('Player 1')]] : [['none', t('Off')], ['p1', t('Player 1')], ['p2', t('Player 2')], ['both', t('Both')]]).map(([v, label]) => `<button class="chip" data-simple2="${v}" aria-pressed="${(keeper && this.app.save.settings.simple2 !== 'none' ? 'p1' : this.app.save.settings.simple2 || 'none') === v}">${label}</button>`).join('')}
+        <span class="muted" style="font-size:12.5px;align-self:center">${t('One button and the nearest skater, for the youngest players.')}</span></div>
       <div class="label" style="font-size:15px">${coop ? t('Against') : t('Player 2 plays as')}</div>
       <div class="filters" style="margin:0">${opts.map((t) => `<button class="chip" data-vs="${t.id}" aria-pressed="${this.vsTeam === t.id}" style="display:inline-flex;gap:6px;align-items:center"><img src="${crest(t.id, 40)}" width="20" height="20" alt="">${esc(t.name)}</button>`).join('')}</div>
       <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Back')}</button><button class="btn gold" id="vs-go">${t('Start')}</button></div>`, (m, close) => {
       this.click('[data-vs]', (el) => {
         this.vsTeam = el.dataset.vs;
         m.querySelectorAll('[data-vs]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.vs === this.vsTeam));
+        audio.sfx('click');
+      }, m);
+      this.click('[data-simple2]', (el) => {
+        this.app.save.settings.simple2 = el.dataset.simple2; writeSave(this.app.save);
+        m.querySelectorAll('[data-simple2]').forEach((b) => b.setAttribute('aria-pressed', b === el));
         audio.sfx('click');
       }, m);
       this.click('[data-vsmode]', (el) => { this.vsMode = el.dataset.vsmode; audio.sfx('click'); close(); this.versusPicker(); }, m);
