@@ -477,9 +477,13 @@ export class UI {
     const rec = (id) => { const r = this.app.save.rivals && this.app.save.rivals[id]; return r && r.played ? ` · ${t('record {rec}', { rec: `${r.wins}–${r.losses}` })}` : ''; };
     this.challenges ||= new Set();
     const mult = () => [...this.challenges].reduce((m, id) => m * CHALLENGES.find((c) => c.id === id).mult, 1);
+    // the challenges and the arena fold away (shut by default on a phone on its side, so the rivals come first)
+    this.qpOpen ??= !(typeof matchMedia === 'function' && matchMedia('(max-height: 480px)').matches);
+    const optsLine = () => `${t('Match options')}: ${(this.arenaPick || 'auto') === 'auto' ? t('Their building') : esc(ARENAS[this.arenaPick].name)}${this.arenaRules === false ? ` · ${t('Arena rules off')}` : ''}${this.challenges.size ? ` · ${t(this.challenges.size > 1 ? '{n} challenges' : '{n} challenge', { n: this.challenges.size })} (${t('coins x{n}', { n: +mult().toFixed(2) })})` : ''}`;
     this.modal(`
       <h2>${t('Quick play')}</h2>
       <p class="muted" style="margin:0">${t('Exhibitions use your current team and pay half rewards. A shootout is five penalty shots each way: you shoot, then you play goalie.')}</p>
+      <details class="qp-opts" ${this.qpOpen ? 'open' : ''}><summary id="qp-sum">${optsLine()}</summary>
       <div>
         <div class="label" style="font-size:15px">${t('Match challenges')} <span class="muted" id="ch-mult" style="font-family:var(--body);font-size:12px;letter-spacing:0;text-transform:none"></span></div>
         <div class="filters" style="margin:6px 0 0">${CHALLENGES.map((c) => `<button class="chip" data-ch="${c.id}" aria-pressed="${this.challenges.has(c.id)}" title="${esc(t(c.text))}">${smallIcon(c.icon)}${esc(t(c.name))}</button>`).join('')}</div>
@@ -489,6 +493,7 @@ export class UI {
         <div class="filters" style="margin:6px 0 0">${['auto', ...Object.keys(ARENAS)].map((k) => `<button class="chip" data-arena="${k}" aria-pressed="${(this.arenaPick || 'auto') === k}">${k === 'auto' ? t('Their building') : esc(ARENAS[k].name)}${ARENAS[k] && ARENAS[k].rule ? ` <span class="muted">· ${ruleIcon(ARENAS[k].twist, 32)}${esc(t(ARENAS[k].rule))}</span>` : ''}</button>`).join('')}
           <button class="chip" id="arena-rules" aria-pressed="${this.arenaRules !== false}" title="${esc(t('Meltwater in the Ember Dome, aurora lanes in the Aurora Palace, pond cracks on Pine Pond, rumble strips in the Golden Hall, raven shadows in the Dark Aerie'))}">${this.arenaRules !== false ? t('Arena rules on') : t('Arena rules off')}</button></div>
       </div>
+      </details>
       <div class="choice">${opts.map((tm) => `
         <div class="qp-row">
           <img src="${crest(tm.id, 64)}" alt="" width="44" height="44">
@@ -498,7 +503,8 @@ export class UI {
       </div>
       <div class="row" style="justify-content:space-between;align-items:center">${playAsHtml(this.app.save, this.app)}<button class="btn small ghost" data-close>${t('Back')}</button></div>`, (m, close) => {
       this.bindPlayAs(m);
-      const upd = () => { const x = mult(); m.querySelector('#ch-mult').textContent = this.challenges.size ? t('coins x{n}', { n: +x.toFixed(2) }) : ''; };
+      const upd = () => { const x = mult(); m.querySelector('#ch-mult').textContent = this.challenges.size ? t('coins x{n}', { n: +x.toFixed(2) }) : ''; m.querySelector('#qp-sum').textContent = optsLine(); };
+      m.querySelector('.qp-opts').addEventListener('toggle', (e) => { this.qpOpen = e.target.open; });
       upd();
       this.click('[data-ch]', (el) => {
         const id = el.dataset.ch;
@@ -509,13 +515,13 @@ export class UI {
       this.click('[data-arena]', (el) => {
         this.arenaPick = el.dataset.arena;
         m.querySelectorAll('[data-arena]').forEach((b) => b.setAttribute('aria-pressed', b === el));
-        audio.sfx('click');
+        audio.sfx('click'); upd();
       }, m);
       this.click('#arena-rules', (el) => {
         this.arenaRules = this.arenaRules === false;
         el.setAttribute('aria-pressed', this.arenaRules);
         el.textContent = this.arenaRules ? t('Arena rules on') : t('Arena rules off');
-        audio.sfx('click');
+        audio.sfx('click'); upd();
       }, m);
       this.click('[data-team]', (el) => { close(); this.app.startExhibition(el.dataset.team, [...this.challenges], this.arenaPick || 'auto', this.arenaRules !== false); }, m);
       this.click('[data-so]', (el) => { close(); this.app.startShootout(el.dataset.so); }, m);

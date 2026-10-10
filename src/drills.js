@@ -690,7 +690,7 @@ class FaceoffDrill extends DrillBase {
 // is clean once the machine's middle passes within the sweep of its centre).
 const RESURFACE_SECONDS = 60, CELL = 16;
 class ResurfaceDrill extends DrillBase {
-  constructor() { super(); this.noSwitch = true; this.noCard = true; this.machine = new DrivenResurfacer(); this.keepGroups = ['title']; } // (its art lives with the title screen's; nobody's card on the HUD)
+  constructor() { super(); this.noSwitch = true; this.noCard = true; this.machine = new DrivenResurfacer(); this.keepGroups = ['title', 'resurfacer']; } // (its art lives with the title screen's, the diagonals on a page of their own; nobody's card on the HUD)
   init(m) {
     this.hideGoalies(m);
     for (const s of m.skaters) { s.parked = true; s.x = 0; s.y = -900; s.vx = s.vy = 0; }

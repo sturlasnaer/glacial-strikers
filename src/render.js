@@ -246,7 +246,7 @@ export class Renderer {
     const P = Assets.atlas.art_additions && Assets.atlas.art_additions.polish;
     if (!P || !P.resurfacer) return;
     const p = lap.pos(), s = toScreen(p.x, p.y);
-    Assets.draw(ctx, lap.frame(P.resurfacer, (id) => !!Assets.frame(id)), s.x, s.y, 0.36 * persp(p.y));
+    Assets.draw(ctx, lap.frame(P.resurfacer, (id) => { const f = Assets.frame(id); return !!(f && Assets.pages[f[0]]); }), s.x, s.y, 0.36 * persp(p.y)); // (the diagonals only once their page is in: the drill's)
   }
 
   // Freshly flooded ice: a wet sheen along the machine's path that dries over a few seconds.

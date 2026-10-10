@@ -511,7 +511,7 @@ class App {
     if (this.loading) return;
     if (ghostTeam && !opts.awayTeam) return this.loadThen(Assets.ensureTeam(ghostTeam), () => this.startDrill(id, charId, { ...opts, awayTeam: ghostTeam }));
     if (id === 'faceoffs' && !opts.awayTeam) return this.loadThen(Assets.ensureTeam('lynx'), () => this.startDrill(id, charId, { ...opts, awayTeam: 'lynx' })); // (with the linesman)
-    if (id === 'resurface' && !Assets.groupReady('title')) return this.loadThen(Assets.loadGroup('title'), () => this.startDrill(id, charId, opts)); // (the machine's art)
+    if (id === 'resurface' && !(Assets.groupReady('title') && Assets.groupReady('resurfacer'))) return this.loadThen(Promise.all(['title', 'resurfacer'].map((g) => Assets.loadGroup(g))), () => this.startDrill(id, charId, opts)); // (the machine's art, and its diagonals)
     const { cfg, ctrl, def, awayTeam } = createDrill(id, this.save, charId, opts);
     this.cur = { drill: id, char: charId, teamId: awayTeam, ctrl, def, opts };
     this.attract = false;

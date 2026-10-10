@@ -1192,6 +1192,7 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
   .plan .plan-ico { width: 22px; height: 22px; }
   .scout { padding: 5px 8px; font-size: 13px; }
   .choice { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .choice:has(> .qp-row) { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); } /* (Quick play's rivals: a crest, a name and two buttons need the room) */
   .choice button { padding: 4px 8px; font-size: 12.5px; }
   .choice button b { font-size: 17px; }
   .locker-faces img { width: 52px; height: 52px; }
@@ -1323,4 +1324,8 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 /* after a two-player match: what each of them did */
 .seat-line { display: flex; justify-content: center; gap: 22px; margin: 2px 0 4px; font-family: var(--display); font-size: 21px; }
 .ios-steps { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+/* Quick play: the match options fold into one line */
+.qp-opts > summary { cursor: pointer; font-size: 14px; color: var(--ice); padding: 4px 0; }
+.qp-opts[open] > summary { margin-bottom: 6px; }
+.qp-opts > div + div { margin-top: 8px; }
 
