@@ -7,9 +7,8 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **CP: the Glacier Cave**
-2. **CR: the sticker album**
-3. **CS: decorations for the locker room**
+1. **CR: the sticker album**
+2. **CS: decorations for the locker room**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -42,6 +41,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered CN:** Harbour gull animation and translucent lighthouse beam. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CN-Testing-Update`.
 
 **Delivered CO:** Twelve camera-facing modular goal celebrations, with equipment masks and head anchors; gold Simple controls buttons and Settings icon. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CO-CQ-Testing-Update`.
+
+**Delivered CP:** Glacier Cave backdrop, scoreboard, foreground glass, penalty alcove, icicle effects and rule icon. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CP-Testing-Update`.
 
 ## Format notes
 
@@ -352,7 +353,7 @@ Metadata: `atlas.arena.harbour = { gulls: { frames: [the four ids], y, scale, sp
 
 Players made from parts (drafted rookies, free agents, and now the players of your own from Team › Create a player) only have one "celebrate" frame, so they bounce on the spot after scoring while the cast and the rivals have their signature celebrations. Please draw a 4-frame celebration for each parts build (`std`, `big`, `small`), facing the camera, in the style of the rival celebrations (`art_additions.rival_polish.<club>_<role>.signature`): a big fist pump into a knee slide, the stick held up. Like every parts body frame they're drawn without the head, so give each frame its head anchor in `modular.anchors` (view `s`) and their gear masks like the other body frames. Add them to each build's skater set as `skaters.body_<build>.signature` (the four ids, `signature_hand` if they're drawn with one hand), which the game already uses for a scorer's celebration. 12 frames plus masks and anchors.
 
-## Batch CP: the Glacier Cave
+## Batch CP ✓: the Glacier Cave
 
 A second building for exhibitions (like the Harbour Rink, Batch CM): **the Glacier Cave**, a rink carved inside a blue glacier, lit by lanterns and the glow of the ice. Its rule is coming in the code: *icicles*, now and then an icicle drops from the ceiling (its shadow grows on the ice first), shatters, and leaves a chunk of ice that deflects the puck until the next faceoff. Please draw, exactly like the AU arena packs (the same 1536×1024 backdrop with the rink lines, boards, glass and benches in the same places):
 - The backdrop (`arena_glacier_cave`): walls and a ceiling of layered blue ice with icicles hanging, lanterns along the boards, fans in thick coats on benches cut into the ice, frozen waterfalls, a few glowing crystals.
