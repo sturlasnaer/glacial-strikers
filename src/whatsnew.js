@@ -2,6 +2,13 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10m',
+    items: [
+      { icon: 'icons/stat_seasons', text: 'The home rink dresses up by the calendar: pumpkins, bats and a Snow Fox in costume from 20 October, lights, a tree and Jingle Bells in December.' },
+      { icon: 'hud_elements/ability/stamina', text: 'Settings › Break reminder: after half an hour or an hour of matches, Coach Brekka suggests a rest.' },
+    ],
+  },
+  {
     id: '2026-10-10l',
     items: [
       { icon: 'polish/resurfacer/east/phase_1', text: 'A new drill for fun: the Resurfacer. Drive the ice resurfacer and clean the rink in a minute. Gold earns the Fresh Sheet trophy.' },
