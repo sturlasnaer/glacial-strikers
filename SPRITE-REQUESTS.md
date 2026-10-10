@@ -7,16 +7,10 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **DX: divisions and their cups**
-2. **DY: veteran stars**
-3. **DZ: the poke check**
-4. **EA: the National clubs' crests**
-5. **EB: their mascots in the stands**
-6. **EC: their mascots for the race**
-7. **ED: the National map and postcards**
-8. **EE: National rinks (1)**
-9. **EF: National rinks (2)**
-10. **EG: National rinks (3)**
+1. **EA: the National clubs' crests**
+2. **EB: their mascots in the stands**
+3. **EC: their mascots for the race**
+4. **ED: the National map and postcards**
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -100,6 +94,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered DU-DV:** Thirty-two seasonal home-game cub poses and four seasonal team-bus frames. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DU-DV-Testing-Update`.
 
 **Delivered DW:** Ten seasonal coach-cub portraits matching the original framing and bottom edge. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DW-Testing-Update`.
+
+**Delivered DX-DZ:** Fourteen division crests, cups, movement icons, veteran badges and poke-check effects. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DX-DZ-Testing-Update`.
 
 ## Format notes
 
@@ -710,7 +706,7 @@ The cub who coaches Little player games from the corner of the screen (DJ) shoul
 
 10 frames.
 
-## Batch DX: divisions and their cups
+## Batch DX ✓: divisions and their cups
 
 The league is getting divisions: win the Frostline Cup and the club is promoted to a tougher level next season, with its own, grander cup; finish last and it drops back down. Three levels: **Regional** (today's league, the Frostline Cup), **National** and **Elite**. Please draw, in the style of the existing `badges/frostline_cup` and the other badges, **no lettering**, as atlas frames on a page in the `badges` group:
 - `badges/tier_regional`, `badges/tier_national`, `badges/tier_elite` (256×256): division crests: a bronze, a silver and a gold shield with a snowflake, one, two and three small stars above it, ribbons in the club's blue.
@@ -719,7 +715,7 @@ The league is getting divisions: win the Frostline Cup and the club is promoted 
 
 7 frames.
 
-## Batch DY: veteran stars
+## Batch DY ✓: veteran stars
 
 Players who reach level 10 keep going as veterans (veteran levels 1 to 10, each a point to push a stat further). Please draw, **no lettering** (the game writes the number beside it), as atlas frames on a page in the `badges` group:
 - `badges/veteran` (128×128): a gold star with a little laurel and a tiny Snow Fox head in its middle, for the player cards.
@@ -728,7 +724,7 @@ Players who reach level 10 keep going as veterans (veteran levels 1 to 10, each 
 
 3 frames.
 
-## Batch DZ: the poke check
+## Batch DZ ✓: the poke check
 
 Skaters are getting a poke check: a quick jab of the stick at the carrier's puck, no body contact. The game uses the skaters' existing poses; please draw the effect that sells it, as atlas frames on a page in the `badges` group (small, used in every match):
 - `fx/poke_1`, `fx/poke_2`, `fx/poke_3` (96×48, transparent, pointing right; the game rotates it): an ice-blue swoosh of a stick jab: the start, the jab at full reach with a little streak, the fade.

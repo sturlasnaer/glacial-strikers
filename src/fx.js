@@ -107,7 +107,11 @@ export class FX {
       if (a.bedrockT > 0) this.anim('ability_effects/stone_barrier/phase_', b.x, b.y + 4, 0.18, { fps: 20, frames: [1, 2, 5, 6] });
     });
     on('steal', ({ s }) => this.text(s.x, s.y - 92, t('STEAL!'), '#71dce8', 0.9, 18));
-    on('poke_hit', ({ x, y }) => this.burst(x, y, 6, 10, ELEMENT_COLORS.ice, 150, 0.35)); // (the poke check knocks it free: chips of ice)
+    on('poke_hit', ({ x, y }) => { // the native contact burst, or chips until its page is ready
+      const f = Assets.frame('fx/poke_hit');
+      if (f && Assets.pages[f[0]]) this.anim('fx/', x, y, 0.5, { frames: ['poke_hit'], fps: 5 });
+      else this.burst(x, y, 6, 10, ELEMENT_COLORS.ice, 150, 0.35);
+    });
     // gear doing its job
     const look = (s, slot) => s && s.gear && GEAR_LOOK[s.gear[slot]];
     on('hit', ({ b, power }) => {

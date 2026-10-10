@@ -3722,7 +3722,7 @@ export class UI {
                 const lu = ups.filter((u) => u.id === k.id);
                 const pct = expPct(rr), vetUp = lu.some((u) => u.vet);
                 return `<div class="xp-row"><img src="${portrait(k.id, 0, null, 88)}" alt="">
-                  <div><div>${esc(k.name)} <span class="muted">${t('+{n} EXP', { n: rewards.exp[k.id] })}</span> ${lu.length ? `<span class="lvlup">${vetUp ? t('VETERAN {n}!', { n: rr.vet }) : t('LEVEL {n}!', { n: rr.level })}</span>` : ''}</div>
+                  <div><div>${esc(k.name)} <span class="muted">${t('+{n} EXP', { n: rewards.exp[k.id] })}</span> ${lu.length ? `<span class="lvlup">${vetUp ? smallIcon('icons/veteran_up', 40, 'rule-ico') : ''}${vetUp ? t('VETERAN {n}!', { n: rr.vet }) : t('LEVEL {n}!', { n: rr.level })}</span>` : ''}</div>
                   <div class="xpbar"><i data-w="${pct}"></i></div></div><span class="lvl">${t('LV {n}', { n: rr.level })}${vetBadge(rr.vet)}</span></div>`;
               }).join('')}
               ${data.rewards.chem && Object.keys(data.rewards.chem).length ? `<div class="label" style="margin-top:6px">${t('Chemistry')}</div>
