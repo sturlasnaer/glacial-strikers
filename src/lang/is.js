@@ -1432,6 +1432,7 @@ export const IS = {
   "Restore a save": "Endurheimta vistun",
   "Resume": "Halda áfram",
   "Resurfacer": "Ísheflari",
+  "Resurfacer Waltz": "Ísheflaravals",
   "retired": "hætt",
   "Retired": "Hætt",
   "Retry": "Reyna aftur",

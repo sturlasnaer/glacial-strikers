@@ -520,7 +520,7 @@ class App {
     this.touch.reset();
     this.drillShown = false;
     this.tutorial = -1;
-    this.music(id === 'shootout' ? 'shootout' : 'training');
+    this.music(id === 'shootout' ? 'shootout' : id === 'resurface' ? 'waltz' : 'training'); // (the Resurfacer: the arena organ's waltz)
     audio.setArena('home');
     this.checkRotate();
   }

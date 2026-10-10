@@ -510,6 +510,40 @@ export const SONGS = {
     order: ['A', 'B'], loop: 0,
   },
 
+  // ---------------------------------------------------------------- the Resurfacer drill: the arena organ's waltz
+  waltz: {
+    name: 'Resurfacer Waltz', bpm: 168, beat: 4, bar: 12, key: 'F', gain: 1.4,
+    inst: { lead: 'organ', comp: 'organ', bass: 'pbass', bells: 'celesta' },
+    pan: { comp: -0.3, bells: 0.35 },
+    sections: {
+      intro: {
+        bars: 2, chords: 'F C7',
+        comp: { pad: true, oct: 4, rhythm: '.:4 x:3 .:1 x:3 .:1' },
+        bass: { oct: 2, pat: '1:4 .:8' },
+        drums: { h: '....x...x...', start: { c: 'x' } },
+      },
+      A: {
+        bars: 8, chords: 'F C7 C7 F F Bb C7 F',
+        lead: `C5:4 F5:4 A5:4 | G5:8 E5:4 | Bb4:4 C5:4 E5:4 | A5:8 F5:4 |
+               C5:4 F5:4 A5:4 | D6:8 Bb5:4 | C6:4 Bb5:4 G5:4 | F5:8 .:4`,
+        comp: { pad: true, oct: 4, rhythm: '.:4 x:3 .:1 x:3 .:1' },
+        bass: { oct: 2, pat: '1:4 .:8' },
+        drums: { k: 'x...........', h: '....x...x...' },
+        hype: { bells: { follow: 'lead' } },
+      },
+      B: {
+        bars: 8, chords: 'Bb F C7 F Bb F G7 C7',
+        lead: `D5:4 F5:4 Bb5:4 | A5:6 G5:2 F5:4 | G5:4 E5:4 C5:4 | F5:8 A4:4 |
+               Bb4:4 D5:4 F5:4 | C6:6 Bb5:2 A5:4 | B5:4 D6:4 F6:4 | E6:8 C6:4`,
+        bells: { follow: 'lead' },
+        comp: { pad: true, oct: 4, rhythm: '.:4 x:3 .:1 x:3 .:1' },
+        bass: { oct: 2, pat: '1:4 5:4 .:4' },
+        drums: { k: 'x...........', h: '....x...x...', fill: { k: 'x.....x.....', h: '....x...xxxx' } },
+      },
+    },
+    order: ['intro', 'A', 'B', 'A'], loop: 1,
+  },
+
   // ---------------------------------------------------------------- awards night
   awards: {
     name: 'Frostline Awards', bpm: 92, key: 'Bb', gain: 1.5,
