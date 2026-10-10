@@ -9,6 +9,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Next batches:**
 1. **CP: the Glacier Cave**
 2. **CR: the sticker album**
+3. **CS: decorations for the locker room**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -378,3 +379,15 @@ The game now has a **sticker album** (Trophies › Sticker album): a numbered st
 - Two trophies in the style of the other achievement badges: `achievements/got_the_set` (a full page of stickers) and `achievements/collector` (a closed album with a gold star).
 
 17 images.
+
+## Batch CS: decorations for the locker room
+
+The locker room hub (`locker_room.webp`, 1536×864) is getting **decorations**: bought in the Shop, each shows in its own spot in the room, so kids can make the room their own. The code is going in now and shows each item as soon as its frame is in. Please draw them in the room's style and angle (the same light, outlines and three-quarter view as the room and its chest), as atlas frames on a page in the `hub` group, transparent, each with its pivot where it says. Sizes are in the room's pixels:
+- **Over the lockers** (pivot top centre, about 860 wide, hung from the top of the lockers around x 760, y 18): `decor/banner_pennants` (a string of pennants in the club's ice blue and cream), `decor/banner_lights_1` and `_2` (a string of warm fairy lights, two frames: twinkling), `decor/banner_snowflakes` (paper snowflakes on a string).
+- **Posters on two locker doors** (pivot centre, about 80 wide and 110 high, on a door around x 330, y 125 and x 1095, y 125), no lettering: `decor/poster_fox` (the Snow Fox mascot cheering), `decor/poster_aurora` (an aurora over an outdoor rink), `decor/poster_legends` (the dragon and the wolf, Fáfnir and Fenrir, back to back), `decor/poster_retro` (an old sepia team photo in a frame).
+- **A rug under the team** (pivot centre, about 560 wide, lying on the floor at the room's angle around x 735, y 610; the skaters stand on it, so keep it flat): `decor/rug_crest` (a round rug with the snowflake crest), `decor/rug_rink` (a rug shaped like a little hockey rink), `decor/rug_fur` (a fluffy white faux-fur rug).
+- **The front right corner** (pivot at the bottom centre, about 200 high, on the floor around x 1330, y 790): `decor/corner_pine` (a potted little pine with a star), `decor/corner_fridge` (a drinks cooler with a glowing front), `decor/corner_sculpture` (an ice sculpture of a fox on a stand), `decor/corner_arcade_1` and `_2` (a small arcade cabinet, two frames: its screen changing).
+- **On the front bench** (pivot at the bottom centre, about 90 high, standing on the bench around x 857, y 680): `decor/bench_boombox_1` and `_2` (a retro boombox, two frames: the speakers pumping), `decor/bench_plushie` (a plush snow fox).
+- For the Shop's list, nothing extra: the game shows each item from its own frame.
+
+If a spot sits better a little elsewhere in the art, add `atlas.decor_slots = { banner: { x, y }, poster: [{ x, y }, { x, y }], rug: { x, y }, corner: { x, y }, bench: { x, y } }` in room pixels and the game uses it. About 19 frames.
