@@ -7,8 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **CC: the Resurfacer drill**
-2. **CD: the home rink dressed for Halloween and the holidays**
+1. **CD: the home rink dressed for Halloween and the holidays**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -21,6 +20,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered CA:** the mint player card, co-op controllers icon and Better Together achievement. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CA-Testing-Update`.
 
 **Delivered CB:** eight custom-player head families, every view and effort pose, five portrait expressions and native skin/hair masks. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CB-Testing-Update`.
+
+**Delivered CC:** the Resurfacer drill icon and Fresh Sheet achievement art. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CC-Testing-Update`.
 
 ## Format notes
 
@@ -244,7 +245,7 @@ Team › Create a player now builds a skater of your own from the parts (a build
 
 8 heads, with masks and portraits, like AZ.
 
-## Batch CC: the Resurfacer drill
+## Batch CC ✓: the Resurfacer drill
 
 Training has a new drill for fun: you drive the ice resurfacer (the title screen's machine) round the rink to clean the ice. Please draw:
 - `equipment_items/hub/resurface`: the drill card's icon, 128×128 like the other drill icons (`equipment_items/hub/target`, `.../tips`): the resurfacer from a three-quarter view with a shiny fresh strip of ice behind it.
