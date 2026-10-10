@@ -10,6 +10,13 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 1. **DX: divisions and their cups**
 2. **DY: veteran stars**
 3. **DZ: the poke check**
+4. **EA: the National clubs' crests**
+5. **EB: their mascots in the stands**
+6. **EC: their mascots for the race**
+7. **ED: the National map and postcards**
+8. **EE: National rinks (1)**
+9. **EF: National rinks (2)**
+10. **EG: National rinks (3)**
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -728,4 +735,46 @@ Skaters are getting a poke check: a quick jab of the stick at the carrier's puck
 - `fx/poke_hit` (64×64): a small white-and-ice burst with a few chips of ice, when a poke knocks the puck free.
 
 4 frames.
+
+## The National division's clubs (EA–EG)
+
+Divisions are in (DX): win the Frostline Cup and the club is promoted to the **National Cup**, played against seven new clubs from all over the country, from the frozen north to a warm canyon town. Like the Glacier Owls and Thunder Moose, their players are built from parts in the club's colours, so they need no roster art; what they need is below. Everything **without lettering**. Names and colours:
+
+| club | key (`mark`) | colours | home | character |
+|---|---|---|---|---|
+| **Hot Springs Capybaras** | `hot_springs_capybaras` | warm teal and sunset orange | a spa town of steaming hot pools | calm and unhurried; never rattled |
+| **Cliffside Puffins** | `cliffside_puffins` | black, white and bright orange | sea cliffs full of burrows | quick little passers who dart everywhere |
+| **Timberline Grizzlies** | `timberline_grizzlies` | bark brown and forest green | a log town high in the mountain forest | big, heavy hitters |
+| **Driftwood Seals** | `driftwood_seals` | slate blue and silver | a frozen bay with ice floes | slippery, always ducking out of checks |
+| **Pack Ice Penguins** | `pack_ice_penguins` | black, white and egg-yolk yellow | a colony on the pack ice by icebergs | all teamwork: pass, pass, pass |
+| **Sunmesa Bulls** | `sunmesa_bulls` | brick red and desert gold | a warm canyon town with adobe walls and cacti | charge straight at you |
+| **Northlight Narwhals** | `northlight_narwhals` | deep sea blue and aurora green | a fjord under the northern lights | fast and flashy |
+
+## Batch EA: the National clubs' crests
+
+`rival_crests/crest/<mark>` for each of the seven (148×148, like `rival_crests/crest/glacier_owls`), drawn in the club's own colours, each with its animal and a hint of its home (steam, a cliff, pines, a floe, an iceberg, a mesa, a fjord). As atlas frames on a page in the `icons_z` group. 7 frames.
+
+## Batch EB: their mascots in the stands
+
+Each club's costumed mascot, dancing in the stands at their home rink, like `mascot/aurora_royals/…` (about 72×102, the same scale and pivot): `mascot/<mark>/idle`, `wave`, `cheer_a`, `cheer_b` (a friendly costumed capybara, puffin, grizzly, seal, penguin, bull and narwhal, each in a team jersey). Each club's four frames on a page in that club's own group `rival_<mark>` (the game loads it for games against them). 28 frames.
+
+## Batch EC: their mascots for the race
+
+The same seven mascots for the mascot race at the break (DB), like `race/glacier_owls/…` (280×240, running to the right): `race/<mark>/run_1`..`_4` and `race/<mark>/win`. On a page in the `race` group. 35 frames.
+
+## Batch ED: the National map and postcards
+
+- `map/region_national` (1536×864): a painted bird's-eye map of the whole country for the National road trip (like DG's `map/region`), no lettering: Snowcrest in the north-west, the seven clubs' towns spread from the frozen north (the Penguins' pack ice, the Narwhals' fjord, the Puffins' cliffs, the Seals' bay) down through the Grizzlies' mountain forest to the warm south (the Capybaras' hot springs, the Bulls' canyon town), with roads, rivers and a railway between. A clear spot (about 90 px) in each town for the crest, and `atlas.map_towns_national = { home: [x, y], <team>: [x, y], … }` with the team keys `capybaras`, `puffins`, `grizzlies`, `seals`, `penguins`, `bulls`, `narwhals`. On a page in the `map` group.
+- `postcard/<team>` (480×320, like DK's) for each of the seven, with the stamp and postmark, **no lettering**. On a page in the `postcards` group.
+
+1 map and 7 frames.
+
+## Batches EE, EF, EG: the National rinks
+
+Each club's home rink as an arena backdrop exactly like the existing ones (1536×1024, the same rink lines, boards, glass and benches in the same places so everything lines up), as plain images listed in `atlas.arenas`, no lettering:
+- **EE:** `arena_hot_springs` (the Capybaras' indoor rink in a bathhouse hall, steaming pools and palms beyond tall windows), `arena_puffin_cliffs` (the Puffins' outdoor rink on a clifftop, the sea far below, burrows in the turf around).
+- **EF:** `arena_timber_lodge` (the Grizzlies' log arena, antler chandeliers, a big stone fireplace), `arena_ice_floes` (the Seals' rink on a frozen bay, floes and seals lounging around it), `arena_pack_ice` (the Penguins' rink among icebergs, the colony in the stands).
+- **EG:** `arena_sunmesa` (the Bulls' rink in a warm canyon town: adobe walls, cacti and sunshine through big windows, fans in sun hats), `arena_fjord_hall` (the Narwhals' hall by a fjord, northern lights over the water through the windows).
+
+Each on its own group named after it (`arena_hot_springs` …), loaded only for games there. 7 backdrops.
 
