@@ -7,8 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **CW: goal celebrations to choose**
-2. **CX: a pet for the locker room**
+1. **CX: a pet for the locker room**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -53,6 +52,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered CU:** Picture day backdrop: native 1600×1000 home rink with cheering crowd, snowflake banner and clear ice for the team. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CU-Testing-Update`.
 
 **Delivered CV:** Summit Rink backdrop, two scoreboard phases, snowy glass, four penalty-hut layers, three clouds, two cable-car poses and Thin air icon. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CV-Testing-Update`.
+
+**Delivered CW:** 24 native goal celebration frames: four-frame guitar and snow-angel loops for Nix, Volta and Bram, with consistent anchors and correct stick hands. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CW-Testing-Update`.
 
 ## Format notes
 
@@ -427,7 +428,7 @@ A third building for exhibitions, like the Harbour Rink (CM) and the Glacier Cav
 
 On a group of its own (say `arena_cv`), with `summit_rink` in `atlas.arenas`. About 6 frames plus the backdrop.
 
-## Batch CW: goal celebrations to choose
+## Batch CW ✓: goal celebrations to choose
 
 The cast's goal celebrations (`signature_celebrations/nix|volta|bram`) are a hit; now the player gets to **pick** one for each of the three in the Team tab. Please draw two more for each of Nix, Volta and Bram, in the home kit, facing the camera, at the same scale and with the same pivots (at the skates) as their signature frames, each four frames that **loop**:
 - `celebrations/<nix|volta|bram>/guitar_1`..`_4`: a stick guitar solo, sliding on one knee, head banging.

@@ -179,7 +179,7 @@ export const Assets = {
     if (!rc) return;
     const ours = (id) => (/\/home[_/]/.test(id) && !id.startsWith('hud_elements/')) || id.startsWith('expressions_core/')
       || id.startsWith('expressions_halla_royals_comets/halla/') || id === 'hud_elements/misc/home_crest' || id.startsWith('crests_club/')
-      || id === 'arena/banner/glacial_strikers' || id.startsWith('mascot/');
+      || id === 'arena/banner/glacial_strikers' || id.startsWith('mascot/') || id.startsWith('celebrations/');
     const rects = new Map();
     for (const [id, f] of Object.entries(this.atlas.frames)) {
       if (!ours(id) || this.atlas.pages[f[0]].group !== 'home') continue;

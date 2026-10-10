@@ -1292,6 +1292,10 @@ export class Renderer {
     const dir = this.skaterDir(s, !!set.northeast, performance.now() / 1000);
     const motion = this.motionFrame(s, match, set, dir);
     if (motion) return motion;
+    const celebration = s.team === 0 && this.celebrations && this.celebrations[s.who];
+    if (set.celebrations_hand && set.celebrations?.[celebration]?.length && s.stun <= 0 && s.celebrate > 0 &&
+        (match.state === 'goal' || match.state === 'over') && match.lastGoal?.scorer === s)
+      return this.poseFrame(s, match, set, 'south');
     // Parts celebrations face the camera and use their own drawn stick hand.
     if (set.signature_hand && s.stun <= 0 && s.celebrate > 0 &&
         (match.state === 'goal' || match.state === 'over') && match.lastGoal?.scorer === s)
@@ -1368,7 +1372,7 @@ export class Renderer {
     // a celebration picked for them (Batch CW): looping
     const pick = s.team === 0 && this.celebrations && this.celebrations[s.who], C = pick && set.celebrations && set.celebrations[pick];
     if (C && C.length && s.celebrate > 0 && (match.state === 'goal' || match.state === 'over') && match.lastGoal && match.lastGoal.scorer === s) {
-      return { id: C[Math.floor((3 - s.celebrate) * 7) % C.length], flip: Math.cos(s.face) < -0.3, pose: 'signature' };
+      return { id: C[Math.floor((3 - s.celebrate) * 7) % C.length], flip: set.celebrations_hand ? s.hand !== set.celebrations_hand : Math.cos(s.face) < -0.3, pose: 'signature' };
     }
     if (s.celebrate > 0 && (match.state === 'goal' || match.state === 'over') && set.signature && match.lastGoal && match.lastGoal.scorer === s) {
       const i = Math.min(3, Math.floor((3 - s.celebrate) * 6));
