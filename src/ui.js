@@ -2975,7 +2975,7 @@ export class UI {
         <span class="label" style="font-size:15px">${t('Skater:')}</span>
         ${rosterIds(s).map((id) => `<button class="btn small ${this.drillChar === id ? 'cream' : 'ghost'}" data-char="${id}" style="display:flex;gap:6px;align-items:center"><img src="${portrait(id, 0, null, 64)}" width="28" height="28" alt="">${esc(member(id).name)}</button>`).join('')}
       </div>
-      ${snowballArt() ? `<div class="card drill snow-card"><div class="card-head"><img src="${ico(Assets.pages[Assets.frame('snowball/peek_3')[0]] ? 'snowball/peek_3' : 'icons/pet', 128)}" alt="" style="border:0;background:none">
+      ${snowballArt() ? `<div class="card drill snow-card"><div class="card-head">${(() => { const src = (Assets.pages[Assets.frame('snowball/peek_3')[0]] && ico('snowball/peek_3', 128)) || ico('icons/pet', 128) || ico('badges/snowflake', 128); return src ? `<img src="${src}" alt="" style="border:0;background:none">` : ''; })()}
           <div style="min-width:0"><h3>${t('Snowball fun')}</h3><div class="sub">${t('Just for fun')}</div></div></div>
         <p class="muted" style="margin:0;font-size:13px">${t('For the youngest: toss soft snowballs at the cub as it pops up from the snow forts. A coin for every hit.')}</p>
         <div class="row" style="justify-content:space-between"><span style="font-size:13px">${t('Best: {score}', { score: `<b class="gold-t">${(s.snowball && s.snowball.best) || '–'}</b>` })}</span><button class="btn small gold" id="snow-play">${t('Play')}</button></div></div>` : ''}
