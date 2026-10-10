@@ -1479,3 +1479,6 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .mini-podium { width: min(320px, 70vw); }
 @keyframes mini-pop { from { transform: scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .mini-cup-big, .mini-podium { animation: none; } }
+
+/* Apparel previews share a canvas; the upper layer must stay transparent. */
+.outfit-ico img { background: none; border-radius: 0; }
