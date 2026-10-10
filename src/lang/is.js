@@ -1016,6 +1016,7 @@ export const IS = {
   "In goal": "Í markinu",
   "In goal: {name}": "Í marki: {name}",
   "In Safari tap Share, then Add to Home Screen.": "Í Safari: ýttu á Deila og svo Bæta á heimaskjá.",
+  "In season the cub wears its pumpkin costume or Santa hat at home games too, and the team bus on the road-trip map dresses up as well.": "Á hátíðum klæðist yrðlingurinn graskersbúningnum eða jólasveinahúfunni á heimaleikjum líka, og liðsrútan á ferðakortinu fær hátíðarbúning.",
   "In Sync": "Í takt",
   "In the corner": "Í horninu",
   "In the room": "Í klefanum",
