@@ -7,6 +7,7 @@ import { firstKey } from './keys.js';
 import { t } from './i18n.js';
 import { isPartsArt } from './modular.js';
 import { newCoach, coachStep, coachPraise } from './coach.js';
+import { seasonFor } from './seasonal.js';
 
 // The fan cam (Batch CT): is the art in, loaded and ready to draw?
 export const fanCamReady = () => {
@@ -68,6 +69,8 @@ const face = (cv, ...args) => paint(cv, portraitCanvas(...args));
 // The cub as coach (Little player games, Batch DJ): its pose and words for each tip.
 const COACH = { pass: ['point', () => t('Pass it!')], shoot: ['point', () => t('Shoot!')], chase: ['think', () => t('Get the puck back!')], goal: ['cheer', () => t('Hooray!')], nicepass: ['cheer', () => t('Nice pass!')], against: ['talk', () => t('Next one\'s ours!')] };
 const coachReady = () => { const f = Assets.frame('cub_coach/talk_1'); return !!(f && Assets.pages[f[0]]); };
+// in season, in its costume (Batch DW) when that page is in (it is at home games in season)
+const coachArt = (pose) => { const sz = seasonFor(), k = sz && `cub_coach_${sz}/${pose}`, f = k && Assets.frame(k); return f && Assets.pages[f[0]] ? k : `cub_coach/${pose}`; };
 
 export class HUD {
   constructor(app) {
@@ -169,7 +172,7 @@ export class HUD {
     const el = this.el.querySelector('#coachcub'), c = COACH[k];
     if (!el || !c || !coachReady()) return;
     this.coachPose = c[0];
-    el.querySelector('img').src = Assets.sceneImage(`cub_coach/${c[0] === 'talk' ? 'talk_1' : c[0]}`, 192);
+    el.querySelector('img').src = Assets.sceneImage(coachArt(c[0] === 'talk' ? 'talk_1' : c[0]), 192);
     el.querySelector('.cc-say').textContent = c[1]();
     el.hidden = false;
     el.classList.remove('up'); void el.offsetWidth; el.classList.add('up');
@@ -445,7 +448,7 @@ export class HUD {
       if (this.coachT > 0) {
         const el = this.el.querySelector('#coachcub');
         if ((this.coachT -= dt) <= 0) el.hidden = true;
-        else if (this.coachPose === 'talk') { const f = `cub_coach/talk_${1 + (Math.floor(this.coachT * 6) % 2)}`, img = el.querySelector('img'); if (img.dataset.f !== f) { img.dataset.f = f; img.src = Assets.sceneImage(f, 192); } }
+        else if (this.coachPose === 'talk') { const f = coachArt(`talk_${1 + (Math.floor(this.coachT * 6) % 2)}`), img = el.querySelector('img'); if (img.dataset.f !== f) { img.dataset.f = f; img.src = Assets.sceneImage(f, 192); } }
       }
     }
     if (this.hintT > 0) {
