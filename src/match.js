@@ -734,6 +734,7 @@ export class Match {
       case 'eclipse': speed = 1250; break;
       default: speed = s.d.wrist;
     }
+    if (this.twists.air) speed *= this.twists.air.shot; // (thin air)
     const distG = Math.hypot(gx - p.x, aimY - p.y);
     let err = s.d.aimErr * (0.45 + distG / 520);
     if (kind === 'slap') err *= 0.75 + 0.6 * charge;
@@ -1048,7 +1049,7 @@ export class Match {
       if (p.z <= 0) { p.z = 0; p.vz = p.vz < -60 ? -p.vz * 0.3 : 0; }
     }
     // friction
-    const f = Math.exp(-(this.mods.has('speed') ? 0.3 : 0.42) * h);
+    const f = Math.exp(-(this.mods.has('speed') ? 0.3 : 0.42) * (this.twists.air ? this.twists.air.glide : 1) * h); // (thin air: it glides further)
     p.vx *= f; p.vy *= f;
     const lane = this.laneAt(p.x, p.y);
     if (lane) p.vx += lane.dir * 140 * h;

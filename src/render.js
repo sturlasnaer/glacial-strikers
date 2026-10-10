@@ -525,6 +525,7 @@ export class Renderer {
       const g = H.gulls, span = 1900, x = ((t * (g.speed || 50) * (i % 2 ? -1 : 1) + i * 620) % span + span) % span - 180;
       Assets.draw(ctx, g.frames[Math.floor(t * (g.fps || 6) + i) % g.frames.length], x, g.y + i * 26 + Math.sin(t * 1.3 + i) * 12, g.scale || 0.4, { flip: i % 2 === 1 });
     }
+    if (arena === 'summit_rink') this.drawSummit(ctx, t, A.summit || {});
     // the Harbour Rink's windsock (Batch CM): limp, lifting, then streaming in a gust
     const sock = arena === 'harbour_rink' && A.windsock, wind = match.twists && match.twists.wind;
     if (sock && sock.frames) {
@@ -537,6 +538,21 @@ export class Renderer {
     if (board) this.drawScoreboard(ctx, match, fx, board);
     this.drawGlassFans(ctx, fx);
     this.drawCameraFlashes(ctx, fx);
+  }
+
+  // The Summit Rink (Batch CV): a cable car gliding across the sky, swaying, and clouds drifting
+  // past below the rink. S = atlas.arena.summit: { gondola: { y, scale, period }, clouds: [{ y,
+  // scale, speed }] } in backdrop pixels, or these.
+  drawSummit(ctx, t, S) {
+    const g = S.gondola || {}, gf = ['arena_summit/gondola_1', 'arena_summit/gondola_2'];
+    if (Assets.frame(gf[0])) {
+      const period = g.period || 40, u = (t % period) / period;
+      Assets.draw(ctx, gf[Math.floor(t * 1.5) % 2], -200 + u * (1536 + 400), (g.y ?? 110) + Math.sin(u * Math.PI) * 26, g.scale || 0.5); // (the cable sags in the middle)
+    }
+    (S.clouds || [{ y: 1000, scale: 0.9, speed: 14 }, { y: 28, scale: 0.7, speed: -10 }, { y: 985, scale: 0.6, speed: 9 }]).forEach((c, i) => {
+      const id = `arena_summit/cloud_${(i % 3) + 1}`, span = 1536 + 600;
+      if (Assets.frame(id)) Assets.draw(ctx, id, ((((t * c.speed + i * 700) % span) + span) % span) - 300, c.y, c.scale || 0.7, { alpha: 0.75 });
+    });
   }
 
   // The club's history in the rafters at home: a banner for every Frostline Cup (left of the

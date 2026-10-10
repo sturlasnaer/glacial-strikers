@@ -112,6 +112,9 @@ export function collideNets(p, rad) {
 // The Glacier Cave's icicles: the shadow's warning (s), the reach of the impact, a chunk's
 // radius, and how many chunks lie on the ice at once (the oldest melts into the ice for a new one).
 export const ICICLE = { warn: 1.6, r: 34, chunk: 15, max: 3 };
+// The Summit Rink's thin air: the puck glides further (its friction times glide), shots fly
+// faster, and skaters tire sooner (sprinting drains faster, stamina comes back slower).
+export const THIN_AIR = { glide: 0.6, shot: 1.08, drain: 1.25, regen: 0.85 };
 export const AURORA_ROWS = [-215, -120, 125, 245];
 const lane = (y, dir) => ({ x0: -440, x1: 440, y, h: 34, dir });
 
@@ -173,6 +176,7 @@ export function makeTwists(kind, rng = Math.random) {
     // shatters, and leaves a chunk of ice on the rink till the next faceoff
     return { ...base, ice: { next: 8 + rng() * 4, falls: [], chunks: [] } };
   }
+  if (kind === 'thin_air') return { ...base, air: THIN_AIR }; // (the Summit Rink)
   if (kind === 'pond_cracks') {
     // two hairline cracks to start; hits, hard shots and quakes add more
     const cracks = [];

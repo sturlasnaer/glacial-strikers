@@ -304,12 +304,12 @@ export class Skater {
     // stamina
     const sprinting = inp.sprint && Math.hypot(inp.mx, inp.my) > 0.2 && !this.staminaLock && this.dashT <= 0;
     if (sprinting) {
-      this.stamina -= 30 * (this.hasPerk('Breakaway') ? 0.8 : 1) * dt;
+      this.stamina -= 30 * (this.hasPerk('Breakaway') ? 0.8 : 1) * (this.match.twists?.air ? this.match.twists.air.drain : 1) * dt; // (thin air: tiring sooner)
       this.regenDelay = 0.5;
       if (this.stamina <= 0) { this.stamina = 0; this.staminaLock = true; }
     } else {
       this.regenDelay -= dt;
-      if (this.regenDelay <= 0) this.stamina = Math.min(this.d.staminaMax, this.stamina + this.d.regen * this.regenMul * dt);
+      if (this.regenDelay <= 0) this.stamina = Math.min(this.d.staminaMax, this.stamina + this.d.regen * this.regenMul * (this.match.twists?.air ? this.match.twists.air.regen : 1) * dt);
     }
     if (this.staminaLock && this.stamina > this.d.staminaMax * 0.3) this.staminaLock = false;
 

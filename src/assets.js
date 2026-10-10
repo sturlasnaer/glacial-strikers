@@ -16,7 +16,7 @@ const INLINE = typeof window !== 'undefined' && window.__INLINE; // single-file 
 const CORE = ['home', 'away', 'title', 'icons_z', 'allstar', 'icons_ac', 'legends', 'club_masks'];
 const MATCH = ['abilities_al', 'linesman', 'arena_au', 'supporter_masks'];
 // A building's own layers, loaded only for a match there (the Cup Final's Coliseum: a big page).
-const ARENA_GROUPS = { frostline_coliseum: ['arena_bx'], harbour_rink: ['arena_cm'], glacier_cave: ['arena_cp'] };
+const ARENA_GROUPS = { frostline_coliseum: ['arena_bx'], harbour_rink: ['arena_cm'], glacier_cave: ['arena_cp'], summit_rink: ['arena_cv'] };
 // Groups whose data masks live on pages of their own (read, never team-recoloured), loaded and kept with them.
 const COMPANION = { parts: 'parts_masks', goalie_parts: 'goalie_parts_masks' };
 

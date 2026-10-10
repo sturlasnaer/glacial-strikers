@@ -568,6 +568,41 @@ export const SONGS = {
     order: ['intro', 'A', 'B', 'A'], loop: 1,
   },
 
+  // ---------------------------------------------------------------- Summit Rink: an alpine waltz
+  summit: {
+    name: 'Summit Rink', bpm: 152, beat: 4, bar: 12, key: 'D', gain: 1.35,
+    inst: { lead: 'flute', comp: 'organ', bass: 'pbass', bells: 'bell', harm: 'harm' },
+    pan: { comp: -0.3, bells: 0.35, harm: 0.3 },
+    sections: {
+      intro: {
+        bars: 2, chords: 'D A7',
+        comp: { pad: true, oct: 4, rhythm: '.:4 x:3 .:1 x:3 .:1' },
+        bass: { oct: 2, pat: '1:4 .:8' },
+        drums: { h: '....x...x...', start: { c: 'x' } },
+      },
+      A: {
+        bars: 8, chords: 'D A7 A7 D D G A7 D',
+        lead: `D5:4 A4:4 D5:4 | E5:4 C#5:4 A4:4 | G5:4 E5:4 C#5:4 | D5:8 A4:4 |
+               F#5:4 A5:4 D6:4 | D6:4 B5:4 G5:4 | E5:4 G5:4 C#6:4 | D6:8 .:4`,
+        comp: { pad: true, oct: 4, rhythm: '.:4 x:3 .:1 x:3 .:1' },
+        bass: { oct: 2, pat: '1:4 .:8' },
+        drums: { k: 'x...........', h: '....x...x...' },
+        hype: { harm: { follow: 'lead' }, drums: { s: '....x...x...' } },
+      },
+      B: {
+        bars: 8, chords: 'G D A7 D G D A7 D',
+        lead: `B5:4 D6:4 B5:4 | A5:8 F#5:4 | G5:4 E5:4 A5:4 | F#5:8 D5:4 |
+               G5:2 A5:2 B5:4 D6:4 | F#6:4 E6:2 D6:2 A5:4 | E6:4 C#6:4 A5:4 | D6:8 .:4`,
+        bells: { follow: 'lead' },
+        comp: { pad: true, oct: 4, rhythm: '.:4 x:3 .:1 x:3 .:1' },
+        bass: { oct: 2, pat: '1:4 5:4 .:4' },
+        drums: { k: 'x...........', h: '....x...x...', fill: { k: 'x.....x.....', h: '....x...xxxx' } },
+        hype: { harm: { follow: 'lead' } },
+      },
+    },
+    order: ['intro', 'A', 'B', 'A'], loop: 1,
+  },
+
   // ---------------------------------------------------------------- Winter Classic: an outdoor anthem
   classic: {
     name: 'Winter Classic', bpm: 112, key: 'G', gain: 1.15,
@@ -902,4 +937,4 @@ export const JINGLES = {
 };
 
 // Which track plays where.
-export const ARENA_MUSIC = { home: 'frostline', ember_dome: 'ember', aurora_palace: 'aurora', pine_pond: 'pine', golden_hall: 'hall', dark_aerie: 'aerie', owl_observatory: 'observatory', moose_longhouse: 'longhouse', harbour_rink: 'harbour', glacier_cave: 'cave' };
+export const ARENA_MUSIC = { home: 'frostline', ember_dome: 'ember', aurora_palace: 'aurora', pine_pond: 'pine', golden_hall: 'hall', dark_aerie: 'aerie', owl_observatory: 'observatory', moose_longhouse: 'longhouse', harbour_rink: 'harbour', glacier_cave: 'cave', summit_rink: 'summit' };
