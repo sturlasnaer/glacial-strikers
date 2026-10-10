@@ -246,7 +246,7 @@ export class Renderer {
     const P = Assets.atlas.art_additions && Assets.atlas.art_additions.polish;
     if (!P || !P.resurfacer) return;
     const p = lap.pos(), s = toScreen(p.x, p.y);
-    Assets.draw(ctx, lap.frame(P.resurfacer), s.x, s.y, 0.36 * persp(p.y));
+    Assets.draw(ctx, lap.frame(P.resurfacer, (id) => !!Assets.frame(id)), s.x, s.y, 0.36 * persp(p.y));
   }
 
   // Freshly flooded ice: a wet sheen along the machine's path that dries over a few seconds.

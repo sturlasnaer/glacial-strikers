@@ -343,11 +343,12 @@ function ruleIcon(twist, size = 40) {
 // settings. Two players needs a keyboard or a gamepad, so a phone or tablet without a pad
 // doesn't offer it.
 function playAsHtml(s, app) {
+  const own = (id) => (Assets.atlas.frames[id] ? btnIcon(id) : ''); // (their icons once Batch CE is in)
   const as = s.settings.playAs || 'skaters', two = as === 'coop' || as === 'coopGoalie' || !app.isTouch || app.input.pads().length > 0;
   return `<div class="play-as"><span class="label" style="font-size:14px">${t('Play as')}</span>
-    <button class="chip" data-playas="skaters" aria-pressed="${as === 'skaters'}">${t('Skaters')}</button>
-    <button class="chip" data-playas="goalie" aria-pressed="${as === 'goalie'}" title="${esc(t('You play your starting goalie; the AI skates your line.'))}">${t('Goalie')}</button>
-    ${two ? `<button class="chip" data-playas="coop" aria-pressed="${as === 'coop'}" title="${esc(t('Co-op: a friend takes a skater too. Player 1 on WASD, F, G (or touch), player 2 on the arrows, K, L, or a gamepad.'))}">${btnIcon('icons/coop')}${t('Two players')}</button><button class="chip" data-playas="coopGoalie" aria-pressed="${as === 'coopGoalie'}" title="${esc(t('Co-op with player 2 in goal: player 1 skates, the AI skates the other two.'))}">${btnIcon('icons/coop')}${t('Two, one in goal')}</button>` : ''}</div>`;
+    <button class="chip" data-playas="skaters" aria-pressed="${as === 'skaters'}">${own('icons/play_skaters')}${t('Skaters')}</button>
+    <button class="chip" data-playas="goalie" aria-pressed="${as === 'goalie'}" title="${esc(t('You play your starting goalie; the AI skates your line.'))}">${own('icons/play_goalie')}${t('Goalie')}</button>
+    ${two ? `<button class="chip" data-playas="coop" aria-pressed="${as === 'coop'}" title="${esc(t('Co-op: a friend takes a skater too. Player 1 on WASD, F, G (or touch), player 2 on the arrows, K, L, or a gamepad.'))}">${btnIcon('icons/coop')}${t('Two players')}</button><button class="chip" data-playas="coopGoalie" aria-pressed="${as === 'coopGoalie'}" title="${esc(t('Co-op with player 2 in goal: player 1 skates, the AI skates the other two.'))}">${own('icons/coop_keeper') || btnIcon('icons/coop')}${t('Two, one in goal')}</button>` : ''}</div>`;
 }
 
 // The painted logo for the title screen, or the lettering until its art has loaded.

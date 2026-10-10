@@ -41,12 +41,21 @@ export class ResurfacerLap {
     return SEGS[SEGS.length - 1].at(1);
   }
   // atlas frame for the machine's heading, wheels turning at 2 frames a second
-  frame(ids) { return machineFrame(ids, this.pos(), this.t); }
+  frame(ids, has) { return machineFrame(ids, this.pos(), this.t, has); }
 }
 
-function machineFrame(ids, p, t) {
+// The frame for a heading: the nearest of eight once the diagonals are drawn (Batch CE; has(id)
+// says whether a frame exists), else the nearest of the four.
+const DIRS8 = ['east', 'southeast', 'south', 'southwest', 'west', 'northwest', 'north', 'northeast'];
+function machineFrame(ids, p, t, has) {
+  const phase = Math.floor(t * 2) % 2;
+  if (has) {
+    const dir = DIRS8[(Math.round(Math.atan2(p.dy, p.dx) / (Math.PI / 4)) + 8) % 8];
+    const id = ids[0].replace(/\/east\/phase_\d$/, `/${dir}/phase_${phase + 1}`);
+    if (id !== ids[0] && has(id)) return id;
+  }
   const dir = Math.abs(p.dx) >= Math.abs(p.dy) ? (p.dx > 0 ? 'east' : 'west') : (p.dy > 0 ? 'south' : 'north');
-  return ids[DIRS.indexOf(dir) + (Math.floor(t * 2) % 2) * 4];
+  return ids[DIRS.indexOf(dir) + phase * 4];
 }
 
 // The resurfacer in the player's hands (Training › Resurfacer): it heads where the stick points,
@@ -61,7 +70,7 @@ export class DrivenResurfacer {
     this.persist = true;
   }
   pos() { return { x: this.x, y: this.y, dx: Math.cos(this.heading), dy: Math.sin(this.heading) }; }
-  frame(ids) { return machineFrame(ids, this.pos(), this.wheelT); }
+  frame(ids, has) { return machineFrame(ids, this.pos(), this.wheelT, has); }
   // mx, my: the stick; fast: SPRINT (quicker, but it turns wider)
   drive(dt, mx, my, fast) {
     this.t += dt;

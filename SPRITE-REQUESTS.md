@@ -8,6 +8,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 **Next batches:**
 1. **CD: the home rink dressed for Halloween and the holidays**
+2. **CE: a resurfacer that turns smoothly, and icons for Play as**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -261,3 +262,10 @@ The home rink (the Frostline Rink) will dress up by the calendar: from 20 Octobe
 - Kid-friendly: cheerful and cosy, nothing scary.
 
 About 22 frames, all in the `home` palette style (they're never recoloured), on `home` group pages. The game's code is ready (`drawSeasonal` in src/render.js, the dates in src/seasonal.js): it reads `atlas.seasonal.halloween` and `atlas.seasonal.holiday`, each with `banner`, `bunting`, `banner_rect_backdrop` and `bunting_rects_backdrop` exactly as `atlas.allstar` has them, plus `props: [{ frames: [ids], x, y, scale, fps }]` (the pumpkins, the tree and the snowman at backdrop pixels, never on the ice) and `flyers: [{ frames: [ids], y, scale, speed, fps }]` (the bats, crossing the rafters). Open the game with `?season=halloween` or `?season=holiday` to see them out of season.
+
+## Batch CE: a resurfacer that turns smoothly, and icons for Play as
+
+1. **The resurfacer's diagonals.** In the Resurfacer drill the machine drives in any direction, but its art (`polish/resurfacer`, from the title screen's lap) has only east, south, west and north, so it snaps between them. Please add `southeast`, `southwest`, `northwest` and `northeast`, two wheel frames each (`phase_1`, `phase_2`), matching the existing eight frames' size, scale, pivot and lighting: 8 frames. The game picks the nearest of the eight once they're in.
+2. **Play as icons**, 128×128 like `icons/coop`, for the chips before a match: `icons/play_skaters` (a skater with the puck, our colours), `icons/play_goalie` (Halla in the butterfly) and `icons/coop_keeper` (two controllers, one ice blue, one mint, with a goalie mask between them). 3 frames.
+
+11 frames.
