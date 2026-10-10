@@ -1,7 +1,7 @@
-// Divisions: up a level with the Cup, down one from last place; league games tougher and better
+// Divisions: up a level with the Cup, down one from last place (not in the first season up); league games tougher and better
 // paid a level up (the rivals' best stats, their goalies, the AI), and nothing else changes.
 //   node tools/test_tiers.mjs
-import { TIERS, TIER_MAX, tierOf, tierInfo, moveTier, noteTierCup } from '../src/tiers.js';
+import { TIERS, TIER_MAX, tierOf, tierInfo, moveTier, noteTierCup, safeSeason } from '../src/tiers.js';
 import { newSave, matchConfig, computeRewards } from '../src/progress.js';
 import { strength, standings } from '../src/league.js';
 import { TOURNAMENT } from '../src/data.js';
@@ -21,6 +21,15 @@ check('last place in the Regional: nowhere lower', moveTier(s, { champion: 'roya
 s.tier = 2;
 check('the Cup in the Elite: the top already', moveTier(s, { champion: 'home' }, rows('owls')) === null && tierOf(s) === 2);
 check('mid-table: stay', moveTier(s, { champion: 'royals' }, [{ id: 'home' }, { id: 'royals' }]) === null && tierOf(s) === 2);
+
+// a first season up is safe
+{
+  const p = newSave();
+  check('promoted: the next season marked safe', moveTier(p, { champion: 'home', season: 3 }, rows('owls')) === 'promoted' && p.upIn === 4 && safeSeason(p, { season: 4 }) && !safeSeason(p, { season: 5 }));
+  check('last place in the first season up: no drop', moveTier(p, { champion: 'royals', season: 4 }, [{ id: 'royals' }, { id: 'home' }]) === null && tierOf(p) === 1);
+  check('last again the season after: down', moveTier(p, { champion: 'royals', season: 5 }, [{ id: 'royals' }, { id: 'home' }]) === 'relegated' && tierOf(p) === 0);
+  check('never safe in the Regional', !safeSeason(p, { season: 4 }));
+}
 
 // league games a level up
 const sum = (c) => c.teams[1].skaters.reduce((a, k) => a + Object.values(k.stats).reduce((b, x) => b + x, 0), 0);

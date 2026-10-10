@@ -62,7 +62,7 @@ import { MASCOTS, RACE_PRIZE, pickRunners, newRace, stepRace } from './race.js';
 import { SNOW_TIME, newSnowball, stepSnowball, throwAt, snowPrize } from './snowball.js';
 import { KID_STAR_IDS } from './kidstars.js';
 import { tripStops, POSTCARD_TOWNS } from './trip.js';
-import { tierOf, tierInfo, tierAt, TIERS } from './tiers.js';
+import { tierOf, tierInfo, tierAt, TIERS, safeSeason } from './tiers.js';
 import { newPet, stepPet, tapPet, tossPuck, cleanPetName, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall } from './pet.js';
 import { albumPages, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
 
@@ -1166,7 +1166,7 @@ export class UI {
     body.innerHTML = `
       ${npc('announcer', call)}
       ${this.tripHtml(L, body)}
-      <div class="label tier-label" style="margin-bottom:6px">${smallIcon(tierInfo(s).badge, 48, 'tier-ico')}${esc(t(tierInfo(s).name))} · ${t('Season {n}', { n: s.season })}</div>
+      <div class="label tier-label" style="margin-bottom:6px">${smallIcon(tierInfo(s).badge, 48, 'tier-ico')}${esc(t(tierInfo(s).name))} · ${t('Season {n}', { n: s.season })}${safeSeason(s, L) ? ` <span class="muted" style="font-size:12px;font-weight:normal">· ${t('first season up: no drop')}</span>` : ''}</div>
       <div class="league-grid">
         <div style="min-width:0">${table}
           ${goalsHtml}
@@ -3799,7 +3799,7 @@ export class UI {
     if (up) audio.jingle('win'); else audio.sfx('blip');
     this.modal(`<div style="text-align:center">${art ? `<img class="tier-art" src="${art}" alt="">` : ''}
       <h2 class="${up ? 'gold-t' : ''}" style="margin:6px 0">${up ? t('Promoted!') : t('Down a division')}</h2>
-      <p style="margin:0 auto;max-width:44ch">${up ? t('Next season the {club} play in the {league}: tougher rivals, bigger purses, and the {cup} to win.', { club: esc(CLUB.nick), league: esc(t(T.name)), cup: esc(t(T.cup)) })
+      <p style="margin:0 auto;max-width:44ch">${up ? `${t('Next season the {club} play in the {league}: tougher rivals, bigger purses, and the {cup} to win.', { club: esc(CLUB.nick), league: esc(t(T.name)), cup: esc(t(T.cup)) })} ${t('A first season up is safe: no drop at its end.')}`
         : t('Next season it\'s the {league} again. Win its Cup and the {club} go straight back up.', { club: esc(CLUB.nick), league: esc(t(T.name)) })}</p></div>
       <div class="row" style="justify-content:center;margin-top:10px"><button class="btn gold" data-close>${up ? t('Let\'s go!') : t('Back to work')}</button></div>`, null, true, done);
     if (up) this.fireworks?.();

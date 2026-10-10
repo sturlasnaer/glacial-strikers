@@ -3,7 +3,8 @@
 // around it, and a simple player who spends skill points, does both training sessions after
 // each match (silver medals), signs an upgrade when one's affordable (rivals' stars, free
 // agents, goalies), takes trade offers that help, drafts the most promising rookie, and
-// starts the next season. Prints a line per season.
+// starts the next season, up or down a division as it goes (tier: R/N/E, ↑ promoted, ↓ relegated).
+// Prints a line per season.
 //   node tools/sim_seasons.mjs [seasons=4] [seeds=2]      (DIFF=easy|normal|hard: the rival difficulty setting)
 import { Match } from '../src/match.js';
 import { setLeagueEdge, newSave, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, lineupIds, rosterIds, canRaise, effectiveStats, setLineup,
@@ -18,7 +19,8 @@ import { makeDraft, draftPick } from '../src/draft.js';
 import { recordCareer } from '../src/career.js';
 import { updateSeasonGoals, goalStates, seasonGoals } from '../src/goals.js';
 import { FACILITY_IDS, nextCost, buildFacility, facilityLevel } from '../src/facilities.js';
-import { RECRUITS, GOALIE_RECRUITS, CHARACTERS, GEAR, member, setRookies, setFreeGoalies, TOURNAMENT } from '../src/data.js';
+import { RECRUITS, GOALIE_RECRUITS, CHARACTERS, GEAR, member, setRookies, setFreeGoalies, stageOf } from '../src/data.js';
+import { moveTier, tierOf } from '../src/tiers.js';
 import { DRILL_REWARDS } from '../src/drills.js';
 import { useModular } from '../src/modular.js';
 import { setFills } from '../src/slots.js';
@@ -28,7 +30,7 @@ const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
 useModular({ skaters: { body_std: {}, body_big: {}, body_small: {} }, modular: { heads: { c: {}, cage: {}, braids: {} } } });
 
 function play(s, teamId, stage, rnd) {
-  const cfg = matchConfig(s, teamId, stage, {});
+  const cfg = matchConfig(s, teamId, stage, { league: true }); // (as the game plays a league fixture: the division's strength)
   cfg.humanTeam = null; cfg.humans = []; cfg.seed = Math.floor(rnd() * 1e9);
   const m = new Match(cfg);
   for (let t = 0; m.winner === null && m.state !== 'over' && t < 900; t += 1 / 60) m.update(1 / 60);
@@ -125,18 +127,19 @@ function season(s, rnd, out) {
   const line = lineupIds(s).map((id) => s.roster[id].level);
   // the line's numbers against the league's: average stat total per skater
   const ours = lineupIds(s).reduce((a, id) => a + sum(effectiveStats(id, s.roster[id])), 0) / 3;
-  const theirs = leagueRivals(L).reduce((a, id) => a + matchConfig(s, id, TOURNAMENT.stages.find((x) => x.team === id) || TOURNAMENT.stages[0]).teams[1].skaters.reduce((b, k) => b + sum(k.stats), 0) / 3, 0) / leagueRivals(L).length;
+  const theirs = leagueRivals(L).reduce((a, id) => a + matchConfig(s, id, stageOf(id), { league: true }).teams[1].skaters.reduce((b, k) => b + sum(k.stats), 0) / 3, 0) / leagueRivals(L).length;
   const rivals = leagueRivals(L);
-  out.push({ season: s.season, teams: L.teams.length, record: `${log.w}-${log.l}`, goals: `${log.gf}:${log.ga}`, place: order.indexOf('home') + 1, result: log.result || 'playoffs',
+  const tier = tierOf(s), moved = moveTier(s, L, standings(L)); // (up with the Cup, down from last place)
+  out.push({ season: s.season, tier: ['R', 'N', 'E'][tier] + (moved === 'promoted' ? '↑' : moved === 'relegated' ? '↓' : ''), teams: L.teams.length, record: `${log.w}-${log.l}`, goals: `${log.gf}:${log.ga}`, place: order.indexOf('home') + 1, result: log.result || 'playoffs',
     goalsMet: (() => { const g = goalStates(s); return `${g.filter((x) => x.done).length}/${g.length}`; })(),
     which: goalStates(s).map((x) => x.id + (x.done ? '+' : '-')).join(' '),
     facilities: FACILITY_IDS.map((id) => facilityLevel(s, id)).join(''),
     coinsStart: coins0, earned: log.earned, spent: log.spent, coinsEnd: s.coins, levels: line.join('/'), signed: log.signed.join(', ') || '-', trades: log.trades,
     sumUs: +ours.toFixed(1), sumThem: +theirs.toFixed(1), us: +strength('home', s).toFixed(2), rivals: +(rivals.reduce((a, id) => a + strength(id, s), 0) / rivals.length).toFixed(2), retired: retired.length, edge: s.leagueEdge || 0,
-    gUs: (() => { const g = goalieStats(s, starterId(s)); return g.rfx + g.pos; })(), gThem: +(rivals.reduce((a, id) => { const g = matchConfig(s, id, TOURNAMENT.stages.find((x) => x.team === id) || TOURNAMENT.stages[0]).teams[1].goalie.stats; return a + g.rfx + g.pos; }, 0) / rivals.length).toFixed(1) });
+    gUs: (() => { const g = goalieStats(s, starterId(s)); return g.rfx + g.pos; })(), gThem: +(rivals.reduce((a, id) => { const g = matchConfig(s, id, stageOf(id), { league: true }).teams[1].goalie.stats; return a + g.rfx + g.pos; }, 0) / rivals.length).toFixed(1) });
   s.season++;
   const last = s.league;
-  s.league = newLeague(s.season);
+  s.league = newLeague(s.season, tierOf(s));
   setLeagueEdge(s, last);
 }
 

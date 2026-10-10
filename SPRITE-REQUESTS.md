@@ -10,7 +10,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 1. **EB: their mascots in the stands**
 2. **EC: their mascots for the race**
 3. **ED: the National map and postcards**
-4. **## Batches EE, EF, EG: the National rinks**
+4. **EE–EG: the National rinks**
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
