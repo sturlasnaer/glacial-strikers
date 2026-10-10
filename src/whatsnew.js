@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10x',
+    items: [
+      { icon: 'icons/pet', alt: 'icons/friends', text: 'A Snow Fox cub lives in the locker room now! It trots about, naps, and hops when you tap it. Tap its name to give it one of your own.' },
+    ],
+  },
+  {
     id: '2026-10-10w',
     items: [
       { icon: 'celebrations/nix/guitar_1', alt: 'icons/rookie', text: 'Pick a goal celebration for Nix, Volta and Bram in the Team tab: their own, a stick guitar solo or a snow angel.' },

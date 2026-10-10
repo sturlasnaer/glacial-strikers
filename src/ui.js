@@ -838,7 +838,7 @@ export class UI {
   startPet(room) {
     const has = (f) => !!Assets.atlas.frames[f];
     if (!['pet/walk_1', 'pet/sit_1', 'pet/sleep_1', 'pet/hop'].every(has) || room.querySelector('.pet')) return;
-    const H = 70, set = (ids) => Assets.spriteSet(ids.filter(has), H);
+    const H = 84, set = (ids) => Assets.spriteSet(ids.filter(has), H); // (a bit bigger than drawn for: it reads on a phone)
     const sets = { walk: set(['pet/walk_1', 'pet/walk_2', 'pet/walk_3', 'pet/walk_4']), sit: set(['pet/sit_1', 'pet/sit_2']), sleep: set(['pet/sleep_1', 'pet/sleep_2']), hop: set(['pet/hop']) };
     if (Object.values(sets).some((x) => !x)) return;
     const s = this.app.save, name = () => (s.pet && s.pet.name) || t('Snowball');
