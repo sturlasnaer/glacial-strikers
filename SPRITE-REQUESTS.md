@@ -7,16 +7,15 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **ED: the National map and postcards**
-2. **## Batches EE, EF, EG: the National rinks**
-3. **EH: the Frostline's pets (1)**
-4. **EI: the Frostline's pets (2)**
-5. **EJ: the National clubs' pets (1)**
-6. **EK: the National clubs' pets (2)**
-7. **EL: the Elite's own clubs, the Taiga Tigers and the Bamboo Ridge Pandas**
-8. **EM: two more National clubs, the Birchwood Beavers and the Coral Bay Flamingos**
-9. **EN: the new clubs' mascot stickers for the album**
-10. **EO: the National and Elite Cup Finals' buildings**
+1. **## Batches EE, EF, EG: the National rinks**
+2. **EH: the Frostline's pets (1)**
+3. **EI: the Frostline's pets (2)**
+4. **EJ: the National clubs' pets (1)**
+5. **EK: the National clubs' pets (2)**
+6. **EL: the Elite's own clubs, the Taiga Tigers and the Bamboo Ridge Pandas**
+7. **EM: two more National clubs, the Birchwood Beavers and the Coral Bay Flamingos**
+8. **EN: the new clubs' mascot stickers for the album**
+9. **EO: the National and Elite Cup Finals' buildings**
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -110,6 +109,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered EA2:** Capybara crest updated natively to the master document’s caramel brown with teal trim. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EA2-Testing-Update`.
 
 **Delivered EC:** Thirty-five National club race mascot frames, with four native running phases and a winner pose for each club. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EC-Testing-Update`.
+
+**Delivered ED:** The country map with nineteen measured town anchors and seven National postcards, including the complete Puffin postage stamp. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-ED-Testing-Update`.
 
 ## Format notes
 
@@ -772,7 +773,7 @@ Each club's costumed mascot, dancing in the stands at their home rink, like `mas
 
 The same seven mascots for the mascot race at the break (DB), like `race/glacier_owls/…` (280×240, running to the right): `race/<mark>/run_1`..`_4` and `race/<mark>/win`. On a page in the `race` group. 35 frames.
 
-## Batch ED: the National map and postcards
+## Batch ED ✓: the National map and postcards
 
 - `map/region_national` (1536×864): a painted bird's-eye map of the whole country for the National road trip (like DG's `map/region`), no lettering: Snowcrest in the north-west, the seven clubs' towns spread from the frozen north (the Penguins' pack ice, the Narwhals' fjord, the Puffins' cliffs, the Seals' bay) down through the Grizzlies' mountain forest and the Beavers' lake town with its dam to the warm south (the Capybaras' hot springs, the Flamingos' pink lagoon, the Bulls' canyon town), and in the far east the Tigers' snowy taiga forest and the Pandas' misty bamboo ridge in the mountains (see EL), with roads, rivers and a railway between. The Frostline region itself sits in the north-west round Snowcrest (the Elite division mixes clubs from both regions), with smaller spots for its seven clubs' towns (Pinewood, Ember, the Owls' glacier, Gilded, the Moose's hills, Obsidian, Aurora). A clear spot (about 90 px; about 60 px for the Frostline towns) in each town for the crest, and `atlas.map_towns_national = { home: [x, y], <team>: [x, y], … }` with all nineteen team keys: `capybaras`, `beavers`, `puffins`, `grizzlies`, `seals`, `flamingos`, `penguins`, `bulls`, `narwhals`, `tigers`, `pandas` and `lynx`, `comets`, `owls`, `rams`, `moose`, `ravens`, `royals`. On a page in the `map` group.
 - `postcard/<team>` (480×320, like DK's) for each of the seven, with the stamp and postmark, **no lettering**. On a page in the `postcards` group.
