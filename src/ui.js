@@ -369,7 +369,9 @@ function logoHtml() {
 const rowFace = (r, size) => (r.team === 'home' ? portrait(r.face, 0, null, size) : portrait(r.face, 1, r.team, size));
 
 // Hub characters: a portrait and a line of chatter at the top of their tab.
-const NPC_NAMES = { coach: 'Coach Brekka', coach_stern: 'Coach Brekka', shopkeeper: 'Gearsmith Ottar', announcer: 'Kip Vance, PA', agent: 'Vigga, the agent' };
+const NPC_NAMES = { coach: 'Coach Brekka', coach_stern: 'Coach Brekka', shopkeeper: 'Gearsmith Ottar', announcer: 'Kip Vance, PA', agent: 'Vigga, the agent', icekeeper: 'Ragna, the ice-keeper' };
+// Ragna's verdict on a Resurfacer run, by medal (once Batch CH's portrait is in)
+const ICE_LINES = () => [t('A few patches left. The ice remembers, you know.'), t('Not bad! Smooth enough to skate on.'), t('Lovely sheet. The players will thank you.'), t('Like glass! I couldn\'t have done it better myself.')];
 function npc(key, text) {
   const id = Assets.atlas.npcs && Assets.atlas.npcs[key];
   const img = id && Assets.icon(id, 128);
@@ -2648,6 +2650,7 @@ export class UI {
         <div class="label">${esc(t(d.name))}</div>
         <div class="drill-score">${formatScore(d, score)}</div>
         ${badge(MEDAL_BADGES[medal], 192, 'medal-img')}
+        ${d.id === 'resurface' ? npc('icekeeper', ICE_LINES()[medal]) : ''}
         <div class="medal-big" style="--m:${MEDAL_COLORS[medal]}">${t(MEDAL_NAMES[medal])}${rw.newBest && rw.prevBest !== undefined && rw.prevBest !== null ? ` · ${t('new best!')}` : ''}</div>
         <div class="muted" style="font-size:13px">${t('Bronze {bronze} · Silver {silver} · Gold {gold}', { bronze: formatScore(d, d.medals[0]), silver: formatScore(d, d.medals[1]), gold: formatScore(d, d.medals[2]) })}</div>
         ${rw.ghostVs ? `<div class="ghost-vs ${rw.ghostVs.won ? 'won' : ''}">${esc(rw.ghostVs.line)}</div>` : ''}

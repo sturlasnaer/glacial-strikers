@@ -1971,7 +1971,9 @@ export class Renderer {
       if (!c.controlled || c.parked || match.state === 'over' || match.state === 'goal') continue;
       const p = toScreen(c.x, c.y);
       const bob = Math.sin(fx.time * 6) * 3;
-      if (versus || match.coop || match.keeperCoop) {
+      const tagArt = (versus || match.coop || match.keeperCoop) && Assets.frame('hud_elements/tags/p1') && `hud_elements/tags/${c.team === 1 ? 'p2_coral' : c.seat ? 'p2_mint' : 'p1'}`; // (Batch CI)
+      if (tagArt && Assets.frame(tagArt)) Assets.draw(ctx, tagArt, p.x, p.y - 100 + bob, 0.5);
+      else if (versus || match.coop || match.keeperCoop) {
         const tag = c.team === 1 || c.seat ? 'P2' : 'P1';
         ctx.font = `bold 16px ${this.font}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.lineWidth = 4; ctx.strokeStyle = '#14233b'; ctx.strokeText(tag, p.x, p.y - 104 + bob);
@@ -1988,9 +1990,12 @@ export class Renderer {
     // keeper co-op: player 2's tag over our goalie
     if (match.keeperCoop && match.state !== 'over' && match.state !== 'goal') {
       const g = match.goalies[0], p = toScreen(g.x, g.y), bob = Math.sin(fx.time * 6) * 3;
+      if (Assets.frame('hud_elements/tags/p2_mint')) Assets.draw(ctx, 'hud_elements/tags/p2_mint', p.x, p.y - 106 + bob, 0.5);
+      else {
       ctx.font = `bold 16px ${this.font}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.lineWidth = 4; ctx.strokeStyle = '#14233b'; ctx.strokeText('P2', p.x, p.y - 110 + bob);
       ctx.fillStyle = '#7fe08a'; ctx.fillText('P2', p.x, p.y - 110 + bob);
+      }
     }
     // penalty box timers and the extra attacker tag
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
