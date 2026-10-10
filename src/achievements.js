@@ -51,6 +51,10 @@ export const ACHIEVEMENTS = [
   { id: 'sticker-album', name: 'Collector', text: 'Fill the whole sticker album.', icon: 'icons/stat_cups', art: 'achievements/collector', coins: 150 },
   { id: 'mini-cup', name: 'Little Champions', text: 'Win the Mini Cup.', icon: 'equipment_items/reward/trophy', art: 'badges/mini_cup', coins: 50 },
   { id: 'home-sweet-home', name: 'Home Sweet Home', text: 'Decorate every spot in the locker room.', icon: 'equipment_items/hub/locker', art: 'achievements/home_sweet_home', coins: 60 },
+  // (Batch DR's art for the road trip's postcards, the cub's fetch and the youngest's gold stars)
+  { id: 'postcard-collector', name: 'Postcards from the Road', text: 'Collect all eight postcards.', icon: 'icons/career', art: 'achievements/postcard_collector', coins: 100 },
+  { id: 'fetch-champion', name: 'Fetch Champion', text: 'Play fetch with the cub ten times.', icon: 'icons/pet', art: 'achievements/fetch_champion', coins: 30 },
+  { id: 'gold-star-chart', name: 'Star Chart', text: 'Earn ten gold stars in Little player games.', icon: 'badges/daily_star', art: 'achievements/gold_star_chart', coins: 50 },
   { id: 'fresh-sheet', name: 'Fresh Sheet', text: 'Win gold in the Resurfacer drill.', icon: 'hud_elements/ability/frost', art: 'achievements/fresh_sheet', coins: 40 },
   { id: 'better-together', name: 'Better Together', text: 'Win a match with two players on the team.', icon: 'icons/friends', art: 'achievements/better_together', coins: 40 },
   // the newer systems (art: their own icon from Batch AN; icon: a stand-in until then)

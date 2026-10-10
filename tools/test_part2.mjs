@@ -106,8 +106,8 @@ useAchievementArt(F);
 check('every achievement icon exists', ACHIEVEMENTS.every((a) => F[a.icon]), ACHIEVEMENTS.filter((a) => !F[a.icon]).map((a) => a.id));
 const own = (a) => a.icon.startsWith('achievements/') || a.icon.startsWith('allstar/') || (!!a.art && a.icon === a.art); // (or the art it asked for, as the Mini Cup's badge)
 // (requested ones show a stand-in until their art arrives: BF's five, in; BK's two)
-const PENDING = new Set(['moonstruck', 'splinters', 'protector', 'game-face', 'new-colours', 'sold-it', 'off-the-drop', 'penalty-shot', 'redirect', 'wiped-out', 'coachs-orders', 'traffic', 'bench-boss', 'hot-hand', 'breaking-ground', 'built-to-last', 'media-darling', 'raise-the-banner', 'record-breaker', 'better-together', 'fresh-sheet', 'one-of-our-own', 'homegrown-hero', 'special-teams', 'sticker-page', 'sticker-album', 'home-sweet-home']);
-check('every achievement has its own icon (AF, AN, BF, BK, BO, BW, CA, CC; CJ, CL, CR, CS pending)', ACHIEVEMENTS.every((a) => own(a) || (PENDING.has(a.id) && !F[a.art])), ACHIEVEMENTS.filter((a) => !own(a) && !PENDING.has(a.id)).map((a) => a.id));
+const PENDING = new Set(['moonstruck', 'splinters', 'protector', 'game-face', 'new-colours', 'sold-it', 'off-the-drop', 'penalty-shot', 'redirect', 'wiped-out', 'coachs-orders', 'traffic', 'bench-boss', 'hot-hand', 'breaking-ground', 'built-to-last', 'media-darling', 'raise-the-banner', 'record-breaker', 'better-together', 'fresh-sheet', 'one-of-our-own', 'homegrown-hero', 'special-teams', 'sticker-page', 'sticker-album', 'home-sweet-home', 'postcard-collector', 'fetch-champion', 'gold-star-chart']);
+check('every achievement has its own icon (AF, AN, BF, BK, BO, BW, CA, CC; CJ, CL, CR, CS, DR pending)', ACHIEVEMENTS.every((a) => own(a) || (PENDING.has(a.id) && !F[a.art])), ACHIEVEMENTS.filter((a) => !own(a) && !PENDING.has(a.id)).map((a) => a.id));
 
 // the linesman
 const KITS = ['frost', 'thunder', 'stone'];

@@ -885,7 +885,7 @@ export class UI {
     this.pet.ball = ball ? this.pet.ball || { x: 44, y: 77, v: 0 } : null;
     const ballEl = room.querySelector('#cub-ball');
     if (!this.pet.bed) this.pet.inBed = false;
-    let last = performance.now(), tagT = 0;
+    let last = performance.now(), tagT = 0, fetching = false;
     clearInterval(this.petTimer);
     this.petTimer = setInterval(() => {
       if (!el.isConnected) { clearInterval(this.petTimer); return; }
@@ -894,6 +894,8 @@ export class UI {
       const p = stepPet(this.pet, dt), st = p.trickT > 0 && sets['trick_' + p.trick] ? 'trick_' + p.trick : p.fetch && sets.fetch_run ? 'fetch_' + p.fetch.phase : p.hop > 0 ? 'hop' : p.inBed && p.state === 'sleep' && sets.bed_sleep ? 'bed_sleep' : p.state === 'tobed' || p.state === 'toball' ? 'walk' : p.state === 'play' ? 'pounce' : p.state, k = sets[st] || sets.sit;
       if (ballEl && p.ball) ballEl.style.cssText = `left:${p.ball.x}%;top:${p.ball.y}%;z-index:${p.ball.y < 66 ? 1 : 3}`;
       if (bedEl) bedEl.hidden = st === 'bed_sleep'; // (asleep in it: the frames have the basket)
+      if (fetching && !p.fetch) { const P = (s.pet ||= {}); P.fetches = (P.fetches || 0) + 1; writeSave(s); if (P.fetches >= 10) this.app.ach.unlock('fetch-champion'); } // (a fetch done)
+      fetching = !!p.fetch;
       const i = st.startsWith('trick_') ? Math.min(k.urls.length - 1, Math.floor((1 - p.trickT / TRICK_TIME) * k.urls.length)) // (a trick plays through once)
         : st === 'fetch_drop' ? (p.fetch.t < FETCH_DROP * 0.35 ? 0 : 1) // (down it goes, then sitting proud)
         : st === 'pounce' ? Math.min(3, Math.floor((p.t / PLAY_TIME) * 5)) // (crouch, wiggle, pounce, then the bat holds)

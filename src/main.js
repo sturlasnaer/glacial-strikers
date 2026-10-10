@@ -1183,6 +1183,7 @@ class App {
     if (!c.exhibition && s.league && rewards.won) {
       const town = postcardFor(c.fixture ? c.fixture.kind : 'regular', this.arena);
       if (town && sendPostcard(s, town) && Assets.frame('postcard/' + town)) setTimeout(() => this.toast(crest(town, 72), t('Postcard!'), t('A postcard from {town}', { town: town === 'home' ? CLUB.name : TEAMS[town].name }), t('See it in League, under the map')), 2200);
+      if ((s.postcards || []).length >= 8) this.ach.unlock('postcard-collector');
     }
     // the Hall of Fame: anyone who's earned it goes in (the ceremony comes after the results)
     this.pendingHall = hallCandidates(s, rosterIds(s), goalieIds(s)).map((h) => induct(s, h, h.goalie ? goalieInfo(h.id).name : member(h.id).name));
@@ -1217,6 +1218,7 @@ class App {
     if (summary.seats) addSeatTotals(s, summary); // (two players: who's ahead, over every co-op match)
     if (summary.goalieMode) { s.goalieGames = (s.goalieGames || 0) + 1; if (rewards.won) this.ach.unlock('between-pipes'); }
     const kidStar = s.settings.little && !summary.goalieMode && Assets.frame('kid_stars/team') ? awardKidStar(s, summary) : null; // (Little player: a gold star, Batch DN)
+    if (kidStar && s.kidStars.n >= 10) this.ach.unlock('gold-star-chart');
     this.ach.checkMeta();
     s.training.sessions = trainingSessions(s);
     writeSave(s);
