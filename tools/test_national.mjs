@@ -1,4 +1,4 @@
-// The National division's clubs: seven new clubs met one division up (and the best of them,
+// The National division's clubs: nine new clubs met one division up (and the best of them,
 // with the Frostline's best, in the Elite). Each is complete (players from parts, recruits,
 // a goalie to sign, words, a stage, a rink, a mascot), the leagues a division up are theirs,
 // a match against them plays, and the Frostline's own lists (the daily challenge's) stay as
@@ -20,9 +20,9 @@ let pass = 0, fail = 0;
 const check = (name, cond, info) => { if (cond) pass++; else { fail++; console.log('✗', name, info ?? ''); } };
 useModular({ skaters: { body_std: {}, body_big: {}, body_small: {} }, modular: { heads: { c: {}, cage: {}, braids: {} } } });
 
-check('seven National clubs, easiest first', NATIONAL_IDS.length === 7 && NATIONAL_IDS.every((id, i) => !i || TEAMS[id].diff > TEAMS[NATIONAL_IDS[i - 1]].diff));
+check('nine National clubs, easiest first', NATIONAL_IDS.length === 9 && NATIONAL_IDS.every((id, i) => !i || TEAMS[id].diff > TEAMS[NATIONAL_IDS[i - 1]].diff));
 check('the Elite: the strongest of both and its own two, easiest first', ELITE_IDS.length === 9 && ELITE_IDS.some((id) => RIVAL_IDS.includes(id)) && ELITE_IDS.some((id) => NATIONAL_IDS.includes(id)) && ELITE_IDS.every((id, i) => !i || TEAMS[id].diff >= TEAMS[ELITE_IDS[i - 1]].diff));
-check('the Frostline\'s list as it was (the daily challenge draws from it)', RIVAL_IDS.join() === 'lynx,comets,owls,rams,moose,ravens,royals' && ALL_RIVALS.length === 16);
+check('the Frostline\'s list as it was (the daily challenge draws from it)', RIVAL_IDS.join() === 'lynx,comets,owls,rams,moose,ravens,royals' && ALL_RIVALS.length === 18);
 for (const id of NATIONAL_IDS) {
   const t = TEAMS[id];
   check(`${id}: a club from parts, in its colours`, t.national && !t.art && t.mark && t.looks && ['frost', 'thunder', 'stone'].every((k) => t.looks[k] && t.names[k] && t.subs[k]) && t.goalieLook && t.names.goalie && t.subs.goalie && t.recolor && t.style, id);
@@ -40,14 +40,14 @@ for (const id of ELITE_OWN_IDS) {
 }
 check('the Pandas welcome us to the Elite', TIER_LINES.elite.team === 'pandas');
 check('the Grizzlies\' players: "Grizzly", not "Grizzlie"', RECRUITS.grizzlies_c.title === 'Grizzly Centre');
-check('a stage for every National club and the Elite\'s own, the Frostline\'s unchanged', NATIONAL_STAGES.length === 9 && TOURNAMENT.stages.length === 7 && stageOf('lynx') === TOURNAMENT.stages[0]);
+check('a stage for every National club and the Elite\'s own, the Frostline\'s unchanged', NATIONAL_STAGES.length === 11 && TOURNAMENT.stages.length === 7 && stageOf('lynx') === TOURNAMENT.stages[0]);
 check('the daily challenge\'s arenas as they were', Object.keys(ARENAS).filter((k) => !ARENAS[k].finalOnly && !ARENAS[k].exhibitionOnly && !ARENAS[k].national).join() === 'home,ember_dome,aurora_palace,golden_hall,dark_aerie,pine_pond,owl_observatory,moose_longhouse');
 check('a welcome for each division up', TIER_LINES.national && TIER_LINES.elite && NATIONAL_IDS.includes(TIER_LINES.national.team) && ELITE_IDS.includes(TIER_LINES.elite.team));
 
 // the leagues by division
 const pairs = (L) => { const seen = new Set(); for (const r of L.schedule) for (const g of r.games) seen.add([g.a, g.b].sort().join('-')); return seen.size; };
 const N = newLeague(3, 1), E = newLeague(3, 2), R = newLeague(3, 0);
-check('the National: its own seven, seven rounds, every pair once', N.teams.join() === NATIONAL_TEAMS.join() && N.schedule.length === 7 && pairs(N) === 28);
+check('the National: its own nine, ten clubs, nine rounds, every pair once', N.teams.join() === NATIONAL_TEAMS.join() && N.teams.length === 10 && N.schedule.length === 9 && pairs(N) === 45 && N.schedule.every((r) => new Set(r.games.flatMap((g) => [g.a, g.b])).size === 10));
 check('the Elite: ten clubs, nine rounds, every pair once', E.teams.join() === ELITE_TEAMS.join() && E.teams.length === 10 && E.schedule.length === 9 && pairs(E) === 45 && E.schedule.every((r) => new Set(r.games.flatMap((g) => [g.a, g.b])).size === 10));
 check('back down: the Frostline\'s again', R.teams.join() === ['home', ...RIVAL_IDS].join() && newLeague(1).teams.length === 6);
 check('we meet them easiest first', N.schedule.map((r) => r.games[0].b).join() === NATIONAL_IDS.join());

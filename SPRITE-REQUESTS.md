@@ -15,6 +15,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 6. **EJ: the National clubs' pets (1)**
 7. **EK: the National clubs' pets (2)**
 8. **EL: the Elite's own clubs, the Taiga Tigers and the Bamboo Ridge Pandas**
+9. **EM: two more National clubs, the Birchwood Beavers and the Coral Bay Flamingos**
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -770,7 +771,7 @@ The same seven mascots for the mascot race at the break (DB), like `race/glacier
 
 ## Batch ED: the National map and postcards
 
-- `map/region_national` (1536×864): a painted bird's-eye map of the whole country for the National road trip (like DG's `map/region`), no lettering: Snowcrest in the north-west, the seven clubs' towns spread from the frozen north (the Penguins' pack ice, the Narwhals' fjord, the Puffins' cliffs, the Seals' bay) down through the Grizzlies' mountain forest to the warm south (the Capybaras' hot springs, the Bulls' canyon town), and in the far east the Tigers' snowy taiga forest and the Pandas' misty bamboo ridge in the mountains (see EL), with roads, rivers and a railway between. The Frostline region itself sits in the north-west round Snowcrest (the Elite division mixes clubs from both regions), with smaller spots for its seven clubs' towns (Pinewood, Ember, the Owls' glacier, Gilded, the Moose's hills, Obsidian, Aurora). A clear spot (about 90 px; about 60 px for the Frostline towns) in each town for the crest, and `atlas.map_towns_national = { home: [x, y], <team>: [x, y], … }` with all seventeen team keys: `capybaras`, `puffins`, `grizzlies`, `seals`, `penguins`, `bulls`, `narwhals`, `tigers`, `pandas` and `lynx`, `comets`, `owls`, `rams`, `moose`, `ravens`, `royals`. On a page in the `map` group.
+- `map/region_national` (1536×864): a painted bird's-eye map of the whole country for the National road trip (like DG's `map/region`), no lettering: Snowcrest in the north-west, the seven clubs' towns spread from the frozen north (the Penguins' pack ice, the Narwhals' fjord, the Puffins' cliffs, the Seals' bay) down through the Grizzlies' mountain forest and the Beavers' lake town with its dam to the warm south (the Capybaras' hot springs, the Flamingos' pink lagoon, the Bulls' canyon town), and in the far east the Tigers' snowy taiga forest and the Pandas' misty bamboo ridge in the mountains (see EL), with roads, rivers and a railway between. The Frostline region itself sits in the north-west round Snowcrest (the Elite division mixes clubs from both regions), with smaller spots for its seven clubs' towns (Pinewood, Ember, the Owls' glacier, Gilded, the Moose's hills, Obsidian, Aurora). A clear spot (about 90 px; about 60 px for the Frostline towns) in each town for the crest, and `atlas.map_towns_national = { home: [x, y], <team>: [x, y], … }` with all nineteen team keys: `capybaras`, `beavers`, `puffins`, `grizzlies`, `seals`, `flamingos`, `penguins`, `bulls`, `narwhals`, `tigers`, `pandas` and `lynx`, `comets`, `owls`, `rams`, `moose`, `ravens`, `royals`. On a page in the `map` group.
 - `postcard/<team>` (480×320, like DK's) for each of the seven, with the stamp and postmark, **no lettering**. On a page in the `postcards` group.
 
 1 map and 7 frames.
@@ -848,5 +849,24 @@ For each of the two:
 - Its rink, like EE–EG (1536×1024), on its own group named after it: `arena_taiga_rink` (an outdoor rink in a snowy pine forest, lanterns strung between the trees) and `arena_bamboo_grove` (a timber hall open to a bamboo forest, mist on the mountains beyond, paper lanterns overhead).
 - `postcard/tigers` and `postcard/pandas` (480×320, like ED's), on a `postcards` page. (Their towns on the National map are in ED.)
 - Its pet, like EH–EK: `pets/tiger/…` and `icons/pet_tiger`, a **Tiger cub** (fluffy, oversized paws, stripes, an orange-and-black bandana, pouncing on its own tail in one of the sit frames), and `pets/panda/…` and `icons/pet_panda`, a **Panda cub** (round and fluffy, tumbling more than walking, a bamboo-green bandana, a stick of bamboo to chew in one of the sit frames). On `pets` pages.
+
+2 crests, 8 + 10 mascot frames, 2 rinks, 2 postcards and 20 pet frames.
+
+## Batch EM: two more National clubs, the Birchwood Beavers and the Coral Bay Flamingos
+
+The National division grows to ten clubs. Like the other National clubs, their players are built from parts, so each needs what EA–EG drew for the others, plus its pet. Everything without lettering:
+
+| club | key (`mark`) | colours | home | character |
+|---|---|---|---|---|
+| **Birchwood Beavers** | `birchwood_beavers` | wine red and birch white | a lake town in the birch woods, behind a big beaver dam | busy builders; they stack up a dam in front of their net |
+| **Coral Bay Flamingos** | `coral_bay_flamingos` | flamingo pink and palm green | a warm pink lagoon with palm trees | graceful and tricky; they glide past you on one skate |
+
+For each of the two:
+- `rival_crests/crest/<mark>` (148×148, like EA's, in its own colours: the animal and a hint of its home). On an `icons_z` page.
+- Its mascot in the stands, like EB (a big friendly costumed beaver, a big friendly costumed flamingo, each in a team jersey): `mascot/<mark>/idle`, `wave`, `cheer_a`, `cheer_b`, on the club's own group `rival_<mark>`.
+- Its mascot for the race, like EC: `race/<mark>/run_1`..`_4` and `win` (280×240), on a `race` page.
+- Its rink, like EE–EG (1536×1024), on its own group named after it: `arena_millpond` (an outdoor rink on the frozen millpond behind the Beavers' dam, birch trees and a log lodge) and `arena_coral_bay` (the Flamingos' rink by a warm pink lagoon, palm trees and pink sunset light through big windows, fans in sunglasses).
+- `postcard/beavers` and `postcard/flamingos` (480×320, like ED's), on a `postcards` page. (Their towns on the National map are in ED.)
+- Its pet, like EH–EK: `pets/beaver/…` and `icons/pet_beaver`, a **Beaver kit** (round and brown, big front teeth, a flat tail it slaps when it hops, a wine-red bandana, a little twig to chew in one of the sit frames), and `pets/flamingo/…` and `icons/pet_flamingo`, a **Flamingo chick** (a fluffy pale-grey chick, just turning pink, with a little hooked beak and wobbly long legs; it naps standing on one leg; a palm-green bandana). On `pets` pages.
 
 2 crests, 8 + 10 mascot frames, 2 rinks, 2 postcards and 20 pet frames.

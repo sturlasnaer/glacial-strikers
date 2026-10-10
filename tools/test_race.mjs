@@ -13,7 +13,7 @@ const r1 = pickRunners('rams', rnd);
 check('four runners: the Snow Fox, theirs and two more, all different', r1.length === 4 && r1[0] === 'home' && r1[1] === 'rams' && new Set(r1).size === 4, r1);
 check('...at home against ourselves (versus): still four', pickRunners('home', rnd).length === 4);
 check('...only the ones drawn', JSON.stringify(pickRunners('lynx', rnd, (k) => ['home', 'owls'].includes(k))) === JSON.stringify(['home', 'owls']));
-check('a mascot for every club: the Frostline\'s eight, the National seven and the Elite\'s two', Object.keys(MASCOTS).length === 17);
+check('a mascot for every club: the Frostline\'s eight, the National nine and the Elite\'s two', Object.keys(MASCOTS).length === 19);
 
 const run = (seed) => { const g = makeRng(seed), r = newRace(['home', 'lynx', 'rams', 'owls']); while (!r.winner && r.t < 60) stepRace(r, 1 / 60, g); return r; };
 const wins = {}; let slowest = 0, fastest = 99;

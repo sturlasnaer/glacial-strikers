@@ -391,6 +391,31 @@ export const TEAMS = {
     gstyle: 'reader', subs: { goalie: 'Pod', frost: 'Brine', thunder: 'Streak', stone: 'Bergen' },
     style: 'Fast and flashy, the stars of the north. Their wingers are gone before you turn.',
   },
+  // Two more National clubs (the division grows to ten): the dam builders and the lagoon's dancers.
+  beavers: {
+    elems: { frost: 'stone' }, // supers other than the slot's own
+    id: 'beavers', plan: 'trap', chem: 2, name: 'Birchwood Beavers', short: 'BEA', crest: 'hud_elements/misc/away_crest',
+    art: null, mark: 'birchwood_beavers', arena: 'millpond', national: true,
+    goalieLook: { mask: 'classic', paint: '#7a2433', body: 'big' },
+    looks: { frost: { body: 'std', head: 'gap_tooth', skin: 2, hair: 1 }, thunder: { body: 'small', head: 'freckles', skin: 0, hair: 4 }, stone: { body: 'big', head: 'buzz_cut', skin: 3, hair: 0 } },
+    color: '#7a2433', color2: '#f1e6cf', recolor: { h1: 352, h2: 40, sat: 0.7, val: 0.55, sat2: 0.15, val2: 1.0 }, // (wine red and birch white)
+    diff: 0.38, bonus: { chk: 1, sta: 1, agi: -1 }, goalie: { rfx: 6, pos: 8 },
+    names: { frost: 'Chipper', thunder: 'Woody', stone: 'Logjam', goalie: 'Stopper' },
+    gstyle: 'wall', subs: { goalie: 'Birchbark', frost: 'Twiggy', thunder: 'Paddletail', stone: 'Mudpie' },
+    style: 'Busy builders. They stack up a dam in front of their net and dare you to get through.',
+  },
+  flamingos: {
+    elems: { stone: 'gale' }, // supers other than the slot's own
+    id: 'flamingos', plan: 'rungun', chem: 2, name: 'Coral Bay Flamingos', short: 'FLA', crest: 'hud_elements/misc/away_crest',
+    art: null, mark: 'coral_bay_flamingos', arena: 'coral_bay', national: true,
+    goalieLook: { mask: 'stars', paint: '#ff6fae', body: 'small' },
+    looks: { frost: { body: 'std', head: 'curls', skin: 1, hair: 3 }, thunder: { body: 'small', head: 'space_buns', skin: 4, hair: 2 }, stone: { body: 'std', head: 'visor', skin: 2, hair: 5 } },
+    color: '#ff6fae', color2: '#2fa36b', recolor: { h1: 330, h2: 150, sat: 0.9, val: 1.0, sat2: 0.8, val2: 0.75 }, // (flamingo pink and palm green)
+    diff: 0.67, bonus: { agi: 2, pas: 1, chk: -2 }, goalie: { rfx: 7, pos: 6 },
+    names: { frost: 'Flutter', thunder: 'Tango', stone: 'Lagoon', goalie: 'Stilts' },
+    gstyle: 'scrambler', subs: { goalie: 'Shrimp', frost: 'Sunny', thunder: 'Mango', stone: 'Palmer' },
+    style: 'Graceful and tricky, from the warm lagoons. They glide past you on one skate and make it look easy.',
+  },
   // The Elite division's own two clubs (tiers.js): met only at the top, the strongest in the
   // country, the fierce one and the calm one.
   tigers: {
@@ -421,9 +446,10 @@ export const TEAMS = {
 // The rivals, easiest first. The first five are the league's founding clubs.
 export const RIVAL_IDS = ['lynx', 'comets', 'owls', 'rams', 'moose', 'ravens', 'royals'];
 export const FOUNDING_RIVALS = ['lynx', 'comets', 'rams', 'ravens', 'royals'];
-// The National division's clubs, easiest first, and the Elite division's: the strongest of
-// both regions (tiers.js). RIVAL_IDS stays the Frostline's own (the daily challenge draws from it).
-export const NATIONAL_IDS = ['capybaras', 'puffins', 'grizzlies', 'seals', 'penguins', 'bulls', 'narwhals'];
+// The National division's clubs, easiest first (nine: the schedule wants an odd number of
+// rivals), and the Elite division's: the strongest of both regions (tiers.js). RIVAL_IDS stays
+// the Frostline's own (the daily challenge draws from it).
+export const NATIONAL_IDS = ['capybaras', 'beavers', 'puffins', 'grizzlies', 'seals', 'flamingos', 'penguins', 'bulls', 'narwhals'];
 // (the Elite has two clubs of its own, the Tigers and the Pandas: nine rivals, ten clubs, nine
 // rounds; the schedule wants an odd number of rivals)
 export const ELITE_OWN_IDS = ['tigers', 'pandas'];
@@ -476,6 +502,8 @@ export const ARENAS = {
   pack_ice: { name: 'Pack Ice Arena', lamps: '#e6f4ff', twist: 'none', national: true },
   sunmesa: { name: 'Sunmesa Arena', lamps: '#ffb347', twist: 'none', national: true },
   fjord_hall: { name: 'Fjord Hall', lamps: '#9fffc8', twist: 'none', national: true },
+  millpond: { name: 'Millpond Rink', lamps: '#ffcf8a', twist: 'none', national: true }, // (the Beavers': Batch EM)
+  coral_bay: { name: 'Coral Bay Rink', lamps: '#ffb0d0', twist: 'none', national: true }, // (the Flamingos': Batch EM)
   taiga_rink: { name: 'Taiga Rink', lamps: '#ffb36b', twist: 'none', national: true }, // (the Tigers': Batch EL)
   bamboo_grove: { name: 'Bamboo Grove', lamps: '#ffd8a0', twist: 'none', national: true }, // (the Pandas': Batch EL)
 };
@@ -530,6 +558,12 @@ export const RECRUITS = {
   narwhals_c: recruit('narwhals', 'frost', { spd: 9, agi: 9, sht: 8, pas: 9, chk: 3, sta: 6 }, [1, 0, 1], 650, 'The north\'s brightest star, and dazzling with the puck.', 'dangler', 'L'),
   narwhals_w: recruit('narwhals', 'thunder', { spd: 10, agi: 9, sht: 9, pas: 5, chk: 3, sta: 6 }, [0, 1, 0], 650, 'Gone before you turn, and the puck is already in the net.', 'sniper', 'R'),
   narwhals_d: recruit('narwhals', 'stone', { spd: 7, agi: 7, sht: 8, pas: 8, chk: 7, sta: 7 }, [1, 0, 0], 650, 'Joins every rush and still beats everyone back.', 'blueliner', 'L'),
+  beavers_c: recruit('beavers', 'frost', { spd: 6, agi: 6, sht: 7, pas: 8, chk: 7, sta: 8 }, [1, 1, 0], 420, 'Never stops working. Every shift, another log on the pile.', 'grinder', 'L'),
+  beavers_w: recruit('beavers', 'thunder', { spd: 7, agi: 7, sht: 8, pas: 6, chk: 6, sta: 8 }, [0, 1, 1], 420, 'Chips away at the defence until something gives.', 'grinder', 'R'),
+  beavers_d: recruit('beavers', 'stone', { spd: 4, agi: 5, sht: 7, pas: 6, chk: 9, sta: 10 }, [1, 0, 1], 420, 'Builds a wall in front of the net and stands behind it.', 'blueliner', 'L'),
+  flamingos_c: recruit('flamingos', 'frost', { spd: 8, agi: 9, sht: 7, pas: 9, chk: 3, sta: 6 }, [0, 1, 0], 530, 'Glides through traffic on one skate, cool as you like.', 'playmaker', 'R'),
+  flamingos_w: recruit('flamingos', 'thunder', { spd: 9, agi: 10, sht: 8, pas: 6, chk: 2, sta: 7 }, [1, 0, 1], 530, 'All long legs and fancy moves, and somehow never falls over.', 'dangler', 'L'),
+  flamingos_d: recruit('flamingos', 'stone', { spd: 6, agi: 8, sht: 7, pas: 8, chk: 6, sta: 7 }, [0, 0, 1], 530, 'Steps out of the way, then takes the puck off you anyway.', 'blueliner', 'R'),
   // the Elite's own (beat them there first)
   tigers_c: recruit('tigers', 'frost', { spd: 9, agi: 8, sht: 9, pas: 8, chk: 6, sta: 6 }, [1, 0, 0], 680, 'Hunts the puck down and buries it.', 'sniper', 'R'),
   tigers_w: recruit('tigers', 'thunder', { spd: 10, agi: 9, sht: 9, pas: 5, chk: 6, sta: 6 }, [0, 0, 1], 680, 'A blur of orange and black, gone before you hear the skates.', 'speedster', 'L'),
@@ -555,7 +589,7 @@ export const STAR_AGES = {
   capybaras_c: 29, capybaras_w: 24, capybaras_d: 27, puffins_c: 22, puffins_w: 21, puffins_d: 25, grizzlies_c: 28, grizzlies_w: 26, grizzlies_d: 31,
   seals_c: 25, seals_w: 23, seals_d: 28, penguins_c: 30, penguins_w: 26, penguins_d: 29, bulls_c: 26, bulls_w: 22, bulls_d: 30,
   narwhals_c: 24, narwhals_w: 23, narwhals_d: 27, pandas_c: 27, pandas_w: 23, pandas_d: 29,
-  tigers_c: 25, tigers_w: 22, tigers_d: 28,
+  tigers_c: 25, tigers_w: 22, tigers_d: 28, beavers_c: 27, beavers_w: 24, beavers_d: 30, flamingos_c: 23, flamingos_w: 22, flamingos_d: 26,
 };
 // The kit a rival slot plays with: that player's archetype and the team's super for the slot.
 export const slotDef = (teamId, kit) => {
@@ -567,7 +601,7 @@ export const KIT_OF_ROLE = { C: 'frost', W: 'thunder', D: 'stone' };
 // Rival goalies you can sign once you've beaten their team ('<team>_g'). Their club then plays
 // a backup. Halla is 'halla'.
 const GOALIE_PRICES = { lynx: 220, comets: 300, owls: 400, rams: 380, moose: 480, ravens: 460, royals: 560,
-  capybaras: 380, puffins: 400, grizzlies: 460, seals: 500, penguins: 540, bulls: 580, narwhals: 640, tigers: 680, pandas: 700 };
+  capybaras: 380, puffins: 400, grizzlies: 460, seals: 500, penguins: 540, bulls: 580, narwhals: 640, tigers: 680, pandas: 700, beavers: 420, flamingos: 520 };
 export const GOALIE_RECRUITS = Object.fromEntries(Object.entries(GOALIE_PRICES).map(([team, price]) => {
   const t = TEAMS[team];
   return [`${team}_g`, { key: `${team}_g`, team, name: t.names.goalie, base: { ...t.goalie }, gstyle: t.gstyle, price, art: t.art || (t.goalieLook ? goalieArt(t.goalieLook) : 'newcomer'), mask: t.goalieLook || null, title: 'Goaltender' }]; // (an expansion club's goalie: made from parts)
@@ -771,6 +805,8 @@ export const NATIONAL_STAGES = [
   { team: 'penguins', round: 'Semifinal', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 270 },
   { team: 'bulls', round: 'Semifinal', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'speed_lanes', reward: 300 },
   { team: 'narwhals', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'cracked_ice', reward: 400 },
+  { team: 'beavers', round: 'Group Stage', powers: ['fire', 'ice'], twist: 'none', reward: 175 },
+  { team: 'flamingos', round: 'Quarterfinal', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 255 },
   { team: 'tigers', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 410 }, // (the Elite's own)
   { team: 'pandas', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 420 },
 ];
@@ -1066,6 +1102,26 @@ export const DIALOGUE = {
     finalWin: [['them', 'frost', 'The cup is yours. The north will be back for it.']],
     finalLoss: [['them', 'frost', 'The north shines brightest. Come back next season, Foxes.']],
   },
+  beavers: {
+    pre: [
+      ['them', 'stone', 'Welcome to the Millpond. Mind the dam. We built it ourselves.'],
+      ['us', 'thunder', 'They\'ve piled logs in front of their net. Is that even allowed?'],
+      ['them', 'frost', 'Those are our defenders. Good luck chewing through them.'],
+      ['us', 'frost', 'A dam has gaps. Move the puck side to side and find them.'],
+    ],
+    win: [['them', 'stone', 'A leak in the dam! Back to work, everyone.']],
+    loss: [['them', 'frost', 'Nothing gets through a Beaver dam. Nothing!']],
+  },
+  flamingos: {
+    pre: [
+      ['them', 'thunder', 'Hello, darlings! Welcome to Coral Bay. Isn\'t the ice lovely and pink?'],
+      ['us', 'stone', 'Pink ice? I just want to know where the puck is.'],
+      ['them', 'frost', 'We glide, we twirl, we score. Try to keep up on two skates.'],
+      ['us', 'frost', 'Stay on your feet and keep them to the outside. They don\'t like a bump.'],
+    ],
+    win: [['them', 'thunder', 'Oh! You ruffled our feathers. Well played.']],
+    loss: [['them', 'frost', 'And that\'s how it\'s done. On one skate!']],
+  },
   // the Elite's own
   tigers: {
     pre: [
@@ -1109,9 +1165,9 @@ export const DIALOGUE = {
 export const TIER_LINES = {
   national: { team: 'narwhals', lines: [
     ['kip', null, 'The Foxes go national! New rinks and new rivals, from all over the country.'],
-    ['kip', null, 'Capybaras from the hot springs, Puffins off the sea cliffs, Grizzlies from the timber, slippery Seals, Penguins from the pack ice, the Bulls from the warm canyon country... and the mighty Northlight Narwhals.'],
+    ['kip', null, 'Capybaras from the hot springs, Beavers from the lakes, Puffins off the sea cliffs, Grizzlies from the timber, slippery Seals, Flamingos from the warm lagoons, Penguins from the pack ice, the Bulls from the canyon country... and the mighty Northlight Narwhals.'],
     ['them', 'frost', 'So these are the Frostline champions. Welcome to the National Cup, Foxes.'],
-    ['us', 'frost', 'Seven clubs we\'ve never played. Let\'s go and meet them.'],
+    ['us', 'frost', 'Nine clubs we\'ve never played. Let\'s go and meet them.'],
   ] },
   elite: { team: 'pandas', lines: [
     ['kip', null, 'The Elite Cup! Only the very best clubs in the country play here.'],

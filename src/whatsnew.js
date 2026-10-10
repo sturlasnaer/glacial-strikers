@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10zq',
+    items: [
+      { icon: 'badges/national_cup', alt: 'badges/tier_national', text: 'Two more clubs in the National Cup: the Birchwood Beavers, who build a dam in front of their net, and the Coral Bay Flamingos, who glide past you on one skate. The National is now ten clubs and nine rounds, like the Elite.' },
+    ],
+  },
+  {
     id: '2026-10-10zp',
     items: [
       { icon: 'badges/elite_cup', alt: 'badges/tier_elite', text: 'Two new clubs who play only in the Elite Cup: the fierce Taiga Tigers from the snowy forests, and the Bamboo Ridge Pandas from their misty mountains, the strongest club in the country. The Elite is now ten clubs and nine rounds.' },

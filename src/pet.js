@@ -149,7 +149,7 @@ function rollBall(b, dt) {
 // playoffs, Quick play) and they send it to the Foxes' locker room as a gift. Snowball the
 // Snow Fox cub is there from the start. Up to ROOM_MAX of them wander the room; the rest wait
 // in the pet house (Shop › Locker room), and they swap at will. A pet comes once its art is in
-// (Batches EH to EL: pets/<kind>/walk_1.., on the `pets` pages). Their names are the player's.
+// (Batches EH to EM: pets/<kind>/walk_1.., on the `pets` pages). Their names are the player's.
 export const PET_WINS = 3;
 export const ROOM_MAX = 4;
 export const PET_KINDS = [
@@ -162,9 +162,11 @@ export const PET_KINDS = [
   { id: 'raven', team: 'ravens', name: 'Raven chick', pet: 'Inky' },
   { id: 'polar', team: 'royals', name: 'Polar bear cub', pet: 'Frosty' },
   { id: 'capybara', team: 'capybaras', name: 'Capybara pup', pet: 'Mochi' },
+  { id: 'beaver', team: 'beavers', name: 'Beaver kit', pet: 'Toothy' },
   { id: 'puffling', team: 'puffins', name: 'Puffling', pet: 'Skipper' },
   { id: 'bear', team: 'grizzlies', name: 'Grizzly cub', pet: 'Bumble' },
   { id: 'seal', team: 'seals', name: 'Seal pup', pet: 'Bubbles' },
+  { id: 'flamingo', team: 'flamingos', name: 'Flamingo chick', pet: 'Pinky' },
   { id: 'penguin', team: 'penguins', name: 'Penguin chick', pet: 'Waddles' },
   { id: 'bull', team: 'bulls', name: 'Bull calf', pet: 'Chili' },
   { id: 'narwhal', team: 'narwhals', name: 'Narwhal calf', pet: 'Sprinkle' },
