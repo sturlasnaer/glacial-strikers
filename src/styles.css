@@ -1500,6 +1500,21 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .outfit-ico { position: relative; display: block; width: 64px; height: 64px; }
 .outfit-ico img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 /* the mascot race at the break (Batch DB): the track (its art, or plain ice), four lanes to pick */
+/* snowball fun with the cub (Training, Batch DT) */
+.snowfun { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 10px; background: rgba(11, 20, 36, 0.85); }
+.snow-head { display: flex; align-items: center; gap: 12px; width: min(100%, 860px, 150vh); font-size: 18px; }
+.snow-head .snow-hits { margin-left: auto; font-family: var(--display); color: var(--gold); }
+.snow-time { width: 120px; height: 10px; border: 2px solid var(--navy-3); border-radius: 5px; overflow: hidden; }
+.snow-time i { display: block; height: 100%; width: 100%; background: var(--ice, #71dce8); }
+.snow-yard { position: relative; width: min(100%, 860px, 150vh); aspect-ratio: 16 / 9; border: 3px solid var(--navy-3); border-radius: 8px; overflow: hidden; cursor: crosshair; touch-action: manipulation; }
+.snow-bg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.snow-cub { position: absolute; padding: 0; border: 0; background: none; cursor: pointer; }
+.snow-cub img { display: block; width: 100%; height: 100%; }
+.snow-ball { position: absolute; height: calc(100% * 40 / 864); width: auto; transform: translate(-50%, -50%) scale(1.6); transition: left 0.3s ease-out, top 0.3s ease-out, transform 0.3s ease-out; pointer-events: none; }
+.snow-splat { position: absolute; height: calc(100% * 90 / 864); width: auto; transform: translate(-50%, -50%); pointer-events: none; animation: snow-splat 0.5s ease-out forwards; }
+@keyframes snow-splat { from { opacity: 1; transform: translate(-50%, -50%) scale(0.6); } to { opacity: 0; transform: translate(-50%, -50%) scale(1.1); } }
+.snow-end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: rgba(11, 20, 36, 0.7); text-align: center; padding: 12px; }
+.snow-end h2 { margin: 0; }
 .race { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 12px; background: rgba(11, 20, 36, 0.78); }
 .race-track { position: relative; width: min(96vw, calc((100vh - 90px) * 2.4)); aspect-ratio: 1536 / 640; border: 4px solid var(--navy); border-radius: 6px; background: #d6eef8 center / cover no-repeat; box-shadow: 0 0 0 2px var(--ice), 4px 6px 0 rgba(0, 0, 0, 0.4); overflow: hidden; }
 .race-lane { position: absolute; left: 0; right: 0; height: 19%; border: 0; border-top: 2px dashed rgba(20, 35, 59, 0.25); background: transparent; cursor: pointer; text-align: right; padding: 0 2%; }

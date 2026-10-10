@@ -59,6 +59,7 @@ import { DECOR, DECOR_BY_ID, DECOR_SLOTS, SLOT_NAMES as DECOR_SLOT_NAMES, buyDec
 import { cleanSign, SIGN_MAX } from './fancam.js';
 import { MINI_ROUNDS, MINI_PRIZE, miniOf } from './minicup.js';
 import { MASCOTS, RACE_PRIZE, pickRunners, newRace, stepRace } from './race.js';
+import { SNOW_TIME, newSnowball, stepSnowball, throwAt, snowPrize } from './snowball.js';
 import { tripStops, POSTCARD_TOWNS } from './trip.js';
 import { newPet, stepPet, tapPet, tossPuck, cleanPetName, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall } from './pet.js';
 import { albumPages, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
@@ -267,6 +268,9 @@ const shopFilters = (filter) => `<div class="filters">${['all', 'stick', 'skates
 // Locker room decorations (Batch CS): an item once its frames are in, and the spots (moved where
 // the art says, atlas.decor_slots).
 const decorArt = (d) => d.frames.every((f) => Assets.atlas.frames[f]);
+// Snowball fun's art is in (Batch DT): the yard and its spots, the cub's poses, the ball and a splat
+const SNOW_FRAMES = ['snowball/yard', 'snowball/peek_1', 'snowball/peek_2', 'snowball/peek_3', 'snowball/hit_1', 'snowball/hit_2', 'snowball/ball', 'snowball/splat_1'];
+const snowballArt = () => !!(Assets.atlas.snowball_spots && Assets.atlas.snowball_spots.length && SNOW_FRAMES.every((f) => Assets.atlas.frames[f]));
 // the season's daily treat in the locker room: Halloween's bowl (Batch DQ), the holidays' presents (DS)
 const treatArt = () => ({
   halloween: { full: 'seasonal_room/candy_bowl', empty: 'seasonal_room/candy_bowl_empty', icon: 'icons/treat', name: () => t('Treats'), got: () => t('A treat!'), done: () => t('That was today\'s treat.') },
@@ -2959,6 +2963,10 @@ export class UI {
         <span class="label" style="font-size:15px">${t('Skater:')}</span>
         ${rosterIds(s).map((id) => `<button class="btn small ${this.drillChar === id ? 'cream' : 'ghost'}" data-char="${id}" style="display:flex;gap:6px;align-items:center"><img src="${portrait(id, 0, null, 64)}" width="28" height="28" alt="">${esc(member(id).name)}</button>`).join('')}
       </div>
+      ${snowballArt() ? `<div class="card drill snow-card"><div class="card-head"><img src="${ico(Assets.pages[Assets.frame('snowball/peek_3')[0]] ? 'snowball/peek_3' : 'icons/pet', 128)}" alt="" style="border:0;background:none">
+          <div style="min-width:0"><h3>${t('Snowball fun')}</h3><div class="sub">${t('Just for fun')}</div></div></div>
+        <p class="muted" style="margin:0;font-size:13px">${t('For the youngest: toss soft snowballs at the cub as it pops up from the snow forts. A coin for every hit.')}</p>
+        <div class="row" style="justify-content:space-between"><span style="font-size:13px">${t('Best: {score}', { score: `<b class="gold-t">${(s.snowball && s.snowball.best) || '–'}</b>` })}</span><button class="btn small gold" id="snow-play">${t('Play')}</button></div></div>` : ''}
       <div class="drills">${Object.values(DRILLS).map((d) => {
         const best = tr.best[d.id];
         const medal = tr.medals[d.id] || 0;
@@ -2983,6 +2991,80 @@ export class UI {
     }, body);
     this.click('[data-ghost]', (el) => { (s.settings.ghosts ||= {})[el.dataset.drill] = el.dataset.ghost; writeSave(s); audio.sfx('click'); this.tabTraining(body); }, body);
     this.click('[data-lb]', (el) => { audio.sfx('click'); this.leaderboard(el.dataset.lb); }, body);
+    this.click('#snow-play', () => { audio.sfx('confirm'); this.snowballFun(() => { if (this.tab === 'training' && body.isConnected) this.tabTraining(body); }); }, body);
+  }
+
+  // Snowball fun with the cub (Training, Batch DT): a minute of soft snowballs at the cub as it
+  // pops up from the snow forts, a coin a hit, no losing. done() after it's closed.
+  snowballFun(done = () => {}) {
+    if (!snowballArt()) return done();
+    const ready = () => SNOW_FRAMES.every((f) => Assets.pages[Assets.frame(f)[0]]);
+    if (!ready()) { Assets.loadGroup('snowball').then(() => (ready() ? this.snowballFun(done) : done()), () => done()); return; } // (once: not round again)
+    const s = this.app.save, rec = (s.snowball ||= { best: 0, games: 0 }), spots = Assets.atlas.snowball_spots;
+    const cub = Assets.spriteSet(['peek_1', 'peek_2', 'peek_3', 'hit_1', 'hit_2'].map((f) => 'snowball/' + f), 120);
+    const at = (x, y) => `left:${(x / 1536) * 100}%;top:${(y / 864) * 100}%`;
+    const el = document.createElement('div');
+    el.className = 'snowfun';
+    el.innerHTML = `<div class="snow-head"><b>${t('Snowball fun')}</b><span class="snow-hits">${t('Hits: {n}', { n: 0 })}</span><span class="snow-time"><i></i></span><button class="btn small ghost" id="snow-done">${t('Done')}</button></div>
+      <div class="snow-yard"><img class="snow-bg" src="${Assets.sceneImage('snowball/yard', 960)}" alt="">
+        <button class="snow-cub" aria-label="${esc(t('The cub'))}" hidden><img alt=""></button></div>`;
+    document.getElementById('app').appendChild(el);
+    const yard = el.querySelector('.snow-yard'), cubBtn = el.querySelector('.snow-cub'), cubImg = cubBtn.querySelector('img'), hits = el.querySelector('.snow-hits'), bar = el.querySelector('.snow-time i');
+    const st = newSnowball(spots.length);
+    let last = performance.now(), raf = 0, ended = false;
+    const toss = (x, y, hit) => { // (from the bottom of the yard to the spot, then a splat)
+      const b = document.createElement('img');
+      b.className = 'snow-ball'; b.src = Assets.sceneImage('snowball/ball', 40); b.alt = '';
+      b.style.cssText = 'left:50%;top:100%';
+      yard.appendChild(b);
+      requestAnimationFrame(() => { b.style.cssText = `${at(x, y)};transform:translate(-50%,-50%) scale(0.7)`; });
+      setTimeout(() => {
+        b.remove();
+        const f = Assets.frame('snowball/splat_2') ? (hit ? 'snowball/splat_1' : 'snowball/splat_2') : 'snowball/splat_1', sp = document.createElement('img');
+        sp.className = 'snow-splat'; sp.src = Assets.sceneImage(f, 120); sp.alt = ''; sp.style.cssText = at(x, y);
+        yard.appendChild(sp); setTimeout(() => sp.remove(), 500);
+        if (hit) audio.sfx('blip');
+      }, 300);
+    };
+    const finish = () => {
+      if (ended) return;
+      ended = true; cancelAnimationFrame(raf);
+      const prize = snowPrize(st.score);
+      s.coins += prize; rec.games++; const best = st.score > rec.best; if (best) rec.best = st.score;
+      writeSave(s); audio.sfx('purchase');
+      el.querySelector('.snow-yard').insertAdjacentHTML('beforeend', `<div class="snow-end"><h2>${t(st.score === 1 ? 'You got the cub once!' : 'You got the cub {n} times!', { n: st.score })}</h2>
+        <p>${t('+{n} coins', { n: prize })}${best && st.score ? ` · <span class="gold-t">${t('A new best!')}</span>` : ''}</p>
+        <div class="row" style="justify-content:center"><button class="btn ghost" id="snow-close">${t('Done')}</button><button class="btn gold" id="snow-again">${t('Play again')}</button></div></div>`);
+      el.querySelector('#snow-close').addEventListener('click', () => { audio.sfx('back'); el.remove(); done(); });
+      el.querySelector('#snow-again').addEventListener('click', () => { audio.sfx('confirm'); el.remove(); this.snowballFun(done); });
+    };
+    cubBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const sp = spots[st.cub.spot];
+      if (sp && throwAt(st, st.cub.spot)) { toss(sp.x, sp.y - 50, true); hits.textContent = t('Hits: {n}', { n: st.score }); }
+    });
+    yard.addEventListener('click', (e) => { // (a miss: it lands in the snow)
+      if (ended || e.target.closest('button')) return;
+      const r = yard.getBoundingClientRect();
+      toss(((e.clientX - r.left) / r.width) * 1536, ((e.clientY - r.top) / r.height) * 864, false);
+    });
+    el.querySelector('#snow-done').addEventListener('click', () => { audio.sfx('back'); if (st.score) finish(); else { cancelAnimationFrame(raf); ended = true; el.remove(); done(); } });
+    const tick = (now) => {
+      if (!el.isConnected) return;
+      const dt = Math.min(0.1, (now - last) / 1000); last = now;
+      stepSnowball(st, dt);
+      const c = st.cub, sp = spots[c.spot];
+      cubBtn.hidden = !sp || c.phase === 'wait';
+      if (sp && c.phase !== 'wait') {
+        const i = c.phase === 'rise' ? (c.t > 0.15 ? 0 : 1) : c.phase === 'up' ? 2 : c.phase === 'hit' ? (c.t > 0.45 ? 3 : 4) : 0;
+        if (cubImg.dataset.i !== String(i)) { cubImg.src = cub.urls[i]; cubImg.dataset.i = i; }
+        cubBtn.style.cssText = `${at(sp.x, sp.y)};height:${(120 / 864) * 100}%;aspect-ratio:${cub.w}/${cub.h};transform:translate(-${cub.fx * 100}%,-${cub.fy * 100}%)`;
+      }
+      bar.style.width = `${Math.max(0, 100 - (st.t / SNOW_TIME) * 100)}%`;
+      if (st.over) return finish();
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
   }
 
   // A drill's ghost (Cone Weave, Breakaway): none, your best run, this week's best, or a
