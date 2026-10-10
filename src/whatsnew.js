@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10zs',
+    items: [
+      { icon: 'race/sunmesa_bulls/win', alt: 'icons/stat_cups', text: 'The National clubs\' mascots join the mascot race: a capybara, a puffin, a grizzly, a seal, a penguin, a bull and a narwhal. Play a National club to see them run.' },
+    ],
+  },
+  {
     id: '2026-10-10zr',
     items: [
       { icon: 'icons/album', alt: 'icons/stat_cups', text: 'The sticker album grows: a page for every National and Elite club, once the Foxes reach their division. And two new trophies to chase: win the Elite Cup three times, and beat every club in the country.' },

@@ -2265,6 +2265,7 @@ export const IS = {
   "The Mini Cup, in Quick play: three quick games, first to three, against rivals getting tougher. Win them all for a cup of your own!": "Litli bikarinn, í Stökum leik: þrír stuttir leikir, fyrst í þrjú mörk, gegn sífellt sterkari andstæðingum. Vinndu þá alla og fáðu þinn eigin bikar!",
   "The morning paper: \"{club} ROLL {gf}–{ga}.\" Volta has already framed it.": "Blöðin í morgun: „{club} MEÐ STÓRSIGUR, {gf}–{ga}.“ Volta er þegar búin að ramma fyrirsögnina inn.",
   "The most valuable skater in the Frostline.": "Mikilvægasti skautarinn í Frostline-deildinni.",
+  "The National clubs' mascots join the mascot race: a capybara, a puffin, a grizzly, a seal, a penguin, a bull and a narwhal. Play a National club to see them run.": "Lukkudýr félaganna í Landsdeildinni bætast í lukkudýrakapphlaupið: flóðsvín, lundi, grábjörn, selur, mörgæs, naut og náhvalur. Spilaðu við félag úr Landsdeildinni til að sjá þau hlaupa.",
   "The newcomer +20 EXP, and +6 chemistry with the line": "Nýliðinn +20 EXP og +6 samspil með línunni",
   "The night before the final": "Kvöldið fyrir úrslitaleikinn",
   "The north shines brightest. Better luck next time.": "Norðrið skín skærast. Gangi ykkur betur næst.",

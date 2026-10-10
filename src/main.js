@@ -10,7 +10,7 @@ import { PadNav } from './padnav.js';
 import { forceSeason, seasonFor } from './seasonal.js';
 import { addPacks } from './album.js';
 import { cleanSign, CROWD_SIGNS } from './fancam.js';
-import { RACE_AT } from './race.js';
+import { RACE_AT, MASCOTS } from './race.js';
 import { MINI_ROUNDS, MINI_WIN, miniOf, newMiniCup, miniResult } from './minicup.js';
 import { firstTime } from './guide.js';
 import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as cloudBackup, settleCups } from './online.js';
@@ -337,11 +337,13 @@ class App {
     // the coach cub keeps its costume at away games too (Batch DW): just its own page, not the
     // whole seasonal group (that's some 30 MB decoded)
     const coachCostume = this.save.settings.little && seasonFor() ? ['talk_1', 'talk_2', 'point', 'cheer', 'think'].map((f) => `cub_coach_${seasonFor()}/${f}`).filter((f) => Assets.frame(f)) : [];
-    Assets.trim({ pages: Assets.framePages(coachCostume), teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(team.groups || []), ...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(arena === 'home' ? ['pet_rink'] : []), ...(this.save.settings.little ? ['cub_coach', 'kid_stars'] : []), ...(!this.attract && !cfg.drill ? ['race'] : []), ...(cfg.night && Assets.frame('night/aurora_1') ? [Assets.atlas.pages[Assets.frame('night/aurora_1')[0]].group] : [])] });
+    // the mascot race's runners (Batch DB): only the pages with the Snow Fox and their mascot on
+    // (the race draws the others from those); the whole race group is over 20 MB decoded
+    const runners = !this.attract && !cfg.drill ? ['race/snow_fox/run_1', ...(MASCOTS[teamId] ? [`race/${MASCOTS[teamId]}/run_1`] : [])].filter((f) => Assets.frame(f)) : [];
+    Assets.trim({ pages: [...Assets.framePages(coachCostume), ...Assets.framePages(runners)], teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(team.groups || []), ...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(arena === 'home' ? ['pet_rink'] : []), ...(this.save.settings.little ? ['cub_coach', 'kid_stars'] : []), ...(cfg.night && Assets.frame('night/aurora_1') ? [Assets.atlas.pages[Assets.frame('night/aurora_1')[0]].group] : [])] });
     const fancam = arena === 'home' && !this.attract && !!Assets.atlas.fancam; // (the fan cam's fans: Batch CT)
     const cub = arena === 'home' && !!Assets.atlas.arena_spots?.home_cub && Assets.atlas.pages.some((pg) => pg.group === 'pet_rink'); // (the cub on the boards: Batch DH)
-    const racing = !this.attract && !cfg.drill && Assets.atlas.pages.some((pg) => pg.group === 'race'); // (the mascot race's runners: Batch DB)
-    if (racing) Assets.loadGroup('race').catch(() => {});
+    if (runners.length) Assets.loadPages(runners).catch(() => {});
     if (fancam) Assets.loadGroup('fancam').catch(() => {});
     if (cub) Assets.loadGroup('pet_rink').catch(() => {});
     if (dressed) Assets.loadGroup('seasonal').then(() => { if (this.scene === 'title') this.ui.titleLogo(); }).catch(() => {}); // (the logo's trimmings too)
