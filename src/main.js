@@ -220,6 +220,10 @@ class App {
     this.fx.particleMul = st.particles === 'reduced' ? 0.35 : 1;
     this.renderer.markers = st.markers || 'color';
     this.renderer.passRing = st.passRing !== false;
+    // the puck: larger on a phone by default (Settings › Puck), with a ring if asked for
+    const puck = st.puck === 'auto' || !st.puck ? (this.isTouch ? 'large' : 'normal') : st.puck;
+    this.renderer.puckSize = puck === 'normal' ? 1 : 1.35;
+    this.renderer.puckRing = puck === 'ring';
     document.body.classList.toggle('large-text', st.textSize === 'large');
     const t = document.getElementById('touch');
     t.dataset.size = st.touchSize || 'normal';

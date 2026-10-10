@@ -1690,7 +1690,16 @@ export class Renderer {
     const comboType = sp && sp.combo ? { 'frost+thunder': 'lightning', 'frost+stone': 'ice', 'stone+thunder': 'lightning' }[sp.combo] : null;
     const type = p.power || comboType || (sp && sp.zero ? 'ice' : sp && (sp.thunder || sp.charged) ? 'lightning' : 'plain');
     const ph = 1 + (Math.floor(fx.time * 8) % 4);
-    Assets.draw(ctx, `power_pucks/${type}/phase_${ph}`, s.x, s.y - 2, PUCK_SCALE * persp(p.y));
+    // (Settings › Puck: larger, and a ring round it, for small screens)
+    if (this.puckRing && !p.inNet) {
+      const k = persp(p.y) * (this.puckSize || 1), pulse = 0.75 + Math.sin(fx.time * 5) * 0.15;
+      ctx.save(); ctx.globalAlpha *= pulse;
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(11, 20, 36, 0.6)';
+      ctx.beginPath(); ctx.ellipse(s.x, s.y - 2, 13 * k, 9 * k, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.lineWidth = 1.6; ctx.strokeStyle = '#ffd45e'; ctx.stroke();
+      ctx.restore();
+    }
+    Assets.draw(ctx, `power_pucks/${type}/phase_${ph}`, s.x, s.y - 2, PUCK_SCALE * persp(p.y) * (this.puckSize || 1));
     ctx.restore();
     if (p.power && match.state === 'play' && Math.random() < 0.5) {
       fx.part(p.x, p.y, 4, (Math.random() - 0.5) * 40, (Math.random() - 0.5) * 30, 60, 0.4, ELEMENT_COLORS[p.power][Math.floor(Math.random() * 3)], 2);

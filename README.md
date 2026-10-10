@@ -110,7 +110,7 @@ Hold shoot while a pass is on its way to fire a **one-timer**. Your skates plant
 - **Rivalries:** head-to-head records per rival. Captains bring up past scores, streaks and who lit them up, and the bracket shows the record.
 - **Challenges:** exhibition modifiers (One-timers only, Giant goalies, Ice age, Lightning round, Heavy hitters, Next goal wins) with coin multipliers.
 - **Local versus:** two players on one keyboard or with gamepads, plus gamepad rumble on hits, goals, combos and ultimates.
-- **Accessibility and comfort (Settings):** aim assist (off/normal/strong), auto-sprint, relaxed game speed, screen shake strength, flashes off, reduced effects, colorblind-friendly team markers (blue triangles vs orange diamonds), large text, bigger touch buttons and a left-handed touch layout.
+- **Accessibility and comfort (Settings):** aim assist (off/normal/strong), auto-sprint, relaxed game speed, screen shake strength, flashes off, reduced effects, colorblind-friendly team markers (blue triangles vs orange diamonds), large text, bigger touch buttons and a left-handed touch layout. **Puck:** Auto (larger on a phone), Normal, Large, or Large with a pulsing gold ring round it.
 - **Photo:** Pause › Photo saves a picture of the ice as it stands (the share sheet on a phone).
 - **Our goal horn:** Settings › Our goal horn picks the horn for our goals at our own rink from the buildings' horns (classic, volcano, fanfare, ram's horn, bell and ravens, cowbells); tap one to hear it.
 - **Goal clips:** every instant replay is recorded as a short video with game sound and a caption. The results screen lists the match's highlights with Share (phones) and Save.

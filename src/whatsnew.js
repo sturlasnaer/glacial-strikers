@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10e',
+    items: [
+      { icon: 'power_pucks/plain/phase_1', text: 'Phones: the menus fit a phone on its side or upright, and the puck is larger on a small screen (Settings › Puck, with a ring round it if you like).' },
+    ],
+  },
+  {
     id: '2026-10-10d',
     items: [
       { icon: 'icons/stat_goals', text: 'Club records, in Trophies: the biggest win, the most goals, points and saves in a match, the fastest goal, the longest winning streak and the best seasons. Break one and the game tells you.' },

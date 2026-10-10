@@ -46,7 +46,7 @@ export function newSave() {
       music: true, sfx: true, musicVol: 1, sfxVol: 1, audioQuality: 'auto', online: true, difficulty: 'normal', tips: true, replays: true, clips: true,
       assist: 'normal', autoSprint: false, speed: 'normal',
       shake: 1, flashes: true, particles: 'full',
-      markers: 'color', passRing: true, textSize: 'normal', touchSize: 'normal', lefty: false,
+      markers: 'color', passRing: true, puck: 'auto', textSize: 'normal', touchSize: 'normal', lefty: false,
     },
     record: { played: 0, wins: 0, goals: 0 },
     rookies: {}, // drafted rookies by roster id (rk1, rk2, …), see draft.js
