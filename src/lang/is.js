@@ -631,6 +631,7 @@ export const IS = {
   "Dealmaker": "Samningamaður",
   "Decide later": "Ákveða seinna",
   "Decorate every spot in the locker room.": "Skreyttu alla staðina í búningsklefanum.",
+  "Decorate the locker room! Shop › Locker room has fairy lights, posters, rugs, an arcade cabinet, a boombox and more. Fill every spot for a trophy.": "Skreyttu búningsklefann! Undir Búð › Búningsklefinn eru ljósaseríur, plaköt, mottur, spilakassi, ferðaútvarp og fleira. Fylltu alla staðina og fáðu verðlaun.",
   "Deep dark gouges in the ice": "Djúpar, dökkar skorur í ísnum",
   "Deep Freeze: Absolute Zero slows for longer": "Djúpfrost: Alkul hægir lengur á andstæðingum",
   "Defeat": "Tap",

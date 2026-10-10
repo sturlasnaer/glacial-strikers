@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10u',
+    items: [
+      { icon: 'decor/poster_fox', alt: 'equipment_items/hub/locker', text: 'Decorate the locker room! Shop › Locker room has fairy lights, posters, rugs, an arcade cabinet, a boombox and more. Fill every spot for a trophy.' },
+    ],
+  },
+  {
     id: '2026-10-10t',
     items: [
       { icon: 'icons/album', text: 'The sticker album has its own look now (shiny foil, packs to tear open) and eight more stickers: every club\'s mascot, the Snow Fox too.' },

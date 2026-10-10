@@ -2496,7 +2496,7 @@ export class UI {
       <div class="shop">${items.map((d) => {
         const own = ownsDecor(s, d.id), on = decorOn(s, d.id), afford = s.coins >= d.price;
         return `<div class="item" tabindex="0" data-card="${d.id}" aria-label="${esc(t(d.name))}">
-          <img src="${Assets.icon(d.frames[0], 128)}" alt="">
+          <img src="${Assets.icon(d.frames[0], 128, null, d.slot === 'banner' ? { crop: 'middle' } : {})}" alt="">
           <div style="min-width:0">
             <div class="label" style="font-size:13px">${t(DECOR_SLOT_NAMES[d.slot])}</div>
             <h4>${esc(t(d.name))}</h4>

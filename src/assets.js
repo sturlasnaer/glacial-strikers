@@ -626,6 +626,7 @@ export const Assets = {
     ctx.imageSmoothingQuality = 'high';
     let sx = fx, sy = fy, sw = fw, sh = fh;
     if (opts.crop === 'head') { sh = Math.round(fh * 0.55); }
+    if (opts.crop === 'middle' && fw > fh * 2.4) { sw = Math.round(fh * 2.4); sx = fx + Math.round((fw - sw) / 2); } // (a long string of something: its middle, big enough to see)
     const k = size / Math.max(sw, sh);
     if (opts.flip) { ctx.translate(size, 0); ctx.scale(-1, 1); }
     ctx.drawImage(page, sx, sy, sw, sh, (size - sw * k) / 2, (size - sh * k) / 2, sw * k, sh * k);
