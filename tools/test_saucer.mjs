@@ -79,7 +79,11 @@ check('AI against AI: it still goes for the puck', nearCatch({ humanTeam: null, 
   for (let i = 0; i < 60 && !m.puck.owner; i++) { m.setHumanInput(idle()); m.update(1 / 60); }
   const now = m.controlled();
   check('the catch: control goes to the teammate, who remembers the pass', now === mate && mate.recvFrom === c, now && now.name);
+  const told = [];
+  m.on('givego', (e) => told.push(e.s));
   const roles = m.ai[0].plan(m.teamSkaters(0), m.puck.owner, true, false, true), r = roles.get(c);
+  m.ai[0].plan(m.teamSkaters(0), m.puck.owner, true, false, true);
+  check('...said once for the pass (the first one gets a hint)', told.length === 1 && told[0] === c, told.length);
   check('...and the passer goes ahead for the return, sprinting', r && r.sprint && (r.x - mate.x) * mate.side > 60, r);
   m.time += 2;
   const later = m.ai[0].plan(m.teamSkaters(0), m.puck.owner, true, false, true).get(c);

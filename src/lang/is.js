@@ -896,6 +896,7 @@ export const IS = {
   "Give the club a new crest.": "Gefðu félaginu nýtt merki.",
   "Give the speech": "Halda ræðu",
   "Give-and-go! When a teammate passes to you, they skate hard into open ice ahead. Pass it back for the one-two.": "Gefa og fara! Eftir sendingu á þig skautar liðsfélaginn af krafti fram á autt svell. Sendu til baka í einn-tveir.",
+  "Give-and-go! Your teammate is skating into space: pass it back.": "Gefa og fara! Liðsfélaginn skautar út í autt svæði: sendu til baka.",
   "Glacier Cave rules: now and then an icicle drops from the ceiling. Watch for its shadow: get out from under it! It leaves a chunk of ice the puck glances off until the next faceoff.": "Reglur Jöklahellisins: annað slagið fellur grýlukerti úr loftinu. Fylgstu með skugganum og forðaðu þér undan! Eftir situr ísmoli sem pökkurinn skoppar af fram að næsta uppkasti.",
   "Glacier Glide": "Jökulsvif",
   "Glacier Guards": "Jökulhlífar",

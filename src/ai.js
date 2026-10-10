@@ -111,6 +111,7 @@ export class TeamAI {
       if (giver) {
         const gx = clamp(c.x + this.side * 170, -GOAL_X + 150, GOAL_X - 150), gy = clamp(c.y > 0 ? c.y - 150 : c.y + 150, -170, 170);
         roles.set(giver, { ...this.openUp({ x: gx, y: gy, kind: 'spot', sprint: true }, c), sprint: true });
+        if (c.ggT !== c.recvT) { c.ggT = c.recvT; m.emit('givego', { s: giver, to: c }); } // (once a pass: the first one gets a hint)
         avail = avail.filter((s) => s !== giver);
         spots.sort((a, b) => Math.hypot(a.x - gx, a.y - gy) - Math.hypot(b.x - gx, b.y - gy)).shift(); // (the spot it would have had)
       }
