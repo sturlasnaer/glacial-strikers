@@ -53,3 +53,11 @@ self.addEventListener('fetch', (e) => {
 });
 `);
 console.log(`sw.js: ${list.length} files, cache ${version}`);
+// A file the worker caches must be committed with it: one git doesn't know (art half-merged in
+// the working tree) would 404 on the live site and stop the offline install.
+try {
+  const { execSync } = await import('node:child_process');
+  const known = new Set(execSync('git ls-files', { cwd: root, encoding: 'utf8' }).split('\n'));
+  const loose = list.filter((f) => f !== './' && !known.has(f.replace(/^\.\//, '')));
+  if (loose.length) console.log(`WARNING: sw.js lists files git doesn't track (commit them with it): ${loose.join(', ')}`);
+} catch { /* not a git checkout */ }
