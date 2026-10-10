@@ -109,6 +109,7 @@ export class Renderer {
   // ------------------------------------------------------------------ frame
   render(match, fx, ui = {}) {
     const ctx = this.ctx;
+    this.celebrations = (ui.save && ui.save.celebrations) || null; // (the goal celebrations picked in the Team tab)
     const { dpr } = this;
     const z = this.cam.zoom;
     const sh = fx.shakeOffset();
@@ -1364,6 +1365,11 @@ export class Renderer {
       return { id: seq[i], flip: side === 'west' && !own, pose: i === 1 ? 'down' : 'stagger' };
     }
     let pose = 'idle';
+    // a celebration picked for them (Batch CW): looping
+    const pick = s.team === 0 && this.celebrations && this.celebrations[s.who], C = pick && set.celebrations && set.celebrations[pick];
+    if (C && C.length && s.celebrate > 0 && (match.state === 'goal' || match.state === 'over') && match.lastGoal && match.lastGoal.scorer === s) {
+      return { id: C[Math.floor((3 - s.celebrate) * 7) % C.length], flip: Math.cos(s.face) < -0.3, pose: 'signature' };
+    }
     if (s.celebrate > 0 && (match.state === 'goal' || match.state === 'over') && set.signature && match.lastGoal && match.lastGoal.scorer === s) {
       const i = Math.min(3, Math.floor((3 - s.celebrate) * 6));
       return { id: set.signature[i], flip: set.signature_hand ? s.hand !== set.signature_hand : Math.cos(s.face) < -0.3, pose: 'signature' };

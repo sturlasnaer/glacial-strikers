@@ -1439,3 +1439,5 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .tp-cup { position: absolute; right: 22%; bottom: 2%; width: 10%; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.35)); }
 .tp-plaque { position: absolute; left: 3%; bottom: 3%; padding: 3px 10px; border-radius: 3px; background: #6b4423; border: 2px solid #e0a92a; color: #fff2cb; font-size: clamp(9px, 1.6cqw, 14px); line-height: 1.2; max-width: 40%; }
 .tp-plaque b { display: block; font-family: var(--display); font-weight: normal; font-size: 1.35em; color: var(--gold); }
+.cel-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 6px; font-size: 13px; }
+.cel-row .muted { margin-right: 4px; }

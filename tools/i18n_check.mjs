@@ -69,7 +69,7 @@ for (const f of ['ui.js', 'hud.js', 'main.js']) {
   const src = readFileSync(join(root, 'src', f), 'utf8');
   for (const m of src.matchAll(/\b(label|tip|title|hint):\s*'((?:\\.|[^'\\])+)'/g)) add(m[2].replace(/\\'/g, "'"), `${f}:${m[1]}`);
 }
-for (const name of ['ROLE_NAME', 'SLOT_NAMES', 'NPC_NAMES']) {
+for (const name of ['ROLE_NAME', 'SLOT_NAMES', 'NPC_NAMES', 'CEL_NAMES']) {
   const map = new RegExp(`const ${name} = \\{([^}]*)\\}`).exec(uiSrc);
   if (map) for (const m of map[1].matchAll(/:\s*'([^']+)'/g)) add(m[1], `ui.js:${name}`);
 }

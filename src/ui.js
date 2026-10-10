@@ -381,6 +381,10 @@ function standingGoalie(gid, size) {
   return (own && keeper.mask && Assets.goalieStanding(own, keeper.mask, size, 'homekit')) // (made from parts: the body and their mask)
     || (own && !keeper.mask && Assets.icon(own, size, 'homekit')) || Assets.icon(F.home?.idle_a || Assets.atlas.goalies_side.home.ready, size, CLUB_PAGES());
 }
+// The goal celebrations a player can be given (Batch CW: { guitar: [frames], angel: [frames] }
+// on their home kit set), and their names.
+const celebrationsOf = (id) => { const m = member(id), set = m && Assets.atlas.skaters[m.sprite || m.def.sprite]; const C = set && set.home && set.home.celebrations; return C && Object.keys(C).length && Object.values(C).every((f) => f.length && Assets.atlas.frames[f[0]]) ? C : null; };
+const CEL_NAMES = { signature: 'Their own', guitar: 'Stick guitar', angel: 'Snow angel' };
 const simpleLabel = () => `${smallIcon('icons/simple_controls', 48, 'btn-ico')} ${t('Simple controls')}`; // (its icon once Batch CQ is in)
 // A goaltending style's icon (Batch AN), the Iron Wall until it's in.
 const goalieStyleIcon = (id, size = 68) => `<img src="${ico(Assets.atlas.frames['icons/gstyle_' + id] ? 'icons/gstyle_' + id : 'icons/award_iron_wall', size)}" alt="">`;
@@ -1692,6 +1696,10 @@ export class UI {
         <div class="abil"><img src="${ico(c.skill.icon, 68)}" alt=""><div><b>${esc(t(c.skill.name))}</b>${esc(t(c.skill.text))} <span class="muted">(${c.skill.cd}s)</span></div></div>
         <div class="abil"><img src="${ico('hud_elements/misc/level_star', 68)}" alt=""><div><b>${esc(t(c.ult.name))}</b>${esc(t(c.ult.text))}</div></div>
         ${r.perks.length ? `<div class="perks">${r.perks.map((p) => `<span class="perk" title="${esc(t(p))}">${esc(t(p).split(':')[0])}</span>`).join('')}</div>` : ''}
+        ${(() => { // their goal celebration, picked from the ones drawn for them (Batch CW)
+          const C = celebrationsOf(id);
+          return C ? `<div class="cel-row"><span class="muted">${t('Goal celebration')}</span>${['signature', ...Object.keys(C)].map((k) => `<button class="chip" data-cel="${id}" data-v="${k}" aria-pressed="${((s.celebrations || {})[id] || 'signature') === k}">${t(CEL_NAMES[k] || k)}</button>`).join('')}</div>` : '';
+        })()}
       </div>`;
     };
     const keepers = goalieIds(s), starting = starterId(s);
@@ -1742,6 +1750,7 @@ export class UI {
     }, body);
     this.click('[data-perk]', (el) => this.perkChoice(el.dataset.perk, () => this.hub('team')), body);
     this.click('[data-camp]', (el) => this.campModal(el.dataset.camp), body);
+    this.click('[data-cel]', (el) => { (s.celebrations ||= {})[el.dataset.cel] = el.dataset.v; writeSave(s); audio.sfx('click'); this.hub('team'); }, body);
     this.click('[data-rename]', (el) => this.renameModal(el.dataset.rename), body);
     this.click('#t-supers', () => this.supersHelp(), body);
     this.click('[data-gear]', (el) => { const [id, slot] = el.dataset.gear.split(':'); this.gearPicker(id, slot); }, body);
