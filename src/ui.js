@@ -53,7 +53,8 @@ const padList = () => [...(navigator.getGamepads ? navigator.getGamepads() : [])
 const psPad = () => padList().some((p) => /dualsense|dualshock|playstation|054c/i.test(p.id));
 import { DRILLS, MEDAL_NAMES, MEDAL_COLORS, formatScore } from './drills.js';
 import { SKILLS_EVENTS, placeIn } from './skills.js';
-import { PAINTS } from './modular.js';
+import { PAINTS, MODULAR, SKIN_TONES, HAIR_COLORS } from './modular.js';
+import { canCreate, createPlayer, restyle, defaultChoice, stylesFor, cleanName, MAX_OWN, NAME_MAX } from './create.js';
 
 const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
 const ROLE_NAME = { C: 'Centre', W: 'Winger', D: 'Defender' };
@@ -197,7 +198,7 @@ const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 // The league news icon for each kind of story (Batch AV).
-const NEWS_ICON = { edge: 'edge', rivalSign: 'sign', weSign: 'sign', weGoalie: 'sign', weAgent: 'sign', weLegend: 'sign', rivalDraft: 'draft', weDraft: 'draft', trade: 'trade', retire: 'retire', champion: 'cup', expansion: 'new_club' };
+const NEWS_ICON = { edge: 'edge', rivalSign: 'sign', weSign: 'sign', weGoalie: 'sign', weAgent: 'sign', weOwn: 'sign', weLegend: 'sign', rivalDraft: 'draft', weDraft: 'draft', trade: 'trade', retire: 'retire', champion: 'cup', expansion: 'new_club' };
 const NEWS_ART = { hatTrick: 'achievements/hat_trick', streak: 'badges/streak_flame', press: 'icons/share', hall: 'icons/career', record: 'icons/stat_goals', facility: 'icons/friends' }; // (news without a news icon of its own)
 // The locker room hub: stations in the painting, in % of the 16:9 image.
 const STATIONS = [
@@ -847,6 +848,7 @@ export class UI {
         case 'weAgent': return t('The {club} signed free agent {name} ({role}).', { club: esc(CLUB.nick), name, role: role(n.kit) });
         case 'weLegend': return t('The {club} signed the legend {name}!', { club: esc(CLUB.nick), name });
         case 'weDraft': return t('The {club} drafted {name} ({role}).', { club: esc(CLUB.nick), name, role: role(n.kit) });
+        case 'weOwn': return t('{name} ({role}) joins the {club}, one of their own.', { club: esc(CLUB.nick), name, role: role(n.kit) });
         case 'trade': return t('Trade: {gave} to the {team} for {name}.', { gave: `<b>${esc(n.gave || '')}</b>`, team: tn(n.team), name });
         case 'champion': return n.team === 'home' ? t('The {club} win the Frostline Cup!', { club: esc(CLUB.nick) }) : t('{team} win the Frostline Cup.', { team: tn(n.team) });
         case 'expansion': return t('The Glacier Owls and Thunder Moose join the Frostline.');
@@ -1481,7 +1483,7 @@ export class UI {
         <div class="card-head">
           <img src="${portrait(id, 0, null, 152)}" alt="">
           <div style="min-width:0">
-            <h3>${esc(m.name)}${s.rookies && s.rookies[id] ? ` <button class="btn tiny ghost rename-btn" data-rename="${id}" title="${esc(t('Rename'))}">${t('Rename')}</button>` : ''}</h3>
+            <h3>${esc(m.name)}${s.rookies && s.rookies[id] ? ` <button class="btn tiny ghost rename-btn" data-rename="${id}" title="${esc(t('Rename'))}">${t('Rename')}</button>` : ''}${s.rookies && s.rookies[id] && s.rookies[id].own && MODULAR.heads.length ? ` <button class="btn tiny ghost rename-btn" data-restyle="${id}">${t('New look')}</button>` : ''}</h3>
             <div class="sub">${esc(t(m.title))}${m.recruit ? ` · ${t('signed')}` : ''}${m.agent ? ` · ${t('free agent')}` : ''}${m.legend ? ` · <span class="gold-t">${t('legend')}</span>` : ''}${m.rookie ? ` · ${smallIcon('icons/rookie', 40)}<span class="pot" title="${esc(t(POTENTIAL_GRADE[m.rookie.potential]))}">${stars(m.rookie.potential)}</span>` : ''}</div>
             <div class="lvl">${t('LV {n}', { n: r.level })}${r.points ? ` <span style="font-size:15px">· ${t(r.points > 1 ? '{n} points to spend' : '{n} point to spend', { n: r.points })}</span>` : ''}</div>
           </div>
@@ -1526,7 +1528,7 @@ export class UI {
     for (let i = 0; i < 3; i++) for (let j = i + 1; j < 3; j++) pairs.push(pairKey(line[i], line[j]));
     body.innerHTML = `
       <div class="club-bar"><img src="${crest('home', 96)}" alt="" width="40" height="40"><div style="min-width:0"><b>${esc(CLUB.name)}</b><span class="muted">${esc(CLUB.short)} · ${t('the {club}', { club: esc(CLUB.nick) })}</span></div>
-        <span class="club-sw" style="--a:${CLUB.trim};--b:${CLUB.jersey}"></span><button class="btn small ghost" id="club-edit">${t('Customise club')}</button></div>
+        <span class="club-sw" style="--a:${CLUB.trim};--b:${CLUB.jersey}"></span><button class="btn small ghost" id="club-edit">${t('Customise club')}</button>${canCreate(s) && MODULAR.heads.length ? `<button class="btn small" id="own-new">${t('Create a player')}</button>` : ''}</div>
       <div class="label" style="margin-bottom:4px">${t('Line-up')}</div>
       <p class="muted" style="margin:0 0 10px;font-size:13px">${t('A centre, a winger and a defender dress for every match. Every player brings a style and a super of their own.')} <button class="link-btn" id="t-supers">${t('How supers work')}</button></p>
       <div class="roster">${line.map((id) => card(id, true)).join('')}${goalieCard(starting)}</div>
@@ -1575,9 +1577,87 @@ export class UI {
       });
     }, body);
     this.click('#club-edit', () => this.clubEditor(), body);
+    this.click('#own-new', () => this.ownEditor(), body);
+    this.click('[data-restyle]', (el) => this.ownEditor(el.dataset.restyle), body);
   }
 
   // Club name, nickname, short code and colours, with a live preview.
+  // Team › Create a player (create.js): a skater of your own from the parts art, with a name,
+  // a position, a style, a super and a stick hand. With an id, a new look for one of them.
+  ownEditor(id = null) {
+    const s = this.app.save, edit = id && s.rookies && s.rookies[id];
+    if (!MODULAR.heads.length || (!edit && !canCreate(s))) return;
+    // (the faces are drawn from the parts art, in our kit)
+    const kit = [...new Set([...homeKitGroups(s), 'parts'])];
+    if (!this.ownKit) { this.ownKit = true; Assets.ensureKit(kit).then(() => this.ownEditor(id), () => { this.ownKit = false; }); return; }
+    this.ownKit = false;
+    const c = edit ? { name: edit.name, role: CHARACTERS[edit.kit].role, arch: edit.arch, elem: edit.elem, hand: edit.hand, look: { ...edit.parts } }
+      : (this.ownDraft ||= defaultChoice('W', MODULAR));
+    const BUILD = { std: t('Standard'), small: t('Slight'), big: t('Big') };
+    const chip = (key, val, on, label, extra = '') => `<button class="chip" data-own="${key}:${val}" aria-pressed="${on}"${extra}>${label}</button>`;
+    const face = (look, size, expr = 'neutral') => Assets.partsPortrait(look, expr, size, 'homekit') || ''; // (in our kit)
+    const paint = (m) => {
+      m.querySelector('#own-face').src = face(c.look, 192, 'grin');
+      const L = c.look;
+      m.querySelector('#own-opts').innerHTML = `
+        ${edit ? '' : `<div class="label">${t('Position')}</div><div class="filters">${['C', 'W', 'D'].map((r) => chip('role', r, c.role === r, t(ROLE_NAME[r]))).join('')}</div>
+        <div class="label">${t('Style')}</div><div class="filters">${stylesFor(c.role).map((a) => chip('arch', a, c.arch === a, esc(t(ARCHETYPES[a].name)), ` title="${esc(t(ARCHETYPES[a].trait))}"`)).join('')}</div>
+        <div class="label">${t('Super')}</div><div class="filters">${Object.values(ELEMENTS).map((e) => chip('elem', e.id, c.elem === e.id, `<img src="${ico(e.icon, 40)}" width="18" height="18" alt=""> ${esc(t(e.name))}`, ` style="display:inline-flex;gap:5px;align-items:center" title="${esc(t(e.skill.name))} · ${esc(t(e.ult.name))}"`)).join('')}</div>
+        <div class="label">${t('Stick')}</div><div class="filters">${chip('hand', 'L', c.hand === 'L', t('Shoots left'))}${chip('hand', 'R', c.hand === 'R', t('Shoots right'))}</div>`}
+        <div class="label">${t('body::Build')}</div><div class="filters">${MODULAR.bodies.map((b) => chip('body', b, L.body === b, BUILD[b] || b)).join('')}</div>
+        <div class="label">${t('Face')}</div><div class="own-faces">${MODULAR.heads.map((h) => `<button class="own-face${L.head === h ? ' sel' : ''}" data-own="head:${h}" aria-pressed="${L.head === h}" aria-label="${esc(h)}"><img src="${face({ ...L, head: h }, 64)}" alt=""></button>`).join('')}</div>
+        <div class="label">${t('Skin')}</div><div class="own-sw">${SKIN_TONES.map((hex, i) => `<button class="own-dot${L.skin === i ? ' sel' : ''}" data-own="skin:${i}" aria-pressed="${L.skin === i}" style="--c:${hex}" aria-label="${t('Skin')} ${i + 1}"></button>`).join('')}</div>
+        <div class="label">${t('Hair')}</div><div class="own-sw">${HAIR_COLORS.map((hex, i) => `<button class="own-dot${L.hair === i ? ' sel' : ''}" data-own="hair:${i}" aria-pressed="${L.hair === i}" style="--c:${hex}" aria-label="${t('Hair')} ${i + 1}"></button>`).join('')}</div>`;
+      m.querySelector('#own-what').textContent = `${t(ROLE_NAME[c.role])} · ${t(ARCHETYPES[c.arch].name)} · ${t(ELEMENTS[c.elem].name)} · ${c.hand === 'R' ? t('Shoots right') : t('Shoots left')}`;
+    };
+    this.modal(`
+      <h2>${edit ? t('A new look for {name}', { name: esc(edit.name) }) : t('Create a player')}</h2>
+      <div class="own-top"><img id="own-face" width="96" height="96" alt="">
+        <div style="min-width:0;flex:1">
+          ${edit ? '' : `<input class="cloud-input" id="own-name" maxlength="${NAME_MAX}" autocomplete="off" spellcheck="false" placeholder="${esc(t('Their name'))}" value="${esc(c.name)}">`}
+          <div class="muted" id="own-what" style="font-size:13px;margin-top:4px"></div>
+          ${edit ? '' : `<p class="muted" style="font-size:12.5px;margin:4px 0 0">${t('Up to {n} players of your own. They join at the line-up\'s level with points to spend, grow like a rookie, and their look can change any time.', { n: MAX_OWN })}</p>`}
+        </div></div>
+      <div id="own-opts" class="own-opts"></div>
+      <div class="row" style="justify-content:flex-end"><button class="btn small ghost" data-close>${t('Cancel')}</button><button class="btn gold" id="own-go">${edit ? t('Save') : t('Join the team')}</button></div>`, (m, close) => {
+      paint(m);
+      const input = m.querySelector('#own-name');
+      if (input) {
+        input.addEventListener('input', () => { c.name = input.value; });
+        input.addEventListener('keydown', (e) => e.stopPropagation()); // (typing isn't the game's keys)
+      }
+      m.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-own]');
+        if (!b) return;
+        const [k, v] = b.dataset.own.split(':');
+        if (k === 'role') { c.role = v; if (!stylesFor(v).includes(c.arch)) c.arch = stylesFor(v)[0]; }
+        else if (k === 'arch' || k === 'elem' || k === 'hand') c[k] = v;
+        else c.look[k] = k === 'skin' || k === 'hair' ? +v : v;
+        audio.sfx('click');
+        const sc = m.scrollTop;
+        paint(m);
+        m.scrollTop = sc;
+      });
+      this.click('#own-go', () => {
+        if (edit) {
+          if (!restyle(s, id, c.look, MODULAR)) return;
+          writeSave(s); audio.sfx('confirm'); close(); this.hub('team');
+          return;
+        }
+        if (!cleanName(c.name)) { audio.sfx('deny'); input.focus(); input.classList.add('shake'); setTimeout(() => input.classList.remove('shake'), 400); return; }
+        const nid = createPlayer(s, c, MODULAR);
+        if (!nid) { audio.sfx('deny'); return; }
+        this.ownDraft = null;
+        writeSave(s);
+        audio.sfx('purchase');
+        close();
+        Assets.ensureKit(homeKitGroups(s)).then(() => { if (this.app.scene === 'hub' && this.tab === 'team') this.hub('team'); }, () => {});
+        this.hub('team');
+        this.app.toast(face(c.look, 72), t('A player of your own'), t('{name} joins the {club}!', { name: esc(s.rookies[nid].name), club: esc(CLUB.nick) }), t('On the bench for now: dress them from their card.'));
+      }, m);
+    });
+  }
+
   clubEditor() {
     const s = this.app.save;
     const cur = { ...CLUB_DEFAULT, ...(s.club || {}) };

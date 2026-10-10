@@ -58,7 +58,7 @@ for (const f of modules) {
   }
 }
 // plain maps and lists of display text
-const STRING_MAPS = { 'data.js': ['STAT_NAMES', 'STAT_HINT', 'TWIST_INFO', 'ROOKIE_TITLE', 'AGENT_TITLE', 'MASK_NAMES'], 'drills.js': ['MEDAL_NAMES'], 'draft.js': ['POTENTIAL_GRADE', 'SCOUTING'], 'agents.js': ['PITCH'] };
+const STRING_MAPS = { 'data.js': ['STAT_NAMES', 'STAT_HINT', 'TWIST_INFO', 'ROOKIE_TITLE', 'AGENT_TITLE', 'OWN_TITLE', 'MASK_NAMES'], 'create.js': ['OWN_TEXT'], 'drills.js': ['MEDAL_NAMES'], 'draft.js': ['POTENTIAL_GRADE', 'SCOUTING'], 'agents.js': ['PITCH'] };
 for (const [f, names] of Object.entries(STRING_MAPS)) {
   const mod = await import(join(root, 'src', f));
   for (const n of names) for (const v of Object.values(mod[n] || {})) [].concat(v).forEach((x) => add(x, `${f}:${n}`));

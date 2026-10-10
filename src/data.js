@@ -466,6 +466,7 @@ export function setRookies(list = {}) {
 }
 export const ROOKIE_TITLE = { C: 'Rookie Centre', W: 'Rookie Winger', D: 'Rookie Defender' };
 export const AGENT_TITLE = { C: 'Veteran Centre', W: 'Veteran Winger', D: 'Veteran Defender' };
+export const OWN_TITLE = { C: 'Homegrown Centre', W: 'Homegrown Winger', D: 'Homegrown Defender' }; // (players of your own, create.js)
 
 // Everything about a member of our roster ('frost', 'thunder', 'stone', a recruit key or a
 // rookie's id). Signings and rookies are drawn from rival or newcomer art in home colours.
@@ -475,7 +476,7 @@ function memberBase(who) {
     const c = CHARACTERS[k.kit];
     const body = bodySprite(k.parts); // drawn from parts once that art is in (Batch AJ)
     // (a free agent from the market is kept like a rookie, but a veteran: no potential to show)
-    return { who, kit: k.kit, def: makeDef(k.kit, k.arch, k.elem), name: k.name, title: k.agent ? AGENT_TITLE[c.role] : ROOKIE_TITLE[c.role], base: k.base, role: c.role, blurb: k.blurb, recruit: null, rookie: k.agent ? null : k, agent: k.agent ? k : null, hand: k.hand || 'L', sprite: body || `newcomer_${ROLE[k.kit]}`, parts: body ? k.parts : null, look: 'homekit' };
+    return { who, kit: k.kit, def: makeDef(k.kit, k.arch, k.elem), name: k.name, title: k.agent ? AGENT_TITLE[c.role] : k.own ? OWN_TITLE[c.role] : ROOKIE_TITLE[c.role], base: k.base, role: c.role, blurb: k.blurb, recruit: null, rookie: k.agent ? null : k, agent: k.agent ? k : null, hand: k.hand || 'L', sprite: body || `newcomer_${ROLE[k.kit]}`, parts: body ? k.parts : null, look: 'homekit' };
   }
   const L = LEGENDS[who];
   if (L) {

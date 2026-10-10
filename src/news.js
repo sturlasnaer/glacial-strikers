@@ -1,7 +1,7 @@
 // Around the Frostline: what's happened in the league, newest first, for the League tab.
 // Kept as small records (the words are made when they're shown, in the player's language):
 //   { k: kind, s: season, r: round, team?, name?, kit?, ... }
-// Kinds: 'rivalSign', 'rivalDraft', 'retire', 'weSign', 'weAgent', 'weGoalie', 'weLegend',
+// Kinds: 'rivalSign', 'rivalDraft', 'retire', 'weSign', 'weAgent', 'weOwn', 'weGoalie', 'weLegend',
 // 'weDraft', 'trade', 'champion', 'expansion', 'edge', 'hatTrick' (ours, in a league game), 'streak'
 // (one of ours scoring in 3, 5, 7 or 10 league games in a row).
 export const NEWS_KEEP = 80;

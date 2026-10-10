@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10j',
+    items: [
+      { icon: 'icons/rookie', text: 'Create a player (Team tab): make up to two skaters of your own, with a face, skin, hair, build, name, position, style, super and stick hand. They join at the line-up\'s level, and their look can change any time.' },
+    ],
+  },
+  {
     id: '2026-10-10i',
     items: [
       { icon: 'icons/friends', text: 'Two players on one team: pick Play as › Two players before a match and a friend takes a skater too (the arrows and K, L on the keyboard, or a gamepad), with the AI on the third.' },

@@ -747,9 +747,25 @@ body.in-hub.hub-room #screen { background: linear-gradient(rgba(8, 14, 26, 0.82)
 .daily-goal b { font-family: var(--display); font-weight: normal; font-size: clamp(20px, 3.6vw, 26px); }
 
 /* ---- your club ---- */
-.club-bar { display: grid; grid-template-columns: 40px 1fr auto auto; gap: 10px; align-items: center; padding: 8px 10px; margin-bottom: 12px; border-radius: 8px; background: rgba(13, 24, 42, 0.55); border: 2px solid var(--navy-3); }
+.club-bar { display: grid; grid-template-columns: 40px 1fr auto auto auto; gap: 10px; align-items: center; padding: 8px 10px; margin-bottom: 12px; border-radius: 8px; background: rgba(13, 24, 42, 0.55); border: 2px solid var(--navy-3); }
 .club-bar b { display: block; font-family: var(--display); font-weight: normal; font-size: 22px; line-height: 1; }
 .club-bar .muted { font-size: 12px; }
+/* Team › Create a player */
+.own-top { display: flex; gap: 12px; align-items: center; }
+.own-top > img { width: 96px; height: 96px; flex: none; border-radius: 8px; background: rgba(13, 24, 42, 0.6); border: 2px solid var(--navy-3); image-rendering: auto; }
+.own-top .cloud-input { text-transform: none; font-family: var(--display); font-size: 20px; padding: 6px 10px; }
+.own-opts { display: flex; flex-direction: column; gap: 4px; }
+.own-opts .label { font-size: 13px; margin-top: 4px; }
+.own-opts .filters { margin: 0; }
+.own-faces { display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 6px; }
+.own-face { padding: 2px; border-radius: 8px; border: 2px solid var(--navy-3); background: rgba(13, 24, 42, 0.6); cursor: pointer; }
+.own-face img { width: 100%; aspect-ratio: 1; display: block; image-rendering: auto; }
+.own-face.sel { border-color: var(--gold); background: rgba(255, 212, 94, 0.15); }
+.own-sw { display: flex; flex-wrap: wrap; gap: 8px; }
+.own-dot { width: 30px; height: 30px; border-radius: 50%; border: 3px solid var(--navy); background: var(--c); box-shadow: 0 0 0 2px var(--navy-3); cursor: pointer; }
+.own-dot.sel { box-shadow: 0 0 0 3px var(--gold); }
+.cloud-input.shake { animation: own-shake 0.35s; border-color: var(--coral); }
+@keyframes own-shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
 .club-sw { display: inline-block; width: 26px; height: 18px; border-radius: 4px; border: 2px solid var(--navy); background: linear-gradient(135deg, var(--b) 0 55%, var(--a) 55% 100%); vertical-align: middle; flex: none; }
 .chip.preset { display: inline-flex; gap: 6px; align-items: center; }
 .chip.crest-pick { padding: 3px 6px; }
