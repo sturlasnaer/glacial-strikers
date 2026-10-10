@@ -688,6 +688,7 @@ export const IS = {
   "Dress at {role} (for {name})": "Setja inn sem {role} (í stað {name})",
   "Dress Fáfnir and Fenrir for the same match.": "Settu Fáfni og Fenri í liðið í sama leik.",
   "Dress now": "Setja í liðið",
+  "Dress the cub! Shop › Locker room › For the cub has a striped scarf, a bobble hat and a bow tie.": "Klæddu yrðlinginn! Undir Búð › Búningsklefinn › Fyrir yrðlinginn er röndóttur trefill, dúskahúfa og slaufa.",
   "dressed": "í liðinu",
   "Drills give 15% more EXP.": "Æfingar gefa 15% meiri reynslu.",
   "Drills give 30% more EXP.": "Æfingar gefa 30% meiri reynslu.",

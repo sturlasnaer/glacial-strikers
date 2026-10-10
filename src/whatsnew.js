@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10za',
+    items: [
+      { icon: 'icons/pet', alt: 'icons/friends', text: 'Dress the cub! Shop › Locker room › For the cub has a striped scarf, a bobble hat and a bow tie.' },
+    ],
+  },
+  {
     id: '2026-10-10z',
     items: [
       { icon: 'icons/mini_cup', alt: 'badges/cup_small', text: 'The Mini Cup, in Quick play: three quick games, first to three, against rivals getting tougher. Win them all for a cup of your own!' },
