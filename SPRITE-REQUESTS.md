@@ -7,8 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **CV: the Summit Rink**
-2. **CW: goal celebrations to choose**
+1. **CW: goal celebrations to choose**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -51,6 +50,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered CT:** Nine Fan cam frames with four cheering fan pairs, a transparent camera border and shared blank-card text anchors. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CT-Testing-Update`.
 
 **Delivered CU:** Picture day backdrop: native 1600×1000 home rink with cheering crowd, snowflake banner and clear ice for the team. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CU-Testing-Update`.
+
+**Delivered CV:** Summit Rink backdrop, two scoreboard phases, snowy glass, four penalty-hut layers, three clouds, two cable-car poses and Thin air icon. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CV-Testing-Update`.
 
 ## Format notes
 
@@ -416,7 +417,7 @@ Every season now ends with a **team photo** (Trophies › Seasons): the line-up 
 
 1 image.
 
-## Batch CV: the Summit Rink
+## Batch CV ✓: the Summit Rink
 
 A third building for exhibitions, like the Harbour Rink (CM) and the Glacier Cave (CP): **the Summit Rink**, an outdoor rink on a mountaintop, at the top station of a cable car, above the clouds. Its rule is in the code: *thin air*, the puck glides further and shots fly faster, and skaters tire sooner. Please draw, exactly like the AU arena packs (the same 1536×1024 backdrop with the rink lines, boards, glass and benches in the same places):
 - The backdrop (`arena_summit_rink`): snowy peaks all round under a deep blue sky, a sea of clouds below, the cable-car station with its big wheel at one end, wooden stands with fans in bobble hats and mittens, prayer-flag-like strings of club pennants, a few mountain goats on the rocks.
