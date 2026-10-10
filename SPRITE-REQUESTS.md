@@ -9,6 +9,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Next batches:**
 1. **DK: postcards from the road**
 2. **DL: a basket for the cub**
+3. **DM: the cub's victory slide**
+4. **DN: star stickers for the youngest**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -589,4 +591,21 @@ The cub (CX) should have a bed of its own: a Shop item ("For the cub", next to t
 - `icons/cub_bed` (128×128): the basket for the Shop.
 
 As atlas frames on a page in the `hub` group. 4 frames.
+
+## Batch DM: the cub's victory slide
+
+After a home win, the cub (DH, on the boards at Frostline Rink) should hop down and celebrate with a belly slide across the ice while the players celebrate. Please draw, at the same scale and camera angle as the `pet_rink/` poses (120×80, pivot at its feet, facing right; the game flips it):
+- `pet_rink/hop_down_1`, `_2`: jumping down from the boards onto the ice.
+- `pet_rink/slide_1`..`_4`: sliding on its belly with its paws stretched out in front, a little spray of snow, happy.
+- `pet_rink/spin_1`..`_3`: spinning round on its back at the end of the slide, paws in the air.
+
+On the `pet_rink` group's page. 9 frames.
+
+## Batch DN: star stickers for the youngest
+
+After a Little player game, the results should give the young player a big gold star for something they did well. Please draw five star stickers, 256×256, each a chunky gold star with a happy face and a shiny white outline (like a sticker on a reward chart), with a small picture on it, **no lettering**:
+- `kid_stars/passer` (a puck flying between two sticks), `kid_stars/scorer` (a puck in a net), `kid_stars/defender` (a little shield), `kid_stars/hustle` (speed lines, a skate), `kid_stars/team` (three small happy faces together).
+- `kid_stars/shine_1`, `_2`: two sparkle overlays, the same size, to twinkle over the star.
+
+As atlas frames on a page in a new `kid_stars` group (loaded for Little player games). 7 frames.
 
