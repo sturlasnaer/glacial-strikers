@@ -7,10 +7,8 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **DI: fetch with the cub**
-2. **DJ: the cub as coach for the youngest**
-3. **DK: postcards from the road**
-4. **DL: a basket for the cub**
+1. **DK: postcards from the road**
+2. **DL: a basket for the cub**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -75,6 +73,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered DE-DF:** Three native outdoor night backdrops (1536×1024), four soft-alpha aurora poses and a wooden trophy shelf with room anchors. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DE-DF-Testing-Update`.
 
 **Delivered DG-DH:** Native Frostline league map with eight town anchors, two bus frames and seven home-game cub poses with a boards anchor. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DG-DH-Testing-Update`.
+
+**Delivered DI-DJ:** Eleven cub fetch frames including a loose puck and five cub coach portraits for Little player games. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-DI-DJ-Testing-Update`.
 
 ## Format notes
 
@@ -554,7 +554,7 @@ The locker room's Snow Fox cub (CX) should come to the Foxes' home games and wat
 
 On a page in a new `pet_rink` group (loaded only for home games). 7 frames.
 
-## Batch DI: fetch with the cub
+## Batch DI ✓: fetch with the cub
 
 In the locker room, tapping the open floor should toss a puck there for the Snow Fox cub (CX) to fetch: it runs over, picks the puck up in its mouth, trots back to the middle of the room and drops it, very pleased with itself. Please draw, on the same 120×72 canvas and pivot as its other poses (CX), facing right (the game flips it), as atlas frames on a page in the `hub` group:
 - `pet/fetch_run_1`..`_4`: a quick, bouncy run (faster and more stretched out than its walk).
@@ -564,7 +564,7 @@ In the locker room, tapping the open floor should toss a puck there for the Snow
 
 11 frames.
 
-## Batch DJ: the cub as coach for the youngest
+## Batch DJ ✓: the cub as coach for the youngest
 
 In Little player games (Settings › Little player), the locker room's Snow Fox cub pops up in a corner of the screen with a speech bubble and short tips at the right moments: "Pass it!" when a rival is right on you and a teammate is open, "Shoot!" in front of the net, a cheer for a goal. Please draw the cub's head and shoulders, facing a little to the right, in the game's style and its own coat (as in CX), on a transparent 192×192 canvas with the bottom edge cut off cleanly (it peeks up from the bottom of the screen):
 - `cub_coach/talk_1`, `cub_coach/talk_2`: talking (mouth closed, open), ears up, friendly.

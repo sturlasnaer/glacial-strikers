@@ -891,7 +891,7 @@ export class UI {
       const i = st.startsWith('trick_') ? Math.min(k.urls.length - 1, Math.floor((1 - p.trickT / TRICK_TIME) * k.urls.length)) // (a trick plays through once)
         : st === 'fetch_drop' ? (p.fetch.t < FETCH_DROP * 0.35 ? 0 : 1) // (down it goes, then sitting proud)
         : Math.floor((now / 1000) * (st === 'walk' ? 8 : st === 'fetch_run' ? 12 : st === 'fetch_carry' ? 9 : st === 'sleep' || st === 'bed_sleep' ? 1 : 2)) % k.urls.length;
-      if (puck) { const f = p.fetch, on = f && f.phase !== 'carry'; puck.hidden = !on; if (on) puck.style.cssText = `left:${f.x}%;top:${f.y}%;z-index:${f.y < 66 ? 1 : 3}`; }
+      if (puck) { const f = p.fetch, on = f && f.phase === 'run'; puck.hidden = !on; if (on) puck.style.cssText = `left:${f.x}%;top:${f.y}%;z-index:${f.y < 66 ? 1 : 3}`; }
       if (img.dataset.k !== st + i) { img.src = k.urls[i]; img.dataset.k = st + i; acc.hidden = !k.acc; if (k.acc) acc.src = k.acc[i]; }
       const lift = p.hop > 0 ? Math.sin((1 - p.hop / 0.5) * Math.PI) * 3 : 0;
       el.style.cssText = `left:${p.x}%;top:${p.y - lift}%;height:${(H / 864) * 100}%;aspect-ratio:${k.w}/${k.h};transform:translate(-${k.fx * 100}%,-${k.fy * 100}%) scaleX(${p.face});z-index:${p.y < 66 ? 1 : 3}`;
