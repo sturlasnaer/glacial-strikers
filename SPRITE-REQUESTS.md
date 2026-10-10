@@ -11,6 +11,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 2. **DN: star stickers for the youngest**
 3. **DO: a ball for the cub**
 4. **DP: the road-trip map in season**
+5. **DQ: Halloween treats in the locker room**
+6. **DR: three new trophies**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -627,4 +629,22 @@ The road-trip map (DG) should dress up like the rest of the game in season. Plea
 - `map_holiday/overlay` (December): fresh snow on the roofs, strings of coloured lights along the roads, a decorated tree in each town's square (beside the clear spot), a sleigh's tracks across a frozen river.
 
 2 frames.
+
+## Batch DQ: Halloween treats in the locker room
+
+From 20 October (when the room and the cub dress up, CD/CZ), a bowl of treats should sit on the locker room floor: tap it once a day for a treat (a few coins) and the cub in its pumpkin costume does a little happy hop. Please draw, in the room's style and angle, as atlas frames on a page in the `seasonal` group:
+- `seasonal_room/candy_bowl`: a carved pumpkin bowl heaped with wrapped sweets, about 90×70 room pixels, pivot at its bottom centre; and `seasonal_room/candy_bowl_empty`: the same with only a few sweets left (after today's treat).
+- `icons/treat` (128×128): one wrapped sweet in orange and purple paper, for the toast.
+- `atlas.decor_slots.candy_bowl = { x, y }`: where its pivot goes in the room's 1536×864 pixels (on the open floor, clear of the skaters, the stations and the cub's basket).
+
+3 frames.
+
+## Batch DR: three new trophies
+
+Three achievement badges in the same style, size and frame as the other `achievements/` icons (256×256), for the newest features, **no lettering**:
+- `achievements/postcard_collector`: a fan of postcards with stamps, a little bus in front (all eight postcards from the road, DK).
+- `achievements/fetch_champion`: the Snow Fox cub with a puck in its mouth, a tiny medal round its neck (played fetch ten times, DI).
+- `achievements/gold_star_chart`: a reward chart with a row of gold stars (ten gold stars for the youngest, DN).
+
+As atlas frames on the page with the other achievement icons (or a new page in the same group). 3 frames.
 
