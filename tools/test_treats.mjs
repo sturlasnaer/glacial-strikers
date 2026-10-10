@@ -1,4 +1,5 @@
-// Halloween treats in the locker room (Batch DQ): one a day, only in the season.
+// Halloween treats and holiday presents in the locker room (Batches DQ, DS): one a day, only in
+// the seasons.
 //   node tools/test_treats.mjs
 import { takeTreat, treatTaken, TREAT_COINS } from '../src/seasonal.js';
 
@@ -10,7 +11,8 @@ check('not before the season', !takeTreat(save, oct10) && save.coins === 10);
 check('a treat in the season', takeTreat(save, oct25) && save.coins === 10 + TREAT_COINS && treatTaken(save, oct25));
 check('one a day', !takeTreat(save, oct25late) && save.coins === 10 + TREAT_COINS);
 check('another tomorrow', !treatTaken(save, oct26) && takeTreat(save, oct26) && save.coins === 10 + 2 * TREAT_COINS);
-check('none at Christmas', !takeTreat({ coins: 0 }, new Date(2026, 11, 20)));
+check('a present a day in December (Batch DS)', takeTreat({ coins: 0 }, new Date(2026, 11, 20)));
+check('none in November', !takeTreat({ coins: 0 }, new Date(2026, 10, 15)));
 
 console.log(`Treats: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

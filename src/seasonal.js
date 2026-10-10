@@ -14,12 +14,13 @@ export function seasonFor(d = new Date()) {
 }
 
 // Halloween treats in the locker room (Batch DQ): a bowl on the floor, one treat a day in the
-// season (a few coins). The day by the device's own calendar.
+// season (a few coins); in the holidays a pile of presents, one a day (Batch DS). The day by the
+// device's own calendar.
 export const TREAT_COINS = 15;
 const dayKey = (d) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 export const treatTaken = (save, d = new Date()) => save.treatDay === dayKey(d);
 export function takeTreat(save, d = new Date()) {
-  if (seasonFor(d) !== 'halloween' || treatTaken(save, d)) return false;
+  if (!seasonFor(d) || treatTaken(save, d)) return false;
   save.treatDay = dayKey(d);
   save.coins = (save.coins || 0) + TREAT_COINS;
   return true;

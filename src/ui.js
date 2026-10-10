@@ -267,6 +267,11 @@ const shopFilters = (filter) => `<div class="filters">${['all', 'stick', 'skates
 // Locker room decorations (Batch CS): an item once its frames are in, and the spots (moved where
 // the art says, atlas.decor_slots).
 const decorArt = (d) => d.frames.every((f) => Assets.atlas.frames[f]);
+// the season's daily treat in the locker room: Halloween's bowl (Batch DQ), the holidays' presents (DS)
+const treatArt = () => ({
+  halloween: { full: 'seasonal_room/candy_bowl', empty: 'seasonal_room/candy_bowl_empty', icon: 'icons/treat', name: () => t('Treats'), got: () => t('A treat!'), done: () => t('That was today\'s treat.') },
+  holiday: { full: 'seasonal_room/gift_pile', empty: 'seasonal_room/gift_pile_empty', icon: 'icons/gift', name: () => t('Presents'), got: () => t('A present!'), done: () => t('That was today\'s present.') },
+})[seasonFor()] || null;
 const decorSlots = () => {
   const o = Assets.atlas.decor_slots || {};
   return Object.fromEntries(Object.entries(DECOR_SLOTS).map(([k, list]) => [k, list.map((sp, i) => ({ ...sp, ...((Array.isArray(o[k]) ? o[k][i] : i === 0 ? o[k] : null) || {}) }))]));
@@ -754,11 +759,12 @@ export class UI {
         : `<img class="decor" data-decor="${item.id}" src="${set.urls[0]}" alt="" style="${style}">`;
     }
     html += this.trophyShelf(s, at);
-    // Halloween treats (Batch DQ): a bowl on the floor, a treat a day (empty once today's is taken)
-    const bowl = seasonFor() === 'halloween' && Assets.atlas.decor_slots && Assets.atlas.decor_slots.candy_bowl, bowlF = bowl && Assets.frame('seasonal_room/candy_bowl');
-    if (bowlF && Assets.pages[bowlF[0]] && Assets.frame('seasonal_room/candy_bowl_empty')) {
-      const set = Assets.spriteSet([treatTaken(s) ? 'seasonal_room/candy_bowl_empty' : 'seasonal_room/candy_bowl'], 70);
-      if (set) html += `<button class="candy-bowl" id="candy-bowl" aria-label="${esc(t('Treats'))}" style="${at(bowl.x, bowl.y)};height:${(70 / 864) * 100}%;aspect-ratio:${set.w}/${set.h};transform:translate(-${set.fx * 100}%,-${set.fy * 100}%);z-index:${bowl.y / 864 < 0.66 ? 1 : 2}"><img src="${set.urls[0]}" alt=""></button>`;
+    // Halloween treats (Batch DQ) and holiday presents (DS): a bowl or a pile on the floor, one a
+    // day (nearly empty once today's is taken)
+    const bowlArt = treatArt(), bowl = bowlArt && Assets.atlas.decor_slots && Assets.atlas.decor_slots.candy_bowl, bowlF = bowl && Assets.frame(bowlArt.full);
+    if (bowlF && Assets.pages[bowlF[0]] && Assets.frame(bowlArt.empty)) {
+      const set = Assets.spriteSet([treatTaken(s) ? bowlArt.empty : bowlArt.full], 70);
+      if (set) html += `<button class="candy-bowl" id="candy-bowl" aria-label="${esc(bowlArt.name())}" style="${at(bowl.x, bowl.y)};height:${(70 / 864) * 100}%;aspect-ratio:${set.w}/${set.h};transform:translate(-${set.fx * 100}%,-${set.fy * 100}%);z-index:${bowl.y / 864 < 0.66 ? 1 : 2}"><img src="${set.urls[0]}" alt=""></button>`;
     }
     // the cub's basket, once it's bought (Batch DL)
     const bed = Assets.atlas.decor_slots && Assets.atlas.decor_slots.cub_bed, bedSet = bed && ownsBed(s) && ['pet/bed_sleep_1', 'pet/bed_sleep_2'].every((f) => Assets.frame(f)) && Assets.spriteSet(['decor/cub_bed'], 84);
@@ -831,14 +837,16 @@ export class UI {
     const props = room.querySelector('#room-props');
     const bindProps = () => {
       this.click('.room-board, .trophy-shelf', (el) => { audio.sfx('click'); this.hub(el.dataset.board); }, props);
-      this.click('#candy-bowl', (el) => { // (a Halloween treat: once a day)
-        if (!takeTreat(s)) { audio.sfx('click'); this.app.toast(Assets.icon('seasonal_room/candy_bowl_empty', 72), t('Treats'), t('That was today\'s treat.'), t('Come back tomorrow!')); return; }
+      this.click('#candy-bowl', (el) => { // (a Halloween treat or a holiday present: once a day)
+        const A = treatArt();
+        if (!A) return;
+        if (!takeTreat(s)) { audio.sfx('click'); this.app.toast(Assets.icon(A.empty, 72), A.name(), A.done(), t('Come back tomorrow!')); return; }
         writeSave(s); audio.sfx('purchase');
         const coins = document.querySelector('.coins'); if (coins && coins.lastChild) coins.lastChild.textContent = s.coins; // (the purse up top)
-        const img = el.querySelector('img'), set = Assets.spriteSet(['seasonal_room/candy_bowl_empty'], 70);
+        const img = el.querySelector('img'), set = Assets.spriteSet([A.empty], 70);
         if (img && set) img.src = set.urls[0];
         if (this.pet) this.pet.hop = 0.5; // (the cub's happy hop)
-        this.app.toast(Assets.frame('icons/treat') ? Assets.icon('icons/treat', 72) : Assets.icon('seasonal_room/candy_bowl', 72), t('Treats'), t('A treat!'), t('+{n} coins', { n: TREAT_COINS }));
+        this.app.toast(Assets.frame(A.icon) ? Assets.icon(A.icon, 72) : Assets.icon(A.full, 72), A.name(), A.got(), t('+{n} coins', { n: TREAT_COINS }));
       }, props);
       this.startPet(room);
       // a character talks while you point at their station
