@@ -83,7 +83,8 @@ export class HUD {
     this.tickerT = 0;
     this.last = { s0: 0, s1: 0 };
     this.touch.hidden = !this.app.isTouch || this.versus;
-    this.touch.classList.toggle('gk', !!match.goalieMode && !this.keeper); // goalie mode puts icons on the face buttons (keeper co-op: touch is player 1's skater)
+    this.touch.classList.toggle('gk', !!match.goalieMode && !this.keeper);
+    this.touch.classList.toggle('drive', !!(drill && drill.noCard)); // (the Resurfacer: just the stick and SPRINT) // goalie mode puts icons on the face buttons (keeper co-op: touch is player 1's skater)
     this.touch.querySelectorAll('.gk-ico').forEach((i) => i.remove());
     this.keyhintT = 12;
   }

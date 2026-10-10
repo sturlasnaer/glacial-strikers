@@ -1308,3 +1308,6 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .review-photo img { max-width: 90%; height: 100%; object-fit: contain; }
 .review-photo b { font-size: clamp(9px, 2.2cqw, 16px); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .review-paper .review-stamp { position: absolute; width: 25%; height: auto; right: 8%; bottom: 4%; }
+
+/* the Resurfacer drill: only the stick and SPRINT do anything */
+.drive .t-a, .drive .t-b, .drive .t-skill, .drive .t-ult, .drive .t-pull { display: none !important; }
