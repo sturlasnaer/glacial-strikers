@@ -12,6 +12,7 @@ import { handMirror } from './hands.js';
 import { Linesman } from './linesman.js';
 import { cupBanners } from './hall.js';
 import { DRIVE } from './scenery.js';
+import { seasonFor } from './seasonal.js';
 
 const SKATER_SCALE = 0.5; // world px per source px
 const CROSS_IN = 5, CROSS_KEEP = 3; // turn rates (radians a second) into and through a crossover
@@ -207,6 +208,7 @@ export class Renderer {
     if (arena === 'home') this.drawSupporters(ctx, fx, ui.save);
     else this.drawRivalSupporters(ctx, fx, ui.awayTeamId, arena);
     if (match.allstar && arena === 'home') this.drawAllStarDressing(ctx, fx, true);
+    else if (arena === 'home') this.drawSeasonal(ctx, fx, true);
 
     this.drawParticles(ctx, fx);
     this.drawAnims(ctx, fx);
@@ -507,6 +509,7 @@ export class Renderer {
     }
     if (match.classic && arena === 'pine_pond') this.drawWinterClassic(ctx, fx);
     if (match.allstar && arena === 'home') this.drawAllStarDressing(ctx, fx, false);
+    else if (arena === 'home') this.drawSeasonal(ctx, fx, false); // (Halloween, the holidays: Batch CD)
     const board = (A.scoreboards && A.scoreboards[arena]) || (arena === 'ember_dome' ? A.scoreboard_volcanic : A.scoreboard);
     if (board) this.drawScoreboard(ctx, match, fx, board);
     this.drawGlassFans(ctx, fx);
@@ -575,8 +578,26 @@ export class Renderer {
 
   // The home rink on All-Star night (Batch AB): the star banner over the far glass and star
   // bunting along the far boards, then (near) the bunting on the near boards, over the players.
-  drawAllStarDressing(ctx, fx, near) {
-    const A = Assets.atlas.allstar;
+  drawAllStarDressing(ctx, fx, near) { this.drawDressing(ctx, fx, Assets.atlas.allstar, near); }
+
+  // The home rink by the calendar (seasonal.js, Batch CD): the All-Star dressing's banner and
+  // bunting, plus props standing at backdrop spots ({ frames, x, y, scale, fps }) and flyers
+  // crossing the rafters ({ frames, y, scale, speed, fps }). Nothing until its art is in.
+  drawSeasonal(ctx, fx, near) {
+    const S = Assets.atlas.seasonal, season = seasonFor(), A = S && season && S[season];
+    if (!A) return;
+    this.drawDressing(ctx, fx, A, near);
+    if (near) return;
+    const at = (list, i, fps = 2) => list[Math.floor(fx.time * fps + i) % list.length];
+    (A.props || []).forEach((p, i) => { if (p.frames && p.frames.length) Assets.draw(ctx, at(p.frames, i, p.fps), p.x, p.y, p.scale || 0.5); });
+    (A.flyers || []).forEach((b, i) => {
+      if (!b.frames || !b.frames.length) return;
+      const span = 1800, x = ((fx.time * (b.speed || 60) + i * 700) % span) - 130; // (across and round again, off screen in between)
+      Assets.draw(ctx, at(b.frames, i, b.fps || 8), x, b.y + Math.sin(fx.time * 3 + i) * 10, b.scale || 0.4);
+    });
+  }
+
+  drawDressing(ctx, fx, A, near) {
     const f0 = A && A.banner && Assets.frame(A.banner[0]);
     if (!f0 || !Assets.pages[f0[0]]) return;
     const phase = Math.floor(fx.time * 2) % 2; // the cloth sways at 2 fps

@@ -7,6 +7,7 @@ import { FX } from './fx.js';
 import { Input, TouchControls, mergeInputs } from './input.js';
 import { audio } from './audio.js';
 import { PadNav } from './padnav.js';
+import { forceSeason } from './seasonal.js';
 import { firstTime } from './guide.js';
 import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as cloudBackup, settleCups } from './online.js';
 import { ARENA_MUSIC } from './songs.js';
@@ -92,6 +93,7 @@ class App {
       useGoalieParts(Assets.atlas); // and goalies (Batch AT)
       useAchievementArt(Assets.atlas.frames); // the newer trophies' own icons (Batch AN)
       this.legendsPreview = new URLSearchParams(location.search).has('legends');
+      forceSeason(new URLSearchParams(location.search).get('season')); // (?season=halloween / holiday / none: the home rink's dressing, to look at)
     } catch (e) {
       this.loadingEl.querySelector('.err').textContent = t('The game art did not load. Check your connection and reload the page.');
       throw e;
