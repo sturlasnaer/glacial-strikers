@@ -225,7 +225,9 @@ export const GEAR_LOOK = {
   arm_legs: { show: 'guard', color: '#bff4ff', desc: 'Icy flash on blocked shots' },
 };
 
-// Rival teams use the away sprites. recolor shifts the coral/violet jersey hues.
+// Rival teams use the away sprites. recolor shifts the coral/violet jersey hues. habit: how the
+// club likes to attack (ai.js: shoot / pass shift its shoot-or-pass choices, deke / dump / slap
+// scale how often it dekes, dumps the puck in and winds up a slapshot; never how hard it presses).
 export const TEAMS = {
   home: {
     id: 'home', name: 'Snowcrest Foxes', short: 'FOX', crest: 'hud_elements/misc/home_crest',
@@ -233,7 +235,7 @@ export const TEAMS = {
   },
   lynx: {
     elems: { thunder: 'gale' }, // supers other than the slot's own
-    id: 'lynx', plan: 'forecheck', chem: 0, name: 'Pinewood Lynx', short: 'PIN', crest: 'hud_elements/misc/away_crest',
+    id: 'lynx', habit: { pass: 0.05, deke: 1.2 }, plan: 'forecheck', chem: 0, name: 'Pinewood Lynx', short: 'PIN', crest: 'hud_elements/misc/away_crest',
     art: 'pinewood_lynx', arena: 'pine_pond',
     color: '#7fd16b', color2: '#2f6b3a', recolor: { h1: 118, h2: 95, sat: 0.9, val: 0.92, sat2: 0.8, val2: 0.55 },
     diff: 0.12, bonus: { spd: -1, chk: -1 }, goalie: { rfx: 4, pos: 4 },
@@ -243,7 +245,7 @@ export const TEAMS = {
   },
   comets: {
     elems: { thunder: 'ember' }, // supers other than the slot's own
-    id: 'comets', plan: 'rungun', chem: 1, name: 'Ember Comets', short: 'EMB', crest: 'hud_elements/misc/away_crest',
+    id: 'comets', habit: { shoot: 0.12, pass: -0.08, slap: 1.4 }, plan: 'rungun', chem: 1, name: 'Ember Comets', short: 'EMB', crest: 'hud_elements/misc/away_crest',
     art: 'ember_comets', arena: 'ember_dome',
     color: '#ff6f7d', color2: '#8261bd',
     diff: 0.35, bonus: {}, goalie: { rfx: 5, pos: 5 },
@@ -252,7 +254,7 @@ export const TEAMS = {
     style: 'Hot-headed scorers who shoot from everywhere.',
   },
   rams: {
-    id: 'rams', plan: 'forecheck', chem: 1, name: 'Gilded Rams', short: 'RAM', crest: 'hud_elements/misc/away_crest',
+    id: 'rams', habit: { dump: 1.6, slap: 1.2 }, plan: 'forecheck', chem: 1, name: 'Gilded Rams', short: 'RAM', crest: 'hud_elements/misc/away_crest',
     art: 'gilded_rams', arena: 'golden_hall',
     color: '#ffd45e', color2: '#a86b1d', recolor: { h1: 44, h2: 22, sat: 1.0, val: 1.05, sat2: 0.9, val2: 0.65 },
     diff: 0.55, bonus: { sht: 1, chk: 1 }, goalie: { rfx: 6, pos: 6 },
@@ -262,7 +264,7 @@ export const TEAMS = {
   },
   ravens: {
     elems: { thunder: 'shadow' }, // supers other than the slot's own
-    id: 'ravens', plan: 'trap', chem: 2, name: 'Obsidian Ravens', short: 'RAV', crest: 'hud_elements/misc/away_crest',
+    id: 'ravens', habit: { pass: 0.12 }, plan: 'trap', chem: 2, name: 'Obsidian Ravens', short: 'RAV', crest: 'hud_elements/misc/away_crest',
     art: 'obsidian_ravens', arena: 'dark_aerie',
     color: '#9aa3b5', color2: '#2a2f3d', recolor: { h1: 220, h2: 220, sat: 0.12, val: 0.66, sat2: 0.15, val2: 0.4 },
     diff: 0.72, bonus: { agi: 1, pas: 1, chk: 1 }, goalie: { rfx: 7, pos: 7 },
@@ -271,7 +273,7 @@ export const TEAMS = {
     style: 'Disciplined, fast passing, punishing on the forecheck.',
   },
   royals: {
-    id: 'royals', plan: 'counter', chem: 3, name: 'Aurora Royals', short: 'AUR', crest: 'hud_elements/misc/away_crest',
+    id: 'royals', habit: { deke: 1.4, shoot: 0.05 }, plan: 'counter', chem: 3, name: 'Aurora Royals', short: 'AUR', crest: 'hud_elements/misc/away_crest',
     art: 'aurora_royals', arena: 'aurora_palace',
     color: '#c58cff', color2: '#43207a', recolor: { h1: 284, h2: 46, sat: 0.95, val: 0.92, sat2: 1.0, val2: 1.0 },
     diff: 0.9, bonus: { spd: 1, sht: 1, pas: 1, chk: 1 }, goalie: { rfx: 8, pos: 8 },
@@ -285,7 +287,7 @@ export const TEAMS = {
   // Batch AU under their mark.
   owls: {
     elems: { thunder: 'gale', stone: 'frost' }, // supers other than the slot's own
-    id: 'owls', plan: 'counter', chem: 1, name: 'Glacier Owls', short: 'OWL', crest: 'hud_elements/misc/away_crest',
+    id: 'owls', habit: { pass: 0.1, shoot: -0.05 }, plan: 'counter', chem: 1, name: 'Glacier Owls', short: 'OWL', crest: 'hud_elements/misc/away_crest',
     art: null, mark: 'glacier_owls', arena: 'owl_observatory', expansion: true,
     goalieLook: { mask: 'stars', paint: '#dbe7f3', body: 'small' }, // (their goalie, made from parts: Batch AT, a small build from AX)
     looks: { frost: { body: 'small', head: 'glasses', skin: 0, hair: 4 }, thunder: { body: 'std', head: 'visor', skin: 2, hair: 5 }, stone: { body: 'big', head: 'beard', skin: 1, hair: 7 } },
@@ -297,7 +299,7 @@ export const TEAMS = {
   },
   moose: {
     elems: { frost: 'ember' }, // supers other than the slot's own
-    id: 'moose', plan: 'forecheck', chem: 2, name: 'Thunder Moose', short: 'MOO', crest: 'hud_elements/misc/away_crest',
+    id: 'moose', habit: { dump: 1.4, slap: 1.3 }, plan: 'forecheck', chem: 2, name: 'Thunder Moose', short: 'MOO', crest: 'hud_elements/misc/away_crest',
     art: null, mark: 'thunder_moose', arena: 'moose_longhouse', expansion: true,
     goalieLook: { mask: 'wolf_teeth', paint: '#f2a93b', body: 'big' }, // (a big build)
     looks: { frost: { body: 'std', head: 'moustache', skin: 3, hair: 1 }, thunder: { body: 'small', head: 'mohawk', skin: 4, hair: 6 }, stone: { body: 'big', head: 'cage', skin: 2, hair: 0 } },
@@ -311,7 +313,7 @@ export const TEAMS = {
   // country. Like the expansion clubs, their players are made from parts in the team's colours;
   // their crests, mascots, towns and rinks are Batches EA to EG's, under their mark.
   capybaras: {
-    id: 'capybaras', plan: 'trap', chem: 1, name: 'Hot Springs Capybaras', short: 'CAP', crest: 'hud_elements/misc/away_crest',
+    id: 'capybaras', habit: { pass: 0.1, deke: 0.6, slap: 0.6 }, plan: 'trap', chem: 1, name: 'Hot Springs Capybaras', short: 'CAP', crest: 'hud_elements/misc/away_crest',
     art: null, mark: 'hot_springs_capybaras', arena: 'hot_springs', national: true,
     goalieLook: { mask: 'classic', paint: '#c9905a', body: 'big' },
     looks: { frost: { body: 'small', head: 'round_cheeks', skin: 3, hair: 2 }, thunder: { body: 'std', head: 'curls', skin: 4, hair: 1 }, stone: { body: 'big', head: 'buzz_cut', skin: 2, hair: 0 } },
@@ -322,7 +324,7 @@ export const TEAMS = {
     style: 'Calm as a hot bath. Nothing rattles them, and they never rush a pass.',
   },
   puffins: {
-    id: 'puffins', plan: 'rungun', chem: 1, name: 'Cliffside Puffins', short: 'PUF', crest: 'hud_elements/misc/away_crest',
+    id: 'puffins', habit: { pass: 0.1, deke: 1.2 }, plan: 'rungun', chem: 1, name: 'Cliffside Puffins', short: 'PUF', crest: 'hud_elements/misc/away_crest',
     art: null, mark: 'cliffside_puffins', arena: 'puffin_cliffs', national: true,
     goalieLook: { mask: 'stars', paint: '#ff7a2f', body: 'small' },
     looks: { frost: { body: 'small', head: 'freckles', skin: 0, hair: 3 }, thunder: { body: 'small', head: 'space_buns', skin: 1, hair: 5 }, stone: { body: 'std', head: 'cage', skin: 2, hair: 0 } },
@@ -334,7 +336,7 @@ export const TEAMS = {
   },
   grizzlies: {
     elems: { stone: 'ember' }, // supers other than the slot's own
-    id: 'grizzlies', plan: 'forecheck', chem: 2, name: 'Timberline Grizzlies', short: 'GRZ', single: 'Grizzly', crest: 'hud_elements/misc/away_crest',
+    id: 'grizzlies', habit: { dump: 1.6, slap: 1.4 }, plan: 'forecheck', chem: 2, name: 'Timberline Grizzlies', short: 'GRZ', single: 'Grizzly', crest: 'hud_elements/misc/away_crest',
     art: null, mark: 'timberline_grizzlies', arena: 'timber_lodge', national: true,
     goalieLook: { mask: 'stripes', paint: '#7a4a2a', body: 'big' },
     looks: { frost: { body: 'std', head: 'beard', skin: 1, hair: 6 }, thunder: { body: 'std', head: 'long_hair', skin: 3, hair: 4 }, stone: { body: 'big', head: 'eye_black', skin: 2, hair: 7 } },
@@ -346,7 +348,7 @@ export const TEAMS = {
   },
   seals: {
     elems: { thunder: 'frost' }, // supers other than the slot's own
-    id: 'seals', plan: 'counter', chem: 2, name: 'Driftwood Seals', short: 'SEL', crest: 'hud_elements/misc/away_crest',
+    id: 'seals', habit: { deke: 1.8 }, plan: 'counter', chem: 2, name: 'Driftwood Seals', short: 'SEL', crest: 'hud_elements/misc/away_crest',
     art: null, mark: 'driftwood_seals', arena: 'ice_floes', national: true,
     goalieLook: { mask: 'pixel', paint: '#4f6d8a', body: 'std' },
     looks: { frost: { body: 'small', head: 'ponytail', skin: 2, hair: 3 }, thunder: { body: 'std', head: 'side_part', skin: 0, hair: 1 }, stone: { body: 'big', head: 'bandaged_nose', skin: 4, hair: 0 } },
@@ -357,7 +359,7 @@ export const TEAMS = {
     style: 'Slippery as wet ice. They duck out of every check and slide away with the puck.',
   },
   penguins: {
-    id: 'penguins', plan: 'balanced', chem: 3, name: 'Pack Ice Penguins', short: 'PNG', crest: 'hud_elements/misc/away_crest',
+    id: 'penguins', habit: { pass: 0.18, shoot: -0.1 }, plan: 'balanced', chem: 3, name: 'Pack Ice Penguins', short: 'PNG', crest: 'hud_elements/misc/away_crest',
     art: null, mark: 'pack_ice_penguins', arena: 'pack_ice', national: true,
     goalieLook: { mask: 'lightning', paint: '#ffd23f', body: 'std' },
     looks: { frost: { body: 'small', head: 'braids', skin: 1, hair: 4 }, thunder: { body: 'std', head: 'visor', skin: 3, hair: 2 }, stone: { body: 'big', head: 'moustache', skin: 0, hair: 6 } },
@@ -369,7 +371,7 @@ export const TEAMS = {
   },
   bulls: {
     elems: { frost: 'ember', thunder: 'ember' }, // supers other than the slot's own
-    id: 'bulls', plan: 'forecheck', chem: 2, name: 'Sunmesa Bulls', short: 'BUL', crest: 'hud_elements/misc/away_crest',
+    id: 'bulls', habit: { shoot: 0.1, deke: 0.6, dump: 1.3 }, plan: 'forecheck', chem: 2, name: 'Sunmesa Bulls', short: 'BUL', crest: 'hud_elements/misc/away_crest',
     art: null, mark: 'sunmesa_bulls', arena: 'sunmesa', national: true,
     goalieLook: { mask: 'flame', paint: '#c0392b', body: 'big' },
     looks: { frost: { body: 'std', head: 'mohawk', skin: 4, hair: 1 }, thunder: { body: 'std', head: 'afro_puffs', skin: 4, hair: 0 }, stone: { body: 'big', head: 'sports_hijab', skin: 3, hair: 0 } },
@@ -381,7 +383,7 @@ export const TEAMS = {
   },
   narwhals: {
     elems: { thunder: 'gale' }, // supers other than the slot's own
-    id: 'narwhals', plan: 'rungun', chem: 3, name: 'Northlight Narwhals', short: 'NAR', crest: 'hud_elements/misc/away_crest',
+    id: 'narwhals', habit: { deke: 1.5, shoot: 0.06 }, plan: 'rungun', chem: 3, name: 'Northlight Narwhals', short: 'NAR', crest: 'hud_elements/misc/away_crest',
     art: null, mark: 'northlight_narwhals', arena: 'fjord_hall', national: true,
     goalieLook: { mask: 'aurora', paint: '#1f4e8c', body: 'std' },
     looks: { frost: { body: 'std', head: 'long_braids', skin: 0, hair: 5 }, thunder: { body: 'small', head: 'gap_tooth', skin: 1, hair: 2 }, stone: { body: 'big', head: 'freckled_redhead', skin: 0, hair: 3 } },
@@ -394,7 +396,7 @@ export const TEAMS = {
   // Two more National clubs (the division grows to ten): the dam builders and the lagoon's dancers.
   beavers: {
     elems: { frost: 'stone' }, // supers other than the slot's own
-    id: 'beavers', plan: 'trap', chem: 2, name: 'Birchwood Beavers', short: 'BEA', crest: 'hud_elements/misc/away_crest',
+    id: 'beavers', habit: { dump: 1.5, slap: 1.3 }, plan: 'trap', chem: 2, name: 'Birchwood Beavers', short: 'BEA', crest: 'hud_elements/misc/away_crest',
     art: null, mark: 'birchwood_beavers', arena: 'millpond', national: true,
     goalieLook: { mask: 'classic', paint: '#7a2433', body: 'big' },
     looks: { frost: { body: 'std', head: 'gap_tooth', skin: 2, hair: 1 }, thunder: { body: 'small', head: 'freckles', skin: 0, hair: 4 }, stone: { body: 'big', head: 'buzz_cut', skin: 3, hair: 0 } },
@@ -406,7 +408,7 @@ export const TEAMS = {
   },
   flamingos: {
     elems: { stone: 'gale' }, // supers other than the slot's own
-    id: 'flamingos', plan: 'rungun', chem: 2, name: 'Coral Bay Flamingos', short: 'FLA', crest: 'hud_elements/misc/away_crest',
+    id: 'flamingos', habit: { deke: 2, pass: 0.05 }, plan: 'rungun', chem: 2, name: 'Coral Bay Flamingos', short: 'FLA', crest: 'hud_elements/misc/away_crest',
     art: null, mark: 'coral_bay_flamingos', arena: 'coral_bay', national: true,
     goalieLook: { mask: 'stars', paint: '#ff6fae', body: 'small' },
     looks: { frost: { body: 'std', head: 'curls', skin: 1, hair: 3 }, thunder: { body: 'small', head: 'space_buns', skin: 4, hair: 2 }, stone: { body: 'std', head: 'visor', skin: 2, hair: 5 } },
@@ -420,7 +422,7 @@ export const TEAMS = {
   // country, the fierce one and the calm one.
   tigers: {
     elems: { thunder: 'ember' }, // supers other than the slot's own
-    id: 'tigers', plan: 'forecheck', chem: 3, name: 'Taiga Tigers', short: 'TIG', crest: 'hud_elements/misc/away_crest',
+    id: 'tigers', habit: { shoot: 0.08, slap: 1.3 }, plan: 'forecheck', chem: 3, name: 'Taiga Tigers', short: 'TIG', crest: 'hud_elements/misc/away_crest',
     art: null, mark: 'taiga_tigers', arena: 'taiga_rink', elite: true,
     goalieLook: { mask: 'tiger', paint: '#ff8c1a', body: 'std' },
     looks: { frost: { body: 'std', head: 'eye_black', skin: 1, hair: 2 }, thunder: { body: 'small', head: 'ponytail', skin: 3, hair: 5 }, stone: { body: 'big', head: 'beard', skin: 4, hair: 1 } },
@@ -432,7 +434,7 @@ export const TEAMS = {
   },
   pandas: {
     elems: { thunder: 'shadow' }, // supers other than the slot's own
-    id: 'pandas', plan: 'trap', chem: 3, name: 'Bamboo Ridge Pandas', short: 'PAN', crest: 'hud_elements/misc/away_crest',
+    id: 'pandas', habit: { pass: 0.12, shoot: -0.04, deke: 1.3 }, plan: 'trap', chem: 3, name: 'Bamboo Ridge Pandas', short: 'PAN', crest: 'hud_elements/misc/away_crest',
     art: null, mark: 'bamboo_ridge_pandas', arena: 'bamboo_grove', elite: true,
     goalieLook: { mask: 'classic', paint: '#1f1f1f', body: 'big' },
     looks: { frost: { body: 'std', head: 'bun', skin: 2, hair: 0 }, thunder: { body: 'small', head: 'glasses', skin: 0, hair: 4 }, stone: { body: 'big', head: 'cage', skin: 3, hair: 0 } },

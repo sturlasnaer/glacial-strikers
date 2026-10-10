@@ -456,6 +456,7 @@ export function matchConfig(save, teamId, stage, opts = {}) {
     }),
     goalie: rivalGoalie(save, teamId, tier),
     chem: Object.fromEntries(CAST_PAIRS.map((k) => [k, Math.min(3, (t.chem || 0) + (save.season > 1 ? 1 : 0))])),
+    habit: t.habit || null, // (how the club likes to attack: data.js TEAMS[].habit)
   };
   const diff = Math.min(1, Math.max(0, t.diff + (DIFF_OFFSET[save.settings.difficulty] || 0) + seasonBoost(save) + tier * TIER_SHARP));
   // locker-room buffs: stat bumps and goalie reflex land here, the rest goes to the match

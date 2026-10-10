@@ -98,6 +98,7 @@ export class Match {
       this.goalies.push(new Goalie(this, team, t.goalie.stats, t.goalie));
     });
     if (this.goalieMode) this.goalies[0].human = true;
+    this.habits = cfg.teams.map((t) => t.habit || {}); // (a club's habits: how it likes to attack, see TEAMS in data.js)
     this.ai = [0, 1].map((team) => new TeamAI(this, team, (cfg.diff || [0.5, 0.5])[team]));
     // a comeback helper (Little player): an AI team two or more goals up on the player eases off
     this.comeback = !!cfg.comeback;

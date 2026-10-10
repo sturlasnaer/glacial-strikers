@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10zw',
+    items: [
+      { icon: 'icons/plan_balanced', alt: 'icons/career', text: 'Every club plays its own way now: the Seals and Flamingos deke round you, the Rams and Grizzlies dump it in and chase, the Comets wind up big slapshots, the Penguins pass and pass, and the Bulls come straight at you. Watch how a club plays and plan for it.' },
+    ],
+  },
+  {
     id: '2026-10-10zv',
     items: [
       { icon: 'map/bus_1', alt: 'icons/career', text: 'Every club plays in its own building now: the Capybaras\' steamy Hot Springs, the Puffins\' clifftop rink, the Grizzlies\' Timber Lodge, the Seals\' Floes, Pack Ice Arena, Sunmesa Arena, Fjord Hall, the Beavers\' Millpond, Coral Bay, the Taiga Rink and Bamboo Grove. Their mascots dance in the stands too.' },

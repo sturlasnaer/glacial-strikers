@@ -27,6 +27,10 @@ export class TeamAI {
       * (this.team === 0 && this.m.buffs ? this.m.buffs.stealMul || 1 : 1);
   }
   get gamePlan() { return (this.m.plans && this.m.plans[this.team]) || 'balanced'; }
+  // The club's habits (TEAMS[].habit): shoot / pass shift its shoot-or-pass choices (+ sooner,
+  // − later), deke / dump / slap scale how often it dekes, dumps the puck in and winds up.
+  // They shape how it attacks, never how hard it presses.
+  get habit() { return (this.m.habits && this.m.habits[this.team]) || {}; }
   get interval() { return lerp(0.42, 0.12, this.diff); }
 
   brain(s) {
@@ -532,10 +536,10 @@ export class TeamAI {
         if (m.puck.power && m.puck.power !== 'lightning') score += 0.3;
         if (s.empowered > 0 || s.igniteT > 0) score += 0.3;
         if (s.def.arch === 'sniper') score += 0.12; // a sniper lets it go sooner
-        const thresh = lerp(0.55, 0.75, this.diff) - (near < 60 ? 0.25 : 0) - (this.gamePlan === 'rungun' ? 0.14 : this.gamePlan === 'trap' ? -0.05 : 0);
+        const thresh = lerp(0.55, 0.75, this.diff) - (near < 60 ? 0.25 : 0) - (this.gamePlan === 'rungun' ? 0.14 : this.gamePlan === 'trap' ? -0.05 : 0) - (this.habit.shoot || 0);
         if (score > thresh) {
           inp.aimY = aimY / (MOUTH * 0.74);
-          if (near > 110 && dG > 200 && m.rng() < 0.6) {
+          if (near > 110 && dG > 200 && m.rng() < 0.6 * (this.habit.slap || 1)) {
             b.shootHold = lerp(0.35, 0.75, m.rng());
             inp.shoot = true;
           } else {
@@ -559,18 +563,19 @@ export class TeamAI {
         if (v > bestV) { bestV = v; best = t; }
       }
       const pressured = nearFront < 70 || near < 48;
-      const margin = lerp(0.05, 0.3, this.diff);
+      const margin = lerp(0.05, 0.3, this.diff) - (this.habit.pass || 0);
       if (best && (bestV > own + margin || (pressured && bestV > own - 0.4)) && m.rng() < lerp(0.5, 0.95, this.diff)) {
         inp.pass = true; inp.passTo = best;
         return;
       }
       // dump it in: at their blue line, pressured, nothing on: rim it behind the net and chase
-      if (dx > 340 && dx < 500 && nearFront < 85 && !m.extra[this.team] && m.rng() < lerp(0.35, 0.6, this.diff)) {
+      if (dx > 340 && dx < 500 && nearFront < 85 && !m.extra[this.team] && m.rng() < lerp(0.35, 0.6, this.diff) * (this.habit.dump || 1)) {
         inp.pass = true; inp.dump = true;
         return;
       }
       // a deke: past a defender closing in, or to sell the goalie on a breakaway
-      if (s.dekeCd <= 0 && s.stamina > 25 && ((nearFront < 70 && m.rng() < 0.1 + this.diff * 0.2) || (nearFront > 140 && dG < 210 && m.rng() < 0.25))) inp.deke = true;
+      const dk = this.habit.deke || 1;
+      if (s.dekeCd <= 0 && s.stamina > 25 && ((nearFront < 70 && m.rng() < (0.1 + this.diff * 0.2) * dk) || (nearFront > 140 && dG < 210 && m.rng() < 0.25 * dk))) inp.deke = true;
       // abilities while carrying
       if (s.skillCd <= 0) {
         const id = s.def.skill.id;
