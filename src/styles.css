@@ -156,6 +156,21 @@ img { image-rendering: auto; max-width: 100%; }
 .league-table tr.us td { background: rgba(113, 220, 232, 0.12); }
 .league-table tr.cut td { border-bottom: 2px dashed var(--gold); }
 .schedule { display: grid; gap: 6px; }
+/* the road-trip map (League tab, Batch DG) */
+.trip { position: relative; width: 100%; max-width: 560px; margin: 0 auto 12px; border: 2px solid var(--navy-3); border-radius: 8px; overflow: hidden; background: #0b1424; }
+.trip-map { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.trip-route { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.trip-route polyline { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.trip-route .todo { stroke: rgba(255, 242, 203, 0.75); stroke-width: 2.5; stroke-dasharray: 2 7; }
+.trip-route .done { stroke: var(--gold); stroke-width: 3.5; }
+.trip-town { position: absolute; width: 6%; transform: translate(-50%, -50%); filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.5)); }
+.trip-town img { display: block; width: 100%; height: auto; }
+.trip-town.next { animation: trip-pulse 1.2s ease-in-out infinite; }
+@keyframes trip-pulse { 50% { transform: translate(-50%, -50%) scale(1.18); } }
+.trip-bus { position: absolute; width: 7.8%; height: auto; transform: translate(-50%, -100%); filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.4)); }
+.trip-bus.flip { transform: translate(-50%, -100%) scaleX(-1); }
+.trip-bus.driving { transition: left 2.2s ease-in-out, top 2.2s ease-in-out; }
+@media (prefers-reduced-motion: reduce) { .trip-town.next { animation: none; } .trip-bus.driving { transition: none; } }
 .fixture { display: grid; grid-template-columns: 26px 26px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 8px; background: rgba(11, 20, 36, 0.55); border: 2px solid var(--navy-3); border-radius: 6px; font-size: 13px; }
 .fixture.next { border-color: var(--gold); }
 .fixture.classic { background: linear-gradient(90deg, rgba(113, 220, 232, 0.18), rgba(11, 20, 36, 0.55)); border-color: var(--ice); }

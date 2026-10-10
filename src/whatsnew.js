@@ -2,6 +2,13 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10zd',
+    items: [
+      { icon: 'rules/aurora_lanes', alt: 'icons/quick', text: 'Night games! In Quick play › Match options, pick Night game and play the outdoor rinks under the lights: Pine Pond beneath the northern lights, the Harbour Rink by moonlight, the Summit Rink above the clouds.' },
+      { icon: 'decor/trophy_shelf', alt: 'badges/cup_small', text: 'A trophy shelf in the locker room: the cups the club wins stand on it. Tap it to see them all.' },
+    ],
+  },
+  {
     id: '2026-10-10zc',
     items: [
       { icon: 'equipment_items/stick/passing', alt: 'icons/coop', text: 'Saucer passes! With a rival right on you, your pass lifts over their stick to your teammate. A rival out in the passing lane can still pick it off, so look for the open one.' },

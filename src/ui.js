@@ -59,6 +59,7 @@ import { DECOR, DECOR_BY_ID, DECOR_SLOTS, SLOT_NAMES as DECOR_SLOT_NAMES, buyDec
 import { cleanSign, SIGN_MAX } from './fancam.js';
 import { MINI_ROUNDS, MINI_PRIZE, miniOf } from './minicup.js';
 import { MASCOTS, RACE_PRIZE, pickRunners, newRace, stepRace } from './race.js';
+import { tripStops } from './trip.js';
 import { newPet, stepPet, tapPet, cleanPetName, PET_NAME_MAX, TRICK_TIME, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit } from './pet.js';
 import { albumPages, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
 
@@ -1085,6 +1086,7 @@ export class UI {
         : t('Welcome to the Frostline league!');
     body.innerHTML = `
       ${npc('announcer', call)}
+      ${this.tripHtml(L, body)}
       <div class="label" style="margin-bottom:6px">${esc(t(TOURNAMENT.name))} · ${t('Season {n}', { n: s.season })}</div>
       <div class="league-grid">
         <div style="min-width:0">${table}
@@ -1097,6 +1099,41 @@ export class UI {
         <div style="min-width:0"><div class="label" style="margin-bottom:6px;font-size:14px">${t('Your schedule')}</div><div class="schedule">${schedule}</div>
           ${this.leadersHtml(L)}</div>
       </div>`;
+    this.tripGo(body);
+  }
+
+  // The road-trip map (Batch DG): the league's towns, the season's route between them, and the
+  // team bus driving from the last game's town to the next one's. Nothing until the map's drawn.
+  tripHtml(L, body) {
+    const A = Assets.atlas, towns = A.map_towns, f = Assets.frame('map/region');
+    if (!towns || !f || !A.pages.some((p) => p.group === 'map')) return '';
+    if (!Assets.groupReady('map')) { Assets.loadGroup('map').then(() => { if (this.tab === 'tournament' && body.isConnected) this.tabTournament(body); }, () => {}); return ''; }
+    const W = f[3] / (f[7] || 1), H = f[4] / (f[7] || 1), { stops, at, next } = tripStops(L);
+    const pt = (town) => towns[town] || towns.home || [W / 2, H / 2];
+    const line = (list) => list.map((st) => pt(st.town).join(',')).join(' ');
+    const where = (town, dy = 0) => `left:${(pt(town)[0] / W * 100).toFixed(2)}%;top:${((pt(town)[1] + dy) / H * 100).toFixed(2)}%`;
+    const to = next !== null ? stops[next] : null, label = to ? t('Road trip: next stop, {town}', { town: to.town === 'home' ? CLUB.name : TEAMS[to.town].name }) : t('Road trip');
+    this.trip = { from: stops[at].town, to: to && to.town, where, flip: to && pt(to.town)[0] < pt(stops[at].town)[0] };
+    return `<div class="trip" role="img" aria-label="${esc(label)}" style="aspect-ratio:${W} / ${H}">
+      <img class="trip-map" src="${Assets.sceneImage('map/region', 960)}" alt="">
+      <svg class="trip-route" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline class="todo" points="${line(stops.slice(at))}"/><polyline class="done" points="${line(stops.slice(0, at + 1))}"/></svg>
+      ${Object.keys(towns).filter((id) => TEAMS[id]).map((id) => `<span class="trip-town ${id === 'home' ? 'us' : ''} ${to && to.town === id ? 'next' : ''}" style="${where(id)}" title="${esc(id === 'home' ? CLUB.name : TEAMS[id].name)}"><img src="${crest(id, 64)}" alt=""></span>`).join('')}
+      ${Assets.frame('map/bus_1') ? `<img class="trip-bus ${this.trip.flip ? 'flip' : ''}" id="trip-bus" src="${Assets.sceneImage('map/bus_1', 120)}" alt="" style="${where(stops[at].town, 62)}">` : ''}
+    </div>`;
+  }
+
+  // The bus drives on to the next town once the tab's up (straight there with less motion).
+  tripGo(body) {
+    const bus = body.querySelector('#trip-bus'), tr = this.trip;
+    if (!bus || !tr || !tr.to || tr.to === tr.from) return;
+    const still = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const go = () => { bus.classList.add('driving'); bus.setAttribute('style', tr.where(tr.to, 62)); };
+    if (still) return go();
+    const frames = ['map/bus_1', 'map/bus_2'].every((id) => Assets.frame(id)) ? [Assets.sceneImage('map/bus_1', 120), Assets.sceneImage('map/bus_2', 120)] : null;
+    let i = 0;
+    const bounce = frames && setInterval(() => { if (!bus.isConnected) return clearInterval(bounce); bus.src = frames[++i % 2]; }, 160);
+    setTimeout(() => requestAnimationFrame(go), 450);
+    bus.addEventListener('transitionend', () => { clearInterval(bounce); if (frames) bus.src = frames[0]; }, { once: true });
   }
 
   // Around the Frostline: signings, draft picks, trades, retirements and champions, newest first.
