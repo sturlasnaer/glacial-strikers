@@ -11,6 +11,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 2. **DP: the road-trip map in season**
 3. **DQ: Halloween treats in the locker room**
 4. **DR: three new trophies**
+5. **DS: a present a day in December**
+6. **DT: snowball fun with the cub**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -647,4 +649,23 @@ Three achievement badges in the same style, size and frame as the other `achieve
 - `achievements/gold_star_chart`: a reward chart with a row of gold stars (ten gold stars for the youngest, DN).
 
 As atlas frames on the page with the other achievement icons (or a new page in the same group). 3 frames.
+
+## Batch DS: a present a day in December
+
+The holiday twin of DQ's treat bowl: in December (when the room and the cub wear their holiday dressing), a little pile of wrapped presents sits on the locker room floor; tap it once a day for a small gift (a few coins). Please draw, in the room's style and angle, as atlas frames on a page in the `seasonal` group:
+- `seasonal_room/gift_pile`: three or four wrapped presents in the club's blue and white and in red and gold, ribbons and bows, about 90×70 room pixels, pivot at its bottom centre; and `seasonal_room/gift_pile_empty`: the same with one present opened (paper and ribbon spilled), the rest still wrapped.
+- `icons/gift` (128×128): one wrapped present with a big bow, for the toast.
+- It stands where the treat bowl does (`atlas.decor_slots.candy_bowl`), so no new spot is needed.
+
+3 frames.
+
+## Batch DT: snowball fun with the cub
+
+A gentle mini-game for the youngest, in Training: the cub (CX) pops up from behind snow forts and you tap it to toss a soft snowball; it giggles and ducks back down, a minute of play, no losing. Please draw, as atlas frames on a page in a new `snowball` group:
+- `snowball/yard` (1536×864): a snowy backyard in the game's style, seen from the front: three low snow forts in a row across the middle (left, centre, right) and two further back, a fence, pine trees, a soft winter sky, no lettering. And `atlas.snowball_spots = [{ x, y }, …]`: the five spots (in the yard's pixels) where the cub's feet are when it pops up behind each fort.
+- `snowball/peek_1`, `_2`, `_3` (about 160×120, pivot at its feet, facing the viewer): the cub rising up from behind a fort (just the ears, then the head, then head and paws on the wall), at the scale of the forts.
+- `snowball/hit_1`, `_2`: snow on its face, giggling with its eyes shut, then shaking it off.
+- `snowball/ball` (about 40×40) and `snowball/splat_1`, `_2` (about 120×90): the snowball and its splash on the fort.
+
+11 frames and 1 image.
 
