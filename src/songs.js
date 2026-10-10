@@ -106,6 +106,64 @@ export const SONGS = {
     order: ['A', 'B'], loop: 0,
   },
 
+  // ---------------------------------------------------------------- the locker room by the calendar (seasonal.js)
+  // December: Jingle Bells (James Lord Pierpont, 1857, public domain), in the locker room's
+  // key with sleigh-bell shakers. Halloween: an original, more giggly than ghostly.
+  holiday: {
+    name: 'Jingle Bells', bpm: 132, key: 'F', gain: 1.25,
+    inst: { lead: 'celesta', comp: 'epiano', bass: 'pbass', counter: 'flute' },
+    pan: { comp: -0.3, counter: 0.35 },
+    sections: {
+      A: {
+        bars: 16, chords: 'F F F F Bb Bb:4 F:12 G7 C7 F F F F Bb Bb:4 F:12 C7 F', // (the first beat of bars 6 and 14 under the melody's Bb)
+        lead: `A5:4 A5:4 A5:8 | A5:4 A5:4 A5:8 | A5:4 C6:4 F5:6 G5:2 | A5:16 |
+               Bb5:4 Bb5:4 Bb5:6 Bb5:2 | Bb5:4 A5:4 A5:4 A5:2 A5:2 | A5:4 G5:4 G5:4 A5:4 | G5:8 C6:8 |
+               A5:4 A5:4 A5:8 | A5:4 A5:4 A5:8 | A5:4 C6:4 F5:6 G5:2 | A5:16 |
+               Bb5:4 Bb5:4 Bb5:4 Bb5:4 | Bb5:4 A5:4 A5:4 A5:2 A5:2 | C6:4 C6:4 Bb5:4 G5:4 | F5:16`,
+        comp: { pad: true, oct: 4, rhythm: '.:4 x:4 .:4 x:4' },
+        bass: { oct: 2, pat: '1:4 5:4 1:4 5:4' },
+        drums: { k: 'x.......x.......', s: '....x.......x...', z: 'x.x.x.x.x.x.x.x.', start: { c: 'x' } },
+      },
+      B: {
+        bars: 16, chords: 'F F F F Bb Bb:4 F:12 G7 C7 F F F F Bb Bb:4 F:12 C7 F', // (the first beat of bars 6 and 14 under the melody's Bb)
+        lead: `A5:4 A5:4 A5:8 | A5:4 A5:4 A5:8 | A5:4 C6:4 F5:6 G5:2 | A5:16 |
+               Bb5:4 Bb5:4 Bb5:6 Bb5:2 | Bb5:4 A5:4 A5:4 A5:2 A5:2 | A5:4 G5:4 G5:4 A5:4 | G5:8 C6:8 |
+               A5:4 A5:4 A5:8 | A5:4 A5:4 A5:8 | A5:4 C6:4 F5:6 G5:2 | A5:16 |
+               Bb5:4 Bb5:4 Bb5:4 Bb5:4 | Bb5:4 A5:4 A5:4 A5:2 A5:2 | C6:4 C6:4 Bb5:4 G5:4 | F5:16`,
+        counter: { follow: 'lead' },
+        comp: { pad: true, oct: 4, rhythm: '.:4 x:4 .:4 x:4' },
+        bass: { oct: 2, pat: '1:4 3:4 5:4 3:4' },
+        drums: { k: 'x.......x.......', s: '....x.......x...', z: 'xxxxxxxxxxxxxxxx', fill: { k: 'x.......x.......', s: '....x...x.x.xXXX', z: 'x.x.x.x.........' } },
+      },
+    },
+    order: ['A', 'B'], loop: 0,
+  },
+  halloween: {
+    name: 'Spooky Skate', bpm: 120, key: 'Dm', gain: 1.3,
+    inst: { lead: 'celesta', comp: 'organ', bass: 'pbass', counter: 'flute' },
+    pan: { comp: -0.3, counter: 0.35 },
+    sections: {
+      A: {
+        bars: 8, chords: 'Dm Dm Bb:8 Gm:8 A Dm Gm:4 Dm:12 Gm A',
+        lead: `D5:2 F5:2 A5:2 F5:2 D5:2 F5:2 A5:4 | A5:2 G5:2 F5:2 E5:2 D5:8 | D5:2 F5:2 Bb5:4 A5:2 G5:2 F5:4 | E5:4 C#5:4 A4:8 |
+               D5:2 F5:2 A5:2 F5:2 D6:4 C6:4 | Bb5:2 A5:2 G5:2 F5:2 A5:8 | G5:2 Bb5:2 D6:2 Bb5:2 G5:4 E5:4 | A5:4 E5:4 C#5:4 A4:4`,
+        comp: { pad: true, oct: 4, rhythm: 'x:2 .:6 x:2 .:6' },
+        bass: { oct: 2, pat: '1:4 5:4 1:4 5:4' },
+        drums: { k: 'x.......x.......', s: '....x.......x...', h: '..x...x...x...x.', start: { c: 'x' } },
+      },
+      B: {
+        bars: 8, chords: 'Gm Dm A Dm Gm Dm E7 A',
+        lead: `G5:4 Bb5:4 D6:6 C6:2 | A5:4 F5:4 D5:8 | E5:2 F5:2 G5:2 A5:2 C#6:8 | D6:8 .:8 |
+               Bb5:4 G5:4 D5:4 G5:4 | F5:4 A5:4 D6:8 | G#5:4 B5:4 D6:4 E6:4 | C#6:8 A5:8`,
+        counter: { follow: 'lead' },
+        comp: { pad: true, oct: 4, rhythm: 'x:2 .:6 x:2 .:6' },
+        bass: { oct: 2, pat: '1:4 5:4 1:4 5:4' },
+        drums: { k: 'x.......x.......', s: '....x.......x...', h: 'x.x.x.x.x.x.x.x.', fill: { k: 'x.......x.......', s: '....x...x.x.xXXX', h: 'x.x.x.x.........' } },
+      },
+    },
+    order: ['A', 'B'], loop: 0,
+  },
+
   // ---------------------------------------------------------------- Frostline (home)
   frostline: {
     name: 'Frostline Faceoff', bpm: 152, key: 'Am', gain: 1.4,

@@ -7,7 +7,7 @@ import { FX } from './fx.js';
 import { Input, TouchControls, mergeInputs } from './input.js';
 import { audio } from './audio.js';
 import { PadNav } from './padnav.js';
-import { forceSeason } from './seasonal.js';
+import { forceSeason, seasonFor } from './seasonal.js';
 import { firstTime } from './guide.js';
 import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as cloudBackup, settleCups } from './online.js';
 import { ARENA_MUSIC } from './songs.js';
@@ -306,7 +306,10 @@ class App {
   }
 
   // The soundtrack follows the scene (and comes back after the music room).
-  music(name) { this.track = name; audio.play(name); }
+  music(name) {
+    if (name === 'hub') name = { holiday: 'holiday', halloween: 'halloween' }[seasonFor()] || 'hub'; // (the locker room by the calendar)
+    this.track = name; audio.play(name);
+  }
 
   // A close game: either side one goal from winning, or next goal wins.
   clutch(m) {
