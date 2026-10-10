@@ -7,7 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **CF: the Snow Fox dresses up too**
+None currently open. Monitoring for additions.
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -26,6 +26,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered CD:** Halloween and holiday rink dressing: animated banners, bunting, pumpkins, bats, tree lights and a snowman. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CD-Testing-Update`.
 
 **Delivered CE:** eight resurfacer diagonal wheel frames and three Play as icons. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CE-Testing-Update`.
+
+**Delivered CF:** eight seasonal Snow Fox mascot poses with native cloth recolour masks. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CF-Testing-Update`.
 
 ## Format notes
 
@@ -274,7 +276,7 @@ About 22 frames, all in the `home` palette style (they're never recoloured), on 
 
 11 frames.
 
-## Batch CF: the Snow Fox dresses up too
+## Batch CF ✓: the Snow Fox dresses up too
 
 The home rink now dresses for Halloween and the holidays (Batch CD). The Snow Fox mascot, who dances in the near stands (`atlas.arena.mascot`: idle, wave, cheer_a, cheer_b), should join in. Please draw the same four poses, same size, scale, pivot and recolour masks as the existing mascot frames, in two costumes:
 - `seasonal/halloween/mascot_*`: the Snow Fox in a cosy pumpkin costume with a little green stem hat (cute, not scary).
