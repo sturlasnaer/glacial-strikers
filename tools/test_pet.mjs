@@ -2,7 +2,7 @@
 // never off it, sits a while, now and then naps, wakes up and hops when tapped, and its name is
 // cleaned (12 characters at most).
 //   node tools/test_pet.mjs
-import { newPet, stepPet, tapPet, tossPuck, cleanPetName, PET_AREA, PET_NAME_MAX, TRICK_TIME, FETCH_HOME, FETCH_DROP, PET_BED, ownsBed, buyBed, PET_OUTFITS, buyOutfit, wearOutfit, ownsOutfit } from '../src/pet.js';
+import { newPet, stepPet, tapPet, tossPuck, cleanPetName, PET_AREA, PET_NAME_MAX, TRICK_TIME, FETCH_HOME, FETCH_DROP, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall, PET_OUTFITS, buyOutfit, wearOutfit, ownsOutfit } from '../src/pet.js';
 import { makeRng } from '../src/util.js';
 
 let pass = 0, fail = 0;
@@ -95,6 +95,28 @@ check('its name: cleaned, 12 characters at most', cleanPetName('  <Snjó>\n bolt
   let slept = false;
   for (let k = 0; k < 1200; k++) { stepPet(q, 0.1, rnd); if (q.state === 'sleep') { slept = true; break; } }
   check('without one: a nap on the floor, as before', slept && !q.inBed);
+}
+
+// its ball (Batch DO): bought once; the cub goes to it, pounces, and the bat sends it rolling
+{
+  const save = { coins: 50 };
+  check('the ball: bought once', buyBall(save) && ownsBall(save) && save.coins === 50 - PET_BALL.price && !buyBall(save));
+  const rnd = makeRng(3), p = newPet(rnd);
+  p.ball = { x: 60, y: 74, v: 0 };
+  let t = 0, went = false, played = false, rolled = false;
+  while (t < 200 && !rolled) {
+    stepPet(p, 0.1, rnd); t += 0.1;
+    if (p.state === 'toball') went = true;
+    if (p.state === 'play') played = true;
+    if (p.ball.v) rolled = true;
+  }
+  check('it goes to its ball, plays, and bats it away', went && played && rolled, t);
+  for (let k = 0; k < 100; k++) stepPet(p, 0.1, rnd);
+  check('the ball rolls to a stop on the floor', p.ball.v === 0 && p.ball.x >= 28 && p.ball.x <= 70);
+  const q = newPet(makeRng(3));
+  q.ball = { x: 60, y: 74, v: 0 }; q.state = 'toball';
+  tapPet(q, rnd, []);
+  check('a tap on the way: it sits for you', q.state === 'sit');
 }
 
 console.log(`Pet: ${pass} passed, ${fail} failed`);

@@ -23,18 +23,27 @@ export function stepPet(p, dt, rnd = Math.random) {
   p.t += dt;
   if (p.trickT > 0) { p.trickT = Math.max(0, p.trickT - dt); if (!p.trickT) p.trick = null; return p; }
   if (p.fetch) return stepFetch(p, dt, rnd);
+  if (p.ball) rollBall(p.ball, dt);
+  if (p.state === 'play') { // (batting its ball about: Batch DO)
+    if (p.t >= PLAY_TIME * 0.6 && !p.batted) { p.batted = true; p.ball.v = p.face * (10 + rnd() * 8); }
+    if (p.t >= PLAY_TIME) { p.state = 'sit'; p.t = 0; p.until = 2 + rnd() * 3; }
+    return p;
+  }
   if (p.hop > 0) { p.hop = Math.max(0, p.hop - dt); return p; }
-  if (p.state === 'walk' || p.state === 'tobed') {
+  if (p.state === 'walk' || p.state === 'tobed' || p.state === 'toball') {
+    if (p.state === 'toball') { p.tx = p.ball.x - 5 * (p.ball.x >= p.x ? 1 : -1); p.ty = p.ball.y; } // (up to it, from its side)
     const dx = p.tx - p.x, dy = p.ty - p.y, d = Math.hypot(dx, dy), v = PET_SPEED * dt;
     if (dx) p.face = dx > 0 ? 1 : -1;
-    if (d <= v && p.state === 'tobed') { p.x = p.tx; p.y = p.ty; p.state = 'sleep'; p.inBed = true; p.t = 0; p.until = 8 + rnd() * 8; } // (a longer nap in its own bed)
+    if (d <= v && p.state === 'toball') { p.x = p.tx; p.y = p.ty; p.face = p.ball.x >= p.x ? 1 : -1; p.state = 'play'; p.t = 0; p.batted = false; }
+    else if (d <= v && p.state === 'tobed') { p.x = p.tx; p.y = p.ty; p.state = 'sleep'; p.inBed = true; p.t = 0; p.until = 8 + rnd() * 8; } // (a longer nap in its own bed)
     else if (d <= v) { p.x = p.tx; p.y = p.ty; p.state = 'sit'; p.t = 0; p.until = 2 + rnd() * 4; }
     else { p.x += (dx / d) * v; p.y += (dy / d) * v; }
   } else if (p.t >= p.until) {
     if (p.state === 'sit' && rnd() < 0.25) {
       if (p.bed) { p.state = 'tobed'; p.tx = p.bed.x; p.ty = p.bed.y; p.t = 0; } // (off to its basket for the nap: Batch DL)
       else { p.state = 'sleep'; p.t = 0; p.until = 6 + rnd() * 6; }
-    } else { p.inBed = false; walkTo(p, rnd); }
+    } else if (p.ball && p.state === 'sit' && rnd() < 0.35) { p.inBed = false; p.state = 'toball'; p.t = 0; } // (off to play with its ball)
+    else { p.inBed = false; walkTo(p, rnd); }
   }
   return p;
 }
@@ -44,7 +53,7 @@ export function tapPet(p, rnd = Math.random, tricks = []) {
   if (p.trickT > 0 || p.fetch) return p;
   if (tricks.length && rnd() < 0.6) { p.trick = tricks[Math.floor(rnd() * tricks.length)]; p.trickT = TRICK_TIME; }
   else p.hop = 0.5;
-  if (p.state === 'sleep' || p.state === 'walk' || p.state === 'tobed') { p.state = 'sit'; p.t = 0; p.until = 1.5; p.inBed = false; }
+  if (p.state === 'sleep' || p.state === 'walk' || p.state === 'tobed' || p.state === 'toball' || p.state === 'play') { p.state = 'sit'; p.t = 0; p.until = 1.5; p.inBed = false; }
   return p;
 }
 
@@ -112,5 +121,25 @@ export function buyBed(save) {
   save.coins -= PET_BED.price;
   petOf(save).bed = true;
   return true;
+}
+
+// A ball (Shop › Locker room › For the cub, Batch DO): bought once, it lies on the floor and the
+// cub now and then goes to play with it: crouch, wiggle, pounce, and a bat that sends it rolling
+// (p.ball: { x, y, v } in % of the room, set by the room).
+export const PET_BALL = { id: 'ball', name: 'Striped ball', price: 40 };
+export const PLAY_TIME = 2.2;
+export const ownsBall = (save) => !!petOf(save).ball;
+export function buyBall(save) {
+  if (ownsBall(save) || (save.coins || 0) < PET_BALL.price) return false;
+  save.coins -= PET_BALL.price;
+  petOf(save).ball = true;
+  return true;
+}
+function rollBall(b, dt) {
+  if (!b.v) return;
+  b.x += b.v * dt;
+  if (b.x < PET_AREA.x0 || b.x > PET_AREA.x1) { b.x = Math.min(PET_AREA.x1, Math.max(PET_AREA.x0, b.x)); b.v = -b.v * 0.5; } // (off the edge of the floor: back it comes)
+  b.v *= Math.exp(-1.8 * dt);
+  if (Math.abs(b.v) < 0.3) b.v = 0;
 }
 

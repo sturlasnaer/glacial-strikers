@@ -60,7 +60,7 @@ import { cleanSign, SIGN_MAX } from './fancam.js';
 import { MINI_ROUNDS, MINI_PRIZE, miniOf } from './minicup.js';
 import { MASCOTS, RACE_PRIZE, pickRunners, newRace, stepRace } from './race.js';
 import { tripStops, POSTCARD_TOWNS } from './trip.js';
-import { newPet, stepPet, tapPet, tossPuck, cleanPetName, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit, PET_BED, ownsBed, buyBed } from './pet.js';
+import { newPet, stepPet, tapPet, tossPuck, cleanPetName, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall } from './pet.js';
 import { albumPages, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
 
 const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
@@ -873,12 +873,17 @@ export class UI {
     // its basket (Batch DL): it naps in it (the frames have the basket in them)
     const bedEl = room.querySelector('#cub-bed'), bedAt = Assets.atlas.decor_slots && Assets.atlas.decor_slots.cub_bed;
     if (bedEl && bedAt && dir === 'pet/') sets.bed_sleep = set(['bed_sleep_1', 'bed_sleep_2']);
+    // its ball (Batch DO): it goes and plays with it now and then
+    const ball = dir === 'pet/' && ownsBall(this.app.save) && ['decor/cub_ball', 'pet/pounce_1', 'pet/pounce_4'].every(has);
+    if (ball) sets.pounce = set(['pounce_1', 'pounce_2', 'pounce_3', 'pounce_4']);
     if (Object.values(sets).some((x) => !x)) return;
     const s = this.app.save, name = () => (s.pet && s.pet.name) || t('Snowball');
-    room.insertAdjacentHTML('beforeend', `<button class="pet" id="pet" aria-label="${esc(name())}"><img alt=""><img class="pet-acc" alt="" hidden></button><button class="pet-tag" id="pet-tag" hidden></button>${fetches ? `<img class="pet-puck" id="pet-puck" src="${Assets.sceneImage('pet/puck', 48)}" alt="" hidden>` : ''}`);
+    room.insertAdjacentHTML('beforeend', `<button class="pet" id="pet" aria-label="${esc(name())}"><img alt=""><img class="pet-acc" alt="" hidden></button><button class="pet-tag" id="pet-tag" hidden></button>${fetches ? `<img class="pet-puck" id="pet-puck" src="${Assets.sceneImage('pet/puck', 48)}" alt="" hidden>` : ''}${ball ? `<img class="cub-ball" id="cub-ball" src="${Assets.sceneImage('decor/cub_ball', 64)}" alt="">` : ''}`);
     const el = room.querySelector('#pet'), img = el.querySelector('img'), acc = el.querySelector('.pet-acc'), tag = room.querySelector('#pet-tag'), puck = room.querySelector('#pet-puck');
     this.pet ||= newPet();
     this.pet.bed = sets.bed_sleep ? { x: (bedAt.x / 1536) * 100, y: (bedAt.y / 864) * 100 } : null;
+    this.pet.ball = ball ? this.pet.ball || { x: 44, y: 77, v: 0 } : null;
+    const ballEl = room.querySelector('#cub-ball');
     if (!this.pet.bed) this.pet.inBed = false;
     let last = performance.now(), tagT = 0;
     clearInterval(this.petTimer);
@@ -886,10 +891,12 @@ export class UI {
       if (!el.isConnected) { clearInterval(this.petTimer); return; }
       const now = performance.now(), dt = Math.min(0.2, (now - last) / 1000);
       last = now;
-      const p = stepPet(this.pet, dt), st = p.trickT > 0 && sets['trick_' + p.trick] ? 'trick_' + p.trick : p.fetch && sets.fetch_run ? 'fetch_' + p.fetch.phase : p.hop > 0 ? 'hop' : p.inBed && p.state === 'sleep' && sets.bed_sleep ? 'bed_sleep' : p.state === 'tobed' ? 'walk' : p.state, k = sets[st] || sets.sit;
+      const p = stepPet(this.pet, dt), st = p.trickT > 0 && sets['trick_' + p.trick] ? 'trick_' + p.trick : p.fetch && sets.fetch_run ? 'fetch_' + p.fetch.phase : p.hop > 0 ? 'hop' : p.inBed && p.state === 'sleep' && sets.bed_sleep ? 'bed_sleep' : p.state === 'tobed' || p.state === 'toball' ? 'walk' : p.state === 'play' ? 'pounce' : p.state, k = sets[st] || sets.sit;
+      if (ballEl && p.ball) ballEl.style.cssText = `left:${p.ball.x}%;top:${p.ball.y}%;z-index:${p.ball.y < 66 ? 1 : 3}`;
       if (bedEl) bedEl.hidden = st === 'bed_sleep'; // (asleep in it: the frames have the basket)
       const i = st.startsWith('trick_') ? Math.min(k.urls.length - 1, Math.floor((1 - p.trickT / TRICK_TIME) * k.urls.length)) // (a trick plays through once)
         : st === 'fetch_drop' ? (p.fetch.t < FETCH_DROP * 0.35 ? 0 : 1) // (down it goes, then sitting proud)
+        : st === 'pounce' ? Math.min(3, Math.floor((p.t / PLAY_TIME) * 5)) // (crouch, wiggle, pounce, then the bat holds)
         : Math.floor((now / 1000) * (st === 'walk' ? 8 : st === 'fetch_run' ? 12 : st === 'fetch_carry' ? 9 : st === 'sleep' || st === 'bed_sleep' ? 1 : 2)) % k.urls.length;
       if (puck) { const f = p.fetch, on = f && f.phase === 'run'; puck.hidden = !on; if (on) puck.style.cssText = `left:${f.x}%;top:${f.y}%;z-index:${f.y < 66 ? 1 : 3}`; }
       if (img.dataset.k !== st + i) { img.src = k.urls[i]; img.dataset.k = st + i; acc.hidden = !k.acc; if (k.acc) acc.src = k.acc[i]; }
@@ -1142,8 +1149,11 @@ export class UI {
     const where = (town, dy = 0) => `left:${(pt(town)[0] / W * 100).toFixed(2)}%;top:${((pt(town)[1] + dy) / H * 100).toFixed(2)}%`;
     const to = next !== null ? stops[next] : null, label = to ? t('Road trip: next stop, {town}', { town: to.town === 'home' ? CLUB.name : TEAMS[to.town].name }) : t('Road trip');
     this.trip = { from: stops[at].town, to: to && to.town, where, flip: to && pt(to.town)[0] < pt(stops[at].town)[0] };
+    // in season the map dresses up (Batch DP: pumpkins from 20 October, lights in December)
+    const season = seasonFor(), ov = season && Assets.frame(`map_${season}/overlay`), ovReady = ov && Assets.pages[ov[0]];
+    if (ov && !ovReady) Assets.loadGroup('seasonal').then(() => { if (Assets.pages[ov[0]] && this.tab === 'tournament' && body.isConnected) this.tabTournament(body); }, () => {}); // (once: never round again if it isn't there)
     return `<div class="trip" role="img" aria-label="${esc(label)}" style="aspect-ratio:${W} / ${H}">
-      <img class="trip-map" src="${Assets.sceneImage('map/region', 960)}" alt="">
+      <img class="trip-map" src="${Assets.sceneImage('map/region', 960)}" alt="">${ovReady ? `<img class="trip-map" src="${Assets.sceneImage(`map_${season}/overlay`, 960)}" alt="">` : ''}
       <svg class="trip-route" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline class="todo" points="${line(stops.slice(at))}"/><polyline class="done" points="${line(stops.slice(0, at + 1))}"/></svg>
       ${Object.keys(towns).filter((id) => TEAMS[id]).map((id) => `<span class="trip-town ${id === 'home' ? 'us' : ''} ${to && to.town === id ? 'next' : ''}" style="${where(id)}" title="${esc(id === 'home' ? CLUB.name : TEAMS[id].name)}"><img src="${crest(id, 64)}" alt=""></span>`).join('')}
       ${Assets.frame('map/bus_1') ? `<img class="trip-bus ${this.trip.flip ? 'flip' : ''}" id="trip-bus" src="${Assets.sceneImage('map/bus_1', 120)}" alt="" style="${where(stops[at].town, 62)}">` : ''}
@@ -2787,11 +2797,13 @@ export class UI {
       ${(() => { // outfits for the cub (Batch DA)
         const outfits = PET_OUTFITS.filter((o) => Assets.atlas.frames[`pet_acc/${o.id}/sit_1`] && Assets.atlas.frames['pet/sit_1']);
         const bed = ['decor/cub_bed', 'pet/bed_sleep_1', 'icons/cub_bed'].every((f) => Assets.atlas.frames[f]) && Assets.atlas.decor_slots && Assets.atlas.decor_slots.cub_bed; // (its basket: Batch DL)
-        if (!outfits.length && !bed) return '';
-        const bedItem = bed ? `<div class="item" tabindex="0" aria-label="${esc(t(PET_BED.name))}"><img src="${Assets.icon('icons/cub_bed', 128)}" alt="">
-            <div style="min-width:0"><div class="label" style="font-size:13px">${t('For the cub')}</div><h4>${esc(t(PET_BED.name))}</h4><div class="muted" style="font-size:12px">${t('A bed of its own, for its naps.')}</div>
-              <div class="buy">${ownsBed(s) ? `<span class="tag good">${t('In the room')}</span>` : `<span class="price">${PET_BED.price}</span><button class="btn small ${s.coins >= PET_BED.price ? 'gold' : ''}" data-bbuy="1" ${s.coins >= PET_BED.price ? '' : 'disabled'}>${t('Buy')}</button>`}</div></div>
-          </div>` : '';
+        const ball = ['decor/cub_ball', 'pet/pounce_1', 'icons/cub_ball'].every((f) => Assets.atlas.frames[f]); // (its ball: Batch DO)
+        if (!outfits.length && !bed && !ball) return '';
+        const toy = (o, icon, blurb, owned, attr) => `<div class="item" tabindex="0" aria-label="${esc(t(o.name))}"><img src="${Assets.icon(icon, 128)}" alt="">
+            <div style="min-width:0"><div class="label" style="font-size:13px">${t('For the cub')}</div><h4>${esc(t(o.name))}</h4><div class="muted" style="font-size:12px">${blurb}</div>
+              <div class="buy">${owned ? `<span class="tag good">${t('In the room')}</span>` : `<span class="price">${o.price}</span><button class="btn small ${s.coins >= o.price ? 'gold' : ''}" ${attr}="1" ${s.coins >= o.price ? '' : 'disabled'}>${t('Buy')}</button>`}</div></div>
+          </div>`;
+        const bedItem = (bed ? toy(PET_BED, 'icons/cub_bed', t('A bed of its own, for its naps.'), ownsBed(s), 'data-bbuy') : '') + (ball ? toy(PET_BALL, 'icons/cub_ball', t('Something to pounce on.'), ownsBall(s), 'data-lbuy') : '');
         const wear = (s.pet || {}).wear;
         return `<div class="label" style="margin:14px 0 6px">${t('For the cub')}</div><div class="shop">${outfits.map((o) => {
           const pic = Assets.spriteSet(['pet/sit_1', `pet_acc/${o.id}/sit_1`], 96), own = ownsOutfit(s, o.id), on = wear === o.id, afford = s.coins >= o.price;
@@ -2811,6 +2823,7 @@ export class UI {
     this.click('#decor-room', () => { audio.sfx('click'); this.hub('room'); }, body);
     this.click('[data-obuy]', (el) => { if (!buyOutfit(s, el.dataset.obuy)) return; writeSave(s); audio.sfx('purchase'); this.hub('shop'); }, body);
     this.click('[data-bbuy]', () => { if (!buyBed(s)) return; writeSave(s); audio.sfx('purchase'); this.hub('shop'); }, body);
+    this.click('[data-lbuy]', () => { if (!buyBall(s)) return; writeSave(s); audio.sfx('purchase'); this.hub('shop'); }, body);
     this.click('[data-wear]', (el) => { if (wearOutfit(s, el.dataset.wear)) { writeSave(s); audio.sfx('equip'); } this.tabDecor(body); }, body);
     this.click('[data-unwear]', () => { wearOutfit(s, null); writeSave(s); audio.sfx('back'); this.tabDecor(body); }, body);
   }
