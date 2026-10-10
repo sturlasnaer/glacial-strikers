@@ -1475,8 +1475,8 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .mini-rd { font-family: var(--display); color: var(--ice); }
 .mini-res { font-size: 18px; text-align: center; }
 .mini-step.won .mini-res { color: #7fe08a; } .mini-step.lost .mini-res { color: var(--coral); } .mini-step.now .mini-res { color: var(--gold); }
-.mini-cup-big, .mini-podium { display: block; margin: 0 auto; width: min(200px, 50vw); height: auto; filter: drop-shadow(0 6px 0 rgba(0, 0, 0, 0.35)); animation: mini-pop 0.5s ease-out; }
-.mini-podium { width: min(320px, 70vw); }
+.mini-cup-big, .mini-podium { display: block; margin: 0 auto; width: auto; height: auto; max-width: min(200px, 50vw); max-height: 24vh; filter: drop-shadow(0 6px 0 rgba(0, 0, 0, 0.35)); animation: mini-pop 0.5s ease-out; }
+.mini-podium { max-width: min(320px, 70vw); max-height: 32vh; } /* (the bracket and the prize stay in view on a phone held sideways) */
 @keyframes mini-pop { from { transform: scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .mini-cup-big, .mini-podium { animation: none; } }
 

@@ -2,6 +2,14 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10zb',
+    items: [
+      { icon: 'pet/trick_five_2', alt: 'icons/pet', text: 'The cub has tricks! Tap it in the locker room and now and then it chases its tail, rolls over or gives you a high five.' },
+      { icon: 'badges/mini_cup', alt: 'icons/mini_cup', text: 'The Mini Cup has its own silver cup now, and the champions lift it on a podium in the confetti.' },
+      { icon: 'icons/simple_controls', text: 'Little player helps a bit more: the rivals ease off when they\'re well ahead, and your teammates like to pass to you.' },
+    ],
+  },
+  {
     id: '2026-10-10za',
     items: [
       { icon: 'race/snow_fox/win', alt: 'icons/friends', text: 'The mascot race! When a side gets to three, the club mascots race across the ice. Pick the winner for coins.' },
