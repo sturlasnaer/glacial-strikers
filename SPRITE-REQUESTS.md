@@ -7,7 +7,8 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-None currently open. Monitoring for additions.
+1. **DU: the cub's costumes at home games**
+2. **DV: the team bus in season**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -667,4 +668,20 @@ A gentle mini-game for the youngest, in Training: the cub (CX) pops up from behi
 - `snowball/ball` (about 40×40) and `snowball/splat_1`, `_2` (about 120×90): the snowball and its splash on the fort.
 
 11 frames and 1 image.
+
+## Batch DU: the cub's costumes at home games
+
+In season the locker room's cub wears its pumpkin costume (from 20 October) and its Santa hat (December) (CZ); it should wear them on the boards at home games too. Please redraw the home-game poses (DH) and the victory slide (DM) in each costume, exactly matching the originals' canvas (120×80), pivot and timing, as atlas frames on a page in the `seasonal` group:
+- `pet_rink_halloween/sit_1`, `_2`, `cheer_1`..`_4`, `sad`, `hop_down_1`, `_2`, `slide_1`..`_4`, `spin_1`..`_3` (the pumpkin costume),
+- `pet_rink_holiday/…` the same sixteen (the Santa hat and a little red scarf).
+
+32 frames.
+
+## Batch DV: the team bus in season
+
+The Foxes' bus on the road-trip map (DG) should dress up in season too. Please redraw `map/bus_1` and `_2` (the same 120×80 canvas, pivot and bounce) as atlas frames on a page in the `seasonal` group:
+- `map_halloween/bus_1`, `_2`: a carved pumpkin on the roof and a few orange lights.
+- `map_holiday/bus_1`, `_2`: a wreath on the front, snow on the roof and a string of coloured lights.
+
+4 frames.
 
