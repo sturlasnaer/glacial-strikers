@@ -910,7 +910,7 @@ export class Match {
     }
     const c = clampInside(tx, ty, 34);
     const dir0 = norm(c.x - p.x, c.y - p.y);
-    const e = this.rng.normal() * s.d.passErr * (0.4 + dir0.l / 600);
+    const e = this.rng.normal() * s.d.passErr * (0.4 + dir0.l / 600) * (s.controlled && this.humans.includes(s.team) ? 0.7 : 1); // (the player's passes: a little truer)
     const dir = norm(c.x - p.x - dir0.y * e, c.y - p.y + dir0.x * e);
     this.loosePuck(s);
     p.vx = dir.x * speed; p.vy = dir.y * speed; p.vz = 0;
@@ -1297,7 +1297,10 @@ export class Match {
       const ds = Math.hypot(st.x - p.x, st.y - p.y);
       const db = Math.hypot(s.x - p.x, s.y - p.y);
       const intended = p.pass && p.pass.to === s;
-      const reach = intended ? (s.controlled && this.assist === 'strong' ? 38 : 30) : 22;
+      // (a stick reaching for the player's team's pass: a little shorter and less sure on the easier levels)
+      const vsPlayersPass = !intended && p.pass && p.pass.from.team !== s.team && this.humans.includes(p.pass.from.team) && !this.humans.includes(s.team), pd = vsPlayersPass ? this.ai[s.team].diff ** 2 : 1;
+      const fromPlayer = intended && p.pass.from.controlled && this.humans.includes(p.pass.from.team); // (a teammate taking the player's pass reaches a little further)
+      const reach = intended ? (s.controlled && this.assist === 'strong' ? 38 : fromPlayer ? 35 : 30) : vsPlayersPass ? 15 + 7 * pd : 22;
       if (p.shot && p.shot.plow > 0 && p.shot.team !== s.team && db < s.r + PUCK_R + 10) {
         // Avalanche bulldozes through the blocker
         p.shot.plow--;
@@ -1323,6 +1326,7 @@ export class Match {
         // (a pass the player makes is caught like the player's own catches: an AI teammate's
         // fumble roll on it felt like the game dropping one pass in nine)
         if (!(intended && p.pass.from.controlled && this.humans.includes(p.pass.from.team))) chance *= this.ai[s.team].catchMul(s);
+        if (vsPlayersPass) chance *= 0.5 + 0.4 * pd;
         if (this.rng() < chance) {
           this.takePossession(s, 'catch');
           return true;

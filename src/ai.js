@@ -153,7 +153,8 @@ export class TeamAI {
       }
       // forecheck: send a second hunter while they're still in their own end
       const inTheirEnd = (c.x - this.attX * 0.55) * this.side > 0;
-      if (plan === 'forecheck' && inTheirEnd && left.length >= 2) {
+      const vsHuman = this.m.humans.includes(c.team), hd = this.diff * this.diff; // (against the player: more room, the top teams still tough)
+      if (plan === 'forecheck' && inTheirEnd && left.length >= 2 && (!vsHuman || hd > 0.36)) {
         roles.set(left[0], { kind: 'pressure', target: c });
         left = left.slice(1);
       }
@@ -174,7 +175,8 @@ export class TeamAI {
         roles.set(back, { kind: 'spot', x: this.ownX + out * hd, y: clamp(c.y * 0.45, -120, 120), sprint: true });
         left = left.filter((s) => s !== back);
       }
-      const markD = plan === 'trap' ? 72 : plan === 'forecheck' ? 32 : plan === 'rungun' ? 40 : 48;
+      // (the player's teammates get room to take a pass: marked from further off on the easier levels)
+      const markD = Math.max(plan === 'trap' ? 72 : plan === 'forecheck' ? 32 : plan === 'rungun' ? 40 : 48, vsHuman ? lerp(115, 55, hd) : 0);
       // mark the other attackers, goal side
       const marks = opps.filter((o) => o !== c).map((o) => {
         const g = norm(this.ownX - o.x, -o.y);
@@ -238,7 +240,7 @@ export class TeamAI {
   }
 
   supportSpots(c) {
-    const spots = this.baseSupportSpots(c);
+    let spots = this.baseSupportSpots(c);
     const plan = this.gamePlan, side = this.side;
     if (plan === 'rungun') for (const sp of spots) sp.x += side * (sp.pref === 'W' ? 90 : 60);
     if (plan === 'trap') {
@@ -246,7 +248,30 @@ export class TeamAI {
       const breakout = c.x * side < -BLUE_X;
       for (const sp of spots) { if (sp.pref === 'D') sp.x -= side * 70; else if (breakout) { sp.x += side * 90; sp.sprint = true; } }
     }
+    // the player has the puck: the teammates find open ice near their spots, with a clear lane
+    // for the pass (they used to stand on their spot whoever was marking it)
+    if (c.controlled && this.m.humans.includes(this.team)) spots = spots.map((sp) => this.openUp(sp, c));
     return spots;
+  }
+
+  // The most open ice near a support spot: away from the defenders, the lane from the carrier
+  // clear, not too far off the spot, on the ice and out of the creases.
+  openUp(sp, c) {
+    const m = this.m, opps = m.skaters.filter((o) => o.team !== this.team && !o.parked);
+    if (!opps.length) return sp;
+    const score = (x, y) => {
+      let near = 260;
+      for (const o of opps) near = Math.min(near, Math.hypot(o.x - x, o.y - y));
+      return near + m.laneClear(c.x, c.y, x, y, this.team, true) * 140 - Math.hypot(x - sp.x, y - sp.y) * 0.3;
+    };
+    let best = sp, bs = score(sp.x, sp.y);
+    for (const r of [70, 140]) for (let a = 0; a < 8; a++) {
+      const x = sp.x + Math.cos((a * Math.PI) / 4) * r, y = sp.y + Math.sin((a * Math.PI) / 4) * r * 0.8;
+      if (insideDepth(x, y) < 50 || Math.hypot(Math.abs(x) - GOAL_X, y) < 90) continue;
+      const v = score(x, y);
+      if (v > bs + 8) { bs = v; best = { ...sp, x, y }; } // (a clear gain, so it doesn't twitch between two)
+    }
+    return best;
   }
 
   baseSupportSpots(c) {
@@ -415,18 +440,20 @@ export class TeamAI {
     const g = norm(this.ownX - c.x, -c.y);
     // contain the carrier from a gap goal-side, closing in only near our net or on the
     // forecheck: the stick still pokes at the puck, but nobody runs straight through them
-    const tight = Math.abs(c.x - this.ownX) < 260 || plan === 'forecheck';
-    // (the player's carrier gets room to skate on the easier levels: a wider gap)
+    // (the player's carrier gets room to skate on the easier levels: a wider gap, and only the
+    // stronger teams' forecheck hounds them all over the ice)
     const human = c.controlled && m.humans.includes(c.team), hd = this.diff * this.diff; // (against the player: gentle for longer, the top teams still tough)
-    const gap = human ? (tight ? lerp(40, 14, hd) : lerp(82, 28, hd)) : tight ? lerp(24, 14, this.diff) : lerp(48, 28, this.diff);
+    const hunts = plan === 'forecheck' && (!human || hd > 0.36);
+    const tight = Math.abs(c.x - this.ownX) < 260 || hunts;
+    const gap = human ? (tight ? lerp(58, 16, hd) : lerp(110, 32, hd)) : tight ? lerp(24, 14, this.diff) : lerp(48, 28, this.diff);
     const tx = c.x + c.vx * 0.22 + g.x * gap, ty = c.y + c.vy * 0.22 + g.y * gap;
-    this.seek(s, tx, ty, true, 8);
+    this.seek(s, tx, ty, !human || tight || hd > 0.3, 8); // (no sprinting up to the player out in the open on the easier levels)
     const d = Math.hypot(c.x - s.x, c.y - s.y);
     if (decide) {
       // checks are picked moments, with a breather after each one: a chance per second in
       // reach (sharper AIs decide more often, so it's spread over their decisions)
       // (on the player's carrier, far fewer on the easier levels, with a longer breather)
-      const aggression = (human ? lerp(0.035, 0.24, hd) : lerp(0.1, 0.28, this.diff)) * this.interval * (plan === 'forecheck' ? 1.3 : plan === 'trap' ? 0.6 : 1);
+      const aggression = (human ? lerp(0.035, 0.24, hd) : lerp(0.1, 0.28, this.diff)) * this.interval * (hunts ? 1.3 : plan === 'trap' ? 0.6 : 1);
       if (d < 62 && s.checkCd <= 0 && !(b.checkRest > 0) && s.stamina > 35 && m.rng() < aggression) {
         b.checkRest = human ? lerp(5.5, 2, hd) : lerp(3, 1.8, this.diff);
         if (s.def.skill.id === 'bedrock' && s.skillCd <= 0 && m.rng() < this.diff) s.in.skill = true;

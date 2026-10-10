@@ -2010,7 +2010,7 @@ export const IS = {
   "The puck vanishes into shadow as you shoot, and the goalie reads it late.": "Pökkurinn hverfur inn í skuggann þegar þú skýtur og markvörðurinn sér hann of seint.",
   "The referee blows it dead. Faceoff!": "Dómarinn flautar. Uppkast!",
   "The release sends a shockwave that knocks nearby defenders off their feet.": "Skotið sendir frá sér höggbylgju sem feykir nálægum varnarmönnum um koll.",
-  "The rivals ease off: fewer hits and more room on the puck, most of all on Easy and against the early teams. The top teams still play hard.": "Andstæðingarnir slaka á: færri tæklingar og meira pláss með pökkinn, mest á Auðvelt og á móti fyrstu liðunum. Bestu liðin spila enn af krafti.",
+  "The rivals ease off: fewer hits, more room on the puck and more space for passes (your teammates find open ice), most of all on Easy and against the early teams. The top teams still play hard.": "Andstæðingarnir slaka á: færri tæklingar, meira pláss með pökkinn og meira rými fyrir sendingar (liðsfélagarnir finna autt svell), mest á Auðvelt og á móti fyrstu liðunum. Bestu liðin spila enn af krafti.",
   "The round button above SHOOT is your signature skill. The star fires your ultimate when it glows.": "Kringlótti hnappurinn fyrir ofan SKJÓTA er sérhæfnin þín. Stjarnan leysir ofurkraftinn úr læðingi þegar hún glóir.",
   "The round button pokes the puck off a close carrier. Saves charge Wall of Ice: fire it with the star.": "Hringlaga takkinn potar pökknum af sóknarmanni sem kemur nálægt. Varslur hlaða Ísvegginn: kveiktu á honum með stjörnunni.",
   "the runners-up": "liðið í öðru sæti",
