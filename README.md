@@ -15,7 +15,7 @@ The game needs to be served over http; opening `index.html` straight from disk w
 
 ### Offline
 
-- **Single file:** `node tools/build_offline.mjs` writes `dist/puckbound-offline.html`, one file of about 55 MB with everything embedded. Double-click it on any computer to play with no server or internet. It isn't kept in git: the Pages workflow (`.github/workflows/pages.yml`) builds it on every push to main and publishes it with the site, at `dist/puckbound-offline.html`.
+- **Single file:** `node tools/build_offline.mjs` writes `dist/puckbound-offline.html`, one file of about 95 MB with everything embedded. Double-click it on any computer to play with no server or internet. It isn't kept in git: the Pages workflow (`.github/workflows/pages.yml`) builds it on every push to main and publishes it with the site, at `dist/puckbound-offline.html`.
 - **Install on a phone (home screen, offline):** the game is a Progressive Web App with a manifest, icons and a service worker that caches every file the game uses. Phones only allow this from an **https** address. Host the folder on any https static host (GitHub Pages, Netlify, Cloudflare Pages), open it on the phone, then:
   - Android (Chrome): menu, then *Install app*. The title screen also shows an Install button.
   - iPhone (Safari): Share, then *Add to Home Screen*.
