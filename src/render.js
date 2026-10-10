@@ -2092,6 +2092,25 @@ export class Renderer {
     ctx.moveTo(s.x, s.y - 10 - rad * 1.2); ctx.lineTo(s.x, s.y - 10 + rad * 1.2); ctx.stroke();
   }
 
+  // The way to go, for the youngest players (Simple controls): a gold chevron on the ice a
+  // little ahead of the skater, toward the puck, or with the puck toward their net. Not when
+  // it's right there.
+  drawGuide(ctx, match, c, fx) {
+    const p = match.puck;
+    if (p.owner && p.owner !== c && p.owner.team === c.team) return; // (a teammate has it)
+    const tx = c.hasPuck ? c.side * GOAL_X : p.x, ty = c.hasPuck ? 0 : p.y;
+    const dx = tx - c.x, dy = ty - c.y, d = Math.hypot(dx, dy);
+    if (d < (c.hasPuck ? 330 : 110)) return;
+    const ux = dx / d, uy = dy / d, r = 62 + Math.sin(fx.time * 5) * 7;
+    const at = (f, s) => toScreen(c.x + ux * f - uy * s, c.y + uy * f + ux * s);
+    const tip = at(r + 32, 0), l = at(r, -20), m = at(r + 11, 0), rt = at(r, 20);
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(tip.x, tip.y); ctx.lineTo(l.x, l.y); ctx.lineTo(m.x, m.y); ctx.lineTo(rt.x, rt.y); ctx.closePath();
+    ctx.lineJoin = 'round'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(20,35,59,0.85)'; ctx.stroke();
+    ctx.fillStyle = c.hasPuck ? '#ffd45e' : '#71dce8'; ctx.globalAlpha = 0.92; ctx.fill();
+    ctx.restore();
+  }
+
   drawOverheads(ctx, match, fx) {
     const versus = match.humans && match.humans.length > 1;
     for (const c of match.skaters) {
@@ -2106,6 +2125,8 @@ export class Renderer {
         ctx.lineWidth = 4; ctx.strokeStyle = '#14233b'; ctx.strokeText(tag, p.x, p.y - 104 + bob);
         ctx.fillStyle = seatColour(match, c); ctx.fillText(tag, p.x, p.y - 104 + bob);
       } else Assets.draw(ctx, 'hud_elements/misc/player_arrow', p.x, p.y - 96 + bob, 0.1);
+      // Simple controls: an arrow at their feet showing the way (to the puck, or with it to their net)
+      if (match.state === 'play' && match.simpleSeat && match.simpleSeat(c.team, c.seat || 0)) this.drawGuide(ctx, match, c, fx);
       // charge meter
       if (c.charging || c.ultWindup > 0) {
         const v = c.ultWindup > 0 ? 1 : clamp((c.chargeT - 0.1) / 0.85, 0, 1);
