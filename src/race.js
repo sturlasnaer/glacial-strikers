@@ -3,7 +3,8 @@
 // it wins. Each runner trots at its own pace with bursts and slips on the ice, so anyone can
 // win. rnd: () => [0, 1) (the menus' own randomness; the match is frozen meanwhile).
 
-export const MASCOTS = { home: 'snow_fox', lynx: 'pinewood_lynx', comets: 'ember_comets', rams: 'gilded_rams', ravens: 'obsidian_ravens', royals: 'aurora_royals', owls: 'glacier_owls', moose: 'thunder_moose' };
+export const MASCOTS = { home: 'snow_fox', lynx: 'pinewood_lynx', comets: 'ember_comets', rams: 'gilded_rams', ravens: 'obsidian_ravens', royals: 'aurora_royals', owls: 'glacier_owls', moose: 'thunder_moose',
+  capybaras: 'hot_springs_capybaras', puffins: 'cliffside_puffins', grizzlies: 'timberline_grizzlies', seals: 'driftwood_seals', penguins: 'pack_ice_penguins', bulls: 'sunmesa_bulls', narwhals: 'northlight_narwhals' }; // (the National clubs': Batch EC)
 export const RACE_PRIZE = 25;
 export const RACE_AT = 3; // (goals for either side)
 

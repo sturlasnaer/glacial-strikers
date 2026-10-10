@@ -740,7 +740,7 @@ Divisions are in (DX): win the Frostline Cup and the club is promoted to the **N
 
 | club | key (`mark`) | colours | home | character |
 |---|---|---|---|---|
-| **Hot Springs Capybaras** | `hot_springs_capybaras` | warm teal and sunset orange | a spa town of steaming hot pools | calm and unhurried; never rattled |
+| **Hot Springs Capybaras** | `hot_springs_capybaras` | caramel brown with hot-spring teal trim (changed from teal-first: the Foxes are teal, so teal stays the trim) | a spa town of steaming hot pools | calm and unhurried; never rattled |
 | **Cliffside Puffins** | `cliffside_puffins` | black, white and bright orange | sea cliffs full of burrows | quick little passers who dart everywhere |
 | **Timberline Grizzlies** | `timberline_grizzlies` | bark brown and forest green | a log town high in the mountain forest | big, heavy hitters |
 | **Driftwood Seals** | `driftwood_seals` | slate blue and silver | a frozen bay with ice floes | slippery, always ducking out of checks |

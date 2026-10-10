@@ -7,7 +7,7 @@
 // standings. After round 2 comes the All-Star Game at home: the fans vote in the league's
 // stars, mixed across two benches (it doesn't count either).
 
-import { TEAMS, TOURNAMENT, RIVAL_IDS, FOUNDING_RIVALS } from './data.js';
+import { TEAMS, RIVAL_IDS, FOUNDING_RIVALS, NATIONAL_IDS, ELITE_IDS, stageOf } from './data.js';
 import { makeRng } from './util.js';
 import { recordSimGame } from './awards.js';
 import { rosterShift, seasonBoost } from './slots.js';
@@ -16,6 +16,9 @@ import { t } from './i18n.js';
 
 export const FOUNDING_TEAMS = ['home', ...FOUNDING_RIVALS];
 export const EXPANDED_TEAMS = ['home', ...RIVAL_IDS]; // (the rivals easiest first: the order we meet them)
+// A division up (tiers.js), other clubs: the National's own, then the best of both.
+export const NATIONAL_TEAMS = ['home', ...NATIONAL_IDS];
+export const ELITE_TEAMS = ['home', ...ELITE_IDS];
 export const EXPANSION_SEASON = 2;
 export const leagueTeams = (L) => (L && L.teams) || FOUNDING_TEAMS;
 export const leagueRivals = (L) => leagueTeams(L).filter((id) => id !== 'home');
@@ -44,8 +47,8 @@ function buildSchedule(order) {
   }));
 }
 
-export function newLeague(season) {
-  const teams = season >= EXPANSION_SEASON ? EXPANDED_TEAMS : FOUNDING_TEAMS;
+export function newLeague(season, tier = 0) {
+  const teams = tier >= 2 ? ELITE_TEAMS : tier === 1 ? NATIONAL_TEAMS : season >= EXPANSION_SEASON ? EXPANDED_TEAMS : FOUNDING_TEAMS;
   return {
     season,
     teams: [...teams],
@@ -62,7 +65,7 @@ export function newLeague(season) {
 
 // Make sure every pair meets exactly once; fall back to a standard circle schedule if not.
 (function verify() {
-  for (const teams of [FOUNDING_TEAMS, EXPANDED_TEAMS]) {
+  for (const teams of [FOUNDING_TEAMS, EXPANDED_TEAMS, NATIONAL_TEAMS, ELITE_TEAMS]) {
     const s = buildSchedule(teams.slice(1)), n = teams.length;
     const seen = new Set();
     for (const r of s) for (const g of r.games) seen.add([g.a, g.b].sort().join('-'));
@@ -108,12 +111,12 @@ export function nextFixture(L) {
   }
   if (L.phase === 'regular' && L.round === CLASSIC_AFTER && !L.classic) {
     const opp = classicOpponent(L);
-    const base = TOURNAMENT.stages.find((s) => s.team === opp);
+    const base = stageOf(opp);
     return { kind: 'classic', opponent: opp, label: t('Winter Classic'), stage: { ...base, powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', round: 'Winter Classic', reward: 320, arena: 'pine_pond' } };
   }
   if (L.phase === 'regular') {
     const opp = L.schedule[L.round].games[0].b;
-    const base = TOURNAMENT.stages.find((s) => s.team === opp);
+    const base = stageOf(opp);
     return { kind: 'regular', opponent: opp, label: t('Round {n} of {total}', { n: L.round + 1, total: L.schedule.length }), stage: { ...base, round: 'League · round {n}', roundN: L.round + 1 } };
   }
   if (L.phase === 'playoffs') {
@@ -121,7 +124,7 @@ export function nextFixture(L) {
     const ourSemi = po.semis.find((g) => g.a === 'home' || g.b === 'home');
     if (ourSemi && !ourSemi.winner) {
       const opp = ourSemi.a === 'home' ? ourSemi.b : ourSemi.a;
-      const base = TOURNAMENT.stages.find((s) => s.team === opp);
+      const base = stageOf(opp);
       return { kind: 'semi', opponent: opp, label: t('Semifinal'), stage: { ...base, powers: ['fire', 'ice', 'lightning', 'gravity'], round: 'Semifinal', reward: 320 } };
     }
     if (po.final && !po.final.winner && (po.final.a === 'home' || po.final.b === 'home')) {

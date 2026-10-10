@@ -937,4 +937,5 @@ export const JINGLES = {
 };
 
 // Which track plays where.
-export const ARENA_MUSIC = { home: 'frostline', ember_dome: 'ember', aurora_palace: 'aurora', pine_pond: 'pine', golden_hall: 'hall', dark_aerie: 'aerie', owl_observatory: 'observatory', moose_longhouse: 'longhouse', harbour_rink: 'harbour', glacier_cave: 'cave', summit_rink: 'summit' };
+export const ARENA_MUSIC = { home: 'frostline', ember_dome: 'ember', aurora_palace: 'aurora', pine_pond: 'pine', golden_hall: 'hall', dark_aerie: 'aerie', owl_observatory: 'observatory', moose_longhouse: 'longhouse', harbour_rink: 'harbour', glacier_cave: 'cave', summit_rink: 'summit',
+  hot_springs: 'pine', puffin_cliffs: 'harbour', timber_lodge: 'longhouse', ice_floes: 'cave', pack_ice: 'observatory', sunmesa: 'ember', fjord_hall: 'aurora' }; // (the National clubs' rinks borrow a tune)

@@ -3,7 +3,7 @@
 import { GUIDE } from './guide.js';
 import {
   CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE, CAST_PAIRS, makeDef, perkSlot,
-  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, setFreeGoalies, setGoalieLooks, goalieInfo, areTwins, setRookies, setStyles, ELEMENTS, ARCHETYPES, member, pairKey, recruitKey, slotDef, GOALIE_STYLES, RIVAL_IDS, slotSprite, slotLook, CLUB_DEFAULT } from './data.js';
+  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, setFreeGoalies, setGoalieLooks, goalieInfo, areTwins, setRookies, setStyles, ELEMENTS, ARCHETYPES, member, pairKey, recruitKey, slotDef, GOALIE_STYLES, ALL_RIVALS, slotSprite, slotLook, CLUB_DEFAULT } from './data.js';
 import { newLeague, migrateLeague } from './league.js';
 import { lookFor, maskFor, goalieArt, isPartsArt } from './modular.js';
 import { seasonStats } from './awards.js';
@@ -492,7 +492,7 @@ export function allStarVote(save, L) {
     .map((kit) => ({ team, kit, who: recruitKey(team, kit), pts: pts(`${team}:${kit}`) }))
     .sort((a, b) => b.pts - a.pts || a.kit.localeCompare(b.kit));
   const teams = leagueRivals(L).map((team) => ({ team, list: stars(team) })).filter((x) => x.list.length >= 2)
-    .sort((a, b) => (b.list[0].pts + b.list[1].pts) - (a.list[0].pts + a.list[1].pts) || RIVAL_IDS.indexOf(a.team) - RIVAL_IDS.indexOf(b.team));
+    .sort((a, b) => (b.list[0].pts + b.list[1].pts) - (a.list[0].pts + a.list[1].pts) || ALL_RIVALS.indexOf(a.team) - ALL_RIVALS.indexOf(b.team));
   let pair = null; // the best two teams that leave three for the other bench
   for (let i = 0; i < teams.length && !pair; i++) for (let j = i + 1; j < teams.length && !pair; j++) if (teams[i].list.length + teams[j].list.length >= 5) pair = [teams[i], teams[j]];
   if (!star || !pair) return null;

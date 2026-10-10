@@ -4,7 +4,7 @@ import { Assets } from './assets.js';
 import {
   CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
-  RECRUITS, ROOKIES, setRookies, setFreeGoalies, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, RIVAL_IDS, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, CLUB_CRESTS, clubCrestId, MASK_NAMES, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
+  RECRUITS, ROOKIES, setRookies, setFreeGoalies, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, ALL_RIVALS, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, CLUB_CRESTS, clubCrestId, MASK_NAMES, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
 import { standings, classicOpponent, CLASSIC_AFTER, ALLSTAR_AFTER, leagueRivals } from './league.js';
 import { BUFF_TEXT } from './lockerroom.js';
@@ -543,8 +543,15 @@ export class UI {
     if (el) el.innerHTML = logoHtml();
   }
 
+  // Who an exhibition can be against: the Frostline's clubs, and the National clubs once the
+  // club has gone up a division or played them.
+  exhibitionTeams() {
+    const s = this.app.save, up = tierOf(s) > 0;
+    return Object.values(TEAMS).filter((tm) => tm.id !== 'home' && (!tm.national || up || (s.rivals && s.rivals[tm.id] && s.rivals[tm.id].played)));
+  }
+
   quickMatchPicker() {
-    const opts = Object.values(TEAMS).filter((t) => t.id !== 'home');
+    const opts = this.exhibitionTeams();
     const rec = (id) => { const r = this.app.save.rivals && this.app.save.rivals[id]; return r && r.played ? ` · ${t('record {rec}', { rec: `${r.wins}–${r.losses}` })}` : ''; };
     this.challenges ||= new Set();
     const mult = () => [...this.challenges].reduce((m, id) => m * CHALLENGES.find((c) => c.id === id).mult, 1);
@@ -562,7 +569,7 @@ export class UI {
       </div>
       <div>
         <div class="label" style="font-size:15px">${t('Arena')}</div>
-        <div class="filters" style="margin:6px 0 0">${['auto', ...Object.keys(ARENAS).filter((k) => !ARENAS[k].exhibitionOnly || (Assets.atlas.arenas && Assets.atlas.arenas[k]))].map((k) => `<button class="chip" data-arena="${k}" aria-pressed="${(this.arenaPick || 'auto') === k}">${k === 'auto' ? t('Their building') : esc(ARENAS[k].name)}${ARENAS[k] && ARENAS[k].rule ? ` <span class="muted">· ${ruleIcon(ARENAS[k].twist, 32)}${esc(t(ARENAS[k].rule))}</span>` : ''}</button>`).join('')}
+        <div class="filters" style="margin:6px 0 0">${['auto', ...Object.keys(ARENAS).filter((k) => !(ARENAS[k].exhibitionOnly || ARENAS[k].national) || (Assets.atlas.arenas && Assets.atlas.arenas[k]))].map((k) => `<button class="chip" data-arena="${k}" aria-pressed="${(this.arenaPick || 'auto') === k}">${k === 'auto' ? t('Their building') : esc(ARENAS[k].name)}${ARENAS[k] && ARENAS[k].rule ? ` <span class="muted">· ${ruleIcon(ARENAS[k].twist, 32)}${esc(t(ARENAS[k].rule))}</span>` : ''}</button>`).join('')}
           <button class="chip" id="arena-rules" aria-pressed="${this.arenaRules !== false}" title="${esc(t('Meltwater in the Ember Dome, aurora lanes in the Aurora Palace, pond cracks on Pine Pond, rumble strips in the Golden Hall, raven shadows in the Dark Aerie'))}">${this.arenaRules !== false ? t('Arena rules on') : t('Arena rules off')}</button>${Object.keys(Assets.atlas.arenas || {}).some((k) => k.endsWith('_night')) ? `<button class="chip" id="arena-night" aria-pressed="${!!this.nightPick}" title="${esc(t('Under the lights at the outdoor rinks (Pine Pond, the Harbour Rink, the Summit Rink).'))}">${t('Night game')}</button>` : ''}</div>
       </div>
       </details>
@@ -605,7 +612,7 @@ export class UI {
   // Two players from the title: against each other (local versus) or together on our team
   // against the AI (co-op, an exhibition with the club's own players).
   versusPicker() {
-    const opts = Object.values(TEAMS).filter((t) => t.id !== 'home');
+    const opts = this.exhibitionTeams();
     this.vsTeam ||= 'comets';
     this.vsMode ||= 'versus';
     const coop = this.vsMode === 'coop' || this.vsMode === 'keeper', keeper = this.vsMode === 'keeper', party = this.vsMode === 'party';
@@ -1149,7 +1156,7 @@ export class UI {
     const last = L.results.length ? L.results[L.results.length - 1].slice(1) : [];
     const next = this.app.fixture && this.app.fixture();
     const nt = next && teamInfo(next.opponent);
-    const venueKey = next && next.stage.arena ? next.stage.arena : nt && nt.arena;
+    const venueKey = next && next.stage.arena ? next.stage.arena : nt && this.app.arenaFor(next.opponent);
     const venue = venueKey ? ARENAS[venueKey].name : 'Frostline Rink';
     // their leading scorer this season, when they have one worth a mention
     const star = nt && L.stats && Object.values(L.stats.skaters).filter((r) => r.team === next.opponent && r.g >= 2).sort((a, b) => b.g - a.g)[0];
@@ -1183,11 +1190,13 @@ export class UI {
   // The road-trip map (Batch DG): the league's towns, the season's route between them, and the
   // team bus driving from the last game's town to the next one's. Nothing until the map's drawn.
   tripHtml(L, body) {
-    const A = Assets.atlas, towns = A.map_towns, f = Assets.frame('map/region');
-    if (!towns || !f || !A.pages.some((p) => p.group === 'map')) return '';
+    // (a division up, the country's map with every club's town: Batch ED; none until it's in)
+    const A = Assets.atlas, up = tierOf(this.app.save) > 0, mapId = up ? 'map/region_national' : 'map/region';
+    const towns = up ? A.map_towns_national : A.map_towns, f = Assets.frame(mapId), mapGroup = f && A.pages[f[0]] && A.pages[f[0]].group;
+    if (!towns || !f || !mapGroup || !A.pages.some((p) => p.group === 'map')) return '';
     const cards = A.pages.some((p) => p.group === 'postcards') && Assets.frame('postcard/lynx'); // (the postcards: Batch DK)
     const cardArt = cards && (this.app.save.postcards || []).length > 0; // (their page only once there's one to show: it's big)
-    if (!Assets.groupReady('map') || (cardArt && !Assets.groupReady('postcards'))) { Promise.all([Assets.loadGroup('map'), cardArt && Assets.loadGroup('postcards')]).then(() => { if (this.tab === 'tournament' && body.isConnected) this.tabTournament(body); }, () => {}); return ''; }
+    if (!Assets.groupReady('map') || !Assets.groupReady(mapGroup) || (cardArt && !Assets.groupReady('postcards'))) { Promise.all([Assets.loadGroup('map'), Assets.loadGroup(mapGroup), cardArt && Assets.loadGroup('postcards')]).then(() => { if (this.tab === 'tournament' && body.isConnected) this.tabTournament(body); }, () => {}); return ''; }
     const W = f[3] / (f[7] || 1), H = f[4] / (f[7] || 1), { stops, at, next } = tripStops(L);
     const pt = (town) => towns[town] || towns.home || [W / 2, H / 2];
     const line = (list) => list.map((st) => pt(st.town).join(',')).join(' ');
@@ -1200,7 +1209,7 @@ export class UI {
     const bus = [1, 2].map((n) => { const k = season && `map_${season}/bus_${n}`, b = k && Assets.frame(k); return b && Assets.pages[b[0]] ? k : `map/bus_${n}`; }); // (in its seasonal livery: Batch DV)
     this.trip.bus = bus;
     return `<div class="trip" role="img" aria-label="${esc(label)}" style="aspect-ratio:${W} / ${H}">
-      <img class="trip-map" src="${Assets.sceneImage('map/region', 960)}" alt="">${ovReady ? `<img class="trip-map" src="${Assets.sceneImage(`map_${season}/overlay`, 960)}" alt="">` : ''}
+      <img class="trip-map" src="${Assets.sceneImage(mapId, 960)}" alt="">${ovReady ? `<img class="trip-map" src="${Assets.sceneImage(`map_${season}/overlay`, 960)}" alt="">` : ''}
       <svg class="trip-route" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline class="todo" points="${line(stops.slice(at))}"/><polyline class="done" points="${line(stops.slice(0, at + 1))}"/></svg>
       ${Object.keys(towns).filter((id) => TEAMS[id]).map((id) => `<button class="trip-town ${id === 'home' ? 'us' : ''} ${to && to.town === id ? 'next' : ''}" data-town="${id}" style="${where(id)}" aria-label="${esc(id === 'home' ? CLUB.name : TEAMS[id].name)}"><img src="${crest(id, 64)}" alt=""></button>`).join('')}
       ${Assets.frame('map/bus_1') ? `<img class="trip-bus ${this.trip.flip ? 'flip' : ''}" id="trip-bus" src="${Assets.sceneImage(bus[0], 120)}" alt="" style="${where(stops[at].town, 62)}">` : ''}
@@ -2280,7 +2289,7 @@ export class UI {
   // Rival skaters you can sign: every team you've beaten.
   scoutingHtml(s) {
     // the league's clubs, and any other you've met
-    const teams = RIVAL_IDS.filter((tid) => leagueRivals(s.league).includes(tid) || (s.rivals && s.rivals[tid]));
+    const teams = ALL_RIVALS.filter((tid) => leagueRivals(s.league).includes(tid) || (s.rivals && s.rivals[tid]));
     const rows = teams.map((tid) => {
       const tm = TEAMS[tid];
       const keys = ['frost', 'thunder', 'stone'].map((kit) => recruitKey(tid, kit));

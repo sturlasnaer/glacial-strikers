@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10zo',
+    items: [
+      { icon: 'badges/national_cup', alt: 'badges/tier_national', text: 'Seven new clubs! Go up to the National Cup to meet the Hot Springs Capybaras, Cliffside Puffins, Timberline Grizzlies, Driftwood Seals, Pack Ice Penguins, the Sunmesa Bulls from the warm canyon country and the Northlight Narwhals. The Elite Cup mixes the best of both.' },
+    ],
+  },
+  {
     id: '2026-10-10zn',
     items: [
       { icon: 'badges/tier_national', alt: 'equipment_items/reward/trophy', text: 'Divisions! Win the Frostline Cup and you go up to the National Cup next season, then the Elite Cup: tougher rivals, bigger purses and grander cups. Finish last and you drop back down.' },

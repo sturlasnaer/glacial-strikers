@@ -2,7 +2,7 @@
 
 import { FACILITY_IDS, facilityLevel, MAX_FACILITY } from './facilities.js';
 import { decorFull } from './decor.js';
-import { TEAMS, GEAR, CHEM_LEVELS, RECRUITS, CAST_PAIRS, LEGENDS, ELEMENTS, GOALIE_RECRUITS } from './data.js';
+import { GEAR, CHEM_LEVELS, RECRUITS, CAST_PAIRS, LEGENDS, ELEMENTS, GOALIE_RECRUITS, RIVAL_IDS } from './data.js';
 
 const TROPHY = 'equipment_items/reward/trophy', MEDAL = 'equipment_items/reward/medal', STAR = 'hud_elements/misc/level_star';
 
@@ -217,7 +217,7 @@ export class AchievementTracker {
     if ((s.cups || 0) >= 2) this.unlock('dynasty');
     const L = s.league;
     if (L && L.schedule && L.results.length >= L.schedule.length && L.results.slice(0, L.schedule.length).every((r) => r[0].ga > r[0].gb)) this.unlock('perfect');
-    const rivals = Object.keys(TEAMS).filter((k) => k !== 'home');
+    const rivals = RIVAL_IDS; // (the Frostline's: the National clubs have cups of their own)
     if (s.rivals && rivals.every((k) => s.rivals[k] && s.rivals[k].wins > 0)) this.unlock('rivals');
     if (Object.values(s.roster).some((r) => r.level >= 10)) this.unlock('max-level');
     if (Object.values(s.chem || {}).some((x) => x >= CHEM_LEVELS[2])) this.unlock('in-sync');

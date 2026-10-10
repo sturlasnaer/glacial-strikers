@@ -1,7 +1,7 @@
 // A living league: the rivals fill the holes your signings leave, with their Draft Day picks
 // and now and then a free agent signed mid-season, and a rival who'll take your call may
 // ring after a match with a trade offer of their own.
-import { CHARACTERS, RECRUITS, ARCHETYPES, ELEMENTS, STAT_KEYS, member, recruitKey, RIVAL_IDS } from './data.js';
+import { CHARACTERS, RECRUITS, ARCHETYPES, ELEMENTS, STAT_KEYS, member, recruitKey, ALL_RIVALS } from './data.js';
 import { recruitStatus, recruitPrice } from './progress.js';
 import { tradeable, playerValue, TEAM_LIKES, trade } from './trades.js';
 import { vacated, fillOf } from './slots.js';
@@ -10,7 +10,7 @@ import { addNews } from './news.js';
 import { freshName, leagueNames } from './league_names.js';
 import { leagueRivals } from './league.js';
 
-const RIVALS = RIVAL_IDS;
+const RIVALS = ALL_RIVALS; // (a National club only has a hole, or takes your call, once you've met them)
 const KITS = ['frost', 'thunder', 'stone'];
 const fills = (save) => (save.rivalFills ||= {});
 

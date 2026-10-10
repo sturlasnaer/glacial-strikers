@@ -11,6 +11,8 @@ import { addNews } from './news.js';
 export const TEAM_LIKES = {
   lynx: ['speedster', 'grinder'], comets: ['sniper', 'blueliner'], rams: ['enforcer', 'grinder'],
   ravens: ['dangler', 'playmaker'], royals: ['playmaker', 'sniper'], owls: ['playmaker', 'blueliner'], moose: ['enforcer', 'speedster'],
+  capybaras: ['playmaker', 'grinder'], puffins: ['playmaker', 'dangler'], grizzlies: ['enforcer', 'sniper'], seals: ['dangler', 'blueliner'],
+  penguins: ['playmaker', 'blueliner'], bulls: ['speedster', 'enforcer'], narwhals: ['dangler', 'sniper'],
 };
 
 export const tradeable = (save) => rosterIds(save).filter((id) => (RECRUITS[id] || ROOKIES[id]) && !LEGENDS[id]);

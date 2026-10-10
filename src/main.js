@@ -38,11 +38,11 @@ import { standings } from './league.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan, recordClassic, recordAllStar } from './league.js';
 import { sendPostcard, postcardFor } from './trip.js';
 import { awardKidStar } from './kidstars.js';
-import { moveTier, noteTierCup, tierOf } from './tiers.js';
+import { moveTier, noteTierCup, tierOf, tierInfo } from './tiers.js';
 import { updateSeasonGoals, goalStates } from './goals.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { member, goalieInfo, TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, EXPANSION_LINES } from './data.js';
+import { member, goalieInfo, TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, EXPANSION_LINES, TIER_LINES } from './data.js';
 import { rollLegend, legendState, STAY, joinLegend, LEGEND_LINES, twinsFirstTogether } from './legends.js';
 import { rivalSigning, rivalOffer } from './moves.js';
 import { refreshAgents } from './agents.js';
@@ -490,10 +490,11 @@ class App {
       () => this.beginMatch('allstar', f.stage, false, [], { fixture: f, allstar: vote })));
   }
 
-  // Rivals with their own building host you there.
+  // Rivals with their own building host you there (a National club's once its rink's art is in).
   arenaFor(teamId, pick) {
     if (pick && pick !== 'auto') return pick;
-    return (TEAMS[teamId] && TEAMS[teamId].arena) || 'home';
+    const a = TEAMS[teamId] && TEAMS[teamId].arena;
+    return a && (!ARENAS[a] || !ARENAS[a].national || (Assets.atlas.arenas && Assets.atlas.arenas[a])) ? a : 'home';
   }
 
   announceRule(twist, arena) {
@@ -1384,21 +1385,35 @@ class App {
     s.season++;
     s.stage = 0; s.beaten = []; s.champion = false;
     const before = new Set(Object.keys((s.rivals || {}))), last = s.league;
-    s.league = newLeague(s.season);
+    s.league = newLeague(s.season, tierOf(s)); // (a division up or down: its clubs)
     s.league.prevChampion = (last && last.champion) || null; // (beat them: a season goal)
     s.buffs = [];
     setLeagueEdge(s, last); // (the league keeps up with a club that ran away with it)
     writeSave(s);
-    if (moved) { this.ui.tierMove(moved, () => this.newSeasonOn(before)); return; } // (up or down a division: said first)
+    if (moved) { this.ui.tierMove(moved, () => this.newSeasonOn(before, moved)); return; } // (up or down a division: said first)
     this.newSeasonOn(before);
   }
 
-  // The rest of a new season's start: the expansion clubs' welcome (once), then the League tab.
-  newSeasonOn(before) {
+  // The rest of a new season's start: the expansion clubs' welcome (once), or Kip's welcome to a
+  // division (the first time up), then the League tab.
+  newSeasonOn(before, moved = null) {
     const s = this.save;
+    const tier = tierInfo(s), welcome = moved === 'promoted' && TIER_LINES[tier.id];
+    if (welcome && !(s.tierSeen && s.tierSeen[tier.id])) {
+      (s.tierSeen ||= {})[tier.id] = true;
+      writeSave(s);
+      const gone = ['frost', 'thunder', 'stone'].filter((k) => s.roster[recruitKey(welcome.team, k)]).map((k) => TEAMS[welcome.team].names[k]);
+      const lines = welcome.lines.filter((l) => l[0] !== 'us' || !gone.some((n) => l[2].includes(n))); // (not to one who's since signed with us)
+      this.ui.clear();
+      this.loadThen(Assets.ensureTeam(welcome.team), () => {
+        this.scene = 'dialogue';
+        this.ui.dialogue(lines, welcome.team, null, () => this.goHub('tournament'));
+      });
+      return;
+    }
     // the league grows: Kip welcomes the new clubs (once)
     const fresh = s.league.teams.filter((id) => TEAMS[id] && TEAMS[id].expansion && !before.has(id));
-    if (fresh.length && !s.expansionSeen) {
+    if (fresh.length && !s.expansionSeen && tierOf(s) === 0) { // (the Frostline's own news)
       s.expansionSeen = true;
       addNews(s, { k: 'expansion', teams: fresh });
       writeSave(s);
