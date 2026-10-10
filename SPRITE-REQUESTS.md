@@ -10,6 +10,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 1. **DG: the road-trip map**
 2. **DH: the cub at home games**
 3. **DI: fetch with the cub**
+4. **DJ: the cub as coach for the youngest**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -560,4 +561,14 @@ In the locker room, tapping the open floor should toss a puck there for the Snow
 - `pet/puck` (about 24×12, pivot at its bottom centre): the puck on the floor, at the room's angle.
 
 11 frames.
+
+## Batch DJ: the cub as coach for the youngest
+
+In Little player games (Settings › Little player), the locker room's Snow Fox cub pops up in a corner of the screen with a speech bubble and short tips at the right moments: "Pass it!" when a rival is right on you and a teammate is open, "Shoot!" in front of the net, a cheer for a goal. Please draw the cub's head and shoulders, facing a little to the right, in the game's style and its own coat (as in CX), on a transparent 192×192 canvas with the bottom edge cut off cleanly (it peeks up from the bottom of the screen):
+- `cub_coach/talk_1`, `cub_coach/talk_2`: talking (mouth closed, open), ears up, friendly.
+- `cub_coach/point`: pointing up and to the right with a paw, eager ("over there!").
+- `cub_coach/cheer`: both paws up, eyes shut with joy.
+- `cub_coach/think`: a paw on its chin, ears tilted (for "get the puck back").
+
+As atlas frames on a page in a new `cub_coach` group (loaded for Little player games). 5 frames.
 
