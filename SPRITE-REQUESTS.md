@@ -7,16 +7,15 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **EE–EG: the National rinks**
-2. **EH: the Frostline's pets (1)**
-3. **EI: the Frostline's pets (2)**
-4. **EJ: the National clubs' pets (1)**
-5. **EK: the National clubs' pets (2)**
-6. **EL: the Elite's own clubs, the Taiga Tigers and the Bamboo Ridge Pandas**
-7. **EM: two more National clubs, the Birchwood Beavers and the Coral Bay Flamingos**
-8. **EN: the new clubs' mascot stickers for the album**
-9. **EO: the National and Elite Cup Finals' buildings**
-10. **EP: supporters' sections for the new clubs' rinks**
+1. **EH: the Frostline's pets (1)**
+2. **EI: the Frostline's pets (2)**
+3. **EJ: the National clubs' pets (1)**
+4. **EK: the National clubs' pets (2)**
+5. **EL: the Elite's own clubs, the Taiga Tigers and the Bamboo Ridge Pandas**
+6. **EM: two more National clubs, the Birchwood Beavers and the Coral Bay Flamingos**
+7. **EN: the new clubs' mascot stickers for the album**
+8. **EO: the National and Elite Cup Finals' buildings**
+9. **EP: supporters' sections for the new clubs' rinks**
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -112,6 +111,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered EC:** Thirty-five National club race mascot frames, with four native running phases and a winner pose for each club. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EC-Testing-Update`.
 
 **Delivered ED:** The country map with nineteen measured town anchors and seven National postcards, including the complete Puffin postage stamp. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-ED-Testing-Update`.
+
+**Delivered EE–EG and EL/EM rinks:** Eleven native home-rink backdrops complete the nineteen clubs’ distinct venues. EE–EG complete; other EL/EM requests remain open. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EE-EG-EL-EM-Testing-Update`.
 
 ## Format notes
 
@@ -781,7 +782,7 @@ The same seven mascots for the mascot race at the break (DB), like `race/glacier
 
 1 map and 7 frames.
 
-## Batches EE, EF, EG: the National rinks
+## Batches EE, EF, EG ✓: the National rinks
 
 Each club's home rink as an arena backdrop exactly like the existing ones (1536×1024, the same rink lines, boards, glass and benches in the same places so everything lines up), as plain images listed in `atlas.arenas`, no lettering:
 - **EE:** `arena_hot_springs` (the Capybaras' indoor rink in a bathhouse hall, steaming pools and palms beyond tall windows), `arena_puffin_cliffs` (the Puffins' outdoor rink on a clifftop, the sea far below, burrows in the turf around).
@@ -840,6 +841,8 @@ And two achievement icons (128×128, like the other `achievements/…`): `achiev
 
 ## Batch EL: the Elite's own clubs, the Taiga Tigers and the Bamboo Ridge Pandas
 
+**Rinks delivered:** Both rink backdrops are in the all-club rink pack. The remaining 40 assets in this batch are still open.
+
 Two new clubs that play **only in the Elite division** (it grows to ten clubs), the strongest in the country. Like the National clubs, their players are built from parts, so each needs what EA–EG drew for the others, plus its pet. Everything without lettering:
 
 | club | key (`mark`) | colours | home | character |
@@ -858,6 +861,8 @@ For each of the two:
 2 crests, 8 + 10 mascot frames, 2 rinks, 2 postcards and 20 pet frames.
 
 ## Batch EM: two more National clubs, the Birchwood Beavers and the Coral Bay Flamingos
+
+**Rinks delivered:** Both rink backdrops are in the all-club rink pack. The remaining 40 assets in this batch are still open.
 
 The National division grows to ten clubs. Like the other National clubs, their players are built from parts, so each needs what EA–EG drew for the others, plus its pet. Everything without lettering:
 
