@@ -1311,3 +1311,6 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 
 /* the Resurfacer drill: only the stick and SPRINT do anything */
 .drive .t-a, .drive .t-b, .drive .t-skill, .drive .t-ult, .drive .t-pull { display: none !important; }
+/* the pause menu with two players: both players' keys first */
+.two-keys { margin: 0 0 8px; font-size: 13px; line-height: 1.7; }
+
