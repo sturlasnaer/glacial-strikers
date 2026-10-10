@@ -1,6 +1,7 @@
 // Achievements: tracked from match events and save progress, shown in the Trophies tab.
 
 import { FACILITY_IDS, facilityLevel, MAX_FACILITY } from './facilities.js';
+import { decorFull } from './decor.js';
 import { TEAMS, GEAR, CHEM_LEVELS, RECRUITS, CAST_PAIRS, LEGENDS, ELEMENTS, GOALIE_RECRUITS } from './data.js';
 
 const TROPHY = 'equipment_items/reward/trophy', MEDAL = 'equipment_items/reward/medal', STAR = 'hud_elements/misc/level_star';
@@ -48,6 +49,7 @@ export const ACHIEVEMENTS = [
   { id: 'special-teams', name: 'Special Teams', text: 'Win gold in the Power Play drill.', icon: 'hud_elements/ability/fire', art: 'achievements/special_teams', coins: 60 },
   { id: 'sticker-page', name: 'Got the Set', text: 'Fill a page of the sticker album.', icon: 'icons/friends', art: 'achievements/got_the_set', coins: 40 },
   { id: 'sticker-album', name: 'Collector', text: 'Fill the whole sticker album.', icon: 'icons/stat_cups', art: 'achievements/collector', coins: 150 },
+  { id: 'home-sweet-home', name: 'Home Sweet Home', text: 'Decorate every spot in the locker room.', icon: 'equipment_items/hub/locker', art: 'achievements/home_sweet_home', coins: 60 },
   { id: 'fresh-sheet', name: 'Fresh Sheet', text: 'Win gold in the Resurfacer drill.', icon: 'hud_elements/ability/frost', art: 'achievements/fresh_sheet', coins: 40 },
   { id: 'better-together', name: 'Better Together', text: 'Win a match with two players on the team.', icon: 'icons/friends', art: 'achievements/better_together', coins: 40 },
   // the newer systems (art: their own icon from Batch AN; icon: a stand-in until then)
@@ -216,6 +218,7 @@ export class AchievementTracker {
     if (Object.values(s.rookies || {}).some((k) => k.own)) this.unlock('one-of-our-own');
     if (s.album && s.album.done.length) this.unlock('sticker-page');
     if (s.album && s.album.full) this.unlock('sticker-album');
+    if (s.decor && decorFull(s)) this.unlock('home-sweet-home');
     if (GEAR.every((g) => s.owned.includes(g.id))) this.unlock('kitted');
     const signed = Object.keys(RECRUITS).filter((k) => s.roster[k]);
     if (signed.length) this.unlock('signing');

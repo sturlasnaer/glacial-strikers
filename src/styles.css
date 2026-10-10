@@ -1393,3 +1393,8 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 @media (prefers-reduced-motion: reduce) { .pk-in { animation-duration: 0.01s; } }
 @media (max-width: 480px) { .pack-reveal { gap: 8px; } .stk b { font-size: 14px; } .stickers { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); } }
 @media (max-height: 480px) { .stickers { grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 10px; } .stk img { max-width: 64px; } .stk b { font-size: 14px; } .stk.empty { min-height: 112px; } .album-page h3 { font-size: 20px; margin-bottom: 6px; } .pack-reveal .stk img { max-width: 76px; } }
+/* locker room decorations (Shop › Locker room, Batch CS): in their spots, under the crew; two-frame ones step */
+.decor { position: absolute; width: auto; display: block; pointer-events: none; }
+.decor.anim { background: 0 0 / 200% 100% no-repeat; animation: decor-2 0.9s step-end infinite; }
+@keyframes decor-2 { 0% { background-position: 0% 0; } 50% { background-position: 100% 0; } }
+@media (prefers-reduced-motion: reduce) { .decor.anim { animation: none; } }

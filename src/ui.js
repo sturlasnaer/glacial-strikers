@@ -56,6 +56,7 @@ import { SKILLS_EVENTS, placeIn } from './skills.js';
 import { PAINTS, MODULAR, SKIN_TONES, HAIR_COLORS } from './modular.js';
 import { seasonFor } from './seasonal.js';
 import { canCreate, createPlayer, restyle, defaultChoice, stylesFor, cleanName, MAX_OWN, NAME_MAX } from './create.js';
+import { DECOR, DECOR_BY_ID, DECOR_SLOTS, SLOT_NAMES as DECOR_SLOT_NAMES, buyDecor, putUp, takeDown, owns as ownsDecor, isOn as decorOn, placed as decorPlaced } from './decor.js';
 import { albumPages, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
 
 const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
@@ -258,7 +259,14 @@ const seatLine = (S) => {
   return `<div class="seat-line"><span><b style="color:var(--ice)">P1</b> ${ga(S.p1)}</span><span><b style="color:#7fe08a">P2</b> ${S.keeper ? t('{n} saves', { n: S.p2.saves }) : ga(S.p2)}</span></div>`;
 };
 // the shop's filters: the gear slots, then the club's facilities
-const shopFilters = (filter) => `<div class="filters">${['all', 'stick', 'skates', 'armor', 'goalie'].map((f) => `<button class="chip" data-f="${f}" aria-pressed="${filter === f}">${f === 'all' ? t('All') : t(SLOT_NAMES[f])}</button>`).join('')}<button class="chip" data-f="club" aria-pressed="${filter === 'club'}">${t('Club facilities')}</button></div>`;
+const shopFilters = (filter) => `<div class="filters">${['all', 'stick', 'skates', 'armor', 'goalie'].map((f) => `<button class="chip" data-f="${f}" aria-pressed="${filter === f}">${f === 'all' ? t('All') : t(SLOT_NAMES[f])}</button>`).join('')}<button class="chip" data-f="club" aria-pressed="${filter === 'club'}">${t('Club facilities')}</button>${DECOR.some(decorArt) ? `<button class="chip" data-f="room" aria-pressed="${filter === 'room'}">${t('Locker room')}</button>` : ''}</div>`;
+// Locker room decorations (Batch CS): an item once its frames are in, and the spots (moved where
+// the art says, atlas.decor_slots).
+const decorArt = (d) => d.frames.every((f) => Assets.atlas.frames[f]);
+const decorSlots = () => {
+  const o = Assets.atlas.decor_slots || {};
+  return Object.fromEntries(Object.entries(DECOR_SLOTS).map(([k, list]) => [k, list.map((sp, i) => ({ ...sp, ...((Array.isArray(o[k]) ? o[k][i] : i === 0 ? o[k] : null) || {}) }))]));
+};
 // a key by name ('J', 'Space', '↑') as a keycap (keys without art stay text)
 const ARROW_KEYS = { '↑': 'up', '←': 'left', '↓': 'down', '→': 'right' };
 export function keyCap(name) {
@@ -720,6 +728,16 @@ export class UI {
     const R = A.arena_additions || {};
     const at = (x, y) => `left:${(x / 1536) * 100}%;top:${(y / 864) * 100}%`;
     let html = '';
+    // the decorations, from the Shop (Batch CS): the rug first, under everyone
+    for (const { item, at: sp } of decorPlaced(s, decorSlots()).sort((a, b) => (a.item.slot === 'rug' ? -1 : 0) - (b.item.slot === 'rug' ? -1 : 0))) {
+      if (!decorArt(item)) continue;
+      const f = Assets.frame(item.frames[0]), h = sp.h || (sp.w * f[4]) / f[3]; // (a width to fit: the frame's height follows)
+      const set = item.frames.length > 1 ? Assets.spriteStrip(item.frames, Math.round(h)) : Assets.spriteSet(item.frames, Math.round(h));
+      if (!set) continue;
+      const style = `${at(sp.x, sp.y)};height:${(h / 864) * 100}%;aspect-ratio:${set.w}/${set.h};transform:translate(-${set.fx * 100}%,-${set.fy * 100}%)`;
+      html += item.frames.length > 1 ? `<div class="decor anim" data-decor="${item.id}" style="${style};background-image:url(${set.url})"></div>`
+        : `<img class="decor" data-decor="${item.id}" src="${set.urls[0]}" alt="" style="${style}">`;
+    }
     // the chest glows while there are trophies you haven't looked at, and stands open after
     const got = Object.keys((s.achievements && s.achievements.unlocked) || {}).length;
     const chest = R.h_chest_open && R.chest_placement && Assets.spriteSet(R.h_chest_open, 190);
@@ -2431,6 +2449,36 @@ export class UI {
   }
 
   // Shop › Club facilities: four buildings, three levels each, bought with coins.
+  // Shop › Locker room: decorations, each in its own spot in the room; bought once, put up or
+  // away at will.
+  tabDecor(body) {
+    const s = this.app.save;
+    if (!Assets.groupReady('hub')) Assets.loadGroup('hub').then(() => { if (this.tab === 'shop' && this.shopFilter === 'room' && body.isConnected) this.tabDecor(body); }, () => {});
+    const items = DECOR.filter(decorArt);
+    body.innerHTML = `
+      ${shopFilters('room')}
+      ${npc('shopkeeper', pick([t('A locker room should feel like home. Pick something you like.'), t('Every champion needs a good poster on the locker door.')]))}
+      <p class="muted" style="margin:0 0 10px;font-size:13px">${t('Make the locker room yours: each piece goes up in its own spot. Swap things round or put them away any time.')}</p>
+      <div class="shop">${items.map((d) => {
+        const own = ownsDecor(s, d.id), on = decorOn(s, d.id), afford = s.coins >= d.price;
+        return `<div class="item" tabindex="0" data-card="${d.id}" aria-label="${esc(t(d.name))}">
+          <img src="${Assets.icon(d.frames[0], 128)}" alt="">
+          <div style="min-width:0">
+            <div class="label" style="font-size:13px">${t(DECOR_SLOT_NAMES[d.slot])}</div>
+            <h4>${esc(t(d.name))}</h4>
+            <div class="buy">${own ? (on ? `<span class="tag good">${t('In the room')}</span><button class="btn small ghost" data-ddown="${d.id}">${t('Put away')}</button>` : `<button class="btn small" data-dup="${d.id}">${t('Put up')}</button>`)
+              : `<span class="price">${d.price}</span><button class="btn small ${afford ? 'gold' : ''}" data-dbuy="${d.id}" ${afford ? '' : 'disabled'}>${t('Buy')}</button>`}</div>
+          </div>
+        </div>`;
+      }).join('')}</div>
+      ${Assets.atlas.locker ? `<div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn small ghost" id="decor-room">${t('See the room')}</button></div>` : ''}`;
+    this.click('[data-f]', (el) => { this.shopFilter = el.dataset.f; audio.sfx('click'); this.tabShop(body); }, body);
+    this.click('[data-dbuy]', (el) => { if (!buyDecor(s, el.dataset.dbuy)) return; this.app.ach.checkMeta(); writeSave(s); audio.sfx('purchase'); this.hub('shop'); }, body);
+    this.click('[data-dup]', (el) => { if (putUp(s, el.dataset.dup)) { this.app.ach.checkMeta(); writeSave(s); audio.sfx('equip'); } this.tabDecor(body); }, body);
+    this.click('[data-ddown]', (el) => { if (takeDown(s, el.dataset.ddown)) { writeSave(s); audio.sfx('back'); } this.tabDecor(body); }, body);
+    this.click('#decor-room', () => { audio.sfx('click'); this.hub('room'); }, body);
+  }
+
   tabFacilities(body) {
     const s = this.app.save;
     if (hasGallery() && !Assets.groupReady('gallery')) Assets.loadGroup('gallery').then(() => { if (this.tab === 'shop' && this.shopFilter === 'club' && body.isConnected) this.tabFacilities(body); }, () => {});
@@ -2474,6 +2522,7 @@ export class UI {
     const s = this.app.save;
     const filter = this.shopFilter || 'all';
     if (filter === 'club') return this.tabFacilities(body);
+    if (filter === 'room') return this.tabDecor(body);
     const items = GEAR.filter((g) => g.price > 0 && (filter === 'all' || g.slot === filter));
     body.innerHTML = `
       ${shopFilters(filter)}

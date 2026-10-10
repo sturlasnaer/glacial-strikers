@@ -49,7 +49,7 @@ function walk(v, path, where, depth = 0) {
     }
   }
 }
-const modules = ['data.js', 'facilities.js', 'press.js', 'records.js', 'achievements.js', 'awards.js', 'drills.js', 'daily.js', 'lockerroom.js', 'guide.js', 'online.js', 'songs.js', 'skills.js', 'draft.js', 'legends.js', 'agents.js', 'whatsnew.js', 'goals.js'];
+const modules = ['data.js', 'facilities.js', 'press.js', 'records.js', 'achievements.js', 'awards.js', 'drills.js', 'daily.js', 'lockerroom.js', 'guide.js', 'online.js', 'songs.js', 'skills.js', 'draft.js', 'legends.js', 'agents.js', 'whatsnew.js', 'goals.js', 'decor.js'];
 for (const f of modules) {
   const mod = await import(join(root, 'src', f));
   for (const [name, v] of Object.entries(mod)) {
@@ -58,7 +58,7 @@ for (const f of modules) {
   }
 }
 // plain maps and lists of display text
-const STRING_MAPS = { 'data.js': ['STAT_NAMES', 'STAT_HINT', 'TWIST_INFO', 'ROOKIE_TITLE', 'AGENT_TITLE', 'OWN_TITLE', 'MASK_NAMES'], 'create.js': ['OWN_TEXT'], 'drills.js': ['MEDAL_NAMES'], 'draft.js': ['POTENTIAL_GRADE', 'SCOUTING'], 'agents.js': ['PITCH'] };
+const STRING_MAPS = { 'data.js': ['STAT_NAMES', 'STAT_HINT', 'TWIST_INFO', 'ROOKIE_TITLE', 'AGENT_TITLE', 'OWN_TITLE', 'MASK_NAMES'], 'create.js': ['OWN_TEXT'], 'drills.js': ['MEDAL_NAMES'], 'draft.js': ['POTENTIAL_GRADE', 'SCOUTING'], 'agents.js': ['PITCH'], 'decor.js': ['SLOT_NAMES'] };
 for (const [f, names] of Object.entries(STRING_MAPS)) {
   const mod = await import(join(root, 'src', f));
   for (const n of names) for (const v of Object.values(mod[n] || {})) [].concat(v).forEach((x) => add(x, `${f}:${n}`));
