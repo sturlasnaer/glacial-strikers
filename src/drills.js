@@ -45,6 +45,11 @@ export const DRILLS = {
     text: 'Ten draws against a centre who gets quicker every time. Press SHOOT or PASS as the puck touches the ice: go while it\'s still in the air and you\'re held back.',
     medals: [5, 7, 9],
   },
+  powerplay: {
+    id: 'powerplay', name: 'Power Play', trains: 'Special teams', icon: 'hud_elements/ability/fire', art: 'equipment_items/hub/powerplay', unit: 'goals45', offline: true, // (art: when it's drawn; no online board yet)
+    text: 'Your line against two penalty killers for 45 seconds, their third in the box. Move the puck round the umbrella: a pass across to an open stick for a one-timer beats a box.',
+    medals: [2, 3, 5],
+  },
   resurface: {
     id: 'resurface', name: 'Resurfacer', trains: 'Ice care', icon: 'polish/resurfacer/east/phase_1', art: 'equipment_items/hub/resurface', unit: 'percent', offline: true, // (no online board: a drill for fun; art: Batch CC, when it's in)
     text: 'The ice needs a fresh coat. Drive the resurfacer with the stick (SPRINT is quicker but turns wider) and clean as much of the rink between the goal lines as you can in a minute.',
@@ -68,6 +73,7 @@ export function formatScore(def, score) {
   if (def.unit === 'draws') return `${score}/${FACEOFF_DRAWS}`;
   if (def.unit === 'tips') return `${score}/${TIP_SHOTS}`;
   if (def.unit === 'percent') return `${score}%`;
+  if (def.unit === 'goals45') return t(score === 1 ? '{n} goal' : '{n} goals', { n: score });
   return t('{n} pts', { n: score });
 }
 
@@ -95,6 +101,7 @@ export function createDrill(id, save, charId, opts = {}) {
     case 'faceoffs': away = ['frost']; ctrl = new FaceoffDrill(); break;
     case 'tips': home = [charId, opts.feeder || mates.find((k) => member(k).role === 'D') || mates[0]]; ctrl = new TipDrill(); break;
     case 'resurface': ctrl = new ResurfaceDrill(); break;
+    case 'powerplay': home = [charId, ...mates]; away = ['frost', 'thunder', 'stone']; ctrl = new PowerPlayDrill(); break;
     case 'shootout': home = line; awayTeam = opts.teamId || 'comets'; away = ids; ctrl = new ShootoutDrill(opts.teamId); break;
     default: throw new Error('Unknown drill ' + id);
   }
@@ -681,6 +688,54 @@ class FaceoffDrill extends DrillBase {
   hud() {
     const dots = Array.from({ length: FACEOFF_DRAWS }, (_, i) => (this.results[i] === 'won' ? '●' : this.results[i] ? '○' : '·')).join(' ');
     return { title: t('Faceoffs'), main: t('{n} won', { n: this.wins }), sub: `${t('Draw {n} of {total}', { n: Math.min(FACEOFF_DRAWS, this.n + 1), total: FACEOFF_DRAWS })}  ${dots}`, note: this.clean ? t('{n} clean', { n: this.clean }) : '' };
+  }
+}
+
+// ----------------------------------------------------------- Power Play
+// Our line of three against two killers (their third sits in the box, the clock over it the
+// drill's), so both sides play special teams: our AI spreads into the umbrella, theirs holds
+// its tandem. A goal, a save held or a clear out of the zone restarts the entry at the blue line.
+const PP_SECONDS = 45;
+class PowerPlayDrill extends DrillBase {
+  constructor() { super(); this.linesman = false; }
+  init(m) {
+    this.hideGoalies(m, true); // (their goalie stays)
+    const away = m.teamSkaters(1);
+    this.boxed = away[1];
+    Object.assign(this.boxed, { parked: true, boxT: PP_SECONDS, boxReason: 'Hooking', x: 70, y: -260, vx: 0, vy: 0 });
+    this.goals = 0; this.shots = 0; this.pauseT = 0; this.results = [];
+    m.on('shot', (e) => { if (e.s.team === 0 && this.pauseT <= 0) this.shots++; });
+    this.entry(m);
+    this.startCountdown(m);
+  }
+  entry(m) {
+    const home = m.teamSkaters(0), away = m.teamSkaters(1).filter((k) => k !== this.boxed), p = m.puck, g = m.goalieAt(1);
+    const hp = [{ x: 120, y: 0 }, { x: 230, y: -150 }, { x: 230, y: 150 }];
+    const c = m.controlled() || home[0];
+    [c, ...home.filter((k) => k !== c)].forEach((s, i) => Object.assign(s, { x: hp[i].x, y: hp[i].y, vx: 140, vy: 0, face: 0, stun: 0, charging: false }));
+    const ap = [{ x: 470, y: -60 }, { x: 470, y: 70 }];
+    away.forEach((s, i) => Object.assign(s, { x: ap[i].x, y: ap[i].y, vx: 0, vy: 0, face: Math.PI, stun: 0 }));
+    g.x = GOAL_X - 28; g.y = 0; g.vy = 0; g.setState('ready'); g.holdT = 0; g.react = null; g.track = null;
+    p.inNet = null; p.shot = null; p.pass = null;
+    m.takePossession(c, 'drill');
+  }
+  tick(m, dt) {
+    this.boxed.boxT = Math.max(0.01, PP_SECONDS - this.t); // (the box clock is the drill's)
+    if (this.t >= PP_SECONDS) { this.finish(m, this.goals, { shots: this.shots, results: this.results }); return; }
+    if (this.pauseT > 0) { this.pauseT -= dt; if (this.pauseT <= 0) this.entry(m); return; }
+    const p = m.puck, o = p.owner;
+    if (o && o.isGoalie) return this.restart(m, 'save');
+    if ((o && o.team === 1 && o.x < 40) || (!o && p.x < -20)) this.restart(m, 'clear'); // (cleared out past the blue line)
+  }
+  restart(m, why) { this.results.push(why); this.pauseT = 0.9; m.emit('pp_reset', { why }); }
+  onGoal(m, info) {
+    if (info.side !== 1 || this.pauseT > 0) return;
+    this.goals++; this.results.push('goal');
+    this.pauseT = 1.4;
+    m.emit('drill_goal', { side: info.side, y: info.y });
+  }
+  hud() {
+    return { title: t('Power Play'), main: t(this.goals === 1 ? '{n} goal' : '{n} goals', { n: this.goals }), sub: t('{seconds}s left', { seconds: Math.max(0, Math.ceil(PP_SECONDS - this.t)) }), note: this.shots ? t('{n} shots', { n: this.shots }) : '' };
   }
 }
 

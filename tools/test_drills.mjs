@@ -12,6 +12,21 @@ const raw = (o = {}) => ({ mx: 0, my: 0, sprint: false, a: false, b: false, skil
 const toward = (s, x, y) => { const dx = x - s.x, dy = y - s.y, l = Math.hypot(dx, dy) || 1; return { mx: dx / l, my: dy / l, l }; };
 
 const bots = {
+  // Power Play: carry toward the slot, shoot from in close; pass across now and then when pressed
+  powerplay: (m, ctrl, st) => {
+    const s = m.controlled(), p = m.puck;
+    if (!s) return raw();
+    st.n = (st.n || 0) + 1;
+    if (p.owner === s) {
+      const d = Math.hypot(GOAL_X - s.x, s.y), near = Math.min(...m.teamSkaters(1).filter((k) => !k.parked).map((k) => Math.hypot(k.x - s.x, k.y - s.y)));
+      if (st.hold > 0) { st.hold--; return raw({ ...toward(s, GOAL_X - 150, s.y * 0.6), a: st.hold > 0 }); }
+      if (d < 240 && st.n % 20 === 0) { st.hold = 4; return raw({ ...toward(s, GOAL_X, 0), a: true }); }
+      if (near < 70 && st.n % 25 === 0) return raw({ ...toward(s, GOAL_X - 150, -s.y), b: true });
+      return raw(toward(s, GOAL_X - 170, s.y * 0.6));
+    }
+    if (!p.owner) return raw(toward(s, p.x, p.y));
+    return raw();
+  },
   // Resurfacer: lanes up and down the rink, then a slow spiral for what's left
   resurface: (m, ctrl, st) => {
     const M = ctrl.machine, lanes = st.lanes ||= [-220, -160, -100, -40, 20, 80, 140, 200, 255];

@@ -8,6 +8,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 **Next batches:**
 1. **CK: the title logo in season**
+2. **CL: the Power Play drill**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -311,3 +312,11 @@ The title screen's logo (`polish/title_logo`, 1804×329 at its source scale) sho
 - `seasonal/holiday/logo`: snow piled along the tops of the letters with a few icicles, a Santa hat on the "P", a sprig of holly on the last letter.
 
 Set `atlas.seasonal.halloween.logo` and `atlas.seasonal.holiday.logo` to their ids, on a `seasonal` group page (the title loads that group in season). 2 frames.
+
+## Batch CL: the Power Play drill
+
+Training has a new drill, the **Power Play**: your line of three against two penalty killers, their third in the box. Please draw:
+- `equipment_items/hub/powerplay`: the drill card's icon, 128×128 like the others (`equipment_items/hub/target`, `.../tips`): three pucks in an umbrella shape with dotted pass lines between them and a goal light glowing behind.
+- `achievements/special_teams` (Special Teams: gold in the Power Play drill): a penalty box door swinging shut on an empty bench, the clock over it at 0:00, our player celebrating out on the ice beyond.
+
+2 frames, on an `icons_z` page.

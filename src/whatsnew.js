@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10n',
+    items: [
+      { icon: 'hud_elements/ability/fire', text: 'A new drill: the Power Play. Your line against two penalty killers for 45 seconds: work the puck round and find the one-timer.' },
+    ],
+  },
+  {
     id: '2026-10-10m',
     items: [
       { icon: 'icons/stat_seasons', text: 'The home rink dresses up by the calendar: pumpkins, bats and a Snow Fox in costume from 20 October, lights, a tree and Jingle Bells in December.' },
