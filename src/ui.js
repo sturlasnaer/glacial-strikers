@@ -852,7 +852,7 @@ export class UI {
         <p style="margin:2px 0 0;font-size:13px">${t('{n} of {total} unlocked', { n: got.length, total: ACHIEVEMENTS.length })} · ${t('{n} coins earned', { n: earned })}${s.cups ? ` · ${t(s.cups > 1 ? '{n} cups won' : '{n} cup won', { n: s.cups })}` : ''}${classicWins ? ` · ${t(classicWins > 1 ? '{n} Winter Classics won' : '{n} Winter Classic won', { n: classicWins })}` : ''}${allstarWins ? ` · ${t(allstarWins > 1 ? '{n} All-Star Games won' : '{n} All-Star Game won', { n: allstarWins })}` : ''}</p></div>
         <span class="row" style="gap:6px;margin:0"><button class="btn small ghost" id="tr-career">${btnIcon('icons/career')} ${t('Career stats')}</button><button class="btn small ghost" id="tr-lb">${badge('cup_small', 48, 'btn-ico', '🏆')} ${t('Online leaderboards')}</button></span></div>
       ${(() => { // the Hall of Fame's plaques (on Batch BV's plaque once it's in)
-        const hall = s.hall || [], plaque = Assets.atlas.frames['hall/plaque'] ? Assets.icon('hall/plaque', 360) : '';
+        const hall = s.hall || [], plaque = Assets.atlas.frames['hall/plaque'] ? Assets.sceneImage('hall/plaque', 360) : '';
         return `<div class="label" style="margin:4px 0 6px">${t('Hall of Fame')}</div>${hall.length ? `<div class="hall">${hall.map((h) => `<div class="plaque${plaque ? ' art' : ''}"${plaque ? ` style="background-image:url(${plaque})"` : ''}>
           <img src="${portrait(h.id, 0, null, 96)}" alt=""><div><b>${esc(h.name)} <span class="gold-t">#${h.number}</span></b><span>${esc(hallWhy(h))}</span><small>${t('Inducted in season {n}', { n: h.season })}</small></div></div>`).join('')}</div>`
           : `<p class="muted" style="margin:0 0 10px;font-size:12.5px">${t('No one yet. {goals} goals or {points} points for the club, {cups} Cups with it, or {wins} wins in goal puts a player in, with a banner in the rafters at home.', { goals: HALL.goals, points: HALL.points, cups: HALL.cups, wins: HALL.goalieWins })}</p>`}`;
@@ -1349,7 +1349,7 @@ export class UI {
   hallCeremony(list, done) {
     const h = list[0];
     if (!h) return done();
-    const art = Assets.atlas.frames['hall/ceremony'] ? Assets.icon('hall/ceremony', 640) : '';
+    const art = Assets.atlas.frames['hall/ceremony'] ? Assets.sceneImage('hall/ceremony', 640) : ''; // (Batch BV, in its own shape)
     audio.jingle?.('champion');
     this.modal(`
       <div class="label">${t('Hall of Fame')}</div>
@@ -2146,7 +2146,9 @@ export class UI {
       <p class="muted" style="margin:0 0 10px;font-size:13px">${t('Build up the club. Each facility has three levels, and each level helps a little, for good.')}</p>
       <div class="shop">${FACILITY_IDS.map((id) => {
         const F = FACILITIES[id], L = facilityLevel(s, id), cost = nextCost(s, id), afford = cost != null && s.coins >= cost;
-        return `<div class="item fac" tabindex="0" data-pad-press="[data-build]" aria-label="${esc(t(F.name))}">
+        const scene = `facilities/${id}_${Math.max(1, L)}`, sceneSrc = Assets.atlas.frames[scene] && Assets.sceneImage ? Assets.sceneImage(scene, 480) : ''; // (Batch BU: the facility as built so far)
+        return `<div class="item fac${sceneSrc ? ' has-scene' : ''}${L ? '' : ' unbuilt'}" tabindex="0" data-pad-press="[data-build]" aria-label="${esc(t(F.name))}">
+          ${sceneSrc ? `<img class="fac-scene" src="${sceneSrc}" alt="">` : ''}
           <img src="${ico(Assets.atlas.frames[F.icon] ? F.icon : F.stand, 128)}" alt="">
           <div style="min-width:0">
             <div class="label" style="font-size:13px">${t('Level {n} of {max}', { n: L, max: MAX_FACILITY })} <span class="fac-pips" aria-hidden="true">${pips(L)}</span></div>

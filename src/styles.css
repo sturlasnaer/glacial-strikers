@@ -1230,3 +1230,8 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .review-top b { font-family: var(--display); font-weight: normal; font-size: 18px; }
 .review-top span { font-size: 12px; color: var(--ice-2); }
 .review-list { margin: 0; padding-left: 18px; font-size: 13px; }
+
+/* a facility card with its scene (Batch BU): the picture across the top, greyed until it's built */
+.item.fac.has-scene { grid-template-rows: auto auto; }
+.item.fac .fac-scene { grid-column: 1 / -1; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 4px; image-rendering: auto; }
+.item.fac.unbuilt .fac-scene { filter: grayscale(0.8) brightness(0.6); }
