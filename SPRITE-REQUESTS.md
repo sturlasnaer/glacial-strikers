@@ -8,6 +8,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 **Next batches:**
 1. **CV: the Summit Rink**
+2. **CW: goal celebrations to choose**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -423,3 +424,12 @@ A third building for exhibitions, like the Harbour Rink (CM) and the Glacier Cav
 - The rule's art, on the same page: `arena_summit/cloud_1`..`_3` (soft clouds that drift slowly past the edges of the ice, seen from above at the game's angle, semi-transparent), `arena_summit/gondola_1` and `_2` (a cable-car cabin on its cable, two frames: swaying, to glide across the sky in the backdrop), and `rule_icons.thin_air`.
 
 On a group of its own (say `arena_cv`), with `summit_rink` in `atlas.arenas`. About 6 frames plus the backdrop.
+
+## Batch CW: goal celebrations to choose
+
+The cast's goal celebrations (`signature_celebrations/nix|volta|bram`) are a hit; now the player gets to **pick** one for each of the three in the Team tab. Please draw two more for each of Nix, Volta and Bram, in the home kit, facing the camera, at the same scale and with the same pivots (at the skates) as their signature frames, each four frames that **loop**:
+- `celebrations/<nix|volta|bram>/guitar_1`..`_4`: a stick guitar solo, sliding on one knee, head banging.
+- `celebrations/<nix|volta|bram>/angel_1`..`_4`: lying on their back on the ice making a snow angel, arms and legs sweeping (the pivot still where their skates would be standing, so they lie just in front of it).
+- Metadata: `skaters.<frost_captain|thunder_winger|stone_defender>.home.celebrations = { guitar: [the four ids], angel: [the four ids] }`.
+
+The game shows the choice as soon as a player's frames are in. 24 frames.
