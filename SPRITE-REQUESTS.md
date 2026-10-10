@@ -7,8 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **CX: a pet for the locker room**
-2. **CY: celebrations to choose for players of your own**
+1. **CY: celebrations to choose for players of your own**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -55,6 +54,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered CV:** Summit Rink backdrop, two scoreboard phases, snowy glass, four penalty-hut layers, three clouds, two cable-car poses and Thin air icon. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CV-Testing-Update`.
 
 **Delivered CW:** 24 native goal celebration frames: four-frame guitar and snow-angel loops for Nix, Volta and Bram, with consistent anchors and correct stick hands. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CW-Testing-Update`.
+
+**Delivered CX:** Snow Fox cub: four walking poses, two sitting/tail-wag poses, two sleeping poses, happy hop, floating heart and naming portrait. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CX-Testing-Update`.
 
 ## Format notes
 
@@ -438,7 +439,7 @@ The cast's goal celebrations (`signature_celebrations/nix|volta|bram`) are a hit
 
 The game shows the choice as soon as a player's frames are in. 24 frames.
 
-## Batch CX: a pet for the locker room
+## Batch CX ✓: a pet for the locker room
 
 The locker room hub is getting a **pet**: a Snow Fox cub (the mascot's little one) that wanders the floor, sits and wags, curls up for a nap, and hops happily when tapped; the player can name it. Please draw it in the room's style and angle (like the crew standing in the room), about 70 room pixels tall when sitting, transparent, as atlas frames on a page in the `hub` group, each with its pivot at its feet (the middle of where it touches the floor):
 - `pet/walk_1`..`_4`: trotting to the right (the game mirrors it for left), a little bounce.
