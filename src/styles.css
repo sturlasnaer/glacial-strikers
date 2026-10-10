@@ -177,7 +177,8 @@ img { image-rendering: auto; max-width: 100%; }
 .trip-route polyline { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .trip-route .todo { stroke: rgba(255, 242, 203, 0.75); stroke-width: 2.5; stroke-dasharray: 2 7; }
 .trip-route .done { stroke: var(--gold); stroke-width: 3.5; }
-.trip-town { position: absolute; width: 6%; transform: translate(-50%, -50%); filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.5)); }
+.trip-town { position: absolute; width: 6%; padding: 0; border: 0; background: none; cursor: pointer; transform: translate(-50%, -50%); filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.5)); }
+.trip-town:hover, .trip-town:focus-visible { filter: drop-shadow(0 0 4px rgba(255, 212, 94, 0.9)); }
 .trip-town img { display: block; width: 100%; height: auto; }
 .trip-town.next { animation: trip-pulse 1.2s ease-in-out infinite; }
 @keyframes trip-pulse { 50% { transform: translate(-50%, -50%) scale(1.18); } }

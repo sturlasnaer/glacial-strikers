@@ -1162,6 +1162,11 @@ export class UI {
       </div>`;
     this.tripGo(body);
     this.click('#postcards', () => { audio.sfx('click'); this.postcardsModal(); }, body);
+    this.click('[data-town]', (el) => { // (whose town, their building, and how we've done there)
+      const id = el.dataset.town, r = s.rivals && s.rivals[id], arena = id === 'home' ? ARENAS.home : ARENAS[TEAMS[id].arena];
+      audio.sfx('click');
+      this.app.toast(crest(id, 72), t('Road trip'), id === 'home' ? CLUB.name : TEAMS[id].name, `${arena ? arena.name : ''}${r && r.played ? ` · ${t('record {rec}', { rec: `${r.wins}–${r.losses}` })}` : ''}`);
+    }, body);
   }
 
   // The road-trip map (Batch DG): the league's towns, the season's route between them, and the
@@ -1184,7 +1189,7 @@ export class UI {
     return `<div class="trip" role="img" aria-label="${esc(label)}" style="aspect-ratio:${W} / ${H}">
       <img class="trip-map" src="${Assets.sceneImage('map/region', 960)}" alt="">${ovReady ? `<img class="trip-map" src="${Assets.sceneImage(`map_${season}/overlay`, 960)}" alt="">` : ''}
       <svg class="trip-route" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline class="todo" points="${line(stops.slice(at))}"/><polyline class="done" points="${line(stops.slice(0, at + 1))}"/></svg>
-      ${Object.keys(towns).filter((id) => TEAMS[id]).map((id) => `<span class="trip-town ${id === 'home' ? 'us' : ''} ${to && to.town === id ? 'next' : ''}" style="${where(id)}" title="${esc(id === 'home' ? CLUB.name : TEAMS[id].name)}"><img src="${crest(id, 64)}" alt=""></span>`).join('')}
+      ${Object.keys(towns).filter((id) => TEAMS[id]).map((id) => `<button class="trip-town ${id === 'home' ? 'us' : ''} ${to && to.town === id ? 'next' : ''}" data-town="${id}" style="${where(id)}" aria-label="${esc(id === 'home' ? CLUB.name : TEAMS[id].name)}"><img src="${crest(id, 64)}" alt=""></button>`).join('')}
       ${Assets.frame('map/bus_1') ? `<img class="trip-bus ${this.trip.flip ? 'flip' : ''}" id="trip-bus" src="${Assets.sceneImage('map/bus_1', 120)}" alt="" style="${where(stops[at].town, 62)}">` : ''}
     </div>${cards ? this.postcardsHtml() : ''}`;
   }
