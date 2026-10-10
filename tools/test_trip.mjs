@@ -4,7 +4,7 @@
 //   node tools/test_trip.mjs
 import { newLeague, ALLSTAR_AFTER, CLASSIC_AFTER } from '../src/league.js';
 import { TEAMS } from '../src/data.js';
-import { tripStops, townOf, sendPostcard, postcardFor, POSTCARD_TOWNS } from '../src/trip.js';
+import { tripStops, townOf, sendPostcard, postcardFor, POSTCARD_TOWNS, NATIONAL_POSTCARDS, frostlineCards } from '../src/trip.js';
 
 let pass = 0, fail = 0;
 const check = (name, cond, info) => { if (cond) pass++; else { fail++; console.log('✗', name, info ?? ''); } };
@@ -54,6 +54,14 @@ const save = {};
 check('the first one is new', sendPostcard(save, 'owls') && save.postcards.length === 1);
 check('a second from the same town is not', !sendPostcard(save, 'owls') && save.postcards.length === 1);
 check('nowhere else sends one', !sendPostcard(save, 'atlantis') && POSTCARD_TOWNS.length === 8);
+// a division up: the National and Elite clubs' towns, even while their rinks aren't drawn (the
+// game's at our rink then, but the bus went there); the Frostline's eight still the achievement's
+check('a win against a National club: their town\'s card', postcardFor('regular', 'home', 'flamingos') === 'flamingos' && postcardFor('regular', TEAMS.bulls.arena, 'bulls') === 'bulls' && postcardFor('regular', 'home', 'lynx') === null);
+check('the National and Elite towns: eleven cards', NATIONAL_POSTCARDS.length === 11 && sendPostcard(save, 'pandas') && !sendPostcard(save, 'pandas'));
+{
+  const sv = { postcards: [...NATIONAL_POSTCARDS.slice(0, 8)] };
+  check('eight National cards aren\'t the Frostline\'s eight', !frostlineCards(sv) && frostlineCards({ postcards: [...POSTCARD_TOWNS] }));
+}
 
 console.log(`Road trip: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

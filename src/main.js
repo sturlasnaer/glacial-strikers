@@ -36,7 +36,7 @@ import { recordRealGame, computeAwards, AWARD_BY_ID } from './awards.js';
 import { dailyFor, dailyGoal, completeDaily, noteAttempt, dayKey, dailyState } from './daily.js';
 import { standings } from './league.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan, recordClassic, recordAllStar } from './league.js';
-import { sendPostcard, postcardFor } from './trip.js';
+import { sendPostcard, postcardFor, frostlineCards } from './trip.js';
 import { awardKidStar } from './kidstars.js';
 import { moveTier, noteTierCup, tierOf, tierInfo } from './tiers.js';
 import { updateSeasonGoals, goalStates } from './goals.js';
@@ -1196,9 +1196,9 @@ class App {
     }
     // a win on the road sends a postcard home (Batch DK), Snowcrest's own with the Cup
     if (!c.exhibition && s.league && rewards.won) {
-      const town = postcardFor(c.fixture ? c.fixture.kind : 'regular', this.arena);
+      const town = postcardFor(c.fixture ? c.fixture.kind : 'regular', this.arena, c.teamId);
       if (town && sendPostcard(s, town) && Assets.frame('postcard/' + town)) setTimeout(() => this.toast(crest(town, 72), t('Postcard!'), t('A postcard from {town}', { town: town === 'home' ? CLUB.name : TEAMS[town].name }), t('See it in League, under the map')), 2200);
-      if ((s.postcards || []).length >= 8) this.ach.unlock('postcard-collector');
+      if (frostlineCards(s)) this.ach.unlock('postcard-collector');
     }
     // the Hall of Fame: anyone who's earned it goes in (the ceremony comes after the results)
     this.pendingHall = hallCandidates(s, rosterIds(s), goalieIds(s)).map((h) => induct(s, h, h.goalie ? goalieInfo(h.id).name : member(h.id).name));

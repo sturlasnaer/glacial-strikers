@@ -61,7 +61,7 @@ import { MINI_ROUNDS, MINI_PRIZE, miniOf } from './minicup.js';
 import { MASCOTS, RACE_PRIZE, pickRunners, newRace, stepRace } from './race.js';
 import { SNOW_TIME, newSnowball, stepSnowball, throwAt, snowPrize } from './snowball.js';
 import { KID_STAR_IDS } from './kidstars.js';
-import { tripStops, POSTCARD_TOWNS } from './trip.js';
+import { tripStops, POSTCARD_TOWNS, NATIONAL_POSTCARDS } from './trip.js';
 import { tierOf, tierInfo, tierAt, TIERS, safeSeason } from './tiers.js';
 import { newPet, stepPet, tapPet, tossPuck, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall,
   PET_KINDS, PET_KIND, PET_FRAMES, PET_WINS, PET_AREA, ROOM_MAX, petDir, petIcon, roomPets, ownedPets, petsDue, adoptPet, sendToHouse, bringToRoom, petNameOf, renamePet, winsAgainst } from './pet.js';
@@ -1301,20 +1301,24 @@ export class UI {
 
   // Postcards from the road (Batch DK): one from each town won in, Snowcrest's with the Cup. Tap
   // the row for them all, big.
+  // (a division up, the row is the country's towns: those drawn, Batches ED, EL, EM)
   postcardsHtml() {
-    const got = this.app.save.postcards || [];
+    const s = this.app.save, got = s.postcards || [], nat = this.nationalCards();
+    const set = tierOf(s) > 0 && nat.length ? nat : POSTCARD_TOWNS, n = set.filter((id) => got.includes(id)).length;
     const thumb = (id) => got.includes(id) ? `<img class="pc-thumb" src="${Assets.sceneImage('postcard/' + id, 120)}" alt="">` : `<span class="pc-thumb pc-empty"><img src="${crest(id, 40)}" alt=""></span>`;
-    return `<button class="postcards" id="postcards" aria-label="${esc(t('Postcards: {n} of {total}', { n: got.length, total: POSTCARD_TOWNS.length }))}">
-      <span class="label">${t('Postcards')} <b>${got.length}/${POSTCARD_TOWNS.length}</b></span><span class="pc-row">${POSTCARD_TOWNS.map(thumb).join('')}</span></button>`;
+    return `<button class="postcards" id="postcards" aria-label="${esc(t('Postcards: {n} of {total}', { n, total: set.length }))}">
+      <span class="label">${t('Postcards')} <b>${n}/${set.length}</b></span><span class="pc-row">${set.map(thumb).join('')}</span></button>`;
   }
+
+  nationalCards() { return NATIONAL_POSTCARDS.filter((id) => Assets.frame('postcard/' + id)); }
 
   postcardsModal() {
     const got = this.app.save.postcards || [], town = (id) => (id === 'home' ? CLUB.name : TEAMS[id].name);
     this.modal(`<h2>${t('Postcards from the road')}</h2>
       <p class="muted" style="margin-top:0">${t('Win a game in a rival\'s town and they send one home. Your own town\'s comes with the Frostline Cup.')}</p>
-      <div class="pc-grid">${POSTCARD_TOWNS.map((id) => got.includes(id)
+      ${[POSTCARD_TOWNS, this.nationalCards()].filter((set) => set.length).map((set, k) => `${k ? `<div class="label" style="margin:12px 0 6px">${t('Around the country')}</div>` : ''}<div class="pc-grid">${set.map((id) => got.includes(id)
         ? `<figure class="pc-card"><img src="${Assets.sceneImage('postcard/' + id, 480)}" alt=""><figcaption>${esc(town(id))}</figcaption></figure>`
-        : `<figure class="pc-card locked"><span class="pc-empty"><img src="${crest(id, 64)}" alt=""></span><figcaption>${id === 'home' ? t('Win the Frostline Cup') : esc(t('Win in {town}', { town: town(id) }))}</figcaption></figure>`).join('')}</div>
+        : `<figure class="pc-card locked"><span class="pc-empty"><img src="${crest(id, 64)}" alt=""></span><figcaption>${id === 'home' ? t('Win the Frostline Cup') : esc(t('Win in {town}', { town: town(id) }))}</figcaption></figure>`).join('')}</div>`).join('')}
       <div class="row" style="justify-content:flex-end"><button class="btn gold" data-close>${t('Close')}</button></div>`);
   }
 

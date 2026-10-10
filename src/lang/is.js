@@ -398,6 +398,7 @@ export const IS = {
   "Arena": "Svell",
   "Arena rules off": "Svellreglur: slökkt",
   "Arena rules on": "Svellreglur: kveikt",
+  "Around the country": "Um allt land",
   "Around the Frostline": "Í Frostline-deildinni",
   "Around the league": "Önnur úrslit",
   "Around the league · round {n}": "Önnur úrslit · {n}. umferð",

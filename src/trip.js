@@ -1,7 +1,7 @@
 // The road-trip map (League tab, Batch DG): the season as the towns the Foxes' team bus drives
 // between. League games are played in the rival's own building, so each round is a trip to
 // their town; the All-Star Game and the Cup Final are at home, the Winter Classic on Pine Pond.
-import { TEAMS } from './data.js';
+import { TEAMS, NATIONAL_IDS, ELITE_OWN_IDS } from './data.js';
 import { ALLSTAR_AFTER, CLASSIC_AFTER, classicOpponent } from './league.js';
 
 // The town an arena is in: the club whose building it is (home for the rest).
@@ -36,13 +36,19 @@ export function tripStops(L) {
 // Postcards from the road (Batch DK): a win in a rival's town sends one home, and Snowcrest's
 // own comes with the Frostline Cup. New: true the first time.
 export const POSTCARD_TOWNS = ['lynx', 'comets', 'rams', 'ravens', 'royals', 'owls', 'moose', 'home'];
+// ...and, a division up, the National and Elite clubs' towns (Batches ED, EL, EM)
+export const NATIONAL_POSTCARDS = [...NATIONAL_IDS, ...ELITE_OWN_IDS];
 export function sendPostcard(save, town) {
-  if (!POSTCARD_TOWNS.includes(town)) return false;
+  if (!POSTCARD_TOWNS.includes(town) && !NATIONAL_POSTCARDS.includes(town)) return false;
   const P = (save.postcards ||= []);
   if (P.includes(town)) return false;
   P.push(town);
   return true;
 }
-// The town a won league game sends a postcard from (null: none), by the fixture's kind and arena.
-export const postcardFor = (kind, arena) => (kind === 'final' ? 'home' : kind === 'allstar' ? null : townOf(arena) === 'home' ? null : townOf(arena));
+// The town a won league game sends a postcard from (null: none), by the fixture's kind and arena
+// (a National or Elite club's town even while its rink isn't drawn: the bus still went there).
+export const postcardFor = (kind, arena, opp = null) => (kind === 'final' ? 'home' : kind === 'allstar' ? null
+  : townOf(arena) !== 'home' ? townOf(arena) : NATIONAL_POSTCARDS.includes(opp) ? opp : null);
+// The Frostline's eight all collected (the achievement's; the National ones don't count for it).
+export const frostlineCards = (save) => POSTCARD_TOWNS.every((t) => (save.postcards || []).includes(t));
 
