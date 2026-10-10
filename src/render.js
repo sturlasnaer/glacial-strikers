@@ -512,6 +512,17 @@ export class Renderer {
       Assets.draw(ctx, mascot[pose], mascot.foot.x, mascot.foot.y - (party ? Math.abs(Math.sin(t * 8)) * 6 : 0), mascot.source_scale, { pages: Assets.pagesFor(hostTeam.id) });
     }
     if (match.classic && arena === 'pine_pond') this.drawWinterClassic(ctx, fx);
+    // the Harbour Rink's gulls wheeling over the far stands and the lighthouse's beam (Batch CN):
+    // { gulls: { frames, y, scale, speed, fps }, beam: { frame, x, y, scale, period } }
+    const H = arena === 'harbour_rink' && A.harbour;
+    if (H && H.beam && Assets.frame(H.beam.frame)) {
+      const a = Math.sin((t * Math.PI * 2) / (H.beam.period || 8));
+      Assets.draw(ctx, H.beam.frame, H.beam.x, H.beam.y, H.beam.scale || 0.5, { alpha: 0.35 + 0.35 * Math.max(0, a), flip: a < 0 });
+    }
+    if (H && H.gulls && H.gulls.frames) for (let i = 0; i < 3; i++) {
+      const g = H.gulls, span = 1900, x = ((t * (g.speed || 50) * (i % 2 ? -1 : 1) + i * 620) % span + span) % span - 180;
+      Assets.draw(ctx, g.frames[Math.floor(t * (g.fps || 6) + i) % g.frames.length], x, g.y + i * 26 + Math.sin(t * 1.3 + i) * 12, g.scale || 0.4, { flip: i % 2 === 1 });
+    }
     // the Harbour Rink's windsock (Batch CM): limp, lifting, then streaming in a gust
     const sock = arena === 'harbour_rink' && A.windsock, wind = match.twists && match.twists.wind;
     if (sock && sock.frames) {

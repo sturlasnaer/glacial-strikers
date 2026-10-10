@@ -7,7 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-None currently open. Monitoring for additions.
+1. **CN: life at the Harbour Rink**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -333,3 +333,11 @@ A new building for exhibitions: **the Harbour Rink**, an outdoor rink on the fro
 - The rule's icon (`rule_icons.sea_breeze`, like the other rule icons): a gust swirl with a snowflake.
 
 Put the arena's art in a group of its own (say `arena_cm`) so it loads only for a match there; add `harbour_rink` to `atlas.arenas`. About 8 frames plus the backdrop.
+
+## Batch CN: life at the Harbour Rink
+
+The Harbour Rink (Batch CM) is in and looks lovely. Two small touches to bring it alive, both drawn by the game when they're in:
+- **Gulls:** four frames of a gull flapping and gliding, side view, flying right (`arena_harbour/gull_1`..`_4`), small (about 60 px wide at the game's scale). The game sends three across the sky over the far stands, some mirrored.
+- **The lighthouse's beam:** one soft, see-through cone of light (`arena_harbour/beam`) that sweeps from the red lighthouse on the far harbour wall; the game fades it in and out and mirrors it as it turns.
+
+Metadata: `atlas.arena.harbour = { gulls: { frames: [the four ids], y, scale, speed, fps }, beam: { frame, x, y, scale, period } }` in backdrop pixels, on the `arena_cm` group. 5 frames.
