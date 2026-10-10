@@ -12,7 +12,7 @@ const team = () => ({ skaters: ['frost', 'thunder', 'stone'].map((id) => ({ def:
 const idle = () => ({ mx: 0, my: 0, a: false, b: false, sprint: false, skill: false, ult: false });
 // our skater facing a rival carrier `gap` px away (the rival's puck toward us, or behind them)
 const setup = (seed, cfg = {}, gap = 40, behind = false) => {
-  const m = new Match({ teams: [team(), team()], humanTeam: 0, seed, powers: [], diff: [0.5, 0.2], twist: 'none', ...cfg });
+  const m = new Match({ teams: [team(), team()], humanTeam: 0, seed, powers: [], diff: [0.5, 0.2], ...cfg });
   m.state = 'play';
   for (const g of m.goalies) g.disabled = true;
   const c = m.controlled(), [o, ...rest] = m.teamSkaters(1);

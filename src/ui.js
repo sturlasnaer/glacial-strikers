@@ -3,7 +3,7 @@
 import { Assets } from './assets.js';
 import {
   CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, STAT_KEYS, STAT_NAMES, STAT_HINT,
-  POWER_INFO, TWIST_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
+  POWER_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
   RECRUITS, ROOKIES, setRookies, setFreeGoalies, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, ALL_RIVALS, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, CLUB_CRESTS, clubCrestId, MASK_NAMES, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
 import { standings, classicOpponent, CLASSIC_AFTER, ALLSTAR_AFTER, leagueRivals } from './league.js';
@@ -305,12 +305,6 @@ export function hintKeys(pad = false) {
   return { move: g.length > 1 ? t('{a} or {b}', { a: g[0], b: g[1] }) : g[0] || '—', shoot: firstKey('a'), pass: firstKey('b'), sprint: firstKey('sprint'), skill: firstKey('skill'), ult: firstKey('ult'), pull: firstKey('pull') };
 }
 
-// A small icon for an arena rule (Batch O), or nothing without the art.
-export function ruleIconSrc(twist, size = 40) {
-  const key = twist === 'shadow_zones' ? 'raven_shadows' : twist;
-  const id = Assets.atlas.rule_icons && Assets.atlas.rule_icons[key];
-  return id ? Assets.icon(id, size) : '';
-}
 // A picture in front of a chip's words (challenges, combos), or nothing without the art.
 // Which hand a player shoots with.
 const shoots = (hand) => (hand === 'R' ? t('Shoots right') : t('Shoots left'));
@@ -407,10 +401,6 @@ const CEL_NAMES = { signature: 'Their own', guitar: 'Stick guitar', angel: 'Snow
 const simpleLabel = () => `${smallIcon('icons/simple_controls', 48, 'btn-ico')} ${t('Simple controls')}`; // (its icon once Batch CQ is in)
 // A goaltending style's icon (Batch AN), the Iron Wall until it's in.
 const goalieStyleIcon = (id, size = 68) => `<img src="${ico(Assets.atlas.frames['icons/gstyle_' + id] ? 'icons/gstyle_' + id : 'icons/award_iron_wall', size)}" alt="">`;
-function ruleIcon(twist, size = 40) {
-  const src = ruleIconSrc(twist, size);
-  return src ? `<img class="rule-ico" src="${src}" alt="">` : '';
-}
 
 // "Play as: Skaters / Goalie / Two players" (goalie mode, local co-op), remembered in the
 // settings. Two players needs a keyboard or a gamepad, so a phone or tablet without a pad
@@ -559,7 +549,7 @@ export class UI {
     const mult = () => [...this.challenges].reduce((m, id) => m * CHALLENGES.find((c) => c.id === id).mult, 1);
     // the challenges and the arena fold away (shut by default on a phone on its side, so the rivals come first)
     this.qpOpen ??= !(typeof matchMedia === 'function' && matchMedia('(max-height: 480px)').matches);
-    const optsLine = () => `${t('Match options')}: ${(this.arenaPick || 'auto') === 'auto' ? t('Their building') : esc(ARENAS[this.arenaPick].name)}${this.arenaRules === false ? ` · ${t('Arena rules off')}` : ''}${this.nightPick ? ` · ${t('Night game')}` : ''}${this.challenges.size ? ` · ${t(this.challenges.size > 1 ? '{n} challenges' : '{n} challenge', { n: this.challenges.size })} (${t('coins x{n}', { n: +mult().toFixed(2) })})` : ''}`;
+    const optsLine = () => `${t('Match options')}: ${(this.arenaPick || 'auto') === 'auto' ? t('Their building') : esc(ARENAS[this.arenaPick].name)}${this.nightPick ? ` · ${t('Night game')}` : ''}${this.challenges.size ? ` · ${t(this.challenges.size > 1 ? '{n} challenges' : '{n} challenge', { n: this.challenges.size })} (${t('coins x{n}', { n: +mult().toFixed(2) })})` : ''}`;
     this.modal(`
       <h2>${t('Quick play')}</h2>
       <p class="muted" style="margin:0">${t('Exhibitions use your current team and pay half rewards. A shootout is five penalty shots each way: you shoot, then you play goalie.')}</p>
@@ -571,8 +561,8 @@ export class UI {
       </div>
       <div>
         <div class="label" style="font-size:15px">${t('Arena')}</div>
-        <div class="filters" style="margin:6px 0 0">${['auto', ...Object.keys(ARENAS).filter((k) => !(ARENAS[k].exhibitionOnly || ARENAS[k].national || (ARENAS[k].finalOnly && k !== 'frostline_coliseum')) || (Assets.atlas.arenas && Assets.atlas.arenas[k]))].map((k) => `<button class="chip" data-arena="${k}" aria-pressed="${(this.arenaPick || 'auto') === k}">${k === 'auto' ? t('Their building') : esc(ARENAS[k].name)}${ARENAS[k] && ARENAS[k].rule ? ` <span class="muted">· ${ruleIcon(ARENAS[k].twist, 32)}${esc(t(ARENAS[k].rule))}</span>` : ''}</button>`).join('')}
-          <button class="chip" id="arena-rules" aria-pressed="${this.arenaRules !== false}" title="${esc(t('Meltwater in the Ember Dome, aurora lanes in the Aurora Palace, pond cracks on Pine Pond, rumble strips in the Golden Hall, raven shadows in the Dark Aerie'))}">${this.arenaRules !== false ? t('Arena rules on') : t('Arena rules off')}</button>${Object.keys(Assets.atlas.arenas || {}).some((k) => k.endsWith('_night')) ? `<button class="chip" id="arena-night" aria-pressed="${!!this.nightPick}" title="${esc(t('Under the lights at the outdoor rinks (Pine Pond, the Harbour Rink, the Summit Rink).'))}">${t('Night game')}</button>` : ''}</div>
+        <div class="filters" style="margin:6px 0 0">${['auto', ...Object.keys(ARENAS).filter((k) => !(ARENAS[k].exhibitionOnly || ARENAS[k].national || (ARENAS[k].finalOnly && k !== 'frostline_coliseum')) || (Assets.atlas.arenas && Assets.atlas.arenas[k]))].map((k) => `<button class="chip" data-arena="${k}" aria-pressed="${(this.arenaPick || 'auto') === k}">${k === 'auto' ? t('Their building') : esc(ARENAS[k].name)}</button>`).join('')}
+          ${Object.keys(Assets.atlas.arenas || {}).some((k) => k.endsWith('_night')) ? `<button class="chip" id="arena-night" aria-pressed="${!!this.nightPick}" title="${esc(t('Under the lights at the outdoor rinks (Pine Pond, the Harbour Rink, the Summit Rink).'))}">${t('Night game')}</button>` : ''}</div>
       </div>
       </details>
       <div class="choice">${opts.map((tm) => `
@@ -599,14 +589,8 @@ export class UI {
         m.querySelectorAll('[data-arena]').forEach((b) => b.setAttribute('aria-pressed', b === el));
         audio.sfx('click'); upd();
       }, m);
-      this.click('#arena-rules', (el) => {
-        this.arenaRules = this.arenaRules === false;
-        el.setAttribute('aria-pressed', this.arenaRules);
-        el.textContent = this.arenaRules ? t('Arena rules on') : t('Arena rules off');
-        audio.sfx('click'); upd();
-      }, m);
       this.click('#arena-night', (el) => { this.nightPick = !this.nightPick; el.setAttribute('aria-pressed', this.nightPick); audio.sfx('click'); upd(); }, m);
-      this.click('[data-team]', (el) => { close(); this.app.startExhibition(el.dataset.team, [...this.challenges], this.arenaPick || 'auto', this.arenaRules !== false, false, false, !!this.nightPick); }, m);
+      this.click('[data-team]', (el) => { close(); this.app.startExhibition(el.dataset.team, [...this.challenges], this.arenaPick || 'auto', false, false, !!this.nightPick); }, m);
       this.click('[data-so]', (el) => { close(); this.app.startShootout(el.dataset.so); }, m);
     });
   }
@@ -647,7 +631,7 @@ export class UI {
         audio.sfx('click');
       }, m);
       this.click('[data-vsmode]', (el) => { this.vsMode = el.dataset.vsmode; audio.sfx('click'); close(); this.versusPicker(); }, m);
-      this.click('#vs-go', () => { close(); if (party) this.app.startParty(this.vsTeam); else if (this.vsMode !== 'versus') this.app.startExhibition(this.vsTeam, [], 'auto', true, this.vsMode === 'keeper' ? 'keeper' : true); else this.app.startVersus(this.vsTeam); }, m);
+      this.click('#vs-go', () => { close(); if (party) this.app.startParty(this.vsTeam); else if (this.vsMode !== 'versus') this.app.startExhibition(this.vsTeam, [], 'auto', this.vsMode === 'keeper' ? 'keeper' : true); else this.app.startVersus(this.vsTeam); }, m);
     });
   }
 
@@ -713,7 +697,6 @@ export class UI {
       tradeReady: tradeable(s).length > 0 && Object.keys(RECRUITS).some((k) => recruitStatus(s, k) === 'open'),
       expansion: !!(s.league && s.league.teams && s.league.teams.some((id) => TEAMS[id] && TEAMS[id].expansion)),
       maskPick: goalieIds(s).some((id) => canPickMask(s, id)),
-      nextRule: (() => { const f = this.app.fixture && this.app.fixture(), ar = f && f.stage && (f.stage.arena || (TEAMS[f.opponent] && TEAMS[f.opponent].arena)); return ar && ARENAS[ar] ? ARENAS[ar].twist : null; })(),
       newCombo: lineupIds(s).some((a, i, l) => l.some((b, j) => j > i && !CAST_PAIRS.includes(pairKey(member(a).def.elem, member(b).def.elem)) && COMBOS[pairKey(member(a).def.elem, member(b).def.elem)])),
     });
     this.roomFit?.disconnect();
@@ -730,7 +713,7 @@ export class UI {
     const next = this.app.fixture && this.app.fixture();
     const scoutOpen = Object.keys(RECRUITS).some((k) => recruitStatus(s, k) === 'open' && s.coins >= RECRUITS[k].price);
     const shopNew = GEAR.some((g) => g.price > 0 && !s.owned.includes(g.id) && Math.round(g.price * (1 - (s.discount || 0))) <= s.coins);
-    const got = Object.keys((s.achievements && s.achievements.unlocked) || {}).length;
+    const got = ACHIEVEMENTS.filter((a) => s.achievements && s.achievements.unlocked && s.achievements.unlocked[a.id]).length; // (those still in the game)
     const badge = {
       team: anyPoints ? t('Points to spend') : scoutOpen ? t('Scouts calling') : '',
       shop: shopNew ? t('New gear in reach') : '',
@@ -788,7 +771,7 @@ export class UI {
     const bed = Assets.atlas.decor_slots && Assets.atlas.decor_slots.cub_bed, bedSet = bed && ownsBed(s) && ['pet/bed_sleep_1', 'pet/bed_sleep_2'].every((f) => Assets.frame(f)) && Assets.spriteSet(['decor/cub_bed'], 84);
     if (bedSet) html += `<img class="cub-bed" id="cub-bed" src="${bedSet.urls[0]}" alt="" style="${at(bed.x, bed.y)};height:${(84 / 864) * 100}%;aspect-ratio:${bedSet.w}/${bedSet.h};transform:translate(-${bedSet.fx * 100}%,-${bedSet.fy * 100}%);z-index:${bed.y / 864 < 0.66 ? 1 : 2}">`;
     // the chest glows while there are trophies you haven't looked at, and stands open after
-    const got = Object.keys((s.achievements && s.achievements.unlocked) || {}).length;
+    const got = ACHIEVEMENTS.filter((a) => s.achievements && s.achievements.unlocked && s.achievements.unlocked[a.id]).length; // (those still in the game)
     const chest = R.h_chest_open && R.chest_placement && Assets.spriteSet(R.h_chest_open, 190);
     if (chest && got) {
       const p = R.chest_placement, fresh = got > (s.trophiesSeen || 0);
@@ -1895,7 +1878,7 @@ export class UI {
       <p class="muted" style="margin:0">${t('{date} · the same challenge for everyone today. Beat the goal on consecutive days to build a streak.', { date: esc(d.date) })}</p>
       <div class="daily">
         <img src="${crest(d.teamId, 96)}" alt="" width="64" height="64">
-        <div style="min-width:0"><b>${t('vs {team}', { team: esc(tm.name) })}</b><span class="muted">${esc(ar.name)}${ar.rule ? ` · ${ruleIcon(ar.twist, 32)}${esc(t(ar.rule))}` : ''}</span>
+        <div style="min-width:0"><b>${t('vs {team}', { team: esc(tm.name) })}</b><span class="muted">${esc(ar.name)}</span>
           <span>${d.mods.map((id) => { const c = CHALLENGES.find((x) => x.id === id); return `<span class="chip" aria-pressed="true" style="pointer-events:none">${smallIcon(c.icon)}${esc(t(c.name))}</span>`; }).join(' ')}</span></div>
       </div>
       <div class="daily-goal"><small>${t('Goal')}</small><b>${esc(t(dailyGoal(d.goal).text))}</b></div>
@@ -3753,7 +3736,7 @@ export class UI {
       ${scene && scene.bg ? `<div class="dlg-scene" style="background-image:url(${scene.bg})"></div>` : ''}<div class="dim${scene && scene.bg ? ' light' : ''}"></div>
       <div class="dlg" id="dlg">
         <button class="btn small ghost dlg-skip" id="dlg-skip">${t('Skip')}</button>
-        ${header ? `<div class="dlg-head"><div class="vs">${esc(CLUB.nick)}<em>${t('vs')}</em>${esc(tm.nick || tm.name.split(' ').slice(-1)[0])}</div>${header.sub ? `<div class="twist">${esc(header.sub)}</div>` : ''}</div>` : ''}
+        ${header ? `<div class="dlg-head"><div class="vs">${esc(CLUB.nick)}<em>${t('vs')}</em>${esc(tm.nick || tm.name.split(' ').slice(-1)[0])}</div>${header.sub ? `<div class="dlg-sub">${esc(header.sub)}</div>` : ''}</div>` : ''}
         <div class="portraits"><img id="pl" alt=""><img id="pr" class="them" alt=""></div>
         <div class="dlg-box panel"><div class="dlg-name" id="dn"></div><div class="dlg-text" id="dt"></div><div class="dlg-more">▼</div></div>
       </div>`);

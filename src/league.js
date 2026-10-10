@@ -108,12 +108,12 @@ function headToHead(L, a, b) {
 // What the player plays next: { kind: 'regular'|'semi'|'final', opponent, round label, stage cfg }.
 export function nextFixture(L) {
   if (L.phase === 'regular' && L.round === ALLSTAR_AFTER && !L.allstar) {
-    return { kind: 'allstar', opponent: 'allstar', label: t('All-Star Game'), stage: { team: 'allstar', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', round: 'All-Star Game', reward: 260, arena: 'home' } };
+    return { kind: 'allstar', opponent: 'allstar', label: t('All-Star Game'), stage: { team: 'allstar', powers: ['fire', 'ice', 'lightning', 'gravity'], round: 'All-Star Game', reward: 260, arena: 'home' } };
   }
   if (L.phase === 'regular' && L.round === CLASSIC_AFTER && !L.classic) {
     const opp = classicOpponent(L);
     const base = stageOf(opp);
-    return { kind: 'classic', opponent: opp, label: t('Winter Classic'), stage: { ...base, powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', round: 'Winter Classic', reward: 320, arena: 'pine_pond' } };
+    return { kind: 'classic', opponent: opp, label: t('Winter Classic'), stage: { ...base, powers: ['fire', 'ice', 'lightning', 'gravity'], round: 'Winter Classic', reward: 320, arena: 'pine_pond' } };
   }
   if (L.phase === 'regular') {
     const opp = L.schedule[L.round].games[0].b;
@@ -130,7 +130,7 @@ export function nextFixture(L) {
     }
     if (po.final && !po.final.winner && (po.final.a === 'home' || po.final.b === 'home')) {
       const opp = po.final.a === 'home' ? po.final.b : po.final.a;
-      return { kind: 'final', opponent: opp, label: t('Final'), stage: { team: opp, powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'both', round: 'Cup Final', reward: 480, arena: tierAt(L.tier).final } };
+      return { kind: 'final', opponent: opp, label: t('Final'), stage: { team: opp, powers: ['fire', 'ice', 'lightning', 'gravity'], round: 'Cup Final', reward: 480, arena: tierAt(L.tier).final } };
     }
   }
   return null;

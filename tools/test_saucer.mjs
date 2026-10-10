@@ -13,7 +13,7 @@ const idle = () => ({ mx: 0, my: 0, a: false, b: false, sprint: false, skill: fa
 // the passer at centre ice, a teammate 130 to the right, one rival at `near` in the lane, the
 // others parked out of the way
 const setup = (cfg, near = 40) => {
-  const m = new Match({ teams: [team(), team()], seed: 3, powers: [], diff: [0.5, 0.5], twist: 'none', ...cfg });
+  const m = new Match({ teams: [team(), team()], seed: 3, powers: [], diff: [0.5, 0.5], ...cfg });
   m.state = 'play';
   for (const g of m.goalies) g.disabled = true;
   const [c, mate, other] = m.teamSkaters(0);
@@ -94,7 +94,7 @@ check('AI against AI: it still goes for the puck', nearCatch({ humanTeam: null, 
 // moment on every level (a small player who stops shouldn't freeze the game), one skating keeps it
 {
   const hold = (diff, steer, at = [-300, -200]) => {
-    const m = new Match({ teams: [team(), team()], humanTeam: 0, seed: 901, powers: [], diff: [0.6, diff], twist: 'none' });
+    const m = new Match({ teams: [team(), team()], humanTeam: 0, seed: 901, powers: [], diff: [0.6, diff] });
     for (let k = 0; k < 600 && m.state !== 'play'; k++) { m.setHumanInput(idle()); m.update(1 / 60); }
     m.state = 'play';
     const c = m.controlled(); c.x = at[0]; c.y = at[1];

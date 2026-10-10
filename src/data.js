@@ -478,37 +478,37 @@ export const ROLE = { frost: 'c', thunder: 'w', stone: 'd', goalie: 'g' };
 export const ART_NAME = { frost: 'nix', thunder: 'volta', stone: 'bram', goalie: 'halla' };
 // Arenas: rivals with their own building host you there.
 export const ARENAS = {
-  home: { name: 'Frostline Rink', lamps: '#ffb84d', twist: null },
-  ember_dome: { name: 'Ember Dome', lamps: '#ff7a2e', flicker: 2.2, ice: 'rgba(255,140,60,0.06)', twist: 'meltwater', rule: 'Meltwater' },
-  aurora_palace: { name: 'Aurora Palace', lamps: '#ffd27a', twist: 'aurora_lanes', rule: 'Aurora lanes' },
-  golden_hall: { name: 'Golden Hall', lamps: '#ffc04a', flicker: 1.6, twist: 'rumble_strips', rule: 'Rumble strips' },
-  dark_aerie: { name: 'Dark Aerie', lamps: '#b48cff', flicker: 0.7, twist: 'shadow_zones', rule: 'Shadow zones' },
-  pine_pond: { name: 'Pine Pond', lamps: null, twist: 'pond_cracks', rule: 'Pond cracks' },
-  owl_observatory: { name: 'The Observatory', lamps: '#bfe8ff', twist: 'moonbeams', rule: 'Moonbeams' }, // (the Glacier Owls')
-  moose_longhouse: { name: 'The Longhouse', lamps: '#ffb05c', flicker: 1.4, twist: 'loose_planks', rule: 'Loose planks' }, // (the Thunder Moose's)
-  // the Cup Final's neutral building (Batch BX): no rule of its own; not a daily challenge's arena
-  frostline_coliseum: { name: 'Frostline Coliseum', lamps: '#ffd45e', twist: 'none', finalOnly: true },
+  home: { name: 'Frostline Rink', lamps: '#ffb84d' },
+  ember_dome: { name: 'Ember Dome', lamps: '#ff7a2e', flicker: 2.2, ice: 'rgba(255,140,60,0.06)' },
+  aurora_palace: { name: 'Aurora Palace', lamps: '#ffd27a' },
+  golden_hall: { name: 'Golden Hall', lamps: '#ffc04a', flicker: 1.6 },
+  dark_aerie: { name: 'Dark Aerie', lamps: '#b48cff', flicker: 0.7 },
+  pine_pond: { name: 'Pine Pond', lamps: null },
+  owl_observatory: { name: 'The Observatory', lamps: '#bfe8ff' }, // (the Glacier Owls')
+  moose_longhouse: { name: 'The Longhouse', lamps: '#ffb05c', flicker: 1.4 }, // (the Thunder Moose's)
+  // the Cup Final's neutral building (Batch BX): not a daily challenge's arena
+  frostline_coliseum: { name: 'Frostline Coliseum', lamps: '#ffd45e', finalOnly: true },
   // the National and Elite Cup Finals' buildings (Batch EO): the Coliseum until their art is in
-  capital_dome: { name: 'The Capital Dome', lamps: '#ffe9b0', twist: 'none', finalOnly: true },
-  diamond_arena: { name: 'Diamond Arena', lamps: '#d6f0ff', twist: 'none', finalOnly: true },
+  capital_dome: { name: 'The Capital Dome', lamps: '#ffe9b0', finalOnly: true },
+  diamond_arena: { name: 'Diamond Arena', lamps: '#d6f0ff', finalOnly: true },
   // an outdoor rink on the frozen harbour (Batch CM), for exhibitions: in Quick play once its art is in, never a daily's
-  harbour_rink: { name: 'Harbour Rink', lamps: '#ffd27a', twist: 'sea_breeze', rule: 'Sea breeze', exhibitionOnly: true },
+  harbour_rink: { name: 'Harbour Rink', lamps: '#ffd27a', exhibitionOnly: true },
   // a rink carved inside a glacier (Batch CP), for exhibitions: in Quick play once its art is in, never a daily's
-  glacier_cave: { name: 'Glacier Cave', lamps: '#9fe3ff', twist: 'icicles', rule: 'Icicles', exhibitionOnly: true },
+  glacier_cave: { name: 'Glacier Cave', lamps: '#9fe3ff', exhibitionOnly: true },
   // a mountaintop rink at the top of a cable car (Batch CV), for exhibitions: in Quick play once its art is in, never a daily's
-  summit_rink: { name: 'Summit Rink', lamps: '#ffe9a6', twist: 'thin_air', rule: 'Thin air', exhibitionOnly: true },
+  summit_rink: { name: 'Summit Rink', lamps: '#ffe9a6', exhibitionOnly: true },
   // the National clubs' buildings (Batches EE to EG): their own rink once its art is in (ours until then), never a daily's
-  hot_springs: { name: 'The Hot Springs', lamps: '#ffc98a', twist: 'none', national: true },
-  puffin_cliffs: { name: 'Cliffside Rink', lamps: '#ffe0b0', twist: 'none', national: true },
-  timber_lodge: { name: 'Timber Lodge', lamps: '#ffb05c', flicker: 1.2, twist: 'none', national: true },
-  ice_floes: { name: 'The Floes', lamps: '#cfe8ff', twist: 'none', national: true },
-  pack_ice: { name: 'Pack Ice Arena', lamps: '#e6f4ff', twist: 'none', national: true },
-  sunmesa: { name: 'Sunmesa Arena', lamps: '#ffb347', twist: 'none', national: true },
-  fjord_hall: { name: 'Fjord Hall', lamps: '#9fffc8', twist: 'none', national: true },
-  millpond: { name: 'Millpond Rink', lamps: '#ffcf8a', twist: 'none', national: true }, // (the Beavers': Batch EM)
-  coral_bay: { name: 'Coral Bay Rink', lamps: '#ffb0d0', twist: 'none', national: true }, // (the Flamingos': Batch EM)
-  taiga_rink: { name: 'Taiga Rink', lamps: '#ffb36b', twist: 'none', national: true }, // (the Tigers': Batch EL)
-  bamboo_grove: { name: 'Bamboo Grove', lamps: '#ffd8a0', twist: 'none', national: true }, // (the Pandas': Batch EL)
+  hot_springs: { name: 'The Hot Springs', lamps: '#ffc98a', national: true },
+  puffin_cliffs: { name: 'Cliffside Rink', lamps: '#ffe0b0', national: true },
+  timber_lodge: { name: 'Timber Lodge', lamps: '#ffb05c', flicker: 1.2, national: true },
+  ice_floes: { name: 'The Floes', lamps: '#cfe8ff', national: true },
+  pack_ice: { name: 'Pack Ice Arena', lamps: '#e6f4ff', national: true },
+  sunmesa: { name: 'Sunmesa Arena', lamps: '#ffb347', national: true },
+  fjord_hall: { name: 'Fjord Hall', lamps: '#9fffc8', national: true },
+  millpond: { name: 'Millpond Rink', lamps: '#ffcf8a', national: true }, // (the Beavers': Batch EM)
+  coral_bay: { name: 'Coral Bay Rink', lamps: '#ffb0d0', national: true }, // (the Flamingos': Batch EM)
+  taiga_rink: { name: 'Taiga Rink', lamps: '#ffb36b', national: true }, // (the Tigers': Batch EL)
+  bamboo_grove: { name: 'Bamboo Grove', lamps: '#ffd8a0', national: true }, // (the Pandas': Batch EL)
 };
 
 // ---------------------------------------------------------------- recruitment
@@ -790,28 +790,28 @@ export function clubText(str) {
 export const TOURNAMENT = {
   name: 'Frostline Regional Cup',
   stages: [
-    { team: 'lynx', round: 'Group Stage', powers: [], twist: 'none', reward: 120 },
-    { team: 'comets', round: 'Group Stage', powers: ['fire', 'ice'], twist: 'none', reward: 160 },
-    { team: 'owls', round: 'Group Stage', powers: ['fire', 'ice', 'lightning'], twist: 'none', reward: 185 },
-    { team: 'rams', round: 'Quarterfinal', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 210 },
-    { team: 'moose', round: 'Quarterfinal', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 240 },
-    { team: 'ravens', round: 'Semifinal', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'speed_lanes', reward: 270 },
-    { team: 'royals', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'cracked_ice', reward: 400 },
+    { team: 'lynx', round: 'Group Stage', powers: [], reward: 120 },
+    { team: 'comets', round: 'Group Stage', powers: ['fire', 'ice'], reward: 160 },
+    { team: 'owls', round: 'Group Stage', powers: ['fire', 'ice', 'lightning'], reward: 185 },
+    { team: 'rams', round: 'Quarterfinal', powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 210 },
+    { team: 'moose', round: 'Quarterfinal', powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 240 },
+    { team: 'ravens', round: 'Semifinal', powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 270 },
+    { team: 'royals', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 400 },
   ],
 };
 // The National clubs' match settings, and the Elite's own (the league plays them like the Frostline's: see stageOf).
 export const NATIONAL_STAGES = [
-  { team: 'capybaras', round: 'Group Stage', powers: ['fire', 'ice'], twist: 'none', reward: 160 },
-  { team: 'puffins', round: 'Group Stage', powers: ['fire', 'ice', 'lightning'], twist: 'none', reward: 185 },
-  { team: 'grizzlies', round: 'Quarterfinal', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 210 },
-  { team: 'seals', round: 'Quarterfinal', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 240 },
-  { team: 'penguins', round: 'Semifinal', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 270 },
-  { team: 'bulls', round: 'Semifinal', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'speed_lanes', reward: 300 },
-  { team: 'narwhals', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'cracked_ice', reward: 400 },
-  { team: 'beavers', round: 'Group Stage', powers: ['fire', 'ice'], twist: 'none', reward: 175 },
-  { team: 'flamingos', round: 'Quarterfinal', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 255 },
-  { team: 'tigers', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 410 }, // (the Elite's own)
-  { team: 'pandas', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 420 },
+  { team: 'capybaras', round: 'Group Stage', powers: ['fire', 'ice'], reward: 160 },
+  { team: 'puffins', round: 'Group Stage', powers: ['fire', 'ice', 'lightning'], reward: 185 },
+  { team: 'grizzlies', round: 'Quarterfinal', powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 210 },
+  { team: 'seals', round: 'Quarterfinal', powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 240 },
+  { team: 'penguins', round: 'Semifinal', powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 270 },
+  { team: 'bulls', round: 'Semifinal', powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 300 },
+  { team: 'narwhals', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 400 },
+  { team: 'beavers', round: 'Group Stage', powers: ['fire', 'ice'], reward: 175 },
+  { team: 'flamingos', round: 'Quarterfinal', powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 255 },
+  { team: 'tigers', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 410 }, // (the Elite's own)
+  { team: 'pandas', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 420 },
 ];
 export const stageOf = (team) => TOURNAMENT.stages.find((x) => x.team === team) || NATIONAL_STAGES.find((x) => x.team === team) || TOURNAMENT.stages[0];
 
@@ -918,23 +918,6 @@ export const POWER_INFO = {
   ice: { name: 'Ice Puck', icon: 'hud_elements/ability/frost', color: '#7fe3ff', text: 'Next shot freezes the first skater or goalie it hits.' },
   lightning: { name: 'Lightning Puck', icon: 'hud_elements/ability/lightning', color: '#ffe066', text: 'Next pass is instant and charges the receiver\'s shot.' },
   gravity: { name: 'Gravity Puck', icon: 'hud_elements/ability/gravity', color: '#b07cff', text: 'Next shot curves toward your aim.' },
-};
-
-export const TWIST_INFO = {
-  none: '',
-  speed_lanes: 'Speed lanes: glowing strips along the boards boost anyone skating with the arrows.',
-  cracked_ice: 'Cracked ice: rough patches slow skaters down. Keep the puck moving.',
-  both: 'Speed lanes and cracked ice.',
-  meltwater: 'Ember Dome rules: meltwater pools drift across the warm ice. Skaters and the puck bog down in them.',
-  aurora_lanes: 'Aurora Palace rules: aurora lanes push skaters and the puck along the arrows, and shift every few seconds with the lights.',
-  pond_cracks: 'Pine Pond rules: big hits and hard shots crack the pond. Cracks slow skaters, grab the puck and spread as the game goes on.',
-  rumble_strips: 'Golden Hall rules: ridged ice runs along the boards. Carry the puck fast across it and it hops off your stick.',
-  shadow_zones: 'Dark Aerie rules: ravens circle overhead. The puck is hard to see in their shadows, and goalies pick up shots from them late.',
-  moonbeams: 'Observatory rules: a beam of moonlight sweeps slowly across the ice. A shot from inside it glares in the goalie\'s eyes.',
-  loose_planks: 'Longhouse rules: some of the wooden boards are loose. A puck that hits one comes off at an odd angle.',
-  sea_breeze: 'Harbour Rink rules: now and then a gust blows in off the sea, down the length of the ice. Passes and loose pucks drift with it, and skating into it is slower.',
-  thin_air: 'Summit Rink rules: thin air up on the mountain. The puck glides further and shots fly faster, but skaters tire sooner, so change up the sprints.',
-  icicles: 'Glacier Cave rules: now and then an icicle drops from the ceiling. Watch for its shadow: get out from under it! It leaves a chunk of ice the puck glances off until the next faceoff.',
 };
 
 // Pre- and post-match scenes. speaker: 'us' (our captain), 'them' (their captain),

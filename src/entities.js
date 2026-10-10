@@ -216,7 +216,6 @@ export class Skater {
     if (this.ultWindup > 0) m *= 0.3;
     if (this.boostT > 0) m *= 1.3;
     if (this.slowT > 0) m *= this.slowMul;
-    m *= m2.surfaceSpeed(this);
     return m;
   }
 
@@ -295,9 +294,6 @@ export class Skater {
         const f = Math.exp(-1.15 * dt);
         this.vx *= f; this.vy *= f;
       }
-      // speed lanes push
-      const lane = m.laneAt(this.x, this.y);
-      if (lane) this.vx += lane.dir * 260 * dt;
       // cap
       const sp = this.speed, cap = max * 1.6;
       if (sp > cap && this.state !== 'check') { this.vx *= cap / sp; this.vy *= cap / sp; }
@@ -306,12 +302,12 @@ export class Skater {
     // stamina
     const sprinting = inp.sprint && Math.hypot(inp.mx, inp.my) > 0.2 && !this.staminaLock && this.dashT <= 0;
     if (sprinting) {
-      this.stamina -= 30 * (this.hasPerk('Breakaway') ? 0.8 : 1) * (this.match.twists?.air ? this.match.twists.air.drain : 1) * dt; // (thin air: tiring sooner)
+      this.stamina -= 30 * (this.hasPerk('Breakaway') ? 0.8 : 1) * dt;
       this.regenDelay = 0.5;
       if (this.stamina <= 0) { this.stamina = 0; this.staminaLock = true; }
     } else {
       this.regenDelay -= dt;
-      if (this.regenDelay <= 0) this.stamina = Math.min(this.d.staminaMax, this.stamina + this.d.regen * this.regenMul * (this.match.twists?.air ? this.match.twists.air.regen : 1) * dt);
+      if (this.regenDelay <= 0) this.stamina = Math.min(this.d.staminaMax, this.stamina + this.d.regen * this.regenMul * dt);
     }
     if (this.staminaLock && this.stamina > this.d.staminaMax * 0.3) this.staminaLock = false;
 
@@ -545,11 +541,6 @@ export class Goalie {
     this.shotsFaced++;
     let delay = (Math.max(0.08, 0.24 - this.stats.rfx * 0.012) + this.match.rng() * 0.06) * (this.style.react || 1);
     const p = this.match.puck;
-    if (this.match.twists && this.match.inShadow(p.x, p.y)) delay += 0.07; // a shot out of a raven's shadow is picked up late
-    else if (this.match.twists && this.match.twists.beam && this.match.inBeam(p.x, p.y)) { // ...or out of the moonbeam: it glares
-      delay += 0.07;
-      this.match.emit('glare', { x: p.x, y: p.y, g: this });
-    }
     // a screen: somebody (either side) standing in the shot's way in front of the goalie
     for (const k of this.match.skaters) {
       if (k === shot.by || k.parked) continue;
@@ -848,17 +839,6 @@ export function collideBarrier(e, rad, b, bounce) {
   const l = Math.hypot(nx, ny) || 1;
   nx /= l; ny /= l;
   e.x = sd.cx + nx * lim; e.y = sd.cy + ny * lim;
-  const vn = e.vx * nx + e.vy * ny;
-  if (vn < 0) { e.vx -= (1 + bounce) * vn * nx; e.vy -= (1 + bounce) * vn * ny; }
-  return { nx, ny, vn };
-}
-
-// A round obstacle (the Glacier Cave's ice chunks): pushed out of it, bounced off it.
-export function collideChunk(e, rad, k, bounce) {
-  const dx = e.x - k.x, dy = e.y - k.y, d = Math.hypot(dx, dy), lim = rad + k.r;
-  if (d >= lim) return null;
-  const nx = d > 0.01 ? dx / d : 1, ny = d > 0.01 ? dy / d : 0;
-  e.x = k.x + nx * lim; e.y = k.y + ny * lim;
   const vn = e.vx * nx + e.vy * ny;
   if (vn < 0) { e.vx -= (1 + bounce) * vn * nx; e.vy -= (1 + bounce) * vn * ny; }
   return { nx, ny, vn };

@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10zu',
+    items: [
+      { icon: 'hud_elements/misc/away_crest', alt: 'icons/career', text: 'Plain hockey everywhere: the arena rules are gone (speed lanes, cracked ice, meltwater, aurora lanes, rumble strips, raven shadows, pond cracks, moonbeams, loose planks, the sea breeze, icicles and thin air). Every rink plays the same; the power pucks and match challenges stay.' },
+    ],
+  },
+  {
     id: '2026-10-10zt',
     items: [
       { icon: 'map/bus_1', alt: 'icons/career', text: 'The road trip goes national: up a division, the team bus drives across a map of the whole country, and every National town sends a postcard home when you win there.' },

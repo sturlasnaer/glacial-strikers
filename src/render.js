@@ -1,7 +1,7 @@
 // Canvas renderer for matches: rink, crowd, skaters, goalies, puck, effects, camera.
 
 import { Assets } from './assets.js';
-import { toScreen, persp, BACKDROP, GOAL_X, MOUTH, NET_DEPTH, RINK, ICICLE } from './rink.js';
+import { toScreen, persp, BACKDROP, GOAL_X, MOUTH, NET_DEPTH, RINK } from './rink.js';
 import { clamp, lerp, makeRng } from './util.js';
 import { POWER_INFO, COMBOS, TEAMS, ARENAS, PALETTES, GEAR_LOOK, CLUB } from './data.js';
 import { ELEMENT_COLORS } from './fx.js';
@@ -157,7 +157,6 @@ export class Renderer {
     if (fx.marks) ctx.drawImage(fx.marks, 0, 0, BACKDROP.w, BACKDROP.h);
     const lap = ui.lap; // the resurfacer's lap before the title screen's match: nobody on the ice
     if (lap) this.drawLapSheen(ctx, lap);
-    this.drawTwists(ctx, match, fx);
     if (!lap) this.warmUp(match); // (gear recolours and heads, built ahead of their first use)
     // the linesman (Batch AG): not in drills, replays or the resurfacer's lap
     const L = !lap && (!match.drill || match.drill.linesman) && !ui.replay && Assets.atlas.linesman ? this.official(match, fx) : null;
@@ -205,13 +204,11 @@ export class Renderer {
     const lf = L && L.frame(match, Assets.atlas.linesman);
     if (lf) list.push({ y: L.y, f: () => { const q = toScreen(L.x, L.y); Assets.draw(ctx, lf.id, q.x, q.y, SKATER_SCALE * persp(L.y), { flip: lf.flip, pages: Assets.pages }); } });
     for (const b of lap ? [] : match.barriers) list.push({ y: b.y, f: () => this.drawBarrier(ctx, b) });
-    for (const k of lap || !match.twists.ice ? [] : match.twists.ice.chunks) list.push({ y: k.y, f: () => this.drawChunk(ctx, k) });
     for (const k of lap ? [] : match.pickups) list.push({ y: k.y, f: () => this.drawPickupOrb(ctx, k, fx) });
     for (const pt of fx.parts) if (pt.kind === 'ghost') list.push({ y: pt.s.y - 1, f: () => this.drawGhost(ctx, pt, match) });
     list.sort((a, b) => a.y - b.y);
     for (const d of list) d.f();
     if (!lap) for (const k of match.skaters) if (k.state === 'poke' && !k.parked) this.drawPoke(ctx, k); // (the poke check's swoosh)
-    if (!lap && match.twists.ice) for (const f of match.twists.ice.falls) this.drawIcicleFall(ctx, f); // (from the ceiling, over everyone)
     // near glass over anyone skating along the bottom boards (Pine Pond has snowbanks)
     const foreground = Assets.atlas.arena.glasses?.[arena];
     if (foreground) Assets.draw(ctx, foreground.frame, foreground.x, foreground.y, 1);
@@ -226,7 +223,6 @@ export class Renderer {
     this.drawBolts(ctx, fx);
     this.drawGoalLamp(ctx, match, fx);
     this.drawReticle(ctx, fx);
-    if (!lap) this.drawRavens(ctx, match, fx);
     if (!lap) this.drawOverheads(ctx, match, fx);
     if (match.drill && match.drill.drawOver) match.drill.drawOver(ctx, this, match, fx, Assets);
 
@@ -577,11 +573,11 @@ export class Renderer {
       Assets.draw(ctx, g.frames[Math.floor(t * (g.fps || 6) + i) % g.frames.length], x, g.y + i * 26 + Math.sin(t * 1.3 + i) * 12, g.scale || 0.4, { flip: i % 2 === 1 });
     }
     if (arena === 'summit_rink') this.drawSummit(ctx, t, A.summit || {});
-    // the Harbour Rink's windsock (Batch CM): limp, lifting, then streaming in a gust
-    const sock = arena === 'harbour_rink' && A.windsock, wind = match.twists && match.twists.wind;
+    // the Harbour Rink's windsock (Batch CM): lifting now and then in the sea air (for the look)
+    const sock = arena === 'harbour_rink' && A.windsock;
     if (sock && sock.frames) {
-      const k = wind && wind.gust > 0 ? Math.min(1, wind.gust / 0.6, (wind.len - wind.gust) / 0.6) : 0;
-      Assets.draw(ctx, sock.frames[k > 0.66 ? 2 : k > 0.2 ? 1 : 0], sock.x, sock.y, sock.scale || 0.5, { flip: !!(wind && wind.dir < 0 && k > 0.2) });
+      const k = Math.max(0, Math.sin(t * 0.35));
+      Assets.draw(ctx, sock.frames[k > 0.8 ? 2 : k > 0.4 ? 1 : 0], sock.x, sock.y, sock.scale || 0.5);
     }
     if (match.allstar && arena === 'home') this.drawAllStarDressing(ctx, fx, false);
     else if (arena === 'home') this.drawSeasonal(ctx, fx, false); // (Halloween, the holidays: Batch CD)
@@ -806,397 +802,6 @@ export class Renderer {
     ctx.restore();
   }
 
-  drawTwists(ctx, match, fx) {
-    const tw = match.twists;
-    if (!tw || tw.kind === 'none') return;
-    const t = fx.time;
-    const art = this.ruleArt();
-    const aurora = tw.kind === 'aurora_lanes';
-    const tiles = art && (aurora ? art.lane : art.speed_lane);
-    for (const l of tw.lanes) if (tiles) this.drawLaneTiles(ctx, l, t, tiles, 1); else this.drawLane(ctx, l, t, aurora, 1);
-    if (aurora && tw.next) {
-      // the next lanes flicker in before the lights shift
-      const blink = 0.35 + Math.max(0, Math.sin(t * 12)) * 0.4;
-      for (const l of tw.next) if (tiles) this.drawLaneTiles(ctx, l, t, tiles, blink, true); else this.drawLane(ctx, l, t, true, blink, true);
-    }
-    for (const p of tw.pools) if (art) this.drawPoolArt(ctx, p, t, art); else this.drawPool(ctx, p, t);
-    for (const c of tw.cracks) if (art) this.drawCrackArt(ctx, c, art); else this.drawCrack(ctx, c, tw);
-    for (const st of tw.strips) this.drawStrip(ctx, st, match, art);
-    for (const z of tw.shadows) this.drawShadowZone(ctx, z, t, art);
-    if (tw.beam) this.drawMoonbeam(ctx, tw.beam, t);
-    for (const pl of tw.planks) this.drawPlank(ctx, pl, t);
-    if (tw.wind && tw.wind.gust > 0) this.drawGust(ctx, tw.wind, t);
-    if (tw.ice) for (const f of tw.ice.falls) this.drawIcicleShadow(ctx, f, t);
-  }
-
-  // The Glacier Cave's art (Batch CP), once its page is in: arena_glacier/icicle_fall_1..3,
-  // icicle_shatter_1..3 and ice_chunk.
-  glacierFrame(id) {
-    const f = Assets.frame('arena_glacier/' + id);
-    return f && Assets.pages[f[0]] ? f : null;
-  }
-
-  // A falling icicle's shadow on the ice: growing and darkening, with a blinking ring round it.
-  drawIcicleShadow(ctx, f, t) {
-    const k = Math.min(1, f.t / ICICLE.warn), s = toScreen(f.x, f.y), r = (8 + ICICLE.r * k) * persp(f.y);
-    ctx.save();
-    ctx.translate(s.x, s.y); ctx.scale(1, 0.42);
-    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(20,45,80,${0.12 + 0.38 * k})`; ctx.fill();
-    ctx.strokeStyle = `rgba(255,255,255,${(0.25 + 0.45 * Math.abs(Math.sin(t * 9))) * k})`; ctx.lineWidth = 2.5; ctx.stroke();
-    ctx.restore();
-  }
-
-  // The icicle itself, dropping in the last 0.4 s before it lands.
-  drawIcicleFall(ctx, f) {
-    const drop = (f.t - (ICICLE.warn - 0.4)) / 0.4;
-    if (drop < 0) return;
-    const s = toScreen(f.x, f.y), q = persp(f.y), h = (1 - drop * drop) * 320;
-    const art = this.glacierFrame('icicle_fall_1');
-    if (art) {
-      const id = 'arena_glacier/icicle_fall_' + (1 + Math.min(2, Math.floor(drop * 3)));
-      Assets.draw(ctx, id, s.x, s.y - h, (58 * q) / (art[4] / art[7]));
-      return;
-    }
-    ctx.save();
-    ctx.translate(s.x, s.y - h); ctx.scale(q, q);
-    ctx.beginPath(); ctx.moveTo(-3, -150); ctx.lineTo(-3, -70); ctx.moveTo(3, -140); ctx.lineTo(3, -70);
-    ctx.strokeStyle = 'rgba(70,120,170,0.35)'; ctx.lineWidth = 2; ctx.stroke(); // (a streak behind it)
-    ctx.beginPath(); ctx.moveTo(-11, -62); ctx.lineTo(11, -62); ctx.lineTo(1.5, 0); ctx.lineTo(-1.5, 0); ctx.closePath();
-    ctx.fillStyle = '#bfe7fb'; ctx.fill();
-    ctx.strokeStyle = '#2c6a99'; ctx.lineWidth = 2.2; ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(-5, -58); ctx.lineTo(-1.5, -10);
-    ctx.strokeStyle = 'rgba(255,255,255,0.95)'; ctx.lineWidth = 2.5; ctx.stroke();
-    ctx.restore();
-  }
-
-  // A chunk of ice left on the rink, bursting into shards for a moment as it lands.
-  drawChunk(ctx, k) {
-    const s = toScreen(k.x, k.y), q = persp(k.y);
-    const burst = k.t < 0.36 && this.glacierFrame('icicle_shatter_1');
-    if (burst) Assets.draw(ctx, 'arena_glacier/icicle_shatter_' + (1 + Math.floor(k.t / 0.12)), s.x, s.y, (90 * q) / (burst[3] / burst[7]));
-    const art = this.glacierFrame('ice_chunk');
-    if (art) { Assets.draw(ctx, 'arena_glacier/ice_chunk', s.x, s.y, (k.r * 2.7 * q) / (art[3] / art[7]), { flip: k.v % 2 === 1 }); return; }
-    ctx.save();
-    ctx.translate(s.x, s.y); ctx.scale(q * (k.v % 2 ? -1 : 1), q);
-    ctx.beginPath(); ctx.ellipse(0, 2, 19, 7, 0, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(20,50,90,0.28)'; ctx.fill();
-    const pts = [[-17, 0], [-13, -12], [-4, -19], [8, -15], [17, -5], [14, 3], [1, 6], [-11, 5]];
-    ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath();
-    ctx.fillStyle = '#bfe7fb'; ctx.fill();
-    ctx.strokeStyle = '#3f7fae'; ctx.lineWidth = 1.6; ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(-10, -10); ctx.lineTo(-3, -16); ctx.lineTo(5, -12); ctx.lineTo(-4, -6); ctx.closePath();
-    ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.fill();
-    ctx.restore();
-  }
-
-  // A gust off the sea (the Harbour Rink): streaks of blown snow racing down the ice, thicker
-  // as it builds and thinning as it dies.
-  drawGust(ctx, w, t) {
-    const k = Math.min(1, w.gust / 0.6, (w.len - w.gust) / 0.6);
-    ctx.save();
-    ctx.lineCap = 'round';
-    for (let i = 0; i < 46; i++) {
-      const y = -260 + ((i * 97) % 560), speed = 900 + (i % 5) * 160, len = 40 + (i % 7) * 14;
-      const x = ((((t * speed + i * 211) % 1700) + 1700) % 1700) - 850; // (wrapping round the rink)
-      const a = toScreen(w.dir * x, y), b = toScreen(w.dir * (x - len), y + 6);
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
-      ctx.strokeStyle = `rgba(70,110,150,${0.22 * k})`; ctx.lineWidth = 4 + (i % 2); ctx.stroke(); // (a soft shadow, so it reads on white ice)
-      ctx.strokeStyle = `rgba(255,255,255,${(0.55 + (i % 3) * 0.15) * k})`; ctx.lineWidth = 1.6 + (i % 2); ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  // The expansion buildings' rule art (Batch AY), once the rule pages are in.
-  expansionArt(kind) {
-    const R = Assets.atlas.expansion_rules && Assets.atlas.expansion_rules[kind];
-    const probe = R && Object.values(R)[0][0], f = probe && Assets.frame(probe);
-    return f && Assets.pages[f[0]] ? R : null;
-  }
-
-  // Moonbeams: the shaft of light from the telescope and its pool on the ice (the pool is
-  // the bottom left of the art, the shaft rising to the right), shimmering. In code, a soft
-  // pool, until the art is in.
-  drawMoonbeam(ctx, b, t) {
-    const s = toScreen(b.x, b.y), art = this.expansionArt('moonbeams');
-    if (art) {
-      const frames = art.moonbeams, id = frames[Math.floor(t * 5) % frames.length];
-      const k = 1.06 * persp(b.y), sq = 1.35; // (the pool in the art is about 360 px wide)
-      Assets.draw(ctx, id, s.x + 36 * k, s.y - 77 * k * sq, k, { squash: sq, alpha: 0.9 });
-      return;
-    }
-    const rx = b.rx * persp(b.y), shimmer = 0.85 + Math.sin(t * 1.7) * 0.15;
-    ctx.save();
-    ctx.translate(s.x, s.y); ctx.scale(1, b.ry / rx);
-    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
-    g.addColorStop(0, `rgba(170,205,255,${0.32 * shimmer})`); g.addColorStop(0.7, `rgba(150,195,255,${0.18 * shimmer})`); g.addColorStop(1, 'rgba(150,195,255,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.arc(0, 0, rx, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  }
-
-  // Loose planks: wooden stretches of the boards, rattling when the puck hits them. The side
-  // art lies along the far and near boards; the end art, a curved stretch, stands along the
-  // end boards turned toward the ice. In code until the art is in.
-  drawPlank(ctx, pl, t) {
-    const art = this.expansionArt('loose_planks'), rattling = pl.rattle > 0;
-    const side = pl.side === 'far' || pl.side === 'near';
-    if (art) {
-      const frames = side ? art.planks_side : art.planks_end;
-      const id = rattling ? frames[1 + (Math.floor(t * 18) % 2)] : frames[0];
-      if (side) {
-        const by = pl.side === 'far' ? RINK.minY : RINK.maxY, mid = toScreen((pl.a0 + pl.a1) / 2, by);
-        const k = ((pl.a1 - pl.a0) * persp(by)) / 227, sq = 0.46; // (the board in the art is 227 px long, its foot 51 px under the pivot)
-        const foot = pl.side === 'far' ? mid.y + 1 : mid.y + 20;
-        Assets.draw(ctx, id, mid.x - 14.5 * k, foot - 51 * k * sq, k, { squash: sq });
-      } else {
-        const dir = pl.side === 'left' ? -1 : 1, mid = toScreen(RINK.maxX * dir, (pl.a0 + pl.a1) / 2);
-        const k = (pl.a1 - pl.a0) / 248, sq = 0.6;
-        Assets.draw(ctx, id, mid.x + dir * 8, mid.y, k, { squash: sq, rot: dir * -Math.PI / 2 });
-      }
-      return;
-    }
-    const jig = rattling ? Math.round(Math.sin(t * 70) * 2 * Math.min(1, pl.rattle * 3)) : 0;
-    ctx.save();
-    if (side) {
-      const by = pl.side === 'far' ? RINK.minY : RINK.maxY, h = 16;
-      const a = toScreen(pl.a0, by), b = toScreen(pl.a1, by), y = (pl.side === 'far' ? a.y - h : a.y) + jig;
-      ctx.fillStyle = '#8a5a2b'; ctx.fillRect(a.x, y, b.x - a.x, h);
-      ctx.fillStyle = '#b07a3e'; ctx.fillRect(a.x, y, b.x - a.x, 3);
-      ctx.strokeStyle = '#4a2c12'; ctx.lineWidth = 1.5;
-      ctx.strokeRect(a.x + 0.5, y + 0.5, b.x - a.x - 1, h - 1);
-      for (let x = a.x + 14; x < b.x - 4; x += 14) { ctx.beginPath(); ctx.moveTo(x + 0.5, y + 1); ctx.lineTo(x + 0.5, y + h - 1); ctx.stroke(); }
-    } else {
-      const dir = pl.side === 'left' ? -1 : 1, x = RINK.maxX * dir;
-      const a = toScreen(x, pl.a0), b = toScreen(x, pl.a1), w = 9, x0 = (dir < 0 ? a.x - 2 : a.x - w + 2) + jig;
-      ctx.fillStyle = '#8a5a2b'; ctx.fillRect(x0, a.y, w, b.y - a.y);
-      ctx.strokeStyle = '#4a2c12'; ctx.lineWidth = 1.5;
-      ctx.strokeRect(x0 + 0.5, a.y + 0.5, w - 1, b.y - a.y - 1);
-      for (let y = a.y + 14; y < b.y - 4; y += 14) { ctx.beginPath(); ctx.moveTo(x0 + 1, y + 0.5); ctx.lineTo(x0 + w - 1, y + 0.5); ctx.stroke(); }
-    }
-    ctx.restore();
-  }
-
-  // The rule sprites (Batches I, S and T), once their pages are in (drawn in code until then).
-  ruleArt() {
-    const A = Assets.atlas.art_additions;
-    const R = A && A.arena_rules;
-    const f = R && R.pool && Assets.frame(R.pool[0]);
-    if (!f || !Assets.pages[f[0]]) return null;
-    return (this.ruleSet ||= { ...R, ...(A.new_arena_rules || {}) });
-  }
-
-  // Rumble strips: the ridged tile along the boards, rattling while someone rides it fast.
-  drawStrip(ctx, st, match, art) {
-    const a = toScreen(st.x0, st.y), b = toScreen(st.x1, st.y);
-    const busy = match.skaters.some((s) => s.speed > 150 && match.stripAt(s.x, s.y) === st);
-    if (art && art.rumble_strip) { this.drawLaneTiles(ctx, { ...st, dir: 1 }, 0, [art.rumble_strip[busy ? 1 : 0]], 1, false, 0); return; }
-    ctx.save();
-    ctx.fillStyle = busy ? 'rgba(255,212,94,0.45)' : 'rgba(255,212,94,0.28)';
-    ctx.fillRect(a.x, a.y - st.h / 2, b.x - a.x, st.h);
-    ctx.strokeStyle = 'rgba(120,80,20,0.55)'; ctx.lineWidth = 2;
-    for (let x = a.x + 4; x < b.x; x += 9) { ctx.beginPath(); ctx.moveTo(x, a.y - st.h / 2 + 3); ctx.lineTo(x, a.y + st.h / 2 - 3); ctx.stroke(); }
-    ctx.restore();
-  }
-
-  // A raven's shadow drifting over the ice (the raven itself is drawn overhead, later).
-  drawShadowZone(ctx, z, t, art) {
-    const s = toScreen(z.x, z.y), rx = z.rx * persp(z.y);
-    const frames = art && art.shadow_zone;
-    if (frames) {
-      const id = frames[Math.floor(t * 4) % frames.length], f = Assets.frame(id);
-      const k = (2.1 * rx) / (f[3] / f[7]);
-      Assets.draw(ctx, id, s.x, s.y, k, { squash: (2.1 * z.ry) / ((f[4] / f[7]) * k), alpha: 0.75 });
-      return;
-    }
-    ctx.save();
-    const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, rx);
-    g.addColorStop(0, 'rgba(30,18,50,0.55)'); g.addColorStop(1, 'rgba(30,18,50,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.ellipse(s.x, s.y, rx, z.ry, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  }
-
-  // The ravens circling high over the Dark Aerie, above their shadows.
-  drawRavens(ctx, match, fx) {
-    const tw = match.twists;
-    if (!tw || !tw.shadows.length) return;
-    const art = this.ruleArt(), frames = art && art.flying_raven;
-    if (!frames) return;
-    for (const z of tw.shadows) {
-      const s = toScreen(z.x, z.y);
-      const left = -Math.sin(z.ph + tw.t * z.w) * z.w < 0; // which way it's flying round
-      Assets.draw(ctx, frames[Math.floor(fx.time * 8 + z.ph) % frames.length], s.x + 24, s.y - 170, Assets.atlas.art_draw_scales[frames[0]] * 1.3, { flip: left });
-    }
-  }
-
-  // Lanes and strips: a tile repeated along the lane, scrolling the way it pushes.
-  drawLaneTiles(ctx, l, t, frames, alpha, ghost, speed = 45) {
-    const a = toScreen(l.x0, l.y), b = toScreen(l.x1, l.y);
-    const id = frames[Math.floor(t * 8) % frames.length];
-    const f = Assets.frame(id);
-    const len = b.x - a.x, n = Math.max(1, Math.round(len / 64)), w = len / n;
-    const k = w / (f[3] / f[7]);
-    const squash = l.h / ((f[4] / f[7]) * k);
-    const off = ((t * speed) % w) * l.dir;
-    ctx.save();
-    ctx.beginPath(); ctx.rect(a.x, a.y - l.h / 2, len, l.h); ctx.clip();
-    ctx.globalAlpha = alpha;
-    for (let i = -1; i <= n; i++) Assets.draw(ctx, id, a.x + (i + 0.5) * w + off, a.y, k, { squash, flip: l.dir < 0 });
-    ctx.restore();
-    if (ghost) {
-      ctx.save();
-      ctx.setLineDash([10, 8]);
-      ctx.strokeStyle = `rgba(220,255,240,${0.8 * alpha})`;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(a.x, a.y - l.h / 2 + 3, len, l.h - 6);
-      ctx.restore();
-    }
-  }
-
-  // Meltwater: the pool's ripple loop stretched over the pool, with steam rising off it.
-  drawPoolArt(ctx, p, t, R) {
-    const s = toScreen(p.x, p.y);
-    const id = R.pool[Math.floor(t * 5 + p.ph * 3) % R.pool.length];
-    const f = Assets.frame(id);
-    const rx = p.rx * persp(p.y);
-    const k = (2.15 * rx) / (f[3] / f[7]);
-    Assets.draw(ctx, id, s.x, s.y, k, { squash: (2.15 * p.ry) / ((f[4] / f[7]) * k) });
-    this.drawSteam(ctx, s, rx, t, p.ph);
-  }
-
-  // Pond cracks: one of three crack drawings per crack, at the growth stage its size has reached.
-  drawCrackArt(ctx, c, R) {
-    const s = toScreen(c.x, c.y);
-    const variant = Math.abs(Math.round(c.x * 13 + c.y * 7)) % 3;
-    const stage = c.r < 36 ? 0 : c.r < 50 ? 1 : c.r < 62 ? 2 : 3;
-    Assets.draw(ctx, R.cracks[variant * 4 + stage], s.x, s.y, 0.5 * persp(c.y), { squash: 0.85 });
-  }
-
-  drawLane(ctx, l, t, aurora, alpha, ghost) {
-    const a = toScreen(l.x0, l.y - l.h / 2), b = toScreen(l.x1, l.y + l.h / 2);
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    const g = ctx.createLinearGradient(0, a.y, 0, b.y);
-    if (aurora) {
-      // green to violet, drifting along the lane like the lights overhead
-      const hue = 140 + Math.sin(t * 0.7 + l.y * 0.01) * 50;
-      g.addColorStop(0, `hsla(${hue},90%,60%,0)`);
-      g.addColorStop(0.5, `hsla(${hue},90%,62%,${ghost ? 0.25 : 0.55})`);
-      g.addColorStop(1, `hsla(${hue + 90},85%,60%,0)`);
-    } else {
-      g.addColorStop(0, 'rgba(113,220,232,0)');
-      g.addColorStop(0.5, 'rgba(113,220,232,0.5)');
-      g.addColorStop(1, 'rgba(113,220,232,0)');
-    }
-    ctx.fillStyle = g;
-    ctx.fillRect(a.x, a.y, b.x - a.x, b.y - a.y);
-    if (ghost) {
-      ctx.setLineDash([10, 8]);
-      ctx.strokeStyle = 'rgba(220,255,240,0.8)';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(a.x, a.y + 4, b.x - a.x, b.y - a.y - 8);
-      ctx.setLineDash([]);
-    }
-    // chevrons
-    ctx.strokeStyle = aurora ? 'rgba(235,255,245,0.95)' : 'rgba(255,255,255,0.95)';
-    ctx.lineWidth = 4;
-    const step = 60, off = ((t * 120) % step) * l.dir;
-    for (let x = l.x0 + 20; x < l.x1 - 10; x += step) {
-      const cx = x + off;
-      if (cx < l.x0 + 10 || cx > l.x1 - 10) continue;
-      const c = toScreen(cx, l.y);
-      ctx.beginPath();
-      ctx.moveTo(c.x - 8 * l.dir, c.y - 9);
-      ctx.lineTo(c.x + 4 * l.dir, c.y);
-      ctx.lineTo(c.x - 8 * l.dir, c.y + 9);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  // Meltwater: a slushy pool with a warm sheen, slow ripples and a little steam.
-  drawPool(ctx, p, t) {
-    const s = toScreen(p.x, p.y);
-    const rx = p.rx * persp(p.y), ry = p.ry;
-    ctx.save();
-    const g = ctx.createRadialGradient(s.x - rx * 0.2, s.y - ry * 0.2, 0, s.x, s.y, rx);
-    g.addColorStop(0, 'rgba(255,170,90,0.5)');
-    g.addColorStop(0.5, 'rgba(70,120,170,0.55)');
-    g.addColorStop(0.92, 'rgba(70,115,160,0.4)');
-    g.addColorStop(1, 'rgba(70,115,160,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.ellipse(s.x, s.y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
-    // wet rim catching the torchlight
-    ctx.strokeStyle = 'rgba(255,225,190,0.5)';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.ellipse(s.x, s.y, rx * 0.9, ry * 0.9, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
-    ctx.strokeStyle = 'rgba(40,70,110,0.35)';
-    ctx.beginPath(); ctx.ellipse(s.x, s.y, rx * 0.9, ry * 0.9, 0, 0.1, Math.PI - 0.1); ctx.stroke();
-    ctx.strokeStyle = 'rgba(255,230,200,0.45)';
-    ctx.lineWidth = 1.5;
-    for (let i = 0; i < 2; i++) {
-      const k = ((t * 0.35 + i * 0.5 + p.ph) % 1);
-      ctx.globalAlpha = 1 - k;
-      ctx.beginPath(); ctx.ellipse(s.x, s.y, rx * (0.3 + k * 0.6), ry * (0.3 + k * 0.6), 0, 0, Math.PI * 2); ctx.stroke();
-    }
-    ctx.restore();
-    this.drawSteam(ctx, s, rx, t, p.ph);
-  }
-
-  // A little steam off the warm meltwater.
-  drawSteam(ctx, s, rx, t, ph) {
-    ctx.save();
-    ctx.fillStyle = '#fff2e0';
-    for (let i = 0; i < 3; i++) {
-      const k = (t * 0.4 + i / 3 + ph) % 1;
-      const wx = s.x + Math.sin(t * 1.3 + i * 2 + ph) * rx * 0.4;
-      ctx.globalAlpha = 0.3 * (1 - k);
-      ctx.beginPath(); ctx.arc(wx, s.y - k * 34, 4 + k * 6, 0, Math.PI * 2); ctx.fill();
-    }
-    ctx.restore();
-  }
-
-  // Cracks keep their shape as they grow: lines are made once per crack, in units of r.
-  drawCrack(ctx, c, tw) {
-    this.crackLines ||= new WeakMap();
-    let lines = this.crackLines.get(c);
-    if (!lines) {
-      const r = makeRng(Math.round(c.x * 13 + c.y * 7) | 0);
-      lines = [];
-      for (let i = 0; i < 7; i++) {
-        let a = r.range(0, Math.PI * 2), x = 0, y = 0;
-        const pts = [[x, y]];
-        for (let j = 0; j < 5; j++) {
-          a += r.range(-0.6, 0.6);
-          const l = r.range(0.14, 0.31);
-          x += Math.cos(a) * l; y += Math.sin(a) * l * 0.8;
-          pts.push([x, y]);
-        }
-        lines.push(pts);
-      }
-      this.crackLines.set(c, lines);
-    }
-    const fresh = tw.t - (c.born || -9) < 0.5 ? 1 - (tw.t - c.born) / 0.5 : 0;
-    const s = toScreen(c.x, c.y);
-    const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, c.r);
-    g.addColorStop(0, 'rgba(60,110,150,0.32)');
-    g.addColorStop(1, 'rgba(60,110,150,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.ellipse(s.x, s.y, c.r, c.r * 0.8, 0, 0, Math.PI * 2); ctx.fill();
-    const draw = (dx, dy) => {
-      for (const pts of lines) {
-        ctx.beginPath();
-        pts.forEach(([x, y], i) => { const q = toScreen(c.x + x * c.r, c.y + y * c.r); i ? ctx.lineTo(q.x + dx, q.y + dy) : ctx.moveTo(q.x + dx, q.y + dy); });
-        ctx.stroke();
-      }
-    };
-    ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(30,70,110,0.7)';
-    draw(0, 0);
-    ctx.lineWidth = 1; ctx.strokeStyle = `rgba(255,255,255,${0.6 + fresh * 0.4})`;
-    draw(1, -1);
-  }
-
   drawTrails(ctx, match) {
     for (const tr of match.trails) {
       const a = 1 - tr.t / tr.life;
@@ -1241,7 +846,7 @@ export class Renderer {
       ctx.beginPath(); ctx.ellipse(p.x, p.y, 28, 9, 0, 0, Math.PI * 2); ctx.fill();
     }
     const pk = match.puck;
-    if (!match.inShadow(pk.x, pk.y) && !this.puckHeld) {
+    if (!this.puckHeld) {
       const p = toScreen(pk.x, pk.y);
       const zf = clamp(1 - pk.z / 80, 0.4, 1);
       ctx.fillStyle = `rgba(20,35,59,${0.35 * zf})`;
@@ -1961,9 +1566,7 @@ export class Renderer {
   drawPuck(ctx, p, fx, match) {
     if (this.puckHeld) return;
     if (p.owner && p.owner.isGoalie && this.goaliePoses && this.goaliePoses.get(p.owner)?.hidePuck) return;
-    const dark = match.twists && match.twists.shadows.length && match.inShadow(p.x, p.y);
     ctx.save();
-    if (dark) ctx.globalAlpha = 0.2; // hard to see in a raven's shadow
     // Eclipse (and a shadow combo) hides the puck for the start of its flight
     const hid = p.shot && p.shot.special && (p.shot.special.eclipse ? 0.4 : p.shot.special.hidden || 0);
     if (hid && match.time - p.shot.t < hid) ctx.globalAlpha = 0.07;

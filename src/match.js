@@ -4,15 +4,13 @@
 import { clamp, norm, dist, segDist, makeRng, Emitter, angDiff } from './util.js';
 import {
   RINK, GOAL_X, MOUTH, NET_DEPTH, POST_R, CROSSBAR, DOTS,
-  constrainToRink, netBox, makeTwists, auroraRows, clampInside, insideDepth, collideNets, ICICLE,
+  constrainToRink, netBox, clampInside, insideDepth, collideNets,
 } from './rink.js';
-import { Puck, Skater, Goalie, Barrier, collideBarrier, collideChunk, PUCK_R } from './entities.js';
+import { Puck, Skater, Goalie, Barrier, collideBarrier, PUCK_R } from './entities.js';
 import { Abilities } from './abilities.js';
 import { TeamAI } from './ai.js';
 import { pairKey, GAME_PLANS, COMBOS, CAST_PAIRS } from './data.js';
 
-const CRACK_MAX = 72; // pond cracks stop spreading at this radius
-const WIND_PUCK = 170, WIND_SKATER = 90; // a gust's push (units/s²) on a loose puck, and on a skater heading into it
 
 export const WIN_SCORE = 5;
 export const PENALTY_SECONDS = 15;
@@ -39,7 +37,7 @@ export let HOOK_RATE = 0.6; // a stick reaching round a carrier in full flight f
 export const setHookRate = (v) => { HOOK_RATE = v; };
 
 export class Match {
-  // cfg: { teams: [teamCfg, teamCfg], humanTeam: 0|null, seed, powers: [], twist, diff: [d0, d1] }
+  // cfg: { teams: [teamCfg, teamCfg], humanTeam: 0|null, seed, powers: [], diff: [d0, d1] }
   // teamCfg: { skaters: [{ def, stats, name, perks }], goalie: { stats, name } }
   constructor(cfg) {
     this.cfg = cfg;
@@ -66,15 +64,6 @@ export class Match {
     this.buffs = cfg.buffs || {}; // locker-room buffs for the home team
     this.winScore = this.mods.has('sudden') ? 1 : cfg.winScore || WIN_SCORE; // (the Mini Cup's games are to three)
     this.powers = this.mods.has('iceage') ? ['ice'] : cfg.powers || [];
-    this.twists = makeTwists(cfg.twist || 'none', this.rng);
-    if (this.twists.kind === 'pond_cracks') {
-      // the pond cracks under big hits, hard shots and shockwaves
-      this.on('hit', (e) => { if (e.power > 240) this.crackAt(e.b.x, e.b.y, Math.min(1.4, e.power / 400)); });
-      this.on('shot', (e) => {
-        if (['slap', 'onetimer', 'zero', 'thunderclap'].includes(e.kind)) this.crackAt(e.s.x + Math.cos(e.s.face) * 16, e.s.y + Math.sin(e.s.face) * 10, e.kind === 'slap' ? 0.7 : 1);
-      });
-      this.on('quake', (e) => this.crackAt(e.s.x, e.s.y, 1.5));
-    }
     this.pickupT = 9;
     this.humanTeam = cfg.humanTeam ?? null; // player 1's team
     // every team with a human player (two in local versus)
@@ -197,7 +186,6 @@ export class Match {
     this.barriers.length = 0;
     this.cyclones.length = 0;
     this.trails.length = 0;
-    if (this.twists.ice) { const ice = this.twists.ice; ice.chunks.length = 0; ice.falls.length = 0; ice.next = Math.max(ice.next, 5); } // (the crew sweeps the chunks off)
     this.chain = [0, 0];
     for (const s of this.skaters) { s.comboT = 0; s.comboFrom = null; }
     this.state = 'faceoff';
@@ -350,7 +338,6 @@ export class Match {
     this.time += dt;
     this.stateT += dt;
     this.applyHuman();
-    if (!this.drill && this.twists.kind !== 'none') this.updateTwists(dt);
     if (this.drill) {
       this.drill.update(this, dt);
       if (this.state === 'play' || this.state === 'drill_over') this.tickEntities(dt, false);
@@ -775,7 +762,6 @@ export class Match {
       case 'eclipse': speed = 1250; break;
       default: speed = s.d.wrist;
     }
-    if (this.twists.air) speed *= this.twists.air.shot; // (thin air)
     const distG = Math.hypot(gx - p.x, aimY - p.y);
     let err = s.d.aimErr * (0.45 + distG / 520);
     if (kind === 'slap') err *= 0.75 + 0.6 * charge;
@@ -973,11 +959,6 @@ export class Match {
     const p = this.puck;
     if (p.owner !== s) return;
     let sy = Math.sign(s.y) || (this.rng() < 0.5 ? -1 : 1);
-    // the Longhouse: an AI dumps it into the corner without a loose plank on the way
-    if (!s.controlled && this.twists.planks.length) {
-      const loose = (y) => this.twists.planks.some((pl) => (pl.side === 'far' || pl.side === 'near') ? (pl.side === 'far') === (y < 0) && Math.max(pl.a0 * s.side, pl.a1 * s.side) > GOAL_X - 260 : pl.side === (s.side > 0 ? 'right' : 'left') && Math.sign((pl.a0 + pl.a1) / 2) === Math.sign(y));
-      if (loose(sy * 200) && !loose(-sy * 200)) sy = -sy;
-    }
     const tx = s.side * (GOAL_X + 60), ty = sy * 200 + this.rng.range(-30, 30);
     const d = norm(tx - p.x, ty - p.y);
     s.setState('pass', 0.2);
@@ -1098,12 +1079,8 @@ export class Match {
       if (p.z <= 0) { p.z = 0; p.vz = p.vz < -60 ? -p.vz * 0.3 : 0; }
     }
     // friction
-    const f = Math.exp(-(this.mods.has('speed') ? 0.3 : 0.42) * (this.twists.air ? this.twists.air.glide : 1) * h); // (thin air: it glides further)
+    const f = Math.exp(-(this.mods.has('speed') ? 0.3 : 0.42) * h);
     p.vx *= f; p.vy *= f;
-    const lane = this.laneAt(p.x, p.y);
-    if (lane) p.vx += lane.dir * 140 * h;
-    if (this.inCrack(p.x, p.y)) { const f2 = Math.exp(-1.6 * h); p.vx *= f2; p.vy *= f2; }
-    else if (this.twists.pools.length && p.z <= 0 && this.inPool(p.x, p.y)) { const f2 = Math.exp(-1.25 * h); p.vx *= f2; p.vy *= f2; }
     if (p.speed < 4) { p.vx = 0; p.vy = 0; }
 
     // boards
@@ -1116,7 +1093,6 @@ export class Match {
         p.vx = tx * vt * 0.92 - n.nx * vn * 0.7;
         p.vy = ty * vt * 0.92 - n.ny * vn * 0.7;
         if (vn > 120) this.emit('puck_boards', { x: p.x, y: p.y, power: vn });
-        if (vn > 90 && this.twists.planks.length) { const pl = this.plankAt(p.x, p.y, n); if (pl) this.plankBounce(p, n, vn, pl); }
         if (p.shot) { p.shot.wide = true; }
       }
     }
@@ -1131,13 +1107,6 @@ export class Match {
           if (p.shot) { p.shot = null; }
           p.pass = null;
         }
-      }
-    }
-    // the Glacier Cave's ice chunks: a puck on the ice glances off them (one in the air flies over)
-    if (this.twists.ice && p.z < 14) {
-      for (const k of this.twists.ice.chunks) {
-        const hit = collideChunk(p, PUCK_R, k, 0.55);
-        if (hit && -hit.vn > 90) this.emit('chunk_hit', { x: p.x, y: p.y, power: -hit.vn });
       }
     }
     // goals, posts, nets, goalies
@@ -1541,171 +1510,6 @@ export class Match {
     }
   }
 
-  // ------------------------------------------------------ arena twists
-  laneAt(x, y) {
-    for (const l of this.twists.lanes) {
-      if (x > l.x0 && x < l.x1 && Math.abs(y - l.y) < l.h / 2) return l;
-    }
-    return null;
-  }
-  inCrack(x, y) {
-    for (const c of this.twists.cracks) if (Math.hypot(x - c.x, (y - c.y) * 1.25) < c.r) return true;
-    return false;
-  }
-  inPool(x, y) {
-    for (const p of this.twists.pools) {
-      const dx = (x - p.x) / p.rx, dy = (y - p.y) / p.ry;
-      if (dx * dx + dy * dy < 1) return p;
-    }
-    return null;
-  }
-  stripAt(x, y) {
-    for (const st of this.twists.strips) if (x > st.x0 && x < st.x1 && Math.abs(y - st.y) < st.h / 2) return st;
-    return null;
-  }
-  // Moonbeams: inside the pool of light.
-  inBeam(x, y) {
-    const b = this.twists.beam;
-    if (!b) return false;
-    const dx = (x - b.x) / b.rx, dy = (y - b.y) / b.ry;
-    return dx * dx + dy * dy < 1;
-  }
-  // Loose planks: the plank of the board the puck just hit (n: that board's outward normal).
-  plankAt(x, y, n) {
-    for (const pl of this.twists.planks) {
-      const on = pl.side === 'far' ? n.ny < -0.97 : pl.side === 'near' ? n.ny > 0.97 : pl.side === 'left' ? n.nx < -0.97 : n.nx > 0.97;
-      const along = pl.side === 'far' || pl.side === 'near' ? x : y;
-      if (on && along > pl.a0 && along < pl.a1) return pl;
-    }
-    return null;
-  }
-  // A loose plank gives: the puck comes off at an odd angle, sometimes dead, sometimes lively.
-  plankBounce(p, n, power, pl) {
-    const sp = Math.hypot(p.vx, p.vy) * (0.7 + this.rng() * 0.45);
-    const base = Math.atan2(p.vy, p.vx), dev = (0.35 + this.rng() * 0.45) * (this.rng() < 0.5 ? -1 : 1);
-    const off = (a) => Math.cos(a) * n.nx + Math.sin(a) * n.ny < -0.25; // still coming off the boards
-    const a = off(base + dev) ? base + dev : off(base - dev) ? base - dev : base;
-    p.vx = Math.cos(a) * sp; p.vy = Math.sin(a) * sp;
-    pl.rattle = 0.5;
-    this.emit('plank', { x: p.x, y: p.y, power, pl });
-  }
-  inShadow(x, y) {
-    for (const z of this.twists.shadows) {
-      const dx = (x - z.x) / z.rx, dy = (y - z.y) / z.ry;
-      if (dx * dx + dy * dy < 1) return z;
-    }
-    return null;
-  }
-  surfaceSpeed(s) {
-    if (this.inCrack(s.x, s.y)) return 0.7;
-    if (this.twists.pools.length && this.inPool(s.x, s.y)) return 0.78;
-    return 1;
-  }
-
-  // Moving parts of the arena rules: drifting meltwater, shifting aurora lanes, spreading
-  // pond cracks, circling raven shadows, pucks hopping on rumble strips, the sweeping
-  // moonbeam and rattling planks.
-  updateTwists(dt) {
-    const tw = this.twists;
-    tw.t += dt;
-    if (tw.kind === 'meltwater') {
-      for (const p of tw.pools) {
-        const a = p.ph + tw.t * p.w;
-        p.x = p.ax + Math.cos(a) * p.orbit;
-        p.y = p.ay + Math.sin(a) * p.orbit * 0.55;
-      }
-      if (this.state === 'play') {
-        for (const s of this.skaters) {
-          const inside = !!this.inPool(s.x, s.y);
-          s.splashCd = Math.max(0, (s.splashCd || 0) - dt);
-          if (inside && !s.inPool && s.speed > 230 && !s.splashCd) { this.emit('splash', { x: s.x, y: s.y, power: s.speed, s }); s.splashCd = 4; }
-          s.inPool = inside;
-        }
-      }
-    } else if (tw.kind === 'aurora_lanes') {
-      tw.phaseT += dt;
-      // the next lanes show up a moment before the lights shift
-      if (!tw.next && tw.phaseT > tw.period - 2.5) tw.next = auroraRows(this.rng);
-      if (tw.phaseT >= tw.period) {
-        tw.lanes = tw.next || auroraRows(this.rng);
-        tw.next = null;
-        tw.phaseT = 0;
-        this.emit('aurora_shift', {});
-      }
-    } else if (tw.kind === 'pond_cracks' && this.state === 'play') {
-      for (const c of tw.cracks) c.r = Math.min(CRACK_MAX, c.r + dt * 0.3); // cracks creep outward
-    } else if (tw.kind === 'shadow_zones') {
-      for (const z of tw.shadows) {
-        const a = z.ph + tw.t * z.w;
-        z.x = z.ax + Math.cos(a) * z.orbit;
-        z.y = z.ay + Math.sin(a) * z.orbit * 0.6;
-      }
-    } else if (tw.kind === 'moonbeams') {
-      const b = tw.beam;
-      b.x = Math.sin(b.ph + (tw.t * Math.PI * 2) / b.period) * b.reach;
-      b.y = Math.sin(b.dph + (tw.t * Math.PI * 2) / b.dperiod) * b.drift;
-    } else if (tw.kind === 'loose_planks') {
-      for (const pl of tw.planks) pl.rattle = Math.max(0, pl.rattle - dt);
-    } else if (tw.kind === 'sea_breeze' && this.state === 'play') {
-      // a gust: loose pucks (passes, shots, rebounds) drift with it, and skaters going into it
-      // slow a little; between gusts the next is 10 to 18 seconds away
-      const w = tw.wind;
-      if (w.gust > 0) {
-        w.gust = Math.max(0, w.gust - dt);
-        const k = Math.min(1, w.gust / 0.6, (w.len - w.gust) / 0.6); // (eases in and out)
-        const p = this.puck;
-        if (!p.owner && !p.inNet) p.vx += w.dir * WIND_PUCK * k * dt;
-        for (const s of this.skaters) if (!s.parked && s.vx * w.dir < 0) s.vx += w.dir * WIND_SKATER * k * dt;
-        if (!w.gust) w.next = 10 + this.rng() * 8;
-      } else if ((w.next -= dt) <= 0) {
-        w.dir = this.rng() < 0.5 ? -1 : 1; w.len = 2.5 + this.rng() * 1.5; w.gust = w.len;
-        this.emit('gust', { dir: w.dir });
-      }
-    } else if (tw.kind === 'icicles' && this.state === 'play' && !this.pshot) {
-      // every 9 to 15 seconds an icicle drops: its shadow grows for 1.6 s, then it lands
-      const ice = tw.ice;
-      for (const k of ice.chunks) k.t += dt;
-      for (const f of ice.falls) if ((f.t += dt) >= ICICLE.warn) this.icicleLands(f);
-      ice.falls = ice.falls.filter((f) => f.t < ICICLE.warn);
-      if ((ice.next -= dt) <= 0) {
-        ice.next = 9 + this.rng() * 6;
-        const at = this.icicleSpot();
-        if (at) { ice.falls.push({ ...at, t: 0 }); this.emit('icicle_warn', at); }
-      }
-    } else if (tw.kind === 'rumble_strips' && this.state === 'play') {
-      // carry the puck fast over the ridges and now and then it hops off the stick
-      const s = this.puck.owner;
-      if (s && s.isSkater) {
-        s.hopCd = Math.max(0, (s.hopCd || 0) - dt);
-        if (!s.hopCd && s.speed > 150 && this.stripAt(s.x, s.y)) {
-          s.hopCd = 0.3;
-          if (this.rng() < 0.4) this.puckHop(s);
-        }
-      }
-    }
-  }
-
-  puckHop(s) {
-    const p = this.puck;
-    this.loosePuck(s);
-    p.vx = s.vx * 1.15 + (this.rng() - 0.5) * 140;
-    p.vy = s.vy * 0.8 + (this.rng() - 0.5) * 140;
-    p.vz = 160;
-    p.noPickup.set(s, 0.45);
-    s.hopCd = 1.2;
-    this.emit('puck_hop', { x: p.x, y: p.y, s });
-  }
-
-  crackAt(x, y, k = 1) {
-    const tw = this.twists;
-    if (Math.hypot(Math.abs(x) - GOAL_X, y) < 120 || insideDepth(x, y) < 40) return; // creases and boards hold
-    const near = tw.cracks.find((c) => Math.hypot(x - c.x, (y - c.y) * 1.25) < c.r + 24);
-    if (near) near.r = Math.min(CRACK_MAX, near.r + 7 * k);
-    else if (tw.cracks.length < 6) tw.cracks.push({ x, y, r: 24 + 10 * k, born: tw.t });
-    else return;
-    this.emit('ice_crack', { x, y, grow: !!near, k });
-  }
-
   // -------------------------------------------------------- ability bits
   addTrail(s) {
     this.trails.push({ x: s.x, y: s.y, t: 0, life: s.hasPerk('Long Glide') ? 5.5 : 4, team: s.team, owner: s, ang: Math.atan2(s.vy, s.vx) });
@@ -1765,46 +1569,6 @@ export class Match {
 
   collideBarriers(e, rad, bounce) {
     for (const b of this.barriers) collideBarrier(e, rad, b, bounce);
-    if (this.twists.ice) for (const k of this.twists.ice.chunks) collideChunk(e, rad, k, bounce);
-  }
-
-  // The Glacier Cave: where the next icicle drops. Half the time near the puck, else anywhere
-  // out on the ice; never in a crease, along the boards or on a chunk already there.
-  icicleSpot() {
-    const p = this.puck, ice = this.twists.ice;
-    for (let i = 0; i < 6; i++) {
-      let x, y;
-      if (this.rng() < 0.5) { const a = this.rng() * Math.PI * 2, d = 70 + this.rng() * 150; x = p.x + Math.cos(a) * d; y = p.y + Math.sin(a) * d * 0.8; }
-      else { x = (this.rng() - 0.5) * 940; y = -200 + this.rng() * 430; }
-      if (Math.hypot(Math.abs(x) - GOAL_X, y) < 160 || insideDepth(x, y) < 60) continue;
-      if (ice.chunks.some((k) => Math.hypot(k.x - x, k.y - y) < 60) || ice.falls.some((f) => Math.hypot(f.x - x, f.y - y) < 80)) continue;
-      return { x, y };
-    }
-    return null;
-  }
-
-  // An icicle lands: anyone right under it is knocked aside and stunned (a carrier loses the
-  // puck), a loose puck there is bumped away, and a chunk of ice is left behind.
-  icicleLands(f) {
-    const ice = this.twists.ice, p = this.puck;
-    const hit = [];
-    for (const s of this.skaters) {
-      if (s.parked) continue;
-      const d = Math.hypot(s.x - f.x, s.y - f.y);
-      if (d > ICICLE.r + s.r) continue;
-      const n = d > 1 ? norm(s.x - f.x, s.y - f.y) : { x: s.side, y: 0 };
-      s.vx += n.x * 240; s.vy += n.y * 240;
-      s.stun = Math.max(s.stun, 0.45); s.charging = false; s.flash = 0.25;
-      if (p.owner === s) { this.loosePuck(s); p.vx = n.x * -160 + s.vx * 0.3; p.vy = n.y * -160 + s.vy * 0.3; p.noPickup.set(s, 0.5); }
-      hit.push(s);
-    }
-    if (!p.owner && !p.inNet && p.z < 14) {
-      const d = Math.hypot(p.x - f.x, p.y - f.y);
-      if (d < ICICLE.r + 12) { const n = d > 1 ? norm(p.x - f.x, p.y - f.y) : { x: 1, y: 0 }; p.vx += n.x * 260; p.vy += n.y * 260; }
-    }
-    ice.chunks.push({ x: f.x, y: f.y, r: ICICLE.chunk, t: 0, v: ice.n = (ice.n || 0) + 1 });
-    if (ice.chunks.length > ICICLE.max) ice.chunks.shift();
-    this.emit('icicle', { x: f.x, y: f.y, hit });
   }
 
   // ------------------------------------------------------------ penalties
@@ -1887,7 +1651,6 @@ export class Match {
     p.shot = null; p.pass = null; p.curve = null; p.trail.length = 0; p.inNet = null; p.power = null; p.powerT = 0;
     p.noPickup.clear(); p.rolled.clear(); p.touches = []; p.lastTouch = null; // (nobody assists a penalty shot)
     this.barriers.length = 0; this.cyclones.length = 0; this.trails.length = 0;
-    if (this.twists.ice) { this.twists.ice.chunks.length = 0; this.twists.ice.falls.length = 0; }
     if (this.humans.includes(s.team)) {
       const seat = s.controlled ? s.seat || 0 : this.coop ? this.lastSeat : 0; // (in co-op the other player watches this one)
       for (const o of this.teamSkaters(s.team)) { o.controlled = o === s; o.seat = 0; }

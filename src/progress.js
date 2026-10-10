@@ -472,7 +472,6 @@ export function matchConfig(save, teamId, stage, opts = {}) {
     humanTeam: opts.attract ? null : 0,
     goalieMode: !!opts.goalieMode && !opts.attract, // the player in goal, the AI skating
     powers: stage ? stage.powers : ['fire', 'ice', 'lightning', 'gravity'],
-    twist: stage ? stage.twist : 'none',
     diff: [opts.goalieMode ? 0.72 : 0.6, diff], // in goalie mode all three of ours are AI: sharper ones
     seed: (Math.random() * 1e9) >>> 0,
   };
@@ -541,7 +540,6 @@ export function allStarConfig(save, vote, opts = {}) {
     humanTeam: 0,
     goalieMode: !!opts.goalieMode,
     powers: ['fire', 'ice', 'lightning', 'gravity'],
-    twist: 'none',
     diff: [opts.goalieMode ? 0.72 : 0.6, diff],
     seed: (Math.random() * 1e9) >>> 0,
     penalties: false, // All-Star rules: no penalties, and ultimates charge twice as fast

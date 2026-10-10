@@ -76,8 +76,6 @@ export const ACHIEVEMENTS = [
   { id: 'elements', name: 'Six Elements', text: 'Score with skaters of all six elements.', icon: 'power_pucks/gravity/pickup_orb', art: 'achievements/six_elements', coins: 120, set: 'elemGoals', goal: 6 },
   { id: 'veteran', name: 'Veteran Presence', text: 'Sign a free agent from the market.', icon: 'achievements/free_agent', art: 'achievements/veteran_presence', coins: 50 },
   // the expansion buildings, the puck on the stick, goalie masks and crests (Batch BF art; a stand-in until then)
-  { id: 'moonstruck', name: 'Moonstruck', text: 'Score out of the Observatory\'s moonbeam.', icon: 'icons/rule_moonbeams', art: 'achievements/moonstruck', coins: 80 },
-  { id: 'splinters', name: 'Splinters', text: 'Score off a loose plank\'s bounce at the Longhouse.', icon: 'icons/rule_loose_planks', art: 'achievements/splinters', coins: 80 },
   { id: 'protector', name: 'Puck Protector', text: 'Shield the puck from a defender 15 times in one match.', icon: 'achievements/pickpocket', art: 'achievements/puck_protector', coins: 70 },
   { id: 'game-face', name: 'Game Face', text: 'Pick a new mask for a goalie at goalie camp.', icon: 'icons/gstyle_hybrid', art: 'achievements/game_face', coins: 30 },
   { id: 'new-colours', name: 'New Colours', text: 'Give the club a new crest.', icon: 'hud_elements/misc/home_crest', art: 'achievements/new_colours', coins: 30 },
@@ -156,15 +154,13 @@ export class AchievementTracker {
   // Watch a real match (not drills or versus) for in-game achievements.
   attachMatch(m) {
     this.minDiff = 0;
-    let glareT = -9, plankT = -9, shields = 0, biteT = -9, clean = 0;
+    let shields = 0, biteT = -9, clean = 0;
     m.on('deke_goalie', (e) => { if (e.s.team === 0) biteT = m.time; });
     let ourShot = false; // (a penalty shot of ours under way)
     m.on('penalty_shot', (e) => { ourShot = e.s.team === 0; });
     m.on('penalty_shot_over', () => { ourShot = false; });
     m.on('faceoff', () => { ourShot = false; });
     m.on('faceoff_win', (e) => { if (e.clean && e.s.team === 0 && ++clean >= 3) this.unlock('off-the-drop'); });
-    m.on('glare', (e) => { if (e.g.team === 1) glareT = m.time; }); // (their goalie, dazzled by our shot)
-    m.on('plank', () => { plankT = m.time; });
     this.planWhileBehind = false;
     m.on('plan_change', (e) => { if (e.team === 0 && m.score[0] < m.score[1]) this.planWhileBehind = true; }); // (Bench Boss)
     m.on('shield', (e) => { if (e.s.team === 0 && ++shields >= 15) this.unlock('protector'); });
@@ -184,8 +180,6 @@ export class AchievementTracker {
       if (m.teamSkaters(0).some((k) => k.boxT > 0)) this.unlock('shorthanded');
       if (m.goalies.find((k) => k.team === 1).disabled) this.unlock('empty-net');
       if (m.extra && m.extra[0]) this.unlock('extra-attacker');
-      if (m.time - glareT < 1.5) this.unlock('moonstruck');
-      if (m.time - plankT < 2.5) this.unlock('splinters');
       if (m.time - biteT < 2) this.unlock('sold-it');
       if (ourShot) this.unlock('penalty-shot');
       if (g.kind === 'tip') this.unlock('redirect');

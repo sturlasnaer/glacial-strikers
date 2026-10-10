@@ -131,24 +131,6 @@ export class FX {
       if (L.fx === 'heat') this.shake(0.06);
     });
     on('stop', ({ s }) => { const L = look(s, 'skates'); if (L && L.trail === 'gouge') { this.anim(CHIPS, s.x, s.y + 2, 0.12, { fps: 18, frames: PHASES, flip: s.vx < 0 }); this.scratch(s, 3); } });
-    // arena rules
-    on('splash', ({ x, y, power }) => {
-      const n = Math.min(14, 5 + power / 40);
-      for (let i = 0; i < n; i++) {
-        const a = rnd.range(0, Math.PI * 2), sp = rnd.range(40, 150);
-        this.part(x, y, 2, Math.cos(a) * sp, Math.sin(a) * sp * 0.7, rnd.range(90, 200), rnd.range(0.3, 0.6), rnd.pick(['#cfe9f7', '#ffd8b0', '#9fc3e0']), rnd.range(1.6, 3));
-      }
-    });
-    on('icicle', ({ x, y }) => { // the Glacier Cave: an icicle shatters on the ice
-      this.burst(x, y, 8, 16, ['#ffffff', '#d9f3ff', '#8fd0f5'], 280, 0.55);
-      this.anim(CHIPS, x, y + 2, 0.14, { fps: 18, frames: PHASES });
-      this.shake(0.2);
-    });
-    on('ice_crack', ({ x, y, k }) => {
-      this.anim(CHIPS, x, y + 2, 0.1 + k * 0.03, { fps: 18, frames: PHASES });
-      this.shake(0.12 * k);
-      this.text(x, y - 40, t('CRACK!'), '#cfe9f7', 0.6, 14);
-    });
     on('block', ({ s }) => { this.text(s.x, s.y - 92, t('BLOCKED!'), '#fff2cb', 0.9, 18); this.shake(0.15); });
     on('save', ({ g, caught, speed }) => {
       if (caught === false || (speed && speed > 700)) {
@@ -158,19 +140,7 @@ export class FX {
       if (speed > 850 || caught === false) this.text(g.x - g.goalSide * 30, g.y - 110, caught ? t('SAVE!') : t('REBOUND'), caught ? '#ffffff' : '#fff2cb', 0.9, caught ? 20 : 15);
       this.excite = Math.min(1, this.excite + 0.2);
     });
-    on('splash', ({ x, y }) => this.anim('arena_rules/splash/phase_', x, y + 2, 0.2, { fps: 14 }));
-    on('puck_hop', ({ x, y }) => this.anim('arena_rules/puck_hop/phase_', x, y + 2, 0.085, { fps: 12, frames: [1, 2, 3] }));
-    // the expansion buildings' rules (Batch AY's art once the rule pages are in, drawn in code until then)
-    const ruleArt = (id) => { const f = Assets.frame(id); return f && Assets.pages[f[0]]; };
     on('deke', ({ s }) => { this.burst(s.x, s.y, 2, 8, ELEMENT_COLORS.ice, 150, 0.35); });
-    on('plank', ({ x, y, power }) => { // a puff of splinters
-      if (ruleArt('arena_rules/loose_planks/splinters_a')) this.anim('arena_rules/loose_planks/splinters_', x, y + 4, 0.42, { fps: 14, frames: ['a', 'b', 'c', 'd'], z: 10 });
-      else this.burst(x, y, 10, 4 + Math.min(6, Math.round(power / 120)), ['#a8743a', '#7a4f25', '#d9a866'], 120, 0.45);
-    });
-    on('glare', ({ x, y }) => { // moonlight flashing off the puck
-      if (ruleArt('arena_rules/moonbeams/glare_a')) this.anim('arena_rules/moonbeams/glare_', x, y, 0.42, { fps: 12, frames: ['a', 'b', 'c', 'b', 'c'], z: 8 });
-      else { this.burst(x, y, 6, 6, ['#ffffff', '#e8f4ff', '#fff6c8'], 70, 0.3); this.ring(x, y, 10, 'rgba(235,245,255,0.9)', 0.25); }
-    });
     on('goalie_dive', ({ g }) => {
       this.burst(g.x, g.y, 2, 6, ELEMENT_COLORS.snow, 160, 0.4);
       this.anim(CHIPS, g.x, g.y + 2, 0.12, { fps: 18, frames: PHASES, flip: g.diveDir < 0 });

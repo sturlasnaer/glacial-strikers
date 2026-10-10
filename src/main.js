@@ -16,7 +16,7 @@ import { firstTime } from './guide.js';
 import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as cloudBackup, settleCups } from './online.js';
 import { ARENA_MUSIC } from './songs.js';
 import { ResurfacerLap } from './scenery.js';
-import { UI, controlsHtml, crest, ruleIconSrc, cupPlaceImg, portrait, shotMapSvg, esc, hintKeys } from './ui.js';
+import { UI, controlsHtml, crest, cupPlaceImg, portrait, shotMapSvg, esc, hintKeys } from './ui.js';
 import { seasonReview } from './review.js';
 import { updateRecords, GAME_RECORDS } from './records.js';
 import { noteCup, hallCandidates, induct } from './hall.js';
@@ -42,7 +42,7 @@ import { moveTier, noteTierCup, tierOf, tierInfo } from './tiers.js';
 import { updateSeasonGoals, goalStates } from './goals.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { member, goalieInfo, TEAMS, TOURNAMENT, DIALOGUE, TWIST_INFO, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, EXPANSION_LINES, TIER_LINES } from './data.js';
+import { member, goalieInfo, TEAMS, TOURNAMENT, DIALOGUE, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, EXPANSION_LINES, TIER_LINES } from './data.js';
 import { rollLegend, legendState, STAY, joinLegend, LEGEND_LINES, twinsFirstTogether } from './legends.js';
 import { rivalSigning, rivalOffer } from './moves.js';
 import { refreshAgents } from './agents.js';
@@ -63,7 +63,6 @@ const STEP = 1 / 60;
 // Vibrate only once the player has interacted (browsers block it before that).
 const buzz = (p) => { if (navigator.userActivation?.hasBeenActive !== false) navigator.vibrate?.(p); };
 const RIVALS = RIVAL_IDS;
-const RULE_ART = ['meltwater', 'aurora_lanes', 'pond_cracks', 'cracked_ice', 'both', 'speed_lanes', 'rumble_strips', 'shadow_zones', 'moonbeams', 'loose_planks']; // rules drawn with the rule sprites
 
 const INTRO = [
   ['us', 'frost', 'Welcome to the Frostline Regional Cup, Foxes. Five rounds, then the top four play it off for the cup.'],
@@ -173,11 +172,11 @@ class App {
     requestAnimationFrame((t) => this.loop(t));
   }
 
-  // The icons a match can show (achievement toasts, the arena rule on the ticker), made a few
+  // The icons a match can show (achievement toasts), made a few
   // at a time while the title screen is up: made mid-match, each copy out of a page the rink
   // is drawing forced the GPU to stop and hand it back, a hitch at the moment of a goal.
   warmIcons() {
-    const jobs = [...ACHIEVEMENTS.map((a) => () => Assets.icon(a.icon, 72)), ...Object.keys(TWIST_INFO).map((k) => () => ruleIconSrc(k, 64))];
+    const jobs = ACHIEVEMENTS.map((a) => () => Assets.icon(a.icon, 72));
     const step = () => {
       for (let i = 0; i < 4 && jobs.length; i++) jobs.shift()();
       if (jobs.length) setTimeout(step, 60);
@@ -329,7 +328,6 @@ class App {
   makeMatch(cfg, teamId, arena = 'home') {
     // keep only the art this match uses decoded (phones have little image memory)
     const geared = cfg.teams.some((t) => t.skaters.some((k) => k.gear && (GEAR_LOOK[k.gear.stick] || GEAR_LOOK[k.gear.skates])));
-    const rules = RULE_ART.includes(cfg.twist);
     // the title and hub scenes show over the demo match, so their art stays with it
     const host = Object.values(TEAMS).find((tm) => tm.arena === arena); // its mascot dances in the stands
     const team = teamInfo(teamId); // (the All-Stars recolour the rival pages they're given)
@@ -340,7 +338,7 @@ class App {
     // the mascot race's runners (Batch DB): only the pages with the Snow Fox and their mascot on
     // (the race draws the others from those); the whole race group is over 20 MB decoded
     const runners = !this.attract && !cfg.drill ? ['race/snow_fox/run_1', ...(MASCOTS[teamId] ? [`race/${MASCOTS[teamId]}/run_1`] : [])].filter((f) => Assets.frame(f)) : [];
-    Assets.trim({ pages: [...Assets.framePages(coachCostume), ...Assets.framePages(runners)], teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(team.groups || []), ...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(arena === 'home' ? ['pet_rink'] : []), ...(this.save.settings.little ? ['cub_coach', 'kid_stars'] : []), ...(cfg.night && Assets.frame('night/aurora_1') ? [Assets.atlas.pages[Assets.frame('night/aurora_1')[0]].group] : [])] });
+    Assets.trim({ pages: [...Assets.framePages(coachCostume), ...Assets.framePages(runners)], teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(team.groups || []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(arena === 'home' ? ['pet_rink'] : []), ...(this.save.settings.little ? ['cub_coach', 'kid_stars'] : []), ...(cfg.night && Assets.frame('night/aurora_1') ? [Assets.atlas.pages[Assets.frame('night/aurora_1')[0]].group] : [])] });
     const fancam = arena === 'home' && !this.attract && !!Assets.atlas.fancam; // (the fan cam's fans: Batch CT)
     const cub = arena === 'home' && !!Assets.atlas.arena_spots?.home_cub && Assets.atlas.pages.some((pg) => pg.group === 'pet_rink'); // (the cub on the boards: Batch DH)
     if (runners.length) Assets.loadPages(runners).catch(() => {});
@@ -349,7 +347,6 @@ class App {
     if (dressed) Assets.loadGroup('seasonal').then(() => { if (this.scene === 'title') this.ui.titleLogo(); }).catch(() => {}); // (the logo's trimmings too)
     if (coachCostume.length) Assets.loadPages(coachCostume).catch(() => {});
     if (geared) Assets.ensureGear();
-    if (rules) Assets.loadGroup('rules').catch(() => {});
     this.lap = null;
     this.fx.heavySnow = false;
     Assets.prepareTeam(team);
@@ -377,12 +374,11 @@ class App {
 
   startAttract() {
     const teamId = RIVALS[Math.floor(Math.random() * RIVALS.length)];
-    const cfg = matchConfig(this.save, teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none' }, { attract: true });
+    const cfg = matchConfig(this.save, teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'] }, { attract: true });
     cfg.diff = [0.7, 0.7];
     this.attract = true;
     const arena = TEAMS[teamId].arena;
     const where = arena && Assets.backdrops.has(arena) ? arena : 'home';
-    cfg.twist = this.twistFor(where, { twist: 'none' });
     this.makeMatch(cfg, teamId, where);
     this.match.state = 'faceoff';
     // the ice gets resurfaced before each demo match
@@ -439,8 +435,7 @@ class App {
     const team = TEAMS[f.opponent];
     const powers = stage.powers.length ? t('Power pucks: {list}.', { list: stage.powers.map((p) => t(POWER_INFO[p].name)).join(', ') }) : t('No power pucks this match.');
     const arena = this.venue(stage.arena) || this.arenaFor(team.id); // the Winter Classic is on Pine Pond
-    const twist = TWIST_INFO[this.twistFor(arena, stage)];
-    const sub = `${t(stage.round, { n: stage.roundN })} · ${powers} ${twist ? t(twist) : ''}`;
+    const sub = `${t(stage.round, { n: stage.roundN })} · ${powers}`;
     this.scene = 'dialogue';
     this.music('story');
     this.loadThen(Assets.ensureTeam(team.id, arena), () => this.showStageDialogue(f, team, sub));
@@ -505,17 +500,6 @@ class App {
     return a && (!ARENAS[a] || !ARENAS[a].national || (Assets.atlas.arenas && Assets.atlas.arenas[a])) ? a : 'home';
   }
 
-  announceRule(twist, arena) {
-    if (!twist || twist === 'none' || !TWIST_INFO[twist]) return;
-    setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t(TWIST_INFO[twist]), ruleIconSrc(twist, 64)); }, 1400);
-  }
-
-  // A rival's building brings its own rule; the Frostline rink keeps the stage's twist.
-  twistFor(arena, stage, rules = true) {
-    if (!rules) return 'none';
-    return (ARENAS[arena] && ARENAS[arena].twist) || (stage && stage.twist) || 'none';
-  }
-
   showStageDialogue(f, t, sub) {
     const stage = f.stage;
     let lines;
@@ -532,14 +516,14 @@ class App {
     });
   }
 
-  startExhibition(teamId, mods = [], arena = 'auto', rules = true, coop = false, mini = false, night = false) {
-    this.lastExhibition = { teamId, mods, arena, rules, coop, night }; // (for Play again on the results)
+  startExhibition(teamId, mods = [], arena = 'auto', coop = false, mini = false, night = false) {
+    this.lastExhibition = { teamId, mods, arena, coop, night }; // (for Play again on the results)
     const where = this.arenaFor(teamId, arena);
     // a night game (Batch DE): the rink's night backdrop and the northern lights, where there are some
     const dark = night && Assets.atlas.arenas && Assets.atlas.arenas[where + '_night'] ? where + '_night' : null;
     const aurora = dark && Assets.frame('night/aurora_1');
     this.loadThen(Promise.all([Assets.ensureTeam(teamId, where), dark && Assets.ensureArena(dark), aurora && Assets.loadGroup(Assets.atlas.pages[aurora[0]].group)]), () =>
-      this.beginMatch(teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 120, round: 'Exhibition' }, true, mods, { arena: where, rules, coop, mini, night: !!dark }));
+      this.beginMatch(teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 120, round: 'Exhibition' }, true, mods, { arena: where, coop, mini, night: !!dark }));
   }
 
   // The Mini Cup's next game (a new cup if there's none on, or the last one's over).
@@ -547,7 +531,7 @@ class App {
     const s = this.save;
     let c = miniOf(s);
     if (!c || c.over) { c = newMiniCup(s); writeSave(s); }
-    this.startExhibition(c.opps[c.round], [], 'auto', true, false, true);
+    this.startExhibition(c.opps[c.round], [], 'auto', false, true);
   }
 
   // After a Mini Cup game: the cup and its prize, the bracket and the next game, or out.
@@ -622,8 +606,8 @@ class App {
         { skaters: ids.map((id) => ({ def: slotDef(teamId, id), stats: { ...CHARACTERS[id].base }, name: team.names[id], perks: [], sprite: slotSprite(teamId, id), parts: slotLook(teamId, id) })), goalie: { stats: { rfx: 6, pos: 6 }, name: team.names.goalie, art: team.art || (team.goalieLook ? goalieArt(team.goalieLook) : 'newcomer'), mask: team.goalieLook || null }, chem },
       ],
       humanTeam: 0, humans: [0, 1],
-      powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none',
-      diff: [0.6, 0.6], seed: (Math.random() * 1e9) >>> 0, twist: this.twistFor(arena, { twist: 'none' }),
+      powers: ['fire', 'ice', 'lightning', 'gravity'],
+      diff: [0.6, 0.6], seed: (Math.random() * 1e9) >>> 0,
     };
     this.cur = { versus: true, teamId, stage: { round: 'Versus' }, exhibition: true, mods: [] };
     this.attract = false;
@@ -640,7 +624,6 @@ class App {
     this.music(ARENA_MUSIC[arena] || 'frostline');
     audio.setArena(arena);
     this.hud.banner(`<div class="small">${t('Local versus')}</div><div class="big" style="font-size:clamp(48px,10vw,110px)">${t('FACEOFF')}</div>`, 1.6);
-    this.announceRule(cfg.twist, arena);
   }
 
   endVersus(summary) {
@@ -852,7 +835,6 @@ class App {
     cfg.coop = coop; cfg.keeperCoop = keeperCoop;
     this.cur.coop = coop || keeperCoop; // (two players' input either way)
     const arena = extra.arena || this.venue(stage.arena) || this.arenaFor(teamId);
-    cfg.twist = this.twistFor(arena, stage, extra.rules !== false);
     this.attract = false;
     const m = this.makeMatch(cfg, teamId, arena);
     const classic = !!(extra.fixture && extra.fixture.kind === 'classic');
@@ -880,7 +862,6 @@ class App {
     if (m.coop && firstTime(s, 'coop')) setTimeout(() => { if (this.scene === 'match' && this.match === m) this.hud.hint(t('Two players! Each of you swaps only with the skater the AI has. Pass to it and you take it over; your partner keeps theirs.'), 6); }, 2600);
     if (classic) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t('The Winter Classic! Outdoor hockey under the snow, and the whole league is watching.')); }, 500);
     if (extra.allstar) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t('The All-Star Game! The fans voted, and the league\'s best share the ice.')); }, 500);
-    this.announceRule(cfg.twist, arena);
     if (this.cur.daily) setTimeout(() => { if (this.scene === 'match') this.hud.banner(`<div class="small">${t('Daily challenge')}</div><div class="sub" style="font-size:clamp(16px,3vw,24px)">${t(dailyGoal(this.cur.daily.goal).text)}</div>`, 3); }, 300);
     this.touch.reset(); this.touch2.reset();
     this.music(classic ? 'classic' : /\bFinal$/.test(stage.round || '') ? 'final' : ARENA_MUSIC[arena] || 'frostline');
@@ -1058,27 +1039,7 @@ class App {
     m.on('faceoff', () => { if (m.score[0] + m.score[1] > 0 && !m.drill) drawHint(); });
     m.on('drop', () => audio.sfx('drop'));
     m.on('stop', (e) => audio.sfx('stop', at(e.s.x, e.s.y, 0.8)));
-    m.on('splash', (e) => {
-      const now = performance.now();
-      if (now - (this.lastSplash || 0) < 700) return; // one splash at a time
-      this.lastSplash = now;
-      audio.sfx('splash', at(e.x, e.y, Math.min(1, e.power / 300)));
-    });
-    m.on('icicle_warn', (e) => audio.sfx('shimmer', at(e.x, e.y, 0.5)));
-    m.on('icicle', (e) => {
-      audio.sfx('crack', at(e.x, e.y, 0.9)); audio.sfx('stone', at(e.x, e.y, 0.5));
-      const ours = e.hit.find((s) => s.controlled);
-      if (ours) this.rumble(0.25, 0.5, 160, ours.team, ours.seat || 0);
-      if (e.hit.length && !this.attract) this.hud.ticker(t('{name} got caught under a falling icicle!', { name: e.hit[0].name }));
-    });
-    m.on('chunk_hit', (e) => audio.sfx('boards', at(e.x, e.y, Math.min(0.8, 0.3 + e.power / 1200))));
-    m.on('ice_crack', (e) => { audio.sfx('crack', { vol: 0.5 + e.k * 0.3 }); if (!e.grow) this.rumble(0.1, 0.3, 80); });
-    m.on('aurora_shift', () => audio.sfx('shimmer', { vol: 0.8 }));
-    m.on('gust', (e) => { audio.sfx('whoosh', { vol: 0.9 }); if (!this.attract) this.hud.ticker(e.dir > 0 ? t('A gust off the sea, blowing to the right!') : t('A gust off the sea, blowing to the left!')); });
-    m.on('puck_hop', (e) => { audio.sfx('boards', at(e.x, e.y, 0.45)); audio.sfx('stick', at(e.x, e.y, 0.5)); });
     m.on('deke', (e) => audio.sfx('glide', at(e.s.x, e.s.y, 0.55)));
-    m.on('plank', (e) => { audio.sfx('boards', at(e.x, e.y, Math.min(1, 0.4 + e.power / 900))); audio.sfx('stick', at(e.x, e.y, 0.6)); });
-    m.on('glare', (e) => audio.sfx('shimmer', at(e.x, e.y, 0.35)));
     m.on('stride', (e) => { if (e.s.controlled) audio.sfx('stride'); });
     m.on('pickup_spawn', () => {
       audio.sfx('pickup', { vol: 0.7 });
@@ -1251,7 +1212,7 @@ class App {
       const finish = () => {
         // Play again: the same exhibition straight away
         if (c.mini) return this.miniNext(rewards.won); // (the Mini Cup: the bracket, or the cup)
-        if (this.rematchNext) { this.rematchNext = false; const e = this.lastExhibition; return this.startExhibition(e.teamId, e.mods, e.arena, e.rules, e.coop, false, e.night); }
+        if (this.rematchNext) { this.rematchNext = false; const e = this.lastExhibition; return this.startExhibition(e.teamId, e.mods, e.arena, e.coop, false, e.night); }
         if (becameChampion) { this.scene = 'results'; this.music('final'); audio.jingle('champion'); this.ui.champion(() => this.goHub('tournament')); } else this.goHub(rewards.won ? 'tournament' : 'team');
       };
       const call = (next) => { const o = this.pendingOffer; this.pendingOffer = null; return o ? this.ui.rivalCall(o, next) : next(); };
@@ -1707,7 +1668,7 @@ class App {
     noteAttempt(this.save, d.date);
     writeSave(this.save);
     this.loadThen(Assets.ensureTeam(d.teamId, d.arena), () => {
-      this.beginMatch(d.teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], twist: 'none', reward: 120, round: 'Daily challenge' }, true, d.mods, { arena: d.arena, daily: d });
+      this.beginMatch(d.teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 120, round: 'Daily challenge' }, true, d.mods, { arena: d.arena, daily: d });
     });
   }
 

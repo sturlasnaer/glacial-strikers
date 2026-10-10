@@ -10,7 +10,7 @@ const check = (name, cond, info) => { if (cond) pass++; else { fail++; console.l
 const team = () => ({ skaters: ['frost', 'thunder', 'stone'].map((id) => ({ def: CHARACTERS[id], stats: { ...CHARACTERS[id].base }, perks: [] })), goalie: { stats: { rfx: 6, pos: 6 }, name: 'G' }, chem: {} });
 // the player's skater at (x, y) with the puck, a teammate out in the open, one rival `near` away
 const setup = (x, y, near) => {
-  const m = new Match({ teams: [team(), team()], humanTeam: 0, seed: 4, powers: [], diff: [0.5, 0.3], twist: 'none' });
+  const m = new Match({ teams: [team(), team()], humanTeam: 0, seed: 4, powers: [], diff: [0.5, 0.3] });
   m.state = 'play';
   const c = m.controlled(), [, mate, other] = m.teamSkaters(0), [o, ...rest] = m.teamSkaters(1);
   for (const [k, kx, ky] of [[c, x, y], [mate, x - 40, y + 200], [other, -500, -200], [o, x + near, y]]) { k.x = kx; k.y = ky; }

@@ -29,7 +29,7 @@ for(const team of Object.values(TEAMS).filter(t=>A.rival_supporters[t.art||t.mar
 for(const order of [['home','rams'],['rams','home']]){
  const f=nextFixture({phase:'playoffs',playoffs:{semis:[],final:{a:order[0],b:order[1]}}});assert.equal(f.stage.arena,'frostline_coliseum');checks++;
 }
-assert.equal(ARENAS.frostline_coliseum.twist,'none');checks++;
+assert.ok(ARENAS.frostline_coliseum.finalOnly);checks++;
 assert.equal(Renderer.prototype.penaltyBox.call({arena:ARENAS.frostline_coliseum}),A.arena.penalty_boxes.frostline_coliseum);checks++;
 assert.equal(Renderer.prototype.penaltyBox.call({arena:ARENAS.pine_pond}),A.arena.penalty_box_pond);checks++;
 for(const time of [0,.6]){

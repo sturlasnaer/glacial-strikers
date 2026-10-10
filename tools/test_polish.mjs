@@ -23,7 +23,7 @@ for(const key of ['body_std','body_big','body_small','frost_captain']){
  const fr=Renderer.prototype.skaterFrame.call(renderer,s,{state:'goal',lastGoal:{scorer:{}}});assert.notEqual(fr.pose,'signature');cases++;
  if(key==='frost_captain'){const fr=Renderer.prototype.skaterFrame.call(renderer,s,{state:'goal',lastGoal:{scorer:s}});assert.equal(fr.flip,true);cases++;}
 }
-for(const key of ['moonstruck','splinters','protector','game-face','new-colours']){const a=ACHIEVEMENTS.find(a=>a.id===key);assert.ok(a&&A.frames[a.art||'achievements/'+key]);cases++;}
+for(const key of ['protector','game-face','new-colours']){const a=ACHIEVEMENTS.find(a=>a.id===key);assert.ok(a&&A.frames[a.art||'achievements/'+key]);cases++;}
 const oldIcon=Assets.icon;Assets.icon=(id)=>'TEST:'+id;
 const news={season:2,news:[{k:'edge',s:2}]};const html=UI.prototype.newsHtml.call({},news);assert.ok(html.includes('TEST:icons/news_edge'));cases++;
 const edge=A.news_icons.edge;delete A.news_icons.edge;const fallback=UI.prototype.newsHtml.call({},news);assert.ok(fallback.includes('TEST:'+A.news_icons.new_club));A.news_icons.edge=edge;Assets.icon=oldIcon;cases++;

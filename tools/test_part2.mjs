@@ -83,9 +83,6 @@ check('news icons', ['sign', 'draft', 'trade', 'retire', 'cup', 'new_club'].ever
 check('club crests on the home pages', Object.keys(A.club_crests).length === 6 && Object.values(A.club_crests).every((f) => F[f] && A.pages[F[f][0]].group === 'home'));
 check('goalie builds: every pose anchored, with shoulders', ['big', 'small'].every((b) => ['goalies_side', 'goalies_side_west', 'goalies_front', 'goalies_back', 'goalies_puck_handling', 'goalies_puck_handling_west'].every((k) => Object.values(A[k]['parts_' + b]).every((f) => GP.anchors[f])) && GP.portraits.bodies[b] && F[GP.portraits.bodies[b].body]) && GP.builds.join() === 'std,big,small');
 check('...at the standard build\'s scale', F[A.goalies_side.parts_big.ready][7] === F[A.goalies_side.parts.ready][7]);
-const ER = A.expansion_rules;
-check('moonbeam, glare, planks and splinters with the rule art', ER.moonbeams.moonbeams.length === 4 && ER.moonbeams.glare.length === 3 && ER.loose_planks.planks_side.length === 3 && ER.loose_planks.planks_end.length === 3 && ER.loose_planks.splinters.length === 4 && [...ER.moonbeams.moonbeams, ...ER.loose_planks.splinters].every((f) => A.pages[F[f][0]].group === 'rules'));
-check('...and their rule icons', F[A.rule_icons.moonbeams] && F[A.rule_icons.loose_planks]);
 
 // BA: the expansion captains, drawn like the founding rivals' captains
 for (const key of ['glacier_owls_c', 'thunder_moose_c']) {
@@ -106,7 +103,7 @@ useAchievementArt(F);
 check('every achievement icon exists', ACHIEVEMENTS.every((a) => F[a.icon]), ACHIEVEMENTS.filter((a) => !F[a.icon]).map((a) => a.id));
 const own = (a) => a.icon.startsWith('achievements/') || a.icon.startsWith('allstar/') || (!!a.art && a.icon === a.art); // (or the art it asked for, as the Mini Cup's badge)
 // (requested ones show a stand-in until their art arrives: BF's five, in; BK's two)
-const PENDING = new Set(['moonstruck', 'splinters', 'protector', 'game-face', 'new-colours', 'sold-it', 'off-the-drop', 'penalty-shot', 'redirect', 'wiped-out', 'coachs-orders', 'traffic', 'bench-boss', 'hot-hand', 'breaking-ground', 'built-to-last', 'media-darling', 'raise-the-banner', 'record-breaker', 'better-together', 'fresh-sheet', 'one-of-our-own', 'homegrown-hero', 'special-teams', 'sticker-page', 'sticker-album', 'home-sweet-home', 'postcard-collector', 'fetch-champion', 'gold-star-chart', 'moving-up', 'national-champions', 'elite-champions', 'pet-pals', 'full-pet-house', 'elite-dynasty', 'grand-tour']);
+const PENDING = new Set(['protector', 'game-face', 'new-colours', 'sold-it', 'off-the-drop', 'penalty-shot', 'redirect', 'wiped-out', 'coachs-orders', 'traffic', 'bench-boss', 'hot-hand', 'breaking-ground', 'built-to-last', 'media-darling', 'raise-the-banner', 'record-breaker', 'better-together', 'fresh-sheet', 'one-of-our-own', 'homegrown-hero', 'special-teams', 'sticker-page', 'sticker-album', 'home-sweet-home', 'postcard-collector', 'fetch-champion', 'gold-star-chart', 'moving-up', 'national-champions', 'elite-champions', 'pet-pals', 'full-pet-house', 'elite-dynasty', 'grand-tour']);
 check('every achievement has its own icon (AF, AN, BF, BK, BO, BW, CA, CC; CJ, CL, CR, CS, DX pending)', ACHIEVEMENTS.every((a) => own(a) || (PENDING.has(a.id) && !F[a.art])), ACHIEVEMENTS.filter((a) => !own(a) && !PENDING.has(a.id)).map((a) => a.id));
 
 // the linesman

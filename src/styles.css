@@ -389,7 +389,7 @@ span.fac-pip.on { background: var(--gold); }
 .dlg-head { position: absolute; top: calc(12px + var(--safe-t)); left: 0; right: 0; text-align: center; }
 .dlg-head .vs { font-family: var(--display); font-size: clamp(28px, 6vw, 54px); line-height: 0.9; text-shadow: 0 4px 0 var(--navy); }
 .dlg-head .vs em { font-style: normal; color: var(--gold); padding: 0 0.3em; }
-.dlg-head .twist { font-size: 13px; color: var(--ice-2); max-width: 60ch; margin: 6px auto 0; padding: 0 16px; }
+.dlg-head .dlg-sub { font-size: 13px; color: var(--ice-2); max-width: 60ch; margin: 6px auto 0; padding: 0 16px; }
 .portraits { position: relative; display: flex; justify-content: space-between; align-items: flex-end; pointer-events: none; height: min(42vh, 300px); }
 .portraits img { height: 100%; width: auto; transition: filter 0.2s, transform 0.25s; filter: brightness(0.45) saturate(0.6); transform: translateY(10px); }
 .portraits img.on { filter: none; transform: translateY(0); }

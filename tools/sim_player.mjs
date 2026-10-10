@@ -16,7 +16,7 @@ const team = () => ({ skaters: ['frost', 'thunder', 'stone'].map((id) => ({ def:
 export function probe(diff, n = N, simple = !!process.env.SIMPLE) {
   const tot = { min: 0, steals: 0, hitLoss: 0, hitsTaken: 0, carries: 0, carryT: 0, crowd: 0, crowdN: 0, gf: 0, ga: 0, wins: 0, passes: 0, done: 0, picked: 0, open: 0, openN: 0 };
   for (let i = 0; i < n; i++) {
-    const m = new Match({ teams: [team(), team()], humanTeam: 0, seed: 500 + i, powers: [], diff: [0.6, diff], simple, twist: 'none', plans: ['balanced', process.env.PLAN || 'balanced'] });
+    const m = new Match({ teams: [team(), team()], humanTeam: 0, seed: 500 + i, powers: [], diff: [0.6, diff], simple, plans: ['balanced', process.env.PLAN || 'balanced'] });
     let carryStart = null, f = 0, inFlight = false;
     m.on('pass', (e) => { if (e.s.team === 0 && e.s.controlled) { tot.passes++; inFlight = true; } });
     m.on('steal', (e) => { if (e.from && e.from.team === 0 && e.from.controlled) tot.steals++; });

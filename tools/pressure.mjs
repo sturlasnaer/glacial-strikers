@@ -17,7 +17,7 @@ export function pressure(teamId, n = N, seasonN = season, seed = 1) {
   const stage = TOURNAMENT.stages.find((s) => s.team === teamId);
   let held = 0, spells = 0, lost = 0, hits = 0, steals = 0, playT = 0, goalsFor = 0, goalsAgainst = 0;
   for (let i = 0; i < n; i++) {
-    const m = new Match({ ...matchConfig(save, teamId, { ...stage, powers: [], twist: 'none' }), seed: seed * 100 + i });
+    const m = new Match({ ...matchConfig(save, teamId, { ...stage, powers: [] }), seed: seed * 100 + i });
     let spell = 0, had = false;
     m.on('hit', (e) => { if (e.b.controlled) hits++; });
     m.on('steal', (e) => { if (e.from && e.from.controlled) steals++; });

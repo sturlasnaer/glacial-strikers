@@ -3,7 +3,7 @@
 // reaction time, decision quality, aim and aggression.
 
 import { clamp, lerp, norm, segDist } from './util.js';
-import { GOAL_X, MOUTH, BLUE_X, clampInside, RINK, insideDepth, netBox, ICICLE } from './rink.js';
+import { GOAL_X, MOUTH, BLUE_X, clampInside, RINK, insideDepth, netBox } from './rink.js';
 import { netWaypoint } from './entities.js';
 
 export class TeamAI {
@@ -400,34 +400,6 @@ export class TeamAI {
       const ox = s.x - o.x, oy = s.y - o.y, od = Math.hypot(ox, oy);
       if (od < 70 && od > 0.1) { dx += (ox / od) * (70 - od) * 1.2; dy += (oy / od) * (70 - od) * 1.2; }
     }
-    // arena rules: skirt slush pools and cracks unless the target is inside one, and keep
-    // the puck off the rumble strips
-    const tw = this.m.twists;
-    if (tw.strips.length && this.m.puck.owner === s) {
-      for (const st of tw.strips) {
-        const off = s.y - st.y;
-        if (Math.abs(off) < st.h / 2 + 22 && s.x > st.x0 - 40 && s.x < st.x1 + 40) dy += Math.sign(st.y) * -1 * (st.h / 2 + 22 - Math.abs(off)) * (0.6 + this.diff * 0.8);
-      }
-    }
-    if (tw.pools.length || tw.cracks.length) {
-      for (const z of tw.pools.length ? tw.pools : tw.cracks) {
-        const zr = z.rx || z.r;
-        if (Math.hypot(c.x - z.x, c.y - z.y) < zr) continue;
-        const ox = s.x - z.x, oy = s.y - z.y, od = Math.hypot(ox, oy);
-        if (od < zr + 35 && od > 0.1) { const k = (zr + 35 - od) * (0.5 + this.diff * 0.7); dx += (ox / od) * k; dy += (oy / od) * k; }
-      }
-    }
-    // the Glacier Cave: step round the ice chunks, and out from under a falling icicle's shadow
-    if (tw.ice) {
-      for (const k of tw.ice.chunks) {
-        const ox = s.x - k.x, oy = s.y - k.y, od = Math.hypot(ox, oy), zr = k.r + s.r + 18;
-        if (od < zr && od > 0.1) { const f = (zr - od) * 1.2; dx += (ox / od) * f; dy += (oy / od) * f; }
-      }
-      for (const f of tw.ice.falls) {
-        const ox = s.x - f.x, oy = s.y - f.y, od = Math.hypot(ox, oy), zr = ICICLE.r + s.r + 16;
-        if (od < zr && f.t > 0.5 - this.diff * 0.3) { const g = (zr - od) * (1 + this.diff * 2), l = od > 0.1 ? od : 1; dx += (od > 0.1 ? ox / l : s.side) * g; dy += (od > 0.1 ? oy / l : 0) * g; }
-      }
-    }
     const n = norm(dx, dy);
     const mag = clamp(d / slowR, 0, 1);
     s.in.mx = n.x * mag; s.in.my = n.y * mag;
@@ -559,7 +531,6 @@ export class TeamAI {
         let score = (1 - dG / 430) * 1.2 + lane * 0.6 * clamp(1.4 - dG / 400, 0.3, 1) - angle * 0.35 + (Math.abs(g.y - aimY) > 25 ? 0.25 : 0);
         if (m.puck.power && m.puck.power !== 'lightning') score += 0.3;
         if (s.empowered > 0 || s.igniteT > 0) score += 0.3;
-        if (m.twists.beam && m.inBeam(s.x, s.y)) score += 0.12 + 0.18 * this.diff; // (the Observatory: shoot out of the moonlight)
         if (s.def.arch === 'sniper') score += 0.12; // a sniper lets it go sooner
         const thresh = lerp(0.55, 0.75, this.diff) - (near < 60 ? 0.25 : 0) - (this.gamePlan === 'rungun' ? 0.14 : this.gamePlan === 'trap' ? -0.05 : 0);
         if (score > thresh) {
@@ -657,9 +628,6 @@ export class TeamAI {
     if (nearOpp && Math.abs(nearOpp.y - s.y) < 90 && (nearOpp.x - s.x) * this.side > -20) {
       y = nearOpp.y > s.y ? nearOpp.y - 130 : nearOpp.y + 130;
     }
-    // the Observatory: lean the attack toward the moonbeam when it lies between us and the net
-    const B = this.m.twists.beam;
-    if (B) { const bdx = (this.attX - B.x) * this.side; if (bdx > 60 && bdx < 420 && dx > bdx) y = y * 0.6 + B.y * 0.4; }
     if (dx < 380) y = clamp(y, -110, 110);
     return clamp(y, RINK.minY + 70, RINK.maxY - 70);
   }

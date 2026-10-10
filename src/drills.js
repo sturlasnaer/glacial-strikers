@@ -128,7 +128,6 @@ export function createDrill(id, save, charId, opts = {}) {
     humanTeam: 0,
     ...(id === 'party' ? { humans: [0, 1] } : {}), // (both shooters are players)
     powers: [],
-    twist: 'none',
     diff: [0.6, id === 'shootout' ? t.diff : id === 'party' ? 0.5 : 0.55],
     seed: opts.seed ?? (Math.random() * 1e9) >>> 0,
     assist: id === 'shootout' ? (save.settings && save.settings.assist) || 'normal' : 'normal', // (the shootout goalie's help; drills keep one setting for their boards)

@@ -14,7 +14,7 @@ const team = () => ({
 });
 const agg = { pens: 0, ppg: 0, pulls: 0, enGoals: 0, combos: 0, comboGoals: 0, chains: 0, goals: [0, 0], shots: [0, 0], time: 0, wins: [0, 0], kinds: {}, passes: 0, steals: 0, hits: 0, saves: 0, stuck: 0, ults: 0, skills: 0, powerGoals: 0, oneTimers: 0 };
 for (let i = 0; i < N; i++) {
-  const m = new Match({ teams: [team(), team()], humanTeam: null, seed: 1000 + i, powers: ['fire', 'ice', 'lightning', 'gravity'], diff: [dA, dB], plans, twist: process.env.TWIST || 'none' });
+  const m = new Match({ teams: [team(), team()], humanTeam: null, seed: 1000 + i, powers: ['fire', 'ice', 'lightning', 'gravity'], diff: [dA, dB], plans});
   m.on('combo', () => agg.combos++); m.on('penalty', () => agg.pens++); m.on('goalie_pulled', () => agg.pulls++); m.on('goal', (e) => { if (e.powerPlay) agg.ppg++; if (m.goalies[e.side === 1 ? 1 : 0].disabled) agg.enGoals++; }); m.on('chain', () => agg.chains++);
   const dt = 1 / 60;
   let t = 0;
