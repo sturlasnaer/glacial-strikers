@@ -601,10 +601,15 @@ export class Match {
     const p = this.puck;
     const c = p.owner;
     if (!c || !c.isSkater) return;
+    // a player who has stopped steering with it (3 s) can't shield it, and a stick reaches a bit
+    // further for it: no stalemates with a small player who stands still (see ai.js pressure)
+    const human = c.controlled && this.humans.includes(c.team);
+    c.idleT = human && Math.hypot(c.in.mx, c.in.my) < 0.3 ? (c.idleT || 0) + dt : 0;
+    const parked = c.idleT > 3;
     for (const d of this.opponents(c)) {
       if (d.stun > 0 || d.parked) continue;
       const sp = d.stickPoint();
-      if (Math.hypot(sp.x - p.x, sp.y - p.y) > 20) {
+      if (Math.hypot(sp.x - p.x, sp.y - p.y) > (parked && !this.humans.includes(d.team) ? 34 : 20)) {
         // a stick that would have had it on the forehand, beaten by the puck pulled across: a shield
         if (c.protect > 0.5 && !(c.shieldCd > 0)) {
           const b = c.bladeReach(), open = c.bladeAt(b.fwd, b.lat);
@@ -612,7 +617,7 @@ export class Match {
         }
         continue;
       }
-      const shielded = c.dekeT > 0 || (d.x - c.x) * (p.x - c.x) + (d.y - c.y) * (p.y - c.y) < 0; // reaching round the carrier's body (or a deke going by)
+      const shielded = !parked && (c.dekeT > 0 || (d.x - c.x) * (p.x - c.x) + (d.y - c.y) * (p.y - c.y) < 0); // reaching round the carrier's body (or a deke going by)
       // (the base was 0.8 when the puck sat in front of the body: out on the blade it's easier to reach)
       // (an AI stick on the player's carrier: a little sharper, since the player shields well)
       const vsPlayer = c.controlled && this.humans.includes(c.team) && !this.humans.includes(d.team) ? PLAYER_STEAL_MUL * (0.65 + 0.35 * this.ai[d.team].diff ** 2) : 1; // (gentler sticks on the easier levels)

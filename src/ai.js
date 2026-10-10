@@ -469,7 +469,10 @@ export class TeamAI {
     if (!b.still || b.still.c !== c || Math.hypot(c.in.mx, c.in.my) > 0.3) b.still = { c, t: m.time };
     const squeeze = human ? clamp((m.time - b.still.t - 1.5) / 1.5, 0, 1) : 0; // (round to the puck itself, not just goal-side)
     let tx = c.x + c.vx * 0.22 + g.x * gap, ty = c.y + c.vy * 0.22 + g.y * gap;
-    if (squeeze > 0) { tx = lerp(tx, m.puck.x, squeeze); ty = lerp(ty, m.puck.y, squeeze); }
+    if (squeeze > 0) { // (just past the puck on its open side, not through the carrier: no shoving them round the rink)
+      const u = norm(m.puck.x - c.x, m.puck.y - c.y), px = m.puck.x + u.x * (s.r + 4), py = m.puck.y + u.y * (s.r + 4);
+      tx = lerp(tx, px, squeeze); ty = lerp(ty, py, squeeze);
+    }
     this.seek(s, tx, ty, !human || tight || hd > 0.3, 8); // (no sprinting up to the player out in the open on the easier levels)
     const d = Math.hypot(c.x - s.x, c.y - s.y);
     if (decide) {

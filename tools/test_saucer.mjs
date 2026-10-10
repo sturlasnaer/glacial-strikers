@@ -89,11 +89,11 @@ check('AI against AI: it still goes for the puck', nearCatch({ humanTeam: null, 
 // room is for skating with it: a player standing still with the puck is closed down after a
 // moment on every level (a small player who stops shouldn't freeze the game), one skating keeps it
 {
-  const hold = (diff, steer) => {
+  const hold = (diff, steer, at = [-300, -200]) => {
     const m = new Match({ teams: [team(), team()], humanTeam: 0, seed: 901, powers: [], diff: [0.6, diff], twist: 'none' });
     for (let k = 0; k < 600 && m.state !== 'play'; k++) { m.setHumanInput(idle()); m.update(1 / 60); }
     m.state = 'play';
-    const c = m.controlled(); c.x = -300; c.y = -200;
+    const c = m.controlled(); c.x = at[0]; c.y = at[1];
     m.takePossession(c, 'test');
     let t = 0, ang = 0;
     while (t < 20 && m.puck.owner === c) {
@@ -105,6 +105,8 @@ check('AI against AI: it still goes for the puck', nearCatch({ humanTeam: null, 
   const still = hold(0.12, false), skating = hold(0.12, true);
   check('Easy: standing still with the puck, it\'s gone in a while', still < 12, still.toFixed(1));
   check('...skating about with it, it\'s kept', skating > 15, skating.toFixed(1));
+  const corner = hold(0.12, false, [-670, -145]);
+  check('...and standing still behind their own net too (a stick reaches it there)', corner < 15, corner.toFixed(1));
 }
 
 console.log(`Saucer pass: ${pass} passed, ${fail} failed`);
