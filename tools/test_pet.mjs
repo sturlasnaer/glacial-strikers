@@ -2,7 +2,7 @@
 // never off it, sits a while, now and then naps, wakes up and hops when tapped, and its name is
 // cleaned (12 characters at most).
 //   node tools/test_pet.mjs
-import { newPet, stepPet, tapPet, cleanPetName, PET_AREA, PET_NAME_MAX } from '../src/pet.js';
+import { newPet, stepPet, tapPet, cleanPetName, PET_AREA, PET_NAME_MAX, PET_OUTFITS, buyOutfit, wearOutfit, ownsOutfit } from '../src/pet.js';
 import { makeRng } from '../src/util.js';
 
 let pass = 0, fail = 0;
@@ -26,6 +26,19 @@ check('...staying put while it hops', p.x === x && p.y === y);
 for (let i = 0; i < 60; i++) stepPet(p, 1 / 60, rnd);
 check('...and the hop is over', p.hop === 0);
 check('its name: cleaned, 12 characters at most', cleanPetName('  <Snjó>\n bolti  ') === 'Snjó bolti' && cleanPetName('x'.repeat(40)).length === PET_NAME_MAX && cleanPetName('') === '');
+
+// outfits: bought once with coins and worn straight away, one at a time, taken off and on again
+{
+  const sv = { coins: 100 };
+  check('three outfits to buy', PET_OUTFITS.length === 3 && PET_OUTFITS.every((o) => o.price > 0));
+  check('not without the coins', !buyOutfit({ coins: 10 }, 'beanie'));
+  check('bought: paid for and worn', buyOutfit(sv, 'scarf') && sv.coins === 40 && ownsOutfit(sv, 'scarf') && sv.pet.wear === 'scarf');
+  check('...not twice', !buyOutfit(sv, 'scarf') && sv.coins === 40);
+  sv.coins += 100;
+  check('only one worn: the new one', buyOutfit(sv, 'bowtie') && sv.pet.wear === 'bowtie');
+  check('taken off, and the old one put on again', wearOutfit(sv, null) && sv.pet.wear === null && wearOutfit(sv, 'scarf') && sv.pet.wear === 'scarf');
+  check('not one it doesn\'t own', !wearOutfit(sv, 'beanie') && sv.pet.wear === 'scarf');
+}
 
 console.log(`Pet: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

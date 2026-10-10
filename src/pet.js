@@ -39,3 +39,27 @@ export function tapPet(p) {
 }
 
 export const cleanPetName = (s) => String(s || '').replace(/\s+/g, ' ').replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, PET_NAME_MAX);
+
+// Outfits for the cub (Shop › Locker room, Batch DA): bought once, one worn at a time (none while
+// it's in a seasonal costume).
+export const PET_OUTFITS = [
+  { id: 'scarf', name: 'Striped scarf', price: 60 },
+  { id: 'beanie', name: 'Bobble hat', price: 70 },
+  { id: 'bowtie', name: 'Bow tie', price: 50 },
+];
+export const petOf = (save) => (save.pet ||= {});
+export const ownsOutfit = (save, id) => (petOf(save).outfits || []).includes(id);
+export function buyOutfit(save, id) {
+  const o = PET_OUTFITS.find((x) => x.id === id);
+  if (!o || ownsOutfit(save, id) || (save.coins || 0) < o.price) return false;
+  save.coins -= o.price;
+  const P = petOf(save);
+  (P.outfits ||= []).push(id);
+  P.wear = id;
+  return true;
+}
+export function wearOutfit(save, id) {
+  if (id !== null && !ownsOutfit(save, id)) return false;
+  petOf(save).wear = id;
+  return true;
+}

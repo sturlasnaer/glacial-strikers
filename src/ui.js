@@ -57,7 +57,7 @@ import { seasonFor } from './seasonal.js';
 import { canCreate, createPlayer, restyle, defaultChoice, stylesFor, cleanName, MAX_OWN, NAME_MAX } from './create.js';
 import { DECOR, DECOR_BY_ID, DECOR_SLOTS, SLOT_NAMES as DECOR_SLOT_NAMES, buyDecor, putUp, takeDown, owns as ownsDecor, isOn as decorOn, placed as decorPlaced } from './decor.js';
 import { cleanSign, SIGN_MAX } from './fancam.js';
-import { newPet, stepPet, tapPet, cleanPetName, PET_NAME_MAX } from './pet.js';
+import { newPet, stepPet, tapPet, cleanPetName, PET_NAME_MAX, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit } from './pet.js';
 import { albumPages, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
 
 const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
@@ -842,12 +842,18 @@ export class UI {
     const season = seasonFor(), dressed = season && has(`pet_${season}/sit_1`), ready = dressed && Assets.pages[Assets.atlas.frames[`pet_${season}/sit_1`][0]];
     if (dressed && !ready) Assets.loadGroup('seasonal').catch(() => {}); // (in its costume from the next look in)
     const dir = ready ? `pet_${season}/` : 'pet/';
-    const H = 84, set = (ids) => Assets.spriteSet(ids.map((f) => dir + f).filter(has), H); // (a bit bigger than drawn for: it reads on a phone)
+    // its outfit (Batch DA), drawn over it on the same canvas so the two line up
+    const wear = !ready && this.app.save.pet && this.app.save.pet.wear && has(`pet_acc/${this.app.save.pet.wear}/sit_1`) ? this.app.save.pet.wear : null;
+    const H = 84, set = (names) => { // (a bit bigger than drawn for: it reads on a phone)
+      const pet = names.map((f) => dir + f).filter(has), acc = wear ? names.map((f) => `pet_acc/${wear}/${f}`).filter(has) : [];
+      const k = Assets.spriteSet([...pet, ...acc], H);
+      return k && { ...k, urls: k.urls.slice(0, pet.length), acc: acc.length === pet.length ? k.urls.slice(pet.length) : null };
+    };
     const sets = { walk: set(['walk_1', 'walk_2', 'walk_3', 'walk_4']), sit: set(['sit_1', 'sit_2']), sleep: set(['sleep_1', 'sleep_2']), hop: set(['hop']) };
     if (Object.values(sets).some((x) => !x)) return;
     const s = this.app.save, name = () => (s.pet && s.pet.name) || t('Snowball');
-    room.insertAdjacentHTML('beforeend', `<button class="pet" id="pet" aria-label="${esc(name())}"><img alt=""></button><button class="pet-tag" id="pet-tag" hidden></button>`);
-    const el = room.querySelector('#pet'), img = el.querySelector('img'), tag = room.querySelector('#pet-tag');
+    room.insertAdjacentHTML('beforeend', `<button class="pet" id="pet" aria-label="${esc(name())}"><img alt=""><img class="pet-acc" alt="" hidden></button><button class="pet-tag" id="pet-tag" hidden></button>`);
+    const el = room.querySelector('#pet'), img = el.querySelector('img'), acc = el.querySelector('.pet-acc'), tag = room.querySelector('#pet-tag');
     this.pet ||= newPet();
     let last = performance.now(), tagT = 0;
     clearInterval(this.petTimer);
@@ -857,7 +863,7 @@ export class UI {
       last = now;
       const p = stepPet(this.pet, dt), st = p.hop > 0 ? 'hop' : p.state, k = sets[st];
       const i = Math.floor((now / 1000) * (st === 'walk' ? 8 : st === 'sleep' ? 1 : 2)) % k.urls.length;
-      if (img.dataset.k !== st + i) { img.src = k.urls[i]; img.dataset.k = st + i; }
+      if (img.dataset.k !== st + i) { img.src = k.urls[i]; img.dataset.k = st + i; acc.hidden = !k.acc; if (k.acc) acc.src = k.acc[i]; }
       const lift = p.hop > 0 ? Math.sin((1 - p.hop / 0.5) * Math.PI) * 3 : 0;
       el.style.cssText = `left:${p.x}%;top:${p.y - lift}%;height:${(H / 864) * 100}%;aspect-ratio:${k.w}/${k.h};transform:translate(-${k.fx * 100}%,-${k.fy * 100}%) scaleX(${p.face});z-index:${p.y < 66 ? 1 : 3}`;
       tag.style.cssText = `left:${p.x}%;top:${p.y - 10}%`;
@@ -2570,12 +2576,29 @@ export class UI {
           </div>
         </div>`;
       }).join('')}</div>
+      ${(() => { // outfits for the cub (Batch DA)
+        const outfits = PET_OUTFITS.filter((o) => Assets.atlas.frames[`pet_acc/${o.id}/sit_1`] && Assets.atlas.frames['pet/sit_1']);
+        if (!outfits.length) return '';
+        const wear = (s.pet || {}).wear;
+        return `<div class="label" style="margin:14px 0 6px">${t('For the cub')}</div><div class="shop">${outfits.map((o) => {
+          const pic = Assets.spriteSet(['pet/sit_1', `pet_acc/${o.id}/sit_1`], 96), own = ownsOutfit(s, o.id), on = wear === o.id, afford = s.coins >= o.price;
+          return `<div class="item" tabindex="0" aria-label="${esc(t(o.name))}">
+            <span class="outfit-ico">${pic ? `<img src="${pic.urls[0]}" alt=""><img src="${pic.urls[1]}" alt="">` : ''}</span>
+            <div style="min-width:0"><div class="label" style="font-size:13px">${t('For the cub')}</div><h4>${esc(t(o.name))}</h4>
+              <div class="buy">${own ? (on ? `<span class="tag good">${t('Wearing it')}</span><button class="btn small ghost" data-unwear="1">${t('Take off')}</button>` : `<button class="btn small" data-wear="${o.id}">${t('Put on')}</button>`)
+                : `<span class="price">${o.price}</span><button class="btn small ${afford ? 'gold' : ''}" data-obuy="${o.id}" ${afford ? '' : 'disabled'}>${t('Buy')}</button>`}</div></div>
+          </div>`;
+        }).join('')}</div>`;
+      })()}
       ${Assets.atlas.locker ? `<div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn small ghost" id="decor-room">${t('See the room')}</button></div>` : ''}`;
     this.click('[data-f]', (el) => { this.shopFilter = el.dataset.f; audio.sfx('click'); this.tabShop(body); }, body);
     this.click('[data-dbuy]', (el) => { if (!buyDecor(s, el.dataset.dbuy)) return; this.app.ach.checkMeta(); writeSave(s); audio.sfx('purchase'); this.hub('shop'); }, body);
     this.click('[data-dup]', (el) => { if (putUp(s, el.dataset.dup)) { this.app.ach.checkMeta(); writeSave(s); audio.sfx('equip'); } this.tabDecor(body); }, body);
     this.click('[data-ddown]', (el) => { if (takeDown(s, el.dataset.ddown)) { writeSave(s); audio.sfx('back'); } this.tabDecor(body); }, body);
     this.click('#decor-room', () => { audio.sfx('click'); this.hub('room'); }, body);
+    this.click('[data-obuy]', (el) => { if (!buyOutfit(s, el.dataset.obuy)) return; writeSave(s); audio.sfx('purchase'); this.hub('shop'); }, body);
+    this.click('[data-wear]', (el) => { if (wearOutfit(s, el.dataset.wear)) { writeSave(s); audio.sfx('equip'); } this.tabDecor(body); }, body);
+    this.click('[data-unwear]', () => { wearOutfit(s, null); writeSave(s); audio.sfx('back'); this.tabDecor(body); }, body);
   }
 
   tabFacilities(body) {
