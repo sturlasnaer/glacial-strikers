@@ -26,8 +26,11 @@ const setup = (cfg, near = 40) => {
 
 {
   const { m, c, mate, o } = setup({ humanTeam: 0 });
+  const said = [];
+  m.on('saucer', (e) => said.push(e.s));
   m.pass(c, mate);
   check("the player's pass goes over the rival on them", m.puck.pass && m.puck.pass.over && m.puck.pass.over.includes(o) && m.puck.vz > 0);
+  check('and says so (the first one gets a hint)', said.length === 1 && said[0] === c);
   let top = 0;
   for (let i = 0; i < 40 && !m.puck.owner; i++) { m.setHumanInput(idle()); m.update(1 / 60); top = Math.max(top, m.puck.z); }
   check('and reaches the teammate', m.puck.owner === mate, m.puck.owner && m.puck.owner.team);

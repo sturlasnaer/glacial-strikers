@@ -938,6 +938,7 @@ class App {
       if (e.s.controlled && e.kind !== 'wrist') this.rumble(0.35, 0.6, 90, e.s.team, e.s.seat);
     });
     m.on('pass', (e) => audio.sfx('pass', at(e.s.x, e.s.y)));
+    m.on('saucer', (e) => { if (e.s.controlled && !this.attract && firstTime(this.save, 'saucer')) this.hud.hint(t('Saucer pass! With a rival right on you, your pass hops over their stick.'), 4); });
     m.on('receive', (e) => audio.sfx('receive', at(e.s.x, e.s.y)));
     m.on('goalie_pass', (e) => audio.sfx('pass', at(e.g.x, e.g.y, 0.6)));
     m.on('poke_check', (e) => audio.sfx('poke', at(e.g.x, e.g.y)));

@@ -925,7 +925,7 @@ export class Match {
     if (foe) {
       const r = 80 - 40 * foe.diff ** 2;
       const over = this.skaters.filter((o) => o.team !== s.team && !o.parked && Math.hypot(o.x - s.x, o.y - s.y) < r);
-      if (over.length) { p.pass.over = over; p.vz = 140; } // (a hop it lands from before the catch height)
+      if (over.length) { p.pass.over = over; p.vz = 140; this.emit('saucer', { s }); } // (a hop it lands from before the catch height)
     }
     p.shot = null;
     p.noPickup.set(s, 0.3);
