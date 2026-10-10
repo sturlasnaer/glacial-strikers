@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10zt',
+    items: [
+      { icon: 'map/bus_1', alt: 'icons/career', text: 'The road trip goes national: up a division, the team bus drives across a map of the whole country, and every National town sends a postcard home when you win there.' },
+    ],
+  },
+  {
     id: '2026-10-10zs',
     items: [
       { icon: 'race/sunmesa_bulls/win', alt: 'icons/stat_cups', text: 'The National clubs\' mascots join the mascot race: a capybara, a puffin, a grizzly, a seal, a penguin, a bull and a narwhal. Play a National club to see them run.' },

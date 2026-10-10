@@ -1281,6 +1281,7 @@ export class UI {
     const cardArt = cards && (this.app.save.postcards || []).length > 0; // (their page only once there's one to show: it's big)
     if (!Assets.groupReady('map') || !Assets.groupReady(mapGroup) || (cardArt && !Assets.groupReady('postcards'))) { Promise.all([Assets.loadGroup('map'), Assets.loadGroup(mapGroup), cardArt && Assets.loadGroup('postcards')]).then(() => { if (this.tab === 'tournament' && body.isConnected) this.tabTournament(body); }, () => {}); return ''; }
     const W = f[3] / (f[7] || 1), H = f[4] / (f[7] || 1), { stops, at, next } = tripStops(L);
+    const seen = new Set(['home', ...(L.teams || []), ...stops.map((st) => st.town)]); // (the country's map: this season's towns, not all nineteen)
     const pt = (town) => towns[town] || towns.home || [W / 2, H / 2];
     const line = (list) => list.map((st) => pt(st.town).join(',')).join(' ');
     const where = (town, dy = 0) => `left:${(pt(town)[0] / W * 100).toFixed(2)}%;top:${((pt(town)[1] + dy) / H * 100).toFixed(2)}%`;
@@ -1294,7 +1295,7 @@ export class UI {
     return `<div class="trip" role="img" aria-label="${esc(label)}" style="aspect-ratio:${W} / ${H}">
       <img class="trip-map" src="${Assets.sceneImage(mapId, 960)}" alt="">${ovReady ? `<img class="trip-map" src="${Assets.sceneImage(`map_${season}/overlay`, 960)}" alt="">` : ''}
       <svg class="trip-route" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline class="todo" points="${line(stops.slice(at))}"/><polyline class="done" points="${line(stops.slice(0, at + 1))}"/></svg>
-      ${Object.keys(towns).filter((id) => TEAMS[id]).map((id) => `<button class="trip-town ${id === 'home' ? 'us' : ''} ${to && to.town === id ? 'next' : ''}" data-town="${id}" style="${where(id)}" aria-label="${esc(id === 'home' ? CLUB.name : TEAMS[id].name)}"><img src="${crest(id, 64)}" alt=""></button>`).join('')}
+      ${Object.keys(towns).filter((id) => TEAMS[id] && (!up || seen.has(id))).map((id) => `<button class="trip-town ${id === 'home' ? 'us' : ''} ${to && to.town === id ? 'next' : ''}" data-town="${id}" style="${where(id)}" aria-label="${esc(id === 'home' ? CLUB.name : TEAMS[id].name)}"><img src="${crest(id, 64)}" alt=""></button>`).join('')}
       ${Assets.frame('map/bus_1') ? `<img class="trip-bus ${this.trip.flip ? 'flip' : ''}" id="trip-bus" src="${Assets.sceneImage(bus[0], 120)}" alt="" style="${where(stops[at].town, 62)}">` : ''}
     </div>${cards ? this.postcardsHtml() : ''}`;
   }

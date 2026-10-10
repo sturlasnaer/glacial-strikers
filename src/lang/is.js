@@ -2282,6 +2282,7 @@ export const IS = {
   "The referee blows it dead. Faceoff!": "Dómarinn flautar. Uppkast!",
   "The release sends a shockwave that knocks nearby defenders off their feet.": "Skotið sendir frá sér höggbylgju sem feykir nálægum varnarmönnum um koll.",
   "The rivals ease off: fewer hits, more room on the puck and more space for passes (your teammates find open ice), most of all on Easy and against the early teams. The top teams still play hard.": "Andstæðingarnir slaka á: færri tæklingar, meira pláss með pökkinn og meira rými fyrir sendingar (liðsfélagarnir finna autt svell), mest á Auðvelt og á móti fyrstu liðunum. Bestu liðin spila enn af krafti.",
+  "The road trip goes national: up a division, the team bus drives across a map of the whole country, and every National town sends a postcard home when you win there.": "Ferðalagið nær um allt land: deild ofar keyrir liðsrútan yfir kort af öllu landinu og hver bær í Landsdeildinni sendir póstkort heim þegar þú vinnur þar.",
   "The room is full, so it's waiting in the pet house (Shop › Locker room) until you swap it in.": "Klefinn er fullur, svo það bíður í gæludýrahúsinu (Búð › Búningsklefinn) þar til þú skiptir því inn.",
   "The room is full: send one to the pet house to bring another in.": "Klefinn er fullur: sendu eitt í gæludýrahúsið til að fá annað inn.",
   "The round button above SHOOT is your signature skill. The star fires your ultimate when it glows.": "Kringlótti hnappurinn fyrir ofan SKJÓTA er sérhæfnin þín. Stjarnan leysir ofurkraftinn úr læðingi þegar hún glóir.",
