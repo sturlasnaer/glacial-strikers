@@ -59,7 +59,7 @@ import { DECOR, DECOR_BY_ID, DECOR_SLOTS, SLOT_NAMES as DECOR_SLOT_NAMES, buyDec
 import { cleanSign, SIGN_MAX } from './fancam.js';
 import { MINI_ROUNDS, MINI_PRIZE, miniOf } from './minicup.js';
 import { MASCOTS, RACE_PRIZE, pickRunners, newRace, stepRace } from './race.js';
-import { tripStops } from './trip.js';
+import { tripStops, POSTCARD_TOWNS } from './trip.js';
 import { newPet, stepPet, tapPet, tossPuck, cleanPetName, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit } from './pet.js';
 import { albumPages, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
 
@@ -1116,6 +1116,7 @@ export class UI {
           ${this.leadersHtml(L)}</div>
       </div>`;
     this.tripGo(body);
+    this.click('#postcards', () => { audio.sfx('click'); this.postcardsModal(); }, body);
   }
 
   // The road-trip map (Batch DG): the league's towns, the season's route between them, and the
@@ -1123,7 +1124,8 @@ export class UI {
   tripHtml(L, body) {
     const A = Assets.atlas, towns = A.map_towns, f = Assets.frame('map/region');
     if (!towns || !f || !A.pages.some((p) => p.group === 'map')) return '';
-    if (!Assets.groupReady('map')) { Assets.loadGroup('map').then(() => { if (this.tab === 'tournament' && body.isConnected) this.tabTournament(body); }, () => {}); return ''; }
+    const cards = A.pages.some((p) => p.group === 'postcards') && Assets.frame('postcard/lynx'); // (the postcards: Batch DK)
+    if (!Assets.groupReady('map') || (cards && !Assets.groupReady('postcards'))) { Promise.all([Assets.loadGroup('map'), cards && Assets.loadGroup('postcards')]).then(() => { if (this.tab === 'tournament' && body.isConnected) this.tabTournament(body); }, () => {}); return ''; }
     const W = f[3] / (f[7] || 1), H = f[4] / (f[7] || 1), { stops, at, next } = tripStops(L);
     const pt = (town) => towns[town] || towns.home || [W / 2, H / 2];
     const line = (list) => list.map((st) => pt(st.town).join(',')).join(' ');
@@ -1135,7 +1137,26 @@ export class UI {
       <svg class="trip-route" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline class="todo" points="${line(stops.slice(at))}"/><polyline class="done" points="${line(stops.slice(0, at + 1))}"/></svg>
       ${Object.keys(towns).filter((id) => TEAMS[id]).map((id) => `<span class="trip-town ${id === 'home' ? 'us' : ''} ${to && to.town === id ? 'next' : ''}" style="${where(id)}" title="${esc(id === 'home' ? CLUB.name : TEAMS[id].name)}"><img src="${crest(id, 64)}" alt=""></span>`).join('')}
       ${Assets.frame('map/bus_1') ? `<img class="trip-bus ${this.trip.flip ? 'flip' : ''}" id="trip-bus" src="${Assets.sceneImage('map/bus_1', 120)}" alt="" style="${where(stops[at].town, 62)}">` : ''}
-    </div>`;
+    </div>${cards ? this.postcardsHtml() : ''}`;
+  }
+
+  // Postcards from the road (Batch DK): one from each town won in, Snowcrest's with the Cup. Tap
+  // the row for them all, big.
+  postcardsHtml() {
+    const got = this.app.save.postcards || [];
+    const thumb = (id) => got.includes(id) ? `<img class="pc-thumb" src="${Assets.sceneImage('postcard/' + id, 120)}" alt="">` : `<span class="pc-thumb pc-empty"><img src="${crest(id, 40)}" alt=""></span>`;
+    return `<button class="postcards" id="postcards" aria-label="${esc(t('Postcards: {n} of {total}', { n: got.length, total: POSTCARD_TOWNS.length }))}">
+      <span class="label">${t('Postcards')} <b>${got.length}/${POSTCARD_TOWNS.length}</b></span><span class="pc-row">${POSTCARD_TOWNS.map(thumb).join('')}</span></button>`;
+  }
+
+  postcardsModal() {
+    const got = this.app.save.postcards || [], town = (id) => (id === 'home' ? CLUB.name : TEAMS[id].name);
+    this.modal(`<h2>${t('Postcards from the road')}</h2>
+      <p class="muted" style="margin-top:0">${t('Win a game in a rival\'s town and they send one home. Your own town\'s comes with the Frostline Cup.')}</p>
+      <div class="pc-grid">${POSTCARD_TOWNS.map((id) => got.includes(id)
+        ? `<figure class="pc-card"><img src="${Assets.sceneImage('postcard/' + id, 480)}" alt=""><figcaption>${esc(town(id))}</figcaption></figure>`
+        : `<figure class="pc-card locked"><span class="pc-empty"><img src="${crest(id, 64)}" alt=""></span><figcaption>${id === 'home' ? t('Win the Frostline Cup') : esc(t('Win in {town}', { town: town(id) }))}</figcaption></figure>`).join('')}</div>
+      <div class="row" style="justify-content:flex-end"><button class="btn gold" data-close>${t('Close')}</button></div>`);
   }
 
   // The bus drives on to the next town once the tab's up (straight there with less motion).

@@ -156,6 +156,20 @@ img { image-rendering: auto; max-width: 100%; }
 .league-table tr.us td { background: rgba(113, 220, 232, 0.12); }
 .league-table tr.cut td { border-bottom: 2px dashed var(--gold); }
 .schedule { display: grid; gap: 6px; }
+/* postcards from the road (Batch DK) */
+.postcards { display: flex; align-items: center; gap: 10px; width: 100%; max-width: min(560px, 45vh * 16 / 9); margin: -4px auto 12px; padding: 6px 8px; background: rgba(11, 20, 36, 0.55); border: 2px solid var(--navy-3); border-radius: 6px; cursor: pointer; color: inherit; font: inherit; }
+.postcards .label { white-space: nowrap; font-size: 13px; }
+.pc-row { display: flex; gap: 4px; min-width: 0; overflow: hidden; }
+.pc-thumb { width: 44px; height: 30px; flex: none; border-radius: 2px; object-fit: cover; }
+.pc-empty { display: flex; align-items: center; justify-content: center; border: 2px dashed var(--navy-3); border-radius: 3px; background: rgba(11, 20, 36, 0.4); }
+.pc-empty img { height: 70%; width: auto; opacity: 0.35; filter: grayscale(1); }
+.pc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 6px 0 12px; }
+.pc-card { margin: 0; text-align: center; font-size: 12px; }
+.pc-card > img { display: block; width: 100%; height: auto; border-radius: 3px; box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35); }
+.pc-card .pc-empty { aspect-ratio: 3 / 2; }
+.pc-card .pc-empty img { height: 45%; }
+.pc-card figcaption { margin-top: 4px; }
+.pc-card.locked figcaption { color: var(--muted, #8fa3c0); }
 /* the road-trip map (League tab, Batch DG) */
 .trip { position: relative; width: 100%; max-width: min(560px, 45vh * 16 / 9); margin: 0 auto 12px; border: 2px solid var(--navy-3); border-radius: 8px; overflow: hidden; background: #0b1424; }
 .trip-map { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }

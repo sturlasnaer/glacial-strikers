@@ -36,6 +36,7 @@ import { recordRealGame, computeAwards, AWARD_BY_ID } from './awards.js';
 import { dailyFor, dailyGoal, completeDaily, noteAttempt, dayKey, dailyState } from './daily.js';
 import { standings } from './league.js';
 import { nextFixture, recordOurGame, newLeague, rivalPlan, recordClassic, recordAllStar } from './league.js';
+import { sendPostcard, postcardFor } from './trip.js';
 import { updateSeasonGoals, goalStates } from './goals.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
@@ -1174,6 +1175,11 @@ class App {
       if (leagueOut.champion === 'home') { s.champion = true; becameChampion = true; s.cups = (s.cups || 0) + 1; noteCup(s, rosterIds(s), goalieIds(s)); }
       if (leagueOut.champion) addNews(s, { k: 'champion', team: leagueOut.champion });
       s.stage = s.league.round;
+    }
+    // a win on the road sends a postcard home (Batch DK), Snowcrest's own with the Cup
+    if (!c.exhibition && s.league && rewards.won) {
+      const town = postcardFor(c.fixture ? c.fixture.kind : 'regular', this.arena);
+      if (town && sendPostcard(s, town) && Assets.frame('postcard/' + town)) setTimeout(() => this.toast(crest(town, 72), t('Postcard!'), t('A postcard from {town}', { town: town === 'home' ? CLUB.name : TEAMS[town].name }), t('See it in League, under the map')), 2200);
     }
     // the Hall of Fame: anyone who's earned it goes in (the ceremony comes after the results)
     this.pendingHall = hallCandidates(s, rosterIds(s), goalieIds(s)).map((h) => induct(s, h, h.goalie ? goalieInfo(h.id).name : member(h.id).name));

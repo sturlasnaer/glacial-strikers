@@ -32,3 +32,17 @@ export function tripStops(L) {
   const next = stops[at + 1] && !stops[at + 1].done ? at + 1 : null;
   return { stops, at, next };
 }
+
+// Postcards from the road (Batch DK): a win in a rival's town sends one home, and Snowcrest's
+// own comes with the Frostline Cup. New: true the first time.
+export const POSTCARD_TOWNS = ['lynx', 'comets', 'rams', 'ravens', 'royals', 'owls', 'moose', 'home'];
+export function sendPostcard(save, town) {
+  if (!POSTCARD_TOWNS.includes(town)) return false;
+  const P = (save.postcards ||= []);
+  if (P.includes(town)) return false;
+  P.push(town);
+  return true;
+}
+// The town a won league game sends a postcard from (null: none), by the fixture's kind and arena.
+export const postcardFor = (kind, arena) => (kind === 'final' ? 'home' : kind === 'allstar' ? null : townOf(arena) === 'home' ? null : townOf(arena));
+

@@ -4,7 +4,7 @@
 //   node tools/test_trip.mjs
 import { newLeague, ALLSTAR_AFTER, CLASSIC_AFTER } from '../src/league.js';
 import { TEAMS } from '../src/data.js';
-import { tripStops, townOf } from '../src/trip.js';
+import { tripStops, townOf, sendPostcard, postcardFor, POSTCARD_TOWNS } from '../src/trip.js';
 
 let pass = 0, fail = 0;
 const check = (name, cond, info) => { if (cond) pass++; else { fail++; console.log('✗', name, info ?? ''); } };
@@ -44,6 +44,16 @@ check('the final at home, next', last.kind === 'final' && last.town === 'home' &
 L.playoffs.final.winner = 'home';
 T = tripStops(L);
 check('all done: nowhere next', T.next === null && T.at === T.stops.length - 1);
+
+// postcards (Batch DK): a win in a rival's town, Snowcrest's with the Cup, once each
+check('a win in their building: their town', postcardFor('regular', TEAMS.owls.arena) === 'owls' && postcardFor('semi', TEAMS.rams.arena) === 'rams');
+check('the Classic: Pinewood', postcardFor('classic', 'pine_pond') === 'lynx');
+check('the Cup Final: home', postcardFor('final', 'frostline_coliseum') === 'home');
+check('the All-Star Game and games at home: none', postcardFor('allstar', 'home') === null && postcardFor('regular', 'home') === null);
+const save = {};
+check('the first one is new', sendPostcard(save, 'owls') && save.postcards.length === 1);
+check('a second from the same town is not', !sendPostcard(save, 'owls') && save.postcards.length === 1);
+check('nowhere else sends one', !sendPostcard(save, 'atlantis') && POSTCARD_TOWNS.length === 8);
 
 console.log(`Road trip: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
