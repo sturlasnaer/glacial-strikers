@@ -9,6 +9,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Next batches:**
 1. **DG: the road-trip map**
 2. **DH: the cub at home games**
+3. **DI: fetch with the cub**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -549,4 +550,14 @@ The locker room's Snow Fox cub (CX) should come to the Foxes' home games and wat
 - `atlas.arena_spots = { home_cub: { x, y } }`: where it sits (its feet) in the home rink's 1536×1024 backdrop pixels: on the boards by the Foxes' bench, or wherever a cub can sit and see the game without covering the ice.
 
 On a page in a new `pet_rink` group (loaded only for home games). 7 frames.
+
+## Batch DI: fetch with the cub
+
+In the locker room, tapping the open floor should toss a puck there for the Snow Fox cub (CX) to fetch: it runs over, picks the puck up in its mouth, trots back to the middle of the room and drops it, very pleased with itself. Please draw, on the same 120×72 canvas and pivot as its other poses (CX), facing right (the game flips it), as atlas frames on a page in the `hub` group:
+- `pet/fetch_run_1`..`_4`: a quick, bouncy run (faster and more stretched out than its walk).
+- `pet/fetch_carry_1`..`_4`: trotting back with a black puck in its mouth, tail up.
+- `pet/fetch_drop_1`, `pet/fetch_drop_2`: putting the puck down, then sitting tall and proud behind it.
+- `pet/puck` (about 24×12, pivot at its bottom centre): the puck on the floor, at the room's angle.
+
+11 frames.
 
