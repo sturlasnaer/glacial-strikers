@@ -827,6 +827,7 @@ class App {
     const goalieMode = as === 'goalie' || keeperCoop; // (daily goals are for skaters)
     const cfg = extra.allstar ? allStarConfig(s, extra.allstar, { goalieMode }) : matchConfig(s, teamId, stage, { plans: [plan, theirPlan], buffs, goalieMode });
     if (extra.mini) cfg.winScore = MINI_WIN; // (the Mini Cup: quick games)
+    if (s.settings.little) cfg.comeback = true; // (Little player: the rivals ease off when they're well ahead)
     cfg.night = !!extra.night;
     cfg.mods = mods;
     cfg.coop = coop; cfg.keeperCoop = keeperCoop;

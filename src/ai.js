@@ -552,8 +552,9 @@ export class TeamAI {
       for (const t of m.teamSkaters(this.team)) {
         if (t === s || t.parked) continue; // (not to a teammate in the box)
         const lane = m.laneClear(s.x, s.y, t.x, t.y, this.team);
-        if (lane < 0.35) continue;
-        let v = this.posValue(t, s) * (0.6 + lane * 0.4);
+        const player = t.controlled && m.humans.includes(this.team); // (the player's teammates like to give it to them: more fun with the puck)
+        if (lane < (player ? 0.25 : 0.35)) continue;
+        let v = this.posValue(t, s) * (0.6 + lane * 0.4) + (player ? 0.18 : 0);
         const chem = m.chemLevel(s, t);
         if (chem) { const tdx = (this.attX - t.x) * this.side; if (tdx > 30 && tdx < 420) v += 0.12 * chem; }
         if (v > bestV) { bestV = v; best = t; }

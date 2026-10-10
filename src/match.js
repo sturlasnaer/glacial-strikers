@@ -109,6 +109,9 @@ export class Match {
     });
     if (this.goalieMode) this.goalies[0].human = true;
     this.ai = [0, 1].map((team) => new TeamAI(this, team, (cfg.diff || [0.5, 0.5])[team]));
+    // a comeback helper (Little player): an AI team two or more goals up on the player eases off
+    this.comeback = !!cfg.comeback;
+    this.aiBase = this.ai.map((a) => a.diff);
     for (const s of this.skaters) if (this.plans[s.team] === 'forecheck') s.d.regen *= 0.88;
     for (const s of this.teamSkaters(0)) {
       if (this.buffs.ultStart) s.ult = this.buffs.ultStart;
@@ -1378,6 +1381,16 @@ export class Match {
     return false;
   }
 
+  // The comeback helper: an AI team ahead of a player's by two eases off a little, by three more,
+  // and is itself again once it's close.
+  easeOff() {
+    for (const t of [0, 1]) {
+      if (this.humans.includes(t) || !this.humans.includes(1 - t)) continue;
+      const lead = this.score[t] - this.score[1 - t];
+      this.ai[t].diff = Math.max(0, this.aiBase[t] - (lead >= 3 ? 0.2 : lead >= 2 ? 0.1 : 0));
+    }
+  }
+
   goal(side, yc) {
     const p = this.puck;
     const team = side === 1 ? 0 : 1; // team attacking that net
@@ -1396,6 +1409,7 @@ export class Match {
     }
     if (sh && sh.team === team) this.shotOnGoal(sh);
     this.score[team]++;
+    if (this.comeback) this.easeOff();
     if (sh && sh.team === team && sh.log) sh.log.goal = true;
     else if (p.lastTouch && p.lastTouch.team === team && !p.lastTouch.isGoalie) this.shotLog.push({ team, x: Math.round(p.lastTouch.x), y: Math.round(p.lastTouch.y), goal: true }); // (in off a stick or a skate)
     let scorer = p.lastTouch && p.lastTouch.team === team ? p.lastTouch : null;

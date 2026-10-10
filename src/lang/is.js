@@ -1315,7 +1315,7 @@ export const IS = {
   "One on one with your goalie!": "Einn á móti markverðinum þínum!",
   "One on one: you're in goal!": "Einn á móti einum: þú ert í markinu!",
   "One pick. Rookies start a couple of levels below your line-up, but the more stars of potential, the faster they learn and the further their stats can grow.": "Eitt val. Nýliðar byrja nokkrum stigum fyrir neðan liðið þitt, en því fleiri stjörnur í efnivið, því hraðar læra þeir og því lengra geta tölurnar þeirra vaxið.",
-  "One tap for the youngest: Simple controls, easy rivals, relaxed speed, strong aim assist, big touch buttons and a large puck with a ring. Off puts your settings back.": "Einn smellur fyrir þau yngstu: einfaldar stýringar, léttir andstæðingar, rólegur hraði, sterk miðun, stórir snertihnappar og stór pökkur með hring. Slökkt setur stillingarnar þínar aftur eins og þær voru.",
+  "One tap for the youngest: Simple controls, easy rivals who ease off when they're well ahead, relaxed speed, strong aim assist, big touch buttons and a large puck with a ring. Off puts your settings back.": "Einn smellur fyrir þau yngstu: einfaldar stýringar, léttir andstæðingar sem slaka á þegar þeir eru vel yfir, rólegur hraði, sterk miðun, stórir snertihnappar og stór pökkur með hring. Slökkt setur stillingarnar þínar aftur eins og þær voru.",
   "One to go": "Eitt eftir",
   "ONE-T": "VIÐST.",
   "one-timer": "viðstöðulaust",
