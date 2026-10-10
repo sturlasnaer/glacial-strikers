@@ -7,8 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **CT: the fan cam**
-2. **CU: picture day**
+1. **CU: picture day**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -47,6 +46,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered CR:** Sticker album mascots, feature icons, collection trophies and five album PNGs. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CR-Testing-Update`.
 
 **Delivered CS:** Twenty locker-room decoration and achievement frames, including native animation pairs. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CS-Testing-Update`.
+
+**Delivered CT:** Nine Fan cam frames with four cheering fan pairs, a transparent camera border and shared blank-card text anchors. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CT-Testing-Update`.
 
 ## Format notes
 
@@ -397,7 +398,7 @@ The locker room hub (`locker_room.webp`, 1536×864) is getting **decorations**: 
 
 If a spot sits better a little elsewhere in the art, add `atlas.decor_slots = { banner: { x, y }, poster: [{ x, y }, { x, y }], rug: { x, y }, corner: { x, y }, bench: { x, y } }` in room pixels and the game uses it. About 20 frames.
 
-## Batch CT: the fan cam
+## Batch CT ✓: the fan cam
 
 After one of our goals at home, the arena's camera finds a fan in the crowd holding up a sign, shown for a couple of seconds in a jumbotron box in the corner of the screen. The player can write the sign themselves in Settings (their name, "GO MOM!"), and the game writes the words on it. Please draw, in the game's style, on a page in a new `fancam` group (the game loads it for home matches):
 - `fancam/fan_1_a`, `fan_1_b` … `fancam/fan_4_a`, `fan_4_b` (4 fans, two frames each, about 512×384, waist-up, facing the camera, Snowcrest Foxes fans in the home stands behind them): each holds up a big **blank** white cardboard sign with both hands (frame b: the sign raised a little higher, a cheer). Four different fans: a kid in a fox-ears hat, a grandparent in a long knitted scarf, a teenager with blue-and-cream face paint, a parent with a small child on their shoulders (the child holds the sign). No lettering anywhere.
