@@ -7,10 +7,9 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **CR: the sticker album**
-2. **CS: decorations for the locker room**
-3. **CT: the fan cam**
-4. **CU: picture day**
+1. **CS: decorations for the locker room**
+2. **CT: the fan cam**
+3. **CU: picture day**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -45,6 +44,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered CO:** Twelve camera-facing modular goal celebrations, with equipment masks and head anchors; gold Simple controls buttons and Settings icon. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CO-CQ-Testing-Update`.
 
 **Delivered CP:** Glacier Cave backdrop, scoreboard, foreground glass, penalty alcove, icicle effects and rule icon. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CP-Testing-Update`.
+
+**Delivered CR:** Sticker album mascots, feature icons, collection trophies and five album PNGs. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CR-Testing-Update`.
 
 ## Format notes
 
@@ -372,7 +373,7 @@ For the youngest players the game is getting a *Simple controls* setting: one bi
 
 3 images.
 
-## Batch CR: the sticker album
+## Batch CR ✓: the sticker album
 
 The game now has a **sticker album** (Trophies › Sticker album): a numbered sticker for everyone in the league, a page a club, filled from packs that come with every match. It works with stand-ins today; please draw, all without lettering (the game writes the words, in English or Icelandic):
 - `icons/album` (128×128): a chunky sticker album, a sticker peeking out of it. On the Trophies card, the album's title and What's new.
