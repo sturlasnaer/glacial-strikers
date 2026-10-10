@@ -3005,7 +3005,7 @@ export class UI {
     const at = (x, y) => `left:${(x / 1536) * 100}%;top:${(y / 864) * 100}%`;
     const el = document.createElement('div');
     el.className = 'snowfun';
-    el.innerHTML = `<div class="snow-head"><b>${t('Snowball fun')}</b><span class="snow-hits">${t('Hits: {n}', { n: 0 })}</span><span class="snow-time"><i></i></span><button class="btn small ghost" id="snow-done">${t('Done')}</button></div>
+    el.innerHTML = `<div class="snow-head"><b>${t('Snowball fun')}</b>${this.app.isTouch ? '' : `<span class="muted" style="font-size:13px">${t('Keys 1 to {n}', { n: spots.length })}</span>`}<span class="snow-hits">${t('Hits: {n}', { n: 0 })}</span><span class="snow-time"><i></i></span><button class="btn small ghost" id="snow-done">${t('Done')}</button></div>
       <div class="snow-yard"><img class="snow-bg" src="${Assets.sceneImage('snowball/yard', 960)}" alt="">
         <button class="snow-cub" aria-label="${esc(t('The cub'))}" hidden><img alt=""></button></div>`;
     document.getElementById('app').appendChild(el);
@@ -3035,8 +3035,10 @@ export class UI {
       el.querySelector('.snow-yard').insertAdjacentHTML('beforeend', `<div class="snow-end"><h2>${t(st.score === 1 ? 'You got the cub once!' : 'You got the cub {n} times!', { n: st.score })}</h2>
         <p>${t('+{n} coins', { n: prize })}${best && st.score ? ` · <span class="gold-t">${t('A new best!')}</span>` : ''}</p>
         <div class="row" style="justify-content:center"><button class="btn ghost" id="snow-close">${t('Done')}</button><button class="btn gold" id="snow-again">${t('Play again')}</button></div></div>`);
+      window.removeEventListener('keydown', onKey, true);
       el.querySelector('#snow-close').addEventListener('click', () => { audio.sfx('back'); el.remove(); done(); });
       el.querySelector('#snow-again').addEventListener('click', () => { audio.sfx('confirm'); el.remove(); this.snowballFun(done); });
+      el.querySelector('#snow-again').focus();
     };
     cubBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -3048,7 +3050,21 @@ export class UI {
       const r = yard.getBoundingClientRect();
       toss(((e.clientX - r.left) / r.width) * 1536, ((e.clientY - r.top) / r.height) * 864, false);
     });
-    el.querySelector('#snow-done').addEventListener('click', () => { audio.sfx('back'); if (st.score) finish(); else { cancelAnimationFrame(raf); ended = true; el.remove(); done(); } });
+    const quit = () => { audio.sfx('back'); if (st.score) finish(); else { cancelAnimationFrame(raf); ended = true; window.removeEventListener('keydown', onKey, true); el.remove(); done(); } };
+    el.querySelector('#snow-done').addEventListener('click', quit);
+    // the keyboard: 1 to 5 throw at the forts left to right, Esc stops
+    const order = spots.map((sp, i) => i).sort((a, b) => spots[a].x - spots[b].x);
+    const onKey = (e) => {
+      if (!el.isConnected) return window.removeEventListener('keydown', onKey, true);
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); if (!ended) quit(); return; }
+      const i = order[+e.key - 1];
+      if (ended || i === undefined) return;
+      e.preventDefault(); e.stopPropagation();
+      const sp = spots[i], hit = throwAt(st, i);
+      toss(sp.x, sp.y - 50, hit);
+      if (hit) hits.textContent = t('Hits: {n}', { n: st.score });
+    };
+    window.addEventListener('keydown', onKey, true);
     const tick = (now) => {
       if (!el.isConnected) return;
       const dt = Math.min(0.1, (now - last) / 1000); last = now;

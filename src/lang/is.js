@@ -1046,6 +1046,7 @@ export const IS = {
   "Keep-Away": "Haltu pökknum",
   "Keep-Away is where chemistry starts. Move the puck!": "Samspilið byrjar í æfingunni Haltu pökknum. Láttu pökkinn ganga!",
   "Keyboard": "Lyklaborð",
+  "Keys 1 to {n}": "Lyklar 1 til {n}",
   "Keys or buttons not to your liking? Settings › Keyboard and › Gamepad put anything on any action.": "Lyklarnir eða hnapparnir ekki eins og þú vilt hafa þá? Stillingar › Lyklaborð og › Leikjastýring setja hvað sem er á hvaða aðgerð sem er.",
   "Kindling: Heat Check cooldown 3s shorter": "Uppkveikja: Hitaprófið hleðst 3 sek. fyrr",
   "Kip Vance asks": "Kip Vance spyr",
