@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10y',
+    items: [
+      { icon: 'icons/coop', text: 'A shootout party for two: in 2 Players › Shootout, player 1 shoots for the Foxes and player 2 for a rival, five shots each against the goalies. On a tablet, each gets a stick and a PLAY button.' },
+    ],
+  },
+  {
     id: '2026-10-10x',
     items: [
       { icon: 'icons/pet', alt: 'icons/friends', text: 'A Snow Fox cub lives in the locker room now! It trots about, naps, and hops when you tap it. Tap its name to give it one of your own. From 20 October it dresses up as a pumpkin, and in December it wears a Santa hat.' },

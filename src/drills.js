@@ -103,6 +103,7 @@ export function createDrill(id, save, charId, opts = {}) {
     case 'resurface': ctrl = new ResurfaceDrill(); break;
     case 'powerplay': home = [charId, ...mates]; away = ['frost', 'thunder', 'stone']; ctrl = new PowerPlayDrill(); break;
     case 'shootout': home = line; awayTeam = opts.teamId || 'comets'; away = ids; ctrl = new ShootoutDrill(opts.teamId); break;
+    case 'party': home = line; awayTeam = opts.teamId || 'comets'; away = ids; ctrl = new ShootoutDrill(opts.teamId, true); break; // (2 Players › Shootout)
     default: throw new Error('Unknown drill ' + id);
   }
   const t = TEAMS[awayTeam];
@@ -116,12 +117,13 @@ export function createDrill(id, save, charId, opts = {}) {
   const cfg = {
     teams: [
       { skaters: home.map((k, i) => (i === 0 && opts.skater ? opts.skater : skaterCfg(save, k))), goalie: homeGoalie(save), chem: homeChem(save) }, // (opts.skater: someone else skates it, like a Skills Night bot)
-      { skaters: away.map(awaySkater), goalie: id === 'shootout' ? rivalGoalie(save, awayTeam) : { stats: opts.goalie || { rfx: 4, pos: 5 }, name: 'Coach Brekka', art: null }, chem: {} },
+      { skaters: away.map(awaySkater), goalie: id === 'shootout' || id === 'party' ? rivalGoalie(save, awayTeam) : { stats: opts.goalie || { rfx: 4, pos: 5 }, name: 'Coach Brekka', art: null }, chem: {} },
     ],
     humanTeam: 0,
+    ...(id === 'party' ? { humans: [0, 1] } : {}), // (both shooters are players)
     powers: [],
     twist: 'none',
-    diff: [0.6, id === 'shootout' ? t.diff : 0.55],
+    diff: [0.6, id === 'shootout' ? t.diff : id === 'party' ? 0.5 : 0.55],
     seed: opts.seed ?? (Math.random() * 1e9) >>> 0,
     assist: id === 'shootout' ? (save.settings && save.settings.assist) || 'normal' : 'normal', // (the shootout goalie's help; drills keep one setting for their boards)
     drill: ctrl,
@@ -797,8 +799,10 @@ class ResurfaceDrill extends DrillBase {
 // their shooter (steer to move, shoot button = butterfly, pass button = dive). Best of
 // five, then sudden death.
 class ShootoutDrill extends DrillBase {
-  constructor(teamId) { super(); this.teamId = teamId; this.noSwitch = true; }
-  touchLabels() { return this.turn === 'them' ? { a: t('BLOCK'), b: t('DIVE') } : null; }
+  // party: two players on one screen take turns shooting (player 2 for the other side), both
+  // against computer goalies
+  constructor(teamId, party = false) { super(); this.teamId = teamId; this.noSwitch = true; this.party = party; }
+  touchLabels() { return this.turn === 'them' && !this.party ? { a: t('BLOCK'), b: t('DIVE') } : null; }
   init(m) {
     this.round = 0; this.turn = 'us'; this.goals = [0, 0]; this.log = [[], []];
     this.rng = makeRng(23);
@@ -824,9 +828,10 @@ class ShootoutDrill extends DrillBase {
       s.vx = 0; s.vy = 0; s.stun = 0; s.charging = false; s.ultWindup = 0;
       if (s.parked) { s.x = s.team === 0 ? -150 - s.slot * 40 : 150 + s.slot * 40; s.y = -262; }
     }
-    // control: you skate on your turn, you're the goalie on theirs
+    // control: you skate on your turn, you're the goalie on theirs (party: player 2 skates theirs)
     for (const s of m.teamSkaters(0)) s.controlled = us && s === shooter;
-    if (!us) {
+    for (const s of m.teamSkaters(1)) s.controlled = this.party && !us && s === shooter;
+    if (!us && !this.party) {
       // keep a parked skater "controlled" so input routing still works; the goalie reads it
       const proxy = m.teamSkaters(0).find((s) => s.parked);
       proxy.controlled = true;
@@ -837,7 +842,7 @@ class ShootoutDrill extends DrillBase {
       g.x = g.goalSide * (GOAL_X - 28); g.y = 0; g.vy = 0; g.setState('ready'); g.holdT = 0; g.react = null; g.track = null; g.slowT = 0;
       g.disabled = us ? g.goalSide !== 1 : g.goalSide !== -1;
       // the player's goalie on their turn: goal mode's controls and its help (Settings › Aim assist)
-      g.human = !us && g.goalSide === -1;
+      g.human = !this.party && !us && g.goalSide === -1;
       Object.assign(g, { prevHuman: { a: true, b: true, skill: true, ult: true }, butterflyT: 0, hx: undefined, hy: undefined, wallT: 0 });
       if (g.disabled) { g.x = g.goalSide * 900; g.y = 900; }
     }
@@ -857,7 +862,7 @@ class ShootoutDrill extends DrillBase {
     this.attT += dt;
     // the player plays goalie on their turn
     const g = m.goalieAt(-1);
-    if (this.turn === 'them') {
+    if (this.turn === 'them' && !this.party) {
       // their shooter is AI: make sure it shoots before the time is up
       const s = this.active;
       if (s.hasPuck && this.attT > 4.5 && !s.prevIn.shoot) { s.in.shoot = true; }
@@ -904,6 +909,12 @@ class ShootoutDrill extends DrillBase {
       return Array.from({ length: n }, (_, i) => (this.log[team][i] === true ? '●' : this.log[team][i] === false ? '○' : '·')).join(' ');
     };
     const sudden = this.log[0].length >= 5 && this.log[1].length >= 5;
+    if (this.party) return {
+      title: sudden ? t('Shootout · sudden death') : t('Shootout · round {n}', { n: Math.min(this.round + 1, 99) }),
+      main: `${this.goals[0]} – ${this.goals[1]}`,
+      sub: t('P1 {us}   P2 {them}', { us: dots(0), them: dots(1) }),
+      note: this.turn === 'us' ? t('Player 1 shoots') : t('Player 2 shoots'),
+    };
     return {
       title: sudden ? t('Shootout · sudden death') : t('Shootout · round {n}', { n: Math.min(this.round + 1, 99) }),
       main: `${this.goals[0]} – ${this.goals[1]}`,

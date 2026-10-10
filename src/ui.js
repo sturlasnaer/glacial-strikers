@@ -589,11 +589,11 @@ export class UI {
     const opts = Object.values(TEAMS).filter((t) => t.id !== 'home');
     this.vsTeam ||= 'comets';
     this.vsMode ||= 'versus';
-    const coop = this.vsMode !== 'versus', keeper = this.vsMode === 'keeper';
+    const coop = this.vsMode === 'coop' || this.vsMode === 'keeper', keeper = this.vsMode === 'keeper', party = this.vsMode === 'party';
     this.modal(`
       <h2>${t('2 Players')}</h2>
-      <div class="filters" style="margin:0"><button class="chip" data-vsmode="versus" aria-pressed="${!coop}">${t('Against each other')}</button><button class="chip" data-vsmode="coop" aria-pressed="${this.vsMode === 'coop'}">${t('Together against the AI')}</button><button class="chip" data-vsmode="keeper" aria-pressed="${this.vsMode === 'keeper'}">${t('Together, one in goal')}</button></div>
-      <p class="muted" style="margin:0">${keeper ? t('Two players on the {club}: player 1 skates and player 2 is in goal, the AI on the other two skaters, against a rival: an exhibition with your own players. Needs a keyboard or a gamepad.', { club: esc(CLUB.nick) })
+      <div class="filters" style="margin:0"><button class="chip" data-vsmode="versus" aria-pressed="${this.vsMode === 'versus'}">${t('Against each other')}</button><button class="chip" data-vsmode="coop" aria-pressed="${this.vsMode === 'coop'}">${t('Together against the AI')}</button><button class="chip" data-vsmode="keeper" aria-pressed="${this.vsMode === 'keeper'}">${t('Together, one in goal')}</button><button class="chip" data-vsmode="party" aria-pressed="${party}">${t('Shootout')}</button></div>
+      <p class="muted" style="margin:0">${party ? t('A shootout party: player 1 shoots for the {club}, player 2 for a rival, taking turns against the goalies. Five shots each, then sudden death.', { club: esc(CLUB.nick) }) : keeper ? t('Two players on the {club}: player 1 skates and player 2 is in goal, the AI on the other two skaters, against a rival: an exhibition with your own players. Needs a keyboard or a gamepad.', { club: esc(CLUB.nick) })
         : coop ? t('Two players on the {club}, each with a skater of their own and the AI on the third, against a rival: an exhibition with your own players, their levels and gear. Needs a keyboard or a gamepad.', { club: esc(CLUB.nick) })
         : t('Two players on one screen: {club} against a rival, same stats on both sides, first to 5. Needs a keyboard or gamepads.', { club: esc(CLUB.nick) })}</p>
       ${this.app.isTouch && !padList().length && !keeper ? `<p style="margin:0;color:#7fe08a;font-size:14px">${t('On this touch screen: player 1 on the left and player 2 on the right, each with a stick and one PLAY button.')}</p>` : ''}
@@ -619,7 +619,7 @@ export class UI {
         audio.sfx('click');
       }, m);
       this.click('[data-vsmode]', (el) => { this.vsMode = el.dataset.vsmode; audio.sfx('click'); close(); this.versusPicker(); }, m);
-      this.click('#vs-go', () => { close(); if (this.vsMode !== 'versus') this.app.startExhibition(this.vsTeam, [], 'auto', true, this.vsMode === 'keeper' ? 'keeper' : true); else this.app.startVersus(this.vsTeam); }, m);
+      this.click('#vs-go', () => { close(); if (party) this.app.startParty(this.vsTeam); else if (this.vsMode !== 'versus') this.app.startExhibition(this.vsTeam, [], 'auto', true, this.vsMode === 'keeper' ? 'keeper' : true); else this.app.startVersus(this.vsTeam); }, m);
     });
   }
 

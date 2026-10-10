@@ -58,7 +58,7 @@ export class Match {
     this.assist = cfg.assist || 'normal'; // aim assist for human players
     // Simple controls (for the youngest players): one button, and the skater nearest the puck.
     // cfg.simple: true for everyone, or the players who have them in a two-player game ('p1', 'p2')
-    this.simple = !!cfg.simple && !(Array.isArray(cfg.simple) && !cfg.simple.length) && !cfg.drill;
+    this.simple = !!cfg.simple && !(Array.isArray(cfg.simple) && !cfg.simple.length) && (!cfg.drill || !!cfg.drill.party); // (drills keep their own controls; the party shootout is for anyone)
     this.simpleT = {}; // seat key -> when Simple controls last switched skaters
     this.mods = new Set(cfg.mods || []); // challenge modifiers, see CHALLENGES in data.js
     this.plans = cfg.plans || ['balanced', 'balanced']; // game plans, see GAME_PLANS in data.js

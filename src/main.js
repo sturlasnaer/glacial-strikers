@@ -528,7 +528,7 @@ class App {
     if (id === 'faceoffs' && !opts.awayTeam) return this.loadThen(Assets.ensureTeam('lynx'), () => this.startDrill(id, charId, { ...opts, awayTeam: 'lynx' })); // (with the linesman)
     if (id === 'resurface' && !(Assets.groupReady('title') && Assets.groupReady('resurfacer'))) return this.loadThen(Promise.all(['title', 'resurfacer'].map((g) => Assets.loadGroup(g))), () => this.startDrill(id, charId, opts)); // (the machine's art, and its diagonals)
     const { cfg, ctrl, def, awayTeam } = createDrill(id, this.save, charId, opts);
-    this.cur = { drill: id, char: charId, teamId: awayTeam, ctrl, def, opts };
+    this.cur = { drill: id, char: charId, teamId: awayTeam, ctrl, def, opts, versus: id === 'party' }; // (the party shootout: two players' input, as versus)
     this.attract = false;
     const m = this.makeMatch(cfg, awayTeam);
     this.hookMatch(m);
@@ -536,13 +536,32 @@ class App {
     this.resetReplay();
     this.ui.clear();
     this.scene = 'match';
-    this.hud.show(m, awayTeam, ctrl);
+    this.hud.show(m, awayTeam, ctrl, id === 'party' ? { versus: true } : undefined);
     this.touch.reset(); this.touch2.reset();
     this.drillShown = false;
     this.tutorial = -1;
-    this.music(id === 'shootout' ? 'shootout' : id === 'resurface' ? 'waltz' : 'training'); // (the Resurfacer: the arena organ's waltz)
+    this.music(id === 'shootout' || id === 'party' ? 'shootout' : id === 'resurface' ? 'waltz' : 'training'); // (the Resurfacer: the arena organ's waltz)
     audio.setArena('home');
     this.checkRotate();
+  }
+
+  // 2 Players › Shootout: player 1 for the Foxes, player 2 for teamId, five shots each
+  startParty(teamId) { this.loadThen(Assets.ensureTeam(teamId), () => this.startDrill('party', lineupIds(this.save)[0], { teamId })); }
+
+  finishParty(res) {
+    const [a, b] = res.goals, p1 = a > b;
+    audio.jingle('win');
+    this.music('victory');
+    this.ui.modal(`
+      <div style="text-align:center">
+        <div class="label">${t('Shootout party')}</div>
+        <div class="drill-score">${a} – ${b}</div>
+        <div class="medal-big" style="--m:${p1 ? 'var(--ice)' : 'var(--coral)'}">${p1 ? t('Player 1 wins!') : t('Player 2 wins!')}</div>
+      </div>
+      <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="so-again">${t('Again')}</button><button class="btn gold" id="so-done">${t('Done')}</button></div>`, (m, close) => {
+      m.querySelector('#so-again').addEventListener('click', () => { close(); this.startParty(this.cur.teamId); });
+      m.querySelector('#so-done').addEventListener('click', () => { close(); this.startAttract(); this.goHub(); });
+    }, false);
   }
 
   startShootout(teamId) { this.loadThen(Assets.ensureTeam(teamId), () => this.startDrill('shootout', lineupIds(this.save)[0], { teamId })); }
@@ -641,10 +660,11 @@ class App {
     });
     m.on('shootout_turn', (e) => {
       const us = e.us;
+      if (this.cur && this.cur.ctrl && this.cur.ctrl.party) return hud.banner(`<div class="small" style="color:${us ? 'var(--ice)' : 'var(--coral)'}">${us ? t('PLAYER 1 SHOOTS') : t('PLAYER 2 SHOOTS')}</div><div class="sub">${e.shooter.name}</div>`, 1.6);
       hud.banner(`<div class="small">${us ? t('YOUR SHOT') : t('YOU\'RE IN GOAL')}</div><div class="sub">${us ? e.shooter.name : t('Stop {name}!', { name: e.shooter.name })}</div>`, 1.6);
     });
     m.on('shootout_result', (e) => {
-      const mine = e.team === 0;
+      const mine = e.team === 0 || !!(this.cur && this.cur.ctrl && this.cur.ctrl.party); // (the party: both shooters are ours)
       hud.banner(`<div class="small" style="color:${e.scored === mine ? '#ffd45e' : '#ff6f7d'}">${e.scored ? t('SCORES!') : mine ? t('STOPPED') : t('BIG SAVE!')}</div><div class="sub">${e.goals[0]} – ${e.goals[1]}</div>`, 1.4);
       if (e.scored) { audio.jingle('goal'); fx.lamp = 1.4; } else audio.crowdOoh(0.6);
       if (!mine && !e.scored) audio.crowdCheer(0.6);
@@ -667,6 +687,7 @@ class App {
     this.hud.hide();
     this.scene = 'results';
     if (c.drill === 'shootout') return this.finishShootout(res);
+    if (c.drill === 'party') return this.finishParty(res);
     const medal = medalFor(c.def, res.score);
     const skills = c.opts.skills && s.league && s.league.skills;
     const rw = drillRewards(s, c.drill, c.char, res.score, medal, DRILL_REWARDS, { practice: !!skills });
