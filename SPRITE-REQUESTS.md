@@ -10,6 +10,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 1. **DB: the mascot race**
 2. **DC: tricks for the cub**
 3. **DD: the Mini Cup**
+4. **DE: night games outdoors**
+5. **DF: a trophy shelf in the locker room**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -511,3 +513,15 @@ A short tournament for the youngest players (Quick play › Mini Cup): three qui
 - `minicup/podium` (512×384): the cup on a little podium with confetti, for the winner's screen.
 
 5 frames, all atlas frames on a page in the `icons_z` group (small, shown from the menus).
+
+## Batch DE: night games outdoors
+
+Quick play is getting a **Day / Night** choice for the three outdoor rinks. Please draw a night version of each backdrop, exactly like its day one (the same 1536×1024 layout: rink lines, boards, glass and benches in the same places, so everything else lines up), as plain images next to the day ones, no lettering:
+- `arena_pine_pond_night` (Pine Pond: a starry sky with green northern lights over the pines, string lights along the boards, lanterns, the snow glowing blue), `arena_harbour_rink_night` (the harbour at night: lit boats and windows, the lighthouse's lamp, a big moon on the water), `arena_summit_rink_night` (the mountaintop under stars and northern lights, the cable-car station lit up, the clouds below silver in the moonlight). In `atlas.arenas` as `pine_pond_night`, `harbour_rink_night`, `summit_rink_night`, on each arena's own group (`arena_cm`, `arena_cv`; Pine Pond's where its day one is).
+- `night/aurora_1`..`_4` (about 1536×300, transparent, soft green and violet ribbons of northern lights, four frames that slowly shift, to drift over the top of the backdrop), on the `arena_cv` group.
+
+3 backdrops and 4 frames.
+
+## Batch DF: a trophy shelf in the locker room
+
+The locker room should show off what the club has won. Please draw an empty wooden **trophy shelf** for the room's left wall (the side wall by the stick rack, above the trophy chest), in the room's style and angle: `decor/trophy_shelf`, about 300 room pixels wide and 160 high, three shelves, a little brass plate on the front (no lettering), pivot at its top left, as an atlas frame on a page in the `hub` group; and add `atlas.decor_slots.trophies = { x, y }` with where its top left goes in the room's 1536×864 pixels. The game stands the club's trophies on it (the Frostline Cups, Mini Cups, Weekly Cups and the Winter Classic's) from the trophy art already in. 1 frame.
