@@ -926,6 +926,7 @@ export const IS = {
   "Gold medals don't come from watching. Lace up.": "Gullið vinnst ekki með því að horfa á. Reimaðu á þig skautana.",
   "Gold rush": "Gullæði",
   "Gold Standard": "Gullstaðall",
+  "Gold stars": "Gullstjörnur",
   "Gold stars for the youngest: after every Little player game, a star sticker for something the team did well. Can you collect ten?": "Gullstjörnur fyrir þau yngstu: eftir hvern leik með Fyrir þau yngstu kemur stjörnulímmiði fyrir eitthvað sem liðið gerði vel. Nærðu tíu?",
   "Golden Hall rules: ridged ice runs along the boards. Carry the puck fast across it and it hops off your stick.": "Reglur Golden Hall: rákóttur ís liggur meðfram battanum. Ef þú skautar hratt yfir hann með pökkinn hoppar pökkurinn af kylfunni.",
   "Golden sparkle on clean catches": "Gyllt glit þegar þú tekur hreint á móti sendingu",

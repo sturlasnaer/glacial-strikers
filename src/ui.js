@@ -60,6 +60,7 @@ import { cleanSign, SIGN_MAX } from './fancam.js';
 import { MINI_ROUNDS, MINI_PRIZE, miniOf } from './minicup.js';
 import { MASCOTS, RACE_PRIZE, pickRunners, newRace, stepRace } from './race.js';
 import { SNOW_TIME, newSnowball, stepSnowball, throwAt, snowPrize } from './snowball.js';
+import { KID_STAR_IDS } from './kidstars.js';
 import { tripStops, POSTCARD_TOWNS } from './trip.js';
 import { newPet, stepPet, tapPet, tossPuck, cleanPetName, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall } from './pet.js';
 import { albumPages, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
@@ -1304,6 +1305,7 @@ export class UI {
         <p style="margin:2px 0 0;font-size:13px">${t('{n} of {total} unlocked', { n: got.length, total: ACHIEVEMENTS.length })} · ${t('{n} coins earned', { n: earned })}${s.cups ? ` · ${t(s.cups > 1 ? '{n} cups won' : '{n} cup won', { n: s.cups })}` : ''}${s.miniCups ? ` · ${t(s.miniCups > 1 ? '{n} Mini Cups won' : '{n} Mini Cup won', { n: s.miniCups })}` : ''}${classicWins ? ` · ${t(classicWins > 1 ? '{n} Winter Classics won' : '{n} Winter Classic won', { n: classicWins })}` : ''}${allstarWins ? ` · ${t(allstarWins > 1 ? '{n} All-Star Games won' : '{n} All-Star Game won', { n: allstarWins })}` : ''}</p></div>
         <span class="row" style="gap:6px;margin:0"><button class="btn small ghost" id="tr-career">${btnIcon('icons/career')} ${t('Career stats')}</button><button class="btn small ghost" id="tr-lb">${badge('cup_small', 48, 'btn-ico', '🏆')} ${t('Online leaderboards')}</button></span></div>
       ${this.albumCard(s)}
+      ${this.starChartHtml(s, body)}
       ${(() => { // the Hall of Fame's plaques (on Batch BV's plaque once it's in)
         const hall = s.hall || [], plaque = Assets.atlas.frames['hall/plaque'] ? Assets.sceneImage('hall/plaque', 360) : '';
         const wall = Assets.atlas.frames['hall/wall'] ? Assets.sceneImage('hall/wall', 960) : '';
@@ -3628,6 +3630,16 @@ export class UI {
   }
 
   // --------------------------------------------------------------- results
+  // The youngest's gold stars as a sticker chart (Trophies tab): each kind and how many.
+  starChartHtml(s, body) {
+    const K = s.kidStars, f = Assets.frame('kid_stars/team');
+    if (!K || !K.n || !f) return '';
+    if (!Assets.pages[f[0]]) { Assets.loadGroup('kid_stars').then(() => { if (Assets.pages[f[0]] && this.tab === 'trophies' && body.isConnected) this.tabTrophies(body); }, () => {}); return ''; }
+    const name = { passer: t('Great passing!'), scorer: t('Super scorer!'), defender: t('Super defender!'), hustle: t('Hustle star!'), team: t('Great teamwork!') };
+    return `<div class="label" style="margin:4px 0 6px">${t('Gold stars')} <span class="muted">${K.n}</span></div>
+      <div class="star-chart">${KID_STAR_IDS.map((id) => `<div class="sc-star ${(K.got[id] || 0) ? '' : 'none'}" title="${esc(name[id])}"><img src="${Assets.icon('kid_stars/' + id, 96)}" alt=""><b>×${K.got[id] || 0}</b></div>`).join('')}</div>`;
+  }
+
   // Little player's gold star after a game (Batch DN), twinkling.
   kidStarHtml(id) {
     const f = id && Assets.frame('kid_stars/' + id);
