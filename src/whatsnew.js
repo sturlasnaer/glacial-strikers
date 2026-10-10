@@ -2,6 +2,14 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10zj',
+    items: [
+      { icon: 'icons/cub_ball', alt: 'icons/pet', text: 'A striped ball for the cub, in Shop › Locker room › For the cub. It pounces on it and bats it about the room.' },
+      { icon: 'icons/treat', alt: 'icons/pet', text: 'From 20 October: a bowl of Halloween treats in the locker room, one a day, and the road-trip map dresses up for the season.' },
+      { icon: 'achievements/postcard_collector', alt: 'icons/stat_cups', text: 'Three new trophies: all eight postcards, ten games of fetch with the cub, and ten gold stars. The gold stars have their own sticker chart in Trophies too.' },
+    ],
+  },
+  {
     id: '2026-10-10zi',
     items: [
       { icon: 'pet_rink/slide_2', alt: 'icons/pet', text: 'Win at home and the cub hops down onto the ice for a belly slide and a spin on its back.' },

@@ -888,22 +888,24 @@ export class UI {
       return k && { ...k, urls: k.urls.slice(0, pet.length), acc: acc.length === pet.length ? k.urls.slice(pet.length) : null };
     };
     const sets = { walk: set(['walk_1', 'walk_2', 'walk_3', 'walk_4']), sit: set(['sit_1', 'sit_2']), sleep: set(['sleep_1', 'sleep_2']), hop: set(['hop']) };
-    // its tricks (Batch DC), those drawn (not in a costume: they're drawn in its own coat)
+    // (its tricks, fetch, ball and basket are drawn in its own coat: in a costume, it's off for those)
+    const own = (names) => { const k = Assets.spriteSet(names.map((f) => 'pet/' + f), H); return k && { ...k, acc: null }; };
+    // its tricks (Batch DC), those drawn
     const TRICKS = { spin: 4, roll: 4, five: 3 }, tricks = [];
     for (const [k, n] of Object.entries(TRICKS)) {
       const names = Array.from({ length: n }, (_, i) => `trick_${k}_${i + 1}`);
-      if (dir === 'pet/' && names.every((f) => has('pet/' + f))) { const ts = set(names); if (ts) { sets['trick_' + k] = ts; tricks.push(k); } }
+      if (names.every((f) => has('pet/' + f))) { const ts = own(names); if (ts) { sets['trick_' + k] = ts; tricks.push(k); } }
     }
-    // fetch (Batch DI): tap the open floor to toss it a puck (in its own coat, like the tricks)
+    // fetch (Batch DI): tap the open floor to toss it a puck
     const FETCH = { fetch_run: 4, fetch_carry: 4, fetch_drop: 2 };
-    const fetches = dir === 'pet/' && has('pet/puck') && Object.entries(FETCH).every(([k, n]) => Array.from({ length: n }, (_, i) => `pet/${k}_${i + 1}`).every(has));
-    if (fetches) for (const [k, n] of Object.entries(FETCH)) sets[k] = set(Array.from({ length: n }, (_, i) => `${k}_${i + 1}`));
+    const fetches = has('pet/puck') && Object.entries(FETCH).every(([k, n]) => Array.from({ length: n }, (_, i) => `pet/${k}_${i + 1}`).every(has));
+    if (fetches) for (const [k, n] of Object.entries(FETCH)) sets[k] = own(Array.from({ length: n }, (_, i) => `${k}_${i + 1}`));
     // its basket (Batch DL): it naps in it (the frames have the basket in them)
     const bedEl = room.querySelector('#cub-bed'), bedAt = Assets.atlas.decor_slots && Assets.atlas.decor_slots.cub_bed;
-    if (bedEl && bedAt && dir === 'pet/') sets.bed_sleep = set(['bed_sleep_1', 'bed_sleep_2']);
+    if (bedEl && bedAt) sets.bed_sleep = own(['bed_sleep_1', 'bed_sleep_2']);
     // its ball (Batch DO): it goes and plays with it now and then
-    const ball = dir === 'pet/' && ownsBall(this.app.save) && ['decor/cub_ball', 'pet/pounce_1', 'pet/pounce_4'].every(has);
-    if (ball) sets.pounce = set(['pounce_1', 'pounce_2', 'pounce_3', 'pounce_4']);
+    const ball = ownsBall(this.app.save) && ['decor/cub_ball', 'pet/pounce_1', 'pet/pounce_4'].every(has);
+    if (ball) sets.pounce = own(['pounce_1', 'pounce_2', 'pounce_3', 'pounce_4']);
     if (Object.values(sets).some((x) => !x)) return;
     const s = this.app.save, name = () => (s.pet && s.pet.name) || t('Snowball');
     room.insertAdjacentHTML('beforeend', `<button class="pet" id="pet" aria-label="${esc(name())}"><img alt=""><img class="pet-acc" alt="" hidden></button><button class="pet-tag" id="pet-tag" hidden></button>${fetches ? `<img class="pet-puck" id="pet-puck" src="${Assets.sceneImage('pet/puck', 48)}" alt="" hidden>` : ''}${ball ? `<img class="cub-ball" id="cub-ball" src="${Assets.sceneImage('decor/cub_ball', 64)}" alt="">` : ''}`);
