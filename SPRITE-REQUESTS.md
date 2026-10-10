@@ -202,3 +202,15 @@ Five new achievements go with tonight's features. They borrow other pictures for
 - `achievements/record_breaker` (Record Breaker: break a club record): a record book open on a stand, a gold pen, a new line written in.
 
 5 frames.
+
+## Batch BX: the Frostline Coliseum, a home for the Cup Final
+
+The Cup Final is played at the higher seed's rink today. It deserves its own building. Please draw a neutral arena, **the Frostline Coliseum**, exactly like the AU arena packs (Glacier Owls' Observatory, Thunder Moose's Longhouse): the same 1536×1024 backdrop with the rink lines, boards, glass and benches in the same places, so the game's rink fits it unchanged. Gold and navy, the Frostline league crest at centre ice and on banners round the upper deck, a huge Frostline Cup hanging over centre ice in place of a scoreboard, packed stands of fans in every club's colours with scarves and flags, spotlights. Please include, as AU did: the backdrop (`arena_frostline_coliseum`), its scoreboard frames (`arena.scoreboards.frostline_coliseum`, the score windows where the others have theirs), near-side glass, and a penalty box in the AU style. The game will play every Cup Final there once it's in.
+
+## Batch BY: supporters' sections for the rival rinks
+
+Batch BS gave our home rink a supporters' section (drummer, capo, banner). The rivals' rinks should have theirs too, cheering for the home side when we visit. For each founding rival and the two expansion clubs (Aurora Royals, Ember Comets, Gilded Rams, Obsidian Ravens, Pinewood Lynx, Glacier Owls, Thunder Moose), in the BS supporters' style, scale and recolour approach (their kit, with masks), three figures that suit the club: for example the Rams' fans with horns and a big gong, the Ravens' in black with a crow-feather banner, the Comets' with flame-shaped foam fingers. Names `crowd_supporters_<club>/drummer_a`, `_b`, `capo_a`, `_b`, `banner_a`, `_b` and the three `_cheer` frames, like BS. 63 frames plus masks.
+
+## Batch BZ: the season in review
+
+When a new season starts the game now shows the season just gone (place, record, top scorers, records set, Hall of Fame). Please draw its frame: `review/backdrop`, a newspaper front page lying on a locker-room bench at 1280×720, with a big blank headline area at the top (the game writes the headline), two blank photo frames with paper-clip shadows (for the top scorers' portraits), and blank columns; warm overhead light. And `review/stamp_champions`, a gold "CHAMPIONS" rubber-stamp mark (for a Cup-winning season), about 300×160. 2 frames.
