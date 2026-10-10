@@ -9,6 +9,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Next batches:**
 1. **DM: the cub's victory slide**
 2. **DN: star stickers for the youngest**
+3. **DO: a ball for the cub**
+4. **DP: the road-trip map in season**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -608,4 +610,21 @@ After a Little player game, the results should give the young player a big gold 
 - `kid_stars/shine_1`, `_2`: two sparkle overlays, the same size, to twinkle over the star.
 
 As atlas frames on a page in a new `kid_stars` group (loaded for Little player games). 7 frames.
+
+## Batch DO: a ball for the cub
+
+A toy for the cub (CX): a Shop item ("For the cub"); once bought, the ball lies on the locker room floor and the cub now and then trots over and plays with it. Please draw, in the room's style and angle:
+- `decor/cub_ball`: a small striped ball in the club's blue and white, about 28×28 room pixels, pivot at its bottom centre.
+- `pet/pounce_1`..`_4`: the cub crouching, wiggling, pouncing and batting the ball with a paw (the ball not drawn: the game draws it and rolls it), on the same 120×72 canvas and pivot as its other poses (CX), facing right.
+- `icons/cub_ball` (128×128): the ball for the Shop.
+
+As atlas frames on a page in the `hub` group. 6 frames.
+
+## Batch DP: the road-trip map in season
+
+The road-trip map (DG) should dress up like the rest of the game in season. Please draw two transparent overlays, exactly the map's 1536×864 size and lined up with it, as atlas frames on a page in the `seasonal` group:
+- `map_halloween/overlay` (from 20 October): pumpkins with glowing faces at each town's edge (not over the towns' clear spots, where the crests go), a few bats over the forests, a thin orange mist in the valleys, a big harvest moon in a corner.
+- `map_holiday/overlay` (December): fresh snow on the roofs, strings of coloured lights along the roads, a decorated tree in each town's square (beside the clear spot), a sleigh's tracks across a frozen river.
+
+2 frames.
 
