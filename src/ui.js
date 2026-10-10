@@ -235,6 +235,18 @@ const padGlyphs = (text) => text.replace(/✕|○|□|△|\b(?:L1|R1|L2|R2|L3|R3
 // what put a player in the Hall of Fame
 const hallWhy = (h) => (h.why === 'cups' ? t('{n} Frostline Cups with the club.', { n: h.cups }) : h.why === 'wins' ? t('{n} wins in goal for the club.', { n: h.w })
   : h.why === 'goals' ? t('{n} goals for the club.', { n: h.g }) : t('{n} points for the club.', { n: h.g + h.a }));
+// The gallery art (the press room, the facilities, the Hall of Fame, the season in review)
+// isn't part of the startup download: it loads when a screen wants it. gallery(fn) runs fn
+// once it's in (or after a second and a half without it, when the screen uses its stand-ins).
+const hasGallery = () => Assets.atlas.pages.some((p) => p.group === 'gallery');
+const gallery = (fn) => {
+  if (!hasGallery() || Assets.groupReady('gallery')) return fn();
+  let ran = false;
+  const go = () => { if (!ran) { ran = true; fn(); } };
+  Assets.loadGroup('gallery').then(go, go);
+  setTimeout(go, 1500);
+};
+
 // the shop's filters: the gear slots, then the club's facilities
 const shopFilters = (filter) => `<div class="filters">${['all', 'stick', 'skates', 'armor', 'goalie'].map((f) => `<button class="chip" data-f="${f}" aria-pressed="${filter === f}">${f === 'all' ? t('All') : t(SLOT_NAMES[f])}</button>`).join('')}<button class="chip" data-f="club" aria-pressed="${filter === 'club'}">${t('Club facilities')}</button></div>`;
 // a key by name ('J', 'Space', '↑') as a keycap (keys without art stay text)
@@ -871,6 +883,7 @@ export class UI {
 
   tabTrophies(body) {
     const s = this.app.save;
+    if (hasGallery() && !Assets.groupReady('gallery')) Assets.loadGroup('gallery').then(() => { if (this.tab === 'trophies' && body.isConnected) this.tabTrophies(body); }, () => {});
     const tr = this.app.ach;
     const got = ACHIEVEMENTS.filter((a) => tr.has(a.id));
     const earned = got.reduce((n, a) => n + a.coins, 0);
@@ -1325,6 +1338,7 @@ export class UI {
   // A press conference after a big game (press.js): Kip's question to the player of the night,
   // three answers, then the reply and what it does. (In the press room once Batch BT is in.)
   pressConference(game, who, vars, answer, done) {
+    if (hasGallery() && !Assets.groupReady('gallery')) return gallery(() => this.pressConference(game, who, vars, answer, done));
     const npcs = Assets.atlas.npcs || {}, kipId = npcs.announcer_press || npcs.announcer;
     const kip = kipId ? Assets.icon(kipId, 152) : '';
     const room = Assets.atlas.frames['press/room'] ? Assets.sceneImage('press/room', 640) : '';
@@ -1356,6 +1370,7 @@ export class UI {
 
   // The season in review (review.js), before the next one starts.
   seasonReview(r, done) {
+    if (hasGallery() && !Assets.groupReady('gallery')) return gallery(() => this.seasonReview(r, done));
     const result = { champion: t('Frostline Cup champions!'), final: t('Lost in the Cup Final'), semi: t('Out in the semifinals'), missed: t('Missed the playoffs'), unfinished: t('The season ended early') }[r.result];
     const nm = (id) => (member(id) ? member(id).name : '');
     // (Batch BZ: a newspaper front page behind it, and a CHAMPIONS stamp for a Cup season)
@@ -1385,6 +1400,7 @@ export class UI {
   hallCeremony(list, done) {
     const h = list[0];
     if (!h) return done();
+    if (hasGallery() && !Assets.groupReady('gallery')) return gallery(() => this.hallCeremony(list, done));
     const art = Assets.atlas.frames['hall/ceremony'] ? Assets.sceneImage('hall/ceremony', 640) : ''; // (Batch BV, in its own shape)
     audio.jingle?.('champion');
     this.modal(`
@@ -2175,6 +2191,7 @@ export class UI {
   // Shop › Club facilities: four buildings, three levels each, bought with coins.
   tabFacilities(body) {
     const s = this.app.save;
+    if (hasGallery() && !Assets.groupReady('gallery')) Assets.loadGroup('gallery').then(() => { if (this.tab === 'shop' && this.shopFilter === 'club' && body.isConnected) this.tabFacilities(body); }, () => {});
     const pips = (L) => Array.from({ length: MAX_FACILITY }, (_, i) => { const id = i < L ? 'icons/facility_pip_full' : 'icons/facility_pip_empty'; return Assets.atlas.frames[id] ? `<img class="fac-pip" src="${ico(id, 32)}" alt="">` : `<span class="fac-pip${i < L ? ' on' : ''}"></span>`; }).join('');
     body.innerHTML = `
       ${shopFilters('club')}

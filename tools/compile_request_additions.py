@@ -1,5 +1,10 @@
 """Append request art and equipment masks without rewriting old pages."""
 from pathlib import Path
+# Pictures only a few screens show (the press room, the facilities, the Hall of Fame, the season in review) go in
+# their own group, loaded when one of those screens opens, not with the startup art.
+GALLERY=('facilities/','hall/','press/','review/','npcs/announcer_press','npcs/reporter_')
+# Groups the source packs name that the game never loads on their own: their art goes with the ones it does.
+LOADED={'icons':'icons_z','crowd_props':'home'}
 from PIL import Image
 import json,copy,hashlib,sys,shutil
 def merge_request_additions(atlas,out,sources):
@@ -19,7 +24,7 @@ def merge_request_additions(atlas,out,sources):
      f=S['frames'][fid]
      if fid in A['frames']and batch!='BJ':continue
      if batch=='BJ':replaced.add(fid)
-     rr=f['frame'];q=page.crop((rr['x'],rr['y'],rr['x']+rr['w'],rr['y']+rr['h']));k=f.get('game_scale',1) if batch in ['BR','BS','BT','BU','BV','BW'] else .6 if batch in ['BL','BN'] else .33 if fid=='hub_npcs/portrait/coach_stern' else 1;s=k*f.get('source_scale',1);size=(round(q.width*k),round(q.height*k));sx,sy=size[0]/q.width,size[1]/q.height;p=f['pivot_pixels'];group=f.get('game_group') or {'BJ':'gearmask','BK':'icons_z','BL':'linesman','BM':'home'}[batch];items.append({'id':fid,'q':q.resize(size,Image.Resampling.NEAREST),'pivot':[p['x']*sx,p['y']*sy],'scale':s,'group':group})
+     rr=f['frame'];q=page.crop((rr['x'],rr['y'],rr['x']+rr['w'],rr['y']+rr['h']));k=f.get('game_scale',1) if batch in ['BR','BS','BT','BU','BV','BW'] else .6 if batch in ['BL','BN'] else .33 if fid=='hub_npcs/portrait/coach_stern' else 1;s=k*f.get('source_scale',1);size=(round(q.width*k),round(q.height*k));sx,sy=size[0]/q.width,size[1]/q.height;p=f['pivot_pixels'];group=f.get('game_group') or {'BJ':'gearmask','BK':'icons_z','BL':'linesman','BM':'home'}[batch];group='gallery' if fid.startswith(GALLERY) else LOADED.get(group,group);items.append({'id':fid,'q':q.resize(size,Image.Resampling.NEAREST),'pivot':[p['x']*sx,p['y']*sy],'scale':s,'group':group})
    if batch=='BL':A.setdefault('linesman',{}).setdefault('calls',{}).update(S['linesman']['calls'])
    if batch=='BN':A.setdefault('linesman',{})['delayed']=copy.deepcopy(S['linesman']['delayed'])
    if batch in ['BR','BS','BT','BU','BV','BW']:

@@ -782,7 +782,8 @@ class App {
     this.checkRotate();
     navigator.wakeLock?.request?.('screen').then((l) => { this.wake = l; }).catch(() => {});
     if (this.isTouch && document.documentElement.requestFullscreen && !document.fullscreenElement) {
-      document.documentElement.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+      // fullscreen, then held on its side where the phone allows it (Android; iPhones ignore it and the rotate prompt shows)
+      document.documentElement.requestFullscreen({ navigationUI: 'hide' }).then(() => screen.orientation?.lock?.('landscape')).catch(() => {});
     }
     this.tutorial = (goalieMode ? (this.save.goalieGames || 0) : this.save.record.played) < 2 ? 0 : -1;
     this.tutT = 1.5;
