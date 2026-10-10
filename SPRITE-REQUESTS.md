@@ -7,7 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **CZ: the cub's costumes**
+None currently open. Monitoring for additions.
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -58,6 +58,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered CX:** Snow Fox cub: four walking poses, two sitting/tail-wag poses, two sleeping poses, happy hop, floating heart and naming portrait. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CX-Testing-Update`.
 
 **Delivered CY:** Custom-player celebrations: six four-frame guitar/snow-angel loops for std, big and small builds, 24 native gear masks and head anchors. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CY-Testing-Update`.
+
+**Delivered CZ:** Seasonal cub costumes: nine Halloween pumpkin poses and nine holiday Santa-hat/scarf poses, matching the original floor pivots. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-CZ-Testing-Update`.
 
 ## Format notes
 
@@ -461,7 +463,7 @@ Batch CW's stick guitar and snow angel are lovely on the cast. Please draw the s
 
 The Team tab offers them to those players as soon as their frames are in. 24 frames plus masks and anchors.
 
-## Batch CZ: the cub's costumes
+## Batch CZ ✓: the cub's costumes
 
 The locker room's Snow Fox cub (CX) is adorable. Like the home rink's seasonal dressing (CD), please give it a costume for each season, the same nine poses at the same size and pivots, as atlas frames on a page in the `seasonal` group (loaded in season):
 - `pet_halloween/walk_1`..`_4`, `sit_1`, `sit_2`, `sleep_1`, `sleep_2`, `hop`: in a little pumpkin costume (from 20 October to 1 November).
