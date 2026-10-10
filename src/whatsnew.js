@@ -4,6 +4,7 @@ export const WHATS_NEW = [
   {
     id: '2026-10-10za',
     items: [
+      { icon: 'rink_props/nets/south', text: 'Puck Party for the youngest, in Training: no goalies, no one to take the puck off you. Score ten in either net as fast as you can, with a little party for every goal.' },
       { icon: 'icons/pet', alt: 'icons/friends', text: 'Dress the cub! Shop › Locker room › For the cub has a striped scarf, a bobble hat and a bow tie.' },
     ],
   },

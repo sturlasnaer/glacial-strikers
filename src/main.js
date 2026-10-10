@@ -671,6 +671,13 @@ class App {
     m.on('target_miss', (e) => { fx.text(GOAL_X - 70, e.y - 80, '+10', '#c3d3ea', 0.8, 16); audio.sfx('boards', { vol: 0.4 }); });
     m.on('rondo_pass', (e) => { fx.text(e.s.x, e.s.y - 100, `+${e.pts}`, '#71dce8', 0.8, 15 + e.pts * 2); audio.sfx('coin', { vol: 0.25 + e.pts * 0.05 }); });
     m.on('rondo_steal', (e) => { hud.banner(`<div class="small">${e.why === 'zone' ? t('OUT OF THE ZONE') : e.why === 'shot' ? t('NO SHOOTING!') : t('STOLEN!')}</div>`, 1); audio.sfx('deny'); });
+    m.on('party_goal', (e) => { // (Puck Party: every goal a little party)
+      hud.banner(`<div class="small" style="color:#ffd45e">${t('GOAL!')}</div><div class="sub">${e.n} / 10</div>`, 0.8);
+      audio.jingle('goal'); audio.crowdCheer(0.5); fx.lamp = 1.2;
+      const sx = Math.sign(m.puck.x) || 1; // (the net it went into)
+      fx.burst(sx * (GOAL_X - 20), m.puck.y, 30, 30, ['#ff6f7d', '#ffd45e', '#71dce8', '#7fe08a', '#fff2cb'], 320, 1.1);
+    });
+    m.on('party_drop', (e) => { fx.ring(e.x, e.y, 46, '#ffd45e', 0.7); audio.sfx('pickup', { vol: 0.4 }); });
     m.on('breakaway_result', (e) => {
       hud.banner(`<div class="small" style="color:${e.kind === 'goal' ? '#ffd45e' : '#c3d3ea'}">${{ goal: t('GOAL!'), save: t('SAVED'), miss: t('MISSED'), time: t('TOO SLOW') }[e.kind]}</div>`, 1.2);
       if (e.kind === 'goal') { audio.jingle('goal'); audio.crowdCheer(0.6); fx.lamp = 1.5; } else audio.crowdOoh(0.5);

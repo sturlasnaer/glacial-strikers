@@ -50,6 +50,11 @@ export const DRILLS = {
     text: 'Your line against two penalty killers for 45 seconds, their third in the box. Move the puck round the umbrella: a pass across to an open stick for a one-timer beats a box.',
     medals: [2, 3, 5],
   },
+  puckparty: {
+    id: 'puckparty', name: 'Puck Party', trains: 'Just for fun', icon: 'rink_props/nets/south', unit: 'time', offline: true, // (for the youngest: no goalies, no board)
+    text: 'No goalies, no rush. A puck drops somewhere on the ice: skate to it and put it in either net. Ten goals as fast as you can!',
+    medals: [120, 75, 45],
+  },
   resurface: {
     id: 'resurface', name: 'Resurfacer', trains: 'Ice care', icon: 'polish/resurfacer/east/phase_1', art: 'equipment_items/hub/resurface', unit: 'percent', offline: true, // (no online board: a drill for fun; art: Batch CC, when it's in)
     text: 'The ice needs a fresh coat. Drive the resurfacer with the stick (SPRINT is quicker but turns wider) and clean as much of the rink between the goal lines as you can in a minute.',
@@ -101,6 +106,7 @@ export function createDrill(id, save, charId, opts = {}) {
     case 'faceoffs': away = ['frost']; ctrl = new FaceoffDrill(); break;
     case 'tips': home = [charId, opts.feeder || mates.find((k) => member(k).role === 'D') || mates[0]]; ctrl = new TipDrill(); break;
     case 'resurface': ctrl = new ResurfaceDrill(); break;
+    case 'puckparty': ctrl = new PuckPartyDrill(); break;
     case 'powerplay': home = [charId, ...mates]; away = ['frost', 'thunder', 'stone']; ctrl = new PowerPlayDrill(); break;
     case 'shootout': home = line; awayTeam = opts.teamId || 'comets'; away = ids; ctrl = new ShootoutDrill(opts.teamId); break;
     case 'party': home = line; awayTeam = opts.teamId || 'comets'; away = ids; ctrl = new ShootoutDrill(opts.teamId, true); break; // (2 Players › Shootout)
@@ -488,6 +494,51 @@ class RondoDrill extends DrillBase {
 // ------------------------------------------------------------ Breakaway
 // Every attempt is recorded (the skater's path, the puck's, how it ended), and a ghost's
 // attempt plays alongside yours: same start, its shot, then GOAL or SAVED over its head.
+// Puck Party (for the youngest): no goalies and no one to take it off you. A puck drops at a
+// spot on the ice; skate to it and score in either net; the next drops somewhere new. Ten goals,
+// timed.
+export const PARTY_GOALS = 10;
+class PuckPartyDrill extends DrillBase {
+  constructor() { super(); this.kids = true; } // (Simple controls stay on in it)
+  init(m) {
+    this.hideGoalies(m);
+    this.rng = makeRng(31);
+    this.goals = 0; this.phase = 'run';
+    const s = m.controlled();
+    s.x = 0; s.y = 40; s.vx = s.vy = 0;
+    this.drop(m);
+    this.startCountdown(m);
+  }
+  // a puck at a new spot: away from the skater, the nets and the boards
+  drop(m) {
+    const p = m.puck, s = m.controlled();
+    let x = 0, y = 0;
+    for (let i = 0; i < 12; i++) {
+      x = this.rng.range(-430, 430); y = this.rng.range(-170, 200);
+      if (Math.hypot(x - s.x, y - s.y) > 180) break;
+    }
+    p.owner = null; p.inNet = null; p.shot = null; p.pass = null;
+    p.x = x; p.y = y; p.z = 30; p.vx = p.vy = 0; p.vz = 0;
+    m.emit('party_drop', { x, y });
+  }
+  tick(m, dt) {
+    if (this.phase === 'between') {
+      this.pauseT -= dt;
+      if (this.pauseT <= 0) { this.phase = 'run'; this.drop(m); }
+    }
+  }
+  onGoal(m) {
+    if (this.phase !== 'run') return;
+    this.goals++;
+    m.emit('party_goal', { n: this.goals });
+    if (this.goals >= PARTY_GOALS) return this.finish(m, Math.round(this.t * 100) / 100);
+    this.phase = 'between'; this.pauseT = 0.9;
+  }
+  hud() {
+    return { title: t('Puck Party'), main: `${this.goals} / ${PARTY_GOALS}`, sub: t('{seconds}s', { seconds: this.t.toFixed(1) }), note: t('Skate to the puck and score in either net!') };
+  }
+}
+
 class BreakawayDrill extends DrillBase {
   constructor(ghost = null) {
     super();
