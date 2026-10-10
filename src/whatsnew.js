@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10q',
+    items: [
+      { icon: 'icons/album', alt: 'icons/friends', text: 'The sticker album, in Trophies: a sticker for everyone in the league. Every match brings a pack, two for a win. Look out for shiny ones!' },
+    ],
+  },
+  {
     id: '2026-10-10p',
     items: [
       { icon: 'icons/music_room', alt: 'icons/facility_stands', text: 'New music: the Observatory, the Longhouse and the Harbour Rink have match themes of their own. Hear them in Settings › Music room.' },

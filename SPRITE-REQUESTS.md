@@ -366,3 +366,14 @@ For the youngest players the game is getting a *Simple controls* setting: one bi
 - `icons/simple_controls` (128×128, for Settings): a single big gold button with a small hand pressing it.
 
 3 images.
+
+## Batch CR: the sticker album
+
+The game now has a **sticker album** (Trophies › Sticker album): a numbered sticker for everyone in the league, a page a club, filled from packs that come with every match. It works with stand-ins today; please draw, all without lettering (the game writes the words, in English or Icelandic):
+- `icons/album` (128×128): a chunky sticker album, a sticker peeking out of it. On the Trophies card, the album's title and What's new.
+- `icons/music_room` (128×128): a little jukebox (or a music note over a speaker), for the Music room and What's new.
+- `album/mascot_home`, `album/mascot_lynx`, `album/mascot_comets`, `album/mascot_rams`, `album/mascot_ravens`, `album/mascot_royals`, `album/mascot_owls`, `album/mascot_moose` (8, the size and framing of the character portraits, on transparent): each club's mascot, head and shoulders, waving at the camera, in the club's colours; the same mascots that dance in the stands (the Snow Fox for us). As atlas frames on a page in the `gallery` group (loaded in Trophies). Each joins the end of its club's page as soon as its frame is in.
+- Plain PNGs in `assets/gfx/album/` (no atlas: the page's CSS uses them directly): `cover.png` (256×256, the album's cover: red cloth with the Frostline snowflake in gold), `page.png` (1024×768, a cream paper page with a faint border and photo corners, light enough for dark text on it), `pack.png` (240×320, a sealed foil sticker pack with the league snowflake), `foil.png` (256×256, a seamless holographic foil texture, light and see-through, laid over shiny stickers), `seal.png` (160×160, a round gold seal or rosette for a full page).
+- Two trophies in the style of the other achievement badges: `achievements/got_the_set` (a full page of stickers) and `achievements/collector` (a closed album with a gold star).
+
+17 images.

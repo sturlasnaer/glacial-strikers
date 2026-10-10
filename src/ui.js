@@ -56,6 +56,7 @@ import { SKILLS_EVENTS, placeIn } from './skills.js';
 import { PAINTS, MODULAR, SKIN_TONES, HAIR_COLORS } from './modular.js';
 import { seasonFor } from './seasonal.js';
 import { canCreate, createPlayer, restyle, defaultChoice, stylesFor, cleanName, MAX_OWN, NAME_MAX } from './create.js';
+import { albumPages, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
 
 const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
 const ROLE_NAME = { C: 'Centre', W: 'Winger', D: 'Defender' };
@@ -340,6 +341,21 @@ function coachNote(sm) {
 }
 const smallIcon = (id, size = 40, cls = 'rule-ico') => { const src = id && Assets.icon(id, size); return src ? `<img class="${cls}" src="${src}" alt="">` : ''; };
 const btnIcon = (id) => smallIcon(id, 48, 'btn-ico'); // in front of a button's words
+// The sticker album: the pages (a club's mascot once its sticker is drawn, Batch CR), a
+// sticker's face, and the sticker itself.
+const ALBUM_PAGES = () => albumPages((team) => !!Assets.atlas.frames[`album/mascot_${team}`]);
+function stickerFace(st, size) {
+  if (st.kind === 'mascot') return Assets.icon(`album/mascot_${st.team}`, size);
+  if (st.team === 'home' || st.kind === 'legend') return portrait(st.key, 0, null, size);
+  return portrait(st.kit, 1, st.team, size);
+}
+const stickerRole = (st) => (st.kind === 'mascot' ? t('Mascot') : st.kind === 'goalie' ? t('Goalie') : st.kind === 'legend' ? t(LEGENDS[st.key].title) : t(ROLE_NAME[{ frost: 'C', thunder: 'W', stone: 'D' }[st.kit]]));
+const stickerName = (st) => (st.kind === 'mascot' ? (st.team === 'home' ? t('The Snow Fox') : TEAMS[st.team].name) : st.name);
+function stickerHtml(st, foil, count = 1) {
+  const tilt = (((st.n * 37) % 7) - 3) * 0.7;
+  return `<div class="stk${foil ? ' foil' : ''}${st.kind === 'legend' ? ' legend' : ''}" style="--tilt:${tilt}deg">
+    <img src="${stickerFace(st, 128)}" alt=""><b>${esc(stickerName(st))}</b><small>${esc(stickerRole(st))}</small><span class="no">${st.n}</span>${count > 1 ? `<span class="dup">×${count}</span>` : ''}</div>`;
+}
 const simpleLabel = () => `${smallIcon('icons/simple_controls', 48, 'btn-ico')} ${t('Simple controls')}`; // (its icon once Batch CQ is in)
 // A goaltending style's icon (Batch AN), the Iron Wall until it's in.
 const goalieStyleIcon = (id, size = 68) => `<img src="${ico(Assets.atlas.frames['icons/gstyle_' + id] ? 'icons/gstyle_' + id : 'icons/award_iron_wall', size)}" alt="">`;
@@ -589,7 +605,7 @@ export class UI {
         ${room ? `<div class="room-wrap" id="room-wrap"><div class="room" id="room">${this.roomHtml(s, anyPoints)}</div></div>` : `
         <div class="tabs" role="tablist">
           <button class="tab room-tab" data-tab="room" aria-label="${t('Back to the locker room')}"><span class="arr">◂</span> <span class="lbl">${t('Locker room')}</span></button>
-          ${[['tournament', t('League')], ['team', t('Team')], ['shop', t('Shop')], ['training', t('Training')], ['trophies', t('Trophies')]].map(([t, label]) => `<button class="tab" role="tab" data-tab="${t}" aria-selected="${this.tab === t}">${label}${t === 'team' && anyPoints ? '<span class="dot"></span>' : ''}</button>`).join('')}
+          ${[['tournament', t('League')], ['team', t('Team')], ['shop', t('Shop')], ['training', t('Training')], ['trophies', t('Trophies')]].map(([t, label]) => `<button class="tab" role="tab" data-tab="${t}" aria-selected="${this.tab === t}">${label}${(t === 'team' && anyPoints) || (t === 'trophies' && s.album && s.album.started && s.album.packs > 0) ? '<span class="dot"></span>' : ''}</button>`).join('')}
         </div>
         <div class="hub-body panel" id="hub-body"></div>`}
         <div class="hub-cta">
@@ -938,6 +954,7 @@ export class UI {
       <div class="train-top"><div><div class="label">${t('Trophy case')}</div>
         <p style="margin:2px 0 0;font-size:13px">${t('{n} of {total} unlocked', { n: got.length, total: ACHIEVEMENTS.length })} · ${t('{n} coins earned', { n: earned })}${s.cups ? ` · ${t(s.cups > 1 ? '{n} cups won' : '{n} cup won', { n: s.cups })}` : ''}${classicWins ? ` · ${t(classicWins > 1 ? '{n} Winter Classics won' : '{n} Winter Classic won', { n: classicWins })}` : ''}${allstarWins ? ` · ${t(allstarWins > 1 ? '{n} All-Star Games won' : '{n} All-Star Game won', { n: allstarWins })}` : ''}</p></div>
         <span class="row" style="gap:6px;margin:0"><button class="btn small ghost" id="tr-career">${btnIcon('icons/career')} ${t('Career stats')}</button><button class="btn small ghost" id="tr-lb">${badge('cup_small', 48, 'btn-ico', '🏆')} ${t('Online leaderboards')}</button></span></div>
+      ${this.albumCard(s)}
       ${(() => { // the Hall of Fame's plaques (on Batch BV's plaque once it's in)
         const hall = s.hall || [], plaque = Assets.atlas.frames['hall/plaque'] ? Assets.sceneImage('hall/plaque', 360) : '';
         const wall = Assets.atlas.frames['hall/wall'] ? Assets.sceneImage('hall/wall', 960) : '';
@@ -976,8 +993,89 @@ export class UI {
           <span class="tcoins">${done ? '✓' : `+${a.coins}`}</span>
         </div>`;
       }).join('')}</div>`;
+    this.click('#tr-album', () => { audio.sfx('click'); this.album(); }, body);
+    this.click('#tr-pack', () => { audio.sfx('click'); this.packOpen(); }, body);
     this.click('#tr-lb', () => { audio.sfx('click'); this.leaderboard('cones'); }, body);
     this.click('#tr-career', () => { audio.sfx('click'); this.careerPage(); }, body);
+  }
+
+  // The sticker album's card in Trophies: the cover, how full it is, and the packs to open.
+  albumCard(s) {
+    const a = albumOf(s), pr = albumProgress(s, ALBUM_PAGES());
+    return `<div class="album-card">
+      <div class="album-cover" aria-hidden="true">${smallIcon('icons/album', 96, 'al-ico') || `<img class="al-ico" src="${crest('home', 96)}" alt="">`}</div>
+      <div style="min-width:0"><b>${t('Sticker album')}</b>
+        <span class="muted">${a.started ? t('{n} of {total} stickers', { n: pr.got, total: pr.total }) + (pr.foil ? ` · ${t('{n} shiny', { n: pr.foil })}` : '') : t('A sticker for everyone in the league. Packs come with every match.')}</span>
+        ${a.started ? `<div class="xpbar" style="margin-top:4px"><i style="width:${Math.round((pr.got / pr.total) * 100)}%"></i></div>` : ''}</div>
+      <span class="row" style="gap:6px;margin:0"><button class="btn small ghost" id="tr-album">${a.started ? t('Open album') : t('Start the album')}</button>${a.packs > 0 && a.started ? `<button class="btn small gold" id="tr-pack">${t('Open a pack')} (${a.packs})</button>` : ''}</span>
+    </div>`;
+  }
+
+  // The album, a page a club (and the legends): the stickers you have stuck in, the gaps
+  // numbered with who goes there.
+  album(at = 0) {
+    const s = this.app.save, pages = ALBUM_PAGES(), a = albumOf(s);
+    if (startAlbum(s)) { writeSave(s); this.app.toast(Assets.icon(Assets.atlas.npcs && Assets.atlas.npcs.coach ? Assets.atlas.npcs.coach : 'icons/stat_cups', 72), t('Sticker album'), t('Coach Brekka hands you an album'), t('…and {n} packs to start it!', { n: STARTER_PACKS })); }
+    const title = (p) => (p.team ? TEAMS[p.team].name : t('Legends'));
+    const body = (i) => {
+      const p = pages[i], pr = albumProgress(s, pages), full = pageFull(s, p);
+      return `<h2>${smallIcon('icons/album', 96, 'h-ico')}${t('Sticker album')}</h2>
+        <p class="muted" style="margin:0 0 8px">${t('{n} of {total} stickers', { n: pr.got, total: pr.total })}${pr.foil ? ` · ${t('{n} shiny', { n: pr.foil })}` : ''} · ${t('A full page: +{n} coins. The whole album: +{m}.', { n: PAGE_COINS, m: ALBUM_COINS })}</p>
+        <div class="album-tabs">${pages.map((q, k) => `<button class="chip" data-page="${k}" aria-pressed="${k === i}" title="${esc(title(q))}">${q.team ? `<img src="${crest(q.team, 40)}" alt="" width="20" height="20">` : '★'}${a.done.includes(q.id) ? '<span class="ok">✓</span>' : ''}</button>`).join('')}</div>
+        <div class="album-page">
+          <h3>${p.team ? `<img src="${crest(p.team, 64)}" alt="" width="30" height="30">` : '★'} ${esc(title(p))}</h3>
+          <div class="stickers">${p.stickers.map((st) => (a.got[st.id] ? stickerHtml(st, a.foil[st.id], a.got[st.id])
+            : `<div class="stk empty"><span class="big-no">${st.n}</span><small>${st.kind === 'legend' ? '???' : esc(stickerName(st))}</small></div>`)).join('')}</div>
+          ${full ? `<div class="album-seal">${t('Page complete!')}</div>` : ''}
+        </div>
+        <div class="row" style="justify-content:space-between;margin-top:10px">
+          <button class="btn small ghost" data-step="-1" ${i === 0 ? 'disabled' : ''}>◂</button>
+          ${a.packs > 0 ? `<button class="btn small gold" id="al-pack">${t('Open a pack')} (${a.packs})</button>` : `<span class="muted" style="font-size:13px">${t('Packs come with every match: two for a win.')}</span>`}
+          <button class="btn small ghost" data-step="1" ${i === pages.length - 1 ? 'disabled' : ''}>▸</button>
+        </div>
+        <div class="row" style="justify-content:flex-end"><button class="btn small" id="al-close">${t('Close')}</button></div>`;
+    };
+    let i = Math.max(0, Math.min(pages.length - 1, at));
+    this.modal(body(i), (m, close) => {
+      m.classList.add('album-modal');
+      if (hasGallery() && !Assets.groupReady('gallery')) Assets.loadGroup('gallery').then(() => { if (m.isConnected) m.innerHTML = body(i); }, () => {}); // (the mascots' stickers)
+      m.addEventListener('click', (e) => {
+        const el = e.target.closest('[data-page],[data-step],#al-pack,#al-close');
+        if (!el) return;
+        e.stopPropagation();
+        if (el.id === 'al-close') { audio.sfx('back'); close(); if (this.tab === 'trophies') this.hub('trophies'); return; }
+        if (el.id === 'al-pack') { close(); this.packOpen(i); return; }
+        audio.sfx('click');
+        i = el.dataset.page != null ? +el.dataset.page : Math.max(0, Math.min(pages.length - 1, i + +el.dataset.step));
+        m.innerHTML = body(i);
+      });
+    }, true, () => { if (this.tab === 'trophies') this.hub('trophies'); });
+  }
+
+  // Open a pack: three stickers turn over one by one: NEW!, SHINY! or a double swapped for coins.
+  packOpen(page = null) {
+    const s = this.app.save, pages = ALBUM_PAGES();
+    startAlbum(s);
+    const res = openPack(s, pages);
+    if (!res) return this.album(page ?? 0);
+    writeSave(s);
+    this.app.ach.checkMeta();
+    const a = albumOf(s);
+    const pageOf = (st) => pages.findIndex((p) => p.stickers.includes(st));
+    const tag = (r) => (r.isNew && r.foil ? `<span class="pk-tag new">${t('NEW!')} ✦</span>` : r.isNew ? `<span class="pk-tag new">${t('NEW!')}</span>` : r.newFoil ? `<span class="pk-tag shiny">${t('SHINY!')}</span>` : `<span class="pk-tag">${t('Double: +{n} coins', { n: r.coins })}</span>`);
+    this.modal(`<h2>${t('Sticker pack')}</h2>
+      <div class="pack-reveal">${res.stickers.map((r, k) => `<div class="pk" style="--d:${0.35 + k * 0.45}s"><div class="pk-in"><div class="pk-back"></div><div class="pk-front">${stickerHtml(r.sticker, r.foil)}${tag(r)}</div></div></div>`).join('')}</div>
+      ${res.pages.map((id) => { const p = pages.find((q) => q.id === id); return `<p class="gold-t pk-done">${t('Page complete: {page}! +{n} coins', { page: p.team ? TEAMS[p.team].name : t('Legends'), n: PAGE_COINS })}</p>`; }).join('')}
+      ${res.full ? `<p class="gold-t pk-done">${t('The whole album! +{n} coins', { n: ALBUM_COINS })}</p>` : ''}
+      <div class="row" style="justify-content:flex-end;margin-top:12px">
+        ${a.packs > 0 ? `<button class="btn small gold" id="pk-more">${t('Open another')} (${a.packs})</button>` : ''}
+        <button class="btn small" id="pk-album">${t('To the album')}</button></div>`, (m, close) => {
+      m.classList.add('pack-modal');
+      res.stickers.forEach((r, k) => setTimeout(() => { if (m.isConnected) audio.sfx(r.isNew || r.newFoil ? 'pickup' : 'coin'); }, (0.35 + k * 0.45) * 1000 + 250));
+      if (res.pages.length || res.full) setTimeout(() => { if (m.isConnected) audio.jingle('achievement'); }, 1900);
+      this.click('#pk-more', () => { close(); this.packOpen(page); }, m);
+      this.click('#pk-album', () => { audio.sfx('click'); close(); this.album(res.stickers[0] ? pageOf(res.stickers[0].sticker) : page ?? 0); }, m);
+    }, true, () => { if (this.tab === 'trophies') this.hub('trophies'); });
   }
 
   // Career stats: the club's lifetime numbers, every skater's totals (most points first,
@@ -3028,7 +3126,7 @@ export class UI {
           </div>
           <div>
             <div class="label">${t('Rewards')}</div>
-            <div class="reward-lines">${rewards.lines.map(([a, b]) => `<div><span>${esc(a)}</span><span class="gold-t">${b > 0 ? '+' + b : b < 0 ? '−' + -b : ''}</span></div>`).join('')}</div>
+            <div class="reward-lines">${rewards.lines.map(([a, b]) => `<div><span>${esc(a)}</span><span class="gold-t">${typeof b === 'string' ? esc(b) : b > 0 ? '+' + b : b < 0 ? '−' + -b : ''}</span></div>`).join('')}</div>
             <div class="reward-total"><span>${t('Coins')}</span><span>+${rewards.coins}</span></div>
             <div class="label" style="margin-top:10px">${t('Experience')}</div>
             <div style="display:grid;gap:6px">

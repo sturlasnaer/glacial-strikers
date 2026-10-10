@@ -46,6 +46,8 @@ export const ACHIEVEMENTS = [
   { id: 'one-of-our-own', name: 'One of Our Own', text: 'Create a player of your own.', icon: 'icons/rookie', art: 'achievements/one_of_our_own', coins: 25 },
   { id: 'homegrown-hero', name: 'Homegrown Hero', text: 'A player of your own scores in a league match.', icon: 'icons/rookie', art: 'achievements/homegrown_hero', coins: 60 },
   { id: 'special-teams', name: 'Special Teams', text: 'Win gold in the Power Play drill.', icon: 'hud_elements/ability/fire', art: 'achievements/special_teams', coins: 60 },
+  { id: 'sticker-page', name: 'Got the Set', text: 'Fill a page of the sticker album.', icon: 'icons/friends', art: 'achievements/got_the_set', coins: 40 },
+  { id: 'sticker-album', name: 'Collector', text: 'Fill the whole sticker album.', icon: 'icons/stat_cups', art: 'achievements/collector', coins: 150 },
   { id: 'fresh-sheet', name: 'Fresh Sheet', text: 'Win gold in the Resurfacer drill.', icon: 'hud_elements/ability/frost', art: 'achievements/fresh_sheet', coins: 40 },
   { id: 'better-together', name: 'Better Together', text: 'Win a match with two players on the team.', icon: 'icons/friends', art: 'achievements/better_together', coins: 40 },
   // the newer systems (art: their own icon from Batch AN; icon: a stand-in until then)
@@ -212,6 +214,8 @@ export class AchievementTracker {
     if (s.training && (s.training.medals.resurface || 0) >= 3) this.unlock('fresh-sheet');
     if (s.training && (s.training.medals.powerplay || 0) >= 3) this.unlock('special-teams');
     if (Object.values(s.rookies || {}).some((k) => k.own)) this.unlock('one-of-our-own');
+    if (s.album && s.album.done.length) this.unlock('sticker-page');
+    if (s.album && s.album.full) this.unlock('sticker-album');
     if (GEAR.every((g) => s.owned.includes(g.id))) this.unlock('kitted');
     const signed = Object.keys(RECRUITS).filter((k) => s.roster[k]);
     if (signed.length) this.unlock('signing');

@@ -8,6 +8,7 @@ import { Input, TouchControls, mergeInputs } from './input.js';
 import { audio } from './audio.js';
 import { PadNav } from './padnav.js';
 import { forceSeason, seasonFor } from './seasonal.js';
+import { addPacks } from './album.js';
 import { firstTime } from './guide.js';
 import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as cloudBackup, settleCups } from './online.js';
 import { ARENA_MUSIC } from './songs.js';
@@ -1095,11 +1096,13 @@ class App {
       rewards.coins += sg.met.reduce((a, g) => a + g.coins, 0) + sg.bonus;
       if (sg.met.length) setTimeout(() => this.toast(Assets.icon(Assets.atlas.frames['icons/season_goals'] ? 'icons/season_goals' : (Assets.atlas.npcs && Assets.atlas.npcs.coach) || 'badges/daily_star', 72), t('Season goal'), t(sg.met[0].text, { n: sg.met[0].n }), t('+{n} coins', { n: sg.met[0].coins + sg.bonus })), 2400);
     }
+    let dailyDone = false;
     if (c.daily) {
       const goal = dailyGoal(c.daily.goal);
       const met = goal.check(summary);
       const done = met ? completeDaily(s, c.daily.date) : null;
       if (done) {
+        dailyDone = true;
         rewards.lines.push([t('Daily challenge · {n}-day streak', { n: done.streak }), done.coins]);
         setTimeout(() => audio.jingle('daily'), 4200);
         this.postScore('daily_streak', dailyState(s).best);
@@ -1108,6 +1111,10 @@ class App {
         if (done.streak >= 7) this.ach.unlock('daily-streak');
       } else rewards.lines.push([met ? t('Daily challenge (already done today)') : t('Daily goal missed: {goal}', { goal: t(goal.text) }), 0]);
     }
+    // sticker packs for the album: one a match, two for a win, one more for the daily challenge
+    const packs = (rewards.won ? 2 : 1) + (dailyDone ? 1 : 0);
+    addPacks(s, packs);
+    rewards.lines.push([t('Sticker packs for the album'), `+${packs}`]);
     this.ach.endMatch(summary, { league: !c.exhibition && !allstar, exhibition: c.exhibition, mods: c.mods, coop: !!c.coop });
     if (summary.seats) addSeatTotals(s, summary); // (two players: who's ahead, over every co-op match)
     if (summary.goalieMode) { s.goalieGames = (s.goalieGames || 0) + 1; if (rewards.won) this.ach.unlock('between-pipes'); }
