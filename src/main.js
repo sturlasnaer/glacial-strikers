@@ -1540,6 +1540,7 @@ class App {
     this.last = now;
     this.watchFrameRate(rawDt);
     const inMatch = this.scene === 'match' || this.scene === 'paused';
+    if (!inMatch && !this.rotateEl.hidden) this.rotateEl.hidden = true; // (the match is over: the results and menus work upright)
     const versus = !!(this.cur && this.cur.versus) && inMatch, coop = !!(this.cur && this.cur.coop) && inMatch;
     const raw = this.input.read();
     if (versus || (coop && !this.input.pads().length)) {

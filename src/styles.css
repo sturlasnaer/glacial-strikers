@@ -375,6 +375,10 @@ span.fac-pip.on { background: var(--gold); }
 .res-head { text-align: center; }
 .res-head h1 { margin: 0; font-family: var(--display); font-weight: normal; font-size: clamp(48px, 10vw, 84px); line-height: 0.85; text-shadow: 0 5px 0 var(--navy); }
 .res-head .score { font-family: var(--display); font-size: 34px; }
+/* a pop-up or results panel that scrolls keeps its buttons in view at the bottom (the content
+   fades out under them, the row's bottom on the panel's edge rather than its padding); with
+   nothing to scroll, the row sits where it always did */
+.modal > .row:last-child, .results:not(.champ-panel) > .row:last-child { position: sticky; bottom: -16px; z-index: 2; padding-top: 8px; margin-top: -8px; background: linear-gradient(180deg, rgba(20, 35, 59, 0), #14233b 10px); }
 .res-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
 .res-table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
 .res-table th, .res-table td { padding: 3px 6px; text-align: right; border-bottom: 1px solid var(--navy-3); }
@@ -1180,6 +1184,11 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
   .modal .reward-lines { font-size: 12.5px; }
   .hall-cer { grid-template-columns: 84px minmax(0, 1fr); }
   .hall-cer img { width: 84px; height: 84px; }
+  /* after a match: a smaller headline, so the box score shows without scrolling */
+  .results { width: min(860px, calc(100% - 16px)); max-height: calc(100% - 8px); padding: 8px 12px; gap: 8px; }
+  .res-head h1 { font-size: 44px; }
+  .res-head .score { font-size: 24px; }
+  .modal > .row:last-child, .results:not(.champ-panel) > .row:last-child { bottom: -8px; } /* (the pop-up's own padding: flush with its bottom edge) */
 }
 /* ---- phones upright (the menus; matches ask to turn sideways): the tabs in one scrolling row,
    the play bar's buttons on one line under what's next ---- */
