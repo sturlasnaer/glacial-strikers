@@ -2,6 +2,13 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10zg',
+    items: [
+      { icon: 'equipment_items/stick/passing', alt: 'icons/coop', text: 'Give-and-go! When a teammate passes to you, they skate hard into open ice ahead. Pass it back for the one-two.' },
+      { icon: 'hud_elements/ability/stamina', text: 'More room in front of their net: the defender on you holds further off on the easier levels, still between you and the goal.' },
+    ],
+  },
+  {
     id: '2026-10-10zf',
     items: [
       { icon: 'pet/fetch_carry_1', alt: 'icons/pet', text: 'Play fetch with the cub: tap the open floor in the locker room to toss a puck, and watch it run, bring it back and sit proud.' },

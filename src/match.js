@@ -660,6 +660,7 @@ export class Match {
       // pass completed?
       if (prevTeam !== null && prevTeam !== s.team) this.chain[prevTeam] = 0;
       if (passInfo && passInfo.from.isSkater && passInfo.from.team === s.team && passInfo.from !== s) {
+        s.recvFrom = passInfo.from; s.recvT = this.time; // (who gave it: they go for the give-and-go, see ai.js)
         passInfo.from.stats_.passes++;
         this.addUlt(passInfo.from, 4);
         this.emit('receive', { s, from: passInfo.from });

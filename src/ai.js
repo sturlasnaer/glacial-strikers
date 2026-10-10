@@ -104,7 +104,16 @@ export class TeamAI {
       // support the carrier
       const c = owner || flight;
       const spots = this.supportSpots(c);
-      const avail = free.filter((s) => s !== c && !roles.has(s));
+      let avail = free.filter((s) => s !== c && !roles.has(s));
+      // the give-and-go: the teammate who just passed to the player skates hard into open ice
+      // ahead, on the far side, for the return pass
+      const giver = c.controlled && human && c.recvFrom && avail.includes(c.recvFrom) && m.time - c.recvT < 1.8 ? c.recvFrom : null;
+      if (giver) {
+        const gx = clamp(c.x + this.side * 170, -GOAL_X + 150, GOAL_X - 150), gy = clamp(c.y > 0 ? c.y - 150 : c.y + 150, -170, 170);
+        roles.set(giver, { ...this.openUp({ x: gx, y: gy, kind: 'spot', sprint: true }, c), sprint: true });
+        avail = avail.filter((s) => s !== giver);
+        spots.sort((a, b) => Math.hypot(a.x - gx, a.y - gy) - Math.hypot(b.x - gx, b.y - gy)).shift(); // (the spot it would have had)
+      }
       // a fourth skater (pulled goalie) parks in front of their net
       if (avail.length > 2) spots.push({ x: this.attX - this.side * 70, y: c.y > 0 ? -30 : 30, kind: 'spot', pref: 'C' });
       this.assign(avail, spots, roles, (s, sp) => (sp.pref === s.def.role ? -80 : 0));

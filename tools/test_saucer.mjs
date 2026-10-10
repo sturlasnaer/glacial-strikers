@@ -72,5 +72,19 @@ const nearCatch = (cfg) => {
 check('the player\'s teammate: a gap, not a charge', nearCatch({ humanTeam: 0, diff: [0.5, 0.3] }) === 'spot', nearCatch({ humanTeam: 0, diff: [0.5, 0.3] }));
 check('AI against AI: it still goes for the puck', nearCatch({ humanTeam: null, diff: [0.5, 0.3] }) === 'chase', nearCatch({ humanTeam: null, diff: [0.5, 0.3] }));
 
+// the give-and-go: the teammate who passed to the player heads for open ice ahead, hard
+{
+  const { m, c, mate } = setup({ humanTeam: 0 }, 300);
+  m.pass(c, mate);
+  for (let i = 0; i < 60 && !m.puck.owner; i++) { m.setHumanInput(idle()); m.update(1 / 60); }
+  const now = m.controlled();
+  check('the catch: control goes to the teammate, who remembers the pass', now === mate && mate.recvFrom === c, now && now.name);
+  const roles = m.ai[0].plan(m.teamSkaters(0), m.puck.owner, true, false, true), r = roles.get(c);
+  check('...and the passer goes ahead for the return, sprinting', r && r.sprint && (r.x - mate.x) * mate.side > 60, r);
+  m.time += 2;
+  const later = m.ai[0].plan(m.teamSkaters(0), m.puck.owner, true, false, true).get(c);
+  check('...for a moment, then back to supporting', later && !(later.sprint && (later.x - mate.x) * mate.side > 60 && Math.abs(later.x - r.x) < 1), later);
+}
+
 console.log(`Saucer pass: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
