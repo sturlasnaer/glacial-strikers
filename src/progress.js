@@ -158,6 +158,13 @@ export function clearSave() {
 
 // (the top levels take longer: a season or so each, once you're past six)
 export const expToNext = (level) => 100 + (level - 1) * 60 + Math.max(0, level - 5) ** 2 * 45;
+// Veterans: past level 10 the EXP keeps paying, a veteran level every VET_EXP up to VET_MAX.
+// For a skater each is a stat point that can push a stat a point further past its usual limit
+// (to 12 at most, see canRaise); a goalie's reflexes and angles go up by turns.
+export const VET_MAX = 10;
+export const VET_EXP = 1500;
+export const nextExp = (r) => (r.level < MAX_LEVEL ? expToNext(r.level) : VET_EXP); // (the next level, veteran or not)
+export const expPct = (r) => (r.level >= MAX_LEVEL && (r.vet || 0) >= VET_MAX ? 100 : Math.min(100, Math.round((r.exp / nextExp(r)) * 100)));
 
 export const chemLevel = (xp) => CHEM_LEVELS.filter((t) => xp >= t).length;
 
@@ -353,8 +360,9 @@ export const goalieRec = (save, id) => (id === 'halla' ? save.goalie : save.goal
 export function goalieStats(save, id = starterId(save)) {
   const g = goalieRec(save, id), base = goalieInfo(id).base;
   const gear = GEAR_BY_ID[g.gear];
-  const rfx = base.rfx + Math.floor((g.level - 1) / 2) + (gear?.mods.rfx || 0);
-  return { rfx, pos: base.pos + Math.floor(g.level / 3) };
+  const v = g.vet || 0; // (veteran levels: reflexes, then angles, by turns)
+  const rfx = Math.min(13, base.rfx + Math.floor((g.level - 1) / 2) + Math.ceil(v / 2) + (gear?.mods.rfx || 0));
+  return { rfx, pos: Math.min(13, base.pos + Math.floor(g.level / 3) + Math.floor(v / 2)) };
 }
 
 // Our goalie in a match config: who starts, in their own art (our colours) and style.
@@ -604,7 +612,13 @@ export function applyExp(save, id, amount) {
     if (pi >= 0) r.pendingPerk = pi;
     ups.push({ id, level: r.level, perk: pi >= 0 ? pi : null });
   }
-  if (r.level >= MAX_LEVEL) r.exp = Math.min(r.exp, expToNext(r.level));
+  while (r.level >= MAX_LEVEL && (r.vet || 0) < VET_MAX && r.exp >= VET_EXP) {
+    r.exp -= VET_EXP;
+    r.vet = (r.vet || 0) + 1;
+    r.points++;
+    ups.push({ id, level: r.level, vet: r.vet, perk: null });
+  }
+  if (r.level >= MAX_LEVEL && (r.vet || 0) >= VET_MAX) r.exp = Math.min(r.exp, VET_EXP);
   return ups;
 }
 
@@ -645,11 +659,14 @@ export function applyGoalieExp(save, amount, id = starterId(save)) {
   g.exp += amount;
   let up = 0;
   while (g.level < MAX_LEVEL && g.exp >= expToNext(g.level)) { g.exp -= expToNext(g.level); g.level++; up++; }
+  while (g.level >= MAX_LEVEL && (g.vet || 0) < VET_MAX && g.exp >= VET_EXP) { g.exp -= VET_EXP; g.vet = (g.vet || 0) + 1; up++; } // (a veteran in goal too)
+  if (g.level >= MAX_LEVEL && (g.vet || 0) >= VET_MAX) g.exp = Math.min(g.exp, VET_EXP);
   return up;
 }
 
 export function canRaise(r, id, k) {
-  return r.points > 0 && r.alloc[k] < capBonus(id) && member(id).base[k] + r.alloc[k] < 12;
+  const vet = r.vet || 0; // (a veteran can push a stat a point further past +3 for each veteran level; 12 at most for anyone)
+  return r.points > 0 && r.alloc[k] < capBonus(id) + vet && member(id).base[k] + r.alloc[k] < 12;
 }
 
 // Drafted rookies learn faster the higher their potential, and can raise each stat further.

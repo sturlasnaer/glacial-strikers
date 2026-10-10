@@ -12,7 +12,7 @@ import { ACHIEVEMENTS } from './achievements.js';
 import { AWARDS, AWARD_BY_ID, seasonStats } from './awards.js';
 import { dailyFor, dailyGoal, dayKey, currentStreak, doneToday, dailyReward, dailyState } from './daily.js';
 import {
-  expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, goalieStats, STAT_CAP_BONUS, clearSave, currentProfile, setProfile, profileSummaries, eraseProfile,
+  expToNext, effectiveStats, gearMods, canRaise, writeSave, MAX_LEVEL, VET_MAX, nextExp, expPct, goalieStats, STAT_CAP_BONUS, clearSave, currentProfile, setProfile, profileSummaries, eraseProfile,
   chemLevel, chemProgress, lineupIds, rosterIds, recruitStatus, signRecruit, setLineup, joinLevel, isSigned, homeKitGroups, capBonus,
   CAMP, campOpen, campChoices, campChange, recruitPrice, goalieIds, starterId, goalieRec, goalieStatus, signGoalie, setStarter, GOALIE_CAMP, goalieStyle, goalieCampOpen, goalieCampChange, canPickMask, pickMask, setLittle } from './progress.js';
 import { BOARD_INFO, fetchBoard, onlineState, tagOf, configured, onlineOn, cloudState, formatCode, restoreLink, fetchCloudSave, resetsIn, groupsOf, createGroup, joinGroup, leaveGroup, inviteLink, MAX_GROUPS, fetchCup, fetchGhost, CHALLENGE_BOARDS, createChallenge, fetchChallenge, challengeLink } from './online.js';
@@ -363,6 +363,8 @@ function coachNote(sm) {
 }
 const smallIcon = (id, size = 40, cls = 'rule-ico') => { const src = id && Assets.icon(id, size); return src ? `<img class="${cls}" src="${src}" alt="">` : ''; };
 const btnIcon = (id) => smallIcon(id, 48, 'btn-ico'); // in front of a button's words
+// A veteran's star and level beside their level (Batch DY's star once it's in, ★ till then)
+const vetBadge = (v) => (v ? ` <span class="vet" title="${esc(t('Veteran level {n}', { n: v }))}">${smallIcon(v >= VET_MAX && Assets.atlas.frames['badges/veteran_max'] ? 'badges/veteran_max' : 'badges/veteran', 40, 'vet-ico') || '★'}${v}</span>` : '');
 // The sticker album: the pages (a club's mascot once its sticker is drawn, Batch CR), a
 // sticker's face, and the sticker itself.
 const ALBUM_PAGES = () => albumPages((team) => !!Assets.atlas.frames[`album/mascot_${team}`]);
@@ -1994,7 +1996,7 @@ export class UI {
         return `<div class="stat" title="${esc(t(STAT_HINT[k]))}"><span>${t(STAT_NAMES[k])}</span><span class="pips">${pips.join('')}</span><span class="v">${eff[k]}</span>
           <button class="plus" data-raise="${id}:${k}" ${canRaise(r, id, k) ? '' : 'disabled'} aria-label="${t('Raise {stat}', { stat: t(STAT_NAMES[k]) })}">+</button></div>`;
       }).join('');
-      const pct = r.level >= MAX_LEVEL ? 100 : Math.round((r.exp / expToNext(r.level)) * 100);
+      const pct = expPct(r);
       const starter = s.roster[s.lineup[m.role]] && member(s.lineup[m.role]);
       return `<div class="card ${dressed ? '' : 'benched'}">
         <div class="card-head">
@@ -2002,11 +2004,11 @@ export class UI {
           <div style="min-width:0">
             <h3>${esc(m.name)}${s.rookies && s.rookies[id] ? ` <button class="btn tiny ghost rename-btn" data-rename="${id}" title="${esc(t('Rename'))}">${t('Rename')}</button>` : ''}${s.rookies && s.rookies[id] && s.rookies[id].own && MODULAR.heads.length ? ` <button class="btn tiny ghost rename-btn" data-restyle="${id}">${t('New look')}</button>` : ''}</h3>
             <div class="sub">${esc(t(m.title))}${m.recruit ? ` · ${t('signed')}` : ''}${m.agent ? ` · ${t('free agent')}` : ''}${m.legend ? ` · <span class="gold-t">${t('legend')}</span>` : ''}${m.rookie ? ` · ${smallIcon('icons/rookie', 40)}<span class="pot" title="${esc(t(POTENTIAL_GRADE[m.rookie.potential]))}">${stars(m.rookie.potential)}</span>` : ''}</div>
-            <div class="lvl">${t('LV {n}', { n: r.level })}${r.points ? ` <span style="font-size:15px">· ${t(r.points > 1 ? '{n} points to spend' : '{n} point to spend', { n: r.points })}</span>` : ''}</div>
+            <div class="lvl">${t('LV {n}', { n: r.level })}${vetBadge(r.vet)}${r.points ? ` <span style="font-size:15px">· ${t(r.points > 1 ? '{n} points to spend' : '{n} point to spend', { n: r.points })}</span>` : ''}</div>
           </div>
         </div>
         ${dressed ? `<div class="dress on">${t(ROLE_NAME[m.role])} · ${t('dressed')}</div>` : `<button class="btn small dress" data-dress="${id}">${t('Dress at {role} (for {name})', { role: t(ROLE_NAME[m.role]).toLowerCase(), name: esc(starter.name) })}</button>`}
-        <div class="xpbar" title="${t('{n}/{max} EXP', { n: r.exp, max: expToNext(r.level) })}"><i style="width:${pct}%"></i></div>
+        <div class="xpbar" title="${t('{n}/{max} EXP', { n: r.exp, max: nextExp(r) })}${r.level >= MAX_LEVEL ? ` · ${t('to the next veteran level')}` : ''}"><i style="width:${pct}%"></i></div>
         ${r.pendingPerk !== null ? `<div class="pending" data-perk="${id}">${t('New perk unlocked: choose one')}</div>` : ''}
         <div class="stats">${stats}</div>
         <div class="gear-row">${['stick', 'skates', 'armor'].map((slot) => {
@@ -2027,11 +2029,11 @@ export class UI {
     const goalieCard = (gid) => {
       const g = goalieRec(s, gid), info = goalieInfo(gid), gs = goalieStats(s, gid), st = GOALIE_STYLES[goalieStyle(s, gid)] || GOALIE_STYLES.hybrid;
       const gg = GEAR_BY_ID[g.gear], on = gid === starting;
-      const gpct = g.level >= MAX_LEVEL ? 100 : Math.round((g.exp / expToNext(g.level)) * 100);
+      const gpct = expPct(g);
       const pips = (n) => Array.from({ length: 12 }, (_, i) => `<i class="${i < n ? 'b' : ''}"></i>`).join('');
       return `<div class="card ${on ? '' : 'benched'}">
         <div class="card-head"><img src="${portrait(gid, 0, null, 152)}" alt="">
-          <div style="min-width:0"><h3>${esc(info.name)}${s.freeGoalies && s.freeGoalies[gid] ? ` <button class="btn tiny ghost rename-btn" data-rename="${gid}">${t('Rename')}</button>` : ''}</h3><div class="sub">${t('Goaltender (AI)')}${info.recruit ? ` · ${t('signed')}` : ''}</div><div class="lvl">${t('LV {n}', { n: g.level })}</div></div></div>
+          <div style="min-width:0"><h3>${esc(info.name)}${s.freeGoalies && s.freeGoalies[gid] ? ` <button class="btn tiny ghost rename-btn" data-rename="${gid}">${t('Rename')}</button>` : ''}</h3><div class="sub">${t('Goaltender (AI)')}${info.recruit ? ` · ${t('signed')}` : ''}</div><div class="lvl">${t('LV {n}', { n: g.level })}${vetBadge(g.vet)}</div></div></div>
         ${keepers.length < 2 ? '' : on ? `<div class="dress on">${t('In goal')}</div>` : `<button class="btn small dress" data-start="${gid}">${t('Start in goal (for {name})', { name: esc(goalieInfo(starting).name) })}</button>`}
         <div class="xpbar"><i style="width:${gpct}%"></i></div>
         <div class="stats">
@@ -3711,10 +3713,10 @@ export class UI {
               ${mine.filter((k) => s.roster[k.id]).map((k) => { // (All-Star guests go home with no EXP)
                 const rr = s.roster[k.id];
                 const lu = ups.filter((u) => u.id === k.id);
-                const pct = rr.level >= MAX_LEVEL ? 100 : Math.round((rr.exp / expToNext(rr.level)) * 100);
+                const pct = expPct(rr), vetUp = lu.some((u) => u.vet);
                 return `<div class="xp-row"><img src="${portrait(k.id, 0, null, 88)}" alt="">
-                  <div><div>${esc(k.name)} <span class="muted">${t('+{n} EXP', { n: rewards.exp[k.id] })}</span> ${lu.length ? `<span class="lvlup">${t('LEVEL {n}!', { n: rr.level })}</span>` : ''}</div>
-                  <div class="xpbar"><i data-w="${pct}"></i></div></div><span class="lvl">${t('LV {n}', { n: rr.level })}</span></div>`;
+                  <div><div>${esc(k.name)} <span class="muted">${t('+{n} EXP', { n: rewards.exp[k.id] })}</span> ${lu.length ? `<span class="lvlup">${vetUp ? t('VETERAN {n}!', { n: rr.vet }) : t('LEVEL {n}!', { n: rr.level })}</span>` : ''}</div>
+                  <div class="xpbar"><i data-w="${pct}"></i></div></div><span class="lvl">${t('LV {n}', { n: rr.level })}${vetBadge(rr.vet)}</span></div>`;
               }).join('')}
               ${data.rewards.chem && Object.keys(data.rewards.chem).length ? `<div class="label" style="margin-top:6px">${t('Chemistry')}</div>
               ${Object.entries(data.rewards.chem).map(([k, g]) => {
