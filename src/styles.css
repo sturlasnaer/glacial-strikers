@@ -1339,4 +1339,7 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .qp-opts > summary { cursor: pointer; font-size: 14px; color: var(--ice); padding: 4px 0; }
 .qp-opts[open] > summary { margin-bottom: 6px; }
 .qp-opts > div + div { margin-top: 8px; }
+/* the title logo's seasonal trimmings (Batch CK) sit exactly over it */
+.title-logo-stack { position: relative; display: block; }
+.title-logo-deco { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 

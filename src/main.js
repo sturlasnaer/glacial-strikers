@@ -327,7 +327,7 @@ class App {
     const team = teamInfo(teamId); // (the All-Stars recolour the rival pages they're given)
     const dressed = arena === 'home' && !!seasonFor(); // (the home rink's Halloween or holiday dressing, Batch CD: only in season)
     Assets.trim({ teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(team.groups || []), ...(rules ? ['rules'] : []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : [])] });
-    if (dressed) Assets.loadGroup('seasonal').catch(() => {});
+    if (dressed) Assets.loadGroup('seasonal').then(() => { if (this.scene === 'title') this.ui.titleLogo(); }).catch(() => {}); // (the logo's trimmings too)
     if (geared) Assets.ensureGear();
     if (rules) Assets.loadGroup('rules').catch(() => {});
     this.lap = null;

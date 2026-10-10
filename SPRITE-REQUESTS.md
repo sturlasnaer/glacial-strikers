@@ -8,6 +8,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 **Next batches:**
 1. **CJ: trophies for players of your own**
+2. **CK: the title logo in season**
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
 
@@ -301,3 +302,11 @@ Two new achievements go with Create a player. They borrow the rookie icon until 
 - `achievements/homegrown_hero` (Homegrown Hero: a player of your own scores in a league match): a young skater in our kit, arms up, the goal lamp red behind them, the crowd's scarves in the air.
 
 2 frames, on an `icons_z` page.
+
+## Batch CK: the title logo in season
+
+The title screen's logo (`polish/title_logo`, 1804×329 at its source scale) should join in with the home rink's Halloween and holiday dressing (Batch CD). Please draw two see-through overlays exactly the logo's size and pivot, transparent everywhere except the trimmings, so the game lays them straight over the logo:
+- `seasonal/halloween/logo`: a little witch's hat tipped on the "P", a cobweb in one corner, a small bat perched on the last letter, two tiny pumpkins at the foot.
+- `seasonal/holiday/logo`: snow piled along the tops of the letters with a few icicles, a Santa hat on the "P", a sprig of holly on the last letter.
+
+Set `atlas.seasonal.halloween.logo` and `atlas.seasonal.holiday.logo` to their ids, on a `seasonal` group page (the title loads that group in season). 2 frames.

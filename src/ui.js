@@ -54,6 +54,7 @@ const psPad = () => padList().some((p) => /dualsense|dualshock|playstation|054c/
 import { DRILLS, MEDAL_NAMES, MEDAL_COLORS, formatScore } from './drills.js';
 import { SKILLS_EVENTS, placeIn } from './skills.js';
 import { PAINTS, MODULAR, SKIN_TONES, HAIR_COLORS } from './modular.js';
+import { seasonFor } from './seasonal.js';
 import { canCreate, createPlayer, restyle, defaultChoice, stylesFor, cleanName, MAX_OWN, NAME_MAX } from './create.js';
 
 const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
@@ -362,7 +363,11 @@ function playAsHtml(s, app) {
 function logoHtml() {
   const P = Assets.atlas && Assets.atlas.art_additions && Assets.atlas.art_additions.polish;
   const set = P && P.logo && Assets.spriteSet(P.logo, 220);
-  return set ? `<img class="title-logo-img" src="${set.urls[0]}" alt="Puckbound">` : 'Puck<span>bound</span>';
+  if (!set) return 'Puck<span>bound</span>';
+  // in season, its decoration over it (Batch CK: the logo's own size, see-through but for the trimmings)
+  const S = Assets.atlas.seasonal, sz = seasonFor(), deco = S && sz && S[sz] && S[sz].logo, f = deco && Assets.frame(deco);
+  const over = f && Assets.pages[f[0]] && Assets.spriteSet([deco], 220);
+  return `<span class="title-logo-stack"><img class="title-logo-img" src="${set.urls[0]}" alt="Puckbound">${over ? `<img class="title-logo-deco" src="${over.urls[0]}" alt="">` : ''}</span>`;
 }
 
 // Portrait for a league stat row or award winner (ours or a rival's).
