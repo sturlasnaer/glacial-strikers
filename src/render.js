@@ -419,6 +419,9 @@ export class Renderer {
   drawCub(ctx, fx, near, match) {
     const spot = Assets.atlas.arena_spots?.home_cub, sit = Assets.frame('pet_rink/sit_1');
     if (!spot || !sit || !Assets.pages[sit[0]]) return;
+    // in season, in its costume (Batch DU), pose by pose where it's drawn
+    const season = seasonFor(), dressed = (id) => { const k = season && id.replace('pet_rink/', `pet_rink_${season}/`), f = k && Assets.frame(k); return f && Assets.pages[f[0]] ? k : id; };
+    const draw = (id, x, y) => Assets.draw(ctx, dressed(id), x, y, spot.scale || 1);
     // a home win: down onto the ice for a belly slide and a spin on its back (Batch DM), over
     // everything (it's out on the ice by the near boards)
     if (match && match.state === 'over' && match.winner === 0 && cubSlides()) {
@@ -426,18 +429,18 @@ export class Renderer {
       const t = match.stateT, land = { x: spot.x + 50, y: spot.y - 110 }, far = 460;
       if (t < 0.4) {
         const k = t / 0.4;
-        Assets.draw(ctx, `pet_rink/hop_down_${k < 0.5 ? 1 : 2}`, spot.x + (land.x - spot.x) * k, spot.y + (land.y - spot.y) * k - Math.sin(Math.PI * k) * 30, spot.scale || 1);
+        draw(`pet_rink/hop_down_${k < 0.5 ? 1 : 2}`, spot.x + (land.x - spot.x) * k, spot.y + (land.y - spot.y) * k - Math.sin(Math.PI * k) * 30);
       } else if (t < 2.4) {
         const k = (t - 0.4) / 2, ease = 1 - (1 - k) * (1 - k);
-        Assets.draw(ctx, `pet_rink/slide_${1 + (Math.floor(t * 10) % 4)}`, land.x + far * ease, land.y, spot.scale || 1);
-      } else Assets.draw(ctx, `pet_rink/spin_${1 + (Math.floor(t * 8) % 3)}`, land.x + far, land.y, spot.scale || 1);
+        draw(`pet_rink/slide_${1 + (Math.floor(t * 10) % 4)}`, land.x + far * ease, land.y);
+      } else draw(`pet_rink/spin_${1 + (Math.floor(t * 8) % 3)}`, land.x + far, land.y);
       return;
     }
     if ((spot.y > 520) !== near) return;
     const lit = fx.lamp > 0, cheer = lit && fx.cheerTeam === 0, sad = lit && fx.cheerTeam === 1;
     const id = cheer && Assets.frame('pet_rink/cheer_1') ? `pet_rink/cheer_${1 + (Math.floor(fx.time * 8) % 4)}`
       : sad && Assets.frame('pet_rink/sad') ? 'pet_rink/sad' : `pet_rink/sit_${1 + (Math.floor(fx.time * 1.5) % 2)}`;
-    Assets.draw(ctx, Assets.frame(id) ? id : 'pet_rink/sit_1', spot.x, spot.y, spot.scale || 1);
+    draw(Assets.frame(id) ? id : 'pet_rink/sit_1', spot.x, spot.y);
   }
 
   // The Stands facility unlocks the dedicated near-side supporters at home.
