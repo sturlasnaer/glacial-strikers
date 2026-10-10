@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-10s',
+    items: [
+      { icon: 'rules/icicles', alt: 'hud_elements/ability/frost', text: 'A new building for exhibitions: the Glacier Cave, a rink carved inside a glacier. Watch the ice for an icicle\'s shadow and get out from under it! The chunk it leaves bounces the puck until the next faceoff.' },
+    ],
+  },
+  {
     id: '2026-10-10r',
     items: [
       { icon: 'icons/rookie', text: 'Players of your own (and the drafted rookies and free agents) celebrate their goals in style: a fist pump into a knee slide.' },

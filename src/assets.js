@@ -101,13 +101,21 @@ export const Assets = {
   // decoded art is what fills a phone's memory, so it only happens when a scene needs it.
   async prefetch() {
     if (INLINE) return; // the single-file build already has everything
+    if (typeof navigator !== 'undefined' && ((navigator.serviceWorker && navigator.serviceWorker.controller) || (navigator.connection && navigator.connection.saveData))) return; // (the offline cache has it all already; or the phone is saving data)
     const a = this.atlas;
     const files = [
       ...a.pages.filter((p, i) => !this.pages[i]).map((p) => p.file),
       a.locker, ...Object.values(a.arenas || {}), ...Object.values(a.banners || {}),
     ].filter(Boolean);
     for (const f of files) {
-      try { await fetch(this.url(f)); } catch { /* offline and not cached: fine, it loads when needed */ }
+      if (this.loading.has(f)) continue; // (a scene already asked for it)
+      try {
+        // read each one to the end, a piece at a time and thrown away: a response left unread
+        // holds its connection, and after six of them every later image from the site waited
+        // (an arena's backdrop never came)
+        const r = await fetch(this.url(f));
+        if (r.body && r.body.getReader) { const rd = r.body.getReader(); while (!(await rd.read()).done); } else await r.arrayBuffer();
+      } catch { /* offline and not cached: fine, it loads when needed */ }
     }
   },
 
