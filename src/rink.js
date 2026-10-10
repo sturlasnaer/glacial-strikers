@@ -109,6 +109,9 @@ export function collideNets(p, rad) {
 // cracks, rumble strips, shadow zones, and the expansion clubs' moonbeams and loose planks);
 // the old stage twists (speed lanes, cracked ice) remain for the Frostline rink.
 // Dynamic twists are updated by Match.updateTwists.
+// The Glacier Cave's icicles: the shadow's warning (s), the reach of the impact, a chunk's
+// radius, and how many chunks lie on the ice at once (the oldest melts into the ice for a new one).
+export const ICICLE = { warn: 1.6, r: 34, chunk: 15, max: 3 };
 export const AURORA_ROWS = [-215, -120, 125, 245];
 const lane = (y, dir) => ({ x0: -440, x1: 440, y, h: 34, dir });
 
@@ -164,6 +167,11 @@ export function makeTwists(kind, rng = Math.random) {
     // gusts off the sea down the length of the ice now and then (the Harbour Rink): next is
     // the wait before the first, gust the seconds left of one, dir +1 or -1 (towards which end)
     return { ...base, wind: { next: 7 + rng() * 5, gust: 0, len: 0, dir: 1 } };
+  }
+  if (kind === 'icicles') {
+    // icicles over the Glacier Cave's ice: now and then one drops (its shadow grows first),
+    // shatters, and leaves a chunk of ice on the rink till the next faceoff
+    return { ...base, ice: { next: 8 + rng() * 4, falls: [], chunks: [] } };
   }
   if (kind === 'pond_cracks') {
     // two hairline cracks to start; hits, hard shots and quakes add more

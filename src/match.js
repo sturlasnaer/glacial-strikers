@@ -4,9 +4,9 @@
 import { clamp, norm, dist, segDist, makeRng, Emitter, angDiff } from './util.js';
 import {
   RINK, GOAL_X, MOUTH, NET_DEPTH, POST_R, CROSSBAR, DOTS,
-  constrainToRink, netBox, makeTwists, auroraRows, clampInside, insideDepth, collideNets,
+  constrainToRink, netBox, makeTwists, auroraRows, clampInside, insideDepth, collideNets, ICICLE,
 } from './rink.js';
-import { Puck, Skater, Goalie, Barrier, collideBarrier, PUCK_R } from './entities.js';
+import { Puck, Skater, Goalie, Barrier, collideBarrier, collideChunk, PUCK_R } from './entities.js';
 import { Abilities } from './abilities.js';
 import { TeamAI } from './ai.js';
 import { pairKey, GAME_PLANS, COMBOS, CAST_PAIRS } from './data.js';
@@ -188,6 +188,7 @@ export class Match {
     this.barriers.length = 0;
     this.cyclones.length = 0;
     this.trails.length = 0;
+    if (this.twists.ice) { const ice = this.twists.ice; ice.chunks.length = 0; ice.falls.length = 0; ice.next = Math.max(ice.next, 5); } // (the crew sweeps the chunks off)
     this.chain = [0, 0];
     for (const s of this.skaters) { s.comboT = 0; s.comboFrom = null; }
     this.state = 'faceoff';
@@ -1077,6 +1078,13 @@ export class Match {
         }
       }
     }
+    // the Glacier Cave's ice chunks: a puck on the ice glances off them (one in the air flies over)
+    if (this.twists.ice && p.z < 14) {
+      for (const k of this.twists.ice.chunks) {
+        const hit = collideChunk(p, PUCK_R, k, 0.55);
+        if (hit && -hit.vn > 90) this.emit('chunk_hit', { x: p.x, y: p.y, power: -hit.vn });
+      }
+    }
     // goals, posts, nets, goalies
     if (this.puckNets()) return true;
     if (this.state !== 'play') return false;
@@ -1581,6 +1589,17 @@ export class Match {
         w.dir = this.rng() < 0.5 ? -1 : 1; w.len = 2.5 + this.rng() * 1.5; w.gust = w.len;
         this.emit('gust', { dir: w.dir });
       }
+    } else if (tw.kind === 'icicles' && this.state === 'play' && !this.pshot) {
+      // every 9 to 15 seconds an icicle drops: its shadow grows for 1.6 s, then it lands
+      const ice = tw.ice;
+      for (const k of ice.chunks) k.t += dt;
+      for (const f of ice.falls) if ((f.t += dt) >= ICICLE.warn) this.icicleLands(f);
+      ice.falls = ice.falls.filter((f) => f.t < ICICLE.warn);
+      if ((ice.next -= dt) <= 0) {
+        ice.next = 9 + this.rng() * 6;
+        const at = this.icicleSpot();
+        if (at) { ice.falls.push({ ...at, t: 0 }); this.emit('icicle_warn', at); }
+      }
     } else if (tw.kind === 'rumble_strips' && this.state === 'play') {
       // carry the puck fast over the ridges and now and then it hops off the stick
       const s = this.puck.owner;
@@ -1674,6 +1693,46 @@ export class Match {
 
   collideBarriers(e, rad, bounce) {
     for (const b of this.barriers) collideBarrier(e, rad, b, bounce);
+    if (this.twists.ice) for (const k of this.twists.ice.chunks) collideChunk(e, rad, k, bounce);
+  }
+
+  // The Glacier Cave: where the next icicle drops. Half the time near the puck, else anywhere
+  // out on the ice; never in a crease, along the boards or on a chunk already there.
+  icicleSpot() {
+    const p = this.puck, ice = this.twists.ice;
+    for (let i = 0; i < 6; i++) {
+      let x, y;
+      if (this.rng() < 0.5) { const a = this.rng() * Math.PI * 2, d = 70 + this.rng() * 150; x = p.x + Math.cos(a) * d; y = p.y + Math.sin(a) * d * 0.8; }
+      else { x = (this.rng() - 0.5) * 940; y = -200 + this.rng() * 430; }
+      if (Math.hypot(Math.abs(x) - GOAL_X, y) < 160 || insideDepth(x, y) < 60) continue;
+      if (ice.chunks.some((k) => Math.hypot(k.x - x, k.y - y) < 60) || ice.falls.some((f) => Math.hypot(f.x - x, f.y - y) < 80)) continue;
+      return { x, y };
+    }
+    return null;
+  }
+
+  // An icicle lands: anyone right under it is knocked aside and stunned (a carrier loses the
+  // puck), a loose puck there is bumped away, and a chunk of ice is left behind.
+  icicleLands(f) {
+    const ice = this.twists.ice, p = this.puck;
+    const hit = [];
+    for (const s of this.skaters) {
+      if (s.parked) continue;
+      const d = Math.hypot(s.x - f.x, s.y - f.y);
+      if (d > ICICLE.r + s.r) continue;
+      const n = d > 1 ? norm(s.x - f.x, s.y - f.y) : { x: s.side, y: 0 };
+      s.vx += n.x * 240; s.vy += n.y * 240;
+      s.stun = Math.max(s.stun, 0.45); s.charging = false; s.flash = 0.25;
+      if (p.owner === s) { this.loosePuck(s); p.vx = n.x * -160 + s.vx * 0.3; p.vy = n.y * -160 + s.vy * 0.3; p.noPickup.set(s, 0.5); }
+      hit.push(s);
+    }
+    if (!p.owner && !p.inNet && p.z < 14) {
+      const d = Math.hypot(p.x - f.x, p.y - f.y);
+      if (d < ICICLE.r + 12) { const n = d > 1 ? norm(p.x - f.x, p.y - f.y) : { x: 1, y: 0 }; p.vx += n.x * 260; p.vy += n.y * 260; }
+    }
+    ice.chunks.push({ x: f.x, y: f.y, r: ICICLE.chunk, t: 0, v: ice.n = (ice.n || 0) + 1 });
+    if (ice.chunks.length > ICICLE.max) ice.chunks.shift();
+    this.emit('icicle', { x: f.x, y: f.y, hit });
   }
 
   // ------------------------------------------------------------ penalties
@@ -1756,6 +1815,7 @@ export class Match {
     p.shot = null; p.pass = null; p.curve = null; p.trail.length = 0; p.inNet = null; p.power = null; p.powerT = 0;
     p.noPickup.clear(); p.rolled.clear(); p.touches = []; p.lastTouch = null; // (nobody assists a penalty shot)
     this.barriers.length = 0; this.cyclones.length = 0; this.trails.length = 0;
+    if (this.twists.ice) { this.twists.ice.chunks.length = 0; this.twists.ice.falls.length = 0; }
     if (this.humans.includes(s.team)) {
       const seat = s.controlled ? s.seat || 0 : this.coop ? this.lastSeat : 0; // (in co-op the other player watches this one)
       for (const o of this.teamSkaters(s.team)) { o.controlled = o === s; o.seat = 0; }

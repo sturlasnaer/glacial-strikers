@@ -1,7 +1,7 @@
 // Canvas renderer for matches: rink, crowd, skaters, goalies, puck, effects, camera.
 
 import { Assets } from './assets.js';
-import { toScreen, persp, BACKDROP, GOAL_X, MOUTH, NET_DEPTH, RINK } from './rink.js';
+import { toScreen, persp, BACKDROP, GOAL_X, MOUTH, NET_DEPTH, RINK, ICICLE } from './rink.js';
 import { clamp, lerp, makeRng } from './util.js';
 import { POWER_INFO, COMBOS, TEAMS, ARENAS, PALETTES, GEAR_LOOK, CLUB } from './data.js';
 import { ELEMENT_COLORS } from './fx.js';
@@ -199,10 +199,12 @@ export class Renderer {
     const lf = L && L.frame(match, Assets.atlas.linesman);
     if (lf) list.push({ y: L.y, f: () => { const q = toScreen(L.x, L.y); Assets.draw(ctx, lf.id, q.x, q.y, SKATER_SCALE * persp(L.y), { flip: lf.flip, pages: Assets.pages }); } });
     for (const b of lap ? [] : match.barriers) list.push({ y: b.y, f: () => this.drawBarrier(ctx, b) });
+    for (const k of lap || !match.twists.ice ? [] : match.twists.ice.chunks) list.push({ y: k.y, f: () => this.drawChunk(ctx, k) });
     for (const k of lap ? [] : match.pickups) list.push({ y: k.y, f: () => this.drawPickupOrb(ctx, k, fx) });
     for (const pt of fx.parts) if (pt.kind === 'ghost') list.push({ y: pt.s.y - 1, f: () => this.drawGhost(ctx, pt, match) });
     list.sort((a, b) => a.y - b.y);
     for (const d of list) d.f();
+    if (!lap && match.twists.ice) for (const f of match.twists.ice.falls) this.drawIcicleFall(ctx, f); // (from the ceiling, over everyone)
     // near glass over anyone skating along the bottom boards (Pine Pond has snowbanks)
     const foreground = Assets.atlas.arena.glasses?.[arena];
     if (foreground) Assets.draw(ctx, foreground.frame, foreground.x, foreground.y, 1);
@@ -749,6 +751,68 @@ export class Renderer {
     if (tw.beam) this.drawMoonbeam(ctx, tw.beam, t);
     for (const pl of tw.planks) this.drawPlank(ctx, pl, t);
     if (tw.wind && tw.wind.gust > 0) this.drawGust(ctx, tw.wind, t);
+    if (tw.ice) for (const f of tw.ice.falls) this.drawIcicleShadow(ctx, f, t);
+  }
+
+  // The Glacier Cave's art (Batch CP), once its page is in: arena_glacier/icicle_fall_1..3,
+  // icicle_shatter_1..3 and ice_chunk.
+  glacierFrame(id) {
+    const f = Assets.frame('arena_glacier/' + id);
+    return f && Assets.pages[f[0]] ? f : null;
+  }
+
+  // A falling icicle's shadow on the ice: growing and darkening, with a blinking ring round it.
+  drawIcicleShadow(ctx, f, t) {
+    const k = Math.min(1, f.t / ICICLE.warn), s = toScreen(f.x, f.y), r = (8 + ICICLE.r * k) * persp(f.y);
+    ctx.save();
+    ctx.translate(s.x, s.y); ctx.scale(1, 0.42);
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(20,45,80,${0.12 + 0.38 * k})`; ctx.fill();
+    ctx.strokeStyle = `rgba(255,255,255,${(0.25 + 0.45 * Math.abs(Math.sin(t * 9))) * k})`; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.restore();
+  }
+
+  // The icicle itself, dropping in the last 0.4 s before it lands.
+  drawIcicleFall(ctx, f) {
+    const drop = (f.t - (ICICLE.warn - 0.4)) / 0.4;
+    if (drop < 0) return;
+    const s = toScreen(f.x, f.y), q = persp(f.y), h = (1 - drop * drop) * 320;
+    const art = this.glacierFrame('icicle_fall_1');
+    if (art) {
+      const id = 'arena_glacier/icicle_fall_' + (1 + Math.min(2, Math.floor(drop * 3)));
+      Assets.draw(ctx, id, s.x, s.y - h, (58 * q) / (art[4] / art[7]));
+      return;
+    }
+    ctx.save();
+    ctx.translate(s.x, s.y - h); ctx.scale(q, q);
+    ctx.beginPath(); ctx.moveTo(-3, -150); ctx.lineTo(-3, -70); ctx.moveTo(3, -140); ctx.lineTo(3, -70);
+    ctx.strokeStyle = 'rgba(70,120,170,0.35)'; ctx.lineWidth = 2; ctx.stroke(); // (a streak behind it)
+    ctx.beginPath(); ctx.moveTo(-11, -62); ctx.lineTo(11, -62); ctx.lineTo(1.5, 0); ctx.lineTo(-1.5, 0); ctx.closePath();
+    ctx.fillStyle = '#bfe7fb'; ctx.fill();
+    ctx.strokeStyle = '#2c6a99'; ctx.lineWidth = 2.2; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-5, -58); ctx.lineTo(-1.5, -10);
+    ctx.strokeStyle = 'rgba(255,255,255,0.95)'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.restore();
+  }
+
+  // A chunk of ice left on the rink, bursting into shards for a moment as it lands.
+  drawChunk(ctx, k) {
+    const s = toScreen(k.x, k.y), q = persp(k.y);
+    const burst = k.t < 0.36 && this.glacierFrame('icicle_shatter_1');
+    if (burst) Assets.draw(ctx, 'arena_glacier/icicle_shatter_' + (1 + Math.floor(k.t / 0.12)), s.x, s.y, (90 * q) / (burst[3] / burst[7]));
+    const art = this.glacierFrame('ice_chunk');
+    if (art) { Assets.draw(ctx, 'arena_glacier/ice_chunk', s.x, s.y, (k.r * 2.7 * q) / (art[3] / art[7]), { flip: k.v % 2 === 1 }); return; }
+    ctx.save();
+    ctx.translate(s.x, s.y); ctx.scale(q * (k.v % 2 ? -1 : 1), q);
+    ctx.beginPath(); ctx.ellipse(0, 2, 19, 7, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(20,50,90,0.28)'; ctx.fill();
+    const pts = [[-17, 0], [-13, -12], [-4, -19], [8, -15], [17, -5], [14, 3], [1, 6], [-11, 5]];
+    ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath();
+    ctx.fillStyle = '#bfe7fb'; ctx.fill();
+    ctx.strokeStyle = '#3f7fae'; ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-10, -10); ctx.lineTo(-3, -16); ctx.lineTo(5, -12); ctx.lineTo(-4, -6); ctx.closePath();
+    ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.fill();
+    ctx.restore();
   }
 
   // A gust off the sea (the Harbour Rink): streaks of blown snow racing down the ice, thicker

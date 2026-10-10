@@ -833,4 +833,15 @@ export function collideBarrier(e, rad, b, bounce) {
   return { nx, ny, vn };
 }
 
+// A round obstacle (the Glacier Cave's ice chunks): pushed out of it, bounced off it.
+export function collideChunk(e, rad, k, bounce) {
+  const dx = e.x - k.x, dy = e.y - k.y, d = Math.hypot(dx, dy), lim = rad + k.r;
+  if (d >= lim) return null;
+  const nx = d > 0.01 ? dx / d : 1, ny = d > 0.01 ? dy / d : 0;
+  e.x = k.x + nx * lim; e.y = k.y + ny * lim;
+  const vn = e.vx * nx + e.vy * ny;
+  if (vn < 0) { e.vx -= (1 + bounce) * vn * nx; e.vy -= (1 + bounce) * vn * ny; }
+  return { nx, ny, vn };
+}
+
 export { persp, MOUTH, GOAL_X, NET_DEPTH, POST_R, CROSSBAR };

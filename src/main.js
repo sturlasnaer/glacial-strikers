@@ -954,6 +954,14 @@ class App {
       this.lastSplash = now;
       audio.sfx('splash', at(e.x, e.y, Math.min(1, e.power / 300)));
     });
+    m.on('icicle_warn', (e) => audio.sfx('shimmer', at(e.x, e.y, 0.5)));
+    m.on('icicle', (e) => {
+      audio.sfx('crack', at(e.x, e.y, 0.9)); audio.sfx('stone', at(e.x, e.y, 0.5));
+      const ours = e.hit.find((s) => s.controlled);
+      if (ours) this.rumble(0.25, 0.5, 160, ours.team, ours.seat || 0);
+      if (e.hit.length && !this.attract) this.hud.ticker(t('{name} got caught under a falling icicle!', { name: e.hit[0].name }));
+    });
+    m.on('chunk_hit', (e) => audio.sfx('boards', at(e.x, e.y, Math.min(0.8, 0.3 + e.power / 1200))));
     m.on('ice_crack', (e) => { audio.sfx('crack', { vol: 0.5 + e.k * 0.3 }); if (!e.grow) this.rumble(0.1, 0.3, 80); });
     m.on('aurora_shift', () => audio.sfx('shimmer', { vol: 0.8 }));
     m.on('gust', (e) => { audio.sfx('whoosh', { vol: 0.9 }); if (!this.attract) this.hud.ticker(e.dir > 0 ? t('A gust off the sea, blowing to the right!') : t('A gust off the sea, blowing to the left!')); });

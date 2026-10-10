@@ -134,6 +134,11 @@ export class FX {
         this.part(x, y, 2, Math.cos(a) * sp, Math.sin(a) * sp * 0.7, rnd.range(90, 200), rnd.range(0.3, 0.6), rnd.pick(['#cfe9f7', '#ffd8b0', '#9fc3e0']), rnd.range(1.6, 3));
       }
     });
+    on('icicle', ({ x, y }) => { // the Glacier Cave: an icicle shatters on the ice
+      this.burst(x, y, 8, 16, ['#ffffff', '#d9f3ff', '#8fd0f5'], 280, 0.55);
+      this.anim(CHIPS, x, y + 2, 0.14, { fps: 18, frames: PHASES });
+      this.shake(0.2);
+    });
     on('ice_crack', ({ x, y, k }) => {
       this.anim(CHIPS, x, y + 2, 0.1 + k * 0.03, { fps: 18, frames: PHASES });
       this.shake(0.12 * k);

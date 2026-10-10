@@ -3,7 +3,7 @@
 // reaction time, decision quality, aim and aggression.
 
 import { clamp, lerp, norm, segDist } from './util.js';
-import { GOAL_X, MOUTH, BLUE_X, clampInside, RINK, insideDepth, netBox } from './rink.js';
+import { GOAL_X, MOUTH, BLUE_X, clampInside, RINK, insideDepth, netBox, ICICLE } from './rink.js';
 import { netWaypoint } from './entities.js';
 
 export class TeamAI {
@@ -372,6 +372,17 @@ export class TeamAI {
         if (Math.hypot(c.x - z.x, c.y - z.y) < zr) continue;
         const ox = s.x - z.x, oy = s.y - z.y, od = Math.hypot(ox, oy);
         if (od < zr + 35 && od > 0.1) { const k = (zr + 35 - od) * (0.5 + this.diff * 0.7); dx += (ox / od) * k; dy += (oy / od) * k; }
+      }
+    }
+    // the Glacier Cave: step round the ice chunks, and out from under a falling icicle's shadow
+    if (tw.ice) {
+      for (const k of tw.ice.chunks) {
+        const ox = s.x - k.x, oy = s.y - k.y, od = Math.hypot(ox, oy), zr = k.r + s.r + 18;
+        if (od < zr && od > 0.1) { const f = (zr - od) * 1.2; dx += (ox / od) * f; dy += (oy / od) * f; }
+      }
+      for (const f of tw.ice.falls) {
+        const ox = s.x - f.x, oy = s.y - f.y, od = Math.hypot(ox, oy), zr = ICICLE.r + s.r + 16;
+        if (od < zr && f.t > 0.5 - this.diff * 0.3) { const g = (zr - od) * (1 + this.diff * 2), l = od > 0.1 ? od : 1; dx += (od > 0.1 ? ox / l : s.side) * g; dy += (od > 0.1 ? oy / l : 0) * g; }
       }
     }
     const n = norm(dx, dy);
