@@ -7,14 +7,13 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **EO: the National and Elite Cup Finals' buildings**
-2. **EP: supporters' sections for the new clubs' rinks**
-3. **EQ: the rivalry game's icons**
-4. **ER: tighter pages for the always-loaded art** (no new drawing)
-5. **ES: the clubs' opening scenes** (choose-your-club stories)
-6. **ET: the divisions' gear and new goalie gear** (shop icons)
-7. **EU: mascots for a club of one's own** (one for each crest)
-8. **EV: two trophies for club careers** (achievement icons)
+1. **EP: supporters' sections for the new clubs' rinks**
+2. **EQ: the rivalry game's icons**
+3. **ER: tighter pages for the always-loaded art** (no new drawing)
+4. **ES: the clubs' opening scenes** (choose-your-club stories)
+5. **ET: the divisions' gear and new goalie gear** (shop icons)
+6. **EU: mascots for a club of one's own** (one for each crest)
+7. **EV: two trophies for club careers** (achievement icons)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -126,6 +125,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered EM:** Birchwood Beavers and Coral Bay Flamingos: two native crests, eight arena mascot poses, ten race poses, two town postcards and twenty collectible pet frames (42 new assets), reusing both delivered unique rinks. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EM-Testing-Update`.
 
 **Delivered EN:** Eleven native new-club mascot album portraits, head and shoulders waving in their club colours, imported on gallery pages with CR canvases and pivots. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EN-Testing-Update`.
+
+**Delivered EO:** Capital Dome and Diamond Arena: two unique Cup Final backdrops, four trophy scoreboard phases, two near-glass overlays with native alpha masks, eight penalty-box layers and two achievement icons (18 frames), imported on existing arena feature groups. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EO-Testing-Update`.
 
 ## Format notes
 
@@ -898,7 +899,7 @@ For each of the two:
 
 The sticker album now has a page for each of the eleven new clubs (it appears once the Foxes reach that club's division). Like Batch CR's: `album/mascot_capybaras`, `album/mascot_beavers`, `album/mascot_puffins`, `album/mascot_grizzlies`, `album/mascot_seals`, `album/mascot_flamingos`, `album/mascot_penguins`, `album/mascot_bulls`, `album/mascot_narwhals`, `album/mascot_tigers`, `album/mascot_pandas` (11, the size and framing of the character portraits, on transparent): each club's mascot, head and shoulders, waving at the camera, in the club's colours; the same mascots that dance in the stands (EB, EL, EM). As atlas frames on a page in the `gallery` group (loaded in Trophies). Each joins the end of its club's page as soon as its frame is in. 11 frames.
 
-## Batch EO: the National and Elite Cup Finals' buildings
+## Batch EO ✓: the National and Elite Cup Finals' buildings
 
 Every Cup Final is played at the Frostline Coliseum (BX) today. The two higher divisions deserve grander ones. Please draw each exactly like BX: the 1536×1024 backdrop with the rink lines, boards, glass and benches in the same places (so the game's rink fits unchanged), its scoreboard frames (`arena.scoreboards.<key>`), near-side glass and a penalty box in the AU style, with no lettering. Each building on its own group named after it (`arena_capital_dome`, `arena_diamond_arena`), loaded only for its final:
 - `arena_capital_dome`, **the Capital Dome**, home of the National Cup Final: a huge domed national arena with a glass roof and the night sky beyond, silver and deep blue, the National crest (the `badges/tier_national` design) at centre ice and on banners, packed stands in every National club's colours, the National Cup hanging over centre ice.
