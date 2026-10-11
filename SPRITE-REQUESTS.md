@@ -7,15 +7,14 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **EN: the new clubs' mascot stickers for the album**
-2. **EO: the National and Elite Cup Finals' buildings**
-3. **EP: supporters' sections for the new clubs' rinks**
-4. **EQ: the rivalry game's icons**
-5. **ER: tighter pages for the always-loaded art** (no new drawing)
-6. **ES: the clubs' opening scenes** (choose-your-club stories)
-7. **ET: the divisions' gear and new goalie gear** (shop icons)
-8. **EU: mascots for a club of one's own** (one for each crest)
-9. **EV: two trophies for club careers** (achievement icons)
+1. **EO: the National and Elite Cup Finals' buildings**
+2. **EP: supporters' sections for the new clubs' rinks**
+3. **EQ: the rivalry game's icons**
+4. **ER: tighter pages for the always-loaded art** (no new drawing)
+5. **ES: the clubs' opening scenes** (choose-your-club stories)
+6. **ET: the divisions' gear and new goalie gear** (shop icons)
+7. **EU: mascots for a club of one's own** (one for each crest)
+8. **EV: two trophies for club careers** (achievement icons)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -125,6 +124,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered EL:** Taiga Tigers and Bamboo Ridge Pandas: two native crests, eight arena mascot poses, ten race poses, two town postcards and twenty collectible pet frames (42 new assets), reusing both delivered unique rinks. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EL-Testing-Update`.
 
 **Delivered EM:** Birchwood Beavers and Coral Bay Flamingos: two native crests, eight arena mascot poses, ten race poses, two town postcards and twenty collectible pet frames (42 new assets), reusing both delivered unique rinks. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EM-Testing-Update`.
+
+**Delivered EN:** Eleven native new-club mascot album portraits, head and shoulders waving in their club colours, imported on gallery pages with CR canvases and pivots. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EN-Testing-Update`.
 
 ## Format notes
 
@@ -893,7 +894,7 @@ For each of the two:
 
 2 crests, 8 + 10 mascot frames, 2 rinks, 2 postcards and 20 pet frames.
 
-## Batch EN: the new clubs' mascot stickers for the album
+## Batch EN ✓: the new clubs' mascot stickers for the album
 
 The sticker album now has a page for each of the eleven new clubs (it appears once the Foxes reach that club's division). Like Batch CR's: `album/mascot_capybaras`, `album/mascot_beavers`, `album/mascot_puffins`, `album/mascot_grizzlies`, `album/mascot_seals`, `album/mascot_flamingos`, `album/mascot_penguins`, `album/mascot_bulls`, `album/mascot_narwhals`, `album/mascot_tigers`, `album/mascot_pandas` (11, the size and framing of the character portraits, on transparent): each club's mascot, head and shoulders, waving at the camera, in the club's colours; the same mascots that dance in the stands (EB, EL, EM). As atlas frames on a page in the `gallery` group (loaded in Trophies). Each joins the end of its club's page as soon as its frame is in. 11 frames.
 
