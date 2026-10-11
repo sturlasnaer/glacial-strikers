@@ -2,6 +2,8 @@
 
 Terms the translation uses consistently. The tone is friendly, sporty and short; menus use the infinitive or a plain noun ("Spila leik", "Stillingar").
 
+**Gender-neutral wording.** People in general, and anyone whose gender we don't know (the crowd, a rival's player, the player themselves), are neuter: *öll* (everyone), *engin* + plural verb (nobody: "Engin mótmæla"), *vinafólk* (friends), *þau* (they), "Eitt af öðru taka öll undir". Words that agree with a noun keep its gender ("allir leikmenn", "enginn pökkur"). Avoid participles and adjectives that would gender the player ("þú ert komin/kominn"): say it of the club instead ("þegar félagið er komið upp…") or use a verb ("þú mætir þeim"). The cast keep their established pronouns. Name placeholders ({name}, {c}, {w}…) don't decline, so keep them in the nominative (as a subject, after "segir", or addressed).
+
 | English | Íslenska |
 |---|---|
 | ice hockey | íshokkí |
