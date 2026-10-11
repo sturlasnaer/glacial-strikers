@@ -20,7 +20,6 @@ export class Commentary {
     this.cool = 2;
     this.queue.length = 0;
     this.lastBreak = null; this.lastRush = null; this.breakT = undefined;
-    this.glareT = undefined; this.plankT = undefined;
     const team = (t) => this.teamName(t);
     const n = (s) => s.name;
 
@@ -28,8 +27,6 @@ export class Commentary {
       const s = g.scorer;
       let line;
       if (!s) line = t('Own goal! {team} will take it.', { team: team(g.team) });
-      else if (this.glareT !== undefined && m.time - this.glareT < 1.5) line = t('Out of the moonlight! {name} scores!', { name: n(s) });
-      else if (this.plankT !== undefined && m.time - this.plankT < 2.5) line = t('Off the loose boards and in! {name} will take it!', { name: n(s) });
       else if (g.kind === 'onetimer') line = pick([t('ONE-TIMER! {name} buries it!', { name: n(s) }), t('{name} one-times it home!', { name: n(s) })]);
       else if (g.kind === 'tip') line = pick([t('Tipped in! {name} gets a piece of it in front!', { name: n(s) }), t('{name} redirects it past the goalie!', { name: n(s) })]);
       else if (g.screened && Math.random() < 0.6) line = pick([t('Through the screen! {name} scores!', { name: n(s) }), t('The goalie never saw it! {name} scores through traffic!', { name: n(s) })]);
@@ -65,9 +62,7 @@ export class Commentary {
     m.on('power_get', (e) => { if (e.by) this.say(t('{name} grabs the {power}!', { name: n(e.by), power: t(POWER_INFO[e.type].name) }), 1); });
     m.on('ult', (e) => this.say(t('{name} unleashes {ult}!', { name: n(e.s), ult: t(e.s.def.ult.name) }), 2));
     m.on('barrier_block', () => this.say(t('The wall holds!'), 1));
-    // the expansion buildings and the puck on the stick
-    m.on('glare', (e) => { this.glareT = m.time; this.say(pick([t('{name} loses it in the moonlight!', { name: e.g.name }), t('Out of the moonbeam! {name} squints.', { name: e.g.name })]), 1); });
-    m.on('plank', () => { this.plankT = m.time; if (Math.random() < 0.45) this.say(pick([t('Off the loose boards! Who knows where that\'s going.'), t('The Longhouse boards take a bite out of that one!')]), 0); });
+    // the puck on the stick
     m.on('deke', (e) => { if (!e.by.isGoalie && Math.random() < 0.5) this.say(pick([t('{name} dekes {by}!', { name: n(e.s), by: n(e.by) }), t('{name} walks right around {by}!', { name: n(e.s), by: n(e.by) })]), 1); });
     m.on('deke_goalie', (e) => this.say(pick([t('{name} sells the deke... {goalie} bites!', { name: n(e.s), goalie: e.g.name }), t('What a move! {goalie} is way out of position!', { goalie: e.g.name })]), 2));
     m.on('shield', (e) => { if (Math.random() < 0.3) this.say(pick([t('{name} shields it from {by}.', { name: n(e.s), by: n(e.by) }), t('{name} keeps it away from {by}.', { name: n(e.s), by: n(e.by) })]), 0); });
