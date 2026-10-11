@@ -2909,6 +2909,8 @@ export const IS = {
   "You got the cub {n} times!": "Þú hittir yrðlinginn {n} sinnum!",
   "You got the cub once!": "Þú hittir yrðlinginn einu sinni!",
   "You left {name}.": "Þú hættir á {name}.",
+  "You meet them in the Elite Cup.": "Þú mætir þeim í Úrvalsbikarnum.",
+  "You meet them in the National Cup.": "Þú mætir þeim í Landsbikarnum.",
   "You need a signing or a drafted rookie to trade.": "Þú þarft leikmann sem þú samdir við eða nýliða til að skipta.",
   "You picked {name}. Go, go, go!": "Þitt val: {name}. Áfram, áfram, áfram!",
   "You placed {n} of {total}.": "Þú varðst {n}. af {total}.",

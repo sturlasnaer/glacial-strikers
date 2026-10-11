@@ -3084,9 +3084,10 @@ export class UI {
         const k = K.id, got = mine.includes(k), team = K.team !== 'home' && TEAMS[K.team];
         if (!got) {
           const left = Math.max(1, PET_WINS - winsAgainst(s, K.team));
+          const up = Math.max(s.tier || 0, s.tierTop || 0), later = team && !winsAgainst(s, K.team) && (team.elite && up < 2 ? t('You meet them in the Elite Cup.') : team.national && up < 1 ? t('You meet them in the National Cup.') : ''); // (a club from a division still ahead)
           return `<div class="item pet-locked" tabindex="0" aria-label="${esc(t(K.name))}"><img class="pet-shadow" src="${Assets.icon(petIcon(k), 128)}" alt="">
             <div style="min-width:0"><div class="label" style="font-size:13px">${team ? esc(team.name) : ''}</div><h4>${esc(t(K.name))}</h4>
-              <div class="muted" style="font-size:12px">${esc(t(left > 1 ? 'Beat the {team} {n} more times.' : 'Beat the {team} once more.', { team: team ? team.name : '', n: left }))}</div></div></div>`;
+              <div class="muted" style="font-size:12px">${esc(t(left > 1 ? 'Beat the {team} {n} more times.' : 'Beat the {team} once more.', { team: team ? team.name : '', n: left }))}${later ? ` ${esc(later)}` : ''}</div></div></div>`;
         }
         const inRoom = room.includes(k);
         return `<div class="item" tabindex="0" aria-label="${esc(petNameOf(s, k, t))}"><img src="${Assets.icon(petIcon(k), 128)}" alt="">
