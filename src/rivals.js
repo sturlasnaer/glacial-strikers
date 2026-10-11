@@ -54,7 +54,7 @@ export function rivalLines(save, teamId) {
     if (L.theirTop) lines.push(['us', 'stone', t('{name} scored {n} on us last time. I\'m on them all game.', { name: theirs(L.theirTop.id), n: L.theirTop.goals })]);
     else lines.push(['us', 'frost', t('They beat us {ga}–{gf} last time. Remember how that felt.', { ga: L.ga, gf: L.gf })]);
     lines.push(['them', 'thunder', pick([t('Back for another lesson, Foxes?'), t('Didn\'t you learn anything last time?'), t('Oh good, the Foxes. Easy points.')], seed)]);
-    if (r.streak <= -2) lines.push(['us', 'thunder', t('{n} losses in a row to these guys. That ends today.', { n: -r.streak })]);
+    if (r.streak <= -2) lines.push(['us', 'thunder', t('{n} losses in a row to this lot. That ends today.', { n: -r.streak })]);
   }
   if (save.season > 1 && L.season < save.season && seed % 2 === 0) lines.push(['them', 'frost', t('New season, same Foxes? We\'ll see.')]);
   if (hotLine) lines.splice(1, 0, hotLine);

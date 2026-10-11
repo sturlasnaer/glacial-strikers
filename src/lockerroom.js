@@ -138,7 +138,7 @@ export const MOMENTS = [
     title: 'Scouting report',
     text: (c) => t('The scout drops a thick folder on the table: everything on the {team}.', { team: teamInfo(c.next.opponent).name }),
     choices: [
-      { label: 'Study their goalie', fx: 'Next match: their goalie covers 6% less net', apply: buff({ id: 'scout', type: 'scoutGoalie', v: 0.94 }), reply: '"Weak glove side when he\'s tired," Nix circles it twice.' },
+      { label: 'Study their goalie', fx: 'Next match: their goalie covers 6% less net', apply: buff({ id: 'scout', type: 'scoutGoalie', v: 0.94 }), reply: '"Weak glove side when they\'re tired," Nix circles it twice.' },
       { label: 'Study their skaters', fx: 'Next match: +15% steals', apply: buff({ id: 'scout', type: 'steal', v: 1.15 }), reply: 'Bram memorizes every carrier\'s favourite move.' },
     ],
   },

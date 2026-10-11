@@ -31,7 +31,7 @@ export const LEGEND_LINES = {
     ],
   },
   together: [
-    ['kip', null, 'Ladies and gentlemen, for the first time: the twins take the ice together!'],
+    ['kip', null, 'Everybody on your feet: for the first time, the twins take the ice together!'],
     ['us', 'fenrir', 'Ready?'],
     ['us', 'fafnir', 'Always. Pass it to me and duck.'],
   ],

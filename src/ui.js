@@ -1258,7 +1258,7 @@ export class UI {
     const venue = venueKey ? ARENAS[venueKey].name : 'Frostline Rink';
     // their leading scorer this season, when they have one worth a mention
     const star = nt && L.stats && Object.values(L.stats.skaters).filter((r) => r.team === next.opponent && r.g >= 2).sort((a, b) => b.g - a.g)[0];
-    const call = L.champion ? (L.champion === 'home' ? t('Champions! Ladies and gentlemen, your {club}!', { club: CLUB.name }) : t('What a season. The ice goes quiet until next year.'))
+    const call = L.champion ? (L.champion === 'home' ? t('Champions! Everybody, make some noise for your {club}!', { club: CLUB.name }) : t('What a season. The ice goes quiet until next year.'))
       : nt && next.rivalry ? t('The rivalry game is next: the {team} at {venue}! Bragging rights on the line!', { team: nt.name, venue })
       : nt ? pick([...(star ? [t('Keep an eye on {name}: {n} goals for the {team} this season.', { name: star.name, n: star.g, team: nt.name })] : []),t('Next up: the {team} at {venue}! Get loud!', { team: nt.name, venue }), `${t('{team} at {venue}.', { team: nt.name, venue })} ${t(nt.style)}`, t('Tonight at {venue}: {club} versus {team}. You won\'t want to miss it.', { venue, club: CLUB.nick, team: nt.name })])
         : t('Welcome to the Frostline league!');
