@@ -14,8 +14,9 @@ def merge_request_additions(atlas,out,sources):
   batches=sorted(root.glob('Puckbound-Batch-*'))if not(root/'atlas.json').exists()else[root]
   for B in batches:
    S=json.loads((B/'atlas.json').read_text());batch=B.name.split('-')[-1];assert batch in ['BJ','BK','BL','BM','BN','BO','BP','BR','BS','BT','BU','BV','BW','BX','BY','BZ','CA','CB','CC','CD','CE','CF','CH','CI','CJ','CK','CL','CM','CN','CO','CQ','CP','CR','CS','CT','CU','CV','CW','CX','CY','CZ','DA','DB','DC','DD','DE','DF','DG','DH','DI','DJ','DK','DL','DM','DN','DO','DP','DQ','DR','DS','DT','DU','DV','DW','DX','DY','DZ','EA','EB','EA2','EC','ED','EE','EF','EG','EL','EM','EH','EI','EJ','EK'];digest=hashlib.sha256((B/'atlas.json').read_bytes()+b''.join((B/m['image']).read_bytes()for m in S['sheets'].values())).hexdigest();digest=hashlib.sha256(digest.encode()+b''.join((B/p).read_bytes()for p in S.get('external_images',{}).values())).hexdigest()if batch in ['CR','CU','DB','DC','DD','DE','DF','DG','DH','DI','DJ','DK','DL','DM','DN','DO','DP','DQ','DR','DS','DT','DU','DV','DW','DX','DY','DZ','EA','EB','EA2','EC','ED','EE','EF','EG','EL','EM','EH','EI','EJ','EK']else digest;digests[batch]=digest
-   if batch in ['EA','EA2']:
-    for key in ['crests','crest_native']:A.setdefault(key,{}).update(copy.deepcopy(S[key]))
+   if batch in ['EA','EA2','EL','EM']:
+    for key in ['crests','crest_native']:
+     if key in S:A.setdefault(key,{}).update(copy.deepcopy(S[key]))
    if batch in ['DE','EE','EF','EG','EL','EM','EH','EI','EJ','EK']:digest=hashlib.sha256(digest.encode()+b''.join((B/'frames'/(fid.replace('/','_')+'.png')).read_bytes()for fid in S.get('arenas',{}).values())).hexdigest();digests[batch]=digest
    if A.get('request_addition_sources',{}).get(batch)==digest:continue
    if batch=='BJ':
