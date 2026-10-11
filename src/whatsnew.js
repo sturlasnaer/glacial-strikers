@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-11n',
+    items: [
+      { icon: 'icons/stat_cups', alt: 'icons/career', text: 'Two new trophies for club careers: Underdog Story (win a Cup with a club that had a tough start) and From Scratch (win a Cup with a club of your own). And in two-player versus, a club career now plays its own stars.' },
+    ],
+  },
+  {
     id: '2026-10-11m',
     items: [
       { icon: 'icons/pet_narwhal', alt: 'icons/pet', text: 'Three more National pets: a grizzly cub, a bull calf and a narwhal calf that rolls about in its own little tub.' },

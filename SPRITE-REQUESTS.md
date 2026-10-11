@@ -17,6 +17,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 8. **ES: the clubs' opening scenes** (choose-your-club stories)
 9. **ET: the divisions' gear and new goalie gear** (shop icons)
 10. **EU: mascots for a club of one's own** (one for each crest)
+11. **EV: two trophies for club careers** (achievement icons)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -988,3 +989,11 @@ For each:
 - In the mascot race, like the other runners (`race/snow_fox/run_1`–`run_4` and `win`): `race/club_<crest>/run_1`–`run_4`, `win`, in the race's pages.
 
 The game already looks for all of these (the stands mascot at home games, the race runner), so they show as soon as they're registered. 63 frames.
+
+## Batch EV: two trophies for club careers
+
+Two new achievements for the choose-your-club careers; each shows a stand-in (the cups icon) until its own is in. 128×128, like the other `achievements/…` (a single picture, no lettering):
+- `achievements/underdog_story` **Underdog Story** (win a Cup with a club that had a tough start, like the Pinewood Lynx): a small, scrappy player in an oversized jersey hoisting a cup almost as big as they are, a little woodland creature cheering at their feet.
+- `achievements/from_scratch` **From Scratch** (win a Cup with a club of the player's own): a brand-new, still-blank crest shield with a cup in front of it and a few fresh paint splashes, as if the crest is about to be painted.
+
+2 frames.

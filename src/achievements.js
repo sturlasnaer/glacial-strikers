@@ -2,6 +2,7 @@
 
 import { FACILITY_IDS, facilityLevel, MAX_FACILITY } from './facilities.js';
 import { decorFull } from './decor.js';
+import { clubStart } from './clubs.js';
 import { GEAR, CHEM_LEVELS, RECRUITS, CAST_PAIRS, LEGENDS, ELEMENTS, GOALIE_RECRUITS, RIVAL_IDS, ALL_RIVALS, clubOwn } from './data.js';
 
 const TROPHY = 'equipment_items/reward/trophy', MEDAL = 'equipment_items/reward/medal', STAR = 'hud_elements/misc/level_star';
@@ -63,6 +64,8 @@ export const ACHIEVEMENTS = [
   { id: 'pet-pals', name: 'Pet Pals', text: 'Collect five pets.', icon: 'icons/pet', art: 'achievements/pet_pals', coins: 60 },
   { id: 'bragging-rights', name: 'Bragging Rights', text: 'Win the season\'s rivalry game.', icon: 'icons/stat_cups', art: 'achievements/bragging_rights', coins: 60 },
   { id: 'elite-dynasty', name: 'Dynasty of the Elite', text: 'Win the Elite Cup three times.', icon: 'badges/elite_cup', art: 'achievements/elite_dynasty', coins: 300 },
+  { id: 'underdog-story', name: 'Underdog Story', text: 'Win a Cup with a club that had a tough start.', icon: 'icons/stat_cups', art: 'achievements/underdog_story', coins: 200 },
+  { id: 'from-scratch', name: 'From Scratch', text: 'Win a Cup with a club of your own.', icon: 'icons/stat_cups', art: 'achievements/from_scratch', coins: 200 },
   { id: 'grand-tour', name: 'Grand Tour', text: 'Beat every club in the country at least once.', icon: 'icons/career', art: 'achievements/grand_tour', coins: 200 },
   { id: 'full-pet-house', name: 'Full Pet House', text: 'Collect every club\'s pet.', icon: 'icons/pet', art: 'achievements/full_pet_house', coins: 200 },
   { id: 'fresh-sheet', name: 'Fresh Sheet', text: 'Win gold in the Resurfacer drill.', icon: 'hud_elements/ability/frost', art: 'achievements/fresh_sheet', coins: 40 },
@@ -230,6 +233,8 @@ export class AchievementTracker {
     if (s.album && s.album.done.length) this.unlock('sticker-page');
     if (s.album && s.album.full) this.unlock('sticker-album');
     if (s.decor && decorFull(s)) this.unlock('home-sweet-home');
+    if (s.cups && s.team === 'custom') this.unlock('from-scratch'); // (club careers: clubs.js)
+    if (s.cups && s.team && clubStart(s.team) === 'tough') this.unlock('underdog-story');
     if (GEAR.every((g) => g.tier || s.owned.includes(g.id))) this.unlock('kitted'); // (the regional shop's)
     if (GEAR.every((g) => !g.tier || s.owned.includes(g.id))) this.unlock('pro-kit'); // (the divisions' gear)
     const signed = Object.keys(RECRUITS).filter((k) => s.roster[k] && !clubOwn(k)); // (a club career's own stars aren't signings)

@@ -123,6 +123,13 @@ check('...never naming the Foxes in another club\'s (they\'d read as ours)', CLU
   check('...an older save with cups already won: nothing late', payoffDue(old) === null);
 }
 
+// the club careers' trophies: a Cup with a tough start, a Cup with a club of one's own
+{
+  const unlocked = (team) => { const s = newSave(team, makeRng(4)); s.cups = 1; const got = []; new AchievementTracker(s, (a) => got.push(a.id)).checkMeta(); return got; };
+  const lynx = unlocked('lynx'), own = unlocked('custom'), royals = unlocked('royals'), foxes = unlocked(null);
+  check('Underdog Story for the Lynx\'s Cup, From Scratch for one\'s own club\'s, neither for the Royals or the Foxes', lynx.includes('underdog-story') && !lynx.includes('from-scratch') && own.includes('from-scratch') && !own.includes('underdog-story') && !royals.some((id) => id === 'underdog-story' || id === 'from-scratch') && !foxes.some((id) => id === 'underdog-story' || id === 'from-scratch'));
+}
+
 // and back: a Foxes career after a club career puts everything back
 {
   const s = newSave();
