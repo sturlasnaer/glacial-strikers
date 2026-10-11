@@ -39,9 +39,15 @@ export function strength(teamId, save) {
 
 // Round-robin schedule where our opponents come in order (an odd number of them).
 // Circle method: we sit at the centre and meet rival r in round r; the others pair up as
-// (r+1, r-1), (r+2, r-2)... around the circle, so every pair meets once.
+// (r+1, r-1), (r+2, r-2)... around the circle, so every pair meets once. With an even number
+// of rivals (a club of the player's own: clubs.js), a BYE joins the circle last: each round
+// the club drawn against it sits out, and so do we in the last round (simulated straight
+// after our last game: we never see it).
+export const BYE = 'bye';
+export const isBye = (g) => g.a === BYE || g.b === BYE;
+export const realRounds = (L) => L.schedule.filter((r) => r.games[0].b !== BYE).length;
 function buildSchedule(order) {
-  const R = order, n = R.length;
+  const R = order.length % 2 ? order : [...order, BYE], n = R.length;
   const at = (i) => R[((i % n) + n) % n];
   return R.map((opp, r) => ({
     games: [{ a: 'home', b: opp }, ...Array.from({ length: (n - 1) / 2 }, (_, k) => ({ a: at(r + k + 1), b: at(r - k - 1) }))],
@@ -68,10 +74,10 @@ export function newLeague(season, tier = 0) {
 
 // Make sure every pair meets exactly once; fall back to a standard circle schedule if not.
 (function verify() {
-  for (const teams of [FOUNDING_TEAMS, EXPANDED_TEAMS, NATIONAL_TEAMS, ELITE_TEAMS]) {
+  for (const teams of [FOUNDING_TEAMS, EXPANDED_TEAMS, NATIONAL_TEAMS, ELITE_TEAMS, ['home', 'a', 'b', 'c', 'd', 'e', 'f'], ['home', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']]) {
     const s = buildSchedule(teams.slice(1)), n = teams.length;
     const seen = new Set();
-    for (const r of s) for (const g of r.games) seen.add([g.a, g.b].sort().join('-'));
+    for (const r of s) for (const g of r.games) if (!isBye(g)) seen.add([g.a, g.b].sort().join('-'));
     if (seen.size !== (n * (n - 1)) / 2) throw new Error('League schedule does not cover every pairing: ' + seen.size);
   }
 })();
@@ -87,6 +93,7 @@ export function simGame(sa, sb, rng) {
 }
 
 function addResult(L, g) {
+  if (isBye(g)) return;
   const ta = L.table[g.a], tb = L.table[g.b];
   ta.gp++; tb.gp++;
   ta.gf += g.ga; ta.ga += g.gb; tb.gf += g.gb; tb.ga += g.ga;
@@ -120,7 +127,7 @@ export function nextFixture(L) {
   if (L.phase === 'regular') {
     const opp = L.schedule[L.round].games[0].b;
     const base = stageOf(opp), rivalry = L.rivalry === opp; // (the season's rivalry game: rivals.js)
-    return { kind: 'regular', opponent: opp, rivalry, label: t('Round {n} of {total}', { n: L.round + 1, total: L.schedule.length }), stage: { ...base, round: rivalry ? 'Rivalry game · round {n}' : 'League · round {n}', roundN: L.round + 1, rivalry, reward: rivalry ? Math.round(base.reward * RIVALRY_PRIZE) : base.reward } };
+    return { kind: 'regular', opponent: opp, rivalry, label: t('Round {n} of {total}', { n: L.round + 1, total: realRounds(L) }), stage: { ...base, round: rivalry ? 'Rivalry game · round {n}' : 'League · round {n}', roundN: L.round + 1, rivalry, reward: rivalry ? Math.round(base.reward * RIVALRY_PRIZE) : base.reward } };
   }
   if (L.phase === 'playoffs') {
     const po = L.playoffs;
@@ -164,14 +171,16 @@ export function recordOurGame(L, save, gf, ga) {
     const ours = { a: 'home', b: games[0].b, ga: gf, gb: ga };
     const round = [ours];
     addResult(L, ours);
-    for (const g of games.slice(1)) {
-      const [x, y] = simGame(strength(g.a, save), strength(g.b, save), rng);
-      const r = { a: g.a, b: g.b, ga: x, gb: y };
-      addResult(L, r); round.push(r); out.simulated.push(r);
-      recordSimGame(save, L, r, rng);
-    }
+    simRest(L, save, games, round, rng, out);
     L.results.push(round);
     L.round++;
+    // our bye (the last round, with an even number of rivals): the others play it now
+    while (L.round < L.schedule.length && L.schedule[L.round].games[0].b === BYE) {
+      const bye = [{ a: 'home', b: BYE, bye: true }];
+      simRest(L, save, L.schedule[L.round].games, bye, rng, out);
+      L.results.push(bye);
+      L.round++;
+    }
     if (L.round >= L.schedule.length) {
       L.phase = 'playoffs';
       out.phaseChange = 'playoffs';
@@ -203,6 +212,17 @@ export function recordOurGame(L, save, gf, ga) {
     }
   }
   return out;
+}
+
+// Every game of a round but ours (and anyone's bye), simulated.
+function simRest(L, save, games, round, rng, out) {
+  for (const g of games.slice(1)) {
+    if (isBye(g)) continue;
+    const [x, y] = simGame(strength(g.a, save), strength(g.b, save), rng);
+    const r = { a: g.a, b: g.b, ga: x, gb: y };
+    addResult(L, r); round.push(r); out.simulated.push(r);
+    recordSimGame(save, L, r, rng);
+  }
 }
 
 function seedPlayoffs(L) {

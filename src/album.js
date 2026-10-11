@@ -6,7 +6,7 @@
 // Each club's mascot joins the end of its page once its sticker is drawn (Batch CR). The
 // National and Elite clubs' pages come after the legends, once the club has gone up to meet
 // them (or played them), so the numbers before them stay put.
-import { CHARACTERS, RECRUITS, GOALIE_RECRUITS, LEGENDS, RIVAL_IDS, NATIONAL_IDS, ELITE_OWN_IDS, TEAMS, recruitKey, CAREER } from './data.js';
+import { CHARACTERS, RECRUITS, GOALIE_RECRUITS, LEGENDS, RIVAL_IDS, NATIONAL_IDS, ELITE_OWN_IDS, TEAMS, recruitKey, CAREER, ROOKIES, FREE_GOALIES } from './data.js';
 import { tierOf } from './tiers.js';
 
 export const PACK_SIZE = 3, FOIL_CHANCE = 0.1, DOUBLE_COINS = 10, PAGE_COINS = 150, ALBUM_COINS = 600, STARTER_PACKS = 2;
@@ -25,6 +25,9 @@ export function albumPages(hasMascot = () => false, open = () => false) {
     const g = GOALIE_RECRUITS[`${CAREER.team}_g`];
     club('home', [...KITS.map((kit) => { const k = recruitKey(CAREER.team, kit); return { id: k, kind: 'skater', key: k, team: 'home', kit, name: RECRUITS[k].name }; }),
       { id: g.key, kind: 'goalie', key: g.key, team: 'home', kit: 'goalie', name: g.name }]);
+  } else if (CAREER.custom) { // (a club of one's own: its founders)
+    club('home', [...Object.entries(ROOKIES).filter(([, r]) => r.founder).map(([id, r]) => ({ id, kind: 'skater', key: id, team: 'home', kit: r.kit, name: r.name })),
+      ...Object.entries(FREE_GOALIES).filter(([, g]) => g.founder).map(([id, g]) => ({ id, kind: 'goalie', key: id, team: 'home', kit: 'goalie', name: g.name }))]);
   } else club('home', [...KITS.map((kit) => ({ id: `home_${kit}`, kind: 'skater', key: kit, team: 'home', kit, name: CHARACTERS[kit].name })),
     { id: 'home_g', kind: 'goalie', key: 'halla', team: 'home', kit: 'goalie', name: 'Halla' }]);
   const clubPage = (tid) => {

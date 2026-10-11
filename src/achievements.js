@@ -215,7 +215,7 @@ export class AchievementTracker {
     if (s.champion || (s.league && s.league.champion === 'home')) this.unlock('champion');
     if ((s.cups || 0) >= 2) this.unlock('dynasty');
     const L = s.league;
-    if (L && L.schedule && L.results.length >= L.schedule.length && L.results.slice(0, L.schedule.length).every((r) => r[0].ga > r[0].gb)) this.unlock('perfect');
+    if (L && L.schedule && L.results.length >= L.schedule.length && L.results.slice(0, L.schedule.length).every((r) => r[0].bye || r[0].ga > r[0].gb)) this.unlock('perfect'); // (a bye week isn't a game)
     const rivals = RIVAL_IDS; // (the Frostline's: the National clubs have cups of their own)
     if (s.rivals && rivals.every((k) => s.rivals[k] && s.rivals[k].wins > 0)) this.unlock('rivals');
     if (s.rivals && ALL_RIVALS.every((k) => s.rivals[k] && s.rivals[k].wins > 0)) this.unlock('grand-tour'); // (all three divisions' clubs)

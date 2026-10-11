@@ -6,7 +6,8 @@
 //   node tools/test_clubs.mjs
 import { TEAMS, RIVAL_IDS, FOUNDING_RIVALS, ELITE_IDS, ALL_RIVALS, CAREER, CLUB, RECRUITS, GOALIE_RECRUITS, DIALOGUE, useCareer, applyClub, clubText, stageOf, careerClub } from '../src/data.js';
 import { newSave, goalieIds, starterId, lineupIds, matchConfig } from '../src/progress.js';
-import { newLeague } from '../src/league.js';
+import { newLeague, nextFixture, recordOurGame, standings, BYE, isBye, realRounds } from '../src/league.js';
+import { makeRng } from '../src/util.js';
 import { CLUB_CHOICES, CLUB_STORIES, clubStars } from '../src/clubs.js';
 import { pickRunners, mascotOf } from '../src/race.js';
 import { postcardFor } from '../src/trip.js';
@@ -16,7 +17,7 @@ let pass = 0, fail = 0;
 const check = (name, cond, info) => { if (cond) pass++; else { fail++; console.log('✗', name, info ?? ''); } };
 useModular({ skaters: { body_std: {}, body_big: {}, body_small: {} }, modular: { heads: { c: {}, cage: {}, braids: {} } } });
 
-check('eight choices: the Foxes and the Frostline\'s seven, each with a story', CLUB_CHOICES.length === 8 && CLUB_CHOICES[0] === 'foxes' && CLUB_CHOICES.every((id) => CLUB_STORIES[id] && CLUB_STORIES[id].intro.length >= 4 && CLUB_STORIES[id].blurb && clubStars(id).length === 4));
+check('nine choices: the Foxes, the Frostline\'s seven and one\'s own, each with a story', CLUB_CHOICES.length === 9 && CLUB_CHOICES[0] === 'foxes' && CLUB_CHOICES.at(-1) === 'custom' && CLUB_CHOICES.every((id) => CLUB_STORIES[id] && CLUB_STORIES[id].intro.length >= 4 && CLUB_STORIES[id].blurb && clubStars(id).length === 4));
 check('...only real clubs can be played', careerClub('lynx') === 'lynx' && careerClub('foxes') === null && careerClub('home') === null && careerClub('pandas') === null && careerClub('nope') === null);
 
 // the Foxes' story: as before
@@ -54,6 +55,32 @@ check('...only real clubs can be played', careerClub('lynx') === 'lynx' && caree
   newSave('royals');
   check('the Royals: the Foxes in the Elite in their place', ELITE_IDS.includes('foxes') && !ELITE_IDS.includes('royals') && newLeague(5, 2).teams.includes('foxes'));
 }
+// a club of one's own: founders and a goalie from parts, the Foxes as neighbours, and a bye
+// each round (an even number of rivals)
+{
+  const s = newSave('custom', makeRng(5));
+  check('one\'s own club: three founders from parts and a goalie', s.team === 'custom' && lineupIds(s).join() === 'rk1,rk2,rk3' && Object.values(s.rookies).every((r) => r.founder && r.parts) && starterId(s) === 'fa_g0' && goalieIds(s).join() === 'fa_g0' && CAREER.custom && !CAREER.team);
+  check('...no club leaves: the Foxes join the Frostline, mid-table', RIVAL_IDS.length === 8 && RIVAL_IDS.join() === 'lynx,comets,owls,foxes,rams,moose,ravens,royals' && FOUNDING_RIVALS.length === 6 && stageOf('foxes').reward === stageOf('owls').reward);
+  applyClub(s.club);
+  check('...named as the player names it, the founders in the lines', CLUB.custom && CLUB.name === s.club.name && clubText('Pass it, Volta!') === `Pass it, ${s.club.names.thunder}!`);
+  // the season: six rivals, seven rounds, one of them our bye (the last), every pair once
+  const L = s.league, rounds = L.schedule.length;
+  check('...a bye a round: seven rounds for six rivals, ours the last', rounds === 7 && L.schedule[6].games[0].b === BYE && L.schedule.slice(0, 6).every((r) => r.games[0].b !== BYE) && realRounds(L) === 6);
+  const pairs = new Set();
+  for (const r of L.schedule) for (const g of r.games) if (!isBye(g)) pairs.add([g.a, g.b].sort().join('-'));
+  check('...every pair meets once', pairs.size === 21);
+  let guard = 0;
+  while (L.phase === 'regular' && guard++ < 20) {
+    const f = nextFixture(L);
+    if (f.kind === 'allstar') { L.allstar = { skipped: true }; continue; }
+    if (f.kind === 'classic') { L.classic = { opp: f.opponent, gf: 1, ga: 0, won: true }; continue; }
+    check(`...never a fixture against the bye (round ${L.round + 1})`, f.opponent !== BYE);
+    recordOurGame(L, s, 5, 2);
+  }
+  const rows = standings(L);
+  check('...after our last game the bye round plays itself, then the playoffs', L.phase !== 'regular' && L.results.length === 7 && L.results[6][0].bye && rows.every((r) => r.gp === 6), rows.map((r) => r.id + ':' + r.gp).join());
+}
+
 // and back: a Foxes career after a club career puts everything back
 {
   const s = newSave();

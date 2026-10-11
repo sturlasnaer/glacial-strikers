@@ -13,6 +13,7 @@ export function tripStops(L) {
   const stops = [{ town: 'home', kind: 'start', done: true }];
   const opp = (i) => L.schedule[i].games[0].b;
   L.schedule.forEach((rd, i) => {
+    if (opp(i) === 'bye') return; // (our bye week: no trip)
     const r = L.results[i] && L.results[i][0];
     stops.push({ town: opp(i) === 'foxes' ? 'foxes' : townOf(TEAMS[opp(i)].arena), kind: 'regular', done: !!r, won: r ? r.ga > r.gb : undefined, opp: opp(i) }); // (the Foxes, a club of the league: Snowcrest)
     if (i === ALLSTAR_AFTER - 1 && !(L.allstar && L.allstar.skipped)) stops.push({ town: 'home', kind: 'allstar', done: !!L.allstar, won: L.allstar ? !!L.allstar.won : undefined });

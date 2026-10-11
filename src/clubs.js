@@ -6,7 +6,7 @@
 // kits stand for its centre, winger and defender) and Kip.
 import { TEAMS, CHARACTERS, GOALIE } from './data.js';
 
-export const CLUB_CHOICES = ['foxes', 'lynx', 'comets', 'owls', 'rams', 'moose', 'ravens', 'royals'];
+export const CLUB_CHOICES = ['foxes', 'lynx', 'comets', 'owls', 'rams', 'moose', 'ravens', 'royals', 'custom'];
 
 export const CLUB_STORIES = {
   foxes: {
@@ -85,6 +85,20 @@ export const CLUB_STORIES = {
       ['us', 'frost', 'Win games, earn coins and EXP, and build us up in the hub. As calculated.'],
     ],
   },
+  // a club of one's own: named and coloured in the club editor, three founding players and a
+  // goalie made from parts; the Foxes stay in the league as neighbours from Snowcrest. (The
+  // words for the Foxes in the lines are clubText's: they become the new club's name.)
+  custom: {
+    tag: 'Your story',
+    blurb: 'A brand-new club of your own: your name, your colours, your crest, three founding players and a goalie. The Foxes stay in the league as your neighbours from Snowcrest.',
+    intro: [
+      ['kip', null, 'A brand-new club joins the Frostline tonight, right here in Snowcrest! Please welcome the Snowcrest Foxes!'],
+      ['us', 'frost', 'New club, new kit, new story. Nobody knows us yet.'],
+      ['us', 'thunder', 'They will soon. Wait till they see us skate!'],
+      ['us', 'stone', 'Same town as the old club up the road. That makes every game against them a derby.'],
+      ['us', 'frost', 'Win games, earn coins and EXP, and build us up in the hub. Let\'s make some history.'],
+    ],
+  },
   royals: {
     tag: 'Champions',
     blurb: 'The Aurora Royals are the champions, and every club wants to knock them off the throne. The league\'s best stars: now keep the crown.',
@@ -98,8 +112,19 @@ export const CLUB_STORIES = {
   },
 };
 
+// A club of one's own starts from these in the editor (the player names it), and its founders
+// take names from these lists.
+export const CUSTOM_CLUB = { name: 'Snowcrest Wolves', nick: 'Wolves', short: 'WLV', trim: '#e0303c', jersey: '#f6f1e9', crest: 'wolf' };
+export const FOUNDER_NAMES = {
+  C: ['Rowan', 'Juno', 'Sasha', 'Kai', 'Linnea', 'Emery'],
+  W: ['Skye', 'Remy', 'Tove', 'Milo', 'Astrid', 'Jesse'],
+  D: ['Bodhi', 'Ingrid', 'Rory', 'Sol', 'Freja', 'Arlo'],
+  G: ['Wren', 'Signe', 'Teo', 'Hollis', 'Ylva', 'Quinn'],
+};
+
 // Who a choice starts with, for the picker: centre, winger, defender and goalie.
 export function clubStars(team) {
+  if (team === 'custom') return ['?', '?', '?', '?'];
   if (team === 'foxes') return [CHARACTERS.frost.name, CHARACTERS.thunder.name, CHARACTERS.stone.name, GOALIE.name];
   const n = TEAMS[team].names;
   return [n.frost, n.thunder, n.stone, n.goalie];

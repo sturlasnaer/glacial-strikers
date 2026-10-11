@@ -5,7 +5,8 @@ import {
   CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE, CAST_PAIRS, makeDef, perkSlot,
   RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, setFreeGoalies, setGoalieLooks, goalieInfo, areTwins, setRookies, setStyles, ELEMENTS, ARCHETYPES, member, pairKey, recruitKey, slotDef, GOALIE_STYLES, ALL_RIVALS, slotSprite, slotLook, CLUB_DEFAULT, useCareer } from './data.js';
 import { newLeague, migrateLeague } from './league.js';
-import { lookFor, maskFor, goalieArt, isPartsArt } from './modular.js';
+import { lookFor, maskFor, goalieArt, isPartsArt, randomLook, randomMask } from './modular.js';
+import { CUSTOM_CLUB, FOUNDER_NAMES } from './clubs.js';
 import { seasonStats } from './awards.js';
 import { tierOf, tierInfo, TIER_SHARP } from './tiers.js';
 import { rivalSub, setFills, agedStats, grown, goalieGrowth, leagueGrowth, seasonBoost, GOALIE_CAP } from './slots.js';
@@ -49,11 +50,14 @@ export const STAT_CAP_BONUS = 3; // points you can add to a stat above its base
 
 // team: a career as another club (clubs.js): its three stars and its goalie are the roster,
 // and the Foxes take its place in the league (useCareer, data.js). Default: the Foxes.
-export function newSave(team = null) {
-  const own = useCareer(team);
+export function newSave(team = null, rnd = Math.random) {
+  const own = useCareer(team), custom = own === 'custom';
   const roster = {};
-  const line = own ? ['frost', 'thunder', 'stone'].map((k) => recruitKey(own, k)) : ['frost', 'thunder', 'stone'];
+  // (a club of one's own: three founders made from parts, rk1-rk3, and a goalie, fa_g0)
+  const founders = custom ? foundingPlayers(rnd) : null;
+  const line = custom ? ['rk1', 'rk2', 'rk3'] : own ? ['frost', 'thunder', 'stone'].map((k) => recruitKey(own, k)) : ['frost', 'thunder', 'stone'];
   for (const id of own ? line : Object.keys(CHARACTERS)) roster[id] = newMember();
+  if (founders) { setRookies(founders.rookies); setFreeGoalies(founders.goalies); }
   const pairs = own ? [pairKey(line[0], line[1]), pairKey(line[0], line[2]), pairKey(line[1], line[2])] : CAST_PAIRS;
   return {
     v: 1,
@@ -61,7 +65,8 @@ export function newSave(team = null) {
     coins: 150,
     roster, // every signed skater, keyed by member id
     lineup: { C: line[0], W: line[1], D: line[2] }, // who dresses for matches
-    club: own ? { team: own } : null, // custom name and colours, see applyClub in data.js (a club career: that club's)
+    club: custom ? { ...CUSTOM_CLUB, names: founders.names } : own ? { team: own } : null, // custom name and colours, see applyClub in data.js (a club career: that club's)
+    ...(founders ? { rookieN: 3, freeGoalies: founders.goalies } : {}),
     goalie: { level: 1, exp: 0, gear: 'g_start' },
     owned: ['stick_wood', 'skate_start', 'arm_none', 'g_start'],
     chem: Object.fromEntries(pairs.map((k) => [k, 0])), // chemistry XP per pair of members
@@ -84,11 +89,26 @@ export function newSave(team = null) {
       markers: 'color', passRing: true, puck: 'auto', textSize: 'normal', touchSize: 'normal', lefty: false, breakAfter: 0, simple: false, simple2: 'none', little: false, sign: '', race: true,
     },
     record: { played: 0, wins: 0, goals: 0 },
-    rookies: {}, // drafted rookies by roster id (rk1, rk2, …), see draft.js
-    goalies: own ? { [own + '_g']: { level: 1, exp: 0, gear: 'g_start' } } : {}, // signed rival goalies by key ('rams_g'): { level, exp, gear }; Halla is save.goalie (a club career: its own goalie)
-    goalieStarter: own ? own + '_g' : 'halla', // who starts in goal
+    rookies: founders ? founders.rookies : {}, // drafted rookies by roster id (rk1, rk2, …), see draft.js (a club of one's own: its founders)
+    goalies: own ? { [custom ? 'fa_g0' : own + '_g']: { level: 1, exp: 0, gear: 'g_start' } } : {}, // signed rival goalies by key ('rams_g'): { level, exp, gear }; Halla is save.goalie (a club career: its own goalie)
+    goalieStarter: custom ? 'fa_g0' : own ? own + '_g' : 'halla', // who starts in goal
     draft: null, // this season's Draft Day once it's over
   };
+}
+
+// A club of one's own: its three founders (made from parts, with the cast's numbers and supers)
+// and its goalie, named from clubs.js's lists. { rookies, goalies, names }
+function foundingPlayers(rnd) {
+  const pick = (list) => list[Math.floor(rnd() * list.length)];
+  const rookies = {}, names = {};
+  ['frost', 'thunder', 'stone'].forEach((kit, i) => {
+    const c = CHARACTERS[kit], name = pick(FOUNDER_NAMES[c.role]);
+    names[kit] = name;
+    rookies['rk' + (i + 1)] = { name, kit, arch: c.arch, elem: c.elem, hand: rnd() < 0.6 ? 'L' : 'R', parts: randomLook(rnd, c.role), base: { ...c.base }, potential: 3, blurb: 'A founding player of the club.', season: 1, founder: true };
+  });
+  names.goalie = pick(FOUNDER_NAMES.G);
+  const goalies = { fa_g0: { name: names.goalie, base: { rfx: 6, pos: 6 }, style: 'hybrid', blurb: 'The club\'s founding goalie.', price: 0, look: randomMask(rnd), founder: true } };
+  return { rookies, goalies, names };
 }
 
 // Little player (Settings): one tap sets the game up for the youngest, and off puts the

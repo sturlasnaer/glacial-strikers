@@ -1327,7 +1327,7 @@ class App {
     const s = this.save;
     const L = s.league;
     let streak = 0;
-    if (L) for (let i = L.results.length - 1; i >= 0; i--) { const g = L.results[i][0]; if (g.ga > g.gb) streak++; else break; }
+    if (L) for (let i = L.results.length - 1; i >= 0; i--) { const g = L.results[i][0]; if (g.bye) continue; if (g.ga > g.gb) streak++; else break; } // (a bye week isn't a game)
     const ctx = { won: rewards.won, gf: summary.score[0], ga: summary.score[1], summary, streak, next: this.fixture(), ups: [] };
     // after a big game the press gets the player of the night instead
     const c = this.cur, game = { kind: c && c.fixture ? c.fixture.kind : 'regular', opp: c && c.teamId, won: rewards.won };
@@ -1413,13 +1413,15 @@ class App {
       const s = newSave(team);
       s.settings = prev.settings; s.guide = prev.guide;
       this.save = s;
-      setRookies({}); setFreeGoalies({}); setGoalieLooks({}); setStyles({}); setFills(s);
+      setRookies(s.rookies || {}); setFreeGoalies(s.freeGoalies || {}); setGoalieLooks({}); setStyles({}); setFills(s); // (a club of one's own: its founders)
       this.applyClubLook();
       this.ach = new AchievementTracker(s, (a) => this.toastAchievement(a));
     }
     this.save.clubPicked = true;
     writeSave(this.save);
-    this.loadThen(Promise.all([Assets.ensureKit(homeKitGroups(this.save)), Assets.ensureTeam('foxes')]).catch(() => {}), () => this.startCampaign());
+    // (a club of one's own: named and coloured first, its founders from parts)
+    const next = team === 'custom' ? () => { this.scene = 'hub'; this.ui.clubEditor({ create: true, onDone: () => this.startCampaign() }); } : () => this.startCampaign();
+    this.loadThen(Promise.all([Assets.ensureKit(homeKitGroups(this.save)), Assets.ensureTeam('foxes'), team === 'custom' && Assets.loadGroup('parts'), team === 'custom' && Assets.loadGroup('goalie_parts')]).catch(() => {}), next);
   }
 
   // ?twins=1: a test run with Fáfnir and Fenrir dressed (Fenrir on the wing, Fáfnir on

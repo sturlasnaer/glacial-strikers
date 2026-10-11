@@ -12,12 +12,12 @@ export const RACE_AT = 3; // (goals for either side)
 
 // A runner's mascot: ours (the Snow Fox, or in a career as another club that club's), the
 // Foxes' (the Snow Fox, when they're a club of the league: clubs.js) or a club's own.
-export const mascotOf = (id) => (id === 'home' ? MASCOTS[CAREER.team] || MASCOTS.home : id === 'foxes' ? MASCOTS.home : MASCOTS[id]);
+export const mascotOf = (id) => (id === 'home' ? (CAREER.custom ? null : MASCOTS[CAREER.team] || MASCOTS.home) : id === 'foxes' ? MASCOTS.home : MASCOTS[id]); // (a club of one's own has none yet)
 
 // Four runners: our Snow Fox, the opponent's, and two more; only those drawn (has(team)).
 export function pickRunners(opp, rnd, has = () => true) {
   const ids = ['home', ...(opp && opp !== 'home' && mascotOf(opp) ? [opp] : [])].filter(has);
-  const rest = [...Object.keys(MASCOTS), ...(CAREER.team ? ['foxes'] : [])].filter((k) => !ids.includes(k) && k !== CAREER.team && has(k));
+  const rest = [...Object.keys(MASCOTS), ...(CAREER.team || CAREER.custom ? ['foxes'] : [])].filter((k) => !ids.includes(k) && k !== CAREER.team && (k !== 'home' || !CAREER.custom) && has(k));
   while (ids.length < 4 && rest.length) ids.push(rest.splice(Math.floor(rnd() * rest.length), 1)[0]);
   return ids;
 }

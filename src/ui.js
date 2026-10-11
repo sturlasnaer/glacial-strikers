@@ -4,7 +4,7 @@ import { Assets } from './assets.js';
 import {
   CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
-  RECRUITS, ROOKIES, setRookies, setFreeGoalies, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, ALL_RIVALS, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, CLUB_CRESTS, clubCrestId, MASK_NAMES, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
+  RECRUITS, ROOKIES, setRookies, setFreeGoalies, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, ALL_RIVALS, CAREER, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, CLUB_CRESTS, clubCrestId, MASK_NAMES, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
 import { standings, classicOpponent, CLASSIC_AFTER, ALLSTAR_AFTER, leagueRivals } from './league.js';
 import { BUFF_TEXT } from './lockerroom.js';
@@ -63,7 +63,7 @@ import { SNOW_TIME, newSnowball, stepSnowball, throwAt, snowPrize } from './snow
 import { KID_STAR_IDS } from './kidstars.js';
 import { tripStops, POSTCARD_TOWNS, NATIONAL_POSTCARDS } from './trip.js';
 import { tierOf, tierInfo, tierAt, TIERS, safeSeason } from './tiers.js';
-import { CLUB_CHOICES, CLUB_STORIES, clubStars } from './clubs.js';
+import { CLUB_CHOICES, CLUB_STORIES, clubStars, CUSTOM_CLUB } from './clubs.js';
 import { newPet, stepPet, tapPet, tossPuck, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall,
   PET_KINDS, PET_KIND, PET_FRAMES, PET_WINS, PET_AREA, ROOM_MAX, petDir, petIcon, roomPets, ownedPets, petsDue, adoptPet, sendToHouse, bringToRoom, petNameOf, renamePet, winsAgainst } from './pet.js';
 import { albumPages, albumClubOpen, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
@@ -368,7 +368,7 @@ const vetBadge = (v) => (v ? ` <span class="vet" title="${esc(t('Veteran level {
 // The sticker album: the pages (a club's mascot once its sticker is drawn, Batch CR), a
 // sticker's face, and the sticker itself.
 // (a career as another club: our mascot is that club's, the Foxes' the Snow Fox)
-const mascotKey = (team) => (team === 'home' ? CLUB.team || 'home' : team === 'foxes' ? 'home' : team);
+const mascotKey = (team) => (team === 'home' ? (CAREER.custom ? 'none' : CLUB.team || 'home') : team === 'foxes' ? 'home' : team); // (a club of one's own: no mascot yet)
 const ALBUM_PAGES = (s) => albumPages((team) => !!Assets.atlas.frames[`album/mascot_${mascotKey(team)}`], (tid) => albumClubOpen(s, tid));
 function stickerFace(st, size) {
   if (st.kind === 'mascot') return Assets.icon(`album/mascot_${mascotKey(st.team)}`, size);
@@ -544,7 +544,7 @@ export class UI {
   exhibitionTeams() {
     const s = this.app.save, tier = tierOf(s);
     const open = (tm) => (tm.elite ? tier >= 2 : tm.national ? tier >= 1 : true) || (s.rivals && s.rivals[tm.id] && s.rivals[tm.id].played);
-    return Object.values(TEAMS).filter((tm) => tm.id !== 'home' && tm.id !== CLUB.team && (!tm.careerOnly || CLUB.team) && open(tm)); // (a club career: not ourselves, and the Foxes as a club)
+    return Object.values(TEAMS).filter((tm) => tm.id !== 'home' && tm.id !== CLUB.team && (!tm.careerOnly || CLUB.team || CAREER.custom) && open(tm)); // (a club career: not ourselves, and the Foxes as a club)
   }
 
   quickMatchPicker() {
@@ -1197,6 +1197,7 @@ export class UI {
         <span class="fx-res">${as ? (as.won ? `<span class="good">${t('W {a}–{b}', { a: as.gf, b: as.ga })}</span>` : `<span class="bad">${t('L {a}–{b}', { a: as.gf, b: as.ga })}</span>`) : asNext ? `<span class="gold-t">${t('NEXT')}</span>` : '<span class="muted">–</span>'}</span></div>` : '';
     const schedule = L.schedule.map((rd, i) => {
       const opp = rd.games[0].b;
+      if (opp === 'bye') return ''; // (our bye week, the last round: nothing to show)
       const res = L.results[i] && L.results[i][0];
       const tm = TEAMS[opp];
       const isNext = i === L.round && L.phase === 'regular' && !clNext && !asNext;
@@ -1543,9 +1544,10 @@ export class UI {
   // A new career's first choice (clubs.js): the Foxes' story, or a career as a Frostline club.
   clubPicker(onPick) {
     const card = (id) => {
-      const tm = TEAMS[id], st = CLUB_STORIES[id], stars = clubStars(id);
+      const custom = id === 'custom', tm = custom ? { name: t('Your own club'), color: CUSTOM_CLUB.trim, color2: CUSTOM_CLUB.jersey } : TEAMS[id], st = CLUB_STORIES[id], stars = clubStars(id);
+      const img = custom ? Assets.icon(Assets.frame(clubCrestId(CUSTOM_CLUB.crest)) ? clubCrestId(CUSTOM_CLUB.crest) : 'hud_elements/misc/home_crest', 96) : crest(id, 96);
       return `<button class="club-card" data-club="${id}" style="--c1:${tm.color};--c2:${tm.color2}">
-        <img class="club-crest" src="${crest(id, 96)}" alt="" width="64" height="64">
+        <img class="club-crest" src="${img}" alt="" width="64" height="64">
         <span class="club-txt"><span class="club-name"><b>${esc(tm.name)}</b> <span class="tag club-tag">${esc(t(st.tag))}</span></span>
           <span class="muted club-blurb">${esc(t(st.blurb))}</span><span class="club-stars">${stars.map(esc).join(' · ')}</span></span></button>`;
     };
@@ -2327,23 +2329,26 @@ export class UI {
     });
   }
 
-  clubEditor() {
-    const s = this.app.save;
-    const cur = { ...CLUB_DEFAULT, ...(s.club || {}) };
+  // (opts.create: a new club of one's own being named, clubs.js: no going back, then onDone. In a
+  // career as another club the editor starts from that club, and its crest stays a choice.)
+  clubEditor(opts = {}) {
+    const s = this.app.save, create = !!opts.create;
+    const cur = s.team ? Object.fromEntries(Object.keys(CLUB_DEFAULT).map((k) => [k, CLUB[k]])) : { ...CLUB_DEFAULT, ...(s.club || {}) };
     const draft = { ...cur };
-    let nickTouched = !!(s.club && s.club.nick), shortTouched = !!(s.club && s.club.short);
+    let nickTouched = !create && !!(s.club && s.club.nick), shortTouched = !create && !!(s.club && s.club.short);
+    const crestId = (c) => (c === 'team' && CLUB.team ? `rival_crests/crest/${TEAMS[CLUB.team].art || TEAMS[CLUB.team].mark}` : clubCrestId(c)); // (a club career's own crest)
     audio.sfx('click');
     const previewIds = () => {
       const sk = Assets.atlas.skaters;
-      return [clubCrestId(draft.crest), sk.frost_captain.home.south.frames.idle, sk.thunder_winger.home.south.frames.celebrate, sk.stone_defender.home.east.frames.idle];
+      return [crestId(draft.crest), sk.frost_captain.home.south.frames.idle, sk.thunder_winger.home.south.frames.celebrate, sk.stone_defender.home.east.frames.idle];
     };
-    const crests = CLUB_CRESTS.filter((c) => Assets.frame(clubCrestId(c.id))); // (the designs there's art for)
+    const crests = [...(CLUB.team ? [{ id: 'team', name: TEAMS[CLUB.team].name }] : []), ...CLUB_CRESTS].filter((c) => Assets.frame(crestId(c.id))); // (the designs there's art for)
     const rc = () => {
       const p = { trim: hexToHsvUI(draft.trim), jersey: hexToHsvUI(draft.jersey), mode: 'home' };
       return draft.trim === CLUB_DEFAULT.trim && draft.jersey === CLUB_DEFAULT.jersey ? null : p;
     };
     this.modal(`
-      <h2>${t('Your club')}</h2>
+      <h2>${create ? t('Name your club') : t('Your club')}</h2>
       <div class="club-preview" id="club-preview"></div>
       <div class="club-form">
         <label>${t('Club name')}<input id="club-name" maxlength="26" value="${esc(draft.name)}" autocomplete="off"></label>
@@ -2359,8 +2364,8 @@ export class UI {
         <label class="color-pick">${t('Jersey')} <input type="color" id="club-jersey" value="${draft.jersey}"></label>
       </div>
       <div class="row" style="justify-content:space-between">
-        <button class="btn small ghost" id="club-reset">${t('Reset to {club}', { club: esc(CLUB_DEFAULT.name) })}</button>
-        <span class="row" style="gap:8px"><button class="btn small ghost" data-close>${t('Cancel')}</button><button class="btn gold" id="club-save">${t('Save club')}</button></span>
+        ${create || s.team ? '<span></span>' : `<button class="btn small ghost" id="club-reset">${t('Reset to {club}', { club: esc(CLUB_DEFAULT.name) })}</button>`}
+        <span class="row" style="gap:8px">${create ? '' : `<button class="btn small ghost" data-close>${t('Cancel')}</button>`}<button class="btn gold" id="club-save">${create ? t('Found the club') : t('Save club')}</button></span>
       </div>`, (m, close) => {
       const $ = (sel) => m.querySelector(sel);
       const paint = () => {
@@ -2368,7 +2373,7 @@ export class UI {
         $('#club-preview').innerHTML = previewIds().map((id, i) => `<img src="${Assets.previewIcon(id, i ? 132 : 96, r)}" alt="">`).join('')
           + `<div class="club-name-preview"><b>${esc(draft.name)}</b><span>${esc(draft.short)} · ${esc(draft.nick)}</span></div>`;
         m.querySelectorAll('[data-preset]').forEach((b) => { const p = CLUB_PRESETS.find((x) => x.id === b.dataset.preset); b.setAttribute('aria-pressed', p.trim === draft.trim && p.jersey === draft.jersey); });
-        m.querySelectorAll('[data-crest]').forEach((b) => { b.setAttribute('aria-pressed', b.dataset.crest === draft.crest); b.querySelector('img').src = Assets.previewIcon(clubCrestId(b.dataset.crest), 80, r); });
+        m.querySelectorAll('[data-crest]').forEach((b) => { b.setAttribute('aria-pressed', b.dataset.crest === draft.crest); b.querySelector('img').src = Assets.previewIcon(crestId(b.dataset.crest), 80, r); });
         $('#club-trim').value = draft.trim; $('#club-jersey').value = draft.jersey;
       };
       paint();
@@ -2385,22 +2390,22 @@ export class UI {
       $('#club-jersey').addEventListener('input', (e) => { draft.jersey = e.target.value; paint(); });
       this.click('[data-preset]', (el) => { const p = CLUB_PRESETS.find((x) => x.id === el.dataset.preset); draft.trim = p.trim; draft.jersey = p.jersey; audio.sfx('click'); paint(); }, m);
       this.click('[data-crest]', (el) => { draft.crest = el.dataset.crest; audio.sfx('click'); paint(); }, m);
-      this.click('#club-reset', () => {
+      if ($('#club-reset')) this.click('#club-reset', () => {
         Object.assign(draft, CLUB_DEFAULT); nickTouched = shortTouched = false;
         $('#club-name').value = draft.name; $('#club-nick').value = draft.nick; $('#club-short').value = draft.short;
         audio.sfx('click'); paint();
       }, m);
       this.click('#club-save', () => {
         const same = Object.keys(CLUB_DEFAULT).every((k) => draft[k] === CLUB_DEFAULT[k]);
-        s.club = same ? null : { ...draft };
-        if (draft.crest && draft.crest !== CLUB_DEFAULT.crest) this.app.ach.unlock('new-colours');
+        s.club = s.team ? { ...(s.club || {}), ...draft } : same ? null : { ...draft }; // (a career: its team and founders kept)
+        if (draft.crest && draft.crest !== CLUB_DEFAULT.crest && !create) this.app.ach.unlock('new-colours');
         this.app.applyClubLook();
         writeSave(s);
         audio.jingle('achievement');
         close();
-        this.hub(this.tab);
+        if (opts.onDone) opts.onDone(); else this.hub(this.tab);
       }, m);
-    });
+    }, !create); // (naming a new club: no closing it without)
   }
 
   // Rival skaters you can sign: every team you've beaten.

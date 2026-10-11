@@ -473,17 +473,24 @@ export const ALL_RIVALS = [...RIVAL_IDS, ...NATIONAL_IDS, ...ELITE_OWN_IDS];
 // useCareer swaps it out of the league's lists for the Foxes, in place (everything that reads
 // the lists sees it), and gives the Foxes that club's slot: its difficulty, stats, chemistry,
 // and whether it joins in the second season.
-export const CAREER = { team: null };
+export const CAREER = { team: null, custom: false }; // (custom: a club of the player's own, clubs.js)
 const BASE_LISTS = [[RIVAL_IDS, [...RIVAL_IDS]], [FOUNDING_RIVALS, [...FOUNDING_RIVALS]], [ELITE_IDS, [...ELITE_IDS]], [ALL_RIVALS, [...ALL_RIVALS]]];
 export const careerClub = (team) => (team && team !== 'foxes' && TEAMS[team] && TEAMS[team].names && !TEAMS[team].careerOnly && RIVAL_IDS.concat(BASE_LISTS[0][1]).includes(team) ? team : null);
+// A club of the player's own ('custom'): no club leaves; the Foxes join the Frostline as a club
+// too, mid-table (an even number of rivals: the league has a bye each round, league.js).
+const insertAfter = (list, after, id) => list.splice(list.indexOf(after) + 1, 0, id);
 export function useCareer(team) {
-  const own = careerClub(team);
-  CAREER.team = own;
+  const custom = team === 'custom', own = custom ? null : careerClub(team);
+  CAREER.team = own; CAREER.custom = custom;
   for (const [list, base] of BASE_LISTS) { list.length = 0; list.push(...base.map((id) => (id === own ? 'foxes' : id))); }
+  if (custom) { insertAfter(RIVAL_IDS, 'owls', 'foxes'); insertAfter(FOUNDING_RIVALS, 'comets', 'foxes'); insertAfter(ALL_RIVALS, 'owls', 'foxes'); }
   const F = TEAMS.foxes, T = own && TEAMS[own];
   Object.assign(F, { diff: T ? T.diff : 0.5, bonus: T ? { ...T.bonus } : {}, goalie: T ? { ...T.goalie } : { rfx: 6, pos: 6 }, chem: T ? T.chem : 2, expansion: !!(T && T.expansion) });
-  return own;
+  return own || (custom ? 'custom' : null);
 }
+// The daily challenge's clubs: the same for everyone (a club career meets the Foxes in its own
+// place; a club of one's own adds none).
+export const dailyRivals = () => BASE_LISTS[0][1].map((id) => (id === CAREER.team ? 'foxes' : id));
 // What plays a rival's roster slot: their own art, or a body from parts (an expansion club),
 // or null for our cast's art in their colours.
 export const slotLook = (teamId, kit) => { const t = TEAMS[teamId]; return t && t.looks && t.looks[kit] && bodySprite(t.looks[kit]) ? t.looks[kit] : null; };
@@ -806,7 +813,8 @@ export function applyClub(club) {
   const c = { ...start, ...(club || {}) };
   Object.assign(CLUB, c, { team: T ? T.id : null, custom: !!T || (!!club && (c.name !== CLUB_DEFAULT.name || c.trim !== CLUB_DEFAULT.trim || c.jersey !== CLUB_DEFAULT.jersey || c.short !== CLUB_DEFAULT.short || c.nick !== CLUB_DEFAULT.nick || c.crest !== CLUB_DEFAULT.crest)) });
   for (const k of Object.keys(CAST_SWAP)) delete CAST_SWAP[k];
-  if (T) Object.assign(CAST_SWAP, { Nix: T.names.frost, Volta: T.names.thunder, Bram: T.names.stone, Halla: T.names.goalie });
+  const names = T ? T.names : c.names; // (a club of one's own: its founders')
+  if (names) Object.assign(CAST_SWAP, { Nix: names.frost, Volta: names.thunder, Bram: names.stone, Halla: names.goalie });
   const home = TEAMS.home;
   home.name = c.name; home.short = c.short; home.color = c.trim; home.color2 = c.jersey; home.crest = T && c.crest === 'team' ? `rival_crests/crest/${T.art || T.mark}` : clubCrestId(c.crest); // (a club career: its own crest)
   const t = hexToHsv(c.trim), j = hexToHsv(c.jersey);
@@ -825,7 +833,7 @@ export function applyClub(club) {
 export function clubText(str) {
   if (!CLUB.custom || !str) return str;
   const out = String(str).replace(/Snowcrest Foxes/g, CLUB.name).replace(/\bFoxes\b/g, CLUB.nick);
-  return CLUB.team ? out.replace(/\b(Nix|Volta|Bram|Halla)\b/g, (n) => CAST_SWAP[n] || n) : out; // (a club career: its stars, not the cast)
+  return CAST_SWAP.Nix ? out.replace(/\b(Nix|Volta|Bram|Halla)\b/g, (n) => CAST_SWAP[n] || n) : out; // (a club career: its stars, not the cast)
 }
 
 // Twists: 'none' | 'speed_lanes' | 'cracked_ice' | 'both'
@@ -855,7 +863,7 @@ export const NATIONAL_STAGES = [
   { team: 'tigers', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 410 }, // (the Elite's own)
   { team: 'pandas', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 420 },
 ];
-export const stageOf = (team) => (team === 'foxes' ? { ...stageOf(CAREER.team || 'lynx'), team: 'foxes' } // (the Foxes play in the slot of the club the player took)
+export const stageOf = (team) => (team === 'foxes' ? { ...stageOf(CAREER.team || (CAREER.custom ? 'owls' : 'lynx')), team: 'foxes' } // (the Foxes play in the slot of the club the player took; mid-table beside a club of one's own)
   : TOURNAMENT.stages.find((x) => x.team === team) || NATIONAL_STAGES.find((x) => x.team === team) || TOURNAMENT.stages[0]);
 
 // Chemistry: pairs who pass to each other build a bond over the season. From level 1, a

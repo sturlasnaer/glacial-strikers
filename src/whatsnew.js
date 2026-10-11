@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-11c',
+    items: [
+      { icon: 'hud_elements/misc/home_crest', alt: 'icons/career', text: 'Found a club of your own! A new career can now be a brand-new club: name it, pick its colours and crest, and lead three founding players and a goalie into the Frostline, with the Foxes as your neighbours from Snowcrest.' },
+    ],
+  },
+  {
     id: '2026-10-11b',
     items: [
       { icon: 'icons/pet_lynx', alt: 'icons/pet', text: 'Pets to collect! Beat a club three times and they send their mascot\'s little one to your locker room: a lynx kitten, a snowy owlet, a golden lamb, a moose calf, with more on the way. Up to four play in the room; the rest wait in the pet house (Shop › Locker room).' },
