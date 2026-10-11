@@ -235,11 +235,11 @@ export class AchievementTracker {
     const signed = Object.keys(RECRUITS).filter((k) => s.roster[k] && !clubOwn(k)); // (a club career's own stars aren't signings)
     if (signed.length) this.unlock('signing');
     if (new Set(signed.map((k) => RECRUITS[k].team)).size >= 5) this.unlock('scout');
-    if (Object.keys(s.rookies || {}).length) this.unlock('first-pick');
+    if (Object.values(s.rookies || {}).some((k) => !k.founder)) this.unlock('first-pick'); // (one's own club's founders aren't draft picks)
     if (Object.values(s.roster).some((r) => r.camp) || [s.goalie, ...Object.values(s.goalies || {})].some((g) => g && g.camp)) this.unlock('new-tricks');
     if ((s.trades || []).length) this.unlock('dealmaker');
     if (Object.keys(s.goalies || {}).some((k) => RECRUITS_G(k))) this.unlock('second-keeper');
-    if (Object.values(s.rookies || {}).some((k) => k.agent) || Object.keys(s.freeGoalies || {}).length) this.unlock('veteran');
+    if (Object.values(s.rookies || {}).some((k) => k.agent) || Object.values(s.freeGoalies || {}).some((g) => !g.founder)) this.unlock('veteran'); // (nor its founding goalie a free agent)
     if (Object.keys(LEGENDS).some((k) => s.roster[k])) this.unlock('legend');
     if ((s.weeklyCups || []).some((w) => w.place === 1)) this.unlock('weekly-cup');
     const fac = Object.values(s.facilities || {});

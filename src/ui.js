@@ -2142,7 +2142,7 @@ export class UI {
   lockerMoment(m, ctx, choose, done) {
     const who = (m.whoFn ? m.whoFn(ctx) : m.who).filter(Boolean);
     const say = (x) => (typeof x === 'function' ? x(ctx) : t(x)); // (a club career's moments name the line-up)
-    const mine = (x) => (m.id.endsWith('-club') ? t(x) : clubText(t(x))); // (a club career's moments fill in our own names: the Foxes there are a rival)
+    const mine = (x) => (this.app.save.team ? t(x) : clubText(t(x))); // (a club career's moments fill in our own names: the Foxes there are a rival; the shared ones, like Fan mail, never say Foxes)
     audio.sfx('blip');
     this.modal(`
       <div class="label">${t('Locker room')}</div>
@@ -2751,7 +2751,7 @@ export class UI {
       <div class="label" style="margin:10px 0 4px">${t('Combos')}</div>
       <p class="muted" style="margin:0 0 6px;font-size:12.5px">${t('Two players with chemistry fire a combo when one passes and the other shoots right away. Which combo depends on their two elements.')}</p>
       <div class="car-wrap"><table class="car-table combo-table"><thead><tr><th></th>${els.map((e) => `<th style="color:${e.color}">${esc(t(e.name))}</th>`).join('')}</tr></thead>
-        <tbody>${els.map((a) => `<tr><td style="color:${a.color};text-align:left">${esc(t(a.name))}</td>${els.map((b) => `<td>${a === b ? '–' : esc(t(pair(a.id, b.id).name))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+        <tbody>${els.map((a) => `<tr><td style="color:${a.color};text-align:left">${esc(t(a.name))}</td>${els.map((b) => `<td>${pair(a.id, b.id) ? esc(t(pair(a.id, b.id).name)) : '–'}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
       <p class="muted" style="font-size:12.5px;margin:8px 0 0">${t('Change a player\'s super or style once a season at the training camp: Change… on their Team card.')}</p>
       <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>${t('Done')}</button></div>`);
   }

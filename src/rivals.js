@@ -36,7 +36,7 @@ export function rivalLines(save, teamId) {
   // one of ours scoring in game after game: they've noticed
   const hot = team && Object.entries(save.goalStreaks || {}).filter(([id, n]) => n >= 3 && save.roster[id] && member(id)).sort((a, b) => b[1] - a[1])[0];
   const hotLine = hot ? ['them', 'stone', clubT('{name}, {n} games in a row with a goal? Not tonight.', { name: member(hot[0]).name, n: hot[1] })] : null;
-  if (!r || !r.last || !team) return hotLine ? [hotLine] : [];
+  if (!r || !r.last || !team) return hotLine ? [done(hotLine)] : [];
   const L = r.last;
   const seed = r.played * 7 + r.gf * 3 + r.ga;
   const ours = (id) => (member(id) ? member(id).name : clubT('Somebody'));

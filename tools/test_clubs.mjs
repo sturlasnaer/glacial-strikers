@@ -83,6 +83,8 @@ check('...only real clubs can be played', careerClub('lynx') === 'lynx' && caree
   check('...named as the player names it, the founders in the lines', CLUB.custom && CLUB.name === s.club.name && clubText('Pass it, Volta!') === `Pass it, ${s.club.names.thunder}!`);
   check('...its mascot is its crest\'s (Batch EU), the Foxes keep the Snow Fox', mascotOf('home') === 'club_' + s.club.crest && mascotOf('foxes') === 'snow_fox');
   check('...its founders are the club\'s own, not for trade', ['rk1', 'rk2', 'rk3'].every((id) => clubOwn(id)) && tradeable(s).length === 0);
+  { const got = []; new AchievementTracker(s, (a) => got.push(a.id)).checkMeta(); check('...nor draft picks or free agents (no First Pick or Veteran Presence for them)', !got.includes('first-pick') && !got.includes('veteran'), got); }
+  check('...and the rookie goal waits for a real draft pick', !seasonGoals(s).ids.includes('rookie'));
   // the season: six rivals, seven rounds, one of them our bye (the last), every pair once
   const L = s.league, rounds = L.schedule.length;
   check('...a bye a round: seven rounds for six rivals, ours the last', rounds === 7 && L.schedule[6].games[0].b === BYE && L.schedule.slice(0, 6).every((r) => r.games[0].b !== BYE) && realRounds(L) === 6);

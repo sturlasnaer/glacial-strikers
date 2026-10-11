@@ -55,7 +55,7 @@ export function seasonGoals(save) {
   const table = L.season <= 1 ? FIRST_GOAL[save.team] || 'playoffs' : pick(L.season >= 3 ? ['top2', 'final', 'cup'] : ['top2', 'final', 'final']);
   const play = pick(['goals', 'defence', 'shutout', 'streak', 'hattrick', 'powerplay']);
   const nights = [...(L.round <= 2 && !L.allstar ? ['allstar'] : []), ...(L.round <= 3 && !L.classic ? ['classic'] : []),
-    ...(Object.keys(save.rookies || {}).some((id) => save.roster[id]) ? ['rookie'] : []),
+    ...(Object.keys(save.rookies || {}).some((id) => save.roster[id] && !save.rookies[id].founder) ? ['rookie'] : []), // (a drafted one: not one's own club's founders)
     ...(L.prevChampion && L.prevChampion !== 'home' && leagueTeams(L).includes(L.prevChampion) ? ['revenge'] : [])];
   const night = nights.length ? pick(nights) : pick(['hattrick', 'shutout', 'powerplay'].filter((k) => k !== play));
   L.goals = { season: L.season, ids: [table, play, night], done: [], c: { streak: 0, best: 0, ppg: 0 } };
@@ -85,7 +85,7 @@ export function updateSeasonGoals(save, game) {
     c.ppg += (sm.pen && sm.pen[0] && sm.pen[0].ppGoals) || 0;
     if (game.won && L.prevChampion && game.opp === L.prevChampion) c.revenge = true;
   }
-  if (game.kind !== 'allstar' && sm.skaters.some((k) => k.team === 0 && k.goals > 0 && String(k.id).startsWith('rk'))) c.rookie = true;
+  if (game.kind !== 'allstar' && sm.skaters.some((k) => k.team === 0 && k.goals > 0 && String(k.id).startsWith('rk') && !(save.rookies && save.rookies[k.id] && save.rookies[k.id].founder))) c.rookie = true; // (a drafted one, not a founder)
   const met = [];
   for (const id of G.ids) {
     const d = SEASON_GOALS[id], n = d.n ? d.n(L) : undefined;

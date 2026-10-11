@@ -43,7 +43,7 @@ import { moveTier, noteTierCup, tierOf, tierInfo } from './tiers.js';
 import { updateSeasonGoals, goalStates } from './goals.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { member, goalieInfo, TEAMS, TOURNAMENT, DIALOGUE, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, CAREER, pairKey, applyClub, GEAR_LOOK, useGearArt, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, expansionLines, TIER_LINES } from './data.js';
+import { member, goalieInfo, TEAMS, TOURNAMENT, DIALOGUE, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, CAREER, pairKey, clubT, applyClub, GEAR_LOOK, useGearArt, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, expansionLines, TIER_LINES } from './data.js';
 import { rollLegend, legendState, STAY, joinLegend, LEGEND_LINES, twinsFirstTogether } from './legends.js';
 import { rivalSigning, rivalOffer } from './moves.js';
 import { refreshAgents } from './agents.js';
@@ -530,7 +530,7 @@ class App {
     else lines = [...rivalLines(this.save, tm.id).slice(0, 1), ...PLAYOFF_LINES[f.kind].pre];
     if (f.rivalry) { // (the season's rivalry game: Kip makes the most of it)
       const lost = rivalRecord(this.save, tm.id).losses;
-      lines = [['kip', null, lost ? t('It\'s the rivalry game! The {team} have beaten us {n} times. Tonight we settle it.', { team: tm.name, n: lost }) : t('It\'s the rivalry game! The {team}, the club everyone wants to beat. Tonight\'s the night.', { team: tm.name })], ...lines];
+      lines = [['kip', null, lost ? clubT('It\'s the rivalry game! The {team} have beaten us {n} times. Tonight we settle it.', { team: tm.name, n: lost }) : clubT('It\'s the rivalry game! The {team}, the club everyone wants to beat. Tonight\'s the night.', { team: tm.name }), true], ...lines]; // (filled in: clubT, l[3])
     }
     // skip our lines that talk to a skater who has since signed with us
     const gone = ['frost', 'thunder', 'stone'].filter((k) => this.save.roster[recruitKey(tm.id, k)]).map((k) => tm.names[k]);
