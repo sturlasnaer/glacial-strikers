@@ -1603,6 +1603,7 @@ export const IS = {
   "Perfect Season": "Fullkomið tímabil",
   "Pet Pals": "Gæludýravinir",
   "Pets": "Gæludýr",
+  "Pets to collect! Beat a club three times and they send their mascot's little one to your locker room: a lynx kitten, a snowy owlet, a golden lamb, a moose calf, with more on the way. Up to four play in the room; the rest wait in the pet house (Shop › Locker room).": "Gæludýr til að safna! Vinndu félag þrisvar og það sendir litla krílið hans lukkudýrsins síns í búningsklefann þinn: gaupukettling, snæugluunga, gulllamb, elgskálf, og fleiri eru á leiðinni. Allt að fjögur leika sér í klefanum; hin bíða í gæludýrahúsinu (Búð › Búningsklefinn).",
   "Phones: the menus fit a phone on its side or upright, and the puck is larger on a small screen (Settings › Puck, with a ring round it if you like).": "Símar: valmyndirnar passa á síma á hlið eða uppréttan, og pökkurinn er stærri á litlum skjá (Stillingar › Pökkur, með hring utan um ef þú vilt).",
   "Photo": "Mynd",
   "Physio room": "Sjúkraþjálfun",

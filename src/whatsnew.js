@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-11b',
+    items: [
+      { icon: 'icons/pet_lynx', alt: 'icons/pet', text: 'Pets to collect! Beat a club three times and they send their mascot\'s little one to your locker room: a lynx kitten, a snowy owlet, a golden lamb, a moose calf, with more on the way. Up to four play in the room; the rest wait in the pet house (Shop › Locker room).' },
+    ],
+  },
+  {
     id: '2026-10-11a',
     items: [
       { icon: 'hud_elements/misc/home_crest', alt: 'icons/career', text: 'Choose your club! A new career can be the Snowcrest Foxes\' story, or any Frostline club\'s: the Pinewood Lynx, the Ember Comets, the Glacier Owls, the Gilded Rams, the Thunder Moose, the Obsidian Ravens or the Aurora Royals, each with a story of its own. Then the Foxes play in the league like any other club.' },
