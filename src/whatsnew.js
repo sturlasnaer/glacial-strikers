@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-11t',
+    items: [
+      { icon: 'icons/career', text: 'Every club\'s story now has its own picture behind it: the Foxes\' little rink at dusk, the Owls\' bus pulling up to the Observatory, the Royals\' trophy cabinet, a brand-new locker room for a club of your own, and more. They show in the club\'s opening scene, its Cup scenes and Trophies › Our story.' },
+    ],
+  },
+  {
     id: '2026-10-11s',
     items: [
       { icon: 'rival_crests/crest/sunmesa_bulls', alt: 'icons/career', text: 'Every club in the country now has its own supporters\' section in its rink: drummers, chant leaders and banner-wavers in the club\'s colours, chanting when their team is on top.' },
