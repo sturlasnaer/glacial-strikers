@@ -5,7 +5,7 @@
 // agents, goalies), takes trade offers that help, drafts the most promising rookie, and
 // starts the next season, up or down a division as it goes (tier: R/N/E, ↑ promoted, ↓ relegated).
 // Prints a line per season.
-//   node tools/sim_seasons.mjs [seasons=4] [seeds=2]      (DIFF=easy|normal|hard: the rival difficulty setting)
+//   node tools/sim_seasons.mjs [seasons=4] [seeds=2]      (DIFF=easy|normal|hard: the rival difficulty setting; TEAM=lynx|…|custom: a club career)
 import { Match } from '../src/match.js';
 import { setLeagueEdge, newSave, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, lineupIds, rosterIds, canRaise, effectiveStats, setLineup,
   recruitStatus, signRecruit, recruitPrice, goalieStatus, signGoalie, goalieStats, starterId, setStarter, joinLevel } from '../src/progress.js';
@@ -146,9 +146,9 @@ function season(s, rnd, out) {
 for (let seed = 1; seed <= SEEDS; seed++) {
   let x = seed * 7919;
   const rnd = () => ((x = (x * 16807) % 2147483647) / 2147483647);
-  const s = newSave();
+  const s = newSave(process.env.TEAM || null); // (TEAM=lynx…: a career as that club; TEAM=custom: one's own, clubs.js)
   s.settings.difficulty = process.env.DIFF || 'normal';
-  setRookies({}); setFreeGoalies({}); setFills(s);
+  setRookies(s.rookies || {}); setFreeGoalies(s.freeGoalies || {}); setFills(s);
   const out = [];
   const t0 = Date.now();
   for (let i = 0; i < SEASONS; i++) season(s, rnd, out);
