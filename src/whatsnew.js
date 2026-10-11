@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-11k',
+    items: [
+      { icon: 'icons/pet_capybara', alt: 'icons/pet', text: 'Pets from the National clubs: a capybara pup, a puffling, a seal pup and a penguin chick. Beat their club three times once you\'re up in the National and its little one comes to stay.' },
+    ],
+  },
+  {
     id: '2026-10-11j',
     items: [
       { icon: 'badges/tier_national', alt: 'icons/career', text: 'Two more chapters in every club\'s story: your players have their say when the club first goes up to the National and into the Elite. Trophies › Our story has them all.' },

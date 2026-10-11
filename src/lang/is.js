@@ -1732,6 +1732,7 @@ export const IS = {
   "Perfect Season": "Fullkomið tímabil",
   "Pet Pals": "Gæludýravinir",
   "Pets": "Gæludýr",
+  "Pets from the National clubs: a capybara pup, a puffling, a seal pup and a penguin chick. Beat their club three times once you're up in the National and its little one comes to stay.": "Gæludýr frá félögunum í Landsbikarnum: flóðsvínsungi, lundapysja, selskópur og mörgæsarungi. Vinndu félag þeirra þrisvar þegar félagið þitt er komið upp í Landsbikarinn og litla krílið flytur til ykkar.",
   "Pets to collect! Beat a club three times and they send their mascot's little one to your locker room: a lynx kitten, a snowy owlet, a golden lamb, a moose calf, with more on the way. Up to four play in the room; the rest wait in the pet house (Shop › Locker room).": "Gæludýr til að safna! Vinndu félag þrisvar og það sendir litla krílið hans lukkudýrsins síns í búningsklefann þinn: gaupukettling, snæugluunga, gulllamb, elgskálf, og fleiri eru á leiðinni. Allt að fjögur leika sér í klefanum; hin bíða í gæludýrahúsinu (Búð › Búningsklefinn).",
   "Phones: the menus fit a phone on its side or upright, and the puck is larger on a small screen (Settings › Puck, with a ring round it if you like).": "Símar: valmyndirnar passa á síma á hlið eða uppréttan, og pökkurinn er stærri á litlum skjá (Stillingar › Pökkur, með hring utan um ef þú vilt).",
   "Photo": "Mynd",
