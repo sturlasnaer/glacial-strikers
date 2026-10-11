@@ -3150,15 +3150,16 @@ export class UI {
       s.owned.push(g.id);
       writeSave(s);
       audio.sfx('purchase');
-      // offer to equip right away
-      if (g.slot === 'goalie') { goalieRec(s, starterId(s)).gear = g.id; writeSave(s); this.hub('shop'); return; } // on whoever starts
+      // offer to equip right away (goalie gear: on one of our goalies; each piece trades something)
+      const keeper = g.slot === 'goalie', who = keeper ? [starterId(s), ...goalieIds(s).filter((k) => k !== starterId(s))] : rosterIds(s);
+      const nameOf = (id) => (keeper ? goalieInfo(id).name : member(id).name);
       this.modal(`
         <h2>${t('{item} unlocked', { item: esc(t(g.name)) })}</h2>
         ${modsHtml(g.mods)}
         <p class="muted">${t('Equip it on someone now?')}</p>
-        <div class="row">${rosterIds(s).map((id) => `<button class="btn ghost small" data-who="${id}" style="display:flex;gap:6px;align-items:center"><img src="${portrait(id, 0, null, 64)}" width="32" height="32" alt="">${esc(member(id).name)}</button>`).join('')}</div>
+        <div class="row">${who.map((id) => `<button class="btn ghost small" data-who="${id}" style="display:flex;gap:6px;align-items:center"><img src="${portrait(id, 0, null, 64)}" width="32" height="32" alt="">${esc(nameOf(id))}</button>`).join('')}</div>
         <button class="btn small ghost" data-close>${t('Later')}</button>`, (m, close) => {
-        this.click('[data-who]', (b) => { s.roster[b.dataset.who].gear[g.slot] = g.id; writeSave(s); audio.sfx('equip'); close(); this.hub('shop'); }, m);
+        this.click('[data-who]', (b) => { if (keeper) goalieRec(s, b.dataset.who).gear = g.id; else s.roster[b.dataset.who].gear[g.slot] = g.id; writeSave(s); audio.sfx('equip'); close(); this.hub('shop'); }, m);
       }, true, () => this.hub('shop'));
     }, body);
   }
