@@ -1646,7 +1646,7 @@ export const IS = {
   "Owl Centre": "Miðherji Owls",
   "Owl Defender": "Varnarmaður Owls",
   "Owl Winger": "Kantmaður Owls",
-  "Own every piece of gear in the shop.": "Eignastu allan búnaðinn í búðinni.",
+  "Own every piece of the regional gear in the shop.": "Eignastu allan svæðisbúnaðinn í búðinni.",
   "Own every piece of the National and Elite gear.": "Eignastu allan búnað Landsbikarsins og Úrvalsbikarsins.",
   "Own goal! {team} will take it.": "Sjálfsmark! Kærkomin gjöf fyrir {team}.",
   "Own the mistakes": "Taka ábyrgð á mistökunum",

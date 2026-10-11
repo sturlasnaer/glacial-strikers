@@ -36,7 +36,7 @@ export const ACHIEVEMENTS = [
   { id: 'in-sync', name: 'In Sync', text: 'Get a pair to chemistry level 3.', icon: 'achievements/in_sync', coins: 100 },
   { id: 'gold-drills', name: 'Gold Standard', text: 'Win gold in all four training drills.', icon: MEDAL, coins: 150 },
   { id: 'shootout', name: 'Shootout Hero', text: 'Win a shootout.', icon: 'achievements/shootout_hero', coins: 50 },
-  { id: 'kitted', name: 'Fully Kitted', text: 'Own every piece of gear in the shop.', icon: 'equipment_items/hub/shop', coins: 150 },
+  { id: 'kitted', name: 'Fully Kitted', text: 'Own every piece of the regional gear in the shop.', icon: 'equipment_items/hub/shop', coins: 150 },
   { id: 'pro-kit', name: 'Pro Kit', text: 'Own every piece of the National and Elite gear.', icon: 'equipment_items/hub/shop', art: 'achievements/pro_kit', coins: 200 },
   { id: 'signing', name: 'Free Agent', text: 'Sign a skater from a rival.', icon: 'achievements/free_agent', coins: 40 },
   { id: 'scout', name: 'Talent Scout', text: 'Sign a skater from every rival.', icon: 'achievements/talent_scout', coins: 150 },
