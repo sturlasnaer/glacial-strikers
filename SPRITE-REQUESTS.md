@@ -7,13 +7,12 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **EP: supporters' sections for the new clubs' rinks**
-2. **EQ: the rivalry game's icons**
-3. **ER: tighter pages for the always-loaded art** (no new drawing)
-4. **ES: the clubs' opening scenes** (choose-your-club stories)
-5. **ET: the divisions' gear and new goalie gear** (shop icons)
-6. **EU: mascots for a club of one's own** (one for each crest)
-7. **EV: two trophies for club careers** (achievement icons)
+1. **EQ: the rivalry game's icons**
+2. **ER: tighter pages for the always-loaded art** (no new drawing)
+3. **ES: the clubs' opening scenes** (choose-your-club stories)
+4. **ET: the divisions' gear and new goalie gear** (shop icons)
+5. **EU: mascots for a club of one's own** (one for each crest)
+6. **EV: two trophies for club careers** (achievement icons)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -128,7 +127,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 **Delivered EO:** Capital Dome and Diamond Arena: two unique Cup Final backdrops, four trophy scoreboard phases, two near-glass overlays with native alpha masks, eight penalty-box layers and two achievement icons (18 frames), imported on existing arena feature groups. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EO-Testing-Update`.
 
-**Delivered EP so far:** 90 individual native supporter poses and matching native cloth masks. Completed clubs: hot_springs_capybaras, birchwood_beavers, cliffside_puffins, timberline_grizzlies, driftwood_seals, coral_bay_flamingos, pack_ice_penguins, sunmesa_bulls, northlight_narwhals, taiga_tigers. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EP-Testing-Update`.
+**Delivered EP:** 99 individual native supporter poses and matching native cloth masks. Completed clubs: hot_springs_capybaras, birchwood_beavers, cliffside_puffins, timberline_grizzlies, driftwood_seals, coral_bay_flamingos, pack_ice_penguins, sunmesa_bulls, northlight_narwhals, taiga_tigers, bamboo_ridge_pandas. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EP-Testing-Update`.
 
 ## Format notes
 
@@ -911,7 +910,7 @@ And two achievement icons (128×128, like the other `achievements/…`): `achiev
 
 2 arenas (with their scoreboards, glass and penalty boxes) and 2 icons.
 
-## Batch EP: supporters' sections for the new clubs' rinks
+## Batch EP ✓: supporters' sections for the new clubs' rinks
 
 Like Batch BY did for the Frostline rivals: when the Foxes visit, each club's home rink has its own supporters' section cheering for the home side (the game draws it once that club's rink backdrop is in, EE–EG, EL, EM). For each of the eleven new clubs, in the BS/BY supporters' style, scale and recolour approach (their kit, with masks), three figures that suit the club. Names `crowd_supporters_<mark>/drummer_a`, `_b`, `capo_a`, `_b`, `banner_a`, `_b` and the three `_cheer` frames, with `atlas.rival_supporters.<mark>` metadata like BY's, on each club's own group `rival_<mark>`:
 - `hot_springs_capybaras`: fans in bathrobes with towels on their heads, a hand drum, a banner with steam rising off it.
