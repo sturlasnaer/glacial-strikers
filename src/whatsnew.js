@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-11l',
+    items: [
+      { icon: 'icons/combo_frostbolt', alt: 'icons/career', text: 'Two linemates with the same super now have a combo too: Deep Freeze, Double Strike, Landslide, Wildfire, Whirlwind and Eclipse. Bond them with passes and it fires like any other.' },
+    ],
+  },
+  {
     id: '2026-10-11k',
     items: [
       { icon: 'icons/pet_capybara', alt: 'icons/pet', text: 'Pets from the National clubs: a capybara pup, a puffling, a seal pup and a penguin chick. Beat their club three times once you\'re up in the National and its little one comes to stay.' },
