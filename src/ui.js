@@ -2,7 +2,7 @@
 
 import { Assets } from './assets.js';
 import {
-  CHARACTERS, GEAR, GEAR_BY_ID, gearOpen, TEAMS, STAT_KEYS, STAT_NAMES, STAT_HINT,
+  CHARACTERS, GEAR, GEAR_BY_ID, gearOpen, clubOwn, TEAMS, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
   RECRUITS, ROOKIES, setRookies, setFreeGoalies, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, ALL_RIVALS, CAREER, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, CLUB_CRESTS, clubCrestId, MASK_NAMES, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
@@ -2187,7 +2187,7 @@ export class UI {
           <img src="${portrait(id, 0, null, 152)}" alt="">
           <div style="min-width:0">
             <h3>${esc(m.name)}${s.rookies && s.rookies[id] ? ` <button class="btn tiny ghost rename-btn" data-rename="${id}" title="${esc(t('Rename'))}">${t('Rename')}</button>` : ''}${s.rookies && s.rookies[id] && s.rookies[id].own && MODULAR.heads.length ? ` <button class="btn tiny ghost rename-btn" data-restyle="${id}">${t('New look')}</button>` : ''}</h3>
-            <div class="sub">${esc(t(m.title))}${m.recruit ? ` · ${t('signed')}` : ''}${m.agent ? ` · ${t('free agent')}` : ''}${m.legend ? ` · <span class="gold-t">${t('legend')}</span>` : ''}${m.rookie ? ` · ${smallIcon('icons/rookie', 40)}<span class="pot" title="${esc(t(POTENTIAL_GRADE[m.rookie.potential]))}">${stars(m.rookie.potential)}</span>` : ''}</div>
+            <div class="sub">${esc(t(m.title))}${m.recruit && !clubOwn(id) ? ` · ${t('signed')}` : ''}${m.agent ? ` · ${t('free agent')}` : ''}${m.legend ? ` · <span class="gold-t">${t('legend')}</span>` : ''}${m.rookie ? ` · ${smallIcon('icons/rookie', 40)}<span class="pot" title="${esc(t(POTENTIAL_GRADE[m.rookie.potential]))}">${stars(m.rookie.potential)}</span>` : ''}</div>
             <div class="lvl">${t('LV {n}', { n: r.level })}${vetBadge(r.vet)}${r.points ? ` <span style="font-size:15px">· ${t(r.points > 1 ? '{n} points to spend' : '{n} point to spend', { n: r.points })}</span>` : ''}</div>
           </div>
         </div>
@@ -2217,7 +2217,7 @@ export class UI {
       const pips = (n) => Array.from({ length: 12 }, (_, i) => `<i class="${i < n ? 'b' : ''}"></i>`).join('');
       return `<div class="card ${on ? '' : 'benched'}">
         <div class="card-head"><img src="${portrait(gid, 0, null, 152)}" alt="">
-          <div style="min-width:0"><h3>${esc(info.name)}${s.freeGoalies && s.freeGoalies[gid] ? ` <button class="btn tiny ghost rename-btn" data-rename="${gid}">${t('Rename')}</button>` : ''}</h3><div class="sub">${t('Goaltender (AI)')}${info.recruit ? ` · ${t('signed')}` : ''}</div><div class="lvl">${t('LV {n}', { n: g.level })}${vetBadge(g.vet)}</div></div></div>
+          <div style="min-width:0"><h3>${esc(info.name)}${s.freeGoalies && s.freeGoalies[gid] ? ` <button class="btn tiny ghost rename-btn" data-rename="${gid}">${t('Rename')}</button>` : ''}</h3><div class="sub">${t('Goaltender (AI)')}${info.recruit && !clubOwn(gid) ? ` · ${t('signed')}` : ''}</div><div class="lvl">${t('LV {n}', { n: g.level })}${vetBadge(g.vet)}</div></div></div>
         ${keepers.length < 2 ? '' : on ? `<div class="dress on">${t('In goal')}</div>` : `<button class="btn small dress" data-start="${gid}">${t('Start in goal (for {name})', { name: esc(goalieInfo(starting).name) })}</button>`}
         <div class="xpbar"><i style="width:${gpct}%"></i></div>
         <div class="stats">

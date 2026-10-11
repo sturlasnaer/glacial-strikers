@@ -2,7 +2,7 @@
 
 import { FACILITY_IDS, facilityLevel, MAX_FACILITY } from './facilities.js';
 import { decorFull } from './decor.js';
-import { GEAR, CHEM_LEVELS, RECRUITS, CAST_PAIRS, LEGENDS, ELEMENTS, GOALIE_RECRUITS, RIVAL_IDS, ALL_RIVALS } from './data.js';
+import { GEAR, CHEM_LEVELS, RECRUITS, CAST_PAIRS, LEGENDS, ELEMENTS, GOALIE_RECRUITS, RIVAL_IDS, ALL_RIVALS, clubOwn } from './data.js';
 
 const TROPHY = 'equipment_items/reward/trophy', MEDAL = 'equipment_items/reward/medal', STAR = 'hud_elements/misc/level_star';
 
@@ -232,7 +232,7 @@ export class AchievementTracker {
     if (s.decor && decorFull(s)) this.unlock('home-sweet-home');
     if (GEAR.every((g) => g.tier || s.owned.includes(g.id))) this.unlock('kitted'); // (the regional shop's)
     if (GEAR.every((g) => !g.tier || s.owned.includes(g.id))) this.unlock('pro-kit'); // (the divisions' gear)
-    const signed = Object.keys(RECRUITS).filter((k) => s.roster[k]);
+    const signed = Object.keys(RECRUITS).filter((k) => s.roster[k] && !clubOwn(k)); // (a club career's own stars aren't signings)
     if (signed.length) this.unlock('signing');
     if (new Set(signed.map((k) => RECRUITS[k].team)).size >= 5) this.unlock('scout');
     if (Object.keys(s.rookies || {}).length) this.unlock('first-pick');

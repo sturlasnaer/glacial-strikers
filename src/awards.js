@@ -2,7 +2,7 @@
 // real matches and filled in for the simulated ones, and an awards night when the
 // season ends.
 
-import { TEAMS, RECRUITS, goalieInfo } from './data.js';
+import { TEAMS, RECRUITS, goalieInfo, clubOwn } from './data.js';
 import { t } from './i18n.js';
 import { rivalSub } from './slots.js';
 
@@ -115,7 +115,7 @@ export function computeAwards(save, L, order) {
   }
   const enf = best(rows, (r) => r.hits);
   add('enforcer', enf, `${t(enf.hits === 1 ? '{n} hit' : '{n} hits', { n: enf.hits })} · ${t(enf.steals === 1 ? '{n} steal' : '{n} steals', { n: enf.steals })}`);
-  const signings = rows.filter((r) => r.team === 'home' && RECRUITS[r.face] && save.roster[r.face]); // (still with us)
+  const signings = rows.filter((r) => r.team === 'home' && RECRUITS[r.face] && save.roster[r.face] && !clubOwn(r.face)); // (still with us; a club career's own stars aren't signings)
   if (signings.length) add('signing', best(signings, (r) => r.g * 3 + r.a * 2 + r.hits * 0.3));
   return out;
 }

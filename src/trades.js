@@ -4,7 +4,7 @@
 // each rival values the styles it likes a quarter more. The player you give joins that
 // rival's reserves: they don't play against you, and a signing doesn't go back to their old
 // club.
-import { RECRUITS, ROOKIES, LEGENDS, TEAMS, member, KIT_OF_ROLE } from './data.js';
+import { RECRUITS, ROOKIES, LEGENDS, TEAMS, member, KIT_OF_ROLE, clubOwn } from './data.js';
 import { rosterIds, recruitStatus, addRecruit, recruitPrice } from './progress.js';
 import { addNews } from './news.js';
 
@@ -15,7 +15,7 @@ export const TEAM_LIKES = {
   penguins: ['playmaker', 'blueliner'], bulls: ['speedster', 'enforcer'], narwhals: ['dangler', 'sniper'], beavers: ['grinder', 'blueliner'], flamingos: ['dangler', 'playmaker'], tigers: ['sniper', 'speedster'], pandas: ['playmaker', 'enforcer'],
 };
 
-export const tradeable = (save) => rosterIds(save).filter((id) => (RECRUITS[id] || ROOKIES[id]) && !LEGENDS[id]);
+export const tradeable = (save) => rosterIds(save).filter((id) => (RECRUITS[id] || ROOKIES[id]) && !LEGENDS[id] && !clubOwn(id)); // (a club career's own stars stay, like the cast)
 
 export function playerValue(save, id) {
   const r = save.roster[id], lv = r ? Math.max(0, r.level - (r.joined || 1)) : 0; // (joined: the level they came in at)

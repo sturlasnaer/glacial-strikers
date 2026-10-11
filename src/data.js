@@ -503,6 +503,9 @@ export const careerClub = (team) => (team && team !== 'foxes' && TEAMS[team] && 
 // A club of the player's own ('custom'): no club leaves; the Foxes join the Frostline as a club
 // too, mid-table (an even number of rivals: the league has a bye each round, league.js).
 const insertAfter = (list, after, id) => list.splice(list.indexOf(after) + 1, 0, id);
+// A club career's own stars and goalie: the club's from the start, like the cast in the Foxes'
+// story, not signings (no trades or rivals' calls for them, no Signing of the Year, no 'signed').
+export const clubOwn = (id) => !!(CAREER.team && ((RECRUITS[id] && RECRUITS[id].team === CAREER.team) || id === CAREER.team + '_g'));
 export function useCareer(team) {
   const custom = team === 'custom', own = custom ? null : careerClub(team);
   CAREER.team = own; CAREER.custom = custom;

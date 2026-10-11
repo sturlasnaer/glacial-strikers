@@ -4,7 +4,9 @@
 // prize, stats; the second season for an expansion club), signable like any club's; the
 // cast's names in other clubs' lines become its stars'; and the save keeps all of it.
 //   node tools/test_clubs.mjs
-import { TEAMS, RIVAL_IDS, FOUNDING_RIVALS, ELITE_IDS, ALL_RIVALS, CAREER, CLUB, RECRUITS, GOALIE_RECRUITS, DIALOGUE, useCareer, applyClub, clubText, stageOf, careerClub } from '../src/data.js';
+import { TEAMS, RIVAL_IDS, FOUNDING_RIVALS, ELITE_IDS, ALL_RIVALS, CAREER, CLUB, RECRUITS, GOALIE_RECRUITS, DIALOGUE, useCareer, applyClub, clubText, stageOf, careerClub, clubOwn } from '../src/data.js';
+import { tradeable } from '../src/trades.js';
+import { AchievementTracker } from '../src/achievements.js';
 import { newSave, goalieIds, starterId, lineupIds, matchConfig } from '../src/progress.js';
 import { newLeague, nextFixture, recordOurGame, standings, BYE, isBye, realRounds } from '../src/league.js';
 import { makeRng } from '../src/util.js';
@@ -44,6 +46,8 @@ check('...only real clubs can be played', careerClub('lynx') === 'lynx' && caree
   check('...a new season keeps the Foxes in the league', newLeague(2).teams.includes('foxes') && !newLeague(2).teams.includes('comets'));
   check('...our mascot runs for us; the Snow Fox for the Foxes', mascotOf('home') === 'ember_comets' && mascotOf('foxes') === 'snow_fox' && !pickRunners('foxes', () => 0.3).includes('comets'));
   check('...beating the Foxes sends Snowcrest\'s postcard, the Cup our own', postcardFor('regular', 'home', 'foxes') === 'home' && postcardFor('final', 'frostline_coliseum') === 'comets');
+  const got = []; new AchievementTracker(s, (a) => got.push(a.id)).checkMeta();
+  check('...our own stars are the club\'s, like the cast: not signings, not for trade', clubOwn('comets_c') && clubOwn('comets_g') && !clubOwn('foxes_c') && !clubOwn('lynx_w') && tradeable(s).length === 0 && !got.includes('signing'), [tradeable(s), got]);
 }
 
 // an expansion club: the Foxes join in the second season
