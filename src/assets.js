@@ -12,9 +12,10 @@ const BASE = new URL('assets/', document.baseURI).href;
 const INLINE = typeof window !== 'undefined' && window.__INLINE; // single-file offline build
 
 // Page groups loaded at start and kept through every scene; and the ones every match needs,
-// loaded with the rival's (the newer supers' effects, the linesman).
+// loaded with the rival's (the newer supers' effects, the linesman). (The supporters' cloth
+// masks: only the rival's own page, supporterMaskFrames.)
 const CORE = ['home', 'away', 'title', 'icons_z', 'allstar', 'icons_ac', 'legends', 'club_masks'];
-const MATCH = ['abilities_al', 'linesman', 'arena_au', 'supporter_masks'];
+const MATCH = ['abilities_al', 'linesman', 'arena_au'];
 // A building's own layers, loaded only for a match there (the Cup Final's Coliseum: a big page).
 const ARENA_GROUPS = { frostline_coliseum: ['arena_bx'], capital_dome: ['arena_capital_dome'], diamond_arena: ['arena_diamond_arena'], harbour_rink: ['arena_cm'], glacier_cave: ['arena_cp'], summit_rink: ['arena_cv'] };
 // Groups whose data masks live on pages of their own (read, never team-recoloured), loaded and kept with them.
@@ -80,6 +81,7 @@ export const Assets = {
     if (t && (t.art || t.mark)) jobs.push(this.loadGroup('rival_' + (t.art || t.mark)));
     if (t && t.goalieLook) jobs.push(this.loadGroup('goalie_parts')); // (their goalie, made from parts)
     for (const g of [...MATCH, ...(ARENA_GROUPS[arena] || [])]) jobs.push(this.loadGroup(g));
+    jobs.push(this.loadPages(this.supporterMaskFrames([teamId])));
     if (t && (t.art || t.mark) && this.needNewcomers) jobs.push(this.loadGroup('newcomers')); // (a signed slot's newcomer, or the backup goalie)
     if (this.partsFor && this.partsFor(teamId)) jobs.push(this.loadGroup('parts')); // (a fill made from parts, in their colours)
     if (arena && arena !== 'home') jobs.push(this.ensureArena(arena));
@@ -134,6 +136,14 @@ export const Assets = {
     return [...out];
   },
 
+  // The cloth masks of these clubs' supporters (recolorSupporters reads them when a club's
+  // pages are recoloured): each club's sit on a page of their own (the Frostline's share one),
+  // and a match shows only the rival's, so not all eighteen (16 MB decoded).
+  supporterMaskFrames(teamIds) {
+    const A = this.atlas, groups = new Set(teamIds.map((id) => TEAMS[id]).filter((t) => t && (t.art || t.mark)).map((t) => 'rival_' + (t.art || t.mark)));
+    return Object.entries(A.rival_art_masks || {}).filter(([id]) => A.frames[id] && groups.has(A.pages[A.frames[id][0]].group)).map(([, mid]) => mid);
+  },
+
   newcomerCheck: null, // the game's check: has the save signed a rival (skater or goalie) or drafted a rookie (newcomer art)?
   get needNewcomers() { return !!(this.newcomerCheck && this.newcomerCheck()); },
   partsFor: null, // the game's check: does this rival field anyone made from parts?
@@ -152,7 +162,7 @@ export const Assets = {
     if ((keep.teams || []).length) for (const g of [...MATCH, ...(ARENA_GROUPS[keep.arena] || [])]) groups.add(g); // (in a match)
     for (const [g, c] of Object.entries(COMPANION)) if (groups.has(g)) groups.add(c); // (their masks with them)
     const released = new Set();
-    const pages = new Set(keep.pages || []); // (single pages kept out of a group: the coach cub's costume, say)
+    const pages = new Set([...(keep.pages || []), ...this.framePages(this.supporterMaskFrames(keep.teams || []))]); // (single pages kept out of a group: the coach cub's costume, say; the rival's supporters' masks)
     a.pages.forEach((p, i) => { if (this.pages[i] && !groups.has(p.group) && !pages.has(i)) { released.add(this.pages[i]); this.pages[i] = null; this.forget(p.file); } });
     // recoloured page sets keep references to the original pages they didn't change: drop those too
     for (const r of this.recolored.values()) { const kept = r.pages.map((pg) => (released.has(pg) ? null : pg)); if (r.pages.frames) kept.frames = r.pages.frames; r.pages = kept; } // (a club career's packed club colours keep their map)
@@ -290,7 +300,7 @@ export const Assets = {
   prepareTeam(team) {
     const mark = team.art || team.mark; // (an expansion club's identity art: Batch AU)
     const own = (g) => (team.groups ? team.groups.includes(g) : g === 'away' || g === 'newcomers' || (g === 'parts' && (!this.partsFor || this.partsFor(team.id))) || (g === 'goalie_parts' && !!team.goalieLook) || (mark && g === 'rival_' + mark));
-    const loaded = this.pages.filter((img, i) => img && own(this.atlas.pages[i].group)).length + '|' + (team.groups || []).join(',') + '|supporters:' + this.groupReady('supporter_masks');
+    const loaded = this.pages.filter((img, i) => img && own(this.atlas.pages[i].group)).length + '|' + (team.groups || []).join(',') + '|supporters:' + this.framePages(this.supporterMaskFrames([team.id])).every((i) => this.pages[i]);
     const r = this.recolored.get(team.id);
     if (r && r.loaded === loaded) return;
     if (!team.recolor) { this.recolored.delete(team.id); return; }

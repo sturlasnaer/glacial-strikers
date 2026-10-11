@@ -15,5 +15,20 @@ check('every page has a group and a size', A.pages.every((p) => p.group && p.w >
 const bad = Object.entries(A.frames).filter(([, f]) => { const p = A.pages[f[0]]; return !p || f[1] < 0 || f[2] < 0 || f[1] + f[3] > p.w || f[2] + f[4] > p.h; }).map(([id]) => id);
 check('every frame is on a page, inside it', !bad.length, bad.slice(0, 10));
 
+// A match decodes only its rival's supporters' cloth masks (Assets.supporterMaskFrames): each club's
+// on one page, shared with no more than the Frostline's (a page full of every club's would be
+// decoded whole: 16 MB, where one club's is about 1).
+const maskPages = {};
+for (const [id, mid] of Object.entries(A.rival_art_masks || {})) {
+  const club = id.split('/')[0], m = A.frames[mid];
+  if (m) (maskPages[club] ||= new Set()).add(m[0]);
+}
+const spread = Object.entries(maskPages).filter(([, s]) => s.size > 1).map(([c]) => c);
+check("each club's supporter masks on one page", !spread.length, spread);
+const clubsOn = {};
+for (const [club, s] of Object.entries(maskPages)) for (const pi of s) (clubsOn[pi] ||= []).push(club);
+const crowded = Object.entries(clubsOn).filter(([, cs]) => cs.length > 7).map(([pi, cs]) => `${A.pages[pi].file}: ${cs.length}`);
+check('no supporter mask page holds more than seven clubs', !crowded.length, crowded);
+
 console.log(`Atlas pages: ${pass} passed, ${fail} failed (${A.pages.length} pages, ${Object.keys(A.frames).length} frames)`);
 process.exit(fail ? 1 : 0);
