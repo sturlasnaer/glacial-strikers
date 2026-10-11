@@ -8,7 +8,10 @@ const check = (name, cond, info) => { if (cond) pass++; else { fail++; console.l
 
 const s = newSave();
 const p = teamPhoto(s, false);
-check('the three of a new club, Halla in goal, no Cup', JSON.stringify(p) === JSON.stringify({ ids: ['frost', 'thunder', 'stone'], keepers: ['halla'], champ: false }), p);
+check('the three of a new club, Halla in goal, no Cup, Snowball in front', JSON.stringify(p) === JSON.stringify({ ids: ['frost', 'thunder', 'stone'], keepers: ['halla'], champ: false, pets: ['fox'] }), p);
+s.pets = { got: { lynx: {}, owlet: {}, lamb: {}, moose: {} }, away: ['owlet'] };
+check('...the room\'s pets (up to four), not the pet house\'s', teamPhoto(s).pets.join() === 'fox,lynx,lamb,moose');
+delete s.pets;
 s.lineup = { C: 'frost', W: 'stone', D: 'thunder' }; // (as the line-up says, whatever their kits)
 check('the line-up in its order', teamPhoto(s, true).ids.join() === 'frost,stone,thunder' && teamPhoto(s, true).champ);
 for (let i = 1; i <= 7; i++) s.roster['x' + i] = {}; // (not players: left out)

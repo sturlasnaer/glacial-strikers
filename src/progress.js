@@ -7,7 +7,7 @@ import {
 import { newLeague, migrateLeague } from './league.js';
 import { lookFor, maskFor, goalieArt, isPartsArt, randomLook, randomMask } from './modular.js';
 import { CUSTOM_CLUB, FOUNDER_NAMES } from './clubs.js';
-import { ownPetKind, ownClubPet } from './pet.js';
+import { ownPetKind, ownClubPet, roomPets } from './pet.js';
 import { seasonStats } from './awards.js';
 import { tierOf, tierInfo, TIER_SHARP } from './tiers.js';
 import { rivalSub, setFills, agedStats, grown, goalieGrowth, leagueGrowth, seasonBoost, GOALIE_CAP } from './slots.js';
@@ -385,7 +385,7 @@ export const starterId = (save) => { const ids = goalieIds(save); return ids.inc
 export function teamPhoto(save, champ) {
   const line = lineupIds(save), rest = rosterIds(save).filter((id) => !line.includes(id));
   const keepers = [starterId(save), ...goalieIds(save).filter((g) => g !== starterId(save))].slice(0, 2);
-  return { ids: [...line, ...rest].slice(0, 8), keepers, champ: !!champ };
+  return { ids: [...line, ...rest].slice(0, 8), keepers, champ: !!champ, pets: roomPets(save) }; // (pets: the room's, sitting in front)
 }
 export const goalieRec = (save, id) => (id === 'halla' ? save.goalie : save.goalies && save.goalies[id]);
 

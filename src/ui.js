@@ -1510,13 +1510,19 @@ export class UI {
       <div class="tp-row front">${gk(P.keepers[0])}${P.ids.slice(0, 3).map(sk).join('')}${gk(P.keepers[1])}</div>
       ${coach ? `<img class="tp-coach" src="${coach.urls[0]}" alt="">` : ''}
       ${cup ? `<img class="tp-cup" src="${cup}" alt="">` : ''}
+      ${(() => { // the room's pets, sitting in front (once their pages are in: teamPhoto loads them)
+        const pets = (P.pets || []).map((k) => Assets.frame(petDir(k) + 'sit_1') && Assets.pages[Assets.frame(petDir(k) + 'sit_1')[0]] && Assets.spriteSet([petDir(k) + 'sit_1'], 96)).filter(Boolean);
+        return pets.length ? `<div class="tp-pets">${pets.map((p) => `<img src="${p.urls[0]}" alt="">`).join('')}</div>` : '';
+      })()}
       <div class="tp-plaque"><b>${esc(CLUB.name)}</b><span>${t('Season {n}', { n: h.season })} · ${t('#{n} of {total}', { n: h.finish, total: h.teams })}${result ? ` · ${esc(result)}` : ''}</span></div>
     </div>`;
   }
 
-  teamPhoto(h) {
+  teamPhoto(h, petsTried = false) {
     if (!h || !h.photo) return;
-    if (!Assets.groupReady('hub')) { Assets.loadGroup('hub').then(() => this.teamPhoto(h), () => {}); return; } // (Coach Brekka)
+    if (!Assets.groupReady('hub')) { Assets.loadGroup('hub').then(() => this.teamPhoto(h, petsTried), () => {}); return; } // (Coach Brekka)
+    const petFrames = (h.photo.pets || []).map((k) => petDir(k) + 'sit_1').filter((f) => Assets.frame(f));
+    if (!petsTried && petFrames.some((f) => !Assets.pages[Assets.frame(f)[0]])) { Assets.loadPages(petFrames).then(() => this.teamPhoto(h, true), () => this.teamPhoto(h, true)); return; } // (the pets' pages, once)
     this.modal(`<div class="label">${t('Team photo')}</div>${this.teamPhotoHtml(h)}
       <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>${t('Close')}</button></div>`, (m) => m.classList.add('photo-modal'));
   }
