@@ -786,7 +786,8 @@ export class Match {
     if (s.comboT > 0 && s.comboFrom && !ULT_SHOTS.has(kind)) {
       const level = this.chemLevel(s.comboFrom, s);
       const key = s.twin && s.comboFrom.who === s.twin ? 'ragnarok' : pairKey(s.comboFrom.def.elem, s.def.elem);
-      if (level > 0 && COMBOS[key]) combo = { key, pair: pairKey(s.comboFrom.who, s.who), level, from: s.comboFrom };
+      const twinElems = key.split('+')[0] === key.split('+')[1]; // (two of one element: ours only, never the rivals')
+      if (level > 0 && COMBOS[key] && (!twinElems || s.team === 0)) combo = { key, pair: pairKey(s.comboFrom.who, s.who), level, from: s.comboFrom };
     }
     s.comboT = 0; s.comboFrom = null;
     if (combo) {

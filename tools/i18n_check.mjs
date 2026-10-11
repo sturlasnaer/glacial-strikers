@@ -19,7 +19,7 @@ for (const f of readdirSync(join(root, 'src'))) {
   if (!f.endsWith('.js') || f === 'i18n.js') continue; // (its comments hold examples)
   const src = readFileSync(join(root, 'src', f), 'utf8');
   // t('a') and t(cond ? 'a' : 'b')
-  const re = new RegExp(String.raw`\bt\(\s*(?:[^'"\`()?]*\?\s*)?` + LIT + String.raw`(?:\s*:\s*` + LIT.replace('\\1', '\\3') + ')?', 'g');
+  const re = new RegExp(String.raw`\b(?:t|clubT)\(\s*(?:[^'"\`()?]*\?\s*)?` + LIT + String.raw`(?:\s*:\s*` + LIT.replace('\\1', '\\3') + ')?', 'g');
   for (const m of src.matchAll(re)) {
     if (m[1] === '`' && m[2].includes('${')) continue;
     add(unquote(m[1], m[2]), f); coded.add(unquote(m[1], m[2]));

@@ -18,7 +18,7 @@ const give = (m, s) => { m.puck.owner = null; m.puck.x = s.x + 10; m.puck.y = s.
 const place = (s, x, y) => { s.x = x; s.y = y; s.vx = 0; s.vy = 0; };
 
 // the data
-check('six elements, fifteen pairs and the twins', Object.keys(ELEMENTS).length === 6 && Object.keys(COMBOS).length === 16 && COMBOS.ragnarok);
+check('six elements, fifteen pairs, six of one element each and the twins', Object.keys(ELEMENTS).length === 6 && Object.keys(COMBOS).length === 22 && COMBOS.ragnarok);
 for (const a of Object.values(ELEMENTS)) for (const b of Object.values(ELEMENTS)) if (a !== b && !COMBOS[pairKey(a.id, b.id)]) check('a combo for every pair', false, a.id + b.id);
 check('the cast is unchanged', makeDef('frost') === CHARACTERS.frost && makeDef('frost', 'playmaker', 'frost') === CHARACTERS.frost);
 check('a mix keeps the art, takes the super', makeDef('thunder', 'sniper', 'ember').sprite === CHARACTERS.thunder.sprite && makeDef('thunder', 'sniper', 'ember').ult.id === 'firestorm' && makeDef('thunder', 'sniper', 'ember').perks[1] === ARCHETYPES.sniper.perks);

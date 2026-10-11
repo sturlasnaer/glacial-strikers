@@ -205,7 +205,7 @@ export const PET_FIND = 10;
 export function petFinds(save, day) {
   const F = (save.petFinds ||= { day: '', got: [] });
   if (F.day !== day) { F.day = day; F.got = []; }
-  return F.got.length >= ROOM_MAX ? [] : roomPets(save).filter((k) => !F.got.includes(k));
+  return roomPets(save).filter((k) => !F.got.includes(k)).slice(0, Math.max(0, ROOM_MAX - F.got.length)); // (no more coins on show than there are finds left)
 }
 export function takeFind(save, kind, day) {
   if (!petFinds(save, day).includes(kind)) return 0;

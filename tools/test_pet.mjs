@@ -152,6 +152,10 @@ check('its name: cleaned, 12 characters at most', cleanPetName('  <Snjó>\n bolt
   sendToHouse(s, 'owlet'); bringToRoom(s, 'raven');
   check('...ROOM_MAX a day, however the room\'s swapped', petFinds(s, '2026-10-11').length === 0 && takeFind(s, 'raven', '2026-10-11') === 0 && s.coins === ROOM_MAX * PET_FIND);
   check('...and again tomorrow', petFinds(s, '2026-10-12').length === ROOM_MAX);
+  const t3 = { coins: 0, pets: { got: { lynx: {}, owlet: {}, lamb: {}, moose: {}, raven: {}, polar: {} }, away: ['raven', 'polar'] } };
+  for (const k of ['fox', 'lynx', 'owlet']) takeFind(t3, k, '2026-10-13');
+  sendToHouse(t3, 'fox'); sendToHouse(t3, 'lynx'); bringToRoom(t3, 'raven'); bringToRoom(t3, 'polar');
+  check('...no more coins on show than finds left (one, after three, however the room\'s swapped)', petFinds(t3, '2026-10-13').length === 1, petFinds(t3, '2026-10-13'));
 }
 // a club career: its own mascot's little one from the start (it can't be won from itself)
 {

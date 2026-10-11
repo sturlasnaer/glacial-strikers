@@ -505,7 +505,7 @@ export const careerClub = (team) => (team && team !== 'foxes' && TEAMS[team] && 
 const insertAfter = (list, after, id) => list.splice(list.indexOf(after) + 1, 0, id);
 // A club career's own stars and goalie: the club's from the start, like the cast in the Foxes'
 // story, not signings (no trades or rivals' calls for them, no Signing of the Year, no 'signed').
-export const clubOwn = (id) => !!(CAREER.team && ((RECRUITS[id] && RECRUITS[id].team === CAREER.team) || id === CAREER.team + '_g'));
+export const clubOwn = (id) => !!((CAREER.team && ((RECRUITS[id] && RECRUITS[id].team === CAREER.team) || id === CAREER.team + '_g')) || (CAREER.custom && ROOKIES[id] && ROOKIES[id].founder)); // (one's own club: its founders)
 export function useCareer(team) {
   const custom = team === 'custom', own = custom ? null : careerClub(team);
   CAREER.team = own; CAREER.custom = custom;
@@ -857,6 +857,10 @@ export function applyClub(club) {
 }
 
 // Swap the default club name into a line of text.
+// clubText for words with names filled in: the club's name goes into the line's own words, never
+// into what's filled in ({team} or {name} may be the Foxes or one of them, a club like any other
+// in a career as another club). Already translated.
+export const clubT = (text, params) => { const out = clubText(t(text)); return params ? out.replace(/\{(\w+)\}/g, (m, k) => (params[k] !== undefined ? params[k] : m)) : out; };
 export function clubText(str) {
   if (!CLUB.custom || !str) return str;
   const out = String(str).replace(/Snowcrest Foxes/g, CLUB.name).replace(/\bFoxes\b/g, CLUB.nick);
@@ -920,6 +924,32 @@ export const COMBOS = {
     name: 'Thunderquake', colors: ['#ffe066', '#c9b79c'], icon: 'icons/combo_thunderquake',
     text: 'The release sends a shockwave that knocks nearby defenders off their feet.',
     levels: ['Unlocks Thunderquake', 'Wider shockwave', 'Even faster shot'],
+  },
+  // two of the same element (a club whose centre and defender share one, or a super changed at
+  // camp): the element's part, twice over. Ours only: the rivals don't get these (Match.shoot).
+  'frost+frost': {
+    name: 'Deep Freeze', colors: ['#bff4ff', '#e8fbff'], icon: null,
+    text: 'An ice-cold shot that slows every defender it passes.', levels: GENERIC_LEVELS,
+  },
+  'thunder+thunder': {
+    name: 'Double Strike', colors: ['#ffe066', '#fffbd1'], icon: null,
+    text: 'A crackling rocket, faster than a single bolt.', levels: GENERIC_LEVELS,
+  },
+  'stone+stone': {
+    name: 'Landslide', colors: ['#c9b79c', '#a08a6c'], icon: null,
+    text: 'A heavy shot that plows through a blocker.', levels: GENERIC_LEVELS,
+  },
+  'ember+ember': {
+    name: 'Wildfire', colors: ['#ff7a3d', '#ffb38a'], icon: null,
+    text: 'A blazing shot that burns the goalie\'s glove.', levels: GENERIC_LEVELS,
+  },
+  'gale+gale': {
+    name: 'Whirlwind', colors: ['#c8f0d8', '#e8fff2'], icon: null,
+    text: 'A shot the wind carries to the open corner.', levels: GENERIC_LEVELS,
+  },
+  'shadow+shadow': {
+    name: 'Eclipse', colors: ['#6b5b95', '#9b8cff'], icon: null,
+    text: 'A shot that slips out of sight on its way to the net.', levels: GENERIC_LEVELS,
   },
   // the newer elements' pairs: each element brings its part of the shot (see Match.shoot)
   'ember+frost': {

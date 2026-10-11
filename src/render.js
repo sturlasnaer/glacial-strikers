@@ -557,7 +557,7 @@ export class Renderer {
     if (arena === 'home' && ui && ui.save) this.drawRafters(ctx, ui.save, t);
     // a club career's own mascot dances at home in the Snow Fox's place (in our kit's colours);
     // one's own club, the mascot of its crest once drawn (Batch EU), in the club's colours
-    const clubMascot = CAREER.team && A.rival_mascots && A.rival_mascots[TEAMS[CAREER.team].art];
+    const clubMascot = CAREER.team && A.rival_mascots && A.rival_mascots[TEAMS[CAREER.team].art || TEAMS[CAREER.team].mark]; // (the expansion clubs' identity is their mark)
     const crestMascot = CAREER.custom && A.club_mascots && A.club_mascots[CLUB.crest || 'fox'];
     if (arena === 'home' && crestMascot) {
       const party = (fx.cheerTeam === 0 && fx.lamp > 0) || (fx.chant && fx.chant.team === 0);
@@ -571,7 +571,7 @@ export class Renderer {
       let pose = 'idle';
       if (party) pose = Math.floor(t * 4) % 2 ? 'cheer_a' : 'cheer_b';
       else if (fx.excite > 0.55 || Math.floor(t / 3) % 4 === 0) pose = Math.floor(t * 2) % 2 ? 'wave' : 'idle';
-      const pages = Assets.pagesFor('homekit'), f = Assets.frame(clubMascot[pose]);
+      const kit = Assets.pagesFor('homekit'), f = Assets.frame(clubMascot[pose]), pages = f && kit[f[0]] ? kit : Assets.pagesFor(CAREER.team); // (our kit's colours, or the club's own where the kit doesn't cover its page)
       if (f && pages[f[0]]) Assets.draw(ctx, clubMascot[pose], 768, 950 - (party ? Math.abs(Math.sin(t * 8)) * 6 : 0), clubMascot.source_scale, { pages });
     } else if (arena === 'home' && A.mascot && !CAREER.custom) {
       const party = (fx.cheerTeam === 0 && fx.lamp > 0) || (fx.chant && fx.chant.team === 0);

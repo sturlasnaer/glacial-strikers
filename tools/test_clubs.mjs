@@ -4,7 +4,9 @@
 // prize, stats; the second season for an expansion club), signable like any club's; the
 // cast's names in other clubs' lines become its stars'; and the save keeps all of it.
 //   node tools/test_clubs.mjs
-import { TEAMS, RIVAL_IDS, FOUNDING_RIVALS, ELITE_IDS, ALL_RIVALS, CAREER, CLUB, RECRUITS, GOALIE_RECRUITS, DIALOGUE, useCareer, applyClub, clubText, stageOf, careerClub, clubOwn } from '../src/data.js';
+import { TEAMS, RIVAL_IDS, FOUNDING_RIVALS, ELITE_IDS, ALL_RIVALS, CAREER, CLUB, RECRUITS, GOALIE_RECRUITS, DIALOGUE, useCareer, applyClub, clubText, stageOf, careerClub, clubOwn, clubT, comboFor, pairKey, ELEMENTS, COMBOS } from '../src/data.js';
+import { rivalLines } from '../src/rivals.js';
+import { CAREER_MOMENTS } from '../src/lockerroom.js';
 import { tradeable } from '../src/trades.js';
 import { AchievementTracker } from '../src/achievements.js';
 import { newSave, goalieIds, starterId, lineupIds, matchConfig } from '../src/progress.js';
@@ -21,6 +23,7 @@ useModular({ skaters: { body_std: {}, body_big: {}, body_small: {} }, modular: {
 
 check('nine choices: the Foxes, the Frostline\'s seven and one\'s own, each with a story', CLUB_CHOICES.length === 9 && CLUB_CHOICES[0] === 'foxes' && CLUB_CHOICES.at(-1) === 'custom' && CLUB_CHOICES.every((id) => CLUB_STORIES[id] && CLUB_STORIES[id].intro.length >= 4 && CLUB_STORIES[id].blurb && clubStars(id).length === 4));
 check('the picker says how strong each starts: the Lynx tough (a young goalie), the Royals strong, the Foxes even', clubStart('lynx') === 'tough' && clubStart('royals') === 'strong' && clubStart('foxes') === 'even' && clubStart('custom') === 'even' && CLUB_CHOICES.every((id) => ['tough', 'even', 'strong'].includes(clubStart(id))));
+check('every pair of elements has a combo (the Owls\' centre and defender are both frost)', Object.keys(ELEMENTS).every((a) => Object.keys(ELEMENTS).every((b) => COMBOS[pairKey(a, b)])));
 check('...only real clubs can be played', careerClub('lynx') === 'lynx' && careerClub('foxes') === null && careerClub('home') === null && careerClub('pandas') === null && careerClub('nope') === null);
 
 // the Foxes' story: as before
@@ -47,6 +50,13 @@ check('...only real clubs can be played', careerClub('lynx') === 'lynx' && caree
   check('...our mascot runs for us; the Snow Fox for the Foxes', mascotOf('home') === 'ember_comets' && mascotOf('foxes') === 'snow_fox' && !pickRunners('foxes', () => 0.3).includes('comets'));
   check('...beating the Foxes sends Snowcrest\'s postcard, the Cup our own', postcardFor('regular', 'home', 'foxes') === 'home' && postcardFor('final', 'frostline_coliseum') === 'comets');
   const got = []; new AchievementTracker(s, (a) => got.push(a.id)).checkMeta();
+  // the Foxes are a rival here: their names filled into a line stay theirs (clubT: our name only in the line's own words)
+  s.rivals = { foxes: { played: 3, wins: 0, losses: 3, gf: 4, ga: 9, streak: -3, last: { won: false, gf: 1, ga: 3, theirTop: { id: 'thunder', goals: 2 }, season: 1 } } };
+  const rl = rivalLines(s, 'foxes');
+  check('...the Foxes\' scorer is named as theirs, not swapped for ours', rl.some((l) => l[2].includes('Volta scored 2') && l[3]) && !rl.some((l) => l[2].includes('Blaze scored')), rl);
+  check('...the line\'s own words still say our name', clubT('{n} straight losses to the Foxes.', { n: 2 }) === '2 straight losses to the Comets.' && clubT('Go on, {name}!', { name: 'Volta' }) === 'Go on, Volta!');
+  const ctx = { save: s, next: { opponent: 'foxes', kind: 'regular' }, summary: null };
+  check('...the scout\'s folder on the Foxes says the Foxes', CAREER_MOMENTS.find((m) => m.id === 'scout-club').text(ctx).includes('Snowcrest Foxes') && CAREER_MOMENTS.find((m) => m.id === 'deal-club').text(ctx).includes('Comets'));
   check('...our own stars are the club\'s, like the cast: not signings, not for trade', clubOwn('comets_c') && clubOwn('comets_g') && !clubOwn('foxes_c') && !clubOwn('lynx_w') && tradeable(s).length === 0 && !got.includes('signing'), [tradeable(s), got]);
 }
 
@@ -69,6 +79,7 @@ check('...only real clubs can be played', careerClub('lynx') === 'lynx' && caree
   applyClub(s.club);
   check('...named as the player names it, the founders in the lines', CLUB.custom && CLUB.name === s.club.name && clubText('Pass it, Volta!') === `Pass it, ${s.club.names.thunder}!`);
   check('...its mascot is its crest\'s (Batch EU), the Foxes keep the Snow Fox', mascotOf('home') === 'club_' + s.club.crest && mascotOf('foxes') === 'snow_fox');
+  check('...its founders are the club\'s own, not for trade', ['rk1', 'rk2', 'rk3'].every((id) => clubOwn(id)) && tradeable(s).length === 0);
   // the season: six rivals, seven rounds, one of them our bye (the last), every pair once
   const L = s.league, rounds = L.schedule.length;
   check('...a bye a round: seven rounds for six rivals, ours the last', rounds === 7 && L.schedule[6].games[0].b === BYE && L.schedule.slice(0, 6).every((r) => r.games[0].b !== BYE) && realRounds(L) === 6);

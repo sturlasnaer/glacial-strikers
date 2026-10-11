@@ -2,7 +2,7 @@
 
 import { Assets } from './assets.js';
 import {
-  CHARACTERS, GEAR, GEAR_BY_ID, gearOpen, clubOwn, TIER_LINES, TEAMS, STAT_KEYS, STAT_NAMES, STAT_HINT,
+  CHARACTERS, GEAR, GEAR_BY_ID, gearOpen, clubOwn, TIER_LINES, clubT, TEAMS, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
   RECRUITS, ROOKIES, setRookies, setFreeGoalies, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, ALL_RIVALS, CAREER, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, CLUB_CRESTS, clubCrestId, MASK_NAMES, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
@@ -1452,7 +1452,7 @@ export class UI {
           ...careerRecords(s, (id) => (member(id) ? member(id).name : '')).map((r) => [CAREER_RECORDS[r.id], r]),
           ...Object.keys(GAME_RECORDS).filter((id) => R[id]).map((id) => [GAME_RECORDS[id], R[id]]),
         ];
-        return rows.length ? `<div class="label" style="margin:4px 0 6px">${t('Club records')}</div><div class="records">${rows.map(([def, r]) => `<div><span>${esc(t(def.name))}</span><b>${esc(clubText(t(def.text, { ...r, n: r.n })))}</b></div>`).join('')}</div>` : '';
+        return rows.length ? `<div class="label" style="margin:4px 0 6px">${t('Club records')}</div><div class="records">${rows.map(([def, r]) => `<div><span>${esc(t(def.name))}</span><b>${esc(clubT(def.text, { ...r, n: r.n }))}</b></div>`).join('')}</div>` : '';
       })()}
       ${s.weeklyCups && s.weeklyCups.length ? `<div class="label" style="margin:4px 0 6px">${t('Weekly Cups')}</div>
       <div class="cup-shelf">${s.weeklyCups.slice(-12).reverse().map((w) => `<div class="cup-won" title="${esc(w.name)} · ${esc(w.week)}"><img src="${cupPlaceImg(w.place, 72)}" alt=""><small>${esc(w.name)}</small><span class="muted">${esc(w.week.replace(/^\d+-W/, t('week') + ' '))}</span></div>`).join('')}</div>` : ''}
@@ -2071,7 +2071,7 @@ export class UI {
       <div class="locker press-conf"${room ? ` style="background-image:url(${room});background-size:100% 100%;aspect-ratio:16/9;position:relative;align-items:end;padding:12px;border-radius:8px"` : ''}>
         ${room ? `<img src="${crest('home', 96)}" alt="" style="position:absolute;left:32.9%;top:17.2%;width:12.65%;aspect-ratio:1;object-fit:contain;opacity:.9;pointer-events:none">` : ''}
         <div class="locker-faces">${kip ? `<img src="${kip}" alt="">` : ''}<img src="${portrait(who, 0, null, 152)}" alt=""></div>
-        <div><h2>${esc(t('Kip Vance asks'))}</h2><p style="margin:6px 0 0">${esc(clubText(t(pressQuestion(game), vars)))}</p></div>
+        <div><h2>${esc(t('Kip Vance asks'))}</h2><p style="margin:6px 0 0">${esc(clubT(pressQuestion(game), vars))}</p></div>
       </div>
       <div class="choice" id="pc-choices">${PRESS_ANSWERS.map((a, i) => `<button class="btn ghost" data-pc="${i}"><b>${esc(t((game.won ? a.win : a.loss).label))}</b>${esc(t(a.fx))}</button>`).join('')}</div>
       <div id="pc-reply" hidden></div>`, (el, close) => {
@@ -2085,7 +2085,7 @@ export class UI {
         const reporter = ['radio', 'paper', 'tv'][+b.dataset.pc];
         const reporterId = npcs['reporter_' + reporter + (a.tone === 'fiery' ? '_eager' : '')];
         const reporterImg = reporterId ? Assets.icon(reporterId, 88) : '';
-        r.innerHTML = `${reporterImg ? `<img src="${reporterImg}" alt="" style="float:right;width:60px;height:60px;object-fit:contain;margin:0 0 6px 8px">` : ''}<p style="margin:0 0 6px"><b>${esc(vars.name)}:</b> ${esc(clubText(t(a.reply, vars)))}</p><p class="gold-t" style="margin:0 0 6px">${esc(t(a.fx))}</p><p class="muted" style="margin:0 0 10px;font-size:12.5px">${t('Tomorrow\'s headline')}: ${esc(clubText(t(pressHeadline(a.tone), vars)))}</p><div class="row" style="justify-content:flex-end"><button class="btn gold" id="pc-go">${t('Continue')}</button></div>`;
+        r.innerHTML = `${reporterImg ? `<img src="${reporterImg}" alt="" style="float:right;width:60px;height:60px;object-fit:contain;margin:0 0 6px 8px">` : ''}<p style="margin:0 0 6px"><b>${esc(vars.name)}:</b> ${esc(clubT(a.reply, vars))}</p><p class="gold-t" style="margin:0 0 6px">${esc(t(a.fx))}</p><p class="muted" style="margin:0 0 10px;font-size:12.5px">${t('Tomorrow\'s headline')}: ${esc(clubT(pressHeadline(a.tone), vars))}</p><div class="row" style="justify-content:flex-end"><button class="btn gold" id="pc-go">${t('Continue')}</button></div>`;
         r.querySelector('#pc-go').addEventListener('click', () => { close(); done(); });
       }, el);
     }, false);
@@ -2112,7 +2112,7 @@ export class UI {
         ${r.cups ? `<div><b>${r.cups}</b><span>${t(r.cups === 1 ? 'Cup' : 'Cups')}</span></div>` : ''}
       </div>
       ${r.top.length ? `<div class="label" style="margin-top:4px">${t('Top scorers')}</div><div class="review-top">${r.top.map((k, i) => `<div><img src="${portrait(k.id, 0, null, 72)}" alt=""><b>${i + 1}. ${esc(nm(k.id))}</b><span>${t('{g} G · {a} A in {gp} games', { g: k.g, a: k.a, gp: k.gp })}</span></div>`).join('')}</div>` : ''}
-      ${r.records.length ? `<div class="label" style="margin-top:4px">${t('Club records set this season')}</div><ul class="review-list">${r.records.map((x) => `<li>${esc(t(GAME_RECORDS[x.id].name))}: ${esc(clubText(t(GAME_RECORDS[x.id].text, { ...x, n: x.n })))}</li>`).join('')}</ul>` : ''}
+      ${r.records.length ? `<div class="label" style="margin-top:4px">${t('Club records set this season')}</div><ul class="review-list">${r.records.map((x) => `<li>${esc(t(GAME_RECORDS[x.id].name))}: ${esc(clubT(GAME_RECORDS[x.id].text, { ...x, n: x.n }))}</li>`).join('')}</ul>` : ''}
       ${r.hall.length ? `<div class="label" style="margin-top:4px">${t('Into the Hall of Fame')}</div><ul class="review-list">${r.hall.map((h) => `<li>${esc(h.name)} #${h.number}</li>`).join('')}</ul>` : ''}
       <div class="row" style="justify-content:flex-end">${(this.app.save.history || []).some((h) => h.season === r.season && h.photo) ? `<button class="btn ghost" id="rv-photo">${t('Team photo')}</button>` : ''}<button class="btn gold" id="rv-go">${t('On to season {n}', { n: r.season + 1 })}</button></div>`, (el, close) => {
       this.click('#rv-go', () => { close(); audio.sfx('confirm'); done(); }, el);
@@ -2145,14 +2145,15 @@ export class UI {
   lockerMoment(m, ctx, choose, done) {
     const who = (m.whoFn ? m.whoFn(ctx) : m.who).filter(Boolean);
     const say = (x) => (typeof x === 'function' ? x(ctx) : t(x)); // (a club career's moments name the line-up)
+    const mine = (x) => (m.id.endsWith('-club') ? t(x) : clubText(t(x))); // (a club career's moments fill in our own names: the Foxes there are a rival)
     audio.sfx('blip');
     this.modal(`
       <div class="label">${t('Locker room')}</div>
       <div class="locker">
         <div class="locker-faces">${who.map((id) => `<img src="${portrait(id, 0, null, 152)}" alt="">`).join('') || `<img src="${portrait('goalie', 0, null, 152)}" alt="">`}</div>
-        <div><h2>${esc(t(m.title))}</h2><p style="margin:6px 0 0">${esc(clubText(t(m.text(ctx))))}</p></div>
+        <div><h2>${esc(t(m.title))}</h2><p style="margin:6px 0 0">${esc(mine(m.text(ctx)))}</p></div>
       </div>
-      <div class="choice" id="lm-choices">${m.choices.map((c, i) => `<button class="btn ghost" data-lm="${i}" ${c.cost && this.app.save.coins < c.cost ? 'disabled' : ''}><b>${esc(clubText(say(c.label)))}</b>${esc(clubText(say(c.fx)))}</button>`).join('')}</div>
+      <div class="choice" id="lm-choices">${m.choices.map((c, i) => `<button class="btn ghost" data-lm="${i}" ${c.cost && this.app.save.coins < c.cost ? 'disabled' : ''}><b>${esc(mine(say(c.label)))}</b>${esc(mine(say(c.fx)))}</button>`).join('')}</div>
       <div id="lm-reply" hidden></div>`, (el, close) => {
       this.click('[data-lm]', (b) => {
         const reply = choose(+b.dataset.lm);
@@ -2160,7 +2161,7 @@ export class UI {
         el.querySelector('#lm-choices').hidden = true;
         const r = el.querySelector('#lm-reply');
         r.hidden = false;
-        r.innerHTML = `<p class="gold-t" style="margin:0">${esc(clubText(say(m.choices[+b.dataset.lm].fx)))}</p><p style="margin:6px 0 10px">${esc(reply ? clubText(say(reply)) : '')}</p><div class="row" style="justify-content:flex-end"><button class="btn gold" id="lm-go">${t('Continue')}</button></div>`;
+        r.innerHTML = `<p class="gold-t" style="margin:0">${esc(mine(say(m.choices[+b.dataset.lm].fx)))}</p><p style="margin:6px 0 10px">${esc(reply ? mine(say(reply)) : '')}</p><div class="row" style="justify-content:flex-end"><button class="btn gold" id="lm-go">${t('Continue')}</button></div>`;
         r.querySelector('#lm-go').addEventListener('click', () => { close(); done(); });
       }, el);
     }, false);
@@ -3179,8 +3180,8 @@ export class UI {
       if (s.coins < price || s.owned.includes(g.id) || !gearOpen(s, g)) return;
       s.coins -= price;
       s.discount = 0;
-      this.app.ach.checkMeta();
       s.owned.push(g.id);
+      this.app.ach.checkMeta(); // (with it owned: Fully Kitted, Pro Kit)
       writeSave(s);
       audio.sfx('purchase');
       // offer to equip right away (goalie gear: on one of our goalies; each piece trades something)
@@ -3825,7 +3826,7 @@ export class UI {
     // for its centre, winger and defender, and our goalie)
     const s0 = this.app.save, lu = s0 && s0.team && s0.lineup;
     const speaker = (side, id) => (side === 'us' && lu ? ({ frost: lu.C, thunder: lu.W, stone: lu.D, goalie: starterId(s0) })[id] || id : id);
-    lines = lines.map((l) => [l[0], speaker(l[0], l[1]), clubText(t(l[2]))]);
+    lines = lines.map((l) => [l[0], speaker(l[0], l[1]), l[3] ? l[2] : clubText(t(l[2]))]); // (l[3]: already in words, names filled in: clubT)
     const tm = teamInfo(teamId);
     let i = 0, typing = null, shown = 0;
     const ours = (l) => portrait(l[1], 0, null, 420, expression('us', l[2], mood));
@@ -4003,7 +4004,7 @@ export class UI {
     this.modal(`
       <h2>${t('Chemistry level up!')}</h2>
       ${ups.map((u) => {
-        const c = comboFor(u.key);
+        const c = comboFor(u.key) || { name: 'Chemistry', text: '', levels: [] }; // (any pair without a combo of its own)
         const [a, b] = u.key.split('+');
         const na = member(a).name, nb = member(b).name;
         return `<div class="card chem" style="gap:6px">
@@ -4116,7 +4117,7 @@ function installHelp(app) {
 const chemPips = (lvl) => `<span class="pips3">${[1, 2, 3].map((i) => `<i class="${i <= lvl ? 'on' : ''}"></i>`).join('')}</span>`;
 
 function chemCard(k, xp) {
-  const c = comboFor(k);
+  const c = comboFor(k) || { name: 'Chemistry', text: '', levels: [] }; // (any pair without a combo of its own)
   const [a, b] = k.split('+');
   const lvl = chemLevel(xp);
   const next = lvl < CHEM_LEVELS.length ? CHEM_LEVELS[lvl] : null;
