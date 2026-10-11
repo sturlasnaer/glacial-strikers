@@ -47,13 +47,13 @@ export const WHATS_NEW = [
   {
     id: '2026-10-11d',
     items: [
-      { icon: 'equipment_items/hub/shop', alt: 'icons/career', text: 'New gear in the shop! The National and the Elite each bring a stick, skates, protection and goalie gear of their own, on sale once your club reaches that division. And two new pieces for goalies everywhere: the Brick Blocker covers the angles, the Snapjaw Glove snaps up shots.' },
+      { big: true, icon: 'equipment_items/hub/shop', alt: 'icons/career', text: 'New gear in the shop! The National and the Elite each bring a stick, skates, protection and goalie gear of their own, on sale once your club reaches that division. And two new pieces for goalies everywhere: the Brick Blocker covers the angles, the Snapjaw Glove snaps up shots.' },
     ],
   },
   {
     id: '2026-10-11c',
     items: [
-      { icon: 'hud_elements/misc/home_crest', alt: 'icons/career', text: 'Found a club of your own! A new career can now be a brand-new club: name it, pick its colours and crest, and lead three founding players and a goalie into the Frostline, with the Foxes as your neighbours from Snowcrest.' },
+      { big: true, icon: 'hud_elements/misc/home_crest', alt: 'icons/career', text: 'Found a club of your own! A new career can now be a brand-new club: name it, pick its colours and crest, and lead three founding players and a goalie into the Frostline, with the Foxes as your neighbours from Snowcrest.' },
     ],
   },
   {
@@ -65,7 +65,7 @@ export const WHATS_NEW = [
   {
     id: '2026-10-11a',
     items: [
-      { icon: 'hud_elements/misc/home_crest', alt: 'icons/career', text: 'Choose your club! A new career can be the Snowcrest Foxes\' story, or any Frostline club\'s: the Pinewood Lynx, the Ember Comets, the Glacier Owls, the Gilded Rams, the Thunder Moose, the Obsidian Ravens or the Aurora Royals, each with a story of its own. Then the Foxes play in the league like any other club.' },
+      { big: true, icon: 'hud_elements/misc/home_crest', alt: 'icons/career', text: 'Choose your club! A new career can be the Snowcrest Foxes\' story, or any Frostline club\'s: the Pinewood Lynx, the Ember Comets, the Glacier Owls, the Gilded Rams, the Thunder Moose, the Obsidian Ravens or the Aurora Royals, each with a story of its own. Then the Foxes play in the league like any other club.' },
     ],
   },
   {
@@ -463,7 +463,8 @@ export function whatsNewFor(save) {
   if (!latest || save.seenWhatsNew === latest.id) return null;
   if (!save.record || save.record.played === 0) { save.seenWhatsNew = latest.id; return null; }
   const seen = WHATS_NEW.findIndex((e) => e.id === save.seenWhatsNew);
-  const all = (seen < 0 ? WHATS_NEW : WHATS_NEW.slice(0, seen)).flatMap((e) => e.items);
+  const items = (seen < 0 ? WHATS_NEW : WHATS_NEW.slice(0, seen)).flatMap((e) => e.items);
+  const all = [...items.filter((it) => it.big).reverse(), ...items.filter((it) => !it.big)]; // (the headline features first, in the order they came: big)
   // (back after a long time: the newest few, and how many more there are)
   return { id: latest.id, items: all.slice(0, WHATS_NEW_MAX), more: Math.max(0, all.length - WHATS_NEW_MAX) };
 }
