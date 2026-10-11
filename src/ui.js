@@ -1094,7 +1094,7 @@ export class UI {
     const ids = pickRunners(opp, Math.random, has);
     if (ids.length < 2) return done();
     const sets = Object.fromEntries(ids.map((id) => { const k = mascotOf(id), fr = [1, 2, 3, 4].map((i) => `race/${k}/run_${i}`).filter((f) => Assets.frame(f)); return [id, Assets.spriteSet([...fr, ...(Assets.frame(`race/${k}/win`) ? [`race/${k}/win`] : [])], 180)]; }));
-    const name = (id) => (id === 'home' && !CLUB.team ? t('The Snow Fox') : id === 'home' ? CLUB.nick : TEAMS[id].name.split(' ').slice(-1)[0]);
+    const name = (id) => (id === 'home' && !CLUB.team && !CAREER.custom ? t('The Snow Fox') : id === 'home' ? CLUB.nick : TEAMS[id].name.split(' ').slice(-1)[0]); // (a club of one's own: its crest's mascot, under the club's nickname)
     const el = document.createElement('div');
     el.className = 'race';
     el.innerHTML = `<div class="race-track" style="background-image:url(${Assets.url('gfx/race/track.png')})">

@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-11v',
+    items: [
+      { icon: 'mascot/club_fox/wave', alt: 'icons/career', text: 'A club of your own now has a mascot of its own: the costumed fox, wolf, polar bear, snowy owl, narwhal, mountain goat or stoat of its crest dances in your stands in your club\'s colours and runs in the mascot race. The Underdog Story and From Scratch trophies have their own pictures too.' },
+    ],
+  },
+  {
     id: '2026-10-11u',
     items: [
       { icon: 'equipment_items/stick/aurora', alt: 'equipment_items/hub/shop', text: 'The divisions\' new gear has pictures of its own now: the Capital Carbon stick, the glowing Northern Light, the Diamond Edges skates, the Brick Blocker, the grinning Snapjaw Glove and more. Own every piece of the National and Elite gear for the Pro Kit trophy.' },
