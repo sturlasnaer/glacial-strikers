@@ -2,7 +2,7 @@
 
 import { Assets } from './assets.js';
 import {
-  CHARACTERS, GEAR, GEAR_BY_ID, gearOpen, clubOwn, TEAMS, STAT_KEYS, STAT_NAMES, STAT_HINT,
+  CHARACTERS, GEAR, GEAR_BY_ID, gearOpen, clubOwn, TIER_LINES, TEAMS, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
   RECRUITS, ROOKIES, setRookies, setFreeGoalies, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, ALL_RIVALS, CAREER, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, CLUB_CRESTS, clubCrestId, MASK_NAMES, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
@@ -1483,11 +1483,13 @@ export class UI {
     this.click('#tr-lb', () => { audio.sfx('click'); this.leaderboard('cones'); }, body);
     this.click('#tr-career', () => { audio.sfx('click'); this.careerPage(); }, body);
     this.click('[data-story]', (el) => { // (a chapter of the club's story, again)
-      const k = el.dataset.story, team = s.team || 'foxes', lines = k === 'intro' ? (CLUB_STORIES[team] || CLUB_STORIES.foxes).intro : (CLUB_PAYOFFS[team] || CLUB_PAYOFFS.foxes)[k];
-      const scene = Assets.atlas.story && Assets.atlas.story[team];
+      const k = el.dataset.story, team = s.team || 'foxes', up = TIER_LINES[k]; // (a division's welcome: Kip, the host club, then ours)
+      const lines = k === 'intro' ? (CLUB_STORIES[team] || CLUB_STORIES.foxes).intro : [...(up ? up.lines : []), ...(CLUB_PAYOFFS[team] || CLUB_PAYOFFS.foxes)[k]];
+      const scene = !up && Assets.atlas.story && Assets.atlas.story[team];
       audio.sfx('click');
       this.app.scene = 'dialogue';
-      this.dialogue(lines, s.team ? 'foxes' : 'comets', null, () => this.app.goHub('trophies'), k === 'intro' ? null : 'won', scene ? { bg: Assets.url(scene) } : null);
+      const play = () => this.dialogue(lines, up ? up.team : s.team ? 'foxes' : 'comets', null, () => this.app.goHub('trophies'), k === 'intro' || up ? null : 'won', scene ? { bg: Assets.url(scene) } : null);
+      if (up) this.app.loadThen(Assets.ensureTeam(up.team), play); else play();
     }, body);
   }
 
@@ -1523,9 +1525,11 @@ export class UI {
   // Trophies › Our story: the club's story so far, each scene to watch again (clubs.js): the
   // beginning, the first Cup, the top of the country; those still ahead say what they wait for.
   storyHtml(s) {
-    const C = s.tierCups || {}, chapters = [
+    const C = s.tierCups || {}, up = Math.max(s.tier || 0, s.tierTop || 0), chapters = [
       ['intro', t('The beginning'), true, ''],
       ['cup', t('The first Cup'), (s.cups || 0) > 0, t('Win the Frostline Cup')],
+      ['national', t('Up to the National'), up >= 1, t('Reach the National Cup')],
+      ['elite', t('Into the Elite'), up >= 2, t('Reach the Elite Cup')],
       ['top', t('The top of the country'), (C.elite || 0) > 0, t('Win the Elite Cup')],
     ];
     return `<div class="label" style="margin:4px 0 6px">${t('Our story')}</div>

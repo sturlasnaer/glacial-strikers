@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-11j',
+    items: [
+      { icon: 'badges/tier_national', alt: 'icons/career', text: 'Two more chapters in every club\'s story: your players have their say when the club first goes up to the National and into the Elite. Trophies › Our story has them all.' },
+    ],
+  },
+  {
     id: '2026-10-11i',
     items: [
       { icon: 'icons/career', alt: 'icons/career', text: 'Every club\'s story now has an ending worth chasing: win your first Cup, then the Elite Cup, and see what your players have to say. Trophies › Our story plays any scene again.' },

@@ -89,7 +89,7 @@ check('...only real clubs can be played', careerClub('lynx') === 'lynx' && caree
 
 // each story's payoff: after the club's first Cup, and after its first Elite Cup (once each;
 // a save that won its cups before these scenes doesn't see them late)
-check('every story has its payoffs', CLUB_CHOICES.every((id) => CLUB_PAYOFFS[id] && CLUB_PAYOFFS[id].cup.length >= 3 && CLUB_PAYOFFS[id].top.length >= 3));
+check('every story has its payoffs and its chapters up the divisions', CLUB_CHOICES.every((id) => CLUB_PAYOFFS[id] && CLUB_PAYOFFS[id].cup.length >= 3 && CLUB_PAYOFFS[id].top.length >= 3 && CLUB_PAYOFFS[id].national.length >= 2 && CLUB_PAYOFFS[id].elite.length >= 2 && [...CLUB_PAYOFFS[id].national, ...CLUB_PAYOFFS[id].elite].every((l) => l[0] === 'us')));
 check('...never naming the Foxes in another club\'s (they\'d read as ours)', CLUB_CHOICES.filter((id) => id !== 'foxes' && id !== 'custom').every((id) => !JSON.stringify(CLUB_PAYOFFS[id]).includes('Foxes')));
 {
   const s = newSave('ravens');

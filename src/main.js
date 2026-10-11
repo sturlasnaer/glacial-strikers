@@ -49,7 +49,7 @@ import { rivalSigning, rivalOffer } from './moves.js';
 import { refreshAgents } from './agents.js';
 import { addNews } from './news.js';
 import { teamHasParts, setFills, retireRivals } from './slots.js';
-import { CLUB_STORIES, payoffDue } from './clubs.js';
+import { CLUB_STORIES, CLUB_PAYOFFS, payoffDue } from './clubs.js';
 import { useModular, useGoalieParts, goalieArt } from './modular.js';
 import { Quality } from './quality.js';
 import { offerDraft } from './draft.js';
@@ -1403,7 +1403,8 @@ class App {
       (s.tierSeen ||= {})[tier.id] = true;
       writeSave(s);
       const gone = ['frost', 'thunder', 'stone'].filter((k) => s.roster[recruitKey(welcome.team, k)]).map((k) => TEAMS[welcome.team].names[k]);
-      const lines = welcome.lines.filter((l) => l[0] !== 'us' || !gone.some((n) => l[2].includes(n))); // (not to one who's since signed with us)
+      const ours = (CLUB_PAYOFFS[s.team || 'foxes'] || {})[tier.id] || []; // (and our players' own words: the story's chapter, clubs.js)
+      const lines = [...welcome.lines.filter((l) => l[0] !== 'us' || !gone.some((n) => l[2].includes(n))), ...ours]; // (not to one who's since signed with us)
       this.ui.clear();
       this.loadThen(Assets.ensureTeam(welcome.team), () => {
         this.scene = 'dialogue';

@@ -144,7 +144,7 @@ export function clubStars(team) {
 }
 
 // Each story's payoff: a short scene after the club's first Cup (cup), and after its first
-// Elite Cup, the top of the country (top). Spoken like the opening scene; in a club of one's
+// Elite Cup, the top of the country (top); national and elite (below) are the chapters between. Spoken like the opening scene; in a club of one's
 // own, the cast's names and the Foxes' are the founders' and the club's (clubText).
 export const CLUB_PAYOFFS = {
   foxes: {
@@ -274,6 +274,48 @@ export const CLUB_PAYOFFS = {
     ],
   },
 };
+
+// The middle chapters: our players' words when the club first goes up to the National and to
+// the Elite, after Kip's welcome and the host club's (TIER_LINES in data.js).
+const UP_LINES = {
+  foxes: {
+    national: [['us', 'thunder', 'The National Cup! New rinks, new rivals, new clubs to beat.'], ['us', 'stone', 'And new clubs who want to beat us. Stay sharp, everyone.']],
+    elite: [['us', 'frost', 'The Elite. Not long ago this was a dream on a pond in Snowcrest.'], ['us', 'thunder', 'Now it\'s a real rink with real fans. Let\'s give them a show.']],
+  },
+  lynx: {
+    national: [['us', 'thunder', 'Pinewood in the National Cup! Somebody pinch me.'], ['us', 'stone', 'Nobody picked us for this either. Same plan: pass it around.']],
+    elite: [['us', 'frost', 'The little club from the pines, in the Elite. Imagine that.'], ['us', 'stone', 'Imagine it later. We have work to do.']],
+  },
+  comets: {
+    national: [['us', 'thunder', 'New goalies to shoot at! Lots and lots of them.'], ['us', 'frost', 'And we pass first. Every time. Even here.']],
+    elite: [['us', 'stone', 'The best clubs in the country. Keep your heads, and keep the fire in their net.'], ['us', 'thunder', 'Cool heads. Hot shots. Got it.']],
+  },
+  owls: {
+    national: [['us', 'frost', 'A whole country of clubs we haven\'t studied yet. Get the tapes.'], ['us', 'thunder', 'Or we could just beat them. That works too.']],
+    elite: [['us', 'stone', 'We came down from the north, and now we\'re at the top. Patience works.'], ['us', 'frost', 'Every club here has a weakness. We\'ll find each one.']],
+  },
+  rams: {
+    national: [['us', 'stone', 'The old guard in the National. They\'ll learn what a Gilded check feels like.'], ['us', 'frost', 'Smart and strong, remember. Not just strong.']],
+    elite: [['us', 'thunder', 'The Elite! The old banners never got this high.'], ['us', 'stone', 'Then we hang new ones. For Gilded.']],
+  },
+  moose: {
+    national: [['us', 'thunder', 'New rinks to stampede through! Sorry. Not sorry.'], ['us', 'stone', 'Mind the boards in the new rinks. Some of them weren\'t built for us.']],
+    elite: [['us', 'frost', 'The Elite. The biggest stage for the biggest club.'], ['us', 'thunder', 'Antler hats in the Elite stands. I can see it already.']],
+  },
+  ravens: {
+    national: [['us', 'frost', 'A new table, and we finish at the top of it. That\'s the plan.'], ['us', 'stone', 'Every pass on time. Same as always.']],
+    elite: [['us', 'thunder', 'No Royals to finish behind up here. Just us, and the best.'], ['us', 'frost', 'Then we finish first. As calculated.']],
+  },
+  royals: {
+    national: [['us', 'frost', 'The crown goes national. Every club here wants to knock it off.'], ['us', 'thunder', 'Let them try. Long live the Royals.']],
+    elite: [['us', 'stone', 'The Elite. A crown fit for the whole country.'], ['us', 'frost', 'Champions don\'t get comfortable. One game at a time.']],
+  },
+  custom: {
+    national: [['us', 'frost', 'A club that didn\'t exist a few seasons ago, in the National Cup.'], ['us', 'thunder', 'Wait till they see us skate. Again.']],
+    elite: [['us', 'stone', 'From an empty locker room to the Elite. Look at this place.'], ['us', 'frost', 'We built this. Now let\'s finish it.']],
+  },
+};
+for (const [id, up] of Object.entries(UP_LINES)) Object.assign(CLUB_PAYOFFS[id], up);
 
 // The payoff due just after a Cup is won (counted: save.cups, save.tierCups), if any, once each:
 // 'cup' for the club's first, 'top' for its first Elite Cup. Marks it seen.
