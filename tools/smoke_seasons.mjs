@@ -3,6 +3,7 @@
 // Cup and its story scene, awards night, Draft Day, a new season and the division's welcome),
 // and reports the page's errors. Needs the game served locally (python3 tools/serve.py 8767).
 //   node tools/smoke_seasons.mjs [club=ravens] [url=http://127.0.0.1:8767/index.html?nosw=1]
+//   (SEASONS=4: play into the Elite and win it, for its welcome, the Diamond Arena final and the last story scene)
 //   (club: foxes, lynx, comets, owls, rams, moose, ravens, royals or custom)
 // Chrome is closed with Browser.close (a kill leaks a big code-sign clone on macOS); the save is
 // cleared afterwards and nothing goes online (settings.online is off).
@@ -11,7 +12,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-const CLUB = process.argv[2] || 'ravens', URL = process.argv[3] || 'http://127.0.0.1:8767/index.html?nosw=1';
+const CLUB = process.argv[2] || 'ravens', URL = process.argv[3] || 'http://127.0.0.1:8767/index.html?nosw=1', SEASONS = +(process.env.SEASONS || 2);
 const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const port = 9400 + Math.floor(Math.random() * 500), prof = mkdtempSync(join(tmpdir(), 'puckbound-smoke-'));
@@ -38,7 +39,7 @@ let fail = 0;
 try {
   await send('Runtime.enable'); await send('Page.enable');
   await send('Page.navigate', { url: URL }); await sleep(5000);
-  const out = await run(`const CLUB = ${JSON.stringify(CLUB)};\nfor (let i = 0; i < 120; i++) { if (window.__app && window.__app.ui && !document.querySelector('#loading')) break; await new Promise(r => setTimeout(r, 250)); }
+  const out = await run(`const CLUB = ${JSON.stringify(CLUB)}, SEASONS = ${SEASONS};\nfor (let i = 0; i < 120; i++) { if (window.__app && window.__app.ui && !document.querySelector('#loading')) break; await new Promise(r => setTimeout(r, 250)); }
 window.__errs = []; window.addEventListener('error', (e) => window.__errs.push(String(e.message))); window.addEventListener('unhandledrejection', (e) => window.__errs.push('rej: ' + String(e.reason && e.reason.message || e.reason)));
 const app = window.__app, sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const seen = new Set(), log = [];
@@ -50,7 +51,7 @@ if (CLUB !== 'foxes') { app.chooseClub(CLUB); await sleep(2500); } else { app.sa
 for (let k = 0; k < 8; k++) { if (!(await advance())) break; await sleep(400); }
 const s = app.save; s.settings.online = false; s.settings.race = false; s.seenIntro = true; s.seenWhatsNew = '2026-10-11l'; s.guide = { done: [], off: true, hints: [] }; if (app.scene !== 'hub') { app.goHub(); await sleep(800); }
 let games = 0;
-for (let step = 0; step < 500; step++) {
+for (let step = 0; step < 280 * SEASONS; step++) {
   if (app.scene === 'match') { const m = app.match; m.score = [5, 1]; m.winner = 0; m.state = 'over'; app.endMatch(); games++; await sleep(600); continue; }
   if (app.scene === 'hub' && !document.querySelector('.modal-bg')) {
     const f = app.fixture();
@@ -59,10 +60,9 @@ for (let step = 0; step < 500; step++) {
     if (app.fixture()) { app.startStage(); await sleep(700); continue; }
     const d = document.querySelector('#h-draft'), ns = document.querySelector('#h-season');
     if (d) { d.click(); log.push('draft'); await sleep(900); continue; }
-    if (ns) { if (s.season >= 2 && log.includes('season2')) break; ns.click(); log.push('newseason'); await sleep(1500); continue; }
+    if (ns) { if (s.season >= SEASONS) break; ns.click(); log.push('newseason'); await sleep(1500); continue; }
   }
   const q = await advance(); if (!q) await sleep(300); else await sleep(350);
-  if (s.season >= 2 && !log.includes('season2')) log.push('season2');
 }
 return { games, season: s.season, tier: s.tier, payoffs: s.payoffs, seen: [...seen], log: log.slice(-8), errs: window.__errs };
 `);
