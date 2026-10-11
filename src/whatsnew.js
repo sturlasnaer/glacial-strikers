@@ -71,7 +71,7 @@ export const WHATS_NEW = [
   {
     id: '2026-10-11b',
     items: [
-      { icon: 'icons/pet_lynx', alt: 'icons/pet', text: 'Pets to collect! Beat a club three times and they send their mascot\'s little one to your locker room: a lynx kitten, a snowy owlet, a golden lamb, a moose calf, with more on the way. Up to four play in the room; the rest wait in the pet house (Shop › Locker room).' },
+      { big: true, icon: 'icons/pet_lynx', alt: 'icons/pet', text: 'Pets to collect! Beat a club three times and they send their mascot\'s little one to your locker room: a lynx kitten, a snowy owlet, a golden lamb, a moose calf, with more on the way. Up to four play in the room; the rest wait in the pet house (Shop › Locker room).' },
     ],
   },
   {
