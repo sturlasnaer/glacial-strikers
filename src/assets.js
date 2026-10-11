@@ -5,7 +5,7 @@
 // locker room and cut-in banners are separate images; those load when a scene needs them.
 // (Everything is prefetched into the browser cache, but only decoded when used.)
 
-import { TEAMS, PALETTES } from './data.js';
+import { TEAMS, PALETTES, CAREER } from './data.js';
 import { recolorParts, recolorPaint, headPlacement, PARTS_SCALE } from './modular.js';
 
 const BASE = new URL('assets/', document.baseURI).href;
@@ -189,9 +189,12 @@ export const Assets = {
     for (const k of [...(this.bannerCanvasCache || new Map()).keys()]) if (k.endsWith('|club') || k.endsWith('|homekit')) this.bannerCanvasCache.delete(k);
     this.recolored.delete('homekit'); // signings follow the club colours too
     if (!rc) return;
-    const ours = (id) => (/\/home[_/]/.test(id) && !id.startsWith('hud_elements/')) || id.startsWith('expressions_core/')
+    // (in a career as another club, or one's own, the cast's own skating frames never wear our
+    // colours: the pages holding only those needn't be copied)
+    const castOnly = (CAREER.team || CAREER.custom) ? (id) => /^(ak_|frost_captain\/|thunder_winger\/|stone_defender\/)/.test(id) : () => false;
+    const ours = (id) => !castOnly(id) && ((/\/home[_/]/.test(id) && !id.startsWith('hud_elements/')) || id.startsWith('expressions_core/')
       || id.startsWith('expressions_halla_royals_comets/halla/') || id === 'hud_elements/misc/home_crest' || id.startsWith('crests_club/')
-      || id === 'arena/banner/glacial_strikers' || id.startsWith('mascot/') || id.startsWith('celebrations/');
+      || id === 'arena/banner/glacial_strikers' || id.startsWith('mascot/') || id.startsWith('celebrations/'));
     const rects = new Map();
     for (const [id, f] of Object.entries(this.atlas.frames)) {
       if (!ours(id) || this.atlas.pages[f[0]].group !== 'home') continue;

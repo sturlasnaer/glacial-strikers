@@ -43,7 +43,7 @@ import { moveTier, noteTierCup, tierOf, tierInfo } from './tiers.js';
 import { updateSeasonGoals, goalStates } from './goals.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { member, goalieInfo, TEAMS, TOURNAMENT, DIALOGUE, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, CAREER, pairKey, clubT, applyClub, GEAR_LOOK, useGearArt, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, expansionLines, TIER_LINES } from './data.js';
+import { member, goalieInfo, TEAMS, TOURNAMENT, DIALOGUE, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, CAREER, pairKey, clubT, clubOwn, applyClub, GEAR_LOOK, useGearArt, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, expansionLines, TIER_LINES } from './data.js';
 import { rollLegend, legendState, STAY, joinLegend, LEGEND_LINES, twinsFirstTogether } from './legends.js';
 import { rivalSigning, rivalOffer } from './moves.js';
 import { refreshAgents } from './agents.js';
@@ -146,7 +146,9 @@ class App {
     // newcomer art (Batch AA) is needed once a rival slot has been signed away, or for drafted rookies
     // (a signed goalie leaves a backup in their old net: the newcomer goalie, Batch AN)
     Assets.partsFor = teamHasParts;
-    Assets.newcomerCheck = () => Object.keys(this.save.roster).some((k) => RECRUITS[k] || ROOKIES[k]) || Object.keys(this.save.goalies || {}).length > 0;
+    // (a club career's own stars and goalie, and one's own club's founders, leave no gap in a rival's
+    // line: they don't need the newcomer art)
+    Assets.newcomerCheck = () => Object.keys(this.save.roster).some((k) => (RECRUITS[k] || ROOKIES[k]) && !clubOwn(k)) || Object.keys(this.save.goalies || {}).some((k) => !clubOwn(k) && !(this.save.freeGoalies && this.save.freeGoalies[k] && this.save.freeGoalies[k].founder));
     this.setupInstall();
 
     flushScores(this.save).then((n) => { if (n) writeSave(this.save); });
