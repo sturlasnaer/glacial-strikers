@@ -514,7 +514,7 @@ export class UI {
   // Profiles: three saves on one device, each its own club. Switching reloads the game.
   profiles() {
     const cur = currentProfile();
-    const crestOf = (p) => { const id = p.empty ? null : clubCrestId(p.crest); return id && Assets.frame(id) ? `<img class="prof-crest" src="${Assets.icon(id, 64)}" alt="">` : ''; };
+    const crestOf = (p) => { const id = p.empty ? null : p.crestFrame || clubCrestId(p.crest); return id && Assets.frame(id) ? `<img class="prof-crest" src="${Assets.icon(id, 64)}" alt="">` : ''; };
     const card = (p) => `<div class="profile${p.i === cur ? ' cur' : ''}">
       <b>${crestOf(p)}${t('Profile {n}', { n: p.i + 1 })}${p.i === cur ? ` <span class="gold-t">· ${t('playing now')}</span>` : ''}</b>
       ${p.empty ? `<span class="muted">${t('Empty: a new club starts here.')}</span>`
