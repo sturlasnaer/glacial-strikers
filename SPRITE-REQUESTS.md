@@ -7,12 +7,11 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **EQ: the rivalry game's icons**
-2. **ER: tighter pages for the always-loaded art** (no new drawing)
-3. **ES: the clubs' opening scenes** (choose-your-club stories)
-4. **ET: the divisions' gear and new goalie gear** (shop icons)
-5. **EU: mascots for a club of one's own** (one for each crest)
-6. **EV: two trophies for club careers** (achievement icons)
+1. **ER: tighter pages for the always-loaded art** (no new drawing)
+2. **ES: the clubs' opening scenes** (choose-your-club stories)
+3. **ET: the divisions' gear and new goalie gear** (shop icons)
+4. **EU: mascots for a club of one's own** (one for each crest)
+5. **EV: two trophies for club careers** (achievement icons)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -128,6 +127,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered EO:** Capital Dome and Diamond Arena: two unique Cup Final backdrops, four trophy scoreboard phases, two near-glass overlays with native alpha masks, eight penalty-box layers and two achievement icons (18 frames), imported on existing arena feature groups. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EO-Testing-Update`.
 
 **Delivered EP:** 99 individual native supporter poses and matching native cloth masks. Completed clubs: hot_springs_capybaras, birchwood_beavers, cliffside_puffins, timberline_grizzlies, driftwood_seals, coral_bay_flamingos, pack_ice_penguins, sunmesa_bulls, northlight_narwhals, taiga_tigers, bamboo_ridge_pandas. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EP-Testing-Update`.
+
+**Delivered EQ:** Two native rivalry-game and Bragging Rights icons, 128×128, with centred pivots and transparent gutters. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EQ-Testing-Update`.
 
 ## Format notes
 
@@ -927,7 +928,7 @@ Like Batch BY did for the Frostline rivals: when the Foxes visit, each club's ho
 
 99 frames plus masks.
 
-## Batch EQ: the rivalry game's icons
+## Batch EQ ✓: the rivalry game's icons
 
 Once a season one league game is the Foxes' rivalry game, against the club that has beaten them most (for bragging rights, a bigger prize). Two icons, no lettering:
 - `icons/rivalry` (128×128, like the other `icons/…`, shown small beside the fixture in the schedule and on its news): two crossed hockey sticks with a little lightning bolt between them, fiery orange and ice blue.
