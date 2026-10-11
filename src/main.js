@@ -146,6 +146,8 @@ class App {
     // newcomer art (Batch AA) is needed once a rival slot has been signed away, or for drafted rookies
     // (a signed goalie leaves a backup in their old net: the newcomer goalie, Batch AN)
     Assets.partsFor = teamHasParts;
+    // (the elements a match against this team will see: our line-up's and the rival slots'; makeMatch has the exact list)
+    Assets.matchElems = (teamId) => [...lineupIds(this.save).map((w) => member(w) && member(w).def.elem), ...['frost', 'thunder', 'stone'].map((k) => slotDef(teamId, k).elem)];
     // (a club career's own stars and goalie, and one's own club's founders, leave no gap in a rival's
     // line: they don't need the newcomer art)
     Assets.newcomerCheck = () => Object.keys(this.save.roster).some((k) => (RECRUITS[k] || ROOKIES[k]) && !clubOwn(k)) || Object.keys(this.save.goalies || {}).some((k) => !clubOwn(k) && !(this.save.freeGoalies && this.save.freeGoalies[k] && this.save.freeGoalies[k].founder));
@@ -327,6 +329,8 @@ class App {
     // keep only the art this match uses decoded (phones have little image memory)
     // special gear: just the mask pages of the sprites wearing it (Assets.gearMaskFrames)
     const gearMasks = Assets.gearMaskFrames(cfg.teams.flatMap((t) => t.skaters.filter((k) => k.gear && (GEAR_LOOK[k.gear.stick] || GEAR_LOOK[k.gear.skates])).map((k) => k.sprite || k.def.sprite)));
+    // the newer supers' drawn effects: just those of the elements playing (Assets.abilityFrames)
+    const abilityFx = Assets.abilityFrames(cfg.teams.flatMap((t) => t.skaters.map((k) => k.def && k.def.elem)));
     // the title and hub scenes show over the demo match, so their art stays with it
     const host = Object.values(TEAMS).find((tm) => tm.arena === arena); // its mascot dances in the stands
     const team = teamInfo(teamId); // (the All-Stars recolour the rival pages they're given)
@@ -346,9 +350,10 @@ class App {
     // (a career as another club: its own mascot dances at home, its page loaded wherever it is)
     const ownMascot = arena === 'home' && CAREER.team && Assets.atlas.arena && Assets.atlas.arena.rival_mascots && Assets.atlas.arena.rival_mascots[TEAMS[CAREER.team].art || TEAMS[CAREER.team].mark];
     const mascotFrames = [crestMascot, ownMascot].filter(Boolean).flatMap((M) => ['idle', 'wave', 'cheer_a', 'cheer_b'].map((p) => M[p])).filter((f) => f && Assets.frame(f));
-    Assets.trim({ pages: [...Assets.framePages(coachCostume), ...Assets.framePages(runners), ...Assets.framePages(gearMasks), ...Assets.framePages(petFrames), ...Assets.framePages(mascotFrames)], teams: [teamId, ...(host ? [host.id] : [])], arena, groups: ['badges', ...(team.groups || []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(arena === 'home' ? ['pet_rink'] : []), ...(this.save.settings.little ? ['cub_coach', 'kid_stars'] : []), ...(cfg.night && Assets.frame('night/aurora_1') ? [Assets.atlas.pages[Assets.frame('night/aurora_1')[0]].group] : [])] });
+    Assets.trim({ pages: [...Assets.framePages(abilityFx), ...Assets.framePages(coachCostume), ...Assets.framePages(runners), ...Assets.framePages(gearMasks), ...Assets.framePages(petFrames), ...Assets.framePages(mascotFrames)], teams: [teamId, ...(host ? [host.id] : [])], arena, groups: ['badges', ...(team.groups || []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(arena === 'home' ? ['pet_rink'] : []), ...(this.save.settings.little ? ['cub_coach', 'kid_stars'] : []), ...(cfg.night && Assets.frame('night/aurora_1') ? [Assets.atlas.pages[Assets.frame('night/aurora_1')[0]].group] : [])] });
     const fancam = arena === 'home' && !this.attract && !!Assets.atlas.fancam; // (the fan cam's fans: Batch CT)
     const cub = arena === 'home' && !!Assets.atlas.arena_spots?.home_cub && Assets.atlas.pages.some((pg) => pg.group === 'pet_rink'); // (the cub on the boards: Batch DH)
+    Assets.loadPages(abilityFx).catch(() => {}); // (any ensureTeam's guess missed)
     if (runners.length) Assets.loadPages(runners).catch(() => {});
     if (fancam) Assets.loadGroup('fancam').catch(() => {});
     if (cub) Assets.loadGroup('pet_rink').catch(() => {});

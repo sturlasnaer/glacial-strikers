@@ -5,17 +5,17 @@
 // locker room and cut-in banners are separate images; those load when a scene needs them.
 // (Everything is prefetched into the browser cache, but only decoded when used.)
 
-import { TEAMS, PALETTES, CAREER } from './data.js';
+import { TEAMS, PALETTES, CAREER, elemEffects } from './data.js';
 import { recolorParts, recolorPaint, headPlacement, PARTS_SCALE } from './modular.js';
 
 const BASE = new URL('assets/', document.baseURI).href;
 const INLINE = typeof window !== 'undefined' && window.__INLINE; // single-file offline build
 
 // Page groups loaded at start and kept through every scene; and the ones every match needs,
-// loaded with the rival's (the newer supers' effects, the linesman). (The supporters' cloth
-// masks: only the rival's own page, supporterMaskFrames.)
+// loaded with the rival's (the linesman). (The supporters' cloth masks: only the rival's own
+// page, supporterMaskFrames; the newer supers' effects: only the elements playing, abilityFrames.)
 const CORE = ['home', 'away', 'title', 'icons_z', 'allstar', 'icons_ac', 'legends', 'club_masks'];
-const MATCH = ['abilities_al', 'linesman', 'arena_au'];
+const MATCH = ['linesman', 'arena_au'];
 // A building's own layers, loaded only for a match there (the Cup Final's Coliseum: a big page).
 const ARENA_GROUPS = { frostline_coliseum: ['arena_bx'], capital_dome: ['arena_capital_dome'], diamond_arena: ['arena_diamond_arena'], harbour_rink: ['arena_cm'], glacier_cave: ['arena_cp'], summit_rink: ['arena_cv'] };
 // Groups whose data masks live on pages of their own (read, never team-recoloured), loaded and kept with them.
@@ -82,6 +82,7 @@ export const Assets = {
     if (t && t.goalieLook) jobs.push(this.loadGroup('goalie_parts')); // (their goalie, made from parts)
     for (const g of [...MATCH, ...(ARENA_GROUPS[arena] || [])]) jobs.push(this.loadGroup(g));
     jobs.push(this.loadPages(this.supporterMaskFrames([teamId])));
+    if (this.matchElems) jobs.push(this.loadPages(this.abilityFrames(this.matchElems(teamId))));
     if (t && (t.art || t.mark) && this.needNewcomers) jobs.push(this.loadGroup('newcomers')); // (a signed slot's newcomer, or the backup goalie)
     if (this.partsFor && this.partsFor(teamId)) jobs.push(this.loadGroup('parts')); // (a fill made from parts, in their colours)
     if (arena && arena !== 'home') jobs.push(this.ensureArena(arena));
@@ -143,6 +144,14 @@ export const Assets = {
     const A = this.atlas, groups = new Set(teamIds.map((id) => TEAMS[id]).filter((t) => t && (t.art || t.mark)).map((t) => 'rival_' + (t.art || t.mark)));
     return Object.entries(A.rival_art_masks || {}).filter(([id]) => A.frames[id] && groups.has(A.pages[A.frames[id][0]].group)).map(([, mid]) => mid);
   },
+
+  // The drawn effects of these elements' supers (Batch AL: Ember's, Gale's, Shadow's; six of them,
+  // 24 MB decoded): a match loads only those of the elements its skaters play.
+  abilityFrames(elems) {
+    const names = new Set(elems.flatMap(elemEffects));
+    return Object.keys(this.atlas.frames).filter((id) => id.startsWith('ability_effects/') && names.has(id.split('/')[1]));
+  },
+  matchElems: null, // the game's guess, before a match against this team: the elements its skaters will play
 
   newcomerCheck: null, // the game's check: has the save signed a rival (skater or goalie) or drafted a rookie (newcomer art)?
   get needNewcomers() { return !!(this.newcomerCheck && this.newcomerCheck()); },

@@ -108,6 +108,8 @@ export const ELEMENTS = {
 // Art on its way (Batch AL): once these frames are in the atlas, the newer supers and the
 // combos of the newer pairs use them instead of the stand-ins.
 const AL_ICONS = { heat: 'heat_check', tailwind: 'tailwind', fade: 'fade', firestorm: 'firestorm', cyclone: 'cyclone', eclipse: 'eclipse' };
+// The drawn effects of an element's skill and ultimate (ability_effects/<name>/…), for loading only a match's.
+export const elemEffects = (elem) => (ELEMENTS[elem] ? [ELEMENTS[elem].skill.id, ELEMENTS[elem].ult.id].map((id) => AL_ICONS[id] || id) : []);
 export function useNewArt(has) {
   for (const E of [ELEMENTS.ember, ELEMENTS.gale, ELEMENTS.shadow]) {
     if (has('hud_elements/ability/' + E.id)) E.icon = 'hud_elements/ability/' + E.id;
