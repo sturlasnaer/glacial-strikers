@@ -816,6 +816,9 @@ atlas = repack_always_loaded(atlas, OUT)
 from repack_selective_pages import repack_selective_pages
 atlas = repack_selective_pages(atlas, OUT, 'EW')
 atlas = repack_selective_pages(atlas, OUT, 'EX')
+# Do not retain or recommit superseded root atlas pages.
+from atlas_page_files import prune_atlas_pages
+prune_atlas_pages(atlas, OUT)
 with open(os.path.join(OUT, 'atlas.json'), 'w') as fh:
     json.dump(atlas, fh, separators=(',', ':'))
 

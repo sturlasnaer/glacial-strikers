@@ -3,6 +3,7 @@ from pathlib import Path
 from PIL import Image
 from collections import defaultdict
 import copy, hashlib, json, re
+from atlas_page_files import save_content_page, NAMING_VERSION
 
 GROUPS=('icons_z','hub','badges','gearmask','legends_gearmask','newcomer_gearmask')
 MASKS=set(GROUPS[3:])
@@ -63,7 +64,7 @@ def repack_always_loaded(atlas,out):
         group_items[(group,family(fid) if group in MASKS else '')].append((fid,f[3],f[4]))
     fingerprint=digest.hexdigest()
     previous=old.get('atlas_repacking',{}).get('ER',{})
-    if previous.get('pixel_fingerprint')==fingerprint:return old
+    if previous.get('pixel_fingerprint')==fingerprint and previous.get('naming_version')==NAMING_VERSION:return old
     old_indices={i for i,p in enumerate(old['pages'])if p['group']in GROUPS};new_pages=[];remap={}
     for i,p in enumerate(old['pages']):
         if i not in old_indices:remap[i]=len(new_pages);new_pages.append(copy.deepcopy(p))
@@ -91,8 +92,7 @@ def repack_always_loaded(atlas,out):
                 pi=len(new_pages);im=Image.new('RGBA',(b['w'],b['h']))
                 for fid,x,y,w,h in b['placed']:
                     im.paste(pixels[fid],(x,y));new['frames'][fid][:3]=[pi,x,y];located[family(fid)].add(pi)
-                name=group+'_er_'+suffix+'_'+str(pi-start)+'.webp'
-                im.save(out/name,'WEBP',lossless=True,exact=True,method=6)
+                name=save_content_page(im,out,group,'er')
                 new_pages.append({'file':'gfx/'+name,'group':group,'w':im.width,'h':im.height})
         for fid,original in aliases.items():
             new['frames'][fid][:3]=new['frames'][original][:3];located[family(fid)].add(new['frames'][original][0])
@@ -102,5 +102,5 @@ def repack_always_loaded(atlas,out):
         stats[group]={'old_pages':len(before),'new_pages':len(after),'old_decoded_bytes':sum(p['w']*p['h']*4 for p in before),'new_decoded_bytes':sum(p['w']*p['h']*4 for p in after),'frames':sum(len(v)for (g,fam),v in group_items.items()if g==group),'identical_frames_sharing_rectangles':len(aliases)}
         family_pages[group]=families
     new['pages']=new_pages
-    new.setdefault('atlas_repacking',{})['ER']={'pixel_fingerprint':fingerprint,'gutter_pixels':GUTTER,'maximum_page_size':LIMIT,'groups':stats,'mask_families':family_pages,'method':'Best-short-side-fit MaxRects; no rotation, resizing, trimming, recolouring or alpha changes. Identical same-family pixels may share a rectangle. Lossless WebP with exact RGBA.'}
+    new.setdefault('atlas_repacking',{})['ER']={'pixel_fingerprint':fingerprint,'naming_version':NAMING_VERSION,'gutter_pixels':GUTTER,'maximum_page_size':LIMIT,'groups':stats,'mask_families':family_pages,'method':'Best-short-side-fit MaxRects; no rotation, resizing, trimming, recolouring or alpha changes. Identical same-family pixels may share a rectangle. Lossless WebP with exact RGBA.'}
     return new
