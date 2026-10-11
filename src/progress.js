@@ -3,7 +3,7 @@
 import { GUIDE } from './guide.js';
 import {
   CHARACTERS, GEAR_BY_ID, STAT_KEYS, TEAMS, TOURNAMENT, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, ROLE, CAST_PAIRS, makeDef, perkSlot,
-  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, setFreeGoalies, setGoalieLooks, goalieInfo, areTwins, setRookies, setStyles, ELEMENTS, ARCHETYPES, member, pairKey, recruitKey, slotDef, GOALIE_STYLES, ALL_RIVALS, slotSprite, slotLook, CLUB_DEFAULT } from './data.js';
+  RECRUITS, ROOKIES, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, setFreeGoalies, setGoalieLooks, goalieInfo, areTwins, setRookies, setStyles, ELEMENTS, ARCHETYPES, member, pairKey, recruitKey, slotDef, GOALIE_STYLES, ALL_RIVALS, slotSprite, slotLook, CLUB_DEFAULT, useCareer } from './data.js';
 import { newLeague, migrateLeague } from './league.js';
 import { lookFor, maskFor, goalieArt, isPartsArt } from './modular.js';
 import { seasonStats } from './awards.js';
@@ -47,18 +47,24 @@ export const MAX_LEVEL = 10;
 export const PERK_LEVELS = [3, 5, 7];
 export const STAT_CAP_BONUS = 3; // points you can add to a stat above its base
 
-export function newSave() {
+// team: a career as another club (clubs.js): its three stars and its goalie are the roster,
+// and the Foxes take its place in the league (useCareer, data.js). Default: the Foxes.
+export function newSave(team = null) {
+  const own = useCareer(team);
   const roster = {};
-  for (const id of Object.keys(CHARACTERS)) roster[id] = newMember();
+  const line = own ? ['frost', 'thunder', 'stone'].map((k) => recruitKey(own, k)) : ['frost', 'thunder', 'stone'];
+  for (const id of own ? line : Object.keys(CHARACTERS)) roster[id] = newMember();
+  const pairs = own ? [pairKey(line[0], line[1]), pairKey(line[0], line[2]), pairKey(line[1], line[2])] : CAST_PAIRS;
   return {
     v: 1,
+    team: own, // the club this career plays as (null: the Foxes, the cast's story)
     coins: 150,
     roster, // every signed skater, keyed by member id
-    lineup: { C: 'frost', W: 'thunder', D: 'stone' }, // who dresses for matches
-    club: null, // custom name and colours, see applyClub in data.js
+    lineup: { C: line[0], W: line[1], D: line[2] }, // who dresses for matches
+    club: own ? { team: own } : null, // custom name and colours, see applyClub in data.js (a club career: that club's)
     goalie: { level: 1, exp: 0, gear: 'g_start' },
     owned: ['stick_wood', 'skate_start', 'arm_none', 'g_start'],
-    chem: Object.fromEntries(CAST_PAIRS.map((k) => [k, 0])), // chemistry XP per pair of members
+    chem: Object.fromEntries(pairs.map((k) => [k, 0])), // chemistry XP per pair of members
     stage: 0,
     beaten: [],
     champion: false,
@@ -79,8 +85,8 @@ export function newSave() {
     },
     record: { played: 0, wins: 0, goals: 0 },
     rookies: {}, // drafted rookies by roster id (rk1, rk2, …), see draft.js
-    goalies: {}, // signed rival goalies by key ('rams_g'): { level, exp, gear }; Halla is save.goalie
-    goalieStarter: 'halla', // who starts in goal
+    goalies: own ? { [own + '_g']: { level: 1, exp: 0, gear: 'g_start' } } : {}, // signed rival goalies by key ('rams_g'): { level, exp, gear }; Halla is save.goalie (a club career: its own goalie)
+    goalieStarter: own ? own + '_g' : 'halla', // who starts in goal
     draft: null, // this season's Draft Day once it's over
   };
 }
@@ -111,7 +117,7 @@ export function loadSave() {
     if (!s.guide && s.record && s.record.played >= 3) s.guide = { done: GUIDE.map((g) => g.id), off: false, hints: ['ult', 'combo'] };
     const legacy = !s.league || !s.league.schedule; // (from before the league: see below)
     // fill fields added later
-    const base = newSave();
+    const base = newSave(s.team); // (a club career: that club's, and the league's lists with the Foxes in its place)
     for (const k of Object.keys(base)) if (s[k] === undefined) s[k] = base[k];
     for (const k of Object.keys(base.settings)) if (s.settings[k] === undefined) s.settings[k] = base.settings[k];
     // rookies drafted before the parts art was in get a face of their own once it is
@@ -125,12 +131,12 @@ export function loadSave() {
     // perks are kept as text: a player whose super or archetype has changed since gets the
     // same choice from their new lists
     for (const [id, r] of Object.entries(s.roster)) { const m = member(id); if (m) remapPerks(r, m.def); }
-    for (const id of Object.keys(CHARACTERS)) if (!s.roster[id]) s.roster[id] = base.roster[id];
+    if (!s.team) for (const id of Object.keys(CHARACTERS)) if (!s.roster[id]) s.roster[id] = base.roster[id]; // (the cast are the Foxes', in their story)
     for (const [role, who] of Object.entries(s.lineup)) {
       const m = member(who);
       if (!s.roster[who] || !m || m.role !== role) s.lineup[role] = base.lineup[role];
     }
-    for (const k of CAST_PAIRS) if (typeof s.chem[k] !== 'number') s.chem[k] = 0;
+    for (const k of s.team ? Object.keys(base.chem) : CAST_PAIRS) if (typeof s.chem[k] !== 'number') s.chem[k] = 0;
     if (legacy) s.league = migrateLeague(s);
     return s;
   } catch (e) {
@@ -345,9 +351,10 @@ export function effectiveStats(id, r) {
 
 export function perkNames(r) { return r.perks.map((p) => p.split(':')[0]); }
 
-// Goalies: Halla ('halla', save.goalie) and any rival goalies signed (save.goalies).
-export const goalieIds = (save) => ['halla', ...Object.keys(save.goalies || {}).filter((k) => GOALIE_RECRUITS[k] || FREE_GOALIES[k])];
-export const starterId = (save) => (goalieIds(save).includes(save.goalieStarter) ? save.goalieStarter : 'halla');
+// Goalies: Halla ('halla', save.goalie: not in a career as another club, she's the Foxes')
+// and any rival goalies signed (save.goalies).
+export const goalieIds = (save) => [...(save.team ? [] : ['halla']), ...Object.keys(save.goalies || {}).filter((k) => GOALIE_RECRUITS[k] || FREE_GOALIES[k])];
+export const starterId = (save) => { const ids = goalieIds(save); return ids.includes(save.goalieStarter) ? save.goalieStarter : ids[0] || 'halla'; };
 
 // Who's in the season's team photo (kept with the season in the club's history): the line-up
 // in front, up to five more behind, the starting goalie and one more, and the Cup if it's ours.
@@ -376,7 +383,7 @@ export function rivalGoalie(save, teamId, tier = 0) {
   const t = TEAMS[teamId];
   const gg = goalieGrowth(save) + tier; // (the league gets better; and a point a division up)
   if (isSigned(save, teamId + '_g')) return { stats: { rfx: Math.min(GOALIE_CAP, Math.max(3, t.goalie.rfx - 1) + gg), pos: Math.min(GOALIE_CAP, Math.max(3, t.goalie.pos - 1) + gg) }, name: t.subs.goalie || t.names.goalie, art: 'newcomer', style: 'hybrid', who: 'sub_goalie' }; // (the plain away goalie until the newcomer goalie, Batch AN)
-  return { stats: { rfx: Math.min(GOALIE_CAP, t.goalie.rfx + gg), pos: Math.min(GOALIE_CAP, t.goalie.pos + gg) }, name: t.names.goalie, art: t.art || (t.goalieLook ? goalieArt(t.goalieLook) : 'newcomer'), mask: t.goalieLook || null, style: t.gstyle || 'hybrid' }; // (an expansion club's goalie: the newcomer goalie)
+  return { stats: { rfx: Math.min(GOALIE_CAP, t.goalie.rfx + gg), pos: Math.min(GOALIE_CAP, t.goalie.pos + gg) }, name: t.names.goalie, art: t.castGoalie ? null : t.art || (t.goalieLook ? goalieArt(t.goalieLook) : 'newcomer'), mask: t.goalieLook || null, style: t.gstyle || 'hybrid' }; // (an expansion club's goalie: the newcomer goalie; the Foxes', Halla)
 }
 
 export function goalieStatus(save, key) {

@@ -200,11 +200,16 @@ export const MOMENTS = [
 ];
 
 // Pick a moment for this context, or null. Moments marked once only show once per season.
+// A moment that's about the cast (by who, or by name in its words): not in a career as another
+// club, where the cast are the Foxes' (clubs.js).
+const CAST_NAMES = /\b(Nix|Volta|Bram|Halla)\b/;
+const castMoment = (m) => (m.who || []).some((id) => CHARACTERS[id]) || CAST_NAMES.test(JSON.stringify(m, (k, v) => (typeof v === 'function' ? String(v) : v)));
 export function pickMoment(save, ctx, rng = Math.random) {
   const lr = (save.locker ||= { seen: [], seasonSeen: [], season: save.season });
   if (lr.season !== save.season) { lr.season = save.season; lr.seasonSeen = []; }
   const recent = lr.seen.slice(-3);
   const options = MOMENTS.filter((m) => {
+    if (save.team && castMoment(m)) return false;
     if (m.once && lr.seasonSeen.includes(m.id)) return false;
     if (recent.includes(m.id)) return false;
     try { return m.when({ ...ctx, save }); } catch { return false; }

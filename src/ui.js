@@ -58,11 +58,12 @@ import { canCreate, createPlayer, restyle, defaultChoice, stylesFor, cleanName, 
 import { DECOR, DECOR_BY_ID, DECOR_SLOTS, SLOT_NAMES as DECOR_SLOT_NAMES, buyDecor, putUp, takeDown, owns as ownsDecor, isOn as decorOn, placed as decorPlaced } from './decor.js';
 import { cleanSign, SIGN_MAX } from './fancam.js';
 import { MINI_ROUNDS, MINI_PRIZE, miniOf } from './minicup.js';
-import { MASCOTS, RACE_PRIZE, pickRunners, newRace, stepRace } from './race.js';
+import { MASCOTS, RACE_PRIZE, pickRunners, newRace, stepRace, mascotOf } from './race.js';
 import { SNOW_TIME, newSnowball, stepSnowball, throwAt, snowPrize } from './snowball.js';
 import { KID_STAR_IDS } from './kidstars.js';
 import { tripStops, POSTCARD_TOWNS, NATIONAL_POSTCARDS } from './trip.js';
 import { tierOf, tierInfo, tierAt, TIERS, safeSeason } from './tiers.js';
+import { CLUB_CHOICES, CLUB_STORIES, clubStars } from './clubs.js';
 import { newPet, stepPet, tapPet, tossPuck, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall,
   PET_KINDS, PET_KIND, PET_FRAMES, PET_WINS, PET_AREA, ROOM_MAX, petDir, petIcon, roomPets, ownedPets, petsDue, adoptPet, sendToHouse, bringToRoom, petNameOf, renamePet, winsAgainst } from './pet.js';
 import { albumPages, albumClubOpen, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
@@ -146,7 +147,7 @@ export const portrait = (id, team, teamId, size = 160, expr = null) => {
     const url = Assets.goaliePortrait(t.goalieLook, expr || 'neutral', size, teamId);
     if (url) return url;
   }
-  if (t && !t.art && id === 'goalie' && P.newcomer_g) { // an expansion club's goalie: the newcomer goalie in their colours
+  if (t && !t.art && !t.castGoalie && id === 'goalie' && P.newcomer_g) { // an expansion club's goalie: the newcomer goalie in their colours (the Foxes': Halla)
     const fid = (expr && P.newcomer_g[expr]) || P.newcomer_g.neutral, url = fid && Assets.icon(fid, size, teamId);
     if (url) return url;
   }
@@ -187,9 +188,11 @@ export function portraitCanvas(id, team, teamId, size, expr) {
 }
 
 export const crest = (teamId, size = 96) => {
+  if (teamId === 'home' && CLUB.team && CLUB.crest === 'team') return crest(CLUB.team, size); // (a club career: its own crest, as the league knows it)
   if (teamId === 'home') return Assets.icon(Assets.frame(TEAMS.home.crest) ? TEAMS.home.crest : 'hud_elements/misc/home_crest', size, CLUB_PAGES());
   if (teamId === 'allstar') return Assets.icon((Assets.atlas.allstar && Assets.atlas.allstar.crest) || 'hud_elements/misc/level_star', size); // the League All-Stars' crest
   const t = TEAMS[teamId];
+  if (t && t.careerOnly) return Assets.icon(Assets.frame(t.crest) ? t.crest : 'hud_elements/misc/home_crest', size); // (the Foxes, as a club of the league: their own fox)
   const c = t && (t.art || t.mark) && Assets.atlas.crests && Assets.atlas.crests[t.art || t.mark];
   if (c && !t.art && !Assets.atlas.crest_native?.[t.mark]) return Assets.icon(c, size, teamId, { recolor: true }); // an expansion club's crest (Batch AU), drawn in coral and violet
   return c ? Assets.icon(c, size) : Assets.icon('hud_elements/misc/away_crest', size, teamId);
@@ -364,9 +367,11 @@ const cupName = (tier) => t(tierAt(tier).cup); // (the Frostline Cup, the Nation
 const vetBadge = (v) => (v ? ` <span class="vet" title="${esc(t('Veteran level {n}', { n: v }))}">${smallIcon(v >= VET_MAX && Assets.atlas.frames['badges/veteran_max'] ? 'badges/veteran_max' : 'badges/veteran', 40, 'vet-ico') || '★'}${v}</span>` : '');
 // The sticker album: the pages (a club's mascot once its sticker is drawn, Batch CR), a
 // sticker's face, and the sticker itself.
-const ALBUM_PAGES = (s) => albumPages((team) => !!Assets.atlas.frames[`album/mascot_${team}`], (tid) => albumClubOpen(s, tid));
+// (a career as another club: our mascot is that club's, the Foxes' the Snow Fox)
+const mascotKey = (team) => (team === 'home' ? CLUB.team || 'home' : team === 'foxes' ? 'home' : team);
+const ALBUM_PAGES = (s) => albumPages((team) => !!Assets.atlas.frames[`album/mascot_${mascotKey(team)}`], (tid) => albumClubOpen(s, tid));
 function stickerFace(st, size) {
-  if (st.kind === 'mascot') return Assets.icon(`album/mascot_${st.team}`, size);
+  if (st.kind === 'mascot') return Assets.icon(`album/mascot_${mascotKey(st.team)}`, size);
   if (st.team === 'home' || st.kind === 'legend') return portrait(st.key, 0, null, size);
   return portrait(st.kit, 1, st.team, size);
 }
@@ -539,7 +544,7 @@ export class UI {
   exhibitionTeams() {
     const s = this.app.save, tier = tierOf(s);
     const open = (tm) => (tm.elite ? tier >= 2 : tm.national ? tier >= 1 : true) || (s.rivals && s.rivals[tm.id] && s.rivals[tm.id].played);
-    return Object.values(TEAMS).filter((tm) => tm.id !== 'home' && open(tm));
+    return Object.values(TEAMS).filter((tm) => tm.id !== 'home' && tm.id !== CLUB.team && (!tm.careerOnly || CLUB.team) && open(tm)); // (a club career: not ourselves, and the Foxes as a club)
   }
 
   quickMatchPicker() {
@@ -1059,11 +1064,11 @@ export class UI {
   // The mascot race at the break (Batch DB): pick a runner (or not), watch them race across the
   // ice, a prize if yours wins. done() gives the match back.
   mascotRace(opp, done) {
-    const s = this.app.save, has = (team) => { const f = Assets.frame(`race/${MASCOTS[team]}/run_1`); return !!(f && Assets.pages[f[0]]); };
+    const s = this.app.save, has = (team) => { const f = Assets.frame(`race/${mascotOf(team)}/run_1`); return !!(f && Assets.pages[f[0]]); };
     const ids = pickRunners(opp, Math.random, has);
     if (ids.length < 2) return done();
-    const sets = Object.fromEntries(ids.map((id) => { const k = MASCOTS[id], fr = [1, 2, 3, 4].map((i) => `race/${k}/run_${i}`).filter((f) => Assets.frame(f)); return [id, Assets.spriteSet([...fr, ...(Assets.frame(`race/${k}/win`) ? [`race/${k}/win`] : [])], 180)]; }));
-    const name = (id) => (id === 'home' ? t('The Snow Fox') : TEAMS[id].name.split(' ').slice(-1)[0]);
+    const sets = Object.fromEntries(ids.map((id) => { const k = mascotOf(id), fr = [1, 2, 3, 4].map((i) => `race/${k}/run_${i}`).filter((f) => Assets.frame(f)); return [id, Assets.spriteSet([...fr, ...(Assets.frame(`race/${k}/win`) ? [`race/${k}/win`] : [])], 180)]; }));
+    const name = (id) => (id === 'home' && !CLUB.team ? t('The Snow Fox') : id === 'home' ? CLUB.nick : TEAMS[id].name.split(' ').slice(-1)[0]);
     const el = document.createElement('div');
     el.className = 'race';
     el.innerHTML = `<div class="race-track" style="background-image:url(${Assets.url('gfx/race/track.png')})">
@@ -1248,7 +1253,7 @@ export class UI {
     this.tripGo(body);
     this.click('#postcards', () => { audio.sfx('click'); this.postcardsModal(); }, body);
     this.click('[data-town]', (el) => { // (whose town, their building, and how we've done there)
-      const id = el.dataset.town, r = s.rivals && s.rivals[id], arena = id === 'home' ? ARENAS.home : ARENAS[TEAMS[id].arena];
+      const id = el.dataset.town, r = s.rivals && s.rivals[id], arena = id === 'home' ? ARENAS.home : ARENAS[TEAMS[id].arena || 'home'];
       audio.sfx('click');
       this.app.toast(crest(id, 72), t('Road trip'), id === 'home' ? CLUB.name : TEAMS[id].name, `${arena ? arena.name : ''}${r && r.played ? ` · ${t('record {rec}', { rec: `${r.wins}–${r.losses}` })}` : ''}`);
     }, body);
@@ -1266,7 +1271,9 @@ export class UI {
     if (!Assets.groupReady('map') || !Assets.groupReady(mapGroup) || (cardArt && !Assets.groupReady('postcards'))) { Promise.all([Assets.loadGroup('map'), Assets.loadGroup(mapGroup), cardArt && Assets.loadGroup('postcards')]).then(() => { if (this.tab === 'tournament' && body.isConnected) this.tabTournament(body); }, () => {}); return ''; }
     const W = f[3] / (f[7] || 1), H = f[4] / (f[7] || 1), { stops, at, next } = tripStops(L);
     const seen = new Set(['home', ...(L.teams || []), ...stops.map((st) => st.town)]); // (the country's map: this season's towns, not all nineteen)
-    const pt = (town) => towns[town] || towns.home || [W / 2, H / 2];
+    // (a career as another club: our town is that club's, and Snowcrest the Foxes')
+    const spot = (town) => (town === 'home' ? CLUB.team || 'home' : town === 'foxes' ? 'home' : town);
+    const pt = (town) => towns[spot(town)] || towns.home || [W / 2, H / 2];
     const line = (list) => list.map((st) => pt(st.town).join(',')).join(' ');
     const where = (town, dy = 0) => `left:${(pt(town)[0] / W * 100).toFixed(2)}%;top:${((pt(town)[1] + dy) / H * 100).toFixed(2)}%`;
     const to = next !== null ? stops[next] : null, label = to ? t('Road trip: next stop, {town}', { town: to.town === 'home' ? CLUB.name : TEAMS[to.town].name }) : t('Road trip');
@@ -1279,7 +1286,7 @@ export class UI {
     return `<div class="trip" role="img" aria-label="${esc(label)}" style="aspect-ratio:${W} / ${H}">
       <img class="trip-map" src="${Assets.sceneImage(mapId, 960)}" alt="">${ovReady ? `<img class="trip-map" src="${Assets.sceneImage(`map_${season}/overlay`, 960)}" alt="">` : ''}
       <svg class="trip-route" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline class="todo" points="${line(stops.slice(at))}"/><polyline class="done" points="${line(stops.slice(0, at + 1))}"/></svg>
-      ${Object.keys(towns).filter((id) => TEAMS[id] && (!up || seen.has(id))).map((id) => `<button class="trip-town ${id === 'home' ? 'us' : ''} ${to && to.town === id ? 'next' : ''}" data-town="${id}" style="${where(id)}" aria-label="${esc(id === 'home' ? CLUB.name : TEAMS[id].name)}"><img src="${crest(id, 64)}" alt=""></button>`).join('')}
+      ${Object.keys(towns).map((k) => (CLUB.team && k === 'home' ? 'foxes' : k === CLUB.team ? 'home' : k)).filter((id) => TEAMS[id] && (!up || seen.has(id))).map((id) => `<button class="trip-town ${id === 'home' ? 'us' : ''} ${to && to.town === id ? 'next' : ''}" data-town="${id}" style="${where(id)}" aria-label="${esc(id === 'home' ? CLUB.name : TEAMS[id].name)}"><img src="${crest(id, 64)}" alt=""></button>`).join('')}
       ${Assets.frame('map/bus_1') ? `<img class="trip-bus ${this.trip.flip ? 'flip' : ''}" id="trip-bus" src="${Assets.sceneImage(bus[0], 120)}" alt="" style="${where(stops[at].town, 62)}">` : ''}
     </div>${cards ? this.postcardsHtml() : ''}`;
   }
@@ -1290,7 +1297,7 @@ export class UI {
   postcardsHtml() {
     const s = this.app.save, got = s.postcards || [], nat = this.nationalCards();
     const set = tierOf(s) > 0 && nat.length ? nat : POSTCARD_TOWNS, n = set.filter((id) => got.includes(id)).length;
-    const thumb = (id) => got.includes(id) ? `<img class="pc-thumb" src="${Assets.sceneImage('postcard/' + id, 120)}" alt="">` : `<span class="pc-thumb pc-empty"><img src="${crest(id, 40)}" alt=""></span>`;
+    const thumb = (id) => got.includes(id) ? `<img class="pc-thumb" src="${Assets.sceneImage('postcard/' + id, 120)}" alt="">` : `<span class="pc-thumb pc-empty"><img src="${crest(CLUB.team && id === 'home' ? 'foxes' : id === CLUB.team ? 'home' : id, 40)}" alt=""></span>`;
     return `<button class="postcards" id="postcards" aria-label="${esc(t('Postcards: {n} of {total}', { n, total: set.length }))}">
       <span class="label">${t('Postcards')} <b>${n}/${set.length}</b></span><span class="pc-row">${set.map(thumb).join('')}</span></button>`;
   }
@@ -1298,12 +1305,14 @@ export class UI {
   nationalCards() { return NATIONAL_POSTCARDS.filter((id) => Assets.frame('postcard/' + id)); }
 
   postcardsModal() {
-    const got = this.app.save.postcards || [], town = (id) => (id === 'home' ? CLUB.name : TEAMS[id].name);
+    // (a career as another club: the 'home' card is Snowcrest's, the Foxes', and our own town's comes with the Cup)
+    const ours = CLUB.team || 'home', got = this.app.save.postcards || [], town = (id) => (id === 'home' && CLUB.team ? TEAMS.foxes.name : id === 'home' ? CLUB.name : TEAMS[id].name);
+    const face = (id) => (CLUB.team && id === 'home' ? 'foxes' : id === CLUB.team ? 'home' : id);
     this.modal(`<h2>${t('Postcards from the road')}</h2>
       <p class="muted" style="margin-top:0">${t('Win a game in a rival\'s town and they send one home. Your own town\'s comes with the Frostline Cup.')}</p>
       ${[POSTCARD_TOWNS, this.nationalCards()].filter((set) => set.length).map((set, k) => `${k ? `<div class="label" style="margin:12px 0 6px">${t('Around the country')}</div>` : ''}<div class="pc-grid">${set.map((id) => got.includes(id)
         ? `<figure class="pc-card"><img src="${Assets.sceneImage('postcard/' + id, 480)}" alt=""><figcaption>${esc(town(id))}</figcaption></figure>`
-        : `<figure class="pc-card locked"><span class="pc-empty"><img src="${crest(id, 64)}" alt=""></span><figcaption>${id === 'home' ? t('Win the Frostline Cup') : esc(t('Win in {town}', { town: town(id) }))}</figcaption></figure>`).join('')}</div>`).join('')}
+        : `<figure class="pc-card locked"><span class="pc-empty"><img src="${crest(face(id), 64)}" alt=""></span><figcaption>${id === ours ? t('Win the Frostline Cup') : esc(t('Win in {town}', { town: town(id) }))}</figcaption></figure>`).join('')}</div>`).join('')}
       <div class="row" style="justify-content:flex-end"><button class="btn gold" data-close>${t('Close')}</button></div>`);
   }
 
@@ -1341,7 +1350,7 @@ export class UI {
         case 'weOwn': return t('{name} ({role}) joins the {club}, one of their own.', { club: esc(CLUB.nick), name, role: role(n.kit) });
         case 'trade': return t('Trade: {gave} to the {team} for {name}.', { gave: `<b>${esc(n.gave || '')}</b>`, team: tn(n.team), name });
         case 'champion': return n.team === 'home' ? t('The {club} win the {cup}!', { cup: cupName(n.tier), club: esc(CLUB.nick) }) : t('{team} win the {cup}.', { cup: cupName(n.tier), team: tn(n.team) });
-        case 'expansion': return t('The Glacier Owls and Thunder Moose join the Frostline.');
+        case 'expansion': return (n.teams || []).includes('foxes') ? t('The {a} and {b} join the Frostline.', { a: tn(n.teams[0]), b: tn(n.teams[1]) }) : t('The Glacier Owls and Thunder Moose join the Frostline.');
         case 'rivalryWon': return t('Bragging rights! The {club} beat the {team} {a}–{b} in the rivalry game.', { club: esc(CLUB.nick), team: tn(n.team), a: n.gf, b: n.ga });
         case 'rivalryLost': return t('The {team} win the rivalry game {a}–{b}. The {club} will want that one back.', { club: esc(CLUB.nick), team: tn(n.team), a: n.ga, b: n.gf });
         case 'promoted': return t('The {club} go up to the {league}!', { club: esc(CLUB.nick), league: esc(t(tierAt(n.tier).name)) });
@@ -1529,6 +1538,23 @@ export class UI {
         m.innerHTML = body(i);
       });
     }, true, () => { if (this.tab === 'trophies') this.hub('trophies'); });
+  }
+
+  // A new career's first choice (clubs.js): the Foxes' story, or a career as a Frostline club.
+  clubPicker(onPick) {
+    const card = (id) => {
+      const tm = TEAMS[id], st = CLUB_STORIES[id], stars = clubStars(id);
+      return `<button class="club-card" data-club="${id}" style="--c1:${tm.color};--c2:${tm.color2}">
+        <img class="club-crest" src="${crest(id, 96)}" alt="" width="64" height="64">
+        <span class="club-txt"><span class="club-name"><b>${esc(tm.name)}</b> <span class="tag club-tag">${esc(t(st.tag))}</span></span>
+          <span class="muted club-blurb">${esc(t(st.blurb))}</span><span class="club-stars">${stars.map(esc).join(' · ')}</span></span></button>`;
+    };
+    this.modal(`<h2>${t('Choose your club')}</h2>
+      <p class="muted" style="margin:0 0 10px">${t('Play the Snowcrest Foxes\' story, or take charge of another Frostline club: its stars, its colours, its story. The Foxes then play in the league like any other club.')}</p>
+      <div class="club-grid">${CLUB_CHOICES.map(card).join('')}</div>`, (m, close) => {
+      m.classList.add('club-modal');
+      this.click('[data-club]', (el) => { audio.sfx('confirm'); close(); onPick(el.dataset.club); }, m);
+    }, false);
   }
 
   // A club made from parts shows its stickers' faces in its colours once the parts pages are in
@@ -3728,7 +3754,11 @@ export class UI {
   // lines: [side ('us'|'them'), charId, text]
   // (scene.bg: a painting behind the scene, like the legends' reveal)
   dialogue(lines, teamId, header, onDone, mood = null, scene = null) {
-    lines = lines.map((l) => [l[0], l[1], clubText(t(l[2]))]);
+    // (a career as another club: our lines are spoken by the line-up, the cast's kits standing
+    // for its centre, winger and defender, and our goalie)
+    const s0 = this.app.save, lu = s0 && s0.team && s0.lineup;
+    const speaker = (side, id) => (side === 'us' && lu ? ({ frost: lu.C, thunder: lu.W, stone: lu.D, goalie: starterId(s0) })[id] || id : id);
+    lines = lines.map((l) => [l[0], speaker(l[0], l[1]), clubText(t(l[2]))]);
     const tm = teamInfo(teamId);
     let i = 0, typing = null, shown = 0;
     const ours = (l) => portrait(l[1], 0, null, 420, expression('us', l[2], mood));
@@ -3749,10 +3779,10 @@ export class UI {
       const us = side === 'us' || side === 'kip';
       const lastUs = [...lines.slice(0, i + 1)].reverse().find((l) => l[0] === 'us');
       const lastThem = [...lines.slice(0, i + 1)].reverse().find((l) => l[0] === 'them') || lines.find((l) => l[0] === 'them');
-      pl.src = side === 'kip' && kip ? kip : ours(lastUs || ['us', 'frost', '']);
+      pl.src = side === 'kip' && kip ? kip : ours(lastUs || ['us', speaker('us', 'frost'), '']);
       if (lastThem) { pr.src = theirs(lastThem); pr.hidden = false; } else pr.hidden = true;
       pl.classList.toggle('on', us); pr.classList.toggle('on', !us);
-      dn.textContent = side === 'kip' ? t(NPC_NAMES.announcer) : us ? member(id)?.name || GOALIE.name : gone(id) ? rivalSub(this.app.save, teamId, id).name : tm.names[id];
+      dn.textContent = side === 'kip' ? t(NPC_NAMES.announcer) : us ? member(id)?.name || goalieInfo(id).name || GOALIE.name : gone(id) ? rivalSub(this.app.save, teamId, id).name : tm.names[id];
       dn.className = 'dlg-name' + (us ? '' : ' them');
       shown = 0; dt.textContent = '';
       clearInterval(typing);

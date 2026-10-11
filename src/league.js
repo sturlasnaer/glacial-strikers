@@ -49,7 +49,8 @@ function buildSchedule(order) {
 }
 
 export function newLeague(season, tier = 0) {
-  const teams = tier >= 2 ? ELITE_TEAMS : tier === 1 ? NATIONAL_TEAMS : season >= EXPANSION_SEASON ? EXPANDED_TEAMS : FOUNDING_TEAMS;
+  // (from the lists as they are now: a career as another club has the Foxes in its place, see useCareer)
+  const teams = ['home', ...(tier >= 2 ? ELITE_IDS : tier === 1 ? NATIONAL_IDS : season >= EXPANSION_SEASON ? RIVAL_IDS : FOUNDING_RIVALS)];
   return {
     season,
     tier, // (its Cup Final's building: tiers.js)

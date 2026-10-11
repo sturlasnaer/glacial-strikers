@@ -2,7 +2,7 @@
 // rival brought in to fill the hole (a Draft Day pick, or a free agent signed mid-season,
 // kept in save.rivalFills by 'team:kit'), or one of their reserves until then. They play in
 // the newcomer art (Batch AA) in the team's colours, under their own name and style.
-import { TEAMS, CHARACTERS, STAT_KEYS, STAR_AGES, recruitKey, makeDef, slotDef, slotLook } from './data.js';
+import { TEAMS, CHARACTERS, STAT_KEYS, STAR_AGES, recruitKey, makeDef, slotDef, slotLook, CAREER } from './data.js';
 import { bodySprite } from './modular.js';
 import { TIER_STATS } from './tiers.js';
 
@@ -68,7 +68,7 @@ export function agedStats(save, teamId, kit, stats) {
 export function retireRivals(save) {
   const out = [];
   for (const teamId of Object.keys(TEAMS)) {
-    if (teamId === 'home' || !TEAMS[teamId].names) continue;
+    if (teamId === 'home' || !TEAMS[teamId].names || (TEAMS[teamId].careerOnly && !CAREER.team)) continue; // (the Foxes only age as a club in a career as another)
     for (const kit of ['frost', 'thunder', 'stone']) {
       const key = recruitKey(teamId, kit);
       if (vacated(save, teamId, kit) || ageOf(save, key) < RETIRE_AT) continue;

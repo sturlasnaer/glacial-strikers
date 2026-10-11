@@ -10,7 +10,7 @@ import { PadNav } from './padnav.js';
 import { forceSeason, seasonFor } from './seasonal.js';
 import { addPacks } from './album.js';
 import { cleanSign, CROWD_SIGNS } from './fancam.js';
-import { RACE_AT, MASCOTS } from './race.js';
+import { RACE_AT, mascotOf } from './race.js';
 import { MINI_ROUNDS, MINI_WIN, miniOf, newMiniCup, miniResult } from './minicup.js';
 import { firstTime } from './guide.js';
 import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as cloudBackup, settleCups } from './online.js';
@@ -42,12 +42,13 @@ import { moveTier, noteTierCup, tierOf, tierInfo } from './tiers.js';
 import { updateSeasonGoals, goalStates } from './goals.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { member, goalieInfo, TEAMS, TOURNAMENT, DIALOGUE, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, EXPANSION_LINES, TIER_LINES } from './data.js';
+import { member, goalieInfo, TEAMS, TOURNAMENT, DIALOGUE, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, expansionLines, TIER_LINES } from './data.js';
 import { rollLegend, legendState, STAY, joinLegend, LEGEND_LINES, twinsFirstTogether } from './legends.js';
 import { rivalSigning, rivalOffer } from './moves.js';
 import { refreshAgents } from './agents.js';
 import { addNews } from './news.js';
 import { teamHasParts, setFills, retireRivals } from './slots.js';
+import { CLUB_STORIES } from './clubs.js';
 import { useModular, useGoalieParts, goalieArt } from './modular.js';
 import { Quality } from './quality.js';
 import { offerDraft } from './draft.js';
@@ -63,13 +64,6 @@ const STEP = 1 / 60;
 // Vibrate only once the player has interacted (browsers block it before that).
 const buzz = (p) => { if (navigator.userActivation?.hasBeenActive !== false) navigator.vibrate?.(p); };
 const RIVALS = RIVAL_IDS;
-
-const INTRO = [
-  ['us', 'frost', 'Welcome to the Frostline Regional Cup, Foxes. Five rounds, then the top four play it off for the cup.'],
-  ['us', 'thunder', 'Five rounds? I\'ll score five goals in the first match alone.'],
-  ['us', 'stone', 'You\'ll score five because I\'m clearing the way. Pass to the open player, Volta.'],
-  ['us', 'frost', 'Win matches, earn coins and EXP, then upgrade our gear in the hub. Let\'s go.'],
-];
 
 class App {
   constructor() {
@@ -338,7 +332,7 @@ class App {
     const coachCostume = this.save.settings.little && seasonFor() ? ['talk_1', 'talk_2', 'point', 'cheer', 'think'].map((f) => `cub_coach_${seasonFor()}/${f}`).filter((f) => Assets.frame(f)) : [];
     // the mascot race's runners (Batch DB): only the pages with the Snow Fox and their mascot on
     // (the race draws the others from those); the whole race group is over 20 MB decoded
-    const runners = !this.attract && !cfg.drill ? ['race/snow_fox/run_1', ...(MASCOTS[teamId] ? [`race/${MASCOTS[teamId]}/run_1`] : [])].filter((f) => Assets.frame(f)) : [];
+    const runners = !this.attract && !cfg.drill ? [`race/${mascotOf('home')}/run_1`, ...(mascotOf(teamId) ? [`race/${mascotOf(teamId)}/run_1`] : [])].filter((f) => Assets.frame(f)) : [];
     Assets.trim({ pages: [...Assets.framePages(coachCostume), ...Assets.framePages(runners), ...Assets.framePages(gearMasks)], teams: [teamId, ...(host ? [host.id] : [])], arena, groups: ['badges', ...(team.groups || []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(arena === 'home' ? ['pet_rink'] : []), ...(this.save.settings.little ? ['cub_coach', 'kid_stars'] : []), ...(cfg.night && Assets.frame('night/aurora_1') ? [Assets.atlas.pages[Assets.frame('night/aurora_1')[0]].group] : [])] });
     const fancam = arena === 'home' && !this.attract && !!Assets.atlas.fancam; // (the fan cam's fans: Batch CT)
     const cub = arena === 'home' && !!Assets.atlas.arena_spots?.home_cub && Assets.atlas.pages.some((pg) => pg.group === 'pet_rink'); // (the cub on the boards: Batch DH)
@@ -399,9 +393,12 @@ class App {
   startCampaign() {
     audio.unlock();
     if (!this.save.seenIntro) {
+      // a new career: which club first (clubs.js), then its story
+      if (!this.save.clubPicked && !this.save.record.played) { this.music('story'); this.ui.clubPicker((team) => this.chooseClub(team)); return; }
       this.scene = 'dialogue';
       this.music('story');
-      this.ui.dialogue(INTRO, 'comets', null, () => {
+      const story = CLUB_STORIES[this.save.team || 'foxes'] || CLUB_STORIES.foxes;
+      this.ui.dialogue(story.intro, this.save.team ? 'foxes' : 'comets', null, () => {
         this.save.seenIntro = true;
         writeSave(this.save);
         this.goHub('tournament');
@@ -1400,11 +1397,29 @@ class App {
       this.ui.clear(); // (the hub, and its New season button, go while the art loads)
       this.loadThen(Promise.all(fresh.map((id) => Assets.ensureTeam(id))), () => {
         this.scene = 'dialogue';
-        this.ui.dialogue(EXPANSION_LINES, fresh[0], null, () => this.goHub('tournament'));
+        this.ui.dialogue(expansionLines(fresh), fresh[0], null, () => this.goHub('tournament'));
       });
       return;
     }
     this.goHub('tournament');
+  }
+
+  // The new career's club (clubs.js): the Foxes' story keeps the fresh save; another club starts
+  // one of its own (its stars, its goalie, the Foxes in its place in the league), keeping the
+  // player's settings.
+  chooseClub(team) {
+    const prev = this.save;
+    if (team && team !== 'foxes') {
+      const s = newSave(team);
+      s.settings = prev.settings; s.guide = prev.guide;
+      this.save = s;
+      setRookies({}); setFreeGoalies({}); setGoalieLooks({}); setStyles({}); setFills(s);
+      this.applyClubLook();
+      this.ach = new AchievementTracker(s, (a) => this.toastAchievement(a));
+    }
+    this.save.clubPicked = true;
+    writeSave(this.save);
+    this.loadThen(Promise.all([Assets.ensureKit(homeKitGroups(this.save)), Assets.ensureTeam('foxes')]).catch(() => {}), () => this.startCampaign());
   }
 
   // ?twins=1: a test run with Fáfnir and Fenrir dressed (Fenrir on the wing, Fáfnir on

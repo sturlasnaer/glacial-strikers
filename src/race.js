@@ -3,15 +3,21 @@
 // it wins. Each runner trots at its own pace with bursts and slips on the ice, so anyone can
 // win. rnd: () => [0, 1) (the menus' own randomness; the match is frozen meanwhile).
 
+import { CAREER } from './data.js';
+
 export const MASCOTS = { home: 'snow_fox', lynx: 'pinewood_lynx', comets: 'ember_comets', rams: 'gilded_rams', ravens: 'obsidian_ravens', royals: 'aurora_royals', owls: 'glacier_owls', moose: 'thunder_moose',
   capybaras: 'hot_springs_capybaras', puffins: 'cliffside_puffins', grizzlies: 'timberline_grizzlies', seals: 'driftwood_seals', penguins: 'pack_ice_penguins', bulls: 'sunmesa_bulls', narwhals: 'northlight_narwhals', beavers: 'birchwood_beavers', flamingos: 'coral_bay_flamingos', tigers: 'taiga_tigers', pandas: 'bamboo_ridge_pandas' }; // (the National clubs': Batch EC and EM; the Elite's own: EL)
 export const RACE_PRIZE = 25;
 export const RACE_AT = 3; // (goals for either side)
 
+// A runner's mascot: ours (the Snow Fox, or in a career as another club that club's), the
+// Foxes' (the Snow Fox, when they're a club of the league: clubs.js) or a club's own.
+export const mascotOf = (id) => (id === 'home' ? MASCOTS[CAREER.team] || MASCOTS.home : id === 'foxes' ? MASCOTS.home : MASCOTS[id]);
+
 // Four runners: our Snow Fox, the opponent's, and two more; only those drawn (has(team)).
 export function pickRunners(opp, rnd, has = () => true) {
-  const ids = ['home', ...(opp && opp !== 'home' && MASCOTS[opp] ? [opp] : [])].filter(has);
-  const rest = Object.keys(MASCOTS).filter((k) => !ids.includes(k) && has(k));
+  const ids = ['home', ...(opp && opp !== 'home' && mascotOf(opp) ? [opp] : [])].filter(has);
+  const rest = [...Object.keys(MASCOTS), ...(CAREER.team ? ['foxes'] : [])].filter((k) => !ids.includes(k) && k !== CAREER.team && has(k));
   while (ids.length < 4 && rest.length) ids.push(rest.splice(Math.floor(rnd() * rest.length), 1)[0]);
   return ids;
 }

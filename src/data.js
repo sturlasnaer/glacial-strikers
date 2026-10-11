@@ -444,6 +444,18 @@ export const TEAMS = {
     gstyle: 'wall', subs: { goalie: 'Lantern', frost: 'Mist', thunder: 'Sprout', stone: 'Dumpling' },
     style: 'Calm, strong and patient. They look sleepy right up until they take the puck off you.',
   },
+  // The Snowcrest Foxes as a club of the league, for a career as another club (clubs.js): the
+  // cast in their own colours, in the slot of the club the player took (CAREER, useCareer
+  // below: its difficulty, prize and stats). careerOnly: nowhere else.
+  foxes: {
+    id: 'foxes', careerOnly: true, habit: { pass: 0.08, deke: 1.1 }, plan: 'balanced', chem: 2, name: 'Snowcrest Foxes', short: 'FOX', single: 'Fox', crest: 'hud_elements/misc/home_crest',
+    art: null, arena: null, castGoalie: true, // (the cast's art in their colours; Halla in goal)
+    color: '#71dce8', color2: '#fff2cb', recolor: { h1: 46, h2: 188, sat: 0.32, val: 1.08, sat2: 0.9, val2: 1.3 },
+    diff: 0.5, bonus: {}, goalie: { rfx: 6, pos: 6 },
+    names: { frost: 'Nix', thunder: 'Volta', stone: 'Bram', goalie: 'Halla' },
+    gstyle: 'hybrid', subs: { goalie: 'Glacia', frost: 'Sleet', thunder: 'Zephyr', stone: 'Drumlin' },
+    style: 'Snowcrest\'s plucky underdogs: quick passes, big hearts, and never beaten till the buzzer.',
+  },
 };
 // The rivals, easiest first. The first five are the league's founding clubs.
 export const RIVAL_IDS = ['lynx', 'comets', 'owls', 'rams', 'moose', 'ravens', 'royals'];
@@ -457,6 +469,21 @@ export const NATIONAL_IDS = ['capybaras', 'beavers', 'puffins', 'grizzlies', 'se
 export const ELITE_OWN_IDS = ['tigers', 'pandas'];
 export const ELITE_IDS = ['moose', 'seals', 'ravens', 'penguins', 'bulls', 'royals', 'tigers', 'narwhals', 'pandas'];
 export const ALL_RIVALS = [...RIVAL_IDS, ...NATIONAL_IDS, ...ELITE_OWN_IDS];
+// A career as another club (clubs.js): CAREER.team is that club (null: the Foxes' own story).
+// useCareer swaps it out of the league's lists for the Foxes, in place (everything that reads
+// the lists sees it), and gives the Foxes that club's slot: its difficulty, stats, chemistry,
+// and whether it joins in the second season.
+export const CAREER = { team: null };
+const BASE_LISTS = [[RIVAL_IDS, [...RIVAL_IDS]], [FOUNDING_RIVALS, [...FOUNDING_RIVALS]], [ELITE_IDS, [...ELITE_IDS]], [ALL_RIVALS, [...ALL_RIVALS]]];
+export const careerClub = (team) => (team && team !== 'foxes' && TEAMS[team] && TEAMS[team].names && !TEAMS[team].careerOnly && RIVAL_IDS.concat(BASE_LISTS[0][1]).includes(team) ? team : null);
+export function useCareer(team) {
+  const own = careerClub(team);
+  CAREER.team = own;
+  for (const [list, base] of BASE_LISTS) { list.length = 0; list.push(...base.map((id) => (id === own ? 'foxes' : id))); }
+  const F = TEAMS.foxes, T = own && TEAMS[own];
+  Object.assign(F, { diff: T ? T.diff : 0.5, bonus: T ? { ...T.bonus } : {}, goalie: T ? { ...T.goalie } : { rfx: 6, pos: 6 }, chem: T ? T.chem : 2, expansion: !!(T && T.expansion) });
+  return own;
+}
 // What plays a rival's roster slot: their own art, or a body from parts (an expansion club),
 // or null for our cast's art in their colours.
 export const slotLook = (teamId, kit) => { const t = TEAMS[teamId]; return t && t.looks && t.looks[kit] && bodySprite(t.looks[kit]) ? t.looks[kit] : null; };
@@ -569,6 +596,10 @@ export const RECRUITS = {
   flamingos_c: recruit('flamingos', 'frost', { spd: 8, agi: 9, sht: 7, pas: 9, chk: 3, sta: 6 }, [0, 1, 0], 530, 'Glides through traffic on one skate, cool as you like.', 'playmaker', 'R'),
   flamingos_w: recruit('flamingos', 'thunder', { spd: 9, agi: 10, sht: 8, pas: 6, chk: 2, sta: 7 }, [1, 0, 1], 530, 'All long legs and fancy moves, and somehow never falls over.', 'dangler', 'L'),
   flamingos_d: recruit('flamingos', 'stone', { spd: 6, agi: 8, sht: 7, pas: 8, chk: 6, sta: 7 }, [0, 0, 1], 530, 'Steps out of the way, then takes the puck off you anyway.', 'blueliner', 'R'),
+  // the Foxes, in a career as another club (clubs.js)
+  foxes_c: recruit('foxes', 'frost', { ...CHARACTERS.frost.base }, [0, 0, 0], 300, 'Snowcrest\'s calm captain. Lays down ice trails that speed up the whole line.', CHARACTERS.frost.arch, CHARACTERS.frost.hand),
+  foxes_w: recruit('foxes', 'thunder', { ...CHARACTERS.thunder.base }, [0, 0, 0], 300, 'Lightning on skates, and knows it. Never met a race she didn\'t want.', CHARACTERS.thunder.arch, CHARACTERS.thunder.hand),
+  foxes_d: recruit('foxes', 'stone', { ...CHARACTERS.stone.base }, [0, 0, 0], 300, 'Immovable on the blue line, with a cannon of a slapshot.', CHARACTERS.stone.arch, CHARACTERS.stone.hand),
   // the Elite's own (beat them there first)
   tigers_c: recruit('tigers', 'frost', { spd: 9, agi: 8, sht: 9, pas: 8, chk: 6, sta: 6 }, [1, 0, 0], 680, 'Hunts the puck down and buries it.', 'sniper', 'R'),
   tigers_w: recruit('tigers', 'thunder', { spd: 10, agi: 9, sht: 9, pas: 5, chk: 6, sta: 6 }, [0, 0, 1], 680, 'A blur of orange and black, gone before you hear the skates.', 'speedster', 'L'),
@@ -584,6 +615,7 @@ for (const [key, r] of Object.entries(RECRUITS)) {
   // (an expansion club's player is made from parts: their look, and the newcomer art until it's in)
   Object.assign(r, { key, name: t.names[r.kit], role: c.role, title: `${t.single || t.name.split(' ').slice(-1)[0].replace(/s$/, '')} ${ROLE_TITLE[c.role]}`, sprite: t.art ? `${t.art}_${ROLE[r.kit]}` : `newcomer_${ROLE[r.kit]}`, parts: (t.looks || {})[r.kit] || null, elem: (t.elems || {})[r.kit] || c.elem });
 }
+for (const kit of ['frost', 'thunder', 'stone']) Object.assign(RECRUITS[`foxes_${ROLE[kit]}`], { sprite: CHARACTERS[kit].sprite, parts: null }); // (the cast's own art)
 export const recruitKey = (teamId, kit) => `${teamId}_${ROLE[kit]}`;
 // How old each rival star is in a save's first season (slots.js ages them): the young ones
 // still improving, the old monarch near the end.
@@ -594,7 +626,7 @@ export const STAR_AGES = {
   capybaras_c: 29, capybaras_w: 24, capybaras_d: 27, puffins_c: 22, puffins_w: 21, puffins_d: 25, grizzlies_c: 28, grizzlies_w: 26, grizzlies_d: 31,
   seals_c: 25, seals_w: 23, seals_d: 28, penguins_c: 30, penguins_w: 26, penguins_d: 29, bulls_c: 26, bulls_w: 22, bulls_d: 30,
   narwhals_c: 24, narwhals_w: 23, narwhals_d: 27, pandas_c: 27, pandas_w: 23, pandas_d: 29,
-  tigers_c: 25, tigers_w: 22, tigers_d: 28, beavers_c: 27, beavers_w: 24, beavers_d: 30, flamingos_c: 23, flamingos_w: 22, flamingos_d: 26,
+  tigers_c: 25, tigers_w: 22, tigers_d: 28, foxes_c: 20, foxes_w: 20, foxes_d: 21, beavers_c: 27, beavers_w: 24, beavers_d: 30, flamingos_c: 23, flamingos_w: 22, flamingos_d: 26,
 };
 // The kit a rival slot plays with: that player's archetype and the team's super for the slot.
 export const slotDef = (teamId, kit) => {
@@ -606,10 +638,10 @@ export const KIT_OF_ROLE = { C: 'frost', W: 'thunder', D: 'stone' };
 // Rival goalies you can sign once you've beaten their team ('<team>_g'). Their club then plays
 // a backup. Halla is 'halla'.
 const GOALIE_PRICES = { lynx: 220, comets: 300, owls: 400, rams: 380, moose: 480, ravens: 460, royals: 560,
-  capybaras: 380, puffins: 400, grizzlies: 460, seals: 500, penguins: 540, bulls: 580, narwhals: 640, tigers: 680, pandas: 700, beavers: 420, flamingos: 520 };
+  capybaras: 380, puffins: 400, grizzlies: 460, seals: 500, penguins: 540, bulls: 580, narwhals: 640, tigers: 680, pandas: 700, beavers: 420, flamingos: 520, foxes: 300 };
 export const GOALIE_RECRUITS = Object.fromEntries(Object.entries(GOALIE_PRICES).map(([team, price]) => {
   const t = TEAMS[team];
-  return [`${team}_g`, { key: `${team}_g`, team, name: t.names.goalie, base: { ...t.goalie }, gstyle: t.gstyle, price, art: t.art || (t.goalieLook ? goalieArt(t.goalieLook) : 'newcomer'), mask: t.goalieLook || null, title: 'Goaltender' }]; // (an expansion club's goalie: made from parts)
+  return [`${team}_g`, { key: `${team}_g`, team, name: t.names.goalie, base: { ...t.goalie }, gstyle: t.gstyle, price, art: t.castGoalie ? null : t.art || (t.goalieLook ? goalieArt(t.goalieLook) : 'newcomer'), mask: t.goalieLook || null, title: 'Goaltender' }]; // (an expansion club's goalie: made from parts; the Foxes', Halla in her own art)
 }));
 // Free-agent goalies signed from the market (agents.js), by id ('fa_g1'), from the save.
 export const FREE_GOALIES = {};
@@ -764,18 +796,25 @@ export function hexToHsv(hex) {
   return { h: h * 60, s: mx ? d / mx : 0, v: mx };
 }
 
-// Make the club's settings live: names everywhere, colours for our art and signings.
+// Make the club's settings live: names everywhere, colours for our art and signings. A career
+// as another club (club.team, clubs.js) starts from that club: its name, colours and crest, its
+// stars in its own kit, and the cast's names in other clubs' lines become its stars' (CAST_SWAP).
+const CAST_SWAP = {};
 export function applyClub(club) {
-  const c = { ...CLUB_DEFAULT, ...(club || {}) };
-  Object.assign(CLUB, c, { custom: !!club && (c.name !== CLUB_DEFAULT.name || c.trim !== CLUB_DEFAULT.trim || c.jersey !== CLUB_DEFAULT.jersey || c.short !== CLUB_DEFAULT.short || c.nick !== CLUB_DEFAULT.nick || c.crest !== CLUB_DEFAULT.crest) });
+  const T = club && club.team && TEAMS[club.team] && !TEAMS[club.team].careerOnly ? TEAMS[club.team] : null;
+  const start = T ? { ...CLUB_DEFAULT, name: T.name, nick: T.single ? T.name.split(' ').slice(-1)[0] : T.name.split(' ').slice(-1)[0], short: T.short, trim: T.color, jersey: T.color2, crest: 'team' } : CLUB_DEFAULT;
+  const c = { ...start, ...(club || {}) };
+  Object.assign(CLUB, c, { team: T ? T.id : null, custom: !!T || (!!club && (c.name !== CLUB_DEFAULT.name || c.trim !== CLUB_DEFAULT.trim || c.jersey !== CLUB_DEFAULT.jersey || c.short !== CLUB_DEFAULT.short || c.nick !== CLUB_DEFAULT.nick || c.crest !== CLUB_DEFAULT.crest)) });
+  for (const k of Object.keys(CAST_SWAP)) delete CAST_SWAP[k];
+  if (T) Object.assign(CAST_SWAP, { Nix: T.names.frost, Volta: T.names.thunder, Bram: T.names.stone, Halla: T.names.goalie });
   const home = TEAMS.home;
-  home.name = c.name; home.short = c.short; home.color = c.trim; home.color2 = c.jersey; home.crest = clubCrestId(c.crest);
+  home.name = c.name; home.short = c.short; home.color = c.trim; home.color2 = c.jersey; home.crest = T && c.crest === 'team' ? `rival_crests/crest/${T.art || T.mark}` : clubCrestId(c.crest); // (a club career: its own crest)
   const t = hexToHsv(c.trim), j = hexToHsv(c.jersey);
   const recoloured = c.trim !== CLUB_DEFAULT.trim || c.jersey !== CLUB_DEFAULT.jersey;
   // our own art: teal trim (h 187 s .51 v .91) and cream jersey (h 45 s .2 v 1)
   PALETTES.club.recolor = recoloured ? { mode: 'home', trim: t, jersey: j } : null;
   // signings: coral (s ~.6, v ~1) becomes the jersey, violet (s ~.5, v ~.75) the trim
-  Object.assign(PALETTES.homekit.recolor, {
+  Object.assign(PALETTES.homekit.recolor, T && T.recolor && c.trim === T.color && c.jersey === T.color2 ? { ...T.recolor } : { // (a club career: its own kit, exactly)
     h1: j.h, sat: Math.max(0.05, j.s / 0.6), val: Math.max(0.2, j.v * 1.06),
     h2: t.h, sat2: Math.max(0.05, t.s / 0.55), val2: Math.max(0.2, t.v / 0.72),
   });
@@ -785,7 +824,8 @@ export function applyClub(club) {
 // Swap the default club name into a line of text.
 export function clubText(str) {
   if (!CLUB.custom || !str) return str;
-  return String(str).replace(/Snowcrest Foxes/g, CLUB.name).replace(/\bFoxes\b/g, CLUB.nick);
+  const out = String(str).replace(/Snowcrest Foxes/g, CLUB.name).replace(/\bFoxes\b/g, CLUB.nick);
+  return CLUB.team ? out.replace(/\b(Nix|Volta|Bram|Halla)\b/g, (n) => CAST_SWAP[n] || n) : out; // (a club career: its stars, not the cast)
 }
 
 // Twists: 'none' | 'speed_lanes' | 'cracked_ice' | 'both'
@@ -815,7 +855,8 @@ export const NATIONAL_STAGES = [
   { team: 'tigers', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 410 }, // (the Elite's own)
   { team: 'pandas', round: 'Final', powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 420 },
 ];
-export const stageOf = (team) => TOURNAMENT.stages.find((x) => x.team === team) || NATIONAL_STAGES.find((x) => x.team === team) || TOURNAMENT.stages[0];
+export const stageOf = (team) => (team === 'foxes' ? { ...stageOf(CAREER.team || 'lynx'), team: 'foxes' } // (the Foxes play in the slot of the club the player took)
+  : TOURNAMENT.stages.find((x) => x.team === team) || NATIONAL_STAGES.find((x) => x.team === team) || TOURNAMENT.stages[0]);
 
 // Chemistry: pairs who pass to each other build a bond over the season. From level 1, a
 // pass between the pair followed by a quick shot (or one-timer) fires their combo shot.
@@ -931,6 +972,15 @@ export const EXPANSION_LINES = [
   ['them', 'frost', 'New league, new rink, same old Foxes. We\'ve been watching your tapes.'],
   ['us', 'frost', 'Seven rounds now. More games, more chances. Let\'s go.'],
 ];
+// ...and in a career as one of the expansion clubs (clubs.js), the two who join are the other
+// expansion club and the Foxes (never the word for them: clubText would make it ours).
+export function expansionLines(fresh) {
+  if (!fresh.includes('foxes')) return EXPANSION_LINES;
+  const other = fresh.find((id) => id !== 'foxes');
+  return EXPANSION_LINES.map((l, i) => (i !== 1 ? l : ['kip', null, other === 'moose'
+    ? 'From the timber country, the Thunder Moose. And from Snowcrest, the club with the fox on its crest and big dreams. Mind your toes.'
+    : 'From the north, the patient, sharp-eyed Glacier Owls. And from Snowcrest, the club with the fox on its crest and big dreams.']));
+}
 
 export const DIALOGUE = {
   lynx: {
@@ -1109,6 +1159,25 @@ export const DIALOGUE = {
     ],
     win: [['them', 'thunder', 'Oh! You ruffled our feathers. Well played.']],
     loss: [['them', 'frost', 'And that\'s how it\'s done. On one skate!']],
+  },
+  // the Foxes, as a club of the league (clubs.js; never the word for them: clubText would make it ours)
+  foxes: {
+    pre: [
+      ['them', 'frost', 'So you\'re the club everyone\'s talking about. Snowcrest doesn\'t scare easily.'],
+      ['us', 'frost', 'Neither do we. Let\'s play.'],
+      ['them', 'thunder', 'Fast hands, quick feet, and we never quit. Try to keep up!'],
+      ['us', 'stone', 'Keep it simple and stay together. They feed off mistakes.'],
+    ],
+    win: [['them', 'frost', 'Good game. Snowcrest will be back, and faster.']],
+    loss: [['them', 'thunder', 'Snowcrest wins! Did you see that last goal?']],
+    final: [
+      ['them', 'frost', 'The final. Snowcrest has waited a long time for this one.'],
+      ['us', 'frost', 'So have we. Let\'s make it a good one.'],
+      ['them', 'stone', 'We\'re clearing the way, and we\'re not stopping.'],
+      ['us', 'stone', 'Everybody, together. One more win.'],
+    ],
+    finalWin: [['them', 'frost', 'You earned it. Snowcrest will be back next season.']],
+    finalLoss: [['them', 'frost', 'The cup goes home to Snowcrest! Thanks for a great final.']],
   },
   // the Elite's own
   tigers: {

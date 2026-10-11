@@ -1,7 +1,7 @@
 // The road-trip map (League tab, Batch DG): the season as the towns the Foxes' team bus drives
 // between. League games are played in the rival's own building, so each round is a trip to
 // their town; the All-Star Game and the Cup Final are at home, the Winter Classic on Pine Pond.
-import { TEAMS, NATIONAL_IDS, ELITE_OWN_IDS } from './data.js';
+import { TEAMS, NATIONAL_IDS, ELITE_OWN_IDS, CAREER } from './data.js';
 import { ALLSTAR_AFTER, CLASSIC_AFTER, classicOpponent } from './league.js';
 
 // The town an arena is in: the club whose building it is (home for the rest).
@@ -14,7 +14,7 @@ export function tripStops(L) {
   const opp = (i) => L.schedule[i].games[0].b;
   L.schedule.forEach((rd, i) => {
     const r = L.results[i] && L.results[i][0];
-    stops.push({ town: townOf(TEAMS[opp(i)].arena), kind: 'regular', done: !!r, won: r ? r.ga > r.gb : undefined, opp: opp(i) });
+    stops.push({ town: opp(i) === 'foxes' ? 'foxes' : townOf(TEAMS[opp(i)].arena), kind: 'regular', done: !!r, won: r ? r.ga > r.gb : undefined, opp: opp(i) }); // (the Foxes, a club of the league: Snowcrest)
     if (i === ALLSTAR_AFTER - 1 && !(L.allstar && L.allstar.skipped)) stops.push({ town: 'home', kind: 'allstar', done: !!L.allstar, won: L.allstar ? !!L.allstar.won : undefined });
     if (i === CLASSIC_AFTER - 1) {
       const c = L.classic, o = c ? c.opp : L.phase === 'regular' && L.round <= CLASSIC_AFTER ? classicOpponent(L) : null;
@@ -24,7 +24,7 @@ export function tripStops(L) {
   const po = L.playoffs;
   if (po) {
     const semi = po.semis.find((g) => g.a === 'home' || g.b === 'home');
-    if (semi) { const o = semi.a === 'home' ? semi.b : semi.a; stops.push({ town: townOf(TEAMS[o].arena), kind: 'semi', done: !!semi.winner, won: semi.winner ? semi.winner === 'home' : undefined, opp: o }); }
+    if (semi) { const o = semi.a === 'home' ? semi.b : semi.a; stops.push({ town: o === 'foxes' ? 'foxes' : townOf(TEAMS[o].arena), kind: 'semi', done: !!semi.winner, won: semi.winner ? semi.winner === 'home' : undefined, opp: o }); }
     if (po.final && (po.final.a === 'home' || po.final.b === 'home')) stops.push({ town: 'home', kind: 'final', done: !!po.final.winner, won: po.final.winner ? po.final.winner === 'home' : undefined });
   }
   let at = 0;
@@ -47,8 +47,9 @@ export function sendPostcard(save, town) {
 }
 // The town a won league game sends a postcard from (null: none), by the fixture's kind and arena
 // (a National or Elite club's town even while its rink isn't drawn: the bus still went there).
-export const postcardFor = (kind, arena, opp = null) => (kind === 'final' ? 'home' : kind === 'allstar' ? null
-  : townOf(arena) !== 'home' ? townOf(arena) : NATIONAL_POSTCARDS.includes(opp) ? opp : null);
+// (a career as another club: our own town's comes with the Cup, Snowcrest's from beating the Foxes)
+export const postcardFor = (kind, arena, opp = null) => (kind === 'final' ? CAREER.team || 'home' : kind === 'allstar' ? null
+  : opp === 'foxes' ? 'home' : townOf(arena) !== 'home' ? townOf(arena) : NATIONAL_POSTCARDS.includes(opp) ? opp : null);
 // The Frostline's eight all collected (the achievement's; the National ones don't count for it).
 export const frostlineCards = (save) => POSTCARD_TOWNS.every((t) => (save.postcards || []).includes(t));
 

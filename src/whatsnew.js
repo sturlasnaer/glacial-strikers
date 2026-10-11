@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-11a',
+    items: [
+      { icon: 'hud_elements/misc/home_crest', alt: 'icons/career', text: 'Choose your club! A new career can be the Snowcrest Foxes\' story, or any Frostline club\'s: the Pinewood Lynx, the Ember Comets, the Glacier Owls, the Gilded Rams, the Thunder Moose, the Obsidian Ravens or the Aurora Royals, each with a story of its own. Then the Foxes play in the league like any other club.' },
+    ],
+  },
+  {
     id: '2026-10-10zx',
     items: [
       { icon: 'icons/stat_cups', alt: 'icons/career', text: 'The rivalry game: once a season one league game is for bragging rights, against the club that has beaten the Foxes most. Kip hypes it, the prize is half as much again, and there\'s a trophy for winning one.' },
