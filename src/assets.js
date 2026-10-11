@@ -74,15 +74,18 @@ export const Assets = {
     return own.length > 0 && own.every((i) => this.pages[i]) && (!COMPANION[group] || !this.atlas.pages.some((p) => p.group === COMPANION[group]) || this.groupReady(COMPANION[group]));
   },
 
-  // Everything a match or scene with this rival needs: roster pages, arena, banners.
-  async ensureTeam(teamId, arena) {
+  // Everything a match or scene with this rival needs: roster pages, arena, banners. (scene: a
+  // scene with them, not a match: their own art, none of a match's)
+  async ensureTeam(teamId, arena, scene = false) {
     const t = TEAMS[teamId];
     const jobs = [];
     if (t && (t.art || t.mark)) jobs.push(this.loadGroup('rival_' + (t.art || t.mark)));
     if (t && t.goalieLook) jobs.push(this.loadGroup('goalie_parts')); // (their goalie, made from parts)
-    for (const g of [...MATCH, ...(ARENA_GROUPS[arena] || [])]) jobs.push(this.loadGroup(g));
-    jobs.push(this.loadPages(this.supporterMaskFrames([teamId])));
-    if (this.matchElems) jobs.push(this.loadPages(this.abilityFrames(this.matchElems(teamId))));
+    if (!scene) {
+      for (const g of [...MATCH, ...(ARENA_GROUPS[arena] || [])]) jobs.push(this.loadGroup(g));
+      jobs.push(this.loadPages(this.supporterMaskFrames([teamId])));
+      if (this.matchElems) jobs.push(this.loadPages(this.abilityFrames(this.matchElems(teamId))));
+    }
     if (t && (t.art || t.mark) && this.needNewcomers) jobs.push(this.loadGroup('newcomers')); // (a signed slot's newcomer, or the backup goalie)
     if (this.partsFor && this.partsFor(teamId)) jobs.push(this.loadGroup('parts')); // (a fill made from parts, in their colours)
     if (arena && arena !== 'home') jobs.push(this.ensureArena(arena));

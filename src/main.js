@@ -330,7 +330,7 @@ class App {
     // special gear: just the mask pages of the sprites wearing it (Assets.gearMaskFrames)
     const gearMasks = Assets.gearMaskFrames(cfg.teams.flatMap((t) => t.skaters.filter((k) => k.gear && (GEAR_LOOK[k.gear.stick] || GEAR_LOOK[k.gear.skates])).map((k) => k.sprite || k.def.sprite)));
     // the newer supers' drawn effects: just those of the elements playing (Assets.abilityFrames)
-    const abilityFx = Assets.abilityFrames(cfg.teams.flatMap((t) => t.skaters.map((k) => k.def && k.def.elem)));
+    const abilityFx = this.attract ? [] : Assets.abilityFrames(cfg.teams.flatMap((t) => t.skaters.map((k) => k.def && k.def.elem))); // (not for the title's demo match)
     // the title and hub scenes show over the demo match, so their art stays with it
     const host = Object.values(TEAMS).find((tm) => tm.arena === arena); // its mascot dances in the stands
     const team = teamInfo(teamId); // (the All-Stars recolour the rival pages they're given)
@@ -1419,7 +1419,7 @@ class App {
       const ours = (CLUB_PAYOFFS[s.team || 'foxes'] || {})[tier.id] || []; // (and our players' own words: the story's chapter, clubs.js)
       const lines = [...welcome.lines.filter((l) => l[0] !== 'us' || !gone.some((n) => l[2].includes(n))), ...ours]; // (not to one who's since signed with us)
       this.ui.clear();
-      this.loadThen(Assets.ensureTeam(welcome.team), () => {
+      this.loadThen(Assets.ensureTeam(welcome.team, null, true), () => {
         this.scene = 'dialogue';
         this.ui.dialogue(lines, welcome.team, null, () => this.goHub('tournament'));
       });
@@ -1432,7 +1432,7 @@ class App {
       addNews(s, { k: 'expansion', teams: fresh });
       writeSave(s);
       this.ui.clear(); // (the hub, and its New season button, go while the art loads)
-      this.loadThen(Promise.all(fresh.map((id) => Assets.ensureTeam(id))), () => {
+      this.loadThen(Promise.all(fresh.map((id) => Assets.ensureTeam(id, null, true))), () => {
         this.scene = 'dialogue';
         this.ui.dialogue(expansionLines(fresh), fresh[0], null, () => this.goHub('tournament'));
       });
@@ -1458,7 +1458,7 @@ class App {
     writeSave(this.save);
     // (a club of one's own: named and coloured first, its founders from parts)
     const next = team === 'custom' ? () => { this.scene = 'hub'; this.ui.clubEditor({ create: true, onDone: () => this.startCampaign() }); } : () => this.startCampaign();
-    this.loadThen(Promise.all([Assets.ensureKit(homeKitGroups(this.save)), Assets.ensureTeam('foxes'), team === 'custom' && Assets.loadGroup('parts'), team === 'custom' && Assets.loadGroup('goalie_parts')]).catch(() => {}), next);
+    this.loadThen(Promise.all([Assets.ensureKit(homeKitGroups(this.save)), Assets.ensureTeam('foxes', null, true), team === 'custom' && Assets.loadGroup('parts'), team === 'custom' && Assets.loadGroup('goalie_parts')]).catch(() => {}), next);
   }
 
   // ?twins=1: a test run with Fáfnir and Fenrir dressed (Fenrir on the wing, Fáfnir on

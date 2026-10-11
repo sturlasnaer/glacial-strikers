@@ -1489,7 +1489,7 @@ export class UI {
       audio.sfx('click');
       this.app.scene = 'dialogue';
       const play = () => this.dialogue(lines, up ? up.team : s.team ? 'foxes' : 'comets', null, () => this.app.goHub('trophies'), k === 'intro' || up ? null : 'won', scene ? { bg: Assets.url(scene) } : null);
-      if (up) this.app.loadThen(Assets.ensureTeam(up.team), play); else play();
+      if (up) this.app.loadThen(Assets.ensureTeam(up.team, null, true), play); else play();
     }, body);
   }
 
