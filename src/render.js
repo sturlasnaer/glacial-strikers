@@ -1192,10 +1192,11 @@ export class Renderer {
     if (hp.front) Assets.draw(ctx, hp.front, x, y, k, { flip: fr.flip, pages });
   }
 
-  // A looping effect's frame id at time t, or null while its art isn't in the atlas.
+  // A looping effect's frame id at time t, or null while its art isn't in the atlas or its page
+  // isn't loaded (a match loads only its elements' effects: the stand-in shows meanwhile).
   loopFrame(prefix, n, t, fps) {
-    const id = prefix + (1 + (Math.floor(t * fps) % n));
-    return Assets.atlas.frames[id] ? id : null;
+    const id = prefix + (1 + (Math.floor(t * fps) % n)), f = Assets.atlas.frames[id];
+    return f && Assets.pages[f[0]] ? id : null;
   }
 
   // Gale's Cyclone: wind rings swirling on the ice around its owner, fading as it ends.

@@ -39,7 +39,7 @@ export const raceFrames = (id) => ['run_1', 'run_2', 'run_3', 'run_4', 'win'].ma
 export function raceLoad(opp, page, k = 0) {
   const { ids, rest } = raceField(opp), drawn = (id) => page(raceFrames(id)[0]) !== undefined;
   const base = ids.filter(drawn), on = new Set(base.flatMap(raceFrames).map(page));
-  const others = rest.filter(drawn), free = others.filter((id) => on.has(page(raceFrames(id)[0])));
+  const others = rest.filter(drawn), free = others.filter((id) => raceFrames(id).every((f) => page(f) === undefined || on.has(page(f))));
   const away = others.filter((id) => !free.includes(id)), n = Math.min(Math.max(0, 2 - free.length), away.length);
   return [...base, ...Array.from({ length: n }, (_, j) => away[(k * 2 + j) % away.length])].flatMap(raceFrames).filter((f) => page(f) !== undefined);
 }

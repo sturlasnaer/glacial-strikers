@@ -36,6 +36,8 @@ const solo = raceLoad('penguins', own, 3);
 check('race pages, one per mascot: four runners, four pages', pagesOf(solo, own).size === 4 && runnersOf(solo).size === 4 && runnersOf(solo).has(mascotOf('home')) && runnersOf(solo).has(mascotOf('penguins')), [...runnersOf(solo)]);
 check('...a different two extras next game', [...runnersOf(raceLoad('penguins', own, 4))].sort().join() !== [...runnersOf(solo)].sort().join());
 check('...and every frame of each runner', solo.length === 20);
+const split = (f) => (f === 'race/gilded_rams/win' ? 5 : shared(f)); // (one mascot's last frame on another page)
+check('race pages, shared: a mascot only partly on the loaded pages is not counted as loaded along', !runnersOf(raceLoad('lynx', split)).has('gilded_rams') || pagesOf(raceLoad('lynx', split), split).has(5));
 check('...a runner not drawn yet is left out', runnersOf(raceLoad('penguins', (f) => (f.includes('pack_ice') ? undefined : own(f)), 3)).size === 3);
 
 console.log(`Mascot race: ${pass} passed, ${fail} failed`);

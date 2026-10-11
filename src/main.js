@@ -352,7 +352,7 @@ class App {
     Assets.trim({ pages: [...Assets.framePages(abilityFx), ...Assets.framePages(coachCostume), ...Assets.framePages(runners), ...Assets.framePages(gearMasks), ...Assets.framePages(petFrames), ...Assets.framePages(mascotFrames)], teams: [teamId, ...(host ? [host.id] : [])], arena, groups: ['badges', ...(team.groups || []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(arena === 'home' ? ['pet_rink'] : []), ...(this.save.settings.little ? ['cub_coach', 'kid_stars'] : []), ...(cfg.night && Assets.frame('night/aurora_1') ? [Assets.atlas.pages[Assets.frame('night/aurora_1')[0]].group] : [])] });
     const fancam = arena === 'home' && !this.attract && !!Assets.atlas.fancam; // (the fan cam's fans: Batch CT)
     const cub = arena === 'home' && !!Assets.atlas.arena_spots?.home_cub && Assets.atlas.pages.some((pg) => pg.group === 'pet_rink'); // (the cub on the boards: Batch DH)
-    Assets.loadPages(abilityFx).catch(() => {}); // (any ensureTeam's guess missed)
+    Assets.loadPages([...abilityFx, ...Assets.supporterMaskFrames([teamId])]).catch(() => {}); // (any ensureTeam's guess missed, or let go since)
     if (runners.length) Assets.loadPages(runners).catch(() => {});
     if (fancam) Assets.loadGroup('fancam').catch(() => {});
     if (cub) Assets.loadGroup('pet_rink').catch(() => {});
@@ -1862,7 +1862,8 @@ class App {
         audio.setCrowd(this.attract || this.scene !== 'match' ? 0 : this.fx.excite);
         audio.setIntensity(this.scene === 'match' && this.clutch(m) ? 1 : 0);
       }
-      if (this.attract && m.state === 'over' && m.stateT > 3) this.startAttract();
+      // (only on the title: anywhere else, a fresh demo's trim would let go of the art a match on its way has just loaded)
+      if (this.attract && m.state === 'over' && m.stateT > 3 && this.scene === 'title') this.startAttract();
       if (this.scene === 'match' && this.tutorial >= 0) {
         this.tutT -= realDt;
         const tips = this.tutorialTips();

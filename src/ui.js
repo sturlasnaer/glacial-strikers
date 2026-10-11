@@ -58,7 +58,7 @@ import { canCreate, createPlayer, restyle, defaultChoice, stylesFor, cleanName, 
 import { DECOR, DECOR_BY_ID, DECOR_SLOTS, SLOT_NAMES as DECOR_SLOT_NAMES, buyDecor, putUp, takeDown, owns as ownsDecor, isOn as decorOn, placed as decorPlaced } from './decor.js';
 import { cleanSign, SIGN_MAX } from './fancam.js';
 import { MINI_ROUNDS, MINI_PRIZE, miniOf } from './minicup.js';
-import { MASCOTS, RACE_PRIZE, pickRunners, newRace, stepRace, mascotOf } from './race.js';
+import { MASCOTS, RACE_PRIZE, pickRunners, newRace, stepRace, mascotOf, raceFrames } from './race.js';
 import { SNOW_TIME, newSnowball, stepSnowball, throwAt, snowPrize } from './snowball.js';
 import { KID_STAR_IDS } from './kidstars.js';
 import { tripStops, POSTCARD_TOWNS, NATIONAL_POSTCARDS } from './trip.js';
@@ -1090,7 +1090,7 @@ export class UI {
   // The mascot race at the break (Batch DB): pick a runner (or not), watch them race across the
   // ice, a prize if yours wins. done() gives the match back.
   mascotRace(opp, done) {
-    const s = this.app.save, has = (team) => { const f = Assets.frame(`race/${mascotOf(team)}/run_1`); return !!(f && Assets.pages[f[0]]); };
+    const s = this.app.save, has = (team) => !!Assets.frame(raceFrames(team)[0]) && raceFrames(team).every((id) => { const f = Assets.frame(id); return !f || Assets.pages[f[0]]; }); // (every frame of theirs loaded)
     const ids = pickRunners(opp, Math.random, has);
     if (ids.length < 2) return done();
     const sets = Object.fromEntries(ids.map((id) => { const k = mascotOf(id), fr = [1, 2, 3, 4].map((i) => `race/${k}/run_${i}`).filter((f) => Assets.frame(f)); return [id, Assets.spriteSet([...fr, ...(Assets.frame(`race/${k}/win`) ? [`race/${k}/win`] : [])], 180)]; }));
