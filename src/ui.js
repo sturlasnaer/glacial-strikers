@@ -1325,8 +1325,8 @@ export class UI {
     const s = this.app.save, got = s.postcards || [], nat = this.nationalCards();
     const set = tierOf(s) > 0 && nat.length ? nat : POSTCARD_TOWNS, n = set.filter((id) => got.includes(id)).length;
     const thumb = (id) => got.includes(id) ? `<img class="pc-thumb" src="${Assets.sceneImage('postcard/' + id, 120)}" alt="">` : `<span class="pc-thumb pc-empty"><img src="${crest(CLUB.team && id === 'home' ? 'foxes' : id === CLUB.team ? 'home' : id, 40)}" alt=""></span>`;
-    return `<button class="postcards" id="postcards" aria-label="${esc(t('Postcards: {n} of {total}', { n, total: set.length }))}">
-      <span class="label">${t('Postcards')} <b>${n}/${set.length}</b></span><span class="pc-row">${set.map(thumb).join('')}</span></button>`;
+    return `<button class="postcards" id="postcards" aria-label="${esc(t('Postcards: {n} of {total}', { n, total: set.length }))}"${set.length > 8 ? ` style="max-width:min(${set.length * 48 + 150}px, 100%)"` : ''}>
+      <span class="label">${t('Postcards')} <b>${n}/${set.length}</b></span><span class="pc-row" style="grid-template-columns:repeat(${set.length}, minmax(0, 44px))">${set.map(thumb).join('')}</span></button>`; // (one row, however many towns: the National's eleven shrink to fit)
   }
 
   nationalCards() { return NATIONAL_POSTCARDS.filter((id) => Assets.frame('postcard/' + id)); }
