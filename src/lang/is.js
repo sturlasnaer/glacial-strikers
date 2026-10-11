@@ -2436,6 +2436,7 @@ export const IS = {
   "The Elite. Not long ago this was a dream on a pond in Snowcrest.": "Úrvalið. Fyrir ekki svo löngu var þetta draumur á tjörn í Snowcrest.",
   "The Elite. The biggest stage for the biggest club.": "Úrvalið. Stærsta sviðið fyrir stærsta félagið.",
   "The Elite's finest glove and pads.": "Besti hanski og hlífar Úrvalsdeildarinnar.",
+  "The Elite's own clubs are all here: the Taiga Tigers and the Bamboo Ridge Pandas have their crests, their mascots dancing in the stands and running in the mascot race, a postcard each, and a pet to win: a tiger cub and a panda cub.": "Félög Úrvalsins eru öll komin: Taiga Tigers og Bamboo Ridge Pandas fá sín merki, lukkudýrin sín dansandi í stúkunni og hlaupandi í lukkudýrakapphlaupinu, póstkort hvort og gæludýr til að vinna: tígrisunga og pönduhún.",
   "The Ember Comets are Elite champions! The hot heads kept their cool all the way to the top!": "Ember Comets eru Úrvalsmeistarar! Skaphundarnir héldu ró sinni alla leið á toppinn!",
   "The Ember Comets are Frostline champions! And folks, they passed the puck!": "Ember Comets eru Frostline-meistarar! Og gott fólk, þau sendu pökkinn!",
   "The Faceoffs and Tip-Ins drills have online leaderboards now: this week's and all time, and on your friends boards.": "Uppkasta- og stýringaæfingarnar eru nú með stigatöflur á netinu: þessarar viku og frá upphafi, og á vinatöflunum þínum.",

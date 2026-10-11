@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-11o',
+    items: [
+      { icon: 'rival_crests/crest/taiga_tigers', alt: 'icons/career', text: 'The Elite\'s own clubs are all here: the Taiga Tigers and the Bamboo Ridge Pandas have their crests, their mascots dancing in the stands and running in the mascot race, a postcard each, and a pet to win: a tiger cub and a panda cub.' },
+    ],
+  },
+  {
     id: '2026-10-11n',
     items: [
       { icon: 'icons/stat_cups', alt: 'icons/career', text: 'Two new trophies for club careers: Underdog Story (win a Cup with a club that had a tough start) and From Scratch (win a Cup with a club of your own). And in two-player versus, a club career now plays its own stars.' },
