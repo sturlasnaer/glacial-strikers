@@ -3142,7 +3142,7 @@ export class UI {
     const filter = this.shopFilter || 'all';
     if (filter === 'club') return this.tabFacilities(body);
     if (filter === 'room') return this.tabDecor(body);
-    const items = GEAR.filter((g) => g.price > 0 && (filter === 'all' || g.slot === filter));
+    const items = GEAR.filter((g) => g.price > 0 && (filter === 'all' || g.slot === filter)).sort((a, b) => gearOpen(s, b) - gearOpen(s, a)); // (what's on sale first; the divisions' still to come after)
     body.innerHTML = `
       ${shopFilters(filter)}
       ${npc('shopkeeper', s.coins < 150 ? pick([t('Short on coins? Win a few and come back. I\'ll keep it polished.'), t('Browsing is free. Buying is not.')]) : pick([t('Every piece trades something away. Ask what it costs you, not just the coins.'), t('Forged it myself. Well, most of it.'), t('That stick? Lightning in a bottle. Mind the recoil.')]))}
