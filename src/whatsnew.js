@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-11s',
+    items: [
+      { icon: 'rival_crests/crest/sunmesa_bulls', alt: 'icons/career', text: 'Every club in the country now has its own supporters\' section in its rink: drummers, chant leaders and banner-wavers in the club\'s colours, chanting when their team is on top.' },
+    ],
+  },
+  {
     id: '2026-10-11r',
     items: [
       { icon: 'badges/national_cup', alt: 'icons/career', text: 'The National Cup Final is now played in the Capital Dome, and the Elite Cup Final in the glittering Diamond Arena: two grand new buildings, each with its own trophy scoreboard. Dynasty of the Elite and Grand Tour have their own trophy pictures too.' },
