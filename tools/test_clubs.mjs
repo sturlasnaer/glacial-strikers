@@ -13,6 +13,7 @@ import { newSave, goalieIds, starterId, lineupIds, matchConfig } from '../src/pr
 import { newLeague, nextFixture, recordOurGame, standings, BYE, isBye, realRounds } from '../src/league.js';
 import { makeRng } from '../src/util.js';
 import { CLUB_CHOICES, CLUB_STORIES, CLUB_PAYOFFS, payoffDue, clubStars, clubStart } from '../src/clubs.js';
+import { seasonGoals } from '../src/goals.js';
 import { pickRunners, mascotOf } from '../src/race.js';
 import { postcardFor } from '../src/trip.js';
 import { useModular } from '../src/modular.js';
@@ -24,6 +25,8 @@ useModular({ skaters: { body_std: {}, body_big: {}, body_small: {} }, modular: {
 check('nine choices: the Foxes, the Frostline\'s seven and one\'s own, each with a story', CLUB_CHOICES.length === 9 && CLUB_CHOICES[0] === 'foxes' && CLUB_CHOICES.at(-1) === 'custom' && CLUB_CHOICES.every((id) => CLUB_STORIES[id] && CLUB_STORIES[id].intro.length >= 4 && CLUB_STORIES[id].blurb && clubStars(id).length === 4));
 check('the picker says how strong each starts: the Lynx tough (a young goalie), the Royals strong, the Foxes even', clubStart('lynx') === 'tough' && clubStart('royals') === 'strong' && clubStart('foxes') === 'even' && clubStart('custom') === 'even' && CLUB_CHOICES.every((id) => ['tough', 'even', 'strong'].includes(clubStart(id))));
 check('every pair of elements has a combo (the Owls\' centre and defender are both frost)', Object.keys(ELEMENTS).every((a) => Object.keys(ELEMENTS).every((b) => COMBOS[pairKey(a, b)])));
+check('the first season\'s goal fits the story: the Ravens top two, the Royals the Cup, the Lynx the playoffs', seasonGoals(newSave('ravens')).ids[0] === 'top2' && seasonGoals(newSave('royals')).ids[0] === 'cup' && seasonGoals(newSave('lynx')).ids[0] === 'playoffs' && seasonGoals(newSave()).ids[0] === 'playoffs');
+useCareer(null);
 check('...only real clubs can be played', careerClub('lynx') === 'lynx' && careerClub('foxes') === null && careerClub('home') === null && careerClub('pandas') === null && careerClub('nope') === null);
 
 // the Foxes' story: as before

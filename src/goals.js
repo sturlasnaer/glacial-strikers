@@ -5,6 +5,7 @@
 
 import { standings, leagueTeams } from './league.js';
 import { makeRng } from './util.js';
+import { FIRST_GOAL } from './clubs.js';
 
 export const ALL_GOALS_BONUS = 150;
 
@@ -51,7 +52,7 @@ export function seasonGoals(save) {
   }
   const rng = makeRng(((L.seedRng || 1) * 31 + 7) >>> 0);
   const pick = (ids) => ids[Math.floor(rng() * ids.length)];
-  const table = L.season <= 1 ? 'playoffs' : pick(L.season >= 3 ? ['top2', 'final', 'cup'] : ['top2', 'final', 'final']);
+  const table = L.season <= 1 ? FIRST_GOAL[save.team] || 'playoffs' : pick(L.season >= 3 ? ['top2', 'final', 'cup'] : ['top2', 'final', 'final']);
   const play = pick(['goals', 'defence', 'shutout', 'streak', 'hattrick', 'powerplay']);
   const nights = [...(L.round <= 2 && !L.allstar ? ['allstar'] : []), ...(L.round <= 3 && !L.classic ? ['classic'] : []),
     ...(Object.keys(save.rookies || {}).some((id) => save.roster[id]) ? ['rookie'] : []),

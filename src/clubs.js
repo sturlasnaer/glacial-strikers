@@ -135,6 +135,11 @@ const START = Object.fromEntries(CLUB_CHOICES.filter((id) => id !== 'foxes' && i
 export const clubStart = (team) => START[team] || 'even';
 export const START_NAMES = { tough: { name: 'Tough start' }, even: { name: 'Even start' }, strong: { name: 'Strong start' } };
 
+// The first season's standings goal, as the club's story asks it (goals.js; the rest make the
+// playoffs): the Ravens done with second place, the Royals keeping the crown, the old guard's
+// one more final.
+export const FIRST_GOAL = { ravens: 'top2', royals: 'cup', rams: 'final' };
+
 // Who a choice starts with, for the picker: centre, winger, defender and goalie.
 export function clubStars(team) {
   if (team === 'custom') return ['?', '?', '?', '?'];
