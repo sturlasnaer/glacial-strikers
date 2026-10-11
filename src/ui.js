@@ -3602,7 +3602,7 @@ export class UI {
         try {
           const { save, at } = await fetchCloudSave(m.querySelector('#cr-code').value);
           close();
-          const club = (save.club && save.club.name) || 'Snowcrest Foxes';
+          const club = (save.club && save.club.name) || (save.club && save.club.team && TEAMS[save.club.team] && TEAMS[save.club.team].name) || 'Snowcrest Foxes'; // (a club career: its club)
           const when = new Date(at).toLocaleString();
           this.modal(`
             <h2>${t('Replace this device\'s progress?')}</h2>
