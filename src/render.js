@@ -556,9 +556,17 @@ export class Renderer {
     }
     if (arena === 'home' && ui && ui.save) this.drawRafters(ctx, ui.save, t);
     // a club career's own mascot dances at home in the Snow Fox's place (in our kit's colours);
-    // one's own club has none yet
+    // one's own club, the mascot of its crest once drawn (Batch EU), in the club's colours
     const clubMascot = CAREER.team && A.rival_mascots && A.rival_mascots[TEAMS[CAREER.team].art];
-    if (arena === 'home' && clubMascot) {
+    const crestMascot = CAREER.custom && A.club_mascots && A.club_mascots[CLUB.crest || 'fox'];
+    if (arena === 'home' && crestMascot) {
+      const party = (fx.cheerTeam === 0 && fx.lamp > 0) || (fx.chant && fx.chant.team === 0);
+      let pose = 'idle';
+      if (party) pose = Math.floor(t * 4) % 2 ? 'cheer_a' : 'cheer_b';
+      else if (fx.excite > 0.55 || Math.floor(t / 3) % 4 === 0) pose = Math.floor(t * 2) % 2 ? 'wave' : 'idle';
+      const f = Assets.frame(crestMascot[pose]), cp = Assets.clubPages(); // (club colours when its page is the recoloured home art's)
+      if (f && Assets.pages[f[0]]) Assets.draw(ctx, crestMascot[pose], crestMascot.foot ? crestMascot.foot.x : 768, (crestMascot.foot ? crestMascot.foot.y : 950) - (party ? Math.abs(Math.sin(t * 8)) * 6 : 0), crestMascot.source_scale || 0.125, { pages: cp[f[0]] ? cp : Assets.pages });
+    } else if (arena === 'home' && clubMascot) {
       const party = (fx.cheerTeam === 0 && fx.lamp > 0) || (fx.chant && fx.chant.team === 0);
       let pose = 'idle';
       if (party) pose = Math.floor(t * 4) % 2 ? 'cheer_a' : 'cheer_b';

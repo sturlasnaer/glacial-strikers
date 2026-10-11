@@ -43,7 +43,7 @@ import { moveTier, noteTierCup, tierOf, tierInfo } from './tiers.js';
 import { updateSeasonGoals, goalStates } from './goals.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { member, goalieInfo, TEAMS, TOURNAMENT, DIALOGUE, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, applyClub, GEAR_LOOK, useGearArt, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, expansionLines, TIER_LINES } from './data.js';
+import { member, goalieInfo, TEAMS, TOURNAMENT, DIALOGUE, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, CAREER, applyClub, GEAR_LOOK, useGearArt, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, expansionLines, TIER_LINES } from './data.js';
 import { rollLegend, legendState, STAY, joinLegend, LEGEND_LINES, twinsFirstTogether } from './legends.js';
 import { rivalSigning, rivalOffer } from './moves.js';
 import { refreshAgents } from './agents.js';
@@ -339,7 +339,10 @@ class App {
     // their sitting and hopping frames' pages (small)
     this.benchPets = arena === 'home' && !this.attract && !cfg.drill && Assets.atlas.arena_spots?.home_cub ? roomPets(this.save).filter((k) => k !== 'fox' && BENCH_POSES.every((f) => Assets.frame(petDir(k) + f))).slice(0, 3) : [];
     const petFrames = this.benchPets.flatMap((k) => BENCH_POSES.map((f) => petDir(k) + f));
-    Assets.trim({ pages: [...Assets.framePages(coachCostume), ...Assets.framePages(runners), ...Assets.framePages(gearMasks), ...Assets.framePages(petFrames)], teams: [teamId, ...(host ? [host.id] : [])], arena, groups: ['badges', ...(team.groups || []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(arena === 'home' ? ['pet_rink'] : []), ...(this.save.settings.little ? ['cub_coach', 'kid_stars'] : []), ...(cfg.night && Assets.frame('night/aurora_1') ? [Assets.atlas.pages[Assets.frame('night/aurora_1')[0]].group] : [])] });
+    // one's own club's mascot (the mascot of its crest, Batch EU), wherever its page is
+    const crestMascot = arena === 'home' && CAREER.custom && Assets.atlas.arena && Assets.atlas.arena.club_mascots && Assets.atlas.arena.club_mascots[CLUB.crest || 'fox'];
+    const mascotFrames = crestMascot ? ['idle', 'wave', 'cheer_a', 'cheer_b'].map((p) => crestMascot[p]).filter((f) => f && Assets.frame(f)) : [];
+    Assets.trim({ pages: [...Assets.framePages(coachCostume), ...Assets.framePages(runners), ...Assets.framePages(gearMasks), ...Assets.framePages(petFrames), ...Assets.framePages(mascotFrames)], teams: [teamId, ...(host ? [host.id] : [])], arena, groups: ['badges', ...(team.groups || []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(arena === 'home' ? ['pet_rink'] : []), ...(this.save.settings.little ? ['cub_coach', 'kid_stars'] : []), ...(cfg.night && Assets.frame('night/aurora_1') ? [Assets.atlas.pages[Assets.frame('night/aurora_1')[0]].group] : [])] });
     const fancam = arena === 'home' && !this.attract && !!Assets.atlas.fancam; // (the fan cam's fans: Batch CT)
     const cub = arena === 'home' && !!Assets.atlas.arena_spots?.home_cub && Assets.atlas.pages.some((pg) => pg.group === 'pet_rink'); // (the cub on the boards: Batch DH)
     if (runners.length) Assets.loadPages(runners).catch(() => {});
@@ -349,6 +352,7 @@ class App {
     if (coachCostume.length) Assets.loadPages(coachCostume).catch(() => {});
     if (gearMasks.length) Assets.loadPages(gearMasks).catch(() => {});
     if (petFrames.length) Assets.loadPages(petFrames).catch(() => {});
+    if (mascotFrames.length) Assets.loadPages(mascotFrames).catch(() => {});
     this.lap = null;
     this.fx.heavySnow = false;
     Assets.prepareTeam(team);

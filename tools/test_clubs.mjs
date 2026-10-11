@@ -64,6 +64,7 @@ check('...only real clubs can be played', careerClub('lynx') === 'lynx' && caree
   check('...no club leaves: the Foxes join the Frostline, mid-table', RIVAL_IDS.length === 8 && RIVAL_IDS.join() === 'lynx,comets,owls,foxes,rams,moose,ravens,royals' && FOUNDING_RIVALS.length === 6 && stageOf('foxes').reward === stageOf('owls').reward);
   applyClub(s.club);
   check('...named as the player names it, the founders in the lines', CLUB.custom && CLUB.name === s.club.name && clubText('Pass it, Volta!') === `Pass it, ${s.club.names.thunder}!`);
+  check('...its mascot is its crest\'s (Batch EU), the Foxes keep the Snow Fox', mascotOf('home') === 'club_' + s.club.crest && mascotOf('foxes') === 'snow_fox');
   // the season: six rivals, seven rounds, one of them our bye (the last), every pair once
   const L = s.league, rounds = L.schedule.length;
   check('...a bye a round: seven rounds for six rivals, ours the last', rounds === 7 && L.schedule[6].games[0].b === BYE && L.schedule.slice(0, 6).every((r) => r.games[0].b !== BYE) && realRounds(L) === 6);

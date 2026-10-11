@@ -18,6 +18,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 9. **ER: tighter pages for the always-loaded art** (no new drawing)
 10. **ES: the clubs' opening scenes** (choose-your-club stories)
 11. **ET: the divisions' gear and new goalie gear** (shop icons)
+12. **EU: mascots for a club of one's own** (one for each crest)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -968,3 +969,20 @@ And a trophy for owning every piece of the divisions' gear:
 - `achievements/pro_kit` (128×128, like the other `achievements/…`): a Snow Fox player in shining new silver-and-diamond gear, posing like a catalogue cover.
 
 11 frames.
+
+## Batch EU: mascots for a club of one's own
+
+A new career can be a brand-new club of the player's own (named, coloured and crested in the club editor). Every other club has a costumed mascot that dances in the stands at home and runs in the mascot race; a club of one's own has none yet. Please draw one for each crest it can pick, as costumed mascots like the Snow Fox (a person in a big friendly animal suit, a jersey on):
+- `club_fox`: a **red fox** (clearly not the white Snow Fox, who is the Snowcrest Foxes' own)
+- `club_wolf`: a grey **wolf**
+- `club_bear`: a **polar bear** (no crown or royal trim, unlike the Aurora Royals')
+- `club_owl`: a **snowy owl** (different from the Glacier Owls': round and fluffy, big eyes)
+- `club_narwhal`: a **narwhal** (plush, the horn soft and striped, unlike the Northlight Narwhals')
+- `club_mountain`: a **mountain goat** with curled horns
+- `club_bolt`: a **stoat** with a lightning-bolt tail
+
+For each:
+- In the stands, like the Snow Fox (`mascot/snow_fox/idle`, `wave`, `cheer_a`, `cheer_b`, same size and pivot): `mascot/club_<crest>/idle`, `wave`, `cheer_a`, `cheer_b`, listed as `atlas.arena.club_mascots = { fox: { idle, wave, cheer_a, cheer_b }, wolf: …, … }` (optionally with `foot` and `source_scale` like the rival mascots; without them it stands at the Snow Fox's spot and scale). **Their jerseys take the club's colours**: please draw the jersey and trim in the Snow Fox's palette (its cyan trim and cream jersey) and put these frames on the `home` pages beside the Snow Fox's, so the club recolour that turns the Snow Fox into the club's colours does the same for them (about half a megabyte decoded for all 28).
+- In the mascot race, like the other runners (`race/snow_fox/run_1`–`run_4` and `win`): `race/club_<crest>/run_1`–`run_4`, `win`, in the race's pages.
+
+The game already looks for all of these (the stands mascot at home games, the race runner), so they show as soon as they're registered. 63 frames.
