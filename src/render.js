@@ -3,7 +3,7 @@
 import { Assets } from './assets.js';
 import { toScreen, persp, BACKDROP, GOAL_X, MOUTH, NET_DEPTH, RINK } from './rink.js';
 import { clamp, lerp, makeRng } from './util.js';
-import { POWER_INFO, COMBOS, TEAMS, ARENAS, PALETTES, GEAR_LOOK, CLUB } from './data.js';
+import { POWER_INFO, COMBOS, TEAMS, ARENAS, PALETTES, GEAR_LOOK, CLUB, CAREER } from './data.js';
 import { ELEMENT_COLORS } from './fx.js';
 import { NetRenderer, SpriteNets } from './net.js';
 import { t } from './i18n.js';
@@ -539,7 +539,17 @@ export class Renderer {
       });
     }
     if (arena === 'home' && ui && ui.save) this.drawRafters(ctx, ui.save, t);
-    if (arena === 'home' && A.mascot) {
+    // a club career's own mascot dances at home in the Snow Fox's place (in our kit's colours);
+    // one's own club has none yet
+    const clubMascot = CAREER.team && A.rival_mascots && A.rival_mascots[TEAMS[CAREER.team].art];
+    if (arena === 'home' && clubMascot) {
+      const party = (fx.cheerTeam === 0 && fx.lamp > 0) || (fx.chant && fx.chant.team === 0);
+      let pose = 'idle';
+      if (party) pose = Math.floor(t * 4) % 2 ? 'cheer_a' : 'cheer_b';
+      else if (fx.excite > 0.55 || Math.floor(t / 3) % 4 === 0) pose = Math.floor(t * 2) % 2 ? 'wave' : 'idle';
+      const pages = Assets.pagesFor('homekit'), f = Assets.frame(clubMascot[pose]);
+      if (f && pages[f[0]]) Assets.draw(ctx, clubMascot[pose], 768, 950 - (party ? Math.abs(Math.sin(t * 8)) * 6 : 0), clubMascot.source_scale, { pages });
+    } else if (arena === 'home' && A.mascot && !CAREER.custom) {
       const party = (fx.cheerTeam === 0 && fx.lamp > 0) || (fx.chant && fx.chant.team === 0);
       let pose = 'idle';
       if (party) pose = Math.floor(t * 4) % 2 ? 'cheer_a' : 'cheer_b';
@@ -553,12 +563,13 @@ export class Renderer {
     const mascot = host && A.rival_mascots && A.rival_mascots[host];
     const hostTeam = mascot && Object.values(TEAMS).find((tm) => tm.art === host || tm.mark === host);
     if (hostTeam) {
-      const playing = ui.awayTeamId === hostTeam.id; // only cheers for its own team
-      const party = playing && ((fx.cheerTeam === 1 && fx.lamp > 0) || (fx.chant && fx.chant.team === 1));
+      const ours = CAREER.team === hostTeam.id, side = ours ? 0 : 1; // (our own club's building, in a club career: it cheers for us)
+      const playing = ours || ui.awayTeamId === hostTeam.id; // only cheers for its own team
+      const party = playing && ((fx.cheerTeam === side && fx.lamp > 0) || (fx.chant && fx.chant.team === side));
       let pose = 'idle';
       if (party) pose = Math.floor(t * 4) % 2 ? 'cheer_a' : 'cheer_b';
       else if (fx.excite > 0.55 || Math.floor(t / 3) % 4 === 0) pose = Math.floor(t * 2) % 2 ? 'wave' : 'idle';
-      Assets.draw(ctx, mascot[pose], mascot.foot.x, mascot.foot.y - (party ? Math.abs(Math.sin(t * 8)) * 6 : 0), mascot.source_scale, { pages: Assets.pagesFor(hostTeam.id) });
+      Assets.draw(ctx, mascot[pose], mascot.foot.x, mascot.foot.y - (party ? Math.abs(Math.sin(t * 8)) * 6 : 0), mascot.source_scale, { pages: ours ? Assets.pagesFor('homekit') : Assets.pagesFor(hostTeam.id) });
     }
     if (match.classic && arena === 'pine_pond') this.drawWinterClassic(ctx, fx);
     // the Harbour Rink's gulls wheeling over the far stands and the lighthouse's beam (Batch CN):
