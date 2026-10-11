@@ -12,7 +12,7 @@ import { AchievementTracker } from '../src/achievements.js';
 import { newSave, goalieIds, starterId, lineupIds, matchConfig } from '../src/progress.js';
 import { newLeague, nextFixture, recordOurGame, standings, BYE, isBye, realRounds } from '../src/league.js';
 import { makeRng } from '../src/util.js';
-import { CLUB_CHOICES, CLUB_STORIES, CLUB_PAYOFFS, payoffDue, clubStars, clubStart } from '../src/clubs.js';
+import { CLUB_CHOICES, CLUB_STORIES, CLUB_PAYOFFS, payoffDue, clubStars, clubStart, storyChapters } from '../src/clubs.js';
 import { seasonGoals } from '../src/goals.js';
 import { pickRunners, mascotOf } from '../src/race.js';
 import { postcardFor } from '../src/trip.js';
@@ -114,6 +114,8 @@ check('...never naming the Foxes in another club\'s (they\'d read as ours)', CLU
   check('...not the second', payoffDue(s) === null);
   s.tier = 2; s.cups = 3; s.tierCups.elite = 1;
   check('...the first Elite Cup: the top of the country', payoffDue(s) === CLUB_PAYOFFS.ravens.top && payoffDue(s) === null);
+  const open = (sv) => storyChapters(sv).filter((c) => c.open).map((c) => c.id).join();
+  check('...Our story: the chapters open as the club gets there', open({}) === 'intro' && open({ cups: 1, tier: 1, tierTop: 1 }) === 'intro,cup,national' && open({ cups: 3, tier: 0, tierTop: 2, tierCups: { elite: 1 } }) === 'intro,cup,national,elite,top');
   const old = newSave(); old.cups = 4; old.tier = 2; old.tierCups = { regional: 2, national: 1, elite: 1 };
   old.tierCups.elite = 2;
   check('...an older save with cups already won: nothing late', payoffDue(old) === null);

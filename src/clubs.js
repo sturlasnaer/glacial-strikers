@@ -322,6 +322,20 @@ const UP_LINES = {
 };
 for (const [id, up] of Object.entries(UP_LINES)) Object.assign(CLUB_PAYOFFS[id], up);
 
+// The story's chapters in order (Trophies › Our story), and which are open: the beginning
+// always; the rest once the club has got there (cups and divisions as the save counts them, so
+// saves from before the scenes can watch them too).
+export function storyChapters(save) {
+  const C = save.tierCups || {}, up = Math.max(save.tier || 0, save.tierTop || 0);
+  return [
+    { id: 'intro', open: true },
+    { id: 'cup', open: (save.cups || 0) > 0 },
+    { id: 'national', open: up >= 1 },
+    { id: 'elite', open: up >= 2 },
+    { id: 'top', open: (C.elite || 0) > 0 },
+  ];
+}
+
 // The payoff due just after a Cup is won (counted: save.cups, save.tierCups), if any, once each:
 // 'cup' for the club's first, 'top' for its first Elite Cup. Marks it seen.
 export function payoffDue(save) {

@@ -63,7 +63,7 @@ import { SNOW_TIME, newSnowball, stepSnowball, throwAt, snowPrize } from './snow
 import { KID_STAR_IDS } from './kidstars.js';
 import { tripStops, POSTCARD_TOWNS, NATIONAL_POSTCARDS } from './trip.js';
 import { tierOf, tierInfo, tierAt, TIERS, safeSeason } from './tiers.js';
-import { CLUB_CHOICES, CLUB_STORIES, CLUB_PAYOFFS, clubStars, clubStart, START_NAMES, CUSTOM_CLUB } from './clubs.js';
+import { CLUB_CHOICES, CLUB_STORIES, CLUB_PAYOFFS, clubStars, clubStart, START_NAMES, CUSTOM_CLUB, storyChapters } from './clubs.js';
 import { newPet, stepPet, tapPet, tossPuck, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall,
   PET_KINDS, PET_KIND, PET_FRAMES, PET_WINS, PET_AREA, ROOM_MAX, petDir, petIcon, roomPets, ownedPets, petsDue, adoptPet, sendToHouse, bringToRoom, petNameOf, renamePet, winsAgainst, petFinds, takeFind } from './pet.js';
 import { albumPages, albumClubOpen, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
@@ -1531,13 +1531,8 @@ export class UI {
   // beginning, the first Cup, the divisions, the top of the country; those still ahead say what
   // they wait for.
   storyHtml(s) {
-    const C = s.tierCups || {}, up = Math.max(s.tier || 0, s.tierTop || 0), chapters = [
-      ['intro', t('The beginning'), true, ''],
-      ['cup', t('The first Cup'), (s.cups || 0) > 0, t('Win the Frostline Cup')],
-      ['national', t('Up to the National'), up >= 1, t('Reach the National Cup')],
-      ['elite', t('Into the Elite'), up >= 2, t('Reach the Elite Cup')],
-      ['top', t('The top of the country'), (C.elite || 0) > 0, t('Win the Elite Cup')],
-    ];
+    const words = { intro: [t('The beginning'), ''], cup: [t('The first Cup'), t('Win the Frostline Cup')], national: [t('Up to the National'), t('Reach the National Cup')], elite: [t('Into the Elite'), t('Reach the Elite Cup')], top: [t('The top of the country'), t('Win the Elite Cup')] };
+    const chapters = storyChapters(s).map((c) => [c.id, words[c.id][0], c.open, words[c.id][1]]);
     return `<div class="label" style="margin:4px 0 6px">${t('Our story')}</div>
       <div class="row story-row" style="gap:6px;margin:0 0 10px;flex-wrap:wrap">${chapters.map(([k, name, open, need]) => (open
         ? `<button class="btn small ghost" data-story="${k}">${esc(name)}</button>`
