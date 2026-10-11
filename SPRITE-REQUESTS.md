@@ -7,9 +7,8 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **EV: two trophies for club careers** (achievement icons)
-2. **EW: the newer supers' effects packed by element** (no new drawing)
-3. **EX: one race page per mascot** (no new drawing)
+1. **EW: the newer supers' effects packed by element** (no new drawing)
+2. **EX: one race page per mascot** (no new drawing)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -136,6 +135,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered ET:** Eleven native division and goalie shop gear icons plus Pro Kit achievement art, registered at 128×128 with the compact ER packing retained. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-ET-Testing-Update`.
 
 **Delivered EU:** Seven native custom-club mascot families: 28 recolourable home poses and 35 race poses, registered with fixed foot anchors. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EU-Testing-Update`.
+
+**Delivered EV:** Two native club-career achievement icons: Underdog Story and From Scratch. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EV-Testing-Update`.
 
 ## Format notes
 
@@ -1003,7 +1004,7 @@ For each:
 
 The game already looks for all of these (the stands mascot at home games, the race runner), so they show as soon as they're registered. 63 frames.
 
-## Batch EV: two trophies for club careers
+## Batch EV ✓: two trophies for club careers
 
 Two new achievements for the choose-your-club careers; each shows a stand-in (the cups icon) until its own is in. 128×128, like the other `achievements/…` (a single picture, no lettering):
 - `achievements/underdog_story` **Underdog Story** (win a Cup with a club that had a tough start, like the Pinewood Lynx): a small, scrappy player in an oversized jersey hoisting a cup almost as big as they are, a little woodland creature cheering at their feet.
