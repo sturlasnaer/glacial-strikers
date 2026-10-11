@@ -812,6 +812,9 @@ atlas = blade_points(atlas, OUT)
 # Compact existing pixels after every art import; masks stay with their sprite family.
 from repack_always_loaded import repack_always_loaded
 atlas = repack_always_loaded(atlas, OUT)
+# Keep each element's effects on their own lossless, selectively loaded pages.
+from repack_selective_pages import repack_selective_pages
+atlas = repack_selective_pages(atlas, OUT, 'EW')
 with open(os.path.join(OUT, 'atlas.json'), 'w') as fh:
     json.dump(atlas, fh, separators=(',', ':'))
 
