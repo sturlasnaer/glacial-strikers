@@ -4,7 +4,7 @@
 // league as a club like any other (useCareer and applyClub in data.js). Each has a story of its
 // own: a line on the picker and the opening scene, spoken by the club's line-up (the 'us' lines'
 // kits stand for its centre, winger and defender) and Kip.
-import { TEAMS, CHARACTERS, GOALIE } from './data.js';
+import { TEAMS, CHARACTERS, GOALIE, RECRUITS, GOALIE_RECRUITS } from './data.js';
 
 export const CLUB_CHOICES = ['foxes', 'lynx', 'comets', 'owls', 'rams', 'moose', 'ravens', 'royals', 'custom'];
 
@@ -121,6 +121,19 @@ export const FOUNDER_NAMES = {
   D: ['Bodhi', 'Ingrid', 'Rory', 'Sol', 'Freja', 'Arlo'],
   G: ['Wren', 'Signe', 'Teo', 'Hollis', 'Ylva', 'Quinn'],
 };
+
+// How strong a choice starts, against the Foxes' story (the game's tuning): its three stars'
+// stats and twice its goalie's. 'tough', 'even' or 'strong' (one's own club starts even: founders
+// like the cast). Worked out once, before any career moves the lists.
+const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+const strength = (skaters, g) => skaters.reduce((a, b) => a + sum(b), 0) + 2 * (g.rfx + g.pos);
+const BASELINE = strength(['frost', 'thunder', 'stone'].map((k) => CHARACTERS[k].base), GOALIE.base);
+const START = Object.fromEntries(CLUB_CHOICES.filter((id) => id !== 'foxes' && id !== 'custom').map((id) => {
+  const d = strength(['c', 'w', 'd'].map((k) => RECRUITS[`${id}_${k}`].base), GOALIE_RECRUITS[`${id}_g`].base) - BASELINE;
+  return [id, d < -2 ? 'tough' : d > 7 ? 'strong' : 'even'];
+}));
+export const clubStart = (team) => START[team] || 'even';
+export const START_NAMES = { tough: { name: 'Tough start' }, even: { name: 'Even start' }, strong: { name: 'Strong start' } };
 
 // Who a choice starts with, for the picker: centre, winger, defender and goalie.
 export function clubStars(team) {

@@ -1581,5 +1581,7 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .club-tag { font-size: 11px; vertical-align: 2px; }
 .club-blurb { font-size: 12.5px; line-height: 1.35; }
 .club-stars { font-size: 12px; color: var(--ice-2, #c3d3ea); }
+.club-start { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 999px; font-size: 11px; border: 1px solid currentColor; white-space: nowrap; }
+.club-start.tough { color: #ff9a8a; } .club-start.even { color: #c3d3ea; } .club-start.strong { color: #7fe08a; }
 @media (max-width: 560px) { .club-grid { grid-template-columns: 1fr; max-height: 70vh; } .club-crest { width: 48px; height: 48px; } }
 

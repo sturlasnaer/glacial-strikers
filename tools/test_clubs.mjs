@@ -8,7 +8,7 @@ import { TEAMS, RIVAL_IDS, FOUNDING_RIVALS, ELITE_IDS, ALL_RIVALS, CAREER, CLUB,
 import { newSave, goalieIds, starterId, lineupIds, matchConfig } from '../src/progress.js';
 import { newLeague, nextFixture, recordOurGame, standings, BYE, isBye, realRounds } from '../src/league.js';
 import { makeRng } from '../src/util.js';
-import { CLUB_CHOICES, CLUB_STORIES, CLUB_PAYOFFS, payoffDue, clubStars } from '../src/clubs.js';
+import { CLUB_CHOICES, CLUB_STORIES, CLUB_PAYOFFS, payoffDue, clubStars, clubStart } from '../src/clubs.js';
 import { pickRunners, mascotOf } from '../src/race.js';
 import { postcardFor } from '../src/trip.js';
 import { useModular } from '../src/modular.js';
@@ -18,6 +18,7 @@ const check = (name, cond, info) => { if (cond) pass++; else { fail++; console.l
 useModular({ skaters: { body_std: {}, body_big: {}, body_small: {} }, modular: { heads: { c: {}, cage: {}, braids: {} } } });
 
 check('nine choices: the Foxes, the Frostline\'s seven and one\'s own, each with a story', CLUB_CHOICES.length === 9 && CLUB_CHOICES[0] === 'foxes' && CLUB_CHOICES.at(-1) === 'custom' && CLUB_CHOICES.every((id) => CLUB_STORIES[id] && CLUB_STORIES[id].intro.length >= 4 && CLUB_STORIES[id].blurb && clubStars(id).length === 4));
+check('the picker says how strong each starts: the Lynx tough (a young goalie), the Royals strong, the Foxes even', clubStart('lynx') === 'tough' && clubStart('royals') === 'strong' && clubStart('foxes') === 'even' && clubStart('custom') === 'even' && CLUB_CHOICES.every((id) => ['tough', 'even', 'strong'].includes(clubStart(id))));
 check('...only real clubs can be played', careerClub('lynx') === 'lynx' && careerClub('foxes') === null && careerClub('home') === null && careerClub('pandas') === null && careerClub('nope') === null);
 
 // the Foxes' story: as before

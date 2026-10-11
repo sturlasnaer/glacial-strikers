@@ -63,7 +63,7 @@ import { SNOW_TIME, newSnowball, stepSnowball, throwAt, snowPrize } from './snow
 import { KID_STAR_IDS } from './kidstars.js';
 import { tripStops, POSTCARD_TOWNS, NATIONAL_POSTCARDS } from './trip.js';
 import { tierOf, tierInfo, tierAt, TIERS, safeSeason } from './tiers.js';
-import { CLUB_CHOICES, CLUB_STORIES, clubStars, CUSTOM_CLUB } from './clubs.js';
+import { CLUB_CHOICES, CLUB_STORIES, clubStars, clubStart, START_NAMES, CUSTOM_CLUB } from './clubs.js';
 import { newPet, stepPet, tapPet, tossPuck, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall,
   PET_KINDS, PET_KIND, PET_FRAMES, PET_WINS, PET_AREA, ROOM_MAX, petDir, petIcon, roomPets, ownedPets, petsDue, adoptPet, sendToHouse, bringToRoom, petNameOf, renamePet, winsAgainst } from './pet.js';
 import { albumPages, albumClubOpen, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
@@ -1549,7 +1549,7 @@ export class UI {
       return `<button class="club-card" data-club="${id}" style="--c1:${tm.color};--c2:${tm.color2}">
         <img class="club-crest" src="${img}" alt="" width="64" height="64">
         <span class="club-txt"><span class="club-name"><b>${esc(tm.name)}</b> <span class="tag club-tag">${esc(t(st.tag))}</span></span>
-          <span class="muted club-blurb">${esc(t(st.blurb))}</span><span class="club-stars">${stars.map(esc).join(' · ')}</span></span></button>`;
+          <span class="muted club-blurb">${esc(t(st.blurb))}</span><span class="club-stars">${stars.map(esc).join(' · ')} <span class="club-start ${clubStart(id)}">${t(START_NAMES[clubStart(id)].name)}</span></span></span></button>`;
     };
     this.modal(`<h2>${t('Choose your club')}</h2>
       <p class="muted" style="margin:0 0 10px">${t('Play the Snowcrest Foxes\' story, or take charge of another Frostline club: its stars, its colours, its story. The Foxes then play in the league like any other club.')}</p>
