@@ -860,7 +860,8 @@ export function clubText(str) {
   return CAST_SWAP.Nix ? out.replace(/\b(Nix|Volta|Bram|Halla)\b/g, (n) => CAST_SWAP[n] || n) : out; // (a club career: its stars, not the cast)
 }
 
-// Twists: 'none' | 'speed_lanes' | 'cracked_ice' | 'both'
+// The Frostline clubs' match settings: the power pucks in play and the purse (a division's
+// purse on top, tiers.js).
 export const TOURNAMENT = {
   name: 'Frostline Regional Cup',
   stages: [

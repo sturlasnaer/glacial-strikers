@@ -11,11 +11,11 @@ const UI_SFX = new Set(['click', 'confirm', 'back', 'blip', 'coin', 'deny', 'pur
 // Most sound effects are synthesized once into a short sample and played back from then
 // on (one node instead of five or six). These stay live: they're rare or vary each time.
 const LIVE_SFX = new Set(['combo', 'horn', 'blip']);
-const SFX_LEN = { ooh: 1.25, whistle: 0.5, thunder: 1, stone: 0.7, ult: 0.7, bedrock: 0.6, post: 1, shimmer: 0.95, crack: 0.6, splash: 0.45, buzzer: 0.9,
+const SFX_LEN = { ooh: 1.25, whistle: 0.5, thunder: 1, stone: 0.7, ult: 0.7, bedrock: 0.6, post: 1, shimmer: 0.95, buzzer: 0.9,
   purchase: 0.65, whoosh: 0.5, freeze: 0.35, glide: 0.5, pickup: 0.3, power: 0.5, boards: 0.4, check: 0.3, stop: 0.35, equip: 0.4, coin: 0.32 };
 const WARM_SFX = ['stick', 'slap', 'pass', 'receive', 'boards', 'boards!', 'stop', 'save', 'catch', 'check', 'whistle', 'drop', 'net', 'poke',
-  'stride:0', 'stride:1', 'stride:2', 'pickup', 'dash', 'glide', 'bedrock', 'ult', 'whoosh', 'thunder', 'freeze', 'stone', 'post', 'splash',
-  'crack', 'shimmer', 'buzzer', 'ooh:0', 'ooh:1', 'ooh:2', 'power:fire', 'power:ice', 'power:lightning', 'power:gravity', 'click', 'confirm', 'back', 'coin', 'purchase', 'equip', 'deny'];
+  'stride:0', 'stride:1', 'stride:2', 'pickup', 'dash', 'glide', 'bedrock', 'ult', 'whoosh', 'thunder', 'freeze', 'stone', 'post',
+  'shimmer', 'buzzer', 'ooh:0', 'ooh:1', 'ooh:2', 'power:fire', 'power:ice', 'power:lightning', 'power:gravity', 'click', 'confirm', 'back', 'coin', 'purchase', 'equip', 'deny'];
 
 // Arena acoustics: reverb length and level, and how big the crowd is.
 const ROOMS = {
@@ -348,20 +348,8 @@ export class Audio {
       // ---- skating
       case 'stride': this.noiseBurst(t, 0.1, 0.06 * v, 'bandpass', 4800 + Math.random() * 900, 1.2, out, 0.03); break;
       case 'stop': this.noiseBurst(t, 0.3, 0.34 * v, 'bandpass', 4200, 0.9, out, 0.01, 2600); this.noiseBurst(t, 0.2, 0.1 * v, 'highpass', 7000, 0.7, out, 0.02); break;
-      // ---- arena rules
-      case 'splash':
-        this.noiseBurst(t, 0.32, 0.3 * v, 'bandpass', 1300, 0.7, out, 0.01);
-        this.noiseBurst(t + 0.05, 0.22, 0.15 * v, 'highpass', 3200, 0.8, out);
-        for (let i = 0; i < 4; i++) this.tone(900 + Math.random() * 900, t + 0.08 + Math.random() * 0.2, 0.06, 'sine', 0.04 * v, out, { slide: 1800 }); // droplets
-        break;
-      case 'crack':
-        this.noiseBurst(t, 0.05, 0.5 * v, 'highpass', 2600, 1.2, out);
-        this.tone(420, t, 0.18, 'square25', 0.07 * v, out, { slide: 160 });
-        this.noiseBurst(t + 0.04, 0.4, 0.2 * v, 'lowpass', 700, 0.8, out);
-        this.tone(55, t, 0.5, 'sine', 0.25 * v, out, { slide: 35 }); // the ice groans
-        break;
-      case 'shimmer': ['E6', 'B6', 'D#7', 'G#7'].forEach((n, i) => this.tone(freq(midi(n)), t + i * 0.07, 0.6, 'sine', 0.045 * v, out, { release: 0.4 })); break;
       // ---- powers and abilities
+      case 'shimmer': ['E6', 'B6', 'D#7', 'G#7'].forEach((n, i) => this.tone(freq(midi(n)), t + i * 0.07, 0.6, 'sine', 0.045 * v, out, { release: 0.4 })); break;
       case 'pickup': ['C6', 'E6', 'G6', 'C7'].forEach((n, i) => this.tone(freq(midi(n)), t + i * 0.045, 0.09, 'square25', 0.07 * v, out)); break;
       case 'power': {
         const set = { fire: ['D5', 'A5', 'D6'], ice: ['E6', 'B6', 'E7'], lightning: ['F5', 'C6', 'F6'], gravity: ['C4', 'G4', 'C5'] }[opt.type] || ['C5', 'G5', 'C6'];

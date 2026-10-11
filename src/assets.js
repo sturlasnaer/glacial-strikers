@@ -1,7 +1,7 @@
 // Loads the atlas pages, draws frames, recolours rival jerseys, makes UI icons.
 //
 // The 'home', 'away' and 'title' pages load at startup. Each rival roster has its own pages,
-// the hub's characters and the arena-rule art have theirs ('hub', 'rules'), and the arenas,
+// the hub's characters have theirs ('hub'), and the arenas,
 // locker room and cut-in banners are separate images; those load when a scene needs them.
 // (Everything is prefetched into the browser cache, but only decoded when used.)
 
