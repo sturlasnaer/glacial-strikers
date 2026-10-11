@@ -7,12 +7,10 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **ES: the clubs' opening scenes** (choose-your-club stories)
-2. **ET: the divisions' gear and new goalie gear** (shop icons)
-3. **EU: mascots for a club of one's own** (one for each crest)
-4. **EV: two trophies for club careers** (achievement icons)
-5. **EW: the newer supers' effects packed by element** (no new drawing)
-6. **EX: one race page per mascot** (no new drawing)
+1. **EU: mascots for a club of one's own** (one for each crest)
+2. **EV: two trophies for club careers** (achievement icons)
+3. **EW: the newer supers' effects packed by element** (no new drawing)
+4. **EX: one race page per mascot** (no new drawing)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -131,7 +129,11 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 **Delivered ER:** Lossless tighter pages for icons, hub art and badges, with dedicated character-family gear-mask pages. All previous frame pixels, ids, pivots, dimensions and scales preserved. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-ER-Testing-Update`.
 
-**Delivered EQ:** Nine distinct native 1280×720 club story backdrops, registered as separate scene files and loaded only when drawn. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-ES-Testing-Update`.
+**Delivered EQ:** Two native rivalry and Bragging Rights icons, registered at 128×128. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EQ-Testing-Update`.
+
+**Delivered ES:** Nine distinct native 1280×720 club story backdrops, registered as separate scene files and loaded only when drawn. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-ES-Testing-Update`.
+
+**Delivered ET:** Eleven native division and goalie shop gear icons plus Pro Kit achievement art, registered at 128×128 with the compact ER packing retained. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-ET-Testing-Update`.
 
 ## Format notes
 
@@ -963,7 +965,7 @@ A new career now starts with a choice of club (the Snowcrest Foxes, any Frostlin
 
 9 images.
 
-## Batch ET: the divisions' gear and new goalie gear
+## Batch ET ✓: the divisions' gear and new goalie gear
 
 The shop has ten new pieces: a stick, skates, protection and goalie gear for each of the National and the Elite (on sale once the club reaches that division), and two new goalie pieces for everyone. They're in the game now with a like piece's icon standing in; each wears its own once its frame is in (no registering needed beyond the frame names). Same style and size as the shop's existing gear icons (`equipment_items/stick/frost`, `icons/gear_pro_mitts`: a single item on a transparent background, about 128 px):
 - `equipment_items/stick/capital` **Capital Carbon** (National): a sleek matte-silver composite stick with white tape, a thin navy stripe.
