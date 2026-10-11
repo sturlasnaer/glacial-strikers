@@ -12,6 +12,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 3. **EU: mascots for a club of one's own** (one for each crest)
 4. **EV: two trophies for club careers** (achievement icons)
 5. **EW: the newer supers' effects packed by element** (no new drawing)
+6. **EX: one race page per mascot** (no new drawing)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -1014,3 +1015,9 @@ Like ER, a repack for phone memory. The newer supers' drawn effects (`abilities_
 - **Shadow**: `ability_effects/fade/…` and `ability_effects/eclipse/…` (about 6.3 MB)
 
 Lossless and nothing redrawn: the frame ids, sizes, pivots and scales stay the same, only their page and place change. No code change is needed: a match with one of these elements then decodes about 4 to 7 MB instead of 24.
+
+## Batch EX: one race page per mascot (no new drawing)
+
+Another repack for phone memory. The mascot race runs four mascots: ours, the rival's and two more. A match loads only the race pages those runners are on, but today the runners share big pages (the Frostline's eight on a 12 MB page, the National's seven on a 10 MB one), so a match against a National club decodes 22 MB for about 5 MB of runners. Please repack the `race` group so that each mascot's five frames (`race/<mascot>/run_1`–`run_4` and `win`) sit on a small page of their own, about 1.4 MB decoded each. Please do the same for the own-club mascots from EU (`race/club_<crest>/…`) when they come in.
+
+Lossless and nothing redrawn: the frame ids, sizes, pivots and scales stay the same. No code change is needed (the game picks the two extra runners and loads just their pages): a race then decodes about 5.5 MB instead of 12 to 22.

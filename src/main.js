@@ -10,7 +10,7 @@ import { PadNav } from './padnav.js';
 import { forceSeason, seasonFor } from './seasonal.js';
 import { addPacks } from './album.js';
 import { cleanSign, CROWD_SIGNS } from './fancam.js';
-import { RACE_AT, mascotOf } from './race.js';
+import { RACE_AT, mascotOf, raceLoad } from './race.js';
 import { roomPets, petDir, BENCH_POSES } from './pet.js';
 import { MINI_ROUNDS, MINI_WIN, miniOf, newMiniCup, miniResult } from './minicup.js';
 import { firstTime } from './guide.js';
@@ -338,9 +338,8 @@ class App {
     // the coach cub keeps its costume at away games too (Batch DW): just its own page, not the
     // whole seasonal group (that's some 30 MB decoded)
     const coachCostume = this.save.settings.little && seasonFor() ? ['talk_1', 'talk_2', 'point', 'cheer', 'think'].map((f) => `cub_coach_${seasonFor()}/${f}`).filter((f) => Assets.frame(f)) : [];
-    // the mascot race's runners (Batch DB): only the pages with the Snow Fox and their mascot on
-    // (the race draws the others from those); the whole race group is over 20 MB decoded
-    const runners = !this.attract && !cfg.drill && this.save.settings.race !== false ? [`race/${mascotOf('home')}/run_1`, ...(mascotOf(teamId) ? [`race/${mascotOf(teamId)}/run_1`] : [])].filter((f) => Assets.frame(f)) : [];
+    // the mascot race's runners (Batch DB): only the pages of ours, theirs and two more (raceLoad)
+    const runners = !this.attract && !cfg.drill && this.save.settings.race !== false ? raceLoad(teamId, (f) => Assets.frame(f)?.[0], (this.save.record && this.save.record.played) || 0) : [];
     // the room's other pets (up to three) sit on the boards beside the cub at home games: just
     // their sitting and hopping frames' pages (small)
     this.benchPets = arena === 'home' && !this.attract && !cfg.drill && Assets.atlas.arena_spots?.home_cub ? roomPets(this.save).filter((k) => k !== 'fox' && BENCH_POSES.every((f) => Assets.frame(petDir(k) + f))).slice(0, 3) : [];

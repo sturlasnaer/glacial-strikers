@@ -2,7 +2,7 @@
 // every race finishes in good time with one winner, anyone can win, and the same rolls give
 // the same race.
 //   node tools/test_race.mjs
-import { MASCOTS, pickRunners, newRace, stepRace } from '../src/race.js';
+import { MASCOTS, pickRunners, newRace, stepRace, raceLoad, mascotOf } from '../src/race.js';
 import { makeRng } from '../src/util.js';
 
 let pass = 0, fail = 0;
@@ -21,6 +21,22 @@ for (let s = 1; s <= 400; s++) { const r = run(s); wins[r.winner] = (wins[r.winn
 check('every race ends with a winner in 4 to 12 seconds', slowest < 12 && fastest > 4 && Object.values(wins).reduce((a, b) => a + b, 0) === 400, [fastest, slowest]);
 check('...and anyone can win (each at least 15% of 400)', Object.keys(wins).length === 4 && Object.values(wins).every((n) => n >= 60), wins);
 check('the same rolls, the same race', run(42).winner === run(42).winner && run(42).t === run(42).t);
+
+// A match loads only the race's runners' pages (raceLoad): with today's pages (the Frostline's on
+// one, the National's on another), ours and theirs bring the other two along; with each mascot on
+// a page of its own, four small pages, a different two extras from game to game.
+const FROSTLINE = ['home', 'lynx', 'comets', 'rams', 'ravens', 'royals', 'owls', 'moose'];
+const shared = (f) => { const id = Object.keys(MASCOTS).find((k) => f.startsWith(`race/${MASCOTS[k]}/`)); return id === undefined ? undefined : FROSTLINE.includes(id) ? 0 : 1; };
+const own = (f) => { const i = Object.keys(MASCOTS).findIndex((k) => f.startsWith(`race/${MASCOTS[k]}/`)); return i < 0 ? undefined : 10 + i; };
+const pagesOf = (frames, page) => new Set(frames.map(page));
+const runnersOf = (frames) => new Set(frames.map((f) => f.split('/')[1]));
+check('race pages, shared: a Frostline rival loads one page', pagesOf(raceLoad('rams', shared), shared).size === 1 && runnersOf(raceLoad('rams', shared)).size === 2);
+check('...a National rival two', pagesOf(raceLoad('penguins', shared), shared).size === 2);
+const solo = raceLoad('penguins', own, 3);
+check('race pages, one per mascot: four runners, four pages', pagesOf(solo, own).size === 4 && runnersOf(solo).size === 4 && runnersOf(solo).has(mascotOf('home')) && runnersOf(solo).has(mascotOf('penguins')), [...runnersOf(solo)]);
+check('...a different two extras next game', [...runnersOf(raceLoad('penguins', own, 4))].sort().join() !== [...runnersOf(solo)].sort().join());
+check('...and every frame of each runner', solo.length === 20);
+check('...a runner not drawn yet is left out', runnersOf(raceLoad('penguins', (f) => (f.includes('pack_ice') ? undefined : own(f)), 3)).size === 3);
 
 console.log(`Mascot race: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

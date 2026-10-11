@@ -15,12 +15,33 @@ export const RACE_AT = 3; // (goals for either side)
 // Foxes' (the Snow Fox, when they're a club of the league: clubs.js) or a club's own.
 export const mascotOf = (id) => (id === 'home' ? (CAREER.custom ? 'club_' + (CLUB.crest || 'fox') : MASCOTS[CAREER.team] || MASCOTS.home) : id === 'foxes' ? MASCOTS.home : MASCOTS[id]);
 
+// The race's field: ours and the opponent's, who always run, and the rest who could.
+export function raceField(opp) {
+  const ids = ['home', ...(opp && opp !== 'home' && mascotOf(opp) ? [opp] : [])];
+  const rest = [...Object.keys(MASCOTS), ...(CAREER.team || CAREER.custom ? ['foxes'] : [])].filter((k) => !ids.includes(k) && k !== CAREER.team && (k !== 'home' || !CAREER.custom));
+  return { ids, rest };
+}
+
 // Four runners: our Snow Fox, the opponent's, and two more; only those drawn (has(team)).
 export function pickRunners(opp, rnd, has = () => true) {
-  const ids = ['home', ...(opp && opp !== 'home' && mascotOf(opp) ? [opp] : [])].filter(has);
-  const rest = [...Object.keys(MASCOTS), ...(CAREER.team || CAREER.custom ? ['foxes'] : [])].filter((k) => !ids.includes(k) && k !== CAREER.team && (k !== 'home' || !CAREER.custom) && has(k));
+  const field = raceField(opp), ids = field.ids.filter(has), rest = field.rest.filter(has);
   while (ids.length < 4 && rest.length) ids.push(rest.splice(Math.floor(rnd() * rest.length), 1)[0]);
   return ids;
+}
+
+// A runner's frames.
+export const raceFrames = (id) => ['run_1', 'run_2', 'run_3', 'run_4', 'win'].map((f) => `race/${mascotOf(id)}/${f}`);
+
+// The frames whose pages a match loads for its race (the race runs whoever's loaded; the whole
+// race group is 30 MB decoded): ours and theirs, and two more from the same pages when there are
+// two there, else two others (k: a different two each game). page(frame): its page, undefined if
+// it isn't drawn.
+export function raceLoad(opp, page, k = 0) {
+  const { ids, rest } = raceField(opp), drawn = (id) => page(raceFrames(id)[0]) !== undefined;
+  const base = ids.filter(drawn), on = new Set(base.flatMap(raceFrames).map(page));
+  const others = rest.filter(drawn), free = others.filter((id) => on.has(page(raceFrames(id)[0])));
+  const away = others.filter((id) => !free.includes(id)), n = Math.min(Math.max(0, 2 - free.length), away.length);
+  return [...base, ...Array.from({ length: n }, (_, j) => away[(k * 2 + j) % away.length])].flatMap(raceFrames).filter((f) => page(f) !== undefined);
 }
 
 export const newRace = (ids) => ({ t: 0, runners: ids.map((id) => ({ id, x: 0, boost: 0, slip: 0 })), winner: null });
