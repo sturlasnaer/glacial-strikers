@@ -7,13 +7,13 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **EW: the newer supers' effects packed by element** (no new drawing)
-2. **EX: one race page per mascot** (no new drawing)
+1. **EX: one race page per mascot** (no new drawing)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
 - Registering art is yours; for any other code change (loading, layout, game logic), please say what and why in the commit message. Load only what's drawn: `Assets.loadPages(frameIds)` loads just the pages those frames are on (the whole `seasonal` group is about 30 MB decoded, too much to keep for one portrait).
 - The atlas pages nothing referenced any more (115 files, 33 MB: the pages ER and ET repacked, older batch pages) were deleted on 2026-10-11 at the user's request. Please have the build leave out (or delete) any page the atlas doesn't reference after packing, and don't commit them again; the kit folders (`ui-kit`, `touch-kit`, `hud-kit`, `loading`, `prospect-cards`) were left as they are.
+- The repacked pages (ER's step, rerun with each batch) get a fresh name every build: EV renamed all 36 (`*_er_695004020cf6_*` → `*_er_c9e3778d21ca_*`) though 35 are byte-identical, so every returning player downloads about 12 MB of unchanged pages again after each batch, and the old set stays in the repo unreferenced. Please name each repacked page after its own contents (an unchanged page keeps its name) and remove the superseded pages in the same commit, starting with the `695004020cf6` set.
 - The arena rules are gone from the game (2026-10-10, the user's call): no more rule art is needed (no lanes, cracks, shadows, moonbeams, planks, icicles and so on). The new rinks (EE–EG, EL, EM, EO) are plain backdrops. The old rule art stays registered for now; the user decides whether it goes.
 
 **Delivered BN–BQ:** the linesman's delayed-penalty motion (8), nine new feature icons, three star badges and Coach Brekka's stern portrait (4), and all 42 keyboard/controller prompts. Native generation resumed successfully. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-BN-BQ-Testing-Update`.
@@ -137,6 +137,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered EU:** Seven native custom-club mascot families: 28 recolourable home poses and 35 race poses, registered with fixed foot anchors. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EU-Testing-Update`.
 
 **Delivered EV:** Two native club-career achievement icons: Underdog Story and From Scratch. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EV-Testing-Update`.
+
+**Delivered EW:** Lossless abilities_al packing into element-specific pages for Ember, Gale and Shadow. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EW-Testing-Update`.
 
 ## Format notes
 
@@ -1012,7 +1014,7 @@ Two new achievements for the choose-your-club careers; each shows a stand-in (th
 
 2 frames.
 
-## Batch EW: the newer supers' effects packed by element (no new drawing)
+## Batch EW ✓: the newer supers' effects packed by element (no new drawing)
 
 Like ER, a repack for phone memory. The newer supers' drawn effects (`abilities_al`: Batch AL) are on two pages, 24 MB decoded, and the game now loads only the pages holding the effects of the elements a match's skaters play (`Assets.abilityFrames`). Each element's effects are split across both pages today, so most matches still decode all 24 MB. Please repack `abilities_al` so that each element's effects sit together on their own tightly filled page or pages:
 - **Ember**: `ability_effects/heat_check/…` and `ability_effects/firestorm/…` (about 4.3 MB of frames)
