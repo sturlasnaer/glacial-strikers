@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-11q',
+    items: [
+      { icon: 'album/mascot_capybaras', alt: 'icons/career', text: 'The sticker album\'s National and Elite pages now end with each club\'s mascot, from the Capybaras\' to the Pandas\': eleven new stickers to find.' },
+    ],
+  },
+  {
     id: '2026-10-11p',
     items: [
       { icon: 'rival_crests/crest/coral_bay_flamingos', alt: 'icons/career', text: 'The Birchwood Beavers and the Coral Bay Flamingos are complete too: crests, mascots in the stands and the mascot race, postcards from the Millpond and Coral Bay, and two more pets to win: a beaver kit and a flamingo chick. Every club in the country now has its pet.' },
