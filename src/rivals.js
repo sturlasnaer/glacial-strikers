@@ -96,9 +96,11 @@ export const RIVALRY_PRIZE = 1.5;
 export function rivalryOf(save, L) {
   if (!L || !L.teams) return null;
   if (L.rivalry !== undefined) return L.rivalry;
-  const ids = L.teams.filter((id) => id !== 'home'), rec = (id) => (save.rivals && save.rivals[id]) || { losses: 0, played: 0 };
+  // (only a club still to play: a save from before the rivalry game, loaded mid-season)
+  const left = new Set((L.schedule || []).slice(L.round || 0).map((r) => r.games[0].b));
+  const ids = L.teams.filter((id) => id !== 'home' && (!L.schedule || left.has(id))), rec = (id) => (save.rivals && save.rivals[id]) || { losses: 0, played: 0 };
   const most = [...ids].sort((a, b) => rec(b).losses - rec(a).losses || rec(b).played - rec(a).played || ids.indexOf(b) - ids.indexOf(a))[0];
-  L.rivalry = rec(most).losses > 0 ? most : L.prevChampion && ids.includes(L.prevChampion) ? L.prevChampion : ids[ids.length - 1];
+  L.rivalry = !ids.length ? null : rec(most).losses > 0 ? most : L.prevChampion && ids.includes(L.prevChampion) ? L.prevChampion : ids[ids.length - 1];
   return L.rivalry;
 }
 

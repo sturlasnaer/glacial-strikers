@@ -5,7 +5,9 @@
 // cast's names in other clubs' lines become its stars'; and the save keeps all of it.
 //   node tools/test_clubs.mjs
 import { TEAMS, RIVAL_IDS, FOUNDING_RIVALS, ELITE_IDS, ALL_RIVALS, CAREER, CLUB, RECRUITS, GOALIE_RECRUITS, DIALOGUE, useCareer, applyClub, clubText, stageOf, careerClub, clubOwn, clubT, comboFor, pairKey, ELEMENTS, COMBOS } from '../src/data.js';
-import { rivalLines } from '../src/rivals.js';
+import { rivalLines, rivalryOf } from '../src/rivals.js';
+import { newMiniCup } from '../src/minicup.js';
+import { lastSeasonRate } from '../src/progress.js';
 import { CAREER_MOMENTS } from '../src/lockerroom.js';
 import { tradeable } from '../src/trades.js';
 import { AchievementTracker } from '../src/achievements.js';
@@ -128,6 +130,19 @@ check('...never naming the Foxes in another club\'s (they\'d read as ours)', CLU
   const unlocked = (team) => { const s = newSave(team, makeRng(4)); s.cups = 1; const got = []; new AchievementTracker(s, (a) => got.push(a.id)).checkMeta(); return got; };
   const lynx = unlocked('lynx'), own = unlocked('custom'), royals = unlocked('royals'), foxes = unlocked(null);
   check('Underdog Story for the Lynx\'s Cup, From Scratch for one\'s own club\'s, neither for the Royals or the Foxes', lynx.includes('underdog-story') && !lynx.includes('from-scratch') && own.includes('from-scratch') && !own.includes('underdog-story') && !royals.some((id) => id === 'underdog-story' || id === 'from-scratch') && !foxes.some((id) => id === 'underdog-story' || id === 'from-scratch'));
+}
+
+// the Mini Cup never draws our own club (the Foxes in its place); the rivalry game is a club
+// still to play; a bye isn't a lost game
+{
+  const s = newSave('lynx');
+  check('the Mini Cup: the Foxes in the Lynx\'s place', newMiniCup(s, () => 0).opps[0] === 'foxes' && !newMiniCup(s, () => 0.99).opps.includes('lynx'));
+  const L = s.league; L.round = 3; delete L.rivalry;
+  const played = L.schedule.slice(0, 3).map((r) => r.games[0].b);
+  check('the rivalry pick, mid-season: a club still to play', rivalryOf(s, L) && !played.includes(L.rivalry), [L.rivalry, played]);
+  const own = newSave('custom', makeRng(3)), CL = own.league; let guard = 0;
+  while (CL.phase === 'regular' && guard++ < 20) { const f = nextFixture(CL); if (f.kind === 'allstar') { CL.allstar = { skipped: true }; continue; } if (f.kind === 'classic') { CL.classic = { opp: f.opponent, gf: 1, ga: 0, won: true }; continue; } recordOurGame(CL, own, 5, 2); }
+  check('...and a season of wins with a bye week rates as all wins', lastSeasonRate(CL) === 1, lastSeasonRate(CL));
 }
 
 // and back: a Foxes career after a club career puts everything back

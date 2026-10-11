@@ -11,7 +11,8 @@ export const MINI_POOLS = [['lynx', 'comets'], ['owls', 'rams'], ['moose', 'rave
 export const miniOf = (save) => save.miniCup || null;
 
 export function newMiniCup(save, rnd = Math.random) {
-  save.miniCup = { round: 0, opps: MINI_POOLS.map((pool) => pool[Math.floor(rnd() * pool.length)]), results: [] };
+  // (in a career as one of these clubs, the Foxes take its place, as in the league)
+  save.miniCup = { round: 0, opps: MINI_POOLS.map((pool) => pool[Math.floor(rnd() * pool.length)]).map((id) => (id === save.team ? 'foxes' : id)), results: [] };
   return save.miniCup;
 }
 

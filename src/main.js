@@ -560,7 +560,7 @@ class App {
     const s = this.save;
     let c = miniOf(s);
     if (!c || c.over) { c = newMiniCup(s); writeSave(s); }
-    this.startExhibition(c.opps[c.round], [], 'auto', false, true);
+    this.startExhibition(c.opps[c.round] === s.team ? 'foxes' : c.opps[c.round], [], 'auto', false, true); // (never our own club)
   }
 
   // After a Mini Cup game: the cup and its prize, the bracket and the next game, or out.

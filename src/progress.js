@@ -161,6 +161,8 @@ export function loadSave() {
     }
     for (const k of s.team ? Object.keys(base.chem) : CAST_PAIRS) if (typeof s.chem[k] !== 'number') s.chem[k] = 0;
     if (legacy) s.league = migrateLeague(s);
+    if (s.league && s.league.tier === undefined) s.league.tier = tierOf(s); // (a league from the divisions' first day: its Cup Final's building)
+    if (s.tier && (s.tierTop || 0) < s.tier) s.tierTop = s.tier;
     ownClubPet(s); // (a club career begun before the pets: its own little one)
     return s;
   } catch (e) {
@@ -339,7 +341,7 @@ export function lastSeasonRate(L) {
   let w = 0, n = 0;
   for (const round of (L && L.results) || []) {
     const g = round.find((r) => r.a === 'home' || r.b === 'home');
-    if (!g) continue;
+    if (!g || g.bye) continue; // (our bye week isn't a game)
     n++;
     if (g.a === 'home' ? g.ga > g.gb : g.gb > g.ga) w++;
   }
