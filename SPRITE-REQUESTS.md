@@ -128,7 +128,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 **Delivered EO:** Capital Dome and Diamond Arena: two unique Cup Final backdrops, four trophy scoreboard phases, two near-glass overlays with native alpha masks, eight penalty-box layers and two achievement icons (18 frames), imported on existing arena feature groups. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EO-Testing-Update`.
 
-**Delivered EP so far:** 27 individual native supporter poses and matching native cloth masks. Completed clubs: hot_springs_capybaras, birchwood_beavers, cliffside_puffins. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EP-Testing-Update`.
+**Delivered EP so far:** 36 individual native supporter poses and matching native cloth masks. Completed clubs: hot_springs_capybaras, birchwood_beavers, cliffside_puffins, timberline_grizzlies. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EP-Testing-Update`.
 
 ## Format notes
 
