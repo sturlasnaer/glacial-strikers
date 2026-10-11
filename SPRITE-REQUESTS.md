@@ -7,17 +7,16 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **EH: the Frostline's pets (1)**
-2. **EI: the Frostline's pets (2)**
-3. **EJ: the National clubs' pets (1)**
-4. **EK: the National clubs' pets (2)**
-5. **EL: the Elite's own clubs, the Taiga Tigers and the Bamboo Ridge Pandas**
-6. **EM: two more National clubs, the Birchwood Beavers and the Coral Bay Flamingos**
-7. **EN: the new clubs' mascot stickers for the album**
-8. **EO: the National and Elite Cup Finals' buildings**
-9. **EP: supporters' sections for the new clubs' rinks**
-10. **EQ: the rivalry game's icons**
-11. **ER: tighter pages for the always-loaded art** (no new drawing)
+1. **EI: the Frostline's pets (2)**
+2. **EJ: the National clubs' pets (1)**
+3. **EK: the National clubs' pets (2)**
+4. **EL: the Elite's own clubs, the Taiga Tigers and the Bamboo Ridge Pandas**
+5. **EM: two more National clubs, the Birchwood Beavers and the Coral Bay Flamingos**
+6. **EN: the new clubs' mascot stickers for the album**
+7. **EO: the National and Elite Cup Finals' buildings**
+8. **EP: supporters' sections for the new clubs' rinks**
+9. **EQ: the rivalry game's icons**
+10. **ER: tighter pages for the always-loaded art** (no new drawing)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -115,6 +114,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered ED:** The country map with nineteen measured town anchors and seven National postcards, including the complete Puffin postage stamp. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-ED-Testing-Update`.
 
 **Delivered EE–EG and EL/EM rinks:** Eleven native home-rink backdrops complete the nineteen clubs’ distinct venues. EE–EG complete; other EL/EM requests remain open. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EE-EG-EL-EM-Testing-Update`.
+
+**Delivered EH:** Forty native pet-collection frames: lynx kitten, snowy owlet, golden lamb and moose calf, with four walking phases, idle and breathing pairs, hop and gift-card portraits. New `pets` page group, loaded only when drawn. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EH-Testing-Update`.
 
 ## Format notes
 
@@ -807,7 +808,7 @@ For **each** pet below, exactly like Snowball's frames (`pet/walk_1` … on the 
 
 Each wears a little bandana, collar or scarf in its club's colours, so you can tell whose it is. All on pages in a new `pets` group (loaded only when they're in the room), no lettering. 10 frames a pet.
 
-## Batch EH: the Frostline's pets (1)
+## Batch EH ✓: the Frostline's pets (1)
 
 - `lynx`: a **Lynx kitten** (Pinewood Lynx): spotted, tufted ears, huge paws, green bandana.
 - `owlet`: a **Snowy owlet** (Glacier Owls): a round white fluffball with big yellow eyes; it walks with a waddle, and the hop is a flap of its stubby wings.
