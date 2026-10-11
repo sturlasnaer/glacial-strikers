@@ -805,6 +805,9 @@ atlas = merge_league_motion(atlas, OUT, BH_BI)
 # where the blade meets the ice in the ordinary skating frames (from the gear masks)
 from blade_points import blade_points
 atlas = blade_points(atlas, OUT)
+# Compact existing pixels after every art import; masks stay with their sprite family.
+from repack_always_loaded import repack_always_loaded
+atlas = repack_always_loaded(atlas, OUT)
 with open(os.path.join(OUT, 'atlas.json'), 'w') as fh:
     json.dump(atlas, fh, separators=(',', ':'))
 

@@ -7,11 +7,10 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **ER: tighter pages for the always-loaded art** (no new drawing)
-2. **ES: the clubs' opening scenes** (choose-your-club stories)
-3. **ET: the divisions' gear and new goalie gear** (shop icons)
-4. **EU: mascots for a club of one's own** (one for each crest)
-5. **EV: two trophies for club careers** (achievement icons)
+1. **ES: the clubs' opening scenes** (choose-your-club stories)
+2. **ET: the divisions' gear and new goalie gear** (shop icons)
+3. **EU: mascots for a club of one's own** (one for each crest)
+4. **EV: two trophies for club careers** (achievement icons)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -129,6 +128,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered EP:** 99 individual native supporter poses and matching native cloth masks. Completed clubs: hot_springs_capybaras, birchwood_beavers, cliffside_puffins, timberline_grizzlies, driftwood_seals, coral_bay_flamingos, pack_ice_penguins, sunmesa_bulls, northlight_narwhals, taiga_tigers, bamboo_ridge_pandas. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EP-Testing-Update`.
 
 **Delivered EQ:** Two native rivalry-game and Bragging Rights icons, 128×128, with centred pivots and transparent gutters. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EQ-Testing-Update`.
+
+**Delivered ER:** Lossless tighter pages for icons, hub art and badges, with dedicated character-family gear-mask pages. All previous frame pixels, ids, pivots, dimensions and scales preserved. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-ER-Testing-Update`.
 
 ## Format notes
 
@@ -936,7 +937,7 @@ Once a season one league game is the Foxes' rivalry game, against the club that 
 
 2 frames.
 
-## Batch ER: tighter pages for the always-loaded art (no new drawing)
+## Batch ER ✓: tighter pages for the always-loaded art (no new drawing)
 
 A phone's image memory is the game's tightest limit (a National match decodes about 330 MB of art). Some groups have grown a page per batch, mostly empty, and every page is decoded whole:
 - `icons_z` is loaded from the first screen and never let go: 18 pages, 48.6 MB decoded for 28.7 MB of icons (59% full; several 1.7 MB pages hold one or two icons). Please repack it into as few, tightly filled pages as fit (the frame ids stay the same, only their page and place change).
