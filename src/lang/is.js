@@ -1784,7 +1784,7 @@ export const IS = {
   "Play match": "Spila leik",
   "Play offline": "Spila án nets",
   "Play the {round}": "Spila: {round}",
-  "Play the Snowcrest Foxes' story, or take charge of another Frostline club: its stars, its colours, its story. The Foxes then play in the league like any other club.": "Spilaðu sögu Snowcrest Foxes, eða taktu við öðru félagi í Frostline: stjörnunum þess, litunum og sögunni. Foxes spila þá í deildinni eins og hvert annað félag.",
+  "Play the Snowcrest Foxes' story, take charge of another Frostline club (its stars, its colours, its story) or found a club of your own. The Foxes then play in the league like any other club.": "Spilaðu sögu Snowcrest Foxes, taktu við öðru félagi í Frostline (stjörnunum þess, litunum og sögunni) eða stofnaðu þitt eigið félag. Foxes spila þá í deildinni eins og hvert annað félag.",
   "Played every position once. Liked defence the most.": "Hefur spilað allar stöður einu sinni. Leist best á vörnina.",
   "Player": "Leikmaður",
   "Player {n} wins!": "Leikmaður {n} vinnur!",

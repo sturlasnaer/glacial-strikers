@@ -1610,7 +1610,7 @@ export class UI {
           <span class="muted club-blurb">${esc(t(st.blurb))}</span><span class="club-stars">${stars.map(esc).join(' · ')} <span class="club-start ${clubStart(id)}">${t(START_NAMES[clubStart(id)].name)}</span></span></span></button>`;
     };
     this.modal(`<h2>${t('Choose your club')}</h2>
-      <p class="muted" style="margin:0 0 10px">${t('Play the Snowcrest Foxes\' story, or take charge of another Frostline club: its stars, its colours, its story. The Foxes then play in the league like any other club.')}</p>
+      <p class="muted" style="margin:0 0 10px">${t('Play the Snowcrest Foxes\' story, take charge of another Frostline club (its stars, its colours, its story) or found a club of your own. The Foxes then play in the league like any other club.')}</p>
       <div class="club-grid">${CLUB_CHOICES.map(card).join('')}</div>`, (m, close) => {
       m.classList.add('club-modal');
       this.click('[data-club]', (el) => { audio.sfx('confirm'); close(); onPick(el.dataset.club); }, m);
