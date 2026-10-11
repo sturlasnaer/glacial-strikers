@@ -7,17 +7,16 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **EK: the National clubs' pets (2)**
-2. **EL: the Elite's own clubs, the Taiga Tigers and the Bamboo Ridge Pandas**
-3. **EM: two more National clubs, the Birchwood Beavers and the Coral Bay Flamingos**
-4. **EN: the new clubs' mascot stickers for the album**
-5. **EO: the National and Elite Cup Finals' buildings**
-6. **EP: supporters' sections for the new clubs' rinks**
-7. **EQ: the rivalry game's icons**
-8. **ER: tighter pages for the always-loaded art** (no new drawing)
-9. **ES: the clubs' opening scenes** (choose-your-club stories)
-10. **ET: the divisions' gear and new goalie gear** (shop icons)
-11. **EU: mascots for a club of one's own** (one for each crest)
+1. **EL: the Elite's own clubs, the Taiga Tigers and the Bamboo Ridge Pandas**
+2. **EM: two more National clubs, the Birchwood Beavers and the Coral Bay Flamingos**
+3. **EN: the new clubs' mascot stickers for the album**
+4. **EO: the National and Elite Cup Finals' buildings**
+5. **EP: supporters' sections for the new clubs' rinks**
+6. **EQ: the rivalry game's icons**
+7. **ER: tighter pages for the always-loaded art** (no new drawing)
+8. **ES: the clubs' opening scenes** (choose-your-club stories)
+9. **ET: the divisions' gear and new goalie gear** (shop icons)
+10. **EU: mascots for a club of one's own** (one for each crest)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -121,6 +120,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered EI:** Thirty native pet frames: fire salamander, raven chick and polar bear cub, with four walking phases, idle and breathing pairs, hop and gift-card portraits, plus Pet Pals and Full Pet House achievement icons (32 frames total). Pets load only when drawn; the two small achievement icons use `icons_z`. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EI-Testing-Update`.
 
 **Delivered EJ:** Forty native pet frames: capybara pup, puffling, seal pup and penguin chick, with four walking phases, idle and breathing pairs, hop and gift-card portraits (40 frames total). Pets load only when drawn. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EJ-Testing-Update`.
+
+**Delivered EK:** Thirty native pet frames: grizzly cub, bull calf and narwhal calf in its wheeled water tub, with four walking phases, idle and breathing pairs, tap reactions and gift-card portraits (30 frames total). Pets load only when drawn. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EK-Testing-Update`.
 
 ## Format notes
 
@@ -839,7 +840,7 @@ And two achievement icons (128×128, like the other `achievements/…`): `achiev
 
 40 frames.
 
-## Batch EK: the National clubs' pets (2)
+## Batch EK ✓: the National clubs' pets (2)
 
 - `bear`: a **Grizzly cub** (Timberline Grizzlies): brown, round ears, a bit clumsy, green bandana.
 - `bull`: a **Bull calf** (Sunmesa Bulls): reddish-brown with tiny horn nubs and a desert-gold bandana.
