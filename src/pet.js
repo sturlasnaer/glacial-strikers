@@ -197,6 +197,29 @@ export function adoptPet(save, kind) {
   if (full) P.away.push(kind);
   return full ? 'house' : 'room';
 }
+// A pet's daily find: once a day each pet in the room has found a few coins on its rounds, to
+// take with a tap (ROOM_MAX finds a day at most, however the room's swapped). day: dayKey().
+export const PET_FIND = 10;
+export function petFinds(save, day) {
+  const F = (save.petFinds ||= { day: '', got: [] });
+  if (F.day !== day) { F.day = day; F.got = []; }
+  return F.got.length >= ROOM_MAX ? [] : roomPets(save).filter((k) => !F.got.includes(k));
+}
+export function takeFind(save, kind, day) {
+  if (!petFinds(save, day).includes(kind)) return 0;
+  save.petFinds.got.push(kind);
+  save.coins += PET_FIND;
+  return PET_FIND;
+}
+
+// A club career's own mascot's little one is the club's from the start (no club can beat
+// itself three times); Snowball stays the room's cub, and the Foxes, a rival now, have no
+// other to send.
+export const ownPetKind = (team) => (team && PET_KINDS.find((k) => k.team === team && k.id !== 'fox')) || null;
+export function ownClubPet(save) {
+  const k = ownPetKind(save.team);
+  if (k && !petsOf(save).got[k.id]) petsOf(save).got[k.id] = { name: '', season: 1 };
+}
 // To the pet house and back (the room has ROOM_MAX places).
 export function sendToHouse(save, kind) {
   const P = petsOf(save);

@@ -65,7 +65,7 @@ import { tripStops, POSTCARD_TOWNS, NATIONAL_POSTCARDS } from './trip.js';
 import { tierOf, tierInfo, tierAt, TIERS, safeSeason } from './tiers.js';
 import { CLUB_CHOICES, CLUB_STORIES, clubStars, clubStart, START_NAMES, CUSTOM_CLUB } from './clubs.js';
 import { newPet, stepPet, tapPet, tossPuck, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall,
-  PET_KINDS, PET_KIND, PET_FRAMES, PET_WINS, PET_AREA, ROOM_MAX, petDir, petIcon, roomPets, ownedPets, petsDue, adoptPet, sendToHouse, bringToRoom, petNameOf, renamePet, winsAgainst } from './pet.js';
+  PET_KINDS, PET_KIND, PET_FRAMES, PET_WINS, PET_AREA, ROOM_MAX, petDir, petIcon, roomPets, ownedPets, petsDue, adoptPet, sendToHouse, bringToRoom, petNameOf, renamePet, winsAgainst, petFinds, takeFind } from './pet.js';
 import { albumPages, albumClubOpen, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
 
 const PORTRAIT = { frost: 'frost_captain', thunder: 'thunder_winger', stone: 'stone_defender', goalie: 'goalie' };
@@ -913,6 +913,7 @@ export class UI {
     const s = this.app.save, name = () => (s.pet && s.pet.name) || t('Snowball');
     room.insertAdjacentHTML('beforeend', `<button class="pet" id="pet" aria-label="${esc(name())}"><img alt=""><img class="pet-acc" alt="" hidden></button><button class="pet-tag" id="pet-tag" hidden></button>${fetches ? `<img class="pet-puck" id="pet-puck" src="${Assets.sceneImage('pet/puck', 48)}" alt="" hidden>` : ''}${ball ? `<img class="cub-ball" id="cub-ball" src="${Assets.sceneImage('decor/cub_ball', 64)}" alt="">` : ''}`);
     const el = room.querySelector('#pet'), img = el.querySelector('img'), acc = el.querySelector('.pet-acc'), tag = room.querySelector('#pet-tag'), puck = room.querySelector('#pet-puck');
+    const find = this.petFind(room, 'fox');
     this.pet ||= newPet();
     this.pet.bed = sets.bed_sleep ? { x: (bedAt.x / 1536) * 100, y: (bedAt.y / 864) * 100 } : null;
     this.pet.ball = ball ? this.pet.ball || { x: 44, y: 77, v: 0 } : null;
@@ -938,10 +939,12 @@ export class UI {
       const lift = p.hop > 0 ? Math.sin((1 - p.hop / 0.5) * Math.PI) * 3 : 0;
       el.style.cssText = `left:${p.x}%;top:${p.y - lift}%;height:${(H / 864) * 100}%;aspect-ratio:${k.w}/${k.h};transform:translate(-${k.fx * 100}%,-${k.fy * 100}%) scaleX(${p.face});z-index:${p.y < 66 ? 1 : 3}`;
       tag.style.cssText = `left:${p.x}%;top:${p.y - 10}%`;
+      find?.at(p);
       if (tagT > 0 && (tagT -= dt) <= 0) tag.hidden = true;
     }, 80);
     el.addEventListener('click', (e) => {
       e.stopPropagation();
+      find?.take(name());
       tapPet(this.pet, Math.random, tricks); audio.sfx('blip');
       tag.textContent = `${name()} ♥`; tag.hidden = false; tagT = 2.5;
       const heart = has('pet/heart') && Assets.icon('pet/heart', 48);
@@ -985,9 +988,10 @@ export class UI {
     const items = list.map(({ k, sets }) => {
       const el = room.querySelector(`[data-pet="${k}"]`), tag = room.querySelector(`[data-pet-tag="${k}"]`);
       if (!this.pets[k]) { const p = newPet(); p.x = PET_AREA.x0 + Math.random() * (PET_AREA.x1 - PET_AREA.x0); p.y = PET_AREA.y0 + Math.random() * (PET_AREA.y1 - PET_AREA.y0); this.pets[k] = p; } // (spread about the floor)
-      const it = { k, sets, el, img: el.querySelector('img'), tag, p: this.pets[k], tagT: 0 };
+      const it = { k, sets, el, img: el.querySelector('img'), tag, p: this.pets[k], tagT: 0, find: this.petFind(room, k) };
       el.addEventListener('click', (e) => {
         e.stopPropagation();
+        it.find?.take(petNameOf(s, k, t));
         tapPet(it.p, Math.random); audio.sfx('blip');
         tag.textContent = `${petNameOf(s, k, t)} ♥`; tag.hidden = false; it.tagT = 2.5;
         if (heart) { room.insertAdjacentHTML('beforeend', `<img class="pet-heart" src="${heart}" alt="" style="left:${it.p.x}%;top:${it.p.y - 9}%">`); const h = room.lastElementChild; setTimeout(() => h.remove(), 1200); }
@@ -1008,9 +1012,31 @@ export class UI {
         const lift = p.hop > 0 ? Math.sin((1 - p.hop / 0.5) * Math.PI) * 3 : 0;
         it.el.style.cssText = `left:${p.x}%;top:${p.y - lift}%;height:${(H / 864) * 100}%;aspect-ratio:${k.w}/${k.h};transform:translate(-${k.fx * 100}%,-${k.fy * 100}%) scaleX(${p.face});z-index:${p.y < 66 ? 1 : 3}`;
         it.tag.style.cssText = `left:${p.x}%;top:${p.y - 10}%`;
+        it.find?.at(p);
         if (it.tagT > 0 && (it.tagT -= dt) <= 0) it.tag.hidden = true;
       }
     }, 80);
+  }
+
+  // A pet's daily find (pet.js): coins over it until it's tapped. at(p) keeps them over it.
+  petFind(room, k) {
+    const s = this.app.save;
+    if (!petFinds(s, dayKey()).includes(k)) return null;
+    room.insertAdjacentHTML('beforeend', `<img class="pet-find" src="${ico('equipment_items/reward/coins', 48)}" alt="">`);
+    const el = room.lastElementChild;
+    let taken = false;
+    return {
+      at: (p) => { if (!taken) el.style.cssText = `left:${p.x}%;top:${p.y - 8}%`; }, // (just over its head)
+      take: (name) => {
+        if (taken) return;
+        taken = true; el.remove();
+        const n = takeFind(s, k, dayKey());
+        if (!n) return;
+        writeSave(s); audio.sfx('coin');
+        const coins = document.querySelector('.coins'); if (coins && coins.lastChild) coins.lastChild.textContent = s.coins; // (the purse up top)
+        this.app.toast(ico(petIcon(k), 72), name, pick([t('{name} found some coins under the bench!', { name }), t('{name} dug some coins out of an old skate!', { name }), t('{name} found some coins behind the lockers!', { name })]), t('+{n} coins', { n }));
+      },
+    };
   }
 
   // A club beaten three times sends its mascot's little one (the pet collection), once its art

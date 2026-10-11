@@ -3,7 +3,9 @@
 // cleaned (12 characters at most).
 //   node tools/test_pet.mjs
 // (and the collection: every club's pet, the room and the pet house)
-import { newPet, stepPet, tapPet, tossPuck, cleanPetName, PET_AREA, PET_NAME_MAX, TRICK_TIME, FETCH_HOME, FETCH_DROP, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall, PET_OUTFITS, buyOutfit, wearOutfit, ownsOutfit, PET_KINDS, PET_FRAMES, PET_WINS, ROOM_MAX, petDir, petIcon, ownedPets, roomPets, housePets, petsDue, adoptPet, sendToHouse, bringToRoom, petNameOf, renamePet, winsAgainst } from '../src/pet.js';
+import { newPet, stepPet, tapPet, tossPuck, cleanPetName, PET_AREA, PET_NAME_MAX, TRICK_TIME, FETCH_HOME, FETCH_DROP, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall, PET_OUTFITS, buyOutfit, wearOutfit, ownsOutfit, PET_KINDS, PET_FRAMES, PET_WINS, ROOM_MAX, petDir, petIcon, ownedPets, roomPets, housePets, petsDue, adoptPet, sendToHouse, bringToRoom, petNameOf, renamePet, winsAgainst, petFinds, takeFind, PET_FIND, ownPetKind } from '../src/pet.js';
+import { newSave, loadSave } from '../src/progress.js';
+import { useCareer } from '../src/data.js';
 import { TEAMS } from '../src/data.js';
 import { makeRng } from '../src/util.js';
 
@@ -140,5 +142,23 @@ check('its name: cleaned, 12 characters at most', cleanPetName('  <Snjó>\n bolt
   check('wins counted from the rivals\' record', winsAgainst(sv, 'moose') === 7 && winsAgainst(sv, 'narwhals') === 0 && PET_WINS === 3);
 }
 
+// the daily find: each pet in the room, once a day, ROOM_MAX at most however the room's swapped
+{
+  const s = { coins: 0, pets: { got: { lynx: {}, owlet: {}, lamb: {}, moose: {}, raven: {} }, away: [] } };
+  check('a find for each pet in the room', petFinds(s, '2026-10-11').join() === roomPets(s).join() && roomPets(s).length === ROOM_MAX);
+  check('...a tap takes it, once', takeFind(s, 'lynx', '2026-10-11') === PET_FIND && takeFind(s, 'lynx', '2026-10-11') === 0 && s.coins === PET_FIND);
+  check('...not for a pet in the pet house', takeFind(s, 'raven', '2026-10-11') === 0);
+  for (const k of roomPets(s)) takeFind(s, k, '2026-10-11');
+  sendToHouse(s, 'owlet'); bringToRoom(s, 'raven');
+  check('...ROOM_MAX a day, however the room\'s swapped', petFinds(s, '2026-10-11').length === 0 && takeFind(s, 'raven', '2026-10-11') === 0 && s.coins === ROOM_MAX * PET_FIND);
+  check('...and again tomorrow', petFinds(s, '2026-10-12').length === ROOM_MAX);
+}
+// a club career: its own mascot's little one from the start (it can't be won from itself)
+{
+  const s = newSave('ravens');
+  check('a Ravens career starts with the raven chick (and Snowball)', ownPetKind('ravens').id === 'raven' && ownedPets(s).join() === 'fox,raven' && !petsDue({ ...s, rivals: { ravens: { wins: 9 } } }).includes('raven'));
+  check('...one\'s own club and the Foxes\' story: Snowball alone', ownedPets(newSave('custom', makeRng(2))).join() === 'fox' && ownedPets(newSave()).join() === 'fox');
+  useCareer(null);
+}
 console.log(`Pet: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

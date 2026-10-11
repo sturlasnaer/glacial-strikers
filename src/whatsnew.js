@@ -2,6 +2,13 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-11f',
+    items: [
+      { icon: 'icons/pet', alt: 'equipment_items/reward/coins', text: 'Your pets go treasure hunting: once a day each pet in the locker room finds a few coins on its rounds. Look for the coins over its head and tap it to collect.' },
+      { icon: 'hud_elements/misc/home_crest', alt: 'icons/career', text: 'Playing as another club? Its own mascot\'s little one now lives in your locker room from the start, so every pet can be collected.' },
+    ],
+  },
+  {
     id: '2026-10-11e',
     items: [
       { icon: 'icons/pet_salamander', alt: 'icons/pet', text: 'Three more pets to collect: a fire salamander from the Comets, a raven chick from the Ravens and a polar bear cub from the Royals. Beat a club three times and its little one comes to stay.' },

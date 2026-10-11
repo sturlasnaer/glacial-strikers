@@ -7,6 +7,7 @@ import {
 import { newLeague, migrateLeague } from './league.js';
 import { lookFor, maskFor, goalieArt, isPartsArt, randomLook, randomMask } from './modular.js';
 import { CUSTOM_CLUB, FOUNDER_NAMES } from './clubs.js';
+import { ownPetKind, ownClubPet } from './pet.js';
 import { seasonStats } from './awards.js';
 import { tierOf, tierInfo, TIER_SHARP } from './tiers.js';
 import { rivalSub, setFills, agedStats, grown, goalieGrowth, leagueGrowth, seasonBoost, GOALIE_CAP } from './slots.js';
@@ -93,6 +94,7 @@ export function newSave(team = null, rnd = Math.random) {
     goalies: own ? { [custom ? 'fa_g0' : own + '_g']: { level: 1, exp: 0, gear: 'g_start' } } : {}, // signed rival goalies by key ('rams_g'): { level, exp, gear }; Halla is save.goalie (a club career: its own goalie)
     goalieStarter: custom ? 'fa_g0' : own ? own + '_g' : 'halla', // who starts in goal
     draft: null, // this season's Draft Day once it's over
+    pets: { got: ownPetKind(own) ? { [ownPetKind(own).id]: { name: '', season: 1 } } : {}, away: [] }, // the pets collected, pet.js (a club career: its own mascot's little one)
   };
 }
 
@@ -158,6 +160,7 @@ export function loadSave() {
     }
     for (const k of s.team ? Object.keys(base.chem) : CAST_PAIRS) if (typeof s.chem[k] !== 'number') s.chem[k] = 0;
     if (legacy) s.league = migrateLeague(s);
+    ownClubPet(s); // (a club career begun before the pets: its own little one)
     return s;
   } catch (e) {
     // a save this version can't read: kept aside (never overwritten by the fresh one that

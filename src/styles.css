@@ -1506,6 +1506,9 @@ body.pad-nav.pad-ps .tabs::after { background-image: url(../assets/gfx/ui-kit/im
 .cub-bed { position: absolute; width: auto; pointer-events: none; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.3)); }
 .pet-puck { position: absolute; height: calc(100% * 14 / 864); width: auto; transform: translate(-50%, -100%); pointer-events: none; }
 .pet-tag { position: absolute; z-index: 4; transform: translate(-50%, -100%); font-family: var(--display); font-size: calc(var(--u, 8px) * 1.6); color: var(--navy); background: #fffdf6; border: 2px solid var(--navy); border-radius: 4px; padding: 0 6px; white-space: nowrap; cursor: pointer; pointer-events: auto; }
+.pet-find { position: absolute; z-index: 4; width: calc(var(--u, 8px) * 3.6); transform: translate(-50%, -100%); pointer-events: none; animation: pet-find 0.9s ease-in-out infinite alternate; filter: drop-shadow(0 0 4px rgba(255, 212, 94, 0.8)); } /* (a pet's daily find) */
+@keyframes pet-find { to { translate: 0 -25%; } }
+@media (prefers-reduced-motion: reduce) { .pet-find { animation: none; } }
 .pet-heart { position: absolute; z-index: 4; width: calc(var(--u, 8px) * 2.6); transform: translate(-50%, -100%); pointer-events: none; animation: pet-heart 1.2s ease-out forwards; }
 @keyframes pet-heart { to { transform: translate(-50%, -260%); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .pet-heart { animation-duration: 0.01s; } }
