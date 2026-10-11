@@ -15,7 +15,8 @@ const check = (name, cond, info) => { if (cond) pass++; else { fail++; console.l
   const a = whatsNewFor({ record: { played: 3 }, seenWhatsNew: WHATS_NEW[1] && WHATS_NEW[1].id });
   check("What's new: one entry behind shows just the newest", WHATS_NEW.length < 2 || (a && a.id === latest.id && a.items.length === latest.items.length), a);
   const b = whatsNewFor({ record: { played: 3 } });
-  check('...never looked: the newest eight, and how many more', b && b.items.length === Math.min(all, WHATS_NEW_MAX) && b.more === all - b.items.length && b.items[0] === WHATS_NEW[0].items[0], b && [b.items.length, b.more]);
+  const bigs = WHATS_NEW.flatMap((e) => e.items).filter((i) => i.big); // (the headline features lead, the earliest first)
+  check('...never looked: the newest eight, headline features first, and how many more', b && b.items.length === Math.min(all, WHATS_NEW_MAX) && b.more === all - b.items.length && b.items[0] === (bigs.length ? bigs.at(-1) : WHATS_NEW[0].items[0]), b && [b.items.length, b.more]);
   check('...up to date: nothing', whatsNewFor({ record: { played: 3 }, seenWhatsNew: latest.id }) === null);
   const fresh = { record: { played: 0 } };
   check('...a new player: nothing, and marked up to date', whatsNewFor(fresh) === null && fresh.seenWhatsNew === latest.id);
