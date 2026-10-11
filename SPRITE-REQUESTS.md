@@ -17,6 +17,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 8. **EP: supporters' sections for the new clubs' rinks**
 9. **EQ: the rivalry game's icons**
 10. **ER: tighter pages for the always-loaded art** (no new drawing)
+11. **ES: the clubs' opening scenes** (choose-your-club stories)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -931,3 +932,18 @@ A phone's image memory is the game's tightest limit (a National match decodes ab
 - The gear masks (`gearmask`, `legends_gearmask`, `newcomer_gearmask`): the game now loads only the pages holding the masks of the sprites wearing special gear, so they save most if each sprite's masks (`gm:<sprite frames>`) sit together on as few pages as possible, rather than spread across the batch pages (the cast's masks are on six pages, 55 MB).
 
 Lossless, nothing redrawn: just the packing. Repacked pages save about 30 MB that's in memory all the time.
+
+## Batch ES: the clubs' opening scenes
+
+A new career now starts with a choice of club (the Snowcrest Foxes, any Frostline club, or a brand-new club of the player's own), and each opens with its own short story scene: Kip and the club's players talking. Please paint the backdrop behind each, like the legends' reveal: 1280×720 plain images (not atlas frames), no lettering, warm and inviting. The dialogue box covers the bottom third and portraits stand at both sides, so keep the subject in the upper middle. Listed in `atlas.story = { foxes: 'gfx/story_foxes.webp', lynx: …, comets: …, owls: …, rams: …, moose: …, ravens: …, royals: …, custom: … }`, each its own file (loaded only for its scene):
+- `foxes`: Snowcrest at dusk: the little home rink lit up, snow falling, a Frostline Cup banner hanging over the boards.
+- `lynx`: Pinewood's pond rink among tall pines, a tiny wooden scoreboard, an empty trophy shelf in the clubhouse window.
+- `comets`: Ember's rink in the volcano country: steam and sparks, a target on the boards dented by a hundred slapshots.
+- `owls`: a snowy road from the north at night, the Owls' bus arriving, the Observatory's dome glowing beyond.
+- `rams`: the Gilded Rams' golden hall, old banners from past glory in the rafters, a dusty cup in a glass case.
+- `moose`: the Moose's longhouse rink in the timber hills, a crowd of fans in antler hats stamping their feet.
+- `ravens`: the Ravens' dark hall, a tactics board covered in arrows, a row of second-place pennants on the wall.
+- `royals`: the Aurora Palace's trophy cabinet full of cups under the northern lights, a crown banner over it.
+- `custom`: a brand-new, empty locker room at night: fresh jerseys hanging (no lettering), a blank crest shield above the door, a single puck on the bench.
+
+9 images.

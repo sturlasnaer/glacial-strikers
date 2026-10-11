@@ -398,11 +398,12 @@ class App {
       this.scene = 'dialogue';
       this.music('story');
       const story = CLUB_STORIES[this.save.team || 'foxes'] || CLUB_STORIES.foxes;
+      const scene = Assets.atlas.story && Assets.atlas.story[this.save.team || 'foxes']; // (its opening scene: Batch ES)
       this.ui.dialogue(story.intro, this.save.team ? 'foxes' : 'comets', null, () => {
         this.save.seenIntro = true;
         writeSave(this.save);
         this.goHub('tournament');
-      });
+      }, null, scene ? { bg: Assets.url(scene) } : null);
       return;
     }
     this.goHub();

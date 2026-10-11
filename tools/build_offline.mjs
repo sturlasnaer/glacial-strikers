@@ -67,6 +67,7 @@ const images = [
   ...Object.values(atlas.arenas || {}), ...Object.values(atlas.banners || {}),
   atlas.awards_stage && atlas.awards_stage.file, atlas.champions_painting && atlas.champions_painting.image, atlas.legends && atlas.legends.reveal && atlas.legends.reveal.image, atlas.awards_stage && atlas.awards_stage.podium_foreground && atlas.awards_stage.podium_foreground.file,
   atlas.draft_hall && atlas.draft_hall.image, atlas.draft_hall && atlas.draft_hall.podium_foreground && atlas.draft_hall.podium_foreground.image,
+  ...Object.values(atlas.story || {}), // the clubs' opening scenes (Batch ES)
 ].filter(Boolean);
 for (const f of images) inline[f] = `data:image/webp;base64,${b64('assets/' + f)}`;
 // Plain native PNGs such as the team photo are named by source-pack metadata.
