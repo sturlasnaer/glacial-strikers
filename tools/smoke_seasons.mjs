@@ -51,7 +51,7 @@ for (let k = 0; k < 8; k++) { if (!(await advance())) break; await sleep(400); }
 const s = app.save; s.settings.online = false; s.settings.race = false; s.seenIntro = true; s.seenWhatsNew = '2026-10-11l'; s.guide = { done: [], off: true, hints: [] }; if (app.scene !== 'hub') { app.goHub(); await sleep(800); }
 let games = 0;
 for (let step = 0; step < 500; step++) {
-  if (app.scene === 'match') { const m = app.match; m.score = [5, 1]; m.state = 'over'; app.endMatch(); games++; await sleep(600); continue; }
+  if (app.scene === 'match') { const m = app.match; m.score = [5, 1]; m.winner = 0; m.state = 'over'; app.endMatch(); games++; await sleep(600); continue; }
   if (app.scene === 'hub' && !document.querySelector('.modal-bg')) {
     const f = app.fixture();
     if (f && f.kind === 'allstar') s.league.allstar = { skipped: true };
