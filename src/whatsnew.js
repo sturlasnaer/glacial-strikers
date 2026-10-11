@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-11e',
+    items: [
+      { icon: 'icons/pet_salamander', alt: 'icons/pet', text: 'Three more pets to collect: a fire salamander from the Comets, a raven chick from the Ravens and a polar bear cub from the Royals. Beat a club three times and its little one comes to stay.' },
+    ],
+  },
+  {
     id: '2026-10-11d',
     items: [
       { icon: 'equipment_items/hub/shop', alt: 'icons/career', text: 'New gear in the shop! The National and the Elite each bring a stick, skates, protection and goalie gear of their own, on sale once your club reaches that division. And two new pieces for goalies everywhere: the Brick Blocker covers the angles, the Snapjaw Glove snaps up shots.' },
