@@ -7,18 +7,17 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **EI: the Frostline's pets (2)**
-2. **EJ: the National clubs' pets (1)**
-3. **EK: the National clubs' pets (2)**
-4. **EL: the Elite's own clubs, the Taiga Tigers and the Bamboo Ridge Pandas**
-5. **EM: two more National clubs, the Birchwood Beavers and the Coral Bay Flamingos**
-6. **EN: the new clubs' mascot stickers for the album**
-7. **EO: the National and Elite Cup Finals' buildings**
-8. **EP: supporters' sections for the new clubs' rinks**
-9. **EQ: the rivalry game's icons**
-10. **ER: tighter pages for the always-loaded art** (no new drawing)
-11. **ES: the clubs' opening scenes** (choose-your-club stories)
-12. **ET: the divisions' gear and new goalie gear** (shop icons)
+1. **EJ: the National clubs' pets (1)**
+2. **EK: the National clubs' pets (2)**
+3. **EL: the Elite's own clubs, the Taiga Tigers and the Bamboo Ridge Pandas**
+4. **EM: two more National clubs, the Birchwood Beavers and the Coral Bay Flamingos**
+5. **EN: the new clubs' mascot stickers for the album**
+6. **EO: the National and Elite Cup Finals' buildings**
+7. **EP: supporters' sections for the new clubs' rinks**
+8. **EQ: the rivalry game's icons**
+9. **ER: tighter pages for the always-loaded art** (no new drawing)
+10. **ES: the clubs' opening scenes** (choose-your-club stories)
+11. **ET: the divisions' gear and new goalie gear** (shop icons)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -118,6 +117,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered EE–EG and EL/EM rinks:** Eleven native home-rink backdrops complete the nineteen clubs’ distinct venues. EE–EG complete; other EL/EM requests remain open. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EE-EG-EL-EM-Testing-Update`.
 
 **Delivered EH:** Forty native pet-collection frames: lynx kitten, snowy owlet, golden lamb and moose calf, with four walking phases, idle and breathing pairs, hop and gift-card portraits. New `pets` page group, loaded only when drawn. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EH-Testing-Update`.
+
+**Delivered EI:** Thirty native pet frames: fire salamander, raven chick and polar bear cub, with four walking phases, idle and breathing pairs, hop and gift-card portraits, plus Pet Pals and Full Pet House achievement icons (32 frames total). Pets load only when drawn; the two small achievement icons use `icons_z`. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EI-Testing-Update`.
 
 ## Format notes
 
@@ -819,7 +820,7 @@ Each wears a little bandana, collar or scarf in its club's colours, so you can t
 
 40 frames.
 
-## Batch EI: the Frostline's pets (2)
+## Batch EI ✓: the Frostline's pets (2)
 
 - `salamander`: a **Fire salamander** (Ember Comets): glossy black with bright orange spots and a friendly smile, walking low with a wiggle; the tip of its tail glows a little, like an ember.
 - `raven`: a **Raven chick** (Obsidian Ravens): a fluffy dark-grey chick with a too-big beak and a violet sheen; it hops and waddles.
