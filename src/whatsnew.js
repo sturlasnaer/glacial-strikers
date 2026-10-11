@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-11p',
+    items: [
+      { icon: 'rival_crests/crest/coral_bay_flamingos', alt: 'icons/career', text: 'The Birchwood Beavers and the Coral Bay Flamingos are complete too: crests, mascots in the stands and the mascot race, postcards from the Millpond and Coral Bay, and two more pets to win: a beaver kit and a flamingo chick. Every club in the country now has its pet.' },
+    ],
+  },
+  {
     id: '2026-10-11o',
     items: [
       { icon: 'rival_crests/crest/taiga_tigers', alt: 'icons/career', text: 'The Elite\'s own clubs are all here: the Taiga Tigers and the Bamboo Ridge Pandas have their crests, their mascots dancing in the stands and running in the mascot race, a postcard each, and a pet to win: a tiger cub and a panda cub.' },

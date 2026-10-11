@@ -2412,6 +2412,7 @@ export const IS = {
   "The beginning": "Upphafið",
   "The best clubs in the country. Keep your heads, and keep the fire in their net.": "Bestu félög landsins. Höldum ró okkar og höldum eldinum í markinu þeirra.",
   "The best season by a Foxes signing.": "Besta tímabil leikmanns sem gekk til liðs við Foxes.",
+  "The Birchwood Beavers and the Coral Bay Flamingos are complete too: crests, mascots in the stands and the mascot race, postcards from the Millpond and Coral Bay, and two more pets to win: a beaver kit and a flamingo chick. Every club in the country now has its pet.": "Birchwood Beavers og Coral Bay Flamingos eru líka tilbúin: merki, lukkudýr í stúkunni og í lukkudýrakapphlaupinu, póstkort frá Millpond og Coral Bay, og tvö gæludýr í viðbót til að vinna: bjórkettlingur og flamingóungi. Nú á hvert félag landsins sitt gæludýr.",
   "The buttons as they came.": "Upprunalegu hnapparnir.",
   "The classic": "Klassíska sagan",
   "The coach cub dresses up in season as well, at every game.": "Þjálfarayrðlingurinn klæðir sig líka upp á hátíðum, í hverjum leik.",
