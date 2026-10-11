@@ -129,9 +129,9 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 
 **Delivered EP:** 99 individual native supporter poses and matching native cloth masks. Completed clubs: hot_springs_capybaras, birchwood_beavers, cliffside_puffins, timberline_grizzlies, driftwood_seals, coral_bay_flamingos, pack_ice_penguins, sunmesa_bulls, northlight_narwhals, taiga_tigers, bamboo_ridge_pandas. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EP-Testing-Update`.
 
-**Delivered EQ:** Two native rivalry-game and Bragging Rights icons, 128×128, with centred pivots and transparent gutters. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EQ-Testing-Update`.
-
 **Delivered ER:** Lossless tighter pages for icons, hub art and badges, with dedicated character-family gear-mask pages. All previous frame pixels, ids, pivots, dimensions and scales preserved. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-ER-Testing-Update`.
+
+**Delivered EQ:** Nine distinct native 1280×720 club story backdrops, registered as separate scene files and loaded only when drawn. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-ES-Testing-Update`.
 
 ## Format notes
 
@@ -948,7 +948,7 @@ A phone's image memory is the game's tightest limit (a National match decodes ab
 
 Lossless, nothing redrawn: just the packing. Repacked pages save about 30 MB that's in memory all the time.
 
-## Batch ES: the clubs' opening scenes
+## Batch ES ✓: the clubs' opening scenes
 
 A new career now starts with a choice of club (the Snowcrest Foxes, any Frostline club, or a brand-new club of the player's own), and each opens with its own short story scene: Kip and the club's players talking. The same backdrop shows behind the club's later story scenes too (its first Cup, its first Elite Cup, and the replays in Trophies › Our story), so a picture of the club's home suits it best. Please paint the backdrop behind each, like the legends' reveal: 1280×720 plain images (not atlas frames), no lettering, warm and inviting. The dialogue box covers the bottom third and portraits stand at both sides, so keep the subject in the upper middle. Listed in `atlas.story = { foxes: 'gfx/story_foxes.webp', lynx: …, comets: …, owls: …, rams: …, moose: …, ravens: …, royals: …, custom: … }`, each its own file (loaded only for its scene):
 - `foxes`: Snowcrest at dusk: the little home rink lit up, snow falling, a Frostline Cup banner hanging over the boards.
