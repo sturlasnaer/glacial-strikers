@@ -17,6 +17,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 8. **EO: the National and Elite Cup Finals' buildings**
 9. **EP: supporters' sections for the new clubs' rinks**
 10. **EQ: the rivalry game's icons**
+11. **ER: tighter pages for the always-loaded art** (no new drawing)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -920,3 +921,12 @@ Once a season one league game is the Foxes' rivalry game, against the club that 
 - `achievements/bragging_rights` (128×128, like the other `achievements/…`): a Snow Fox player holding up a small trophy shaped like a megaphone, confetti.
 
 2 frames.
+
+## Batch ER: tighter pages for the always-loaded art (no new drawing)
+
+A phone's image memory is the game's tightest limit (a National match decodes about 330 MB of art). Some groups have grown a page per batch, mostly empty, and every page is decoded whole:
+- `icons_z` is loaded from the first screen and never let go: 18 pages, 48.6 MB decoded for 28.7 MB of icons (59% full; several 1.7 MB pages hold one or two icons). Please repack it into as few, tightly filled pages as fit (the frame ids stay the same, only their page and place change).
+- Likewise `hub` (10 pages, 22.7 MB decoded, 51% full) and `badges` (4 pages, 59% full).
+- The gear masks (`gearmask`, `legends_gearmask`, `newcomer_gearmask`): the game now loads only the pages holding the masks of the sprites wearing special gear, so they save most if each sprite's masks (`gm:<sprite frames>`) sit together on as few pages as possible, rather than spread across the batch pages (the cast's masks are on six pages, 55 MB).
+
+Lossless, nothing redrawn: just the packing. Repacked pages save about 30 MB that's in memory all the time.

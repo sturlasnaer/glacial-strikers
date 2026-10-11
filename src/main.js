@@ -327,7 +327,8 @@ class App {
   // ------------------------------------------------------------- matches
   makeMatch(cfg, teamId, arena = 'home') {
     // keep only the art this match uses decoded (phones have little image memory)
-    const geared = cfg.teams.some((t) => t.skaters.some((k) => k.gear && (GEAR_LOOK[k.gear.stick] || GEAR_LOOK[k.gear.skates])));
+    // special gear: just the mask pages of the sprites wearing it (Assets.gearMaskFrames)
+    const gearMasks = Assets.gearMaskFrames(cfg.teams.flatMap((t) => t.skaters.filter((k) => k.gear && (GEAR_LOOK[k.gear.stick] || GEAR_LOOK[k.gear.skates])).map((k) => k.sprite || k.def.sprite)));
     // the title and hub scenes show over the demo match, so their art stays with it
     const host = Object.values(TEAMS).find((tm) => tm.arena === arena); // its mascot dances in the stands
     const team = teamInfo(teamId); // (the All-Stars recolour the rival pages they're given)
@@ -338,7 +339,7 @@ class App {
     // the mascot race's runners (Batch DB): only the pages with the Snow Fox and their mascot on
     // (the race draws the others from those); the whole race group is over 20 MB decoded
     const runners = !this.attract && !cfg.drill ? ['race/snow_fox/run_1', ...(MASCOTS[teamId] ? [`race/${MASCOTS[teamId]}/run_1`] : [])].filter((f) => Assets.frame(f)) : [];
-    Assets.trim({ pages: [...Assets.framePages(coachCostume), ...Assets.framePages(runners)], teams: [teamId, ...(host ? [host.id] : [])], arena, gear: geared, groups: ['badges', ...(team.groups || []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(arena === 'home' ? ['pet_rink'] : []), ...(this.save.settings.little ? ['cub_coach', 'kid_stars'] : []), ...(cfg.night && Assets.frame('night/aurora_1') ? [Assets.atlas.pages[Assets.frame('night/aurora_1')[0]].group] : [])] });
+    Assets.trim({ pages: [...Assets.framePages(coachCostume), ...Assets.framePages(runners), ...Assets.framePages(gearMasks)], teams: [teamId, ...(host ? [host.id] : [])], arena, groups: ['badges', ...(team.groups || []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(arena === 'home' ? ['pet_rink'] : []), ...(this.save.settings.little ? ['cub_coach', 'kid_stars'] : []), ...(cfg.night && Assets.frame('night/aurora_1') ? [Assets.atlas.pages[Assets.frame('night/aurora_1')[0]].group] : [])] });
     const fancam = arena === 'home' && !this.attract && !!Assets.atlas.fancam; // (the fan cam's fans: Batch CT)
     const cub = arena === 'home' && !!Assets.atlas.arena_spots?.home_cub && Assets.atlas.pages.some((pg) => pg.group === 'pet_rink'); // (the cub on the boards: Batch DH)
     if (runners.length) Assets.loadPages(runners).catch(() => {});
@@ -346,7 +347,7 @@ class App {
     if (cub) Assets.loadGroup('pet_rink').catch(() => {});
     if (dressed) Assets.loadGroup('seasonal').then(() => { if (this.scene === 'title') this.ui.titleLogo(); }).catch(() => {}); // (the logo's trimmings too)
     if (coachCostume.length) Assets.loadPages(coachCostume).catch(() => {});
-    if (geared) Assets.ensureGear();
+    if (gearMasks.length) Assets.loadPages(gearMasks).catch(() => {});
     this.lap = null;
     this.fx.heavySnow = false;
     Assets.prepareTeam(team);

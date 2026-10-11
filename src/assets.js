@@ -124,9 +124,16 @@ export const Assets = {
     }
   },
 
-  // Equipped gear recolours from the masks; load them only when someone wears special gear.
-  ensureGear() { return Promise.all([this.loadGroup('gearmask'), ...(this.needLegends ? [this.loadGroup('legends_gearmask')] : []), ...(this.needNewcomers ? [this.loadGroup('newcomer_gearmask')] : [])]).catch(() => {}); },
-  get needLegends() { return !!(PALETTES.homekit.groups && PALETTES.homekit.groups.includes('legends_ice')); }, // (a twin on the roster)
+  // The gear masks a match needs: those of the sprites wearing special gear, all their poses
+  // ('gm:' + each frame), not the whole mask groups (over 100 MB decoded, and each sprite's
+  // masks sit on a few of their pages). Frame ids, for loadPages and trim's pages.
+  gearMaskFrames(sprites) {
+    const A = this.atlas, out = new Set();
+    const walk = (o) => { if (typeof o === 'string') { if (A.frames['gm:' + o]) out.add('gm:' + o); } else if (o && typeof o === 'object') for (const v of Object.values(o)) walk(v); };
+    for (const sp of new Set(sprites)) if (A.skaters && A.skaters[sp]) walk(A.skaters[sp]);
+    return [...out];
+  },
+
   newcomerCheck: null, // the game's check: has the save signed a rival (skater or goalie) or drafted a rookie (newcomer art)?
   get needNewcomers() { return !!(this.newcomerCheck && this.newcomerCheck()); },
   partsFor: null, // the game's check: does this rival field anyone made from parts?
@@ -143,7 +150,6 @@ export const Assets = {
     if (this.needNewcomers && (keep.teams || []).length) groups.add('newcomers');
     if (this.partsFor && (keep.teams || []).some(this.partsFor)) groups.add('parts');
     if ((keep.teams || []).length) for (const g of [...MATCH, ...(ARENA_GROUPS[keep.arena] || [])]) groups.add(g); // (in a match)
-    if (keep.gear) { groups.add('gearmask'); groups.add('legends_gearmask'); if (this.needNewcomers) groups.add('newcomer_gearmask'); }
     for (const [g, c] of Object.entries(COMPANION)) if (groups.has(g)) groups.add(c); // (their masks with them)
     const released = new Set();
     const pages = new Set(keep.pages || []); // (single pages kept out of a group: the coach cub's costume, say)
@@ -246,7 +252,7 @@ export const Assets = {
     if (r && r.loaded === loaded) return;
     if (!team.recolor) { this.recolored.delete(team.id); return; }
     const pages = this.pages.map((img, i) => {
-      if (!own(this.atlas.pages[i].group)) return img;
+      if (!own(this.atlas.pages[i].group) || this.headOnly().has(i)) return img; // (heads keep their own colours: partsCanvas draws them off the originals)
       const prev = r && r.pages[i];
       if (!img) return prev || null; // the original was let go (dropOriginals): keep the copy
       const copy = prev && prev !== img ? prev : recolorPage(img, team.recolor);
@@ -254,6 +260,15 @@ export const Assets = {
     });
     this.recolored.set(team.id, { pages, loaded });
     for (const k of [...this.iconCache.keys()]) if (k.includes(`|${team.id}|`)) this.iconCache.delete(k);
+  },
+
+  // The parts pages holding nothing but heads (a recoloured copy of one would be 10 MB for
+  // nothing: a head takes skin and hair, never a kit's colours).
+  headOnly() {
+    if (this.headPages) return this.headPages;
+    const all = new Map();
+    for (const [id, f] of Object.entries(this.atlas.frames)) { const h = id.startsWith('head_'); all.set(f[0], (all.get(f[0]) ?? true) && h); }
+    return (this.headPages = new Set([...all].filter(([, h]) => h).map(([i]) => i)));
   },
 
   // Restore each supporter from the original before colouring only its native cloth mask.
