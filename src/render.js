@@ -531,11 +531,14 @@ export class Renderer {
     if (!A) return;
     const t = fx.time;
     if (arena === 'home' && A.banners) {
-      const vis = TEAMS[ui.awayTeamId] && A.banners[TEAMS[ui.awayTeamId].art || TEAMS[ui.awayTeamId].mark];
+      // ours: the Foxes' banner in our colours, or a club career's own; theirs: the visitors' (the
+      // Foxes', a rival in a club career, in their own colours)
+      const artOf = (id) => (id === 'foxes' ? 'glacial_strikers' : TEAMS[id] && (TEAMS[id].art || TEAMS[id].mark));
+      const vis = A.banners[artOf(ui.awayTeamId)], own = CAREER.team && A.banners[artOf(CAREER.team)];
       const spots = [[102, 36, 0], [1433, 36, 1], [120, 856, 1], [1417, 850, 0]];
       spots.forEach(([x, y, theirs], i) => {
-        const id = theirs && vis ? vis : A.banners.glacial_strikers;
-        Assets.draw(ctx, id, x, y, 0.185, { rot: Math.sin(t * 1.3 + i * 1.7) * 0.025, pages: Assets.clubPages() });
+        const id = theirs && vis ? vis : own || A.banners.glacial_strikers;
+        Assets.draw(ctx, id, x, y, 0.185, { rot: Math.sin(t * 1.3 + i * 1.7) * 0.025, pages: id === A.banners.glacial_strikers && !(theirs && vis) ? Assets.clubPages() : Assets.pages });
       });
     }
     if (arena === 'home' && ui && ui.save) this.drawRafters(ctx, ui.save, t);
