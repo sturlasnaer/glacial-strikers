@@ -1527,9 +1527,9 @@ export class UI {
       <div class="row" style="justify-content:flex-end"><button class="btn small" data-close>${t('Close')}</button></div>`, (m) => m.classList.add('photo-modal'));
   }
 
-  // The sticker album's card in Trophies: the cover, how full it is, and the packs to open.
   // Trophies › Our story: the club's story so far, each scene to watch again (clubs.js): the
-  // beginning, the first Cup, the top of the country; those still ahead say what they wait for.
+  // beginning, the first Cup, the divisions, the top of the country; those still ahead say what
+  // they wait for.
   storyHtml(s) {
     const C = s.tierCups || {}, up = Math.max(s.tier || 0, s.tierTop || 0), chapters = [
       ['intro', t('The beginning'), true, ''],
@@ -1544,6 +1544,7 @@ export class UI {
         : `<span class="btn small ghost" aria-disabled="true" style="opacity:.55;cursor:default">${esc(name)} · ${esc(need)}</span>`)).join('')}</div>`;
   }
 
+  // The sticker album's card in Trophies: the cover, how full it is, and the packs to open.
   albumCard(s) {
     const a = albumOf(s), pr = albumProgress(s, ALBUM_PAGES(s));
     return `<div class="album-card">

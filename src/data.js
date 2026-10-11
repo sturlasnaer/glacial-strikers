@@ -500,12 +500,12 @@ export const ALL_RIVALS = [...RIVAL_IDS, ...NATIONAL_IDS, ...ELITE_OWN_IDS];
 export const CAREER = { team: null, custom: false }; // (custom: a club of the player's own, clubs.js)
 const BASE_LISTS = [[RIVAL_IDS, [...RIVAL_IDS]], [FOUNDING_RIVALS, [...FOUNDING_RIVALS]], [ELITE_IDS, [...ELITE_IDS]], [ALL_RIVALS, [...ALL_RIVALS]]];
 export const careerClub = (team) => (team && team !== 'foxes' && TEAMS[team] && TEAMS[team].names && !TEAMS[team].careerOnly && RIVAL_IDS.concat(BASE_LISTS[0][1]).includes(team) ? team : null);
-// A club of the player's own ('custom'): no club leaves; the Foxes join the Frostline as a club
-// too, mid-table (an even number of rivals: the league has a bye each round, league.js).
-const insertAfter = (list, after, id) => list.splice(list.indexOf(after) + 1, 0, id);
 // A club career's own stars and goalie: the club's from the start, like the cast in the Foxes'
 // story, not signings (no trades or rivals' calls for them, no Signing of the Year, no 'signed').
 export const clubOwn = (id) => !!((CAREER.team && ((RECRUITS[id] && RECRUITS[id].team === CAREER.team) || id === CAREER.team + '_g')) || (CAREER.custom && ROOKIES[id] && ROOKIES[id].founder)); // (one's own club: its founders)
+// A club of the player's own ('custom'): no club leaves; the Foxes join the Frostline as a club
+// too, mid-table (an even number of rivals: the league has a bye each round, league.js).
+const insertAfter = (list, after, id) => list.splice(list.indexOf(after) + 1, 0, id);
 export function useCareer(team) {
   const custom = team === 'custom', own = custom ? null : careerClub(team);
   CAREER.team = own; CAREER.custom = custom;
@@ -856,11 +856,11 @@ export function applyClub(club) {
   return CLUB;
 }
 
-// Swap the default club name into a line of text.
 // clubText for words with names filled in: the club's name goes into the line's own words, never
 // into what's filled in ({team} or {name} may be the Foxes or one of them, a club like any other
 // in a career as another club). Already translated.
 export const clubT = (text, params) => { const out = clubText(t(text)); return params ? out.replace(/\{(\w+)\}/g, (m, k) => (params[k] !== undefined ? params[k] : m)) : out; };
+// Swap the default club name into a line of text.
 export function clubText(str) {
   if (!CLUB.custom || !str) return str;
   const out = String(str).replace(/Snowcrest Foxes/g, CLUB.name).replace(/\bFoxes\b/g, CLUB.nick);
