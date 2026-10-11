@@ -11,6 +11,7 @@ import { forceSeason, seasonFor } from './seasonal.js';
 import { addPacks } from './album.js';
 import { cleanSign, CROWD_SIGNS } from './fancam.js';
 import { RACE_AT, mascotOf } from './race.js';
+import { roomPets, petDir, BENCH_POSES } from './pet.js';
 import { MINI_ROUNDS, MINI_WIN, miniOf, newMiniCup, miniResult } from './minicup.js';
 import { firstTime } from './guide.js';
 import { submit as submitScore, flush as flushScores, BOARD_INFO, backup as cloudBackup, settleCups } from './online.js';
@@ -334,7 +335,11 @@ class App {
     // the mascot race's runners (Batch DB): only the pages with the Snow Fox and their mascot on
     // (the race draws the others from those); the whole race group is over 20 MB decoded
     const runners = !this.attract && !cfg.drill ? [`race/${mascotOf('home')}/run_1`, ...(mascotOf(teamId) ? [`race/${mascotOf(teamId)}/run_1`] : [])].filter((f) => Assets.frame(f)) : [];
-    Assets.trim({ pages: [...Assets.framePages(coachCostume), ...Assets.framePages(runners), ...Assets.framePages(gearMasks)], teams: [teamId, ...(host ? [host.id] : [])], arena, groups: ['badges', ...(team.groups || []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(arena === 'home' ? ['pet_rink'] : []), ...(this.save.settings.little ? ['cub_coach', 'kid_stars'] : []), ...(cfg.night && Assets.frame('night/aurora_1') ? [Assets.atlas.pages[Assets.frame('night/aurora_1')[0]].group] : [])] });
+    // the room's other pets (up to three) sit on the boards beside the cub at home games: just
+    // their sitting and hopping frames' pages (small)
+    this.benchPets = arena === 'home' && !this.attract && !cfg.drill && Assets.atlas.arena_spots?.home_cub ? roomPets(this.save).filter((k) => k !== 'fox' && BENCH_POSES.every((f) => Assets.frame(petDir(k) + f))).slice(0, 3) : [];
+    const petFrames = this.benchPets.flatMap((k) => BENCH_POSES.map((f) => petDir(k) + f));
+    Assets.trim({ pages: [...Assets.framePages(coachCostume), ...Assets.framePages(runners), ...Assets.framePages(gearMasks), ...Assets.framePages(petFrames)], teams: [teamId, ...(host ? [host.id] : [])], arena, groups: ['badges', ...(team.groups || []), ...(this.attract ? ['title', 'hub'] : []), ...((cfg.drill && cfg.drill.keepGroups) || []), ...(dressed ? ['seasonal'] : []), ...(arena === 'home' && !this.attract && Assets.atlas.fancam ? ['fancam'] : []), ...(arena === 'home' ? ['pet_rink'] : []), ...(this.save.settings.little ? ['cub_coach', 'kid_stars'] : []), ...(cfg.night && Assets.frame('night/aurora_1') ? [Assets.atlas.pages[Assets.frame('night/aurora_1')[0]].group] : [])] });
     const fancam = arena === 'home' && !this.attract && !!Assets.atlas.fancam; // (the fan cam's fans: Batch CT)
     const cub = arena === 'home' && !!Assets.atlas.arena_spots?.home_cub && Assets.atlas.pages.some((pg) => pg.group === 'pet_rink'); // (the cub on the boards: Batch DH)
     if (runners.length) Assets.loadPages(runners).catch(() => {});
@@ -343,6 +348,7 @@ class App {
     if (dressed) Assets.loadGroup('seasonal').then(() => { if (this.scene === 'title') this.ui.titleLogo(); }).catch(() => {}); // (the logo's trimmings too)
     if (coachCostume.length) Assets.loadPages(coachCostume).catch(() => {});
     if (gearMasks.length) Assets.loadPages(gearMasks).catch(() => {});
+    if (petFrames.length) Assets.loadPages(petFrames).catch(() => {});
     this.lap = null;
     this.fx.heavySnow = false;
     Assets.prepareTeam(team);
@@ -1829,7 +1835,7 @@ class App {
       const lap = this.lap && this.attract ? this.lap : (m && m.drill && m.drill.machine) || null; // (the title's lap, or the Resurfacer drill's machine)
       const focus = lap && toScreen(lap.pos().x, lap.pos().y);
       this.renderer.updateCamera(m, this.fx, realDt, { attract: this.attract, focus, zoom: this.attract ? 0.9 : this.replay.active ? 1.15 : m.pshot ? 1.12 : 1 });
-      this.renderer.render(m, this.fx, { awayTeamId: this.awayTeamId, awayColor: t.color, awayColor2: t.color2, arena: this.arena, replay: this.replay.active, lap, save: this.save, night: this.night }); // (save: the rafters' banners at home)
+      this.renderer.render(m, this.fx, { awayTeamId: this.awayTeamId, awayColor: t.color, awayColor2: t.color2, arena: this.arena, replay: this.replay.active, lap, save: this.save, night: this.night, pets: this.benchPets }); // (save: the rafters' banners at home; pets: those on the boards)
       this.clips.frame();
       this.hud.update(realDt);
       this.crowdT = (this.crowdT || 0) - realDt;

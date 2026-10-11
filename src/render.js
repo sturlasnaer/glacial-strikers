@@ -149,7 +149,7 @@ export class Renderer {
     else if (!(ARENAS[arena] && ARENAS[arena].finalOnly)) Assets.draw(ctx, Assets.frame(TEAMS.home.crest) ? TEAMS.home.crest : 'hud_elements/misc/home_crest', cc.x, cc.y + 2, 0.5, { alpha: 0.3, squash: 0.8, pages: Assets.clubPages() }); // (our crest: the Snow Fox or the club's choice)
     this.drawLamps(ctx, fx);
     this.drawCrowd(ctx, fx, ui);
-    if (arena === 'home') this.drawCub(ctx, fx, false, match);
+    if (arena === 'home') this.drawCub(ctx, fx, false, match, ui);
     this.drawArenaProps(ctx, match, fx, ui, arena);
     const box = this.penaltyBox();
     if (box) this.drawPenaltyBoxes(ctx, match, fx, box);
@@ -213,7 +213,7 @@ export class Renderer {
     const foreground = Assets.atlas.arena.glasses?.[arena];
     if (foreground) Assets.draw(ctx, foreground.frame, foreground.x, foreground.y, 1);
     else if (Assets.glass && arena !== 'pine_pond') ctx.drawImage(Assets.glass, Assets.atlas.arena.glass.x, Assets.atlas.arena.glass.y);
-    if (arena === 'home') { this.drawSupporters(ctx, fx, ui.save); this.drawCub(ctx, fx, true, match); }
+    if (arena === 'home') { this.drawSupporters(ctx, fx, ui.save); this.drawCub(ctx, fx, true, match, ui); }
     else this.drawRivalSupporters(ctx, fx, ui.awayTeamId, arena);
     if (match.allstar && arena === 'home') this.drawAllStarDressing(ctx, fx, true);
     else if (arena === 'home') this.drawSeasonal(ctx, fx, true);
@@ -427,9 +427,10 @@ export class Renderer {
   // The locker room's cub at home games (Batch DH), on the boards where the artists sat it: it
   // swishes its tail, hops for a Foxes goal and droops for one against. Drawn with the far
   // side's crowd, or over the near glass when it sits on the near boards.
-  drawCub(ctx, fx, near, match) {
+  drawCub(ctx, fx, near, match, ui = {}) {
     const spot = Assets.atlas.arena_spots?.home_cub, sit = Assets.frame('pet_rink/sit_1');
     if (!spot || !sit || !Assets.pages[sit[0]]) return;
+    if ((spot.y > 520) === near) this.drawBenchPets(ctx, fx, spot, ui.pets || []);
     // in season, in its costume (Batch DU), pose by pose where it's drawn
     const season = seasonFor(), dressed = (id) => { const k = season && id.replace('pet_rink/', `pet_rink_${season}/`), f = k && Assets.frame(k); return f && Assets.pages[f[0]] ? k : id; };
     const draw = (id, x, y) => Assets.draw(ctx, dressed(id), x, y, spot.scale || 1);
@@ -452,6 +453,18 @@ export class Renderer {
     const id = cheer && Assets.frame('pet_rink/cheer_1') ? `pet_rink/cheer_${1 + (Math.floor(fx.time * 8) % 4)}`
       : sad && Assets.frame('pet_rink/sad') ? 'pet_rink/sad' : `pet_rink/sit_${1 + (Math.floor(fx.time * 1.5) % 2)}`;
     draw(Assets.frame(id) ? id : 'pet_rink/sit_1', spot.x, spot.y);
+  }
+
+  // The room's other pets beside the cub on the boards (ui.pets, up to three: main.makeMatch
+  // loads their pages): sitting, and hopping for our goals.
+  drawBenchPets(ctx, fx, spot, pets) {
+    const cheer = fx.lamp > 0 && fx.cheerTeam === 0;
+    pets.forEach((k, i) => {
+      const dir = k === 'fox' ? 'pet/' : `pets/${k}/`, x = spot.x + 78 * (i + 1);
+      const id = cheer ? dir + 'hop' : `${dir}sit_${1 + (Math.floor(fx.time * 1.5 + i * 0.7) % 2)}`, f = Assets.frame(id);
+      if (!f || !Assets.pages[f[0]]) return;
+      Assets.draw(ctx, id, x, spot.y - (cheer ? Math.abs(Math.sin(fx.time * 8 + i)) * 8 : 0), spot.scale || 1);
+    });
   }
 
   // The Stands facility unlocks the dedicated near-side supporters at home.

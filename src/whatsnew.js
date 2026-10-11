@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-11h',
+    items: [
+      { icon: 'icons/pet_lynx', alt: 'icons/pet', text: 'Your pets come to home games! Up to three of the pets in your locker room sit on the boards beside Snowball, and they all hop when you score.' },
+    ],
+  },
+  {
     id: '2026-10-11g',
     items: [
       { icon: 'icons/career', alt: 'icons/career', text: 'Playing as another club? The locker room comes alive between games: your own line-up gets the late-night nerves, the lucky socks, the extra reps and the pot of stew, and the boosts go to whoever plays there.' },

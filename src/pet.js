@@ -177,6 +177,8 @@ export const PET_KIND = Object.fromEntries(PET_KINDS.map((k) => [k.id, k]));
 // The art a pet needs to wander the room (Snowball's are pet/…, the others' pets/<kind>/…).
 export const petDir = (kind) => (kind === 'fox' ? 'pet/' : `pets/${kind}/`);
 export const PET_FRAMES = ['walk_1', 'walk_2', 'walk_3', 'walk_4', 'sit_1', 'sit_2', 'sleep_1', 'sleep_2', 'hop'];
+// The poses a pet needs to sit on the boards at home games beside Snowball (render.drawCub).
+export const BENCH_POSES = ['sit_1', 'sit_2', 'hop'];
 export const petIcon = (kind) => (kind === 'fox' ? 'icons/pet' : `icons/pet_${kind}`);
 
 export const petsOf = (save) => (save.pets ||= { got: {}, away: [] });
