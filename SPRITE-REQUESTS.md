@@ -7,7 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **EX: one race page per mascot** (no new drawing)
+
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -139,6 +139,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered EV:** Two native club-career achievement icons: Underdog Story and From Scratch. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EV-Testing-Update`.
 
 **Delivered EW:** Lossless abilities_al packing into element-specific pages for Ember, Gale and Shadow. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EW-Testing-Update`.
+
+**Delivered EX:** Lossless race packing with a dedicated small page per mascot, including all custom-club runners. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EX-Testing-Update`.
 
 ## Format notes
 
@@ -1023,7 +1025,7 @@ Like ER, a repack for phone memory. The newer supers' drawn effects (`abilities_
 
 Lossless and nothing redrawn: the frame ids, sizes, pivots and scales stay the same, only their page and place change. No code change is needed: a match with one of these elements then decodes about 4 to 7 MB instead of 24.
 
-## Batch EX: one race page per mascot (no new drawing)
+## Batch EX ✓: one race page per mascot (no new drawing)
 
 Another repack for phone memory. The mascot race runs four mascots: ours, the rival's and two more. A match loads only the race pages those runners are on, but today the runners share big pages (the Frostline's eight on a 12 MB page, the National's seven on a 10 MB one), so a match against a National club decodes 22 MB for about 5 MB of runners. Please repack the `race` group so that each mascot's five frames (`race/<mascot>/run_1`–`run_4` and `win`) sit on a small page of their own, about 1.4 MB decoded each. Please do the same for the own-club mascots from EU (`race/club_<crest>/…`) when they come in.
 

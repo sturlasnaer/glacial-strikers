@@ -815,6 +815,7 @@ atlas = repack_always_loaded(atlas, OUT)
 # Keep each element's effects on their own lossless, selectively loaded pages.
 from repack_selective_pages import repack_selective_pages
 atlas = repack_selective_pages(atlas, OUT, 'EW')
+atlas = repack_selective_pages(atlas, OUT, 'EX')
 with open(os.path.join(OUT, 'atlas.json'), 'w') as fh:
     json.dump(atlas, fh, separators=(',', ':'))
 
