@@ -2426,6 +2426,7 @@ export const IS = {
   "The cup is yours. You earned every inch of it.": "Bikarinn er ykkar. Þið unnuð fyrir hverjum millimetra af honum.",
   "The D-pad and left stick skate. In the menus {a} picks and {b} goes back, whatever is set here.": "Stefnuhnappar og vinstri pinni skauta. Í valmyndum velur {a} og {b} fer til baka, hvað sem er stillt hér.",
   "The defending champions, the Aurora Royals! Every club in the Frostline wants their crown.": "Ríkjandi meistarar, Aurora Royals! Hvert félag í Frostline vill krúnuna þeirra.",
+  "The divisions' new gear has pictures of its own now: the Capital Carbon stick, the glowing Northern Light, the Diamond Edges skates, the Brick Blocker, the grinning Snapjaw Glove and more. Own every piece of the National and Elite gear for the Pro Kit trophy.": "Nýi búnaðurinn í deildunum hefur nú fengið sínar eigin myndir: kylfan Höfuðborgarkolefni, glóandi Norðurljós, skautarnir Demantseggjar, Múrsteinsspaðinn, glottandi Smellukjafturinn og fleira. Eignastu allan búnað Landsbikarsins og Úrvalsbikarsins og fáðu bikarinn Atvinnubúnaður.",
   "The Elite Cup is yours. Hunt well, Foxes.": "Úrvalsbikarinn er ykkar. Góða veiði, Foxes.",
   "The Elite Cup is yours. You earned every bit of it.": "Úrvalsbikarinn er ykkar. Þið unnuð fyrir hverjum mola af honum.",
   "The Elite Cup! Only the very best clubs in the country play here.": "Úrvalsbikarinn! Hér spila bara allra bestu félög landsins.",

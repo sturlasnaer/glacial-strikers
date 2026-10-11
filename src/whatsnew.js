@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-11u',
+    items: [
+      { icon: 'equipment_items/stick/aurora', alt: 'equipment_items/hub/shop', text: 'The divisions\' new gear has pictures of its own now: the Capital Carbon stick, the glowing Northern Light, the Diamond Edges skates, the Brick Blocker, the grinning Snapjaw Glove and more. Own every piece of the National and Elite gear for the Pro Kit trophy.' },
+    ],
+  },
+  {
     id: '2026-10-11t',
     items: [
       { icon: 'icons/career', text: 'Every club\'s story now has its own picture behind it: the Foxes\' little rink at dusk, the Owls\' bus pulling up to the Observatory, the Royals\' trophy cabinet, a brand-new locker room for a club of your own, and more. They show in the club\'s opening scene, its Cup scenes and Trophies › Our story.' },
