@@ -7,10 +7,9 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **EU: mascots for a club of one's own** (one for each crest)
-2. **EV: two trophies for club careers** (achievement icons)
-3. **EW: the newer supers' effects packed by element** (no new drawing)
-4. **EX: one race page per mascot** (no new drawing)
+1. **EV: two trophies for club careers** (achievement icons)
+2. **EW: the newer supers' effects packed by element** (no new drawing)
+3. **EX: one race page per mascot** (no new drawing)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -135,6 +134,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered ES:** Nine distinct native 1280×720 club story backdrops, registered as separate scene files and loaded only when drawn. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-ES-Testing-Update`.
 
 **Delivered ET:** Eleven native division and goalie shop gear icons plus Pro Kit achievement art, registered at 128×128 with the compact ER packing retained. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-ET-Testing-Update`.
+
+**Delivered EU:** Seven native custom-club mascot families: 28 recolourable home poses and 35 race poses, registered with fixed foot anchors. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EU-Testing-Update`.
 
 ## Format notes
 
@@ -985,7 +986,7 @@ And a trophy for owning every piece of the divisions' gear:
 
 11 frames.
 
-## Batch EU: mascots for a club of one's own
+## Batch EU ✓: mascots for a club of one's own
 
 A new career can be a brand-new club of the player's own (named, coloured and crested in the club editor). Every other club has a costumed mascot that dances in the stands at home and runs in the mascot race; a club of one's own has none yet. Please draw one for each crest it can pick, as costumed mascots like the Snow Fox (a person in a big friendly animal suit, a jersey on):
 - `club_fox`: a **red fox** (clearly not the white Snow Fox, who is the Snowcrest Foxes' own)
