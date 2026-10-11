@@ -11,6 +11,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 2. **ET: the divisions' gear and new goalie gear** (shop icons)
 3. **EU: mascots for a club of one's own** (one for each crest)
 4. **EV: two trophies for club careers** (achievement icons)
+5. **EW: the newer supers' effects packed by element** (no new drawing)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -1004,3 +1005,12 @@ Two new achievements for the choose-your-club careers; each shows a stand-in (th
 - `achievements/from_scratch` **From Scratch** (win a Cup with a club of the player's own): a brand-new, still-blank crest shield with a cup in front of it and a few fresh paint splashes, as if the crest is about to be painted.
 
 2 frames.
+
+## Batch EW: the newer supers' effects packed by element (no new drawing)
+
+Like ER, a repack for phone memory. The newer supers' drawn effects (`abilities_al`: Batch AL) are on two pages, 24 MB decoded, and the game now loads only the pages holding the effects of the elements a match's skaters play (`Assets.abilityFrames`). Each element's effects are split across both pages today, so most matches still decode all 24 MB. Please repack `abilities_al` so that each element's effects sit together on their own tightly filled page or pages:
+- **Ember**: `ability_effects/heat_check/…` and `ability_effects/firestorm/…` (about 4.3 MB of frames)
+- **Gale**: `ability_effects/tailwind/…` and `ability_effects/cyclone/…` (about 7.0 MB)
+- **Shadow**: `ability_effects/fade/…` and `ability_effects/eclipse/…` (about 6.3 MB)
+
+Lossless and nothing redrawn: the frame ids, sizes, pivots and scales stay the same, only their page and place change. No code change is needed: a match with one of these elements then decodes about 4 to 7 MB instead of 24.
