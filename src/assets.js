@@ -155,7 +155,7 @@ export const Assets = {
     const pages = new Set(keep.pages || []); // (single pages kept out of a group: the coach cub's costume, say)
     a.pages.forEach((p, i) => { if (this.pages[i] && !groups.has(p.group) && !pages.has(i)) { released.add(this.pages[i]); this.pages[i] = null; this.forget(p.file); } });
     // recoloured page sets keep references to the original pages they didn't change: drop those too
-    for (const r of this.recolored.values()) r.pages = r.pages.map((pg) => (released.has(pg) ? null : pg));
+    for (const r of this.recolored.values()) { const kept = r.pages.map((pg) => (released.has(pg) ? null : pg)); if (r.pages.frames) kept.frames = r.pages.frames; r.pages = kept; } // (a club career's packed club colours keep their map)
     for (const [k, img] of [...this.backdrops]) {
       if (k === 'home' || k === keep.arena || k === keep.arena + '_night') continue; // (a night game's backdrop too)
       this.backdrops.delete(k); if (a.arenas && a.arenas[k]) this.forget(a.arenas[k]);
@@ -189,12 +189,10 @@ export const Assets = {
     for (const k of [...(this.bannerCanvasCache || new Map()).keys()]) if (k.endsWith('|club') || k.endsWith('|homekit')) this.bannerCanvasCache.delete(k);
     this.recolored.delete('homekit'); // signings follow the club colours too
     if (!rc) return;
-    // (in a career as another club, or one's own, the cast's own skating frames never wear our
-    // colours: the pages holding only those needn't be copied)
-    const castOnly = (CAREER.team || CAREER.custom) ? (id) => /^(ak_|frost_captain\/|thunder_winger\/|stone_defender\/)/.test(id) : () => false;
-    const ours = (id) => !castOnly(id) && ((/\/home[_/]/.test(id) && !id.startsWith('hud_elements/')) || id.startsWith('expressions_core/')
+    const ours = (id) => (/\/home[_/]/.test(id) && !id.startsWith('hud_elements/')) || id.startsWith('expressions_core/')
       || id.startsWith('expressions_halla_royals_comets/halla/') || id === 'hud_elements/misc/home_crest' || id.startsWith('crests_club/')
-      || id === 'arena/banner/glacial_strikers' || id.startsWith('mascot/') || id.startsWith('celebrations/'));
+      || id === 'arena/banner/glacial_strikers' || id.startsWith('mascot/') || id.startsWith('celebrations/');
+    if (CAREER.team || CAREER.custom) return this.prepareClubCompact(rc, ours);
     const rects = new Map();
     for (const [id, f] of Object.entries(this.atlas.frames)) {
       if (!ours(id) || this.atlas.pages[f[0]].group !== 'home') continue;
@@ -218,6 +216,48 @@ export const Assets = {
     }
     for (const [pi, ctx] of masked) pages[pi] = gpuCopy(ctx.canvas);
     this.recolored.set('club', { pages, loaded: 'club' });
+  },
+
+  // A club career (clubs.js): its players are its own, or made from parts, so of the home art only
+  // the crowd, the supporters, the crests, mascots, banners and celebrations wear the club's
+  // colours. Those frames are packed onto one small canvas (pages.frames maps them there; draw
+  // and iconDraw read it) instead of copies of whole home pages: some 35 MB less in a match.
+  prepareClubCompact(rc, ours) {
+    const A = this.atlas, masks = A.club_art_masks || {};
+    // (as prepareClub: our frames recoloured whole, the masked ones their cloth alone; of ours, the
+    // ones a club career shows)
+    const keep = (id) => ours(id) && (/^(crowd_|crests_club\/|mascot\/|celebrations\/|arena\/banner\/)/.test(id) || id === 'hud_elements/misc/home_crest');
+    const ids = Object.keys(A.frames).filter((id) => { const f = A.frames[id]; return !!this.pages[f[0]] && ((keep(id) && A.pages[f[0]].group === 'home') || !!masks[id]); });
+    const W = 2048, place = {}; // (shelves, tallest first)
+    let x = 0, y = 0, rowH = 0;
+    for (const id of ids.sort((a, b) => A.frames[b][4] - A.frames[a][4])) {
+      const [, , , w, h] = A.frames[id];
+      if (x + w > W) { x = 0; y += rowH + 2; rowH = 0; }
+      place[id] = [x, y]; x += w + 2; rowH = Math.max(rowH, h);
+    }
+    const H = y + rowH, pages = this.pages.slice();
+    pages.frames = {};
+    this.recolored.set('club', { pages, loaded: 'club' });
+    if (!ids.length || !H) return;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const ctx = c.getContext('2d', { willReadFrequently: true }), rects = [];
+    for (const id of ids) {
+      const [pi, fx, fy, w, h, px, py, s] = A.frames[id], [nx, ny] = place[id];
+      ctx.drawImage(this.pages[pi], fx, fy, w, h, nx, ny, w, h);
+      if (keep(id)) rects.push([nx, ny, w, h]);
+    }
+    recolorHomeIn(ctx, rc, rects);
+    for (const id of ids) { // native cloth masks: banners and supporters, their cloth alone
+      const mid = masks[id], m = mid && A.frames[mid];
+      if (!m || !this.pages[m[0]]) continue;
+      const [, , , w, h] = A.frames[id], [nx, ny] = place[id];
+      const data = ctx.getImageData(nx, ny, w, h), mask = cpuCanvas(this.pages[m[0]]).getImageData(m[1], m[2], m[3], m[4]);
+      recolorClubPixels(data.data, mask.data, rc);
+      ctx.putImageData(data, nx, ny);
+    }
+    const ci = pages.length;
+    pages.push(gpuCopy(c));
+    for (const id of ids) { const f = A.frames[id], [nx, ny] = place[id]; pages.frames[id] = [ci, nx, ny, f[3], f[4], f[5], f[6], f[7]]; }
   },
 
   // A frame of our art in trial club colours, for the club editor's preview.
@@ -319,10 +359,10 @@ export const Assets = {
 
   // Draw a frame with its pivot at (x, y). scale = world px per *source* px.
   draw(ctx, id, x, y, scale, opts = {}) {
-    const f = this.atlas.frames[id];
+    const pages = opts.pages || this.pages;
+    const f = (pages.frames && pages.frames[id]) || this.atlas.frames[id]; // (a club career's club colours: packed, prepareClubCompact)
     if (!f) return;
     const [pi, fx, fy, fw, fh, px, py, s] = f;
-    const pages = opts.pages || this.pages;
     if (!pages[pi]) return;
     const k = scale / s;
     if (!opts.rot && opts.alpha === undefined && !opts.blend) {
@@ -361,7 +401,7 @@ export const Assets = {
     const key = `strip|${ids.join(',')}|${height}|${teamId}`;
     if (this.iconCache.has(key)) return this.iconCache.get(key);
     const pages = this.pagesFor(teamId);
-    const fr = ids.map((id) => this.atlas.frames[id]);
+    const fr = ids.map((id) => (pages.frames && pages.frames[id]) || this.atlas.frames[id]); // (packed club colours: prepareClubCompact)
     if (!fr.length || fr.some((f) => !f || !pages[f[0]])) return null;
     let l = 0, r = 0, t = 0, b = 0;
     for (const [, , , fw, fh, px, py, s] of fr) { l = Math.max(l, px / s); r = Math.max(r, (fw - px) / s); t = Math.max(t, py / s); b = Math.max(b, (fh - py) / s); }
@@ -380,7 +420,7 @@ export const Assets = {
     const key = `set|${ids.join(',')}|${height}|${teamId}`;
     if (this.iconCache.has(key)) return this.iconCache.get(key);
     const pages = this.pagesFor(teamId);
-    const fr = ids.map((id) => this.atlas.frames[id]);
+    const fr = ids.map((id) => (pages.frames && pages.frames[id]) || this.atlas.frames[id]);
     if (!fr.length || fr.some((f) => !f || !pages[f[0]])) return null;
     let l = 0, r = 0, t = 0, b = 0; // extents around the pivot, in source pixels
     for (const [, , , fw, fh, px, py, s] of fr) { l = Math.max(l, px / s); r = Math.max(r, (fw - px) / s); t = Math.max(t, py / s); b = Math.max(b, (fh - py) / s); }
@@ -639,10 +679,10 @@ export const Assets = {
   },
 
   iconDraw(id, size, teamId, opts) {
-    const f = this.atlas.frames[id];
+    const P = this.pagesFor(teamId), f = (P.frames && P.frames[id]) || this.atlas.frames[id];
     if (!f) return null;
     const [pi, fx, fy, fw, fh] = f;
-    const page = this.pagesFor(teamId)[pi];
+    const page = P[pi];
     if (!page) return null;
     const c = document.createElement('canvas');
     c.width = size; c.height = size;
