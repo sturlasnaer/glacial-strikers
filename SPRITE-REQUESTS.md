@@ -18,6 +18,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 9. **EQ: the rivalry game's icons**
 10. **ER: tighter pages for the always-loaded art** (no new drawing)
 11. **ES: the clubs' opening scenes** (choose-your-club stories)
+12. **ET: the divisions' gear and new goalie gear** (shop icons)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -947,3 +948,22 @@ A new career now starts with a choice of club (the Snowcrest Foxes, any Frostlin
 - `custom`: a brand-new, empty locker room at night: fresh jerseys hanging (no lettering), a blank crest shield above the door, a single puck on the bench.
 
 9 images.
+
+## Batch ET: the divisions' gear and new goalie gear
+
+The shop has ten new pieces: a stick, skates, protection and goalie gear for each of the National and the Elite (on sale once the club reaches that division), and two new goalie pieces for everyone. They're in the game now with a like piece's icon standing in; each wears its own once its frame is in (no registering needed beyond the frame names). Same style and size as the shop's existing gear icons (`equipment_items/stick/frost`, `icons/gear_pro_mitts`: a single item on a transparent background, about 128 px):
+- `equipment_items/stick/capital` **Capital Carbon** (National): a sleek matte-silver composite stick with white tape, a thin navy stripe.
+- `equipment_items/stick/aurora` **Northern Light** (Elite): a dark stick whose blade glows with green and teal aurora ribbons.
+- `equipment_items/skates/capital` **Glidemasters** (National): silver-and-navy skates with long polished blades.
+- `equipment_items/skates/aurora` **Diamond Edges** (Elite): white skates with faceted, diamond-clear blades that sparkle.
+- `equipment_items/armor/capital` **Captain's Harness** (National): padded silver-grey shoulder and chest protection with a small "C" stitched on.
+- `equipment_items/armor/aurora` **Diamond Plate** (Elite): sleek pale-blue crystalline chest protection, light and faceted.
+- `equipment_items/goalie/blocker` **Brick Blocker**: a big, square goalie blocker painted like a red brick wall.
+- `equipment_items/goalie/snapjaw` **Snapjaw Glove**: a goalie catching glove with a toothy grin drawn on its pocket.
+- `equipment_items/goalie/capital` **Capital Pads**: wide silver-and-navy goalie leg pads.
+- `equipment_items/goalie/diamond` **Diamond Mitts**: a white goalie glove and blocker with diamond-faceted trim.
+
+And a trophy for owning every piece of the divisions' gear:
+- `achievements/pro_kit` (128×128, like the other `achievements/…`): a Snow Fox player in shining new silver-and-diamond gear, posing like a catalogue cover.
+
+11 frames.

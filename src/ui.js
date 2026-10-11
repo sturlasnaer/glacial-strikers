@@ -2,7 +2,7 @@
 
 import { Assets } from './assets.js';
 import {
-  CHARACTERS, GEAR, GEAR_BY_ID, TEAMS, STAT_KEYS, STAT_NAMES, STAT_HINT,
+  CHARACTERS, GEAR, GEAR_BY_ID, gearOpen, TEAMS, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
   RECRUITS, ROOKIES, setRookies, setFreeGoalies, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, ALL_RIVALS, CAREER, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, CLUB_CRESTS, clubCrestId, MASK_NAMES, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
@@ -450,7 +450,7 @@ const lookHtml = (id) => (GEAR_LOOK[id] && GEAR_LOOK[id].desc ? `<div class="loo
 
 function modsHtml(mods) {
   const parts = Object.entries(mods).filter(([, v]) => v).map(([k, v]) =>
-    `<span class="mod ${v > 0 ? 'up' : 'down'}">${v > 0 ? '+' : ''}${v} ${t(k === 'rfx' ? 'Reflex' : STAT_NAMES[k])}</span>`);
+    `<span class="mod ${v > 0 ? 'up' : 'down'}">${v > 0 ? '+' : ''}${v} ${t(k === 'rfx' ? 'Reflex' : k === 'pos' ? 'Angles' : STAT_NAMES[k])}</span>`);
   return parts.length ? `<div class="mods">${parts.join('')}</div>` : `<div class="mods"><span class="mod">${t('No modifiers')}</span></div>`;
 }
 
@@ -691,7 +691,7 @@ export class UI {
     this.showGuide(r, s, {
       anyPoints,
       touch: !!this.app.isTouch,
-      shopNew: GEAR.some((g) => g.price > 0 && !s.owned.includes(g.id) && Math.round(g.price * (1 - (s.discount || 0))) <= s.coins),
+      shopNew: GEAR.some((g) => g.price > 0 && gearOpen(s, g) && !s.owned.includes(g.id) && Math.round(g.price * (1 - (s.discount || 0))) <= s.coins),
       scoutOpen: Object.keys(RECRUITS).some((k) => recruitStatus(s, k) === 'open' && s.coins >= recruitPrice(s, k)),
       allstarNext: !!(this.app.fixture && this.app.fixture() && this.app.fixture().kind === 'allstar'),
       online: onlineOn(s) && configured(),
@@ -717,7 +717,7 @@ export class UI {
   roomHtml(s, anyPoints) {
     const next = this.app.fixture && this.app.fixture();
     const scoutOpen = Object.keys(RECRUITS).some((k) => recruitStatus(s, k) === 'open' && s.coins >= RECRUITS[k].price);
-    const shopNew = GEAR.some((g) => g.price > 0 && !s.owned.includes(g.id) && Math.round(g.price * (1 - (s.discount || 0))) <= s.coins);
+    const shopNew = GEAR.some((g) => g.price > 0 && gearOpen(s, g) && !s.owned.includes(g.id) && Math.round(g.price * (1 - (s.discount || 0))) <= s.coins);
     const got = ACHIEVEMENTS.filter((a) => s.achievements && s.achievements.unlocked && s.achievements.unlocked[a.id]).length; // (those still in the game)
     const badge = {
       team: anyPoints ? t('Points to spend') : scoutOpen ? t('Scouts calling') : '',
@@ -3095,17 +3095,18 @@ export class UI {
       ${npc('shopkeeper', s.coins < 150 ? pick([t('Short on coins? Win a few and come back. I\'ll keep it polished.'), t('Browsing is free. Buying is not.')]) : pick([t('Every piece trades something away. Ask what it costs you, not just the coins.'), t('Forged it myself. Well, most of it.'), t('That stick? Lightning in a bottle. Mind the recoil.')]))}
       <p class="muted" style="margin:0 0 10px;font-size:13px">${t('Every item trades something away. Bought gear unlocks for the whole team; equip it from the Team tab.')}</p>
       <div class="shop">${items.map((g) => {
-        const owned = s.owned.includes(g.id);
+        const owned = s.owned.includes(g.id), open = gearOpen(s, g);
         const price = Math.round(g.price * (1 - (s.discount || 0)));
-        const afford = s.coins >= price;
-        return `<div class="item" tabindex="0" data-card="${g.id}" data-pad-press="[data-buy]" aria-label="${esc(t(g.name))}">
+        const afford = open && s.coins >= price;
+        return `<div class="item${open ? '' : ' locked'}" tabindex="0" data-card="${g.id}" data-pad-press="[data-buy]" aria-label="${esc(t(g.name))}">
           <img src="${ico(g.icon, 128)}" alt="">
           <div style="min-width:0">
-            <div class="label" style="font-size:13px">${t(SLOT_NAMES[g.slot])}</div>
+            <div class="label" style="font-size:13px">${t(SLOT_NAMES[g.slot])}${g.tier ? ` · ${esc(t(tierAt(g.tier).cup))}` : ''}</div>
             <h4>${esc(t(g.name))}</h4>
             <p>${esc(t(g.text))}</p>
             ${modsHtml(g.mods)}${lookHtml(g.id)}
             <div class="buy">${owned ? ownedStamp()
+              : !open ? `<span class="muted" style="font-size:12.5px">${t('On sale once the club reaches the {division}', { division: t(tierAt(g.tier).name) })}</span>`
               : `<span class="price">${price}${s.discount ? ` <s class="muted" style="font-size:14px">${g.price}</s>` : ''}</span>
                  <button class="btn small ${afford ? 'gold' : ''}" data-buy="${g.id}" ${afford ? '' : 'disabled'}>${t('Buy')}</button>`}</div>
           </div>
@@ -3115,7 +3116,7 @@ export class UI {
     this.click('[data-buy]', (el) => {
       const g = GEAR_BY_ID[el.dataset.buy];
       const price = Math.round(g.price * (1 - (s.discount || 0)));
-      if (s.coins < price || s.owned.includes(g.id)) return;
+      if (s.coins < price || s.owned.includes(g.id) || !gearOpen(s, g)) return;
       s.coins -= price;
       s.discount = 0;
       this.app.ach.checkMeta();

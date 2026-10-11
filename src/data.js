@@ -174,6 +174,9 @@ export const GOALIE_STYLES = {
   puckhandler: { id: 'puckhandler', name: 'Puck-handler', text: 'Leaves the crease to play pucks behind the net whenever it can.', mods: { roam: -0.15 } },
 };
 
+// tier: sold once the club reaches that division (1 the National, 2 the Elite; tierTop in
+// tiers.js). art: the piece's own icon (Batch ET), worn once it's in; until then the icon of a
+// piece like it (useGearArt).
 export const GEAR = [
   // sticks
   { id: 'stick_wood', slot: 'stick', name: 'Birch Twig', icon: 'equipment_items/stick/wood', price: 0, mods: {}, text: 'Reliable starter stick.' },
@@ -182,6 +185,8 @@ export const GEAR = [
   { id: 'stick_frost', slot: 'stick', name: 'Rimefang', icon: 'equipment_items/stick/frost', price: 320, mods: { sht: 1, pas: 2 }, text: 'Carved from glacier ice.' },
   { id: 'stick_bolt', slot: 'stick', name: 'Stormcaller', icon: 'equipment_items/stick/lightning', price: 360, mods: { sht: 2, spd: 1, pas: -1 }, text: 'Crackles when you wind up.' },
   { id: 'stick_grav', slot: 'stick', name: 'Event Horizon', icon: 'equipment_items/stick/gravity', price: 480, mods: { sht: 3, agi: -1, pas: -1 }, text: 'Shots feel heavier than they should.' },
+  { id: 'stick_capital', slot: 'stick', tier: 1, name: 'Capital Carbon', icon: 'equipment_items/stick/passing', art: 'equipment_items/stick/capital', price: 620, mods: { sht: 2, pas: 2, agi: -1 }, text: 'Light, stiff and true. Made for the big rinks.' },
+  { id: 'stick_aurora', slot: 'stick', tier: 2, name: 'Northern Light', icon: 'equipment_items/stick/frost', art: 'equipment_items/stick/aurora', price: 980, mods: { sht: 3, pas: 2, sta: -1 }, text: 'Glows green in the dark. Shots seem to bend.' },
   // skates
   { id: 'skate_start', slot: 'skates', name: 'Rental Blades', icon: 'equipment_items/skates/starter', price: 0, mods: {}, text: 'They fit. Mostly.' },
   { id: 'skate_agile', slot: 'skates', name: 'Pivot Pros', icon: 'equipment_items/skates/agile', price: 140, mods: { agi: 2, spd: -1 }, text: 'Short blades for tight turns.' },
@@ -189,6 +194,8 @@ export const GEAR = [
   { id: 'skate_tank', slot: 'skates', name: 'Iron Boots', icon: 'equipment_items/skates/reinforced', price: 170, mods: { chk: 1, sta: 1, spd: -1 }, text: 'Plant your feet and hit.' },
   { id: 'skate_frost', slot: 'skates', name: 'Hoarfrost Edges', icon: 'equipment_items/skates/frost', price: 340, mods: { spd: 1, agi: 2 }, text: 'Never lose an edge.' },
   { id: 'skate_bolt', slot: 'skates', name: 'Bolt Runners', icon: 'equipment_items/skates/lightning', price: 420, mods: { spd: 3, sta: -1, agi: -1 }, text: 'Blinding speed, tiring stride.' },
+  { id: 'skate_capital', slot: 'skates', tier: 1, name: 'Glidemasters', icon: 'equipment_items/skates/racing', art: 'equipment_items/skates/capital', price: 640, mods: { spd: 2, agi: 2, sta: -1 }, text: 'Fast and nimble, if a little tiring.' },
+  { id: 'skate_aurora', slot: 'skates', tier: 2, name: 'Diamond Edges', icon: 'equipment_items/skates/frost', art: 'equipment_items/skates/aurora', price: 980, mods: { spd: 3, agi: 2, sta: -1 }, text: 'The sharpest blades in the country.' },
   // protection
   { id: 'arm_none', slot: 'armor', name: 'Practice Jersey', icon: 'equipment_items/armor/chest', price: 0, mods: {}, text: 'Light and breezy.' },
   { id: 'arm_vest', slot: 'armor', name: 'Padded Vest', icon: 'icons/gear_padded_vest', price: 110, mods: { sta: 2, spd: -1 }, text: 'Extra stamina for long shifts.' },
@@ -196,10 +203,20 @@ export const GEAR = [
   { id: 'arm_helm', slot: 'armor', name: 'Visor Helm', icon: 'equipment_items/armor/helmet', price: 150, mods: { pas: 1, sta: 1 }, text: 'Clear view of the ice.' },
   { id: 'arm_glove', slot: 'armor', name: 'Grip Gloves', icon: 'equipment_items/armor/gloves', price: 200, mods: { sht: 1, pas: 1, chk: -1 }, text: 'Soft hands, thin padding.' },
   { id: 'arm_legs', slot: 'armor', name: 'Glacier Guards', icon: 'equipment_items/armor/leg_guards', price: 260, mods: { chk: 2, sta: 2, spd: -1 }, text: 'Shot-blocking armour.' },
-  // goalie
+  { id: 'arm_capital', slot: 'armor', tier: 1, name: 'Captain\'s Harness', icon: 'icons/gear_padded_vest', art: 'equipment_items/armor/capital', price: 580, mods: { sta: 3, chk: 1, agi: -1 }, text: 'Built for the long shifts of the National game.' },
+  { id: 'arm_aurora', slot: 'armor', tier: 2, name: 'Diamond Plate', icon: 'equipment_items/armor/chest', art: 'equipment_items/armor/aurora', price: 920, mods: { chk: 2, sta: 2, sht: 1, spd: -1 }, text: 'Light armour that gives nothing away.' },
+  // goalie (rfx: reflexes, pos: angles)
   { id: 'g_start', slot: 'goalie', name: 'Old Mitts', icon: 'equipment_items/armor/goalie_gloves', price: 0, mods: {}, text: 'Patched more than once.' },
+  { id: 'g_block', slot: 'goalie', name: 'Brick Blocker', icon: 'equipment_items/armor/goalie_gloves', art: 'equipment_items/goalie/blocker', price: 180, mods: { pos: 2, rfx: -1 }, text: 'Big and square: covers the angles, a beat slower.' },
+  { id: 'g_glove', slot: 'goalie', name: 'Snapjaw Glove', icon: 'icons/gear_pro_mitts', art: 'equipment_items/goalie/snapjaw', price: 220, mods: { rfx: 2, pos: -1 }, text: 'Snaps shut on anything, but tempts you out of position.' },
   { id: 'g_pro', slot: 'goalie', name: 'Halla\'s Pro Set', icon: 'icons/gear_pro_mitts', price: 380, mods: { rfx: 2 }, text: 'Faster glove, quicker pads.' },
+  { id: 'g_capital', slot: 'goalie', tier: 1, name: 'Capital Pads', icon: 'equipment_items/armor/goalie_gloves', art: 'equipment_items/goalie/capital', price: 600, mods: { rfx: 1, pos: 2 }, text: 'Wide pads that close the gaps.' },
+  { id: 'g_diamond', slot: 'goalie', tier: 2, name: 'Diamond Mitts', icon: 'icons/gear_pro_mitts', art: 'equipment_items/goalie/diamond', price: 980, mods: { rfx: 2, pos: 2 }, text: 'The Elite\'s finest glove and pads.' },
 ];
+// The pieces' own icons once they're drawn.
+export function useGearArt(frames) { for (const g of GEAR) if (g.art && frames[g.art]) g.icon = g.art; }
+// Is it on sale yet? (division gear: once the club has reached that division)
+export const gearOpen = (save, g) => (g.tier || 0) <= Math.max((save && save.tier) || 0, (save && save.tierTop) || 0);
 
 export const GEAR_BY_ID = Object.fromEntries(GEAR.map((g) => [g.id, g]));
 
@@ -223,6 +240,13 @@ export const GEAR_LOOK = {
   arm_helm: { show: 'glint', desc: 'Visor glint' },
   arm_glove: { show: 'grip', color: '#ffd45e', desc: 'Golden sparkle on clean catches' },
   arm_legs: { show: 'guard', color: '#bff4ff', desc: 'Icy flash on blocked shots' },
+  // the divisions' gear
+  stick_capital: { color: '#c8d2e0', accent: '#ffffff', fx: 'tape', desc: 'Silver glow on the puck and shot trail' },
+  stick_aurora: { color: '#5ff2b0', accent: '#e0fff3', fx: 'swirl', desc: 'Green aurora swirl and a ring on release' },
+  skate_capital: { color: '#e6e9f2', trail: 'carve', mark: 'rgba(205,215,235,0.6)', desc: 'Silver carve spray on tight turns' },
+  skate_aurora: { color: '#bfefff', trail: 'frost', mark: 'rgba(170,240,255,0.65)', desc: 'Diamond frost trail and bright skate marks' },
+  arm_capital: { show: 'shield', color: '#d9e0ea', desc: 'Silver shield flash when you\'re hit' },
+  arm_aurora: { show: 'guard', color: '#e9fbff', desc: 'Diamond flash on blocked shots' },
 };
 
 // Rival teams use the away sprites. recolor shifts the coral/violet jersey hues. habit: how the

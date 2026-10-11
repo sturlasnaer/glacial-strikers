@@ -37,6 +37,7 @@ export const ACHIEVEMENTS = [
   { id: 'gold-drills', name: 'Gold Standard', text: 'Win gold in all four training drills.', icon: MEDAL, coins: 150 },
   { id: 'shootout', name: 'Shootout Hero', text: 'Win a shootout.', icon: 'achievements/shootout_hero', coins: 50 },
   { id: 'kitted', name: 'Fully Kitted', text: 'Own every piece of gear in the shop.', icon: 'equipment_items/hub/shop', coins: 150 },
+  { id: 'pro-kit', name: 'Pro Kit', text: 'Own every piece of the National and Elite gear.', icon: 'equipment_items/hub/shop', art: 'achievements/pro_kit', coins: 200 },
   { id: 'signing', name: 'Free Agent', text: 'Sign a skater from a rival.', icon: 'achievements/free_agent', coins: 40 },
   { id: 'scout', name: 'Talent Scout', text: 'Sign a skater from every rival.', icon: 'achievements/talent_scout', coins: 150 },
   { id: 'mvp', name: 'Most Valuable', text: 'A Foxes skater wins League MVP.', icon: 'achievements/most_valuable', coins: 150 },
@@ -229,7 +230,8 @@ export class AchievementTracker {
     if (s.album && s.album.done.length) this.unlock('sticker-page');
     if (s.album && s.album.full) this.unlock('sticker-album');
     if (s.decor && decorFull(s)) this.unlock('home-sweet-home');
-    if (GEAR.every((g) => s.owned.includes(g.id))) this.unlock('kitted');
+    if (GEAR.every((g) => g.tier || s.owned.includes(g.id))) this.unlock('kitted'); // (the regional shop's)
+    if (GEAR.every((g) => !g.tier || s.owned.includes(g.id))) this.unlock('pro-kit'); // (the divisions' gear)
     const signed = Object.keys(RECRUITS).filter((k) => s.roster[k]);
     if (signed.length) this.unlock('signing');
     if (new Set(signed.map((k) => RECRUITS[k].team)).size >= 5) this.unlock('scout');

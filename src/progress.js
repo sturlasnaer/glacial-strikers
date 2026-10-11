@@ -389,8 +389,8 @@ export function goalieStats(save, id = starterId(save)) {
   const g = goalieRec(save, id), base = goalieInfo(id).base;
   const gear = GEAR_BY_ID[g.gear];
   const v = g.vet || 0; // (veteran levels: reflexes, then angles, by turns)
-  const rfx = Math.min(13, base.rfx + Math.floor((g.level - 1) / 2) + Math.ceil(v / 2) + (gear?.mods.rfx || 0));
-  return { rfx, pos: Math.min(13, base.pos + Math.floor(g.level / 3) + Math.floor(v / 2)) };
+  const rfx = Math.max(1, Math.min(13, base.rfx + Math.floor((g.level - 1) / 2) + Math.ceil(v / 2) + (gear?.mods.rfx || 0)));
+  return { rfx, pos: Math.max(1, Math.min(13, base.pos + Math.floor(g.level / 3) + Math.floor(v / 2) + (gear?.mods.pos || 0))) };
 }
 
 // Our goalie in a match config: who starts, in their own art (our colours) and style.

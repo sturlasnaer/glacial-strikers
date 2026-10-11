@@ -19,7 +19,7 @@ import { makeDraft, draftPick } from '../src/draft.js';
 import { recordCareer } from '../src/career.js';
 import { updateSeasonGoals, goalStates, seasonGoals } from '../src/goals.js';
 import { FACILITY_IDS, nextCost, buildFacility, facilityLevel } from '../src/facilities.js';
-import { RECRUITS, GOALIE_RECRUITS, CHARACTERS, GEAR, member, setRookies, setFreeGoalies, stageOf } from '../src/data.js';
+import { RECRUITS, GOALIE_RECRUITS, CHARACTERS, GEAR, gearOpen, member, setRookies, setFreeGoalies, stageOf } from '../src/data.js';
 import { moveTier, tierOf } from '../src/tiers.js';
 import { DRILL_REWARDS } from '../src/drills.js';
 import { useModular } from '../src/modular.js';
@@ -50,7 +50,7 @@ function manage(s, log) {
     }
   }
   // gear: the dearest piece we can afford with a third of the purse, worn by the line
-  for (const g of GEAR.filter((x) => x.price > 0 && !s.owned.includes(x.id) && x.slot !== 'goalie').sort((a, b) => b.price - a.price)) {
+  for (const g of GEAR.filter((x) => x.price > 0 && gearOpen(s, x) && !s.owned.includes(x.id) && x.slot !== 'goalie').sort((a, b) => b.price - a.price)) {
     if (g.price * 3 > s.coins) continue;
     s.coins -= g.price; log.spent += g.price; s.owned.push(g.id);
     for (const id of lineupIds(s)) s.roster[id].gear[g.slot] = g.id;
