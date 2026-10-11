@@ -8,7 +8,7 @@ import { TEAMS, RIVAL_IDS, FOUNDING_RIVALS, ELITE_IDS, ALL_RIVALS, CAREER, CLUB,
 import { newSave, goalieIds, starterId, lineupIds, matchConfig } from '../src/progress.js';
 import { newLeague, nextFixture, recordOurGame, standings, BYE, isBye, realRounds } from '../src/league.js';
 import { makeRng } from '../src/util.js';
-import { CLUB_CHOICES, CLUB_STORIES, clubStars } from '../src/clubs.js';
+import { CLUB_CHOICES, CLUB_STORIES, CLUB_PAYOFFS, payoffDue, clubStars } from '../src/clubs.js';
 import { pickRunners, mascotOf } from '../src/race.js';
 import { postcardFor } from '../src/trip.js';
 import { useModular } from '../src/modular.js';
@@ -79,6 +79,24 @@ check('...only real clubs can be played', careerClub('lynx') === 'lynx' && caree
   }
   const rows = standings(L);
   check('...after our last game the bye round plays itself, then the playoffs', L.phase !== 'regular' && L.results.length === 7 && L.results[6][0].bye && rows.every((r) => r.gp === 6), rows.map((r) => r.id + ':' + r.gp).join());
+}
+
+// each story's payoff: after the club's first Cup, and after its first Elite Cup (once each;
+// a save that won its cups before these scenes doesn't see them late)
+check('every story has its payoffs', CLUB_CHOICES.every((id) => CLUB_PAYOFFS[id] && CLUB_PAYOFFS[id].cup.length >= 3 && CLUB_PAYOFFS[id].top.length >= 3));
+check('...never naming the Foxes in another club\'s (they\'d read as ours)', CLUB_CHOICES.filter((id) => id !== 'foxes' && id !== 'custom').every((id) => !JSON.stringify(CLUB_PAYOFFS[id]).includes('Foxes')));
+{
+  const s = newSave('ravens');
+  check('...none before a cup', payoffDue(s) === null);
+  s.cups = 1; s.tierCups = { regional: 1 };
+  check('...the first Cup: the club\'s own', payoffDue(s) === CLUB_PAYOFFS.ravens.cup && payoffDue(s) === null);
+  s.cups = 2; s.tierCups.regional = 2;
+  check('...not the second', payoffDue(s) === null);
+  s.tier = 2; s.cups = 3; s.tierCups.elite = 1;
+  check('...the first Elite Cup: the top of the country', payoffDue(s) === CLUB_PAYOFFS.ravens.top && payoffDue(s) === null);
+  const old = newSave(); old.cups = 4; old.tier = 2; old.tierCups = { regional: 2, national: 1, elite: 1 };
+  old.tierCups.elite = 2;
+  check('...an older save with cups already won: nothing late', payoffDue(old) === null);
 }
 
 // and back: a Foxes career after a club career puts everything back

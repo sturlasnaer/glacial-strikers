@@ -129,3 +129,145 @@ export function clubStars(team) {
   const n = TEAMS[team].names;
   return [n.frost, n.thunder, n.stone, n.goalie];
 }
+
+// Each story's payoff: a short scene after the club's first Cup (cup), and after its first
+// Elite Cup, the top of the country (top). Spoken like the opening scene; in a club of one's
+// own, the cast's names and the Foxes' are the founders' and the club's (clubText).
+export const CLUB_PAYOFFS = {
+  foxes: {
+    cup: [
+      ['kip', null, 'The Snowcrest Foxes are Frostline champions! The little club from Snowcrest has done it!'],
+      ['us', 'thunder', 'Told you. Five goals in the first match, a cup at the end. Right on schedule.'],
+      ['us', 'stone', 'You scored two in the first match, Volta.'],
+      ['us', 'frost', 'Who\'s counting? We\'re champions. Big dreams, remember? This is only the start.'],
+    ],
+    top: [
+      ['kip', null, 'Elite champions! The Snowcrest Foxes are the best club in the whole country!'],
+      ['us', 'stone', 'From a pond in Snowcrest to the top of the country.'],
+      ['us', 'thunder', 'Can we put the cup on the bus roof? Everyone should see it.'],
+      ['us', 'frost', 'Everyone will. Thank you, all of you. What a story.'],
+    ],
+  },
+  lynx: {
+    cup: [
+      ['kip', null, 'Unbelievable! The Pinewood Lynx are Frostline champions! The club nobody picked has won the cup!'],
+      ['us', 'frost', 'Pinewood never wins, they said. Somebody go and tell them.'],
+      ['us', 'thunder', 'I\'m going to run the cup round every pine tree in Pinewood!'],
+      ['us', 'stone', 'We passed it around and beat everyone. Just like we said.'],
+    ],
+    top: [
+      ['kip', null, 'The Pinewood Lynx are Elite champions! From nobody\'s pick to the best club in the country!'],
+      ['us', 'stone', 'That empty trophy shelf back home is going to need to be a lot bigger.'],
+      ['us', 'thunder', 'Did anyone even see me score? I was SO fast.'],
+      ['us', 'frost', 'The whole country saw. Underdogs no more.'],
+    ],
+  },
+  comets: {
+    cup: [
+      ['kip', null, 'The Ember Comets are Frostline champions! And folks, they passed the puck!'],
+      ['us', 'thunder', 'Okay. Fine. Passing works. Don\'t tell anyone I said that.'],
+      ['us', 'frost', 'Pass first, then shoot. Nobody\'s laughing at us this spring.'],
+      ['us', 'stone', 'And the fire stayed out of our own net. Mostly.'],
+    ],
+    top: [
+      ['kip', null, 'The Ember Comets are Elite champions! The hot heads kept their cool all the way to the top!'],
+      ['us', 'thunder', 'Can I celebrate with one big slapshot? Into an empty net? Please?'],
+      ['us', 'stone', 'Go on. You\'ve earned it.'],
+      ['us', 'frost', 'From the volcano country to the top of the country. Light it up!'],
+    ],
+  },
+  owls: {
+    cup: [
+      ['kip', null, 'The Glacier Owls are Frostline champions! Their very first season, and the cup is theirs!'],
+      ['us', 'frost', 'We studied every club. We waited for every mistake. It worked.'],
+      ['us', 'thunder', 'Told you scoring was better than watching.'],
+      ['us', 'stone', 'Patience. I said patience. Now let\'s hang that banner up north.'],
+    ],
+    top: [
+      ['kip', null, 'The Glacier Owls are Elite champions! The newest club in the Frostline is the best in the country!'],
+      ['us', 'frost', 'There are no tapes left to watch. Every club has seen us now.'],
+      ['us', 'thunder', 'And every club saw us win.'],
+      ['us', 'stone', 'The north is here. And the north is staying.'],
+    ],
+  },
+  rams: {
+    cup: [
+      ['kip', null, 'The Gilded Rams are Frostline champions again! The old guard has one more cup!'],
+      ['us', 'stone', 'Shoulder to shoulder, the Gilded way. Some things never change.'],
+      ['us', 'frost', 'And some things did. We were smart this year as well as strong.'],
+      ['us', 'thunder', 'Take that old cup out of the glass case. It\'s got company now.'],
+    ],
+    top: [
+      ['kip', null, 'The Gilded Rams are Elite champions! The proudest club in the Frostline is the best in the country!'],
+      ['us', 'frost', 'The young clubs were fast. We were faster when it counted.'],
+      ['us', 'stone', 'Hang it high in the hall, next to the old banners. Higher, even.'],
+      ['us', 'thunder', 'For Gilded! For every Ram who ever wore the gold!'],
+    ],
+  },
+  moose: {
+    cup: [
+      ['kip', null, 'The Thunder Moose are Frostline champions! Their first season, and they knocked the whole league over!'],
+      ['us', 'thunder', 'STAMPEDE! Sorry. No, actually, not sorry this time. STAMPEDE!'],
+      ['us', 'stone', 'Big and clever. Told you it would work.'],
+      ['us', 'frost', 'Wait till the timber country hears. They\'ll hear us before they see us.'],
+    ],
+    top: [
+      ['kip', null, 'The Thunder Moose are Elite champions! Mind your toes, everyone: the biggest club in the country is the best!'],
+      ['us', 'stone', 'Hear that rumble? That\'s the whole country stamping its feet.'],
+      ['us', 'thunder', 'Antler hats for everybody!'],
+      ['us', 'frost', 'Nobody could move us. Nobody could stop us. Let\'s go home.'],
+    ],
+  },
+  ravens: {
+    cup: [
+      ['kip', null, 'The Obsidian Ravens are Frostline champions! After all those years in second place, they\'re first!'],
+      ['us', 'frost', 'First place. No mistakes in it. As calculated.'],
+      ['us', 'thunder', 'Somebody take the second-place pennants off the wall. All of them.'],
+      ['us', 'stone', 'Every player in their place, every pass on time. I said the cup would come.'],
+    ],
+    top: [
+      ['kip', null, 'The Obsidian Ravens are Elite champions! Nobody is ahead of them now, not in the whole country!'],
+      ['us', 'frost', 'I ran the numbers. There is no higher place to finish.'],
+      ['us', 'thunder', 'So we\'re done being second? For good?'],
+      ['us', 'stone', 'For good. Now let\'s draw some new arrows on that board.'],
+    ],
+  },
+  royals: {
+    cup: [
+      ['kip', null, 'The Aurora Royals keep the crown! Every club came for it, and the Royals are champions again!'],
+      ['us', 'frost', 'Long live the Royals. The cabinet needs another shelf.'],
+      ['us', 'thunder', 'Everybody played their best game against us. We played better. Every time.'],
+      ['us', 'stone', 'Champions don\'t get comfortable. Next season they\'ll come for it again.'],
+    ],
+    top: [
+      ['kip', null, 'The Aurora Royals are Elite champions! The crown of the whole country belongs to them now!'],
+      ['us', 'stone', 'A bigger kingdom, the same crown. We defended it one game at a time.'],
+      ['us', 'thunder', 'The northern lights are out tonight. Even the sky is celebrating.'],
+      ['us', 'frost', 'Long live the Royals. The crown stays with us.'],
+    ],
+  },
+  custom: {
+    cup: [
+      ['kip', null, 'The Snowcrest Foxes are Frostline champions! A brand-new club, and already a cup of their own!'],
+      ['us', 'frost', 'Nobody knew us when we started. Everybody knows us now.'],
+      ['us', 'thunder', 'Wait till they see us skate, I said. Well, they saw.'],
+      ['us', 'stone', 'And the old club up the road? They\'ll be hearing about this for years.'],
+    ],
+    top: [
+      ['kip', null, 'The Snowcrest Foxes are Elite champions! From a brand-new club to the best in the country!'],
+      ['us', 'stone', 'An empty locker room, a blank crest, one puck on the bench. Look at us now.'],
+      ['us', 'thunder', 'We made history. Can we make some more?'],
+      ['us', 'frost', 'Every season. This is our story, and it\'s only just started.'],
+    ],
+  },
+};
+
+// The payoff due just after a Cup is won (counted: save.cups, save.tierCups), if any, once each:
+// 'cup' for the club's first, 'top' for its first Elite Cup. Marks it seen.
+export function payoffDue(save) {
+  const seen = (save.payoffs ||= {});
+  const key = (save.tierCups || {}).elite === 1 && save.tier === 2 && !seen.top ? 'top' : save.cups === 1 && !seen.cup ? 'cup' : null;
+  if (!key) return null;
+  seen[key] = true;
+  return (CLUB_PAYOFFS[save.team || 'foxes'] || CLUB_PAYOFFS.foxes)[key];
+}

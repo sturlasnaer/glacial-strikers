@@ -48,7 +48,7 @@ import { rivalSigning, rivalOffer } from './moves.js';
 import { refreshAgents } from './agents.js';
 import { addNews } from './news.js';
 import { teamHasParts, setFills, retireRivals } from './slots.js';
-import { CLUB_STORIES } from './clubs.js';
+import { CLUB_STORIES, payoffDue } from './clubs.js';
 import { useModular, useGoalieParts, goalieArt } from './modular.js';
 import { Quality } from './quality.js';
 import { offerDraft } from './draft.js';
@@ -389,6 +389,16 @@ class App {
     if (this.save.league) return null;
     if (this.save.champion) return null;
     return TOURNAMENT.stages[this.save.stage] || null;
+  }
+
+  // A story's payoff after a Cup (clubs.js): the club's first Cup, and its first Elite Cup.
+  payoff(next) {
+    const lines = payoffDue(this.save);
+    if (!lines) return next();
+    writeSave(this.save);
+    const scene = Assets.atlas.story && Assets.atlas.story[this.save.team || 'foxes'];
+    this.scene = 'dialogue';
+    this.ui.dialogue(lines, this.save.team ? 'foxes' : 'comets', null, next, 'won', scene ? { bg: Assets.url(scene) } : null);
   }
 
   startCampaign() {
@@ -1223,7 +1233,7 @@ class App {
         // Play again: the same exhibition straight away
         if (c.mini) return this.miniNext(rewards.won); // (the Mini Cup: the bracket, or the cup)
         if (this.rematchNext) { this.rematchNext = false; const e = this.lastExhibition; return this.startExhibition(e.teamId, e.mods, e.arena, e.coop, false, e.night); }
-        if (becameChampion) { this.scene = 'results'; this.music('final'); audio.jingle('champion'); this.ui.champion(() => this.goHub('tournament')); } else this.goHub(rewards.won ? 'tournament' : 'team');
+        if (becameChampion) { this.scene = 'results'; this.music('final'); audio.jingle('champion'); this.ui.champion(() => this.payoff(() => this.goHub('tournament'))); } else this.goHub(rewards.won ? 'tournament' : 'team');
       };
       const call = (next) => { const o = this.pendingOffer; this.pendingOffer = null; return o ? this.ui.rivalCall(o, next) : next(); };
       const hall = (next) => { const h = this.pendingHall || []; this.pendingHall = null; return h.length ? this.ui.hallCeremony(h, next) : next(); };
