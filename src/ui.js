@@ -63,7 +63,7 @@ import { SNOW_TIME, newSnowball, stepSnowball, throwAt, snowPrize } from './snow
 import { KID_STAR_IDS } from './kidstars.js';
 import { tripStops, POSTCARD_TOWNS, NATIONAL_POSTCARDS } from './trip.js';
 import { tierOf, tierInfo, tierAt, TIERS, safeSeason } from './tiers.js';
-import { CLUB_CHOICES, CLUB_STORIES, clubStars, clubStart, START_NAMES, CUSTOM_CLUB } from './clubs.js';
+import { CLUB_CHOICES, CLUB_STORIES, CLUB_PAYOFFS, clubStars, clubStart, START_NAMES, CUSTOM_CLUB } from './clubs.js';
 import { newPet, stepPet, tapPet, tossPuck, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall,
   PET_KINDS, PET_KIND, PET_FRAMES, PET_WINS, PET_AREA, ROOM_MAX, petDir, petIcon, roomPets, ownedPets, petsDue, adoptPet, sendToHouse, bringToRoom, petNameOf, renamePet, winsAgainst, petFinds, takeFind } from './pet.js';
 import { albumPages, albumClubOpen, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
@@ -1436,6 +1436,7 @@ export class UI {
       <div class="train-top"><div><div class="label">${t('Trophy case')}</div>
         <p style="margin:2px 0 0;font-size:13px">${t('{n} of {total} unlocked', { n: got.length, total: ACHIEVEMENTS.length })} · ${t('{n} coins earned', { n: earned })}${s.cups ? ` · ${t(s.cups > 1 ? '{n} cups won' : '{n} cup won', { n: s.cups })}` : ''}${s.miniCups ? ` · ${t(s.miniCups > 1 ? '{n} Mini Cups won' : '{n} Mini Cup won', { n: s.miniCups })}` : ''}${classicWins ? ` · ${t(classicWins > 1 ? '{n} Winter Classics won' : '{n} Winter Classic won', { n: classicWins })}` : ''}${allstarWins ? ` · ${t(allstarWins > 1 ? '{n} All-Star Games won' : '{n} All-Star Game won', { n: allstarWins })}` : ''}</p></div>
         <span class="row" style="gap:6px;margin:0"><button class="btn small ghost" id="tr-career">${btnIcon('icons/career')} ${t('Career stats')}</button><button class="btn small ghost" id="tr-lb">${badge('cup_small', 48, 'btn-ico', '🏆')} ${t('Online leaderboards')}</button></span></div>
+      ${this.storyHtml(s)}
       ${this.albumCard(s)}
       ${this.starChartHtml(s, body)}
       ${(() => { // the Hall of Fame's plaques (on Batch BV's plaque once it's in)
@@ -1481,6 +1482,13 @@ export class UI {
     this.click('#tr-pack', () => { audio.sfx('click'); this.packOpen(); }, body);
     this.click('#tr-lb', () => { audio.sfx('click'); this.leaderboard('cones'); }, body);
     this.click('#tr-career', () => { audio.sfx('click'); this.careerPage(); }, body);
+    this.click('[data-story]', (el) => { // (a chapter of the club's story, again)
+      const k = el.dataset.story, team = s.team || 'foxes', lines = k === 'intro' ? (CLUB_STORIES[team] || CLUB_STORIES.foxes).intro : (CLUB_PAYOFFS[team] || CLUB_PAYOFFS.foxes)[k];
+      const scene = Assets.atlas.story && Assets.atlas.story[team];
+      audio.sfx('click');
+      this.app.scene = 'dialogue';
+      this.dialogue(lines, s.team ? 'foxes' : 'comets', null, () => this.app.goHub('trophies'), k === 'intro' ? null : 'won', scene ? { bg: Assets.url(scene) } : null);
+    }, body);
   }
 
   // The season's team photo: the line-up in front with the goalies at the ends, the rest behind,
@@ -1512,6 +1520,20 @@ export class UI {
   }
 
   // The sticker album's card in Trophies: the cover, how full it is, and the packs to open.
+  // Trophies › Our story: the club's story so far, each scene to watch again (clubs.js): the
+  // beginning, the first Cup, the top of the country; those still ahead say what they wait for.
+  storyHtml(s) {
+    const C = s.tierCups || {}, chapters = [
+      ['intro', t('The beginning'), true, ''],
+      ['cup', t('The first Cup'), (s.cups || 0) > 0, t('Win the Frostline Cup')],
+      ['top', t('The top of the country'), (C.elite || 0) > 0, t('Win the Elite Cup')],
+    ];
+    return `<div class="label" style="margin:4px 0 6px">${t('Our story')}</div>
+      <div class="row story-row" style="gap:6px;margin:0 0 10px;flex-wrap:wrap">${chapters.map(([k, name, open, need]) => (open
+        ? `<button class="btn small ghost" data-story="${k}">${esc(name)}</button>`
+        : `<span class="btn small ghost" aria-disabled="true" style="opacity:.55;cursor:default">${esc(name)} · ${esc(need)}</span>`)).join('')}</div>`;
+  }
+
   albumCard(s) {
     const a = albumOf(s), pr = albumProgress(s, ALBUM_PAGES(s));
     return `<div class="album-card">

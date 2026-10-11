@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-11i',
+    items: [
+      { icon: 'icons/career', alt: 'icons/career', text: 'Every club\'s story now has an ending worth chasing: win your first Cup, then the Elite Cup, and see what your players have to say. Trophies › Our story plays any scene again.' },
+    ],
+  },
+  {
     id: '2026-10-11h',
     items: [
       { icon: 'icons/pet_lynx', alt: 'icons/pet', text: 'Your pets come to home games! Up to three of the pets in your locker room sit on the boards beside Snowball, and they all hop when you score.' },
