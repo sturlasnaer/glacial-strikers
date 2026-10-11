@@ -2606,6 +2606,7 @@ export const IS = {
   "Those are our defenders. Good luck chewing through them.": "Þetta eru varnarmennirnir okkar. Gangi ykkur vel að naga ykkur í gegnum þá.",
   "Three honours": "Þrenn verðlaun",
   "Three hours of rewinding. Everyone sees something they'll fix.": "Þriggja tíma spólun fram og til baka. Öll sjá eitthvað sem þau ætla að laga.",
+  "Three more National pets: a grizzly cub, a bull calf and a narwhal calf that rolls about in its own little tub.": "Þrjú gæludýr til viðbótar úr Landsbikarnum: grábjarnarhúnn, nautskálfur og náhvalskálfur sem rúllar um í sínum eigin litla bala.",
   "Three more pets to collect: a fire salamander from the Comets, a raven chick from the Ravens and a polar bear cub from the Royals. Beat a club three times and its little one comes to stay.": "Þrjú gæludýr í viðbót til að safna: eldsalamandra frá Comets, hrafnsungi frá Ravens og ísbjarnarhúnn frá Royals. Vinndu félag þrisvar og litla krílið þess flytur til ykkar.",
   "Three new trophies: all eight postcards, ten games of fetch with the cub, and ten gold stars. The gold stars have their own sticker chart in Trophies too.": "Þrenn ný verðlaun: öll átta póstkortin, tíu sinnum að kasta fyrir yrðlinginn og tíu gullstjörnur. Gullstjörnurnar eiga líka sína eigin límmiðatöflu í Verðlaunum.",
   "Three on one! {team} have the numbers!": "Þrír á móti einum! {team} eru fleiri!",

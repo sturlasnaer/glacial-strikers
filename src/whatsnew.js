@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-11m',
+    items: [
+      { icon: 'icons/pet_narwhal', alt: 'icons/pet', text: 'Three more National pets: a grizzly cub, a bull calf and a narwhal calf that rolls about in its own little tub.' },
+    ],
+  },
+  {
     id: '2026-10-11l',
     items: [
       { icon: 'icons/combo_frostbolt', alt: 'icons/career', text: 'Two linemates with the same super now have a combo too: Deep Freeze, Double Strike, Landslide, Wildfire, Whirlwind and Eclipse. Bond them with passes and it fires like any other.' },
