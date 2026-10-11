@@ -902,9 +902,10 @@ class App {
 
   tutorialTips() {
     const touch = this.isTouch, k = hintKeys(this.input.lastDevice === 'gamepad');
+    const name = this.match && this.match.goalies[0] && this.match.goalies[0].name; // (whoever's in our net)
     if (this.match && this.match.goalieMode) return [
-      touch ? t('You\'re in goal! Drag your left thumb to move Halla: she holds the angle, you nudge her.') : t('You\'re in goal! Move Halla with {move}: she holds the angle, you nudge her.', k),
-      touch ? t('Shot coming? BLOCK drops into the butterfly, DIVE throws Halla across the net.') : t('Shot coming? {shoot} drops into the butterfly, {pass} dives across the net.', k),
+      touch ? t('You\'re in goal as {name}! Drag your left thumb to move: {name} holds the angle, you just nudge.', { name }) : t('You\'re in goal as {name}! Move with {move}: {name} holds the angle, you just nudge.', { ...k, name }),
+      touch ? t('Shot coming? BLOCK drops into the butterfly, DIVE throws {name} across the net.', { name }) : t('Shot coming? {shoot} drops into the butterfly, {pass} dives across the net.', k),
       touch ? t('Caught it? PASS goes toward your thumb, CLEAR rims it around the boards.') : t('Caught it? {shoot} passes toward where you\'re steering, {pass} rims it around the boards.', k),
       touch ? t('The round button pokes the puck off a close carrier. Saves charge Wall of Ice: fire it with the star.') : t('{skill} pokes the puck off a close carrier. Saves charge Wall of Ice: fire it with {ult}.', k),
     ];
@@ -1004,7 +1005,7 @@ class App {
         }
       }, 4200);
     });
-        m.on('goalie_returned', (e) => { if (e.team === 0) this.hud.ticker(t('Halla is back in net.')); });
+        m.on('goalie_returned', (e) => { if (e.team === 0) this.hud.ticker(t('{name} is back in net.', { name: m.goalies[0].name })); });
     m.on('no_goal', (e) => { this.hud.banner(`<div class="small" style="color:#ff6f7d">${t('NO GOAL')}</div><div class="sub">${t(e.reason)}</div>`, 1.6); audio.sfx('whistle'); audio.crowdOoh(0.8); });
     m.on('save', (e) => { audio.sfx(e.caught ? 'catch' : 'save', at(e.x, e.y, 0.85)); if (!e.caught) audio.crowdOoh(0.6); });
     m.on('big_save', (e) => { if (!this.attract && !(this.cur && this.cur.drill)) { this.hud.cutin(e.g, null, t('DENIED!')); audio.crowdOoh(1); } });
@@ -1340,7 +1341,7 @@ class App {
     const L = s.league;
     let streak = 0;
     if (L) for (let i = L.results.length - 1; i >= 0; i--) { const g = L.results[i][0]; if (g.bye) continue; if (g.ga > g.gb) streak++; else break; } // (a bye week isn't a game)
-    const ctx = { won: rewards.won, gf: summary.score[0], ga: summary.score[1], summary, streak, next: this.fixture(), ups: [] };
+    const ctx = { won: rewards.won, gf: summary.score[0], ga: summary.score[1], summary, streak, next: this.fixture(), ups: [], save: s }; // (save: the moments' words read it)
     // after a big game the press gets the player of the night instead
     const c = this.cur, game = { kind: c && c.fixture ? c.fixture.kind : 'regular', opp: c && c.teamId, won: rewards.won };
     const who = c && pressWorthy(s, game) && pressPlayer(summary);

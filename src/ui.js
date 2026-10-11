@@ -2111,7 +2111,8 @@ export class UI {
   }
 
   lockerMoment(m, ctx, choose, done) {
-    const who = m.whoFn ? m.whoFn(ctx) : m.who;
+    const who = (m.whoFn ? m.whoFn(ctx) : m.who).filter(Boolean);
+    const say = (x) => (typeof x === 'function' ? x(ctx) : t(x)); // (a club career's moments name the line-up)
     audio.sfx('blip');
     this.modal(`
       <div class="label">${t('Locker room')}</div>
@@ -2119,7 +2120,7 @@ export class UI {
         <div class="locker-faces">${who.map((id) => `<img src="${portrait(id, 0, null, 152)}" alt="">`).join('') || `<img src="${portrait('goalie', 0, null, 152)}" alt="">`}</div>
         <div><h2>${esc(t(m.title))}</h2><p style="margin:6px 0 0">${esc(clubText(t(m.text(ctx))))}</p></div>
       </div>
-      <div class="choice" id="lm-choices">${m.choices.map((c, i) => `<button class="btn ghost" data-lm="${i}" ${c.cost && this.app.save.coins < c.cost ? 'disabled' : ''}><b>${esc(t(c.label))}</b>${esc(t(c.fx))}</button>`).join('')}</div>
+      <div class="choice" id="lm-choices">${m.choices.map((c, i) => `<button class="btn ghost" data-lm="${i}" ${c.cost && this.app.save.coins < c.cost ? 'disabled' : ''}><b>${esc(clubText(say(c.label)))}</b>${esc(clubText(say(c.fx)))}</button>`).join('')}</div>
       <div id="lm-reply" hidden></div>`, (el, close) => {
       this.click('[data-lm]', (b) => {
         const reply = choose(+b.dataset.lm);
@@ -2127,7 +2128,7 @@ export class UI {
         el.querySelector('#lm-choices').hidden = true;
         const r = el.querySelector('#lm-reply');
         r.hidden = false;
-        r.innerHTML = `<p class="gold-t" style="margin:0">${esc(t(m.choices[+b.dataset.lm].fx))}</p><p style="margin:6px 0 10px">${esc(reply ? t(reply) : '')}</p><div class="row" style="justify-content:flex-end"><button class="btn gold" id="lm-go">${t('Continue')}</button></div>`;
+        r.innerHTML = `<p class="gold-t" style="margin:0">${esc(clubText(say(m.choices[+b.dataset.lm].fx)))}</p><p style="margin:6px 0 10px">${esc(reply ? clubText(say(reply)) : '')}</p><div class="row" style="justify-content:flex-end"><button class="btn gold" id="lm-go">${t('Continue')}</button></div>`;
         r.querySelector('#lm-go').addEventListener('click', () => { close(); done(); });
       }, el);
     }, false);
