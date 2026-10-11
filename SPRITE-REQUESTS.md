@@ -7,16 +7,15 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **EM: two more National clubs, the Birchwood Beavers and the Coral Bay Flamingos**
-2. **EN: the new clubs' mascot stickers for the album**
-3. **EO: the National and Elite Cup Finals' buildings**
-4. **EP: supporters' sections for the new clubs' rinks**
-5. **EQ: the rivalry game's icons**
-6. **ER: tighter pages for the always-loaded art** (no new drawing)
-7. **ES: the clubs' opening scenes** (choose-your-club stories)
-8. **ET: the divisions' gear and new goalie gear** (shop icons)
-9. **EU: mascots for a club of one's own** (one for each crest)
-10. **EV: two trophies for club careers** (achievement icons)
+1. **EN: the new clubs' mascot stickers for the album**
+2. **EO: the National and Elite Cup Finals' buildings**
+3. **EP: supporters' sections for the new clubs' rinks**
+4. **EQ: the rivalry game's icons**
+5. **ER: tighter pages for the always-loaded art** (no new drawing)
+6. **ES: the clubs' opening scenes** (choose-your-club stories)
+7. **ET: the divisions' gear and new goalie gear** (shop icons)
+8. **EU: mascots for a club of one's own** (one for each crest)
+9. **EV: two trophies for club careers** (achievement icons)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -124,6 +123,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered EK:** Thirty native pet frames: grizzly cub, bull calf and narwhal calf in its wheeled water tub, with four walking phases, idle and breathing pairs, tap reactions and gift-card portraits (30 frames total). Pets load only when drawn. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EK-Testing-Update`.
 
 **Delivered EL:** Taiga Tigers and Bamboo Ridge Pandas: two native crests, eight arena mascot poses, ten race poses, two town postcards and twenty collectible pet frames (42 new assets), reusing both delivered unique rinks. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EL-Testing-Update`.
+
+**Delivered EM:** Birchwood Beavers and Coral Bay Flamingos: two native crests, eight arena mascot poses, ten race poses, two town postcards and twenty collectible pet frames (42 new assets), reusing both delivered unique rinks. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EM-Testing-Update`.
 
 ## Format notes
 
@@ -871,9 +872,9 @@ For each of the two:
 
 2 crests, 8 + 10 mascot frames, 2 rinks, 2 postcards and 20 pet frames.
 
-## Batch EM: two more National clubs, the Birchwood Beavers and the Coral Bay Flamingos
+## Batch EM ✓: two more National clubs, the Birchwood Beavers and the Coral Bay Flamingos
 
-**Rinks delivered:** Both rink backdrops are in the all-club rink pack. The remaining 40 assets in this batch are still open.
+**Delivered:** Both original rink backdrops are retained, and all 42 named non-rink assets are now imported (the earlier remaining-count note was an arithmetic error).
 
 The National division grows to ten clubs. Like the other National clubs, their players are built from parts, so each needs what EA–EG drew for the others, plus its pet. Everything without lettering:
 
