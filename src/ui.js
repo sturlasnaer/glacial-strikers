@@ -1611,6 +1611,7 @@ export class UI {
     };
     this.modal(`<h2>${t('Choose your club')}</h2>
       <p class="muted" style="margin:0 0 10px">${t('Play the Snowcrest Foxes\' story, take charge of another Frostline club (its stars, its colours, its story) or found a club of your own. The Foxes then play in the league like any other club.')}</p>
+      <p class="muted" style="margin:-4px 0 10px;font-size:12.5px">${t('New to the game? A strong start is the gentlest way in; a tough one is a real underdog story.')}</p>
       <div class="club-grid">${CLUB_CHOICES.map(card).join('')}</div>`, (m, close) => {
       m.classList.add('club-modal');
       this.click('[data-club]', (el) => { audio.sfx('confirm'); close(); onPick(el.dataset.club); }, m);

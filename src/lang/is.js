@@ -1479,6 +1479,7 @@ export const IS = {
   "New season": "Nýtt tímabil",
   "New Season": "Nýtt tímabil",
   "New season, same Foxes? We'll see.": "Nýtt tímabil, sömu Foxes? Við sjáum til.",
+  "New to the game? A strong start is the gentlest way in; a tough one is a real underdog story.": "Fyrsta skiptið? Sterk byrjun er mildasta leiðin inn; erfið byrjun er alvöru saga af litla liðinu.",
   "New Tricks": "Ný brögð",
   "NEW!": "NÝR!",
   "Newcomers": "Nýliðarnir",
