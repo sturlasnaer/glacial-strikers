@@ -2489,6 +2489,7 @@ export const IS = {
   "The morning paper: \"{club} ROLL {gf}–{ga}.\" Volta has already framed it.": "Blöðin í morgun: „{club} MEÐ STÓRSIGUR, {gf}–{ga}.“ Volta er þegar búin að ramma fyrirsögnina inn.",
   "The most valuable skater in the Frostline.": "Mikilvægasti skautarinn í Frostline-deildinni.",
   "The National clubs' mascots join the mascot race: a capybara, a puffin, a grizzly, a seal, a penguin, a bull and a narwhal. Play a National club to see them run.": "Lukkudýr félaganna í Landsdeildinni bætast í lukkudýrakapphlaupið: flóðsvín, lundi, grábjörn, selur, mörgæs, naut og náhvalur. Spilaðu við félag úr Landsdeildinni til að sjá þau hlaupa.",
+  "The National Cup Final is now played in the Capital Dome, and the Elite Cup Final in the glittering Diamond Arena: two grand new buildings, each with its own trophy scoreboard. Dynasty of the Elite and Grand Tour have their own trophy pictures too.": "Úrslitaleikur Landsbikarsins er nú spilaður í Capital Dome og úrslitaleikur Úrvalsbikarsins í glitrandi Diamond Arena: tvær glæsilegar nýjar hallir, hvor með sína bikarstigatöflu. Úrvalsveldi og Hringferðin mikla fá líka sínar eigin bikarmyndir.",
   "The National Cup! New rinks, new rivals, new clubs to beat.": "Landsbikarinn! Ný svell, nýir keppinautar, ný félög til að sigra.",
   "The newcomer +20 EXP, and +6 chemistry with the line": "Nýliðinn +20 EXP og +6 samspil með línunni",
   "The night before the final": "Kvöldið fyrir úrslitaleikinn",

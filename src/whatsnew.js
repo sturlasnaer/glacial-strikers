@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-11r',
+    items: [
+      { icon: 'badges/national_cup', alt: 'icons/career', text: 'The National Cup Final is now played in the Capital Dome, and the Elite Cup Final in the glittering Diamond Arena: two grand new buildings, each with its own trophy scoreboard. Dynasty of the Elite and Grand Tour have their own trophy pictures too.' },
+    ],
+  },
+  {
     id: '2026-10-11q',
     items: [
       { icon: 'album/mascot_capybaras', alt: 'icons/career', text: 'The sticker album\'s National and Elite pages now end with each club\'s mascot, from the Capybaras\' to the Pandas\': eleven new stickers to find.' },
