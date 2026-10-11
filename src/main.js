@@ -43,7 +43,7 @@ import { moveTier, noteTierCup, tierOf, tierInfo } from './tiers.js';
 import { updateSeasonGoals, goalStates } from './goals.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { member, goalieInfo, TEAMS, TOURNAMENT, DIALOGUE, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, CAREER, applyClub, GEAR_LOOK, useGearArt, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, expansionLines, TIER_LINES } from './data.js';
+import { member, goalieInfo, TEAMS, TOURNAMENT, DIALOGUE, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, CAREER, pairKey, applyClub, GEAR_LOOK, useGearArt, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, expansionLines, TIER_LINES } from './data.js';
 import { rollLegend, legendState, STAY, joinLegend, LEGEND_LINES, twinsFirstTogether } from './legends.js';
 import { rivalSigning, rivalOffer } from './moves.js';
 import { refreshAgents } from './agents.js';
@@ -627,9 +627,14 @@ class App {
     const team = TEAMS[teamId];
     const ids = ['frost', 'thunder', 'stone'];
     const chem = { 'frost+thunder': 1, 'frost+stone': 1, 'stone+thunder': 1 };
+    // our side: the cast, or in a career as another club (or one's own) its own three and its
+    // goalie, all on the cast's stats so the two players are even
+    const own = this.save.team, ownIds = own === 'custom' ? ['rk1', 'rk2', 'rk3'] : own ? ['c', 'w', 'd'].map((k) => `${own}_${k}`) : null;
+    const ours = ownIds && ownIds.every((id) => member(id)) ? ownIds.map((id, i) => { const m = member(id); return { def: m.def, stats: { ...CHARACTERS[ids[i]].base }, name: m.name, perks: [], sprite: m.sprite, look: m.look, parts: m.parts, hand: m.hand }; }) : null;
+    const gid = own && (own === 'custom' ? 'fa_g0' : own + '_g'), gi = ours && goalieIds(this.save).includes(gid) ? goalieInfo(gid) : null;
     const cfg = {
       teams: [
-        { skaters: ids.map((id) => ({ def: CHARACTERS[id], stats: { ...CHARACTERS[id].base }, name: CHARACTERS[id].name, perks: [] })), goalie: { stats: { rfx: 6, pos: 6 }, name: GOALIE.name }, chem },
+        { skaters: ours || ids.map((id) => ({ def: CHARACTERS[id], stats: { ...CHARACTERS[id].base }, name: CHARACTERS[id].name, perks: [] })), goalie: gi ? { stats: { rfx: 6, pos: 6 }, name: gi.name, art: gi.art, look: gi.art ? 'homekit' : null, mask: gi.mask || null, style: gi.style } : { stats: { rfx: 6, pos: 6 }, name: GOALIE.name }, chem: ours ? { [pairKey(ownIds[0], ownIds[1])]: 1, [pairKey(ownIds[0], ownIds[2])]: 1, [pairKey(ownIds[1], ownIds[2])]: 1 } : chem },
         { skaters: ids.map((id) => ({ def: slotDef(teamId, id), stats: { ...CHARACTERS[id].base }, name: team.names[id], perks: [], sprite: slotSprite(teamId, id), parts: slotLook(teamId, id) })), goalie: { stats: { rfx: 6, pos: 6 }, name: team.names.goalie, art: team.art || (team.goalieLook ? goalieArt(team.goalieLook) : 'newcomer'), mask: team.goalieLook || null }, chem },
       ],
       humanTeam: 0, humans: [0, 1],
