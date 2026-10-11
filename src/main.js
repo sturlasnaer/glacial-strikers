@@ -334,7 +334,7 @@ class App {
     const coachCostume = this.save.settings.little && seasonFor() ? ['talk_1', 'talk_2', 'point', 'cheer', 'think'].map((f) => `cub_coach_${seasonFor()}/${f}`).filter((f) => Assets.frame(f)) : [];
     // the mascot race's runners (Batch DB): only the pages with the Snow Fox and their mascot on
     // (the race draws the others from those); the whole race group is over 20 MB decoded
-    const runners = !this.attract && !cfg.drill ? [`race/${mascotOf('home')}/run_1`, ...(mascotOf(teamId) ? [`race/${mascotOf(teamId)}/run_1`] : [])].filter((f) => Assets.frame(f)) : [];
+    const runners = !this.attract && !cfg.drill && this.save.settings.race !== false ? [`race/${mascotOf('home')}/run_1`, ...(mascotOf(teamId) ? [`race/${mascotOf(teamId)}/run_1`] : [])].filter((f) => Assets.frame(f)) : [];
     // the room's other pets (up to three) sit on the boards beside the cub at home games: just
     // their sitting and hopping frames' pages (small)
     this.benchPets = arena === 'home' && !this.attract && !cfg.drill && Assets.atlas.arena_spots?.home_cub ? roomPets(this.save).filter((k) => k !== 'fox' && BENCH_POSES.every((f) => Assets.frame(petDir(k) + f))).slice(0, 3) : [];
