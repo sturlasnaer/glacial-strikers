@@ -13,7 +13,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 4. **FE: the Nations Cup's regional jerseys** (a body set in a regional design)
 
 
-**FB in progress:** 191 of 551 Foxes cloth masks delivered across reviewed cohorts. All original art is retained. FB remains the first priority; FC–FE follow. Latest delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-FB-Part3-Testing-Update`. The initial complete game pack remains in `Puckbound-FB-Testing-Update`; Later cohorts add a game-ready delta.
+**FB in progress:** 239 of 551 Foxes cloth masks delivered across reviewed cohorts. All original art is retained. FB remains the first priority; FC–FE follow. Latest delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-FB-Part4-Testing-Update`. The initial complete game pack remains in `Puckbound-FB-Testing-Update`; Later cohorts add a game-ready delta.
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
