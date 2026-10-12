@@ -869,11 +869,14 @@ export function applyClub(club) {
   // our own art: teal trim (h 187 s .51 v .91) and cream jersey (h 45 s .2 v 1)
   PALETTES.club.recolor = recoloured ? { mode: 'home', trim: t, jersey: j } : null;
   // signings: coral (s ~.6, v ~1) becomes the jersey, violet (s ~.5, v ~.75) the trim
-  Object.assign(PALETTES.homekit.recolor, T && T.recolor && c.trim === T.color && c.jersey === T.color2 ? { ...T.recolor } : { // (a club career: its own kit, exactly)
-    h1: j.h, sat: Math.max(0.05, j.s / 0.6), val: Math.max(0.2, j.v * 1.06),
-    h2: t.h, sat2: Math.max(0.05, t.s / 0.55), val2: Math.max(0.2, t.v / 0.72),
-  });
+  Object.assign(PALETTES.homekit.recolor, T && T.recolor && c.trim === T.color && c.jersey === T.color2 ? { ...T.recolor } : kitRecolor(c.trim, c.jersey)); // (a club career: its own kit, exactly)
   return CLUB;
+}
+// The colours for art drawn in coral and violet (signings, players from parts, a club career's
+// stars): coral (s ~.6, v ~1) becomes the jersey, violet (s ~.5, v ~.75) the trim.
+export function kitRecolor(trim, jersey) {
+  const t = hexToHsv(trim), j = hexToHsv(jersey);
+  return { h1: j.h, sat: Math.max(0.05, j.s / 0.6), val: Math.max(0.2, j.v * 1.06), h2: t.h, sat2: Math.max(0.05, t.s / 0.55), val2: Math.max(0.2, t.v / 0.72) };
 }
 
 // clubText for words with names filled in: the club's name goes into the line's own words, never

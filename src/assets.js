@@ -215,21 +215,24 @@ export const Assets = {
       || id.startsWith('expressions_halla_royals_comets/halla/') || id === 'hud_elements/misc/home_crest' || id.startsWith('crests_club/')
       || id === 'arena/banner/glacial_strikers' || id.startsWith('mascot/') || id.startsWith('celebrations/');
     if (CAREER.team || CAREER.custom) return this.prepareClubCompact(rc, ours);
-    const rects = new Map();
+    const rects = new Map(), masks = this.atlas.club_art_masks || {};
     for (const [id, f] of Object.entries(this.atlas.frames)) {
-      if (!ours(id) || this.atlas.pages[f[0]].group !== 'home') continue;
+      if (!ours(id) || this.atlas.pages[f[0]].group !== 'home' || masks[id]) continue; // (a frame with a cloth mask: its cloth alone, below)
       if (!rects.has(f[0])) rects.set(f[0], []);
       rects.get(f[0]).push([f[1], f[2], f[3], f[4]]);
     }
     const pages = this.pages.map((img, i) => (img && rects.has(i) ? recolorHome(img, rc, rects.get(i)) : img));
-    // Native cloth masks isolate these banners and supporters from props and faces.
-    const masked = new Map(), maskSources = new Map();
-    for (const [id, mid] of Object.entries(this.atlas.club_art_masks || {})) {
+    // Native cloth masks isolate the cloth from faces, hair, gear and props (banners, supporters,
+    // and the cast once Batch FB is in): those frames take their cloth's colours alone, from the
+    // original pixels (colour matching bleeds into everything near the kit's colours).
+    const masked = new Map(), maskSources = new Map(), originals = new Map();
+    for (const [id, mid] of Object.entries(masks)) {
       const f = this.atlas.frames[id], m = this.atlas.frames[mid];
       if (!f || !m || !pages[f[0]] || !this.pages[m[0]]) continue;
       if (!masked.has(f[0])) masked.set(f[0], cpuCanvas(pages[f[0]]));
+      if (!originals.has(f[0])) originals.set(f[0], cpuCanvas(this.pages[f[0]]));
       const ctx = masked.get(f[0]);
-      const data = ctx.getImageData(f[1], f[2], f[3], f[4]);
+      const data = originals.get(f[0]).getImageData(f[1], f[2], f[3], f[4]);
       if (!maskSources.has(m[0])) maskSources.set(m[0], cpuCanvas(this.pages[m[0]]));
       const mc = maskSources.get(m[0]);
       const mask = mc.getImageData(m[1], m[2], m[3], m[4]);
@@ -266,7 +269,7 @@ export const Assets = {
     for (const id of ids) {
       const [pi, fx, fy, w, h, px, py, s] = A.frames[id], [nx, ny] = place[id];
       ctx.drawImage(this.pages[pi], fx, fy, w, h, nx, ny, w, h);
-      if (keep(id)) rects.push([nx, ny, w, h]);
+      if (keep(id) && !masks[id]) rects.push([nx, ny, w, h]); // (a frame with a cloth mask: its cloth alone, below)
     }
     recolorHomeIn(ctx, rc, rects);
     for (const id of ids) { // native cloth masks: banners and supporters, their cloth alone
@@ -282,14 +285,21 @@ export const Assets = {
     for (const id of ids) { const f = A.frames[id], [nx, ny] = place[id]; pages.frames[id] = [ci, nx, ny, f[3], f[4], f[5], f[6], f[7]]; }
   },
 
-  // A frame of our art in trial club colours, for the club editor's preview.
+  // A frame in trial club colours, for the club editor's preview: our own art (rc.mode 'home': by
+  // its cloth mask where it has one, Batch FB), or art drawn in coral and violet (kitRecolor).
   previewIcon(id, size, rc) {
     const f = this.atlas.frames[id];
     if (!f || !this.pages[f[0]]) return '';
     const [pi, fx, fy, fw, fh] = f;
     const src = document.createElement('canvas'); src.width = fw; src.height = fh;
     src.getContext('2d').drawImage(this.pages[pi], fx, fy, fw, fh, 0, 0, fw, fh);
-    const img = rc ? recolorHome(src, rc, [[0, 0, fw, fh]]) : src;
+    const mid = rc && rc.mode === 'home' && this.atlas.club_art_masks && this.atlas.club_art_masks[id], m = mid && this.atlas.frames[mid];
+    let img = src;
+    if (rc && m && this.pages[m[0]]) {
+      const ctx = cpuCanvas(src), data = ctx.getImageData(0, 0, fw, fh);
+      recolorClubPixels(data.data, cpuCanvas(this.pages[m[0]]).getImageData(m[1], m[2], m[3], m[4]).data, rc);
+      ctx.putImageData(data, 0, 0); img = ctx.canvas;
+    } else if (rc) img = rc.mode === 'home' ? recolorHome(src, rc, [[0, 0, fw, fh]]) : recolorPage(src, rc);
     const c = document.createElement('canvas'); c.width = size; c.height = size;
     const k = size / Math.max(fw, fh);
     c.getContext('2d').drawImage(img, (size - fw * k) / 2, (size - fh * k) / 2, fw * k, fh * k);
@@ -577,16 +587,16 @@ export const Assets = {
 
   // A portrait from parts: the portrait body in a team's colours and the look's face on its
   // anchor, fitted in a square like icon(). '' while the art isn't there.
-  partsPortrait(look, expr, size = 96, teamId = null) {
+  partsPortrait(look, expr, size = 96, teamId = null, rc = null) { // (rc: a trial kit, kitRecolor: the club editor's preview)
     const P = this.atlas.modular && this.atlas.modular.portraits;
     const faces = P && P.faces && P.faces[look.head];
     const faceId = faces && (faces[expr] || faces.neutral);
     const body = P && ((P.bodies && P.bodies[look.body]) || P); // the shoulders of their build (Batch AO)
     const bf = body && this.atlas.frames[body.body], ff = faceId && this.atlas.frames[faceId];
-    const page = bf && this.pagesFor(teamId)[bf[0]];
+    const page = bf && (rc ? this.pages : this.pagesFor(teamId))[bf[0]];
     if (!bf || !ff || !page) return '';
     const key = `parts|${look.body}|${look.head}|${look.skin}|${look.hair}|${faceId}|${size}|${teamId}|${this.canvasMode ? 'c' : ''}`;
-    if (this.iconCache.has(key)) return this.iconCache.get(key); // (as a canvas mid-match, as a PNG in menus)
+    if (!rc && this.iconCache.has(key)) return this.iconCache.get(key); // (as a canvas mid-match, as a PNG in menus)
     const face = this.partsCanvas(faceId, look);
     if (!face) return '';
     const c = document.createElement('canvas'); c.width = size; c.height = size;
@@ -597,8 +607,10 @@ export const Assets = {
     const a = body.anchor || { x: px, y: 0 };
     const top = Math.min(0, a.y - ff[6]), h = fh - top, k = size / Math.max(fw, h);
     const ox = (size - fw * k) / 2, oy = (size - h * k) / 2 - top * k;
-    ctx.drawImage(page, fx, fy, fw, fh, ox, oy, fw * k, fh * k);
+    if (rc) { const b = cpuCanvas(page, fw, fh); b.clearRect(0, 0, fw, fh); b.drawImage(page, fx, fy, fw, fh, 0, 0, fw, fh); recolorPageIn(b, rc); ctx.drawImage(b.canvas, ox, oy, fw * k, fh * k); }
+    else ctx.drawImage(page, fx, fy, fw, fh, ox, oy, fw * k, fh * k);
     ctx.drawImage(face, ox + (a.x - ff[5]) * k, oy + (a.y - ff[6]) * k, ff[3] * k, ff[4] * k);
+    if (rc) return c.toDataURL('image/png');
     if (this.canvasMode) { this.iconCache.set(key, c); return c; }
     const url = c.toDataURL('image/png');
     this.iconCache.set(key, url);

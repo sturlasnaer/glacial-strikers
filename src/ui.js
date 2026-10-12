@@ -2,7 +2,7 @@
 
 import { Assets } from './assets.js';
 import {
-  CHARACTERS, GEAR, GEAR_BY_ID, NATIONS, FROSTLINE_REGION, gearOpen, clubOwn, TIER_LINES, clubT, TEAMS, STAT_KEYS, STAT_NAMES, STAT_HINT,
+  CHARACTERS, GEAR, GEAR_BY_ID, NATIONS, FROSTLINE_REGION, kitRecolor, gearOpen, clubOwn, TIER_LINES, clubT, TEAMS, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
   RECRUITS, ROOKIES, setRookies, setFreeGoalies, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, ALL_RIVALS, CAREER, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, CLUB_CRESTS, clubCrestId, MASK_NAMES, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
@@ -2443,6 +2443,19 @@ export class UI {
       const sk = Assets.atlas.skaters;
       return [crestId(draft.crest), sk.frost_captain.home.south.frames.idle, sk.thunder_winger.home.south.frames.celebrate, sk.stone_defender.home.east.frames.idle];
     };
+    // Who wears the kit: the Foxes' own art in a Foxes career; otherwise the line-up, drawn in coral
+    // and violet (a club career's stars, a club of one's own's founders from parts), which takes
+    // the trial colours cleanly (the Foxes' art by colour matching until its cloth masks are in)
+    const players = (r) => {
+      if (!s.team) return previewIds().slice(1).map((id) => Assets.previewIcon(id, 132, r));
+      const T = TEAMS[s.team], kit = T && T.recolor && draft.trim === T.color && draft.jersey === T.color2 ? T.recolor : kitRecolor(draft.trim, draft.jersey);
+      return lineupIds(s).slice(0, 3).map((id) => {
+        const m = member(id), sp = m && Assets.atlas.skaters[m.sprite];
+        if (m && m.parts) return Assets.partsPortrait(m.parts, 'happy', 132, null, kit);
+        const f = sp && sp.home && sp.home.south && sp.home.south.frames.idle;
+        return f ? Assets.previewIcon(f, 132, kit) : '';
+      }).filter(Boolean);
+    };
     const crests = [...(CLUB.team ? [{ id: 'team', name: TEAMS[CLUB.team].name }] : []), ...CLUB_CRESTS].filter((c) => Assets.frame(crestId(c.id))); // (the designs there's art for)
     const rc = () => {
       const p = { trim: hexToHsvUI(draft.trim), jersey: hexToHsvUI(draft.jersey), mode: 'home' };
@@ -2471,7 +2484,7 @@ export class UI {
       const $ = (sel) => m.querySelector(sel);
       const paint = () => {
         const r = rc();
-        $('#club-preview').innerHTML = previewIds().map((id, i) => `<img src="${Assets.previewIcon(id, i ? 132 : 96, r)}" alt="">`).join('')
+        $('#club-preview').innerHTML = [Assets.previewIcon(previewIds()[0], 96, r), ...players(r)].map((src) => `<img src="${src}" alt="">`).join('')
           + `<div class="club-name-preview"><b>${esc(draft.name)}</b><span>${esc(draft.short)} · ${esc(draft.nick)}</span></div>`;
         m.querySelectorAll('[data-preset]').forEach((b) => { const p = CLUB_PRESETS.find((x) => x.id === b.dataset.preset); b.setAttribute('aria-pressed', p.trim === draft.trim && p.jersey === draft.jersey); });
         m.querySelectorAll('[data-crest]').forEach((b) => { b.setAttribute('aria-pressed', b.dataset.crest === draft.crest); b.querySelector('img').src = Assets.previewIcon(crestId(b.dataset.crest), 80, r); });
