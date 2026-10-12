@@ -7,7 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **FA: a rival with a story** (three scene backdrops)
+
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -145,6 +145,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered EY:** Two neighbourhood pond backdrops, eight small steel-net animation layers and two pond-hockey icons. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EY-Testing-Update`.
 
 **Delivered EZ:** Four regional crests, the Nations Arena with scoreboard, glass and penalty-box layers, and two Cup icons. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EZ-Testing-Update`.
+
+**Delivered FA:** Three rival-story backdrops: handshake, rumour and farewell. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-FA-Testing-Update`.
 
 ## Format notes
 
@@ -1060,7 +1062,7 @@ A tournament at the end of a season once the club has reached the National: the 
 
 4 crests, 1 arena (with its scoreboards, glass and penalty box), 2 icons.
 
-## Batch FA: a rival with a story
+## Batch FA ✓: a rival with a story
 
 Each career now has one rival captain whose story runs over several seasons: the first grudge, a rumour that they're leaving, mutual respect after a Cup, and a farewell when they retire. Their scenes play over these backdrops, 1280×720 plain images like the story scenes (ES: no lettering, the dialogue box covers the bottom third and portraits stand at both sides, so the subject sits in the upper middle), listed in `atlas.saga = { handshake: 'gfx/saga_handshake.webp', rumour: …, farewell: … }`, each its own file:
 - `saga_handshake`: the handshake line at centre ice after a hard-fought game, two lines of players in different jerseys meeting with gloves off, the arena lights bright and the crowd a warm blur.
