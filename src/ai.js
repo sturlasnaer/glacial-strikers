@@ -183,10 +183,30 @@ export class TeamAI {
       // all of them marking, which left the carrier a clear run in)
       const out = -Math.sign(this.ownX) || this.side, gs = (s) => (s.x - c.x) * -out; // (how far goal-side of the carrier)
       const presser = humanClose ? ctrl : sorted[0];
+      // against the player with the puck, whoever isn't pressing keeps off the carrier: one stick at
+      // a time (marking a trailer goal-side put that marker right on the player's shoulder, so the
+      // player was double-teamed twice as often as an AI carrier), more room on the easier levels;
+      // the slot in front of our own net is still defended
+      const room = vsHuman ? lerp(140, 40, Math.sqrt(hd)) : 0, deep = (c.x - this.ownX) * out < GOAL_X - BLUE_X + 40;
+      // (from where the carrier will be in a moment too: they skate at the defenders, who back off
+      // ahead of them rather than being caught up with; the top teams hold their ground longer)
+      const keepOff = (sp) => {
+        if (!room) return sp;
+        let to = sp;
+        for (const k of [0, 0.4 * (1 - hd)]) { // (the easier levels back off sooner)
+          const cx = c.x + (c.vx || 0) * k, cy = c.y + (c.vy || 0) * k;
+          const dx = to.x - cx, dy = to.y - cy, d = Math.hypot(dx, dy);
+          if (d >= room) continue;
+          const u = d > 1 ? { x: dx / d, y: dy / d } : norm(this.ownX - cx, -cy);
+          to = { ...to, x: cx + u.x * room, y: cy + u.y * room };
+        }
+        return to;
+      };
       if (left.length && !(plan === 'forecheck' && inTheirEnd) && (!presser || gs(presser) < 20)) {
         const back = [...left].sort((a, b) => gs(b) - gs(a))[0];
         const hd = Math.max(90, (c.x - this.ownX) * out * 0.45);
-        roles.set(back, { kind: 'spot', x: this.ownX + out * hd, y: clamp(c.y * 0.45, -120, 120), sprint: true });
+        const home = { kind: 'spot', x: this.ownX + out * hd, y: clamp(c.y * 0.45, -120, 120), sprint: true };
+        roles.set(back, deep ? home : keepOff(home));
         left = left.filter((s) => s !== back);
       }
       // (the player's teammates get room to take a pass: marked from further off on the easier levels)
@@ -199,7 +219,7 @@ export class TeamAI {
       });
       // keep someone home if the carrier is deep in our zone
       if (left.length > marks.length) marks.push({ x: this.ownX + this.side * 110, y: 0, kind: 'spot' });
-      this.assign(left, marks, roles);
+      this.assign(left, room ? marks.map((mk) => (mk.kind === 'mark' || !deep ? keepOff(mk) : mk)) : marks, roles);
       return roles;
     }
 
@@ -281,10 +301,15 @@ export class TeamAI {
   openUp(sp, c) {
     const m = this.m, opps = m.skaters.filter((o) => o.team !== this.team && !o.parked);
     if (!opps.length) return sp;
+    const sp2 = Math.hypot(c.vx || 0, c.vy || 0), moving = sp2 > 60, hx = moving ? c.vx / sp2 : 0, hy = moving ? c.vy / sp2 : 0;
     const score = (x, y) => {
       let near = 260;
       for (const o of opps) near = Math.min(near, Math.hypot(o.x - x, o.y - y));
-      return near + m.laneClear(c.x, c.y, x, y, this.team, true) * 140 - Math.hypot(x - sp.x, y - sp.y) * 0.3;
+      // (and not on top of the player, nor in the lane they're skating up: room for them to skate,
+      // and a pass worth making)
+      const ax = x - c.x, ay = y - c.y, ahead = ax * hx + ay * hy, across = Math.abs(ax * hy - ay * hx);
+      const inPath = moving && ahead > 0 && ahead < 260 && across < 80 ? 90 - across * 0.6 : 0;
+      return near + m.laneClear(c.x, c.y, x, y, this.team, true) * 140 - Math.hypot(x - sp.x, y - sp.y) * 0.3 - Math.max(0, 130 - Math.hypot(ax, ay)) - inPath;
     };
     let best = sp, bs = score(sp.x, sp.y);
     for (const r of [70, 140]) for (let a = 0; a < 8; a++) {
@@ -299,19 +324,24 @@ export class TeamAI {
   baseSupportSpots(c) {
     const side = this.side;
     const cx = c.x * side; // progress toward attack goal
-    const ySign = c.y >= 0 ? 1 : -1;
+    // the player with the puck: the teammates keep to their side until the player is well across
+    // (flipping sides every time the player weaved over the middle had them skate across the
+    // player's path, their markers with them), and they give the player more room
+    const hc = c.controlled && this.m.humans.includes(this.team);
+    if (hc && (!c.supSide || c.y * c.supSide < -50)) c.supSide = c.y >= 0 ? 1 : -1;
+    const ySign = hc ? c.supSide : c.y >= 0 ? 1 : -1;
     if (cx < -BLUE_X) {
       // breakout from our zone
       return [
         { x: c.x + side * 300, y: -ySign * 150, kind: 'spot', pref: 'W', sprint: true },
-        { x: c.x + side * 120, y: -ySign * 60, kind: 'spot', pref: 'D' },
+        { x: c.x + side * (hc ? 150 : 120), y: -ySign * (hc ? 95 : 60), kind: 'spot', pref: 'D' },
       ];
     }
     if (cx < BLUE_X - 20) {
       // neutral zone rush
       return [
         { x: side * (BLUE_X + 170), y: -ySign * 120, kind: 'spot', pref: 'W', sprint: true },
-        { x: c.x - side * 90, y: -ySign * 40, kind: 'spot', pref: 'D' },
+        { x: c.x - side * (hc ? 135 : 90), y: -ySign * (hc ? 75 : 40), kind: 'spot', pref: 'D' },
       ];
     }
     // a power play in their zone: the umbrella, the point and both flanks at the dots, so a pass
