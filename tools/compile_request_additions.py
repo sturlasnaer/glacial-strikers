@@ -8,6 +8,17 @@ GALLERY=('facilities/','hall/','press/','review/','npcs/announcer_press','npcs/r
 LOADED={'icons':'icons_z','crowd_props':'home'}
 from PIL import Image
 import json,copy,hashlib,sys,shutil
+def compact_unused_cloth_mask_pages(atlas):
+ """Drop empty dedicated cloth-mask pages after explicit mask replacement."""
+ used={f[0]for f in atlas['frames'].values()}
+ named=json.dumps({k:v for k,v in atlas.items()if k not in ['pages','frames']})
+ drop={i for i,p in enumerate(atlas['pages'])if p.get('group')=='home_cloth_masks'and i not in used and p['file']not in named and Path(p['file']).name not in named}
+ if not drop:return atlas
+ kept=[i for i in range(len(atlas['pages']))if i not in drop];remap={old:new for new,old in enumerate(kept)}
+ atlas['pages']=[atlas['pages'][i]for i in kept]
+ for f in atlas['frames'].values():f[0]=remap[f[0]]
+ return atlas
+
 def merge_request_additions(atlas,out,sources):
  out=Path(out);A=copy.deepcopy(atlas);items=[];replaced=set();digests={}
  for root in map(Path,sources):
@@ -91,10 +102,15 @@ def merge_request_additions(atlas,out,sources):
     for key,dest in S['saga'].items():
      assert dest=='gfx/saga_'+key+'.webp';source=S['external_images'][Path(dest).name];image=Image.open(B/source).convert('RGB');assert image.size==(1280,720);image.save(out/Path(dest).name,'WEBP',lossless=True,exact=True,method=6)
     A.setdefault('saga',{}).update(copy.deepcopy(S['saga']))
+   if batch=='FA':
+    assert set(S.get('saga',{}))=={'handshake','rumour','farewell'}
+    for key,dest in S['saga'].items():
+     assert dest=='gfx/saga_'+key+'.webp';source=S['external_images'][Path(dest).name];image=Image.open(B/source).convert('RGB');assert image.size==(1280,720);image.save(out/Path(dest).name,'WEBP',lossless=True,exact=True,method=6)
+    A.setdefault('saga',{}).update(copy.deepcopy(S['saga']))
    if batch=='BP':
     A.setdefault('npcs',{}).update(S['npcs']);A.setdefault('badges',{}).update(S['badges'])
    A.setdefault('art_additions',{})[batch]={k:v for k,v in S.items()if k not in ['frames','sheets']};A.setdefault('request_addition_sources',{})[batch]=digest
- if not items:return A
+ if not items:return compact_unused_cloth_mask_pages(A)
  suffix=hashlib.sha256((''.join(digests.values())).encode()).hexdigest()[:10];items.sort(key=lambda it:(it['group'],-it['q'].height,it['id']));page=Image.new('RGBA',(2048,2048));placed=[];x=y=rowh=idx=0;group=items[0]['group'];existing={Path(p['file']).name for p in A['pages']}
  def flush():
   nonlocal page,placed,x,y,rowh,idx
@@ -108,7 +124,7 @@ def merge_request_additions(atlas,out,sources):
   if x+q.width+4>2048:x=0;y+=rowh;rowh=0
   if y+q.height+4>2048:flush()
   page.paste(q,(x+2,y+2));placed.append((it,x+2,y+2));x+=q.width+4;rowh=max(rowh,q.height+4)
- flush();assert all(A['frames'][fid]==f for fid,f in atlas['frames'].items()if fid not in replaced);assert A['pages'][:len(atlas['pages'])]==atlas['pages'];return A
+ flush();assert all(A['frames'][fid]==f for fid,f in atlas['frames'].items()if fid not in replaced);assert A['pages'][:len(atlas['pages'])]==atlas['pages'];return compact_unused_cloth_mask_pages(A)
 if __name__=='__main__':
  R=Path(sys.argv[1]);G=Path(sys.argv[2]);O=R/'game-ready/gfx';O.mkdir(parents=True,exist_ok=True);base=json.loads((G/'atlas.json').read_text())
  for p in base['pages']:shutil.copy2(G/Path(p['file']).name,O/Path(p['file']).name)
