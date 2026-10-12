@@ -33,6 +33,7 @@ import { AchievementTracker, useAchievementArt, ACHIEVEMENTS } from './achieveme
 import { createDrill, medalFor, DRILL_REWARDS } from './drills.js';
 import { makeSkills, recordSkills, SKILLS_EVENTS } from './skills.js';
 import { recordRivalResult, rivalLines, rivalAfterLine, rivalRecord, rivalryOf } from './rivals.js';
+import { startSaga, sagaDue, playSaga, sagaName, SAGA } from './saga.js';
 import { recordRealGame, computeAwards, AWARD_BY_ID } from './awards.js';
 import { dailyFor, dailyGoal, completeDaily, noteAttempt, dayKey, dailyState } from './daily.js';
 import { standings } from './league.js';
@@ -56,7 +57,7 @@ import { offerDraft } from './draft.js';
 import { recordCareer, addSeatTotals } from './career.js';
 import {
   loadSave, newSave, writeSave, setSaveOff, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards,
-  lineupIds, homeKitGroups, allStarVote, allStarVoteStands, allStarConfig, setLeagueEdge, rosterIds, goalieIds, teamPhoto,
+  lineupIds, homeKitGroups, allStarVote, allStarVoteStands, allStarConfig, setLeagueEdge, rosterIds, goalieIds, teamPhoto, recruitStatus,
 } from './progress.js';
 import { t, setLang, getLang, defaultLang } from './i18n.js';
 import { whatsNewFor } from './whatsnew.js';
@@ -538,6 +539,9 @@ class App {
       const lost = rivalRecord(this.save, tm.id).losses;
       lines = [['kip', null, lost ? clubT('It\'s the rivalry game! The {team} have beaten us {n} times. Tonight we settle it.', { team: tm.name, n: lost }) : clubT('It\'s the rivalry game! The {team}, the club everyone wants to beat. Tonight\'s the night.', { team: tm.name }), true], ...lines]; // (filled in: clubT, l[3])
     }
+    // the rival captain's story (saga.js): the rematch, or their last season
+    const saga = f.kind === 'regular' && sagaDue(this.save, 'before', tm.id);
+    if (saga) { lines = [...playSaga(this.save, saga).lines, ...lines.slice(0, 2)]; writeSave(this.save); }
     // skip our lines that talk to a skater who has since signed with us
     const gone = ['frost', 'thunder', 'stone'].filter((k) => this.save.roster[recruitKey(tm.id, k)]).map((k) => tm.names[k]);
     if (gone.length) lines = lines.filter((l) => l[0] !== 'us' || !gone.some((n) => l[2].includes(n)));
@@ -558,6 +562,21 @@ class App {
     this.loadThen(Promise.all([Assets.ensureTeam(teamId, where), dark && Assets.ensureArena(dark), aurora && Assets.loadGroup(Assets.atlas.pages[aurora[0]].group)]), () =>
       this.beginMatch(teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 120, round: 'Exhibition' }, true, mods, { arena: where, coop, mini, night: !!dark }));
   }
+
+  // The rival captain's story (saga.js): a chapter that plays on the way back to the hub (the trade
+  // rumour, respect after one of our Cups, or rivals to teammates once we've signed them).
+  sagaHub() {
+    const s = this.save, ch = !this.testRun && sagaDue(s, 'hub');
+    if (!ch || document.querySelector('.modal-bg')) return false;
+    const { lines, bg } = playSaga(s, ch);
+    if (ch === 'rumour' && recruitStatus(s, s.saga.key) === 'open') lines.push(['kip', null, clubT('Team › Scouting has {name}\'s number, if you\'re curious.', { name: sagaName(s) }), true]);
+    writeSave(s);
+    this.scene = 'dialogue';
+    this.ui.dialogue(lines, s.saga.team, null, () => this.goHub(), null, this.sagaBg(bg));
+    return true;
+  }
+  // A saga scene's backdrop (Batch FA), once drawn.
+  sagaBg(bg) { const f = Assets.atlas.saga && Assets.atlas.saga[bg]; return f ? { bg: Assets.url(f) } : null; }
 
   // Pond hockey (Batch EY): three on three on the neighbourhood pond, no goalies, the little nets,
   // no penalties, first to five; against the clubs met so far, a different one each time. An
@@ -1288,7 +1307,13 @@ class App {
       let lines = !c.exhibition && script ? [...(script[rewards.won ? 'win' : 'loss'] || [])] : null;
       const extra = allstar ? null : rivalAfterLine(s, c.teamId, rewards.won, summary.score[0], summary.score[1]);
       if (extra) lines = [...(lines || []), extra];
-      if (lines) { this.scene = 'dialogue'; this.ui.dialogue(lines, c.teamId, null, after, rewards.won ? 'won' : 'lost'); } else after();
+      // a rival with a story (saga.js): the first league game against the season's rivalry club
+      // starts it, and the grudge follows the game
+      if (!c.exhibition && kind === 'regular' && c.stage.rivalry) startSaga(s, c.teamId);
+      const saga = !c.exhibition && kind === 'regular' && sagaDue(s, 'after', c.teamId);
+      const sagaScene = saga && this.sagaBg(SAGA[saga].bg);
+      if (saga) { lines = [...(lines || []), ...playSaga(s, saga, { won: rewards.won }).lines]; writeSave(s); }
+      if (lines) { this.scene = 'dialogue'; this.ui.dialogue(lines, c.teamId, null, after, rewards.won ? 'won' : 'lost', sagaScene); } else after();
     });
     if (classic && rewards.won) this.ui.fireworks();
   }
@@ -1655,6 +1680,7 @@ class App {
     }
     if (this.awardsNight()) return;
     if (offerDraft(this.save)) writeSave(this.save); // Draft Day opens once the awards are handed out
+    if (this.sagaHub()) return;
     if (this.pendingLegend) { // a legend turns up: Kip calls it over the reveal painting
       const key = this.pendingLegend, L = LEGENDS[key];
       this.pendingLegend = null;
@@ -1710,6 +1736,16 @@ class App {
   awardsNight() {
     const s = this.save, L = s.league;
     if (!L || L.phase !== 'done' || L.awards) return false;
+    // the rival captain's last season is over: their farewell, before they hang up their skates
+    // (after the awards they'd be gone, their replacement in their place)
+    if (sagaDue(s, 'awards')) {
+      const { lines, bg } = playSaga(s, 'farewell');
+      writeSave(s);
+      this.scene = 'dialogue';
+      this.music('awards');
+      this.ui.dialogue(lines, s.saga.team, null, () => this.goHub('tournament'), null, this.sagaBg(bg));
+      return true;
+    }
     const order = standings(L).map((r) => r.id);
     const list = computeAwards(s, L, order);
     L.awards = list;

@@ -64,6 +64,7 @@ import { KID_STAR_IDS } from './kidstars.js';
 import { tripStops, POSTCARD_TOWNS, NATIONAL_POSTCARDS } from './trip.js';
 import { tierOf, tierInfo, tierAt, TIERS, safeSeason } from './tiers.js';
 import { CLUB_CHOICES, CLUB_STORIES, CLUB_PAYOFFS, clubStars, clubStart, START_NAMES, CUSTOM_CLUB, storyChapters } from './clubs.js';
+import { sagaChapters, sagaName } from './saga.js';
 import { newPet, stepPet, tapPet, tossPuck, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall,
   PET_KINDS, PET_KIND, PET_FRAMES, PET_WINS, PET_AREA, ROOM_MAX, petDir, petIcon, roomPets, ownedPets, petsDue, adoptPet, sendToHouse, bringToRoom, petNameOf, renamePet, winsAgainst, petFinds, takeFind } from './pet.js';
 import { albumPages, albumClubOpen, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
@@ -1484,6 +1485,13 @@ export class UI {
     this.click('#tr-pack', () => { audio.sfx('click'); this.packOpen(); }, body);
     this.click('#tr-lb', () => { audio.sfx('click'); this.leaderboard('cones'); }, body);
     this.click('#tr-career', () => { audio.sfx('click'); this.careerPage(); }, body);
+    this.click('[data-saga]', (el) => { // (a chapter of the rival captain's story, again: as it was)
+      const c = sagaChapters(s).find((x) => x.id === el.dataset.saga), f = c && Assets.atlas.saga && Assets.atlas.saga[c.bg];
+      if (!c) return;
+      audio.sfx('click');
+      this.app.scene = 'dialogue';
+      this.app.loadThen(Assets.ensureTeam(c.team, null, true), () => this.dialogue(c.lines, c.team, null, () => this.app.goHub('trophies'), null, { keepCast: true, ...(f ? { bg: Assets.url(f) } : {}) }));
+    }, body);
     this.click('[data-story]', (el) => { // (a chapter of the club's story, again)
       const k = el.dataset.story, team = s.team || 'foxes', up = TIER_LINES[k]; // (a division's welcome: Kip, the host club, then ours)
       const lines = k === 'intro' ? (CLUB_STORIES[team] || CLUB_STORIES.foxes).intro : [...(up ? up.lines : []), ...(CLUB_PAYOFFS[team] || CLUB_PAYOFFS.foxes)[k]];
@@ -1535,10 +1543,13 @@ export class UI {
   storyHtml(s) {
     const words = { intro: [t('The beginning'), ''], cup: [t('The first Cup'), t('Win the Frostline Cup')], national: [t('Up to the National'), t('Reach the National Cup')], elite: [t('Into the Elite'), t('Reach the Elite Cup')], top: [t('The top of the country'), t('Win the Elite Cup')] };
     const chapters = storyChapters(s).map((c) => [c.id, words[c.id][0], c.open, words[c.id][1]]);
+    const saga = sagaChapters(s); // (the rival captain's story so far: saga.js)
     return `<div class="label" style="margin:4px 0 6px">${t('Our story')}</div>
       <div class="row story-row" style="gap:6px;margin:0 0 10px;flex-wrap:wrap">${chapters.map(([k, name, open, need]) => (open
         ? `<button class="btn small ghost" data-story="${k}">${esc(name)}</button>`
-        : `<span class="btn small ghost" aria-disabled="true" style="opacity:.55;cursor:default">${esc(name)} · ${esc(need)}</span>`)).join('')}</div>`;
+        : `<span class="btn small ghost" aria-disabled="true" style="opacity:.55;cursor:default">${esc(name)} · ${esc(need)}</span>`)).join('')}</div>
+      ${saga.length ? `<div class="label" style="margin:4px 0 6px">${esc(clubT('Our rival: {name}', { name: sagaName(s) }))}</div>
+      <div class="row story-row" style="gap:6px;margin:0 0 10px;flex-wrap:wrap">${saga.map((c) => `<button class="btn small ghost" data-saga="${c.id}">${esc(t(c.name))}</button>`).join('')}</div>` : ''}`;
   }
 
   // The sticker album's card in Trophies: the cover, how full it is, and the packs to open.
@@ -3829,7 +3840,7 @@ export class UI {
     const tm = teamInfo(teamId);
     let i = 0, typing = null, shown = 0;
     const ours = (l) => portrait(l[1], 0, null, 420, expression('us', l[2], mood));
-    const gone = (id) => TEAMS[teamId] && TEAMS[teamId].names && vacated(this.app.save, teamId, id); // (signed, traded or retired)
+    const gone = (id) => !(scene && scene.keepCast) && TEAMS[teamId] && TEAMS[teamId].names && vacated(this.app.save, teamId, id); // (signed, traded or retired; a story replayed keeps them as they were)
     const theirs = (l) => portrait(gone(l[1]) ? 'sub_' + l[1] : l[1], 1, teamId, 420, expression('them', l[2], mood));
     const kip = Assets.atlas.npcs && Assets.atlas.npcs.announcer ? Assets.icon(Assets.atlas.npcs.announcer, 420) : ''; // Kip Vance calls the big games
     const r = this.set(`
