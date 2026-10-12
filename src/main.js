@@ -1202,7 +1202,7 @@ class App {
     if (c.pond) { s.pondPlayed = (s.pondPlayed || 0) + 1; if (rewards.won) s.pondWins = (s.pondWins || 0) + 1; if (s.pondWins >= 3) this.ach.unlock('shinny'); }
     else recordCareer(s, summary, rewards.won); // (pond games are just for fun: no career stats, records or head to head)
     // the club's record book: a record broken gets a toast
-    const oppName = teamInfo(c.teamId) ? teamInfo(c.teamId).name : '';
+    const oppName = teamInfo(c.teamId) ? (NATIONS[c.teamId] ? teamInfo(c.teamId).nick : teamInfo(c.teamId).name) : ''; // (a region: 'against the Coast', not 'the The Coast')
     for (const r of c.pond ? [] : updateRecords(s, { summary, won: rewards.won, opp: c.teamId, oppName, season: s.season, nameOf: (id) => (member(id) ? member(id).name : ''), goalieName: (summary.goalieNames && summary.goalieNames[0]) || goalieInfo(summary.goalie || 'halla').name })) {
       const R = GAME_RECORDS[r.id];
       addNews(s, { k: 'record', rec: r.id, n: r.n, name: r.name || '', team: c.teamId });
