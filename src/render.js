@@ -3,7 +3,7 @@
 import { Assets } from './assets.js';
 import { toScreen, persp, BACKDROP, GOAL_X, MOUTH, NET_DEPTH, RINK } from './rink.js';
 import { clamp, lerp, makeRng } from './util.js';
-import { POWER_INFO, COMBOS, TEAMS, ARENAS, PALETTES, GEAR_LOOK, CLUB, CAREER } from './data.js';
+import { POWER_INFO, COMBOS, TEAMS, ARENAS, PALETTES, GEAR_LOOK, CLUB, CAREER, clubMascotKey } from './data.js';
 import { ELEMENT_COLORS } from './fx.js';
 import { NetRenderer, SpriteNets } from './net.js';
 import { t } from './i18n.js';
@@ -559,7 +559,7 @@ export class Renderer {
     // a club career's own mascot dances at home in the Snow Fox's place (in our kit's colours);
     // one's own club, the mascot of its crest once drawn (Batch EU), in the club's colours
     const clubMascot = CAREER.team && A.rival_mascots && A.rival_mascots[TEAMS[CAREER.team].art || TEAMS[CAREER.team].mark]; // (the expansion clubs' identity is their mark)
-    const crestMascot = CAREER.custom && A.club_mascots && A.club_mascots[CLUB.crest || 'fox'];
+    const crestMascot = CAREER.custom && A.club_mascots && A.club_mascots[clubMascotKey()];
     if (arena === 'home' && crestMascot) {
       const party = (fx.cheerTeam === 0 && fx.lamp > 0) || (fx.chant && fx.chant.team === 0);
       let pose = 'idle';

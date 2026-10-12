@@ -65,6 +65,7 @@ import { tripStops, POSTCARD_TOWNS, NATIONAL_POSTCARDS } from './trip.js';
 import { tierOf, tierInfo, tierAt, TIERS, safeSeason } from './tiers.js';
 import { CLUB_CHOICES, CLUB_STORIES, CLUB_PAYOFFS, clubStars, clubStart, START_NAMES, CUSTOM_CLUB, storyChapters } from './clubs.js';
 import { sagaChapters, sagaName } from './saga.js';
+import { drawCrest, CREST_SHIELDS, CREST_PATTERNS, crestEmblems, KIT_DEFAULT } from './crestkit.js';
 import { nationsStandings, US as NATIONS_US } from './nations.js';
 import { newPet, stepPet, tapPet, tossPuck, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall,
   PET_KINDS, PET_KIND, PET_FRAMES, PET_WINS, PET_AREA, ROOM_MAX, petDir, petIcon, roomPets, ownedPets, petsDue, adoptPet, sendToHouse, bringToRoom, petNameOf, renamePet, winsAgainst, petFinds, takeFind } from './pet.js';
@@ -2434,6 +2435,12 @@ export class UI {
   // career as another club the editor starts from that club, and its crest stays a choice.)
   clubEditor(opts = {}) {
     const s = this.app.save, create = !!opts.create;
+    // a crest of one's own design (crestkit.js): its options' names
+    const KIT_NAMES = { classic: t('Classic'), round: t('Round'), hex: t('Hexagon'), banner: t('Banner'), diamond: t('Diamond'), square: t('Square'),
+      plain: t('Plain'), stripes: t('Stripes'), chevron: t('Chevron'), halves: t('Halves'), quarters: t('Quarters'), sash: t('Sash'), hoops: t('Hoops'),
+      letter: t('Letter'), star: t('Star'), snowflake: t('Snowflake'), puck: t('Sticks and puck'), fox: t('Fox'), wolf: t('Wolf'), bear: t('Polar bear'), owl: t('Snowy owl'), narwhal: t('Narwhal'),
+      mountain: t('Mountain'), bolt: t('Lightning'), stick_puck: t('Crossed sticks'), crown: t('Crown'), pine: t('Pine'), flame: t('Flame'), wave: t('Wave'), anchor: t('Anchor'), moose: t('Moose'), skate: t('Skate') };
+    const emblems = crestEmblems((id) => !!Assets.frame(id));
     const cur = s.team ? Object.fromEntries(Object.keys(CLUB_DEFAULT).map((k) => [k, CLUB[k]])) : { ...CLUB_DEFAULT, ...(s.club || {}) };
     const draft = { ...cur };
     let nickTouched = !create && !!(s.club && s.club.nick), shortTouched = !create && !!(s.club && s.club.short);
@@ -2470,7 +2477,11 @@ export class UI {
         <label>${t('Short code')}<input id="club-short" maxlength="3" value="${esc(draft.short)}" autocomplete="off" style="text-transform:uppercase;width:5.5em"></label>
       </div>
       <div class="label" style="font-size:15px;margin:4px 0 0">${t('Crest')}</div>
-      <div class="filters crest-picks" style="margin:6px 0 0">${crests.map((c) => `<button class="chip crest-pick" data-crest="${c.id}" aria-pressed="${draft.crest === c.id}" aria-label="${esc(t(c.name))}" title="${esc(t(c.name))}"><img alt="" width="40" height="40"></button>`).join('')}</div>
+      <div class="filters crest-picks" style="margin:6px 0 0">${crests.map((c) => `<button class="chip crest-pick" data-crest="${c.id}" aria-pressed="${draft.crest === c.id}" aria-label="${esc(t(c.name))}" title="${esc(t(c.name))}"><img alt="" width="40" height="40"></button>`).join('')}<button class="chip crest-pick kit" data-crest="kit" aria-pressed="${draft.crest === 'kit'}" title="${esc(t('Design your own'))}"><img alt="" width="40" height="40"><span>${t('Design your own')}</span></button></div>
+      <div id="crest-kit" class="crest-kit" ${draft.crest === 'kit' ? '' : 'hidden'}>
+        ${[[t('Shield'), 'kshield', CREST_SHIELDS], [t('Pattern'), 'kpattern', CREST_PATTERNS], [t('Emblem'), 'kemblem', emblems]].map(([label, key, ids]) => `<div class="kit-row"><span class="kit-l">${label}</span><div class="filters">${ids.map((id) => `<button class="chip kit-pick" data-${key}="${id}" aria-label="${esc(KIT_NAMES[id] || id)}" title="${esc(KIT_NAMES[id] || id)}"><img alt="" width="36" height="36"></button>`).join('')}</div></div>`).join('')}
+        <div class="kit-row"><span class="kit-l">${t('Ribbon')}</span><div class="filters"><button class="chip" id="kit-ribbon" aria-pressed="true">${t('Short code on a ribbon')}</button></div></div>
+      </div>
       <div class="label" style="font-size:15px;margin:4px 0 0">${t('Colours')}</div>
       <div class="filters" style="margin:6px 0 0">${CLUB_PRESETS.map((p) => `<button class="chip preset" data-preset="${p.id}" aria-pressed="${p.trim === draft.trim && p.jersey === draft.jersey}"><span class="club-sw" style="--a:${p.trim};--b:${p.jersey}"></span>${esc(t(p.name))}</button>`).join('')}</div>
       <div class="row" style="gap:16px;margin-top:4px">
@@ -2482,12 +2493,24 @@ export class UI {
         <span class="row" style="gap:8px">${create ? '' : `<button class="btn small ghost" data-close>${t('Cancel')}</button>`}<button class="btn gold" id="club-save">${create ? t('Found the club') : t('Save club')}</button></span>
       </div>`, (m, close) => {
       const $ = (sel) => m.querySelector(sel);
+      const kit = () => (draft.crestKit ||= { ...KIT_DEFAULT });
+      const kitSrc = (k) => drawCrest(k, { trim: draft.trim, jersey: draft.jersey }, { short: draft.short, letter: draft.nick, art: (id) => Assets.artCanvas(id, rc()) }).toDataURL('image/png');
       const paint = () => {
         const r = rc();
-        $('#club-preview').innerHTML = [Assets.previewIcon(previewIds()[0], 96, r), ...players(r)].map((src) => `<img src="${src}" alt="">`).join('')
+        const crestSrc = draft.crest === 'kit' ? kitSrc(kit()) : Assets.previewIcon(previewIds()[0], 96, r);
+        $('#club-preview').innerHTML = [crestSrc, ...players(r)].map((src) => `<img src="${src}" alt="">`).join('')
           + `<div class="club-name-preview"><b>${esc(draft.name)}</b><span>${esc(draft.short)} · ${esc(draft.nick)}</span></div>`;
         m.querySelectorAll('[data-preset]').forEach((b) => { const p = CLUB_PRESETS.find((x) => x.id === b.dataset.preset); b.setAttribute('aria-pressed', p.trim === draft.trim && p.jersey === draft.jersey); });
-        m.querySelectorAll('[data-crest]').forEach((b) => { b.setAttribute('aria-pressed', b.dataset.crest === draft.crest); b.querySelector('img').src = Assets.previewIcon(crestId(b.dataset.crest), 80, r); });
+        m.querySelectorAll('[data-crest]').forEach((b) => { b.setAttribute('aria-pressed', b.dataset.crest === draft.crest); b.querySelector('img').src = b.dataset.crest === 'kit' ? kitSrc(kit()) : Assets.previewIcon(crestId(b.dataset.crest), 80, r); });
+        // the design's options, each shown as the crest would look with it
+        $('#crest-kit').hidden = draft.crest !== 'kit';
+        if (draft.crest === 'kit') {
+          const k = kit();
+          for (const [key, field] of [['kshield', 'shield'], ['kpattern', 'pattern'], ['kemblem', 'emblem']]) {
+            m.querySelectorAll(`[data-${key}]`).forEach((b) => { const v = b.dataset[key]; b.setAttribute('aria-pressed', k[field] === v); b.querySelector('img').src = kitSrc({ ...k, [field]: v }); });
+          }
+          $('#kit-ribbon').setAttribute('aria-pressed', !!k.ribbon);
+        }
         $('#club-trim').value = draft.trim; $('#club-jersey').value = draft.jersey;
       };
       paint();
@@ -2504,6 +2527,8 @@ export class UI {
       $('#club-jersey').addEventListener('input', (e) => { draft.jersey = e.target.value; paint(); });
       this.click('[data-preset]', (el) => { const p = CLUB_PRESETS.find((x) => x.id === el.dataset.preset); draft.trim = p.trim; draft.jersey = p.jersey; audio.sfx('click'); paint(); }, m);
       this.click('[data-crest]', (el) => { draft.crest = el.dataset.crest; audio.sfx('click'); paint(); }, m);
+      for (const [key, field] of [['kshield', 'shield'], ['kpattern', 'pattern'], ['kemblem', 'emblem']]) this.click(`[data-${key}]`, (el) => { kit()[field] = el.dataset[key]; audio.sfx('click'); paint(); }, m);
+      this.click('#kit-ribbon', () => { kit().ribbon = !kit().ribbon; audio.sfx('click'); paint(); }, m);
       if ($('#club-reset')) this.click('#club-reset', () => {
         Object.assign(draft, CLUB_DEFAULT); nickTouched = shortTouched = false;
         $('#club-name').value = draft.name; $('#club-nick').value = draft.nick; $('#club-short').value = draft.short;

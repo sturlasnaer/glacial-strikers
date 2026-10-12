@@ -5,7 +5,8 @@
 // locker room and cut-in banners are separate images; those load when a scene needs them.
 // (Everything is prefetched into the browser cache, but only decoded when used.)
 
-import { TEAMS, PALETTES, CAREER, elemEffects } from './data.js';
+import { TEAMS, PALETTES, CAREER, CLUB, elemEffects } from './data.js';
+import { drawCrest } from './crestkit.js';
 import { recolorParts, recolorPaint, headPlacement, PARTS_SCALE } from './modular.js';
 
 const BASE = new URL('assets/', document.baseURI).href;
@@ -175,7 +176,7 @@ export const Assets = {
     for (const [g, c] of Object.entries(COMPANION)) if (groups.has(g)) groups.add(c); // (their masks with them)
     const released = new Set();
     const pages = new Set([...(keep.pages || []), ...this.framePages(this.supporterMaskFrames(keep.teams || []))]); // (single pages kept out of a group: the coach cub's costume, say; the rival's supporters' masks)
-    a.pages.forEach((p, i) => { if (this.pages[i] && !groups.has(p.group) && !pages.has(i)) { released.add(this.pages[i]); this.pages[i] = null; this.forget(p.file); } });
+    a.pages.forEach((p, i) => { if (this.pages[i] && !groups.has(p.group) && !pages.has(i) && p.group !== 'runtime') { released.add(this.pages[i]); this.pages[i] = null; this.forget(p.file); } }); // (a frame drawn at run time stays)
     // recoloured page sets keep references to the original pages they didn't change: drop those too
     for (const r of this.recolored.values()) { const kept = r.pages.map((pg) => (released.has(pg) ? null : pg)); if (r.pages.frames) kept.frames = r.pages.frames; r.pages = kept; } // (a club career's packed club colours keep their map)
     for (const [k, img] of [...this.backdrops]) {
@@ -203,8 +204,37 @@ export const Assets = {
     return r ? r.pages : this.pages;
   },
 
+  // A frame drawn at run time (a crest of the club's own design): its own page, group 'runtime',
+  // never let go by trim; drawn with any page set (a recoloured set made before it falls back here).
+  setRuntimeFrame(id, canvas) {
+    const A = this.atlas, w = canvas.width, h = canvas.height;
+    let pi = A.frames[id] && A.pages[A.frames[id][0]].group === 'runtime' ? A.frames[id][0] : -1;
+    if (pi < 0) { pi = A.pages.length; A.pages.push({ file: null, group: 'runtime', w, h }); }
+    this.pages[pi] = canvas;
+    A.pages[pi].w = w; A.pages[pi].h = h;
+    A.frames[id] = [pi, 0, 0, w, h, w / 2, h / 2, 0.54]; // (as the club crests: 120 px at 0.54)
+    for (const k of [...this.iconCache.keys()]) if (k.includes(id)) this.iconCache.delete(k);
+  },
+  runtimePage(pi) { return this.atlas.pages[pi] && this.atlas.pages[pi].group === 'runtime' ? this.pages[pi] : null; },
+  // A frame on its own in trial or club colours (our art's teal and cream: the crest kit, Batch FC).
+  artCanvas(id, rc) {
+    const f = this.atlas.frames[id];
+    if (!f || !this.pages[f[0]]) return null;
+    const c = cpuCanvas(this.pages[f[0]], f[3], f[4]);
+    c.clearRect(0, 0, f[3], f[4]); c.drawImage(this.pages[f[0]], f[1], f[2], f[3], f[4], 0, 0, f[3], f[4]);
+    if (rc) recolorHomeIn(c, rc, [[0, 0, f[3], f[4]]]);
+    return c.canvas;
+  },
+  // The club's crest when it's of its own design (crest 'kit'): drawn in its colours, as the frame
+  // 'club_crest/generated' that clubCrestId names.
+  buildClubCrest(club = CLUB, rc = PALETTES.club.recolor) {
+    if (club.crest !== 'kit' || !this.atlas) return;
+    this.setRuntimeFrame('club_crest/generated', drawCrest(club.crestKit, { trim: club.trim, jersey: club.jersey }, { short: club.short, letter: club.nick || club.name, art: (id) => this.artCanvas(id, rc) }));
+  },
+
   // Club colours: recolour our team's frames on the home pages ('club' palette).
   prepareClub() {
+    this.buildClubCrest();
     const rc = PALETTES.club.recolor;
     this.recolored.delete('club');
     for (const k of [...this.iconCache.keys()]) if (k.includes('|club|')) this.iconCache.delete(k);
@@ -391,11 +421,12 @@ export const Assets = {
 
   // Draw a frame with its pivot at (x, y). scale = world px per *source* px.
   draw(ctx, id, x, y, scale, opts = {}) {
-    const pages = opts.pages || this.pages;
+    let pages = opts.pages || this.pages;
     const f = (pages.frames && pages.frames[id]) || this.atlas.frames[id]; // (a club career's club colours: packed, prepareClubCompact)
     if (!f) return;
     const [pi, fx, fy, fw, fh, px, py, s] = f;
-    if (!pages[pi]) return;
+    if (!pages[pi] && !this.runtimePage(pi)) return;
+    if (!pages[pi]) pages = this.pages; // (a frame drawn at run time: its own page)
     const k = scale / s;
     if (!opts.rot && opts.alpha === undefined && !opts.blend) {
       // the common case (crowds, skaters, props): no save/restore, which phones feel when it's
@@ -716,7 +747,7 @@ export const Assets = {
     const P = this.pagesFor(teamId), f = (P.frames && P.frames[id]) || this.atlas.frames[id];
     if (!f) return null;
     const [pi, fx, fy, fw, fh] = f;
-    const page = P[pi];
+    const page = P[pi] || this.runtimePage(pi);
     if (!page) return null;
     const c = document.createElement('canvas');
     c.width = size; c.height = size;

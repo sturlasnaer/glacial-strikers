@@ -823,13 +823,17 @@ export const teamInfo = (id) => TEAMS[id] || (id === 'allstar' ? ALLSTAR : NATIO
 
 // ---------------------------------------------------------------- your club
 // Name, nickname, short code and colours (trim, jersey). Defaults are the Snowcrest Foxes.
-export const CLUB_DEFAULT = { name: 'Snowcrest Foxes', nick: 'Foxes', short: 'FOX', trim: '#71dce8', jersey: '#fff2cb', crest: 'fox' };
+export const CLUB_DEFAULT = { name: 'Snowcrest Foxes', nick: 'Foxes', short: 'FOX', trim: '#71dce8', jersey: '#fff2cb', crest: 'fox', crestKit: null }; // (crestKit: a crest of one's own design, crest 'kit': crestkit.js)
 // The club's crest: the Snow Fox, or one of Batch AW's designs (all recoloured like our art).
 export const CLUB_CRESTS = [
   { id: 'fox', name: 'Snow Fox' }, { id: 'wolf', name: 'Wolf' }, { id: 'bear', name: 'Polar bear' }, { id: 'owl', name: 'Snowy owl' },
   { id: 'narwhal', name: 'Narwhal' }, { id: 'mountain', name: 'Mountain' }, { id: 'bolt', name: 'Lightning' },
 ];
-export const clubCrestId = (crest) => (crest && crest !== 'fox' ? 'crests_club/' + crest : 'hud_elements/misc/home_crest');
+export const clubCrestId = (crest) => (crest === 'kit' ? 'club_crest/generated' : crest && crest !== 'fox' ? 'crests_club/' + crest : 'hud_elements/misc/home_crest'); // ('kit': drawn when the club's look is applied, Assets.buildClubCrest)
+// A club of one's own's mascot (Batch EU): its crest's, or for a crest of its own design its
+// emblem's when there's a mascot for it (the Snow Fox's red cousin otherwise).
+export const OWN_MASCOTS = ['fox', 'wolf', 'bear', 'owl', 'narwhal', 'mountain', 'bolt'];
+export const clubMascotKey = () => (CLUB.crest === 'kit' ? (OWN_MASCOTS.includes(CLUB.crestKit && CLUB.crestKit.emblem) ? CLUB.crestKit.emblem : 'fox') : CLUB.crest || 'fox');
 export const CLUB = { ...CLUB_DEFAULT, custom: false };
 export const CLUB_PRESETS = [
   { id: 'glacial', name: 'Snowcrest', trim: '#71dce8', jersey: '#fff2cb' },

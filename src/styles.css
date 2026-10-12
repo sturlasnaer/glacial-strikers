@@ -819,6 +819,14 @@ body.in-hub.hub-room #screen { background: linear-gradient(rgba(8, 14, 26, 0.82)
 .paint-sw[aria-pressed="true"] { outline: 3px solid var(--gold, #ffd45e); outline-offset: 1px; }
 @media (max-width: 560px) { .mask-pick #mask-prev { width: 80px; height: 80px; } .chip.mask-opt img { width: 36px; height: 36px; } }
 .chip.crest-pick img { width: 40px; height: 40px; display: block; }
+/* the crest designer (crestkit.js): a chip that names itself, and a row per part */
+.chip.crest-pick.kit { display: inline-flex; align-items: center; gap: 6px; padding-right: 10px; }
+.crest-kit { display: grid; gap: 6px; margin-top: 6px; padding: 8px 10px; border: 2px dashed var(--navy-3); border-radius: 8px; }
+.kit-row { display: grid; grid-template-columns: 74px minmax(0, 1fr); align-items: center; gap: 8px; }
+.kit-l { font-size: 13px; color: var(--muted, #9fb4cf); }
+.chip.kit-pick { padding: 2px 4px; }
+.chip.kit-pick img { width: 36px; height: 36px; display: block; image-rendering: pixelated; }
+@media (max-width: 560px) { .kit-row { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
 .club-preview { display: flex; align-items: flex-end; gap: 4px; padding: 8px 10px; border-radius: 10px; background: radial-gradient(ellipse at 50% 120%, #dff3ff, #a9d3ec 60%, #7fb3d6); min-height: 140px; }
 .club-preview img { width: 96px; height: 96px; image-rendering: auto; }
 .club-preview img:first-child { width: 64px; height: 64px; align-self: center; }

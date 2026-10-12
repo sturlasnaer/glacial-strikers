@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-12d',
+    items: [
+      { icon: 'icons/career', text: 'Design your own crest: in the club editor, pick a shield, a pattern and an emblem, with your short code on a ribbon, all in your club\'s colours. And the editor now shows who really wears the kit: your founders, or your club\'s own stars.' },
+    ],
+  },
+  {
     id: '2026-10-12c',
     items: [
       { big: true, icon: 'badges/nations_cup', alt: 'badges/national_cup', text: 'The Nations Cup: once your club is up in the National Cup, each season ends with the four regions\' best. Your club plays for the Frostline against the Coast, the Timberlands and the Far Wilds: three games and a final, for the Nations Cup.' },

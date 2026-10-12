@@ -45,7 +45,7 @@ import { moveTier, noteTierCup, tierOf, tierInfo } from './tiers.js';
 import { updateSeasonGoals, goalStates } from './goals.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { member, goalieInfo, TEAMS, TOURNAMENT, DIALOGUE, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, CAREER, pairKey, clubT, clubOwn, applyClub, GEAR_LOOK, useGearArt, RECRUITS, ROOKIES, setRookies, ALLSTAR, NATIONS, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, expansionLines, TIER_LINES } from './data.js';
+import { member, goalieInfo, TEAMS, TOURNAMENT, DIALOGUE, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, CAREER, clubMascotKey, pairKey, clubT, clubOwn, applyClub, GEAR_LOOK, useGearArt, RECRUITS, ROOKIES, setRookies, ALLSTAR, NATIONS, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, expansionLines, TIER_LINES } from './data.js';
 import { rollLegend, legendState, STAY, joinLegend, LEGEND_LINES, twinsFirstTogether } from './legends.js';
 import { rivalSigning, rivalOffer } from './moves.js';
 import { refreshAgents } from './agents.js';
@@ -347,7 +347,7 @@ class App {
     this.benchPets = arena === 'home' && !this.attract && !cfg.drill && Assets.atlas.arena_spots?.home_cub ? roomPets(this.save).filter((k) => k !== 'fox' && BENCH_POSES.every((f) => Assets.frame(petDir(k) + f))).slice(0, 3) : [];
     const petFrames = this.benchPets.flatMap((k) => BENCH_POSES.map((f) => petDir(k) + f));
     // one's own club's mascot (the mascot of its crest, Batch EU), wherever its page is
-    const crestMascot = arena === 'home' && CAREER.custom && Assets.atlas.arena && Assets.atlas.arena.club_mascots && Assets.atlas.arena.club_mascots[CLUB.crest || 'fox'];
+    const crestMascot = arena === 'home' && CAREER.custom && Assets.atlas.arena && Assets.atlas.arena.club_mascots && Assets.atlas.arena.club_mascots[clubMascotKey()];
     // (a career as another club: its own mascot dances at home, its page loaded wherever it is)
     const ownMascot = arena === 'home' && CAREER.team && Assets.atlas.arena && Assets.atlas.arena.rival_mascots && Assets.atlas.arena.rival_mascots[TEAMS[CAREER.team].art || TEAMS[CAREER.team].mark];
     const mascotFrames = [crestMascot, ownMascot].filter(Boolean).flatMap((M) => ['idle', 'wave', 'cheer_a', 'cheer_b'].map((p) => M[p])).filter((f) => f && Assets.frame(f));

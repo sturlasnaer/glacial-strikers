@@ -3,7 +3,7 @@
 // it wins. Each runner trots at its own pace with bursts and slips on the ice, so anyone can
 // win. rnd: () => [0, 1) (the menus' own randomness; the match is frozen meanwhile).
 
-import { CAREER, CLUB } from './data.js';
+import { CAREER, CLUB, clubMascotKey } from './data.js';
 
 export const MASCOTS = { home: 'snow_fox', lynx: 'pinewood_lynx', comets: 'ember_comets', rams: 'gilded_rams', ravens: 'obsidian_ravens', royals: 'aurora_royals', owls: 'glacier_owls', moose: 'thunder_moose',
   capybaras: 'hot_springs_capybaras', puffins: 'cliffside_puffins', grizzlies: 'timberline_grizzlies', seals: 'driftwood_seals', penguins: 'pack_ice_penguins', bulls: 'sunmesa_bulls', narwhals: 'northlight_narwhals', beavers: 'birchwood_beavers', flamingos: 'coral_bay_flamingos', tigers: 'taiga_tigers', pandas: 'bamboo_ridge_pandas' }; // (the National clubs': Batch EC and EM; the Elite's own: EL)
@@ -13,7 +13,7 @@ export const RACE_AT = 3; // (goals for either side)
 // A runner's mascot: ours (the Snow Fox, or in a career as another club that club's, or for a
 // club of one's own the mascot of its crest: Batch EU, club_<crest>, runs once drawn), the
 // Foxes' (the Snow Fox, when they're a club of the league: clubs.js) or a club's own.
-export const mascotOf = (id) => (id === 'home' ? (CAREER.custom ? 'club_' + (CLUB.crest || 'fox') : MASCOTS[CAREER.team] || MASCOTS.home) : id === 'foxes' ? MASCOTS.home : MASCOTS[id]);
+export const mascotOf = (id) => (id === 'home' ? (CAREER.custom ? 'club_' + clubMascotKey() : MASCOTS[CAREER.team] || MASCOTS.home) : id === 'foxes' ? MASCOTS.home : MASCOTS[id]);
 
 // The race's field: ours and the opponent's, who always run, and the rest who could.
 export function raceField(opp) {
