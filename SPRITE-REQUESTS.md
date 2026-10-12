@@ -7,6 +7,9 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
+1. **EY: pond hockey** (a pond rink, small nets, two icons)
+2. **EZ: the Nations Cup** (four region crests, a venue, a trophy)
+3. **FA: a rival with a story** (three scene backdrops)
 
 
 **Notes for the art team (from the programmer, 2026-10-10):**
@@ -1030,3 +1033,37 @@ Lossless and nothing redrawn: the frame ids, sizes, pivots and scales stay the s
 Another repack for phone memory. The mascot race runs four mascots: ours, the rival's and two more. A match loads only the race pages those runners are on, but today the runners share big pages (the Frostline's eight on a 12 MB page, the National's seven on a 10 MB one), so a match against a National club decodes 22 MB for about 5 MB of runners. Please repack the `race` group so that each mascot's five frames (`race/<mascot>/run_1`–`run_4` and `win`) sit on a small page of their own, about 1.4 MB decoded each. Please do the same for the own-club mascots from EU (`race/club_<crest>/…`) when they come in.
 
 Lossless and nothing redrawn: the frame ids, sizes, pivots and scales stay the same. No code change is needed (the game picks the two extra runners and loads just their pages): a race then decodes about 5.5 MB instead of 12 to 22.
+
+## Batch EY: pond hockey
+
+A new casual mode: three against three on a frozen pond, no goalies, small nets, no penalties, short games (and the youngest players' favourite, we hope). It's in the game now on the Pine Pond backdrop with the regular nets drawn smaller; these replace them:
+- `arena_pond`: **the neighbourhood pond**, exactly like the other rinks (1536×1024, the ice in the same place and shape so the game's rink fits unchanged), but no boards or glass: the ice ends in soft snowbanks along the rink's outline, with pine trees, a few houses with lit windows beyond, a wooden bench with boots and thermos flasks, a hot-cocoa stand, a sled and a dog watching from the bank, a couple of families cheering on the far bank. Natural pond ice (a little bumpy, a few frozen leaves, skate marks), no rink lines except two faint lines scratched for the goal areas. No lettering. Its own group `arena_pond`, loaded only for pond games.
+- `arena_pond_night`: the same at dusk, string lights between the trees, the houses' windows warm, a lantern on the bench.
+- Small **pond nets**, the shinny kind (a little steel frame with a white net, about 60% of the regular net's width and a little lower), in the same four views and sizes as `rink_props/nets/east`, `west`, `north`, `south` (the pivot at the centre of the goal mouth on the ice): `rink_props/pond_nets/east`, `west`, `north`, `south`. On the `arena_pond` group.
+- `icons/pond_hockey` (about 128 px, like the other `icons/…`): two kids' sticks crossed over a little net on a snowy pond.
+- `achievements/shinny` (128×128, like the other `achievements/…`): three friends in toques and scarves celebrating a goal on the pond, a dog jumping with them.
+
+2 backdrops, 4 nets, 2 icons.
+
+## Batch EZ: the Nations Cup
+
+A tournament at the end of a season once the club has reached the National: the best players from the clubs of each of four regions form a regional team, a round robin of three games and a final. The player's club plays for **the Frostline**. The regional teams wear kits recoloured from the existing art, so no new players are needed. Please draw:
+- The four regions' crests, 128×128 shields like `rival_crests/crest/…`, no lettering, listed as `atlas.nations = { frostline: 'nations/crest/frostline', coast: …, timberlands: …, wilds: … }`:
+  - `nations/crest/frostline`: **the Frostline**, a snowflake over two pine trees, ice blue and white.
+  - `nations/crest/coast`: **the Coast** (the Puffins, Seals, Narwhals, Penguins and Flamingos), a lighthouse over a curling wave, sea blue and sand.
+  - `nations/crest/timberlands`: **the Timberlands** (the Grizzlies, Beavers, Bulls and Capybaras), a mountain peak behind a big pine cone, forest green and brown.
+  - `nations/crest/wilds`: **the Far Wilds** (the Tigers and Pandas), a bamboo stalk crossed with a taiga pine, a stripe of tiger orange, black and white.
+- `arena_nations`: **the Nations Arena**, where every game of the Nations Cup is played, drawn exactly like the Capital Dome (EO: the 1536×1024 backdrop with the rink lines, boards, glass and benches in the same places, its scoreboard frames `arena.scoreboards.nations`, near-side glass and a penalty box), no lettering: a modern international arena, the four regions' banners hanging from the roof in their colours, a giant Nations Cup hanging over centre ice, fans with painted faces and big flags in all four regions' colours. Its own group `arena_nations`.
+- `badges/nations_cup` (like `badges/national_cup`): the Nations Cup, a tall silver cup with four coloured ribbons tied round its handles.
+- `achievements/nations_cup` (128×128): a team in white-and-ice-blue Frostline kits lifting the Nations Cup under falling snow and confetti.
+
+4 crests, 1 arena (with its scoreboards, glass and penalty box), 2 icons.
+
+## Batch FA: a rival with a story
+
+Each career now has one rival captain whose story runs over several seasons: the first grudge, a rumour that they're leaving, mutual respect after a Cup, and a farewell when they retire. Their scenes play over these backdrops, 1280×720 plain images like the story scenes (ES: no lettering, the dialogue box covers the bottom third and portraits stand at both sides, so the subject sits in the upper middle), listed in `atlas.saga = { handshake: 'gfx/saga_handshake.webp', rumour: …, farewell: … }`, each its own file:
+- `saga_handshake`: the handshake line at centre ice after a hard-fought game, two lines of players in different jerseys meeting with gloves off, the arena lights bright and the crowd a warm blur.
+- `saga_rumour`: a rink café in the morning, a newspaper on the counter (its pages blank or with unreadable squiggles), steam from a mug, a phone buzzing beside it, the empty rink through the window.
+- `saga_farewell`: an empty rink at night, a single spotlight on centre ice, a pair of skates and a stick left on the bench, a few balloons and a hand-painted banner in the stands (no letters on it: a big heart and a number).
+
+3 images.
