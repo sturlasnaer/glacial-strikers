@@ -349,6 +349,7 @@ export const IS = {
   "A power orb! Skate the puck through it to charge the puck.": "Orkukúla! Skautaðu með pökkinn í gegnum hana til að hlaða hann.",
   "A present!": "Gjöf!",
   "A regular-season win. Don't get used to it.": "Bara sigur í deildinni. Ekki venjast þessu.",
+  "A rival with a story: the captain of your first rivalry club won't forget you. Their story runs over the seasons, from the first grudge to a farewell, and Trophies › Our story plays every chapter again.": "Keppinautur með sögu: fyrirliðinn hjá fyrsta keppinautnum ykkar gleymir ykkur ekki. Sagan heldur áfram tímabil eftir tímabil, frá fyrsta rígnum til kveðjustundar, og Verðlaun › Sagan okkar spilar hvern kafla aftur.",
   "A rivalry is born. Keep an eye on {name}.": "Nýr rígur er fæddur. Fylgist vel með {name}.",
   "A road-trip map in the League tab: the eight towns of the league, the season's route between them, and the Foxes' team bus driving on to the next game.": "Ferðakort í Deildarflipanum: bæirnir átta í deildinni, leið tímabilsins á milli þeirra og liðsrúta Foxes á leið í næsta leik.",
   "A shootout party for two: in 2 Players › Shootout, player 1 shoots for the Foxes and player 2 for a rival, five shots each against the goalies. On a tablet, each gets a stick and a PLAY button.": "Vítakeppnisveisla fyrir tvo: undir 2 leikmenn › Vítakeppni skýtur leikmaður 1 fyrir Foxes og leikmaður 2 fyrir andstæðing, fimm skot hvort á markverðina. Á spjaldtölvu fær hvort sinn stýripinna og SPILA-hnapp.",

@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-12b',
+    items: [
+      { big: true, icon: 'icons/career', text: 'A rival with a story: the captain of your first rivalry club won\'t forget you. Their story runs over the seasons, from the first grudge to a farewell, and Trophies › Our story plays every chapter again.' },
+    ],
+  },
+  {
     id: '2026-10-12a',
     items: [
       { big: true, icon: 'icons/pond_hockey', alt: 'rink_props/nets/south', text: 'Pond hockey, in Quick play: three on three on the pond, no goalies, little nets and no penalties. Quick games just for fun, against a different club each time. Win three for the Shinny trophy.' },
