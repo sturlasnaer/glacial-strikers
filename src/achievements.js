@@ -23,6 +23,7 @@ export const ACHIEVEMENTS = [
   { id: 'power-play', name: 'Power Play Pro', text: 'Score a power-play goal.', icon: 'hud_elements/ability/fire', coins: 40 },
   { id: 'shorthanded', name: 'Shorthanded', text: 'Score while one of your skaters is in the box.', icon: 'hud_elements/ability/stone', coins: 80 },
   { id: 'empty-net', name: 'Empty Netter', text: 'Score into an empty net.', icon: 'rink_props/nets/south', coins: 40 },
+  { id: 'shinny', name: 'Shinny', text: 'Win three games of pond hockey.', icon: 'rink_props/nets/south', art: 'achievements/shinny', coins: 60 },
   { id: 'extra-attacker', name: 'Extra Attacker', text: 'Score with your own goalie pulled.', icon: 'hud_elements/misc/player_arrow', coins: 90 },
   { id: 'clean', name: 'Clean Game', text: 'Win a league match without taking a penalty.', icon: 'hud_elements/ability/stamina', coins: 30 },
   { id: 'challenge', name: 'Up for a Challenge', text: 'Win an exhibition with 3 or more challenges on.', icon: 'equipment_items/hub/target', coins: 80 },
@@ -183,7 +184,7 @@ export class AchievementTracker {
       if (g.power) this.addToSet('powerGoals', g.power);
       if (g.powerPlay) this.unlock('power-play');
       if (m.teamSkaters(0).some((k) => k.boxT > 0)) this.unlock('shorthanded');
-      if (m.goalies.find((k) => k.team === 1).disabled) this.unlock('empty-net');
+      if (m.goalies.find((k) => k.team === 1).disabled && !m.pond) this.unlock('empty-net'); // (on the pond there's never anyone in goal)
       if (m.extra && m.extra[0]) this.unlock('extra-attacker');
       if (m.time - biteT < 2) this.unlock('sold-it');
       if (ourShot) this.unlock('penalty-shot');

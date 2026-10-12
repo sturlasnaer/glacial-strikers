@@ -559,6 +559,7 @@ export class UI {
       <h2>${t('Quick play')}</h2>
       <p class="muted" style="margin:0">${t('Exhibitions use your current team and pay half rewards. A shootout is five penalty shots each way: you shoot, then you play goalie.')}</p>
       <div class="mini-row"><span class="mini-ico">${smallIcon('icons/mini_cup', 96, 'btn-ico') || smallIcon('badges/cup_small', 96, 'btn-ico')}</span><span style="min-width:0"><b>${t('Mini Cup')}</b><span class="muted" style="font-size:12.5px">${t('Three quick games, first to three, against rivals getting tougher. Win them all for a cup of your own!')}</span></span><button class="btn small gold" id="qp-mini">${miniOf(this.app.save) && !miniOf(this.app.save).over ? t('Next game') : t('Play')}</button></div>
+      <div class="mini-row"><span class="mini-ico">${smallIcon('icons/pond_hockey', 96, 'btn-ico') || smallIcon('rink_props/nets/south', 96, 'btn-ico')}</span><span style="min-width:0"><b>${t('Pond hockey')}</b><span class="muted" style="font-size:12.5px">${t('Three on three on the pond: no goalies, little nets, no penalties. Quick and just for fun.')}</span></span><button class="btn small" id="qp-pond">${t('Play')}</button></div>
       <details class="qp-opts" ${this.qpOpen ? 'open' : ''}><summary id="qp-sum">${optsLine()}</summary>
       <div>
         <div class="label" style="font-size:15px">${t('Match challenges')} <span class="muted" id="ch-mult" style="font-family:var(--body);font-size:12px;letter-spacing:0;text-transform:none"></span></div>
@@ -566,7 +567,7 @@ export class UI {
       </div>
       <div>
         <div class="label" style="font-size:15px">${t('Arena')}</div>
-        <div class="filters" style="margin:6px 0 0">${['auto', ...Object.keys(ARENAS).filter((k) => !(ARENAS[k].exhibitionOnly || ARENAS[k].national || (ARENAS[k].finalOnly && k !== 'frostline_coliseum')) || (Assets.atlas.arenas && Assets.atlas.arenas[k]))].map((k) => `<button class="chip" data-arena="${k}" aria-pressed="${(this.arenaPick || 'auto') === k}">${k === 'auto' ? t('Their building') : esc(ARENAS[k].name)}</button>`).join('')}
+        <div class="filters" style="margin:6px 0 0">${['auto', ...Object.keys(ARENAS).filter((k) => !ARENAS[k].pond).filter((k) => !(ARENAS[k].exhibitionOnly || ARENAS[k].national || (ARENAS[k].finalOnly && k !== 'frostline_coliseum')) || (Assets.atlas.arenas && Assets.atlas.arenas[k]))].map((k) => `<button class="chip" data-arena="${k}" aria-pressed="${(this.arenaPick || 'auto') === k}">${k === 'auto' ? t('Their building') : esc(ARENAS[k].name)}</button>`).join('')}
           ${Object.keys(Assets.atlas.arenas || {}).some((k) => k.endsWith('_night')) ? `<button class="chip" id="arena-night" aria-pressed="${!!this.nightPick}" title="${esc(t('Under the lights at the outdoor rinks (Pine Pond, the Harbour Rink, the Summit Rink).'))}">${t('Night game')}</button>` : ''}</div>
       </div>
       </details>
@@ -580,6 +581,7 @@ export class UI {
       <div class="row" style="justify-content:space-between;align-items:center">${playAsHtml(this.app.save, this.app)}<button class="btn small ghost" data-close>${t('Back')}</button></div>`, (m, close) => {
       this.bindPlayAs(m);
       this.click('#qp-mini', () => { audio.sfx('confirm'); close(); this.app.startMini(); }, m);
+      this.click('#qp-pond', () => { audio.sfx('confirm'); close(); this.app.startPond(!!this.nightPick); }, m);
       const upd = () => { const x = mult(); m.querySelector('#ch-mult').textContent = this.challenges.size ? t('coins x{n}', { n: +x.toFixed(2) }) : ''; m.querySelector('#qp-sum').textContent = optsLine(); };
       m.querySelector('.qp-opts').addEventListener('toggle', (e) => { this.qpOpen = e.target.open; });
       upd();

@@ -33,7 +33,7 @@ export class Commentary {
       else if (g.kind === 'zero') line = t('{name} freezes the whole defense! GOAL!', { name: n(s) });
       else if (g.kind === 'thunderclap') line = t('THUNDERCLAP! {name} lights the lamp!', { name: n(s) });
       else if (g.powerPlay) line = t('Power-play goal! {name} makes them pay.', { name: n(s) });
-      else if (m.goalies.find((k) => k.goalSide === g.side).disabled) line = t('{name} into the empty net!', { name: n(s) });
+      else if (m.goalies.find((k) => k.goalSide === g.side).disabled && !m.pond) line = t('{name} into the empty net!', { name: n(s) });
       else if (g.special && g.special.combo) line = t('{combo} goal! {name} finishes the combo!', { combo: t(COMBOS[g.special.combo].name), name: n(s) });
       else if (g.power) line = t('{name} scores with the {power}!', { name: n(s), power: t(POWER_INFO[g.power].name) });
       else if (g.assists.length) line = pick([t('{name} scores! Lovely feed from {from}.', { name: n(s), from: n(g.assists[0]) }), t('{from} to {name}... SCORES!', { from: n(g.assists[0]), name: n(s) })]);

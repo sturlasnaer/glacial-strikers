@@ -146,7 +146,7 @@ export class Renderer {
       const cv = Assets.iconCanvas(hostCrest, 200, host.id, { recolor: true }), f = Assets.frame(hostCrest), w = f ? (f[3] / f[7]) * 0.26 : 96;
       if (cv) { ctx.save(); ctx.globalAlpha *= 0.3; ctx.drawImage(cv, cc.x - w / 2, cc.y + 4 - (w * 0.8) / 2, w, w * 0.8); ctx.restore(); }
     } else if (hostCrest) Assets.draw(ctx, hostCrest, cc.x, cc.y + 4, 0.26, { alpha: 0.3, squash: 0.8 });
-    else if (!(ARENAS[arena] && ARENAS[arena].finalOnly)) Assets.draw(ctx, Assets.frame(TEAMS.home.crest) ? TEAMS.home.crest : 'hud_elements/misc/home_crest', cc.x, cc.y + 2, 0.5, { alpha: 0.3, squash: 0.8, pages: Assets.clubPages() }); // (our crest: the Snow Fox or the club's choice)
+    else if (!(ARENAS[arena] && (ARENAS[arena].finalOnly || ARENAS[arena].pond))) Assets.draw(ctx, Assets.frame(TEAMS.home.crest) ? TEAMS.home.crest : 'hud_elements/misc/home_crest', cc.x, cc.y + 2, 0.5, { alpha: 0.3, squash: 0.8, pages: Assets.clubPages() }); // (our crest: the Snow Fox or the club's choice)
     this.drawLamps(ctx, fx);
     this.drawCrowd(ctx, fx, ui);
     if (arena === 'home') this.drawCub(ctx, fx, false, match, ui);
@@ -212,7 +212,7 @@ export class Renderer {
     // near glass over anyone skating along the bottom boards (Pine Pond has snowbanks)
     const foreground = Assets.atlas.arena.glasses?.[arena];
     if (foreground) Assets.draw(ctx, foreground.frame, foreground.x, foreground.y, 1);
-    else if (Assets.glass && arena !== 'pine_pond') ctx.drawImage(Assets.glass, Assets.atlas.arena.glass.x, Assets.atlas.arena.glass.y);
+    else if (Assets.glass && arena !== 'pine_pond' && !(ARENAS[arena] && ARENAS[arena].pond)) ctx.drawImage(Assets.glass, Assets.atlas.arena.glass.x, Assets.atlas.arena.glass.y);
     if (arena === 'home') { this.drawSupporters(ctx, fx, ui.save); this.drawCub(ctx, fx, true, match, ui); }
     else this.drawRivalSupporters(ctx, fx, ui.awayTeamId, arena);
     if (match.allstar && arena === 'home') this.drawAllStarDressing(ctx, fx, true);
@@ -341,6 +341,7 @@ export class Renderer {
   }
 
   drawCrowd(ctx, fx, ui) {
+    if (this.arena && this.arena.pond) return; // (the pond's families watch from the bank, in its picture)
     const t = fx.time;
     const ex = fx.excite;
     const awayColor = ui.awayColor || '#ff6f7d', awayColor2 = ui.awayColor2 || '#8261bd';
@@ -754,6 +755,7 @@ export class Renderer {
 
   // The penalty boxes built into the far boards (Batch P), or null without the art.
   penaltyBox() {
+    if (this.arena && this.arena.pond) return null; // (no boards, no box on the pond)
     const A = Assets.atlas.arena;
     const variant = Object.keys(ARENAS).find((key) => ARENAS[key] === this.arena);
     const box = A && (A.penalty_boxes?.[variant] || (this.arena === ARENAS.pine_pond && A.penalty_box_pond?.frames ? A.penalty_box_pond : A.penalty_box));

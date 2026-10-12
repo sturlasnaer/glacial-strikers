@@ -7,7 +7,7 @@
 // (roof, near side, crossbar, near post), so the puck can sit inside the net and the
 // goalie stands in front of it. A goal makes the mesh ripple.
 
-import { toScreen, GOAL_X, MOUTH, NET_DEPTH, CROSSBAR } from './rink.js';
+import { toScreen, GOAL_X, MOUTH, MOUTH_STD, NET_DEPTH, CROSSBAR } from './rink.js';
 import { Assets } from './assets.js';
 
 // Sprite nets from the v3 arena pack: back and front layers around a pivot at the centre
@@ -36,7 +36,10 @@ export class SpriteNets {
     const a = this.anim[side];
     const state = a ? a.seq[Math.floor(a.t * 10)] || 'neutral' : 'neutral';
     const p = toScreen(side * GOAL_X, 0);
-    Assets.draw(ctx, this.map[state][layer], p.x, p.y, NET_SCALE, { flip: side < 0 });
+    // the pond's little nets (Batch EY), or until they're drawn the regular ones at their size
+    const pond = MOUTH < MOUTH_STD, pn = pond && Assets.atlas.arena && Assets.atlas.arena.pond_nets, f = pn && Assets.frame(pn[state][layer]);
+    if (f && Assets.pages[f[0]]) Assets.draw(ctx, pn[state][layer], p.x, p.y, NET_SCALE, { flip: side < 0 });
+    else Assets.draw(ctx, this.map[state][layer], p.x, p.y, NET_SCALE * (pond ? MOUTH / MOUTH_STD : 1), { flip: side < 0 });
   }
 }
 

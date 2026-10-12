@@ -16,7 +16,10 @@ export const RINK = {
 };
 
 export const GOAL_X = 633; // goal line distance from centre
-export const MOUTH = 38; // half width of the goal mouth
+// half width of the goal mouth (the pond's little shinny nets are narrower: each Match sets it)
+export const MOUTH_STD = 38, MOUTH_POND = 24;
+export let MOUTH = MOUTH_STD;
+export const setMouth = (v) => { MOUTH = v; };
 export const NET_DEPTH = 40;
 export const POST_R = 4;
 export const CROSSBAR = 40; // net height (a puck above this clears the net)

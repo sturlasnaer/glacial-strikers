@@ -3,7 +3,7 @@
 
 import { clamp, norm, dist, segDist, makeRng, Emitter, angDiff } from './util.js';
 import {
-  RINK, GOAL_X, MOUTH, NET_DEPTH, POST_R, CROSSBAR, DOTS,
+  RINK, GOAL_X, MOUTH, NET_DEPTH, POST_R, CROSSBAR, DOTS, MOUTH_STD, MOUTH_POND, setMouth,
   constrainToRink, netBox, clampInside, insideDepth, collideNets,
 } from './rink.js';
 import { Puck, Skater, Goalie, Barrier, collideBarrier, PUCK_R } from './entities.js';
@@ -70,8 +70,11 @@ export class Match {
     this.humans = cfg.humans ?? (this.humanTeam !== null ? [this.humanTeam] : []);
     // goalie mode: the player is in goal for team 0 and the AI skates all three skaters
     // keeper co-op: player 1 skates, player 2 is in goal (goalie mode with a skater too)
-    this.keeperCoop = !!cfg.keeperCoop && this.humanTeam === 0;
-    this.goalieMode = (!!cfg.goalieMode || this.keeperCoop) && this.humanTeam === 0;
+    // pond hockey: three on three on the pond, no goalies, the little nets, no penalties
+    this.pond = !!cfg.pond;
+    setMouth(this.pond ? MOUTH_POND : MOUTH_STD);
+    this.keeperCoop = !!cfg.keeperCoop && this.humanTeam === 0 && !this.pond;
+    this.goalieMode = (!!cfg.goalieMode || this.keeperCoop) && this.humanTeam === 0 && !this.pond;
     if (this.goalieMode) this.humans = this.keeperCoop ? [0] : [];
     this.keeperKey = this.keeperCoop ? '0:1' : null; // (player 2's buttons: seat 1's)
     // two players: whose goals and assists (the seat holding each skater when they last had the puck)
@@ -98,6 +101,7 @@ export class Match {
       this.goalies.push(new Goalie(this, team, t.goalie.stats, t.goalie));
     });
     if (this.goalieMode) this.goalies[0].human = true;
+    if (this.pond) for (const g of this.goalies) { g.disabled = true; g.x = g.goalSide * 900; g.y = 900; } // (as drills hide them)
     this.habits = cfg.teams.map((t) => t.habit || {}); // (a club's habits: how it likes to attack, see TEAMS in data.js)
     this.ai = [0, 1].map((team) => new TeamAI(this, team, (cfg.diff || [0.5, 0.5])[team]));
     // a comeback helper (Little player): an AI team two or more goals up on the player eases off
@@ -115,7 +119,7 @@ export class Match {
     this.chem = cfg.teams.map((t) => t.chem || {}); // pairKey -> chemistry level 0..3
     this.chemStats = [{}, {}]; // pairKey -> { passes, assists, comboGoals }
     this.chain = [0, 0]; // consecutive completed passes per team
-    this.penaltiesOn = cfg.penalties !== false && !cfg.drill;
+    this.penaltiesOn = cfg.penalties !== false && !cfg.drill && !this.pond;
     this.ultRate = cfg.ultRate || 1; // (the All-Star Game charges ultimates faster)
     this.pendingPenalty = null;
     this.penStats = [{ pims: 0, ppGoals: 0, kills: 0 }, { pims: 0, ppGoals: 0, kills: 0 }];
@@ -1759,7 +1763,7 @@ export class Match {
 
   // ------------------------------------------------------------ pulled goalie
   canPullGoalie(team) {
-    if (this.drill || this.state !== 'play' || this.extra[team] || this.pshot) return false;
+    if (this.drill || this.pond || this.state !== 'play' || this.extra[team] || this.pshot) return false;
     if (this.goalieMode && team === 0) return false; // you're the one in goal
     if (!this.extraCfg[team]) return false;
     // a delayed penalty on them while we have the puck: an extra attacker costs nothing

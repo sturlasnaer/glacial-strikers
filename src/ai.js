@@ -549,8 +549,8 @@ export class TeamAI {
 
     if (decide) {
       const g = m.goalieAt(side);
-      // empty net: shoot from anywhere with a lane
-      if (g.disabled && dx > 20 && dx < 820 && this.shotLane(s, 0) > 0.4) { inp.aimY = 0; inp.shoot = true; b.shootHold = 0.02; return; }
+      // empty net: shoot from anywhere with a lane (on the pond's little nets, from close in and a fair angle)
+      if (g.disabled && dx > 20 && dx < (m.pond ? 330 : 820) && (!m.pond || Math.abs(s.y) < dx * 0.9 + 40) && this.shotLane(s, 0) > 0.4) { inp.aimY = 0; inp.shoot = true; b.shootHold = 0.02; return; }
       const inZone = dx > 30 && dx < 420 && Math.abs(s.y) < dx * 1.4 + 60;
       // ultimate shots
       if (s.ult >= 100 && s.def.ult.needsPuck && inZone && dG < 380 && m.rng() < 0.4 + this.diff * 0.5) {

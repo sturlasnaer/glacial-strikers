@@ -574,6 +574,7 @@ export const ARENAS = {
   coral_bay: { name: 'Coral Bay Rink', lamps: '#ffb0d0', national: true }, // (the Flamingos': Batch EM)
   taiga_rink: { name: 'Taiga Rink', lamps: '#ffb36b', national: true }, // (the Tigers': Batch EL)
   bamboo_grove: { name: 'Bamboo Grove', lamps: '#ffd8a0', national: true }, // (the Pandas': Batch EL)
+  pond: { name: 'The Pond', lamps: null, exhibitionOnly: true, pond: true }, // (pond hockey only, once it's drawn: Batch EY)
 };
 
 // ---------------------------------------------------------------- recruitment

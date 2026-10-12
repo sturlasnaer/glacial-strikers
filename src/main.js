@@ -559,6 +559,21 @@ class App {
       this.beginMatch(teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 120, round: 'Exhibition' }, true, mods, { arena: where, coop, mini, night: !!dark }));
   }
 
+  // Pond hockey (Batch EY): three on three on the neighbourhood pond, no goalies, the little nets,
+  // no penalties, first to five; against the clubs met so far, a different one each time. An
+  // exhibition (half rewards) that counts for nothing else: no career stats, records or head to head.
+  startPond(night = false) {
+    const ids = this.ui.exhibitionTeams().map((tm) => tm.id), s = this.save;
+    const teamId = ids.length ? ids[(s.pondPlayed || 0) % ids.length] : 'lynx';
+    const where = this.pondArena();
+    const dark = night && Assets.atlas.arenas && Assets.atlas.arenas[where + '_night'] ? where + '_night' : null;
+    this.lastExhibition = { teamId, pond: true, night };
+    this.loadThen(Promise.all([Assets.ensureTeam(teamId, where), dark && Assets.ensureArena(dark)]), () =>
+      this.beginMatch(teamId, { powers: ['fire', 'ice', 'lightning', 'gravity'], reward: 120, round: 'Pond hockey' }, true, [], { arena: where, pond: true, night: !!dark }));
+  }
+  // (the neighbourhood pond once it's drawn; Pine Pond until then)
+  pondArena() { return Assets.atlas.arenas && Assets.atlas.arenas.pond ? 'pond' : 'pine_pond'; }
+
   // The Mini Cup's next game (a new cup if there's none on, or the last one's over).
   startMini() {
     const s = this.save;
@@ -859,7 +874,7 @@ class App {
       s.lastPlan = plan;
       writeSave(s);
     }
-    this.cur = { teamId, stage, exhibition, stageIndex: exhibition ? -1 : s.stage, mods, plan, theirPlan, fixture: extra.fixture, daily: extra.daily || null, allstar: extra.allstar || null, mini: !!extra.mini };
+    this.cur = { teamId, stage, exhibition, stageIndex: exhibition ? -1 : s.stage, mods, plan, theirPlan, fixture: extra.fixture, daily: extra.daily || null, allstar: extra.allstar || null, mini: !!extra.mini, pond: !!extra.pond };
     // two players from the title or Play as (the daily challenge is for one): both skating, or player 2 in goal
     const as = extra.daily ? 'skaters' : extra.coop === 'keeper' ? 'coopGoalie' : extra.coop ? 'coop' : s.settings.playAs;
     const coop = as === 'coop', keeperCoop = as === 'coopGoalie';
@@ -869,6 +884,7 @@ class App {
     if (s.settings.little) cfg.comeback = true; // (Little player: the rivals ease off when they're well ahead)
     if (s.settings.little) for (const g of ['cub_coach', 'kid_stars']) if (Assets.atlas.pages.some((pg) => pg.group === g)) Assets.loadGroup(g).catch(() => {}); // (the cub coaches, and a gold star after: Batches DJ, DN)
     cfg.night = !!extra.night;
+    cfg.pond = !!extra.pond;
     cfg.mods = mods;
     cfg.coop = coop; cfg.keeperCoop = keeperCoop;
     this.cur.coop = coop || keeperCoop; // (two players' input either way)
@@ -901,6 +917,7 @@ class App {
     if (stage.rivalry) setTimeout(() => { if (this.scene === 'match') this.hud.banner(`<div class="small">${t('Rivalry game')}</div><div class="big" style="font-size:clamp(40px,8vw,90px)">${t('BRAGGING RIGHTS')}</div>`, 1.8); }, 300);
     if (classic) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t('The Winter Classic! Outdoor hockey under the snow, and the whole league is watching.')); }, 500);
     if (extra.allstar) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t('The All-Star Game! The fans voted, and the league\'s best share the ice.')); }, 500);
+    if (extra.pond) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t('Pond hockey! Three on three, no goalies, little nets. First to five.')); }, 500);
     if (this.cur.daily) setTimeout(() => { if (this.scene === 'match') this.hud.banner(`<div class="small">${t('Daily challenge')}</div><div class="sub" style="font-size:clamp(16px,3vw,24px)">${t(dailyGoal(this.cur.daily.goal).text)}</div>`, 3); }, 300);
     this.touch.reset(); this.touch2.reset();
     this.music(classic ? 'classic' : /\bFinal$/.test(stage.round || '') ? 'final' : ARENA_MUSIC[arena] || 'frostline');
@@ -1136,15 +1153,16 @@ class App {
     s.coins += rewards.coins;
     const ups = [];
     for (const id of Object.keys(rewards.exp)) ups.push(...applyExp(s, id, rewards.exp[id]));
-    const gUp = applyGoalieExp(s, rewards.gExp, summary.goalie);
+    const gUp = c.pond ? 0 : applyGoalieExp(s, rewards.gExp, summary.goalie); // (no one in goal on the pond)
     const chemUps = applyChem(s, rewards.chem);
     s.record.played++;
     s.record.goals += summary.score[0];
     if (refreshAgents(s)) this.agentNews = true; // new faces on the free-agent market
-    recordCareer(s, summary, rewards.won);
+    if (c.pond) { s.pondPlayed = (s.pondPlayed || 0) + 1; if (rewards.won) s.pondWins = (s.pondWins || 0) + 1; if (s.pondWins >= 3) this.ach.unlock('shinny'); }
+    else recordCareer(s, summary, rewards.won); // (pond games are just for fun: no career stats, records or head to head)
     // the club's record book: a record broken gets a toast
     const oppName = teamInfo(c.teamId) ? teamInfo(c.teamId).name : '';
-    for (const r of updateRecords(s, { summary, won: rewards.won, opp: c.teamId, oppName, season: s.season, nameOf: (id) => (member(id) ? member(id).name : ''), goalieName: (summary.goalieNames && summary.goalieNames[0]) || goalieInfo(summary.goalie || 'halla').name })) {
+    for (const r of c.pond ? [] : updateRecords(s, { summary, won: rewards.won, opp: c.teamId, oppName, season: s.season, nameOf: (id) => (member(id) ? member(id).name : ''), goalieName: (summary.goalieNames && summary.goalieNames[0]) || goalieInfo(summary.goalie || 'halla').name })) {
       const R = GAME_RECORDS[r.id];
       addNews(s, { k: 'record', rec: r.id, n: r.n, name: r.name || '', team: c.teamId });
       setTimeout(() => this.toast(Assets.icon(Assets.atlas.frames['icons/career'] ? 'icons/career' : 'icons/stat_goals', 72), t('New club record'), t(R.name), t(R.text, { ...s.records[r.id], n: s.records[r.id].n })), 3000);
@@ -1154,8 +1172,8 @@ class App {
     if (legend) this.pendingLegend = legend; // Kip announces them on the way back to the hub
     const scorers = (team) => Object.fromEntries(summary.skaters.filter((k) => k.team === team && k.goals).map((k) => [k.id, k.goals]));
     const allstar = !!(c.fixture && c.fixture.kind === 'allstar');
-    const firstWin = rewards.won && !((s.rivals && s.rivals[c.teamId] && s.rivals[c.teamId].wins) > 0);
-    if (!allstar) recordRivalResult(s, c.teamId, summary.score[0], summary.score[1], rewards.won, { ourScorers: scorers(0), theirScorers: scorers(1) });
+    const firstWin = !c.pond && rewards.won && !((s.rivals && s.rivals[c.teamId] && s.rivals[c.teamId].wins) > 0);
+    if (!allstar && !c.pond) recordRivalResult(s, c.teamId, summary.score[0], summary.score[1], rewards.won, { ourScorers: scorers(0), theirScorers: scorers(1) });
     if (firstWin && TEAMS[c.teamId] && TEAMS[c.teamId].names) {
       setTimeout(() => this.toast(crest(c.teamId, 72), t('Scouting'), t('{team} will take your call', { team: TEAMS[c.teamId].name }), t('Sign their skaters in Team › Scouting')), 1600);
     }
@@ -1256,7 +1274,7 @@ class App {
       const finish = () => {
         // Play again: the same exhibition straight away
         if (c.mini) return this.miniNext(rewards.won); // (the Mini Cup: the bracket, or the cup)
-        if (this.rematchNext) { this.rematchNext = false; const e = this.lastExhibition; return this.startExhibition(e.teamId, e.mods, e.arena, e.coop, false, e.night); }
+        if (this.rematchNext) { this.rematchNext = false; const e = this.lastExhibition; return e.pond ? this.startPond(e.night) : this.startExhibition(e.teamId, e.mods, e.arena, e.coop, false, e.night); }
         if (becameChampion) { this.scene = 'results'; this.music('final'); audio.jingle('champion'); this.ui.champion(() => this.payoff(() => this.goHub('tournament'))); } else this.goHub(rewards.won ? 'tournament' : 'team');
       };
       const call = (next) => { const o = this.pendingOffer; this.pendingOffer = null; return o ? this.ui.rivalCall(o, next) : next(); };

@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-12a',
+    items: [
+      { big: true, icon: 'icons/pond_hockey', alt: 'rink_props/nets/south', text: 'Pond hockey, in Quick play: three on three on the pond, no goalies, little nets and no penalties. Quick games just for fun, against a different club each time. Win three for the Shinny trophy.' },
+    ],
+  },
+  {
     id: '2026-10-11v',
     items: [
       { icon: 'mascot/club_fox/wave', alt: 'icons/career', text: 'A club of your own now has a mascot of its own: the costumed fox, wolf, polar bear, snowy owl, narwhal, mountain goat or stoat of its crest dances in your stands in your club\'s colours and runs in the mascot race. The Underdog Story and From Scratch trophies have their own pictures too.' },
