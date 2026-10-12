@@ -7,8 +7,7 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **EZ: the Nations Cup** (four region crests, a venue, a trophy)
-2. **FA: a rival with a story** (three scene backdrops)
+1. **FA: a rival with a story** (three scene backdrops)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -144,6 +143,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered EX:** Lossless race packing with a dedicated small page per mascot, including all custom-club runners. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EX-Testing-Update`.
 
 **Delivered EY:** Two neighbourhood pond backdrops, eight small steel-net animation layers and two pond-hockey icons. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EY-Testing-Update`.
+
+**Delivered EZ:** Four regional crests, the Nations Arena with scoreboard, glass and penalty-box layers, and two Cup icons. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EZ-Testing-Update`.
 
 ## Format notes
 
@@ -1045,7 +1046,7 @@ A new casual mode: three against three on a frozen pond, no goalies, small nets,
 
 2 backdrops, 8 net frames, 2 icons.
 
-## Batch EZ: the Nations Cup
+## Batch EZ ✓: the Nations Cup
 
 A tournament at the end of a season once the club has reached the National: the best players from the clubs of each of four regions form a regional team, a round robin of three games and a final. The player's club plays for **the Frostline**. The regional teams wear kits recoloured from the existing art, so no new players are needed. Please draw:
 - The four regions' crests, 128×128 shields like `rival_crests/crest/…`, no lettering, listed as `atlas.nations = { frostline: 'nations/crest/frostline', coast: …, timberlands: …, wilds: … }`:
