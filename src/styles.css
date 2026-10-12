@@ -975,15 +975,38 @@ body.pad-nav :is(.btn, .chip, .tab, .item, .plan, .spot, .crew, .room-board):foc
 }
 /* controller prompts on the menus: ○/B on back buttons, L1/R1 (LB/RB) beside the tab bar, ✕/A on
    the highlighted shop card's Buy button. Xbox glyphs unless a PlayStation pad is connected. */
-body.pad-nav :is([data-close], #s-close, #dlg-skip, .room-tab)::before,
+body.pad-nav :is([data-close], #s-close, #dlg-skip, #p-resume, .room-tab)::before,
 body.pad-nav .item:focus [data-buy]::before {
   content: ''; display: inline-block; width: 20px; height: 20px; margin: -4px 5px -3px 0; vertical-align: middle;
   background: url(../assets/gfx/ui-kit/images/xbox_b.png) center / contain no-repeat; image-rendering: pixelated;
 }
-body.pad-nav.pad-ps :is([data-close], #s-close, #dlg-skip, .room-tab)::before { background-image: url(../assets/gfx/ui-kit/images/ps_circle.png); }
+body.pad-nav.pad-ps :is([data-close], #s-close, #dlg-skip, #p-resume, .room-tab)::before { background-image: url(../assets/gfx/ui-kit/images/ps_circle.png); }
 body.pad-nav .item:focus [data-buy]::before { background-image: url(../assets/gfx/ui-kit/images/xbox_a.png); }
 body.pad-nav.pad-ps .item:focus [data-buy]::before { background-image: url(../assets/gfx/ui-kit/images/ps_cross.png); }
 body.pad-nav .room-tab .arr { display: none; }
+/* the pad's own keyboard and colour grid, and the hover text under a highlighted button (padnav.js) */
+#pad-tip { position: fixed; z-index: 60; padding: 6px 10px; border-radius: 8px; background: var(--ink); border: 1px solid rgba(255, 212, 94, 0.6); color: var(--cream); font-size: 13px; line-height: 1.35; pointer-events: none; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4); }
+#pad-tip[hidden] { display: none; }
+body:not(.pad-nav) #pad-tip { display: none; }
+.padkb { width: min(640px, 100%); }
+.padkb-text { display: flex; align-items: center; min-height: 1.7em; padding: 4px 12px; margin-bottom: 10px; border-radius: 8px; background: rgba(0, 0, 0, 0.3); font-size: 22px; overflow: hidden; white-space: pre; }
+.padkb-text i { width: 2px; height: 1.1em; margin-left: 1px; background: var(--cream); animation: blink 1s steps(1) infinite; }
+.padkb-row { display: flex; gap: 6px; justify-content: center; margin: 6px 0; }
+.padkb-key { flex: 1 1 0; min-width: 0; max-width: 3.2em; height: 2.5em; padding: 0; border-radius: 8px; border: 1px solid rgba(255, 242, 203, 0.2); background: rgba(255, 242, 203, 0.08); color: var(--cream); font: inherit; font-size: 17px; cursor: pointer; }
+.padkb-key.wide { max-width: 4.6em; }
+.padkb-key.space { flex: 4 1 0; max-width: 14em; font-size: 14px; }
+.padkb-row .btn { flex: 2 1 0; max-width: 7em; }
+.padsw { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; margin-top: 8px; }
+.padsw-c { aspect-ratio: 1; min-width: 0; padding: 0; border-radius: 50%; border: 2px solid rgba(255, 242, 203, 0.35); cursor: pointer; }
+.padsw-c.on { border: 3px solid var(--gold); }
+body.pad-nav :is([data-kb-del], [data-kb-space], [data-kb-done])::before { content: ''; display: inline-block; width: 18px; height: 18px; margin: -4px 5px -3px 0; vertical-align: middle; background: url(../assets/gfx/ui-kit/images/xbox_x.png) center / contain no-repeat; image-rendering: pixelated; }
+body.pad-nav [data-kb-space]::before { background-image: url(../assets/gfx/ui-kit/images/xbox_y.png); }
+body.pad-nav [data-kb-done]::before { background-image: url(../assets/gfx/ui-kit/images/xbox_menu.png); }
+body.pad-nav.pad-ps [data-kb-del]::before { background-image: url(../assets/gfx/ui-kit/images/ps_square.png); }
+body.pad-nav.pad-ps [data-kb-space]::before { background-image: url(../assets/gfx/ui-kit/images/ps_triangle.png); }
+body.pad-nav.pad-ps [data-kb-done]::before { background-image: url(../assets/gfx/ui-kit/images/ps_options.png); }
+body.pad-nav .race-lane:focus { background: rgba(255, 212, 94, 0.25); }
+.snow-aim { position: absolute; width: 6%; aspect-ratio: 1; transform: translate(-50%, -50%); border: 3px solid var(--gold); border-radius: 50%; box-shadow: 0 0 0 4px rgba(255, 212, 94, 0.3); pointer-events: none; transition: left 0.12s, top 0.12s; }
 body.pad-nav .tabs::before, body.pad-nav .tabs::after {
   content: ''; width: 33px; height: 22px; align-self: center; flex: none;
   background: url(../assets/gfx/ui-kit/images/xbox_lb.png) center / contain no-repeat; image-rendering: pixelated;

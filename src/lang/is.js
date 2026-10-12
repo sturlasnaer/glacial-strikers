@@ -3084,4 +3084,12 @@ export const IS = {
   "Your story": "Þín saga",
   "Your ultimate is charged! Press I (gamepad: Y / △).": "Ofurkrafturinn er hlaðinn! Ýttu á I (leikjastýring: Y / △).",
   "Your ultimate is charged! Tap the glowing star.": "Ofurkrafturinn er hlaðinn! Ýttu á glóandi stjörnuna.",
+  "Space": "Bil",
+  "Pick a colour": "Veldu lit",
+  "Pick a winner: choose a lane and press {a}.": "Veldu sigurvegara: veldu braut og ýttu á {a}.",
+  "← → to aim, {a} to throw": "← → til að miða, {a} til að kasta",
+  "{name}: {x} to rename, {y} to toss a puck": "{name}: {x} til að endurnefna, {y} til að kasta pökk",
+  "{name}: {x} to rename": "{name}: {x} til að endurnefna",
+  "Everything works with a controller now: pick your runner in the mascot race, aim and throw in Snowball fun, type names and codes on an on-screen keyboard, pick club colours from a grid, and read every tip under the highlighted button. B on the pause menu plays on.": "Nú virkar allt með leikjastýringu: veldu hlaupara í lukkudýrakapphlaupinu, miðaðu og kastaðu í snjóboltaleiknum, skrifaðu nöfn og kóða á lyklaborði á skjánum, veldu liti félagsins úr litatöflu og lestu allar ábendingar undir valda hnappnum. B í hléinu heldur leiknum áfram.",
+  "Fairer on the ice: rivals no longer mirror your every move. They react a beat late to a sharp cut, so a quick change of direction can get you past, and their sticks block fewer of your shots on the easier levels. Players with the newer hairstyles no longer skate about with heads too big for them.": "Sanngjarnara á svellinu: hin liðin herma ekki lengur eftir hverri hreyfingu þinni. Þau bregðast aðeins of seint við snöggri beygju, svo snögg stefnubreyting getur komið þér fram hjá, og kylfurnar þeirra stöðva færri skot frá þér á auðveldari stigunum. Leikmenn með nýrri hárgreiðslurnar renna sér ekki lengur um með of stór höfuð.",
 };

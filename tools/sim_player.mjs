@@ -4,7 +4,9 @@
 // carries lost to AI sticks (steals) and to hits, the hits the player's skaters take, how long
 // a carry lasts, how close the nearest defender crowds the carrier, and the score.
 //   node tools/sim_player.mjs [matches] [diff ...]      e.g. node tools/sim_player.mjs 12 0.12 0.35 0.55
-//   SIMPLE=1 for Simple controls, PLAN=forecheck (or trap, rungun) for the AI's game plan
+//   SIMPLE=1 for Simple controls, PLAN=forecheck (or trap, rungun) for the AI's game plan,
+//   DEKE=1 for a player who cuts hard side to side as they carry it (does the presser mirror
+//   every move? "clear" is the share of carrying time with nobody goal-side within 150)
 import { Match } from '../src/match.js';
 import { CHARACTERS } from '../src/data.js';
 import { GOAL_X } from '../src/rink.js';
@@ -14,11 +16,12 @@ const diffs = process.argv.slice(3).map(Number);
 const team = () => ({ skaters: ['frost', 'thunder', 'stone'].map((id) => ({ def: CHARACTERS[id], stats: { ...CHARACTERS[id].base }, perks: [] })), goalie: { stats: { rfx: 6, pos: 6 }, name: 'G' }, chem: {} });
 
 export function probe(diff, n = N, simple = !!process.env.SIMPLE) {
-  const tot = { min: 0, steals: 0, hitLoss: 0, hitsTaken: 0, carries: 0, carryT: 0, crowd: 0, crowdN: 0, gf: 0, ga: 0, wins: 0, passes: 0, done: 0, picked: 0, open: 0, openN: 0 };
+  const tot = { min: 0, shots: 0, clear: 0, clearN: 0, steals: 0, hitLoss: 0, hitsTaken: 0, carries: 0, carryT: 0, crowd: 0, crowdN: 0, gf: 0, ga: 0, wins: 0, passes: 0, done: 0, picked: 0, open: 0, openN: 0 };
   for (let i = 0; i < n; i++) {
     const m = new Match({ teams: [team(), team()], humanTeam: 0, seed: 500 + i, powers: [], diff: [0.6, diff], simple, plans: ['balanced', process.env.PLAN || 'balanced'] });
     let carryStart = null, f = 0, inFlight = false;
     m.on('pass', (e) => { if (e.s.team === 0 && e.s.controlled) { tot.passes++; inFlight = true; } });
+    m.on('shot', (e) => { if (e.s.team === 0) tot.shots++; });
     m.on('steal', (e) => { if (e.from && e.from.team === 0 && e.from.controlled) tot.steals++; });
     m.on('hit', (e) => { if (e.b.team === 0) { tot.hitsTaken++; if (e.stripped && e.b.controlled) tot.hitLoss++; } });
     const rnd = ((s) => () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648)(77 + i);
@@ -27,7 +30,7 @@ export function probe(diff, n = N, simple = !!process.env.SIMPLE) {
       const inp = { mx: 0, my: 0, a: false, b: false, sprint: false, skill: false, ult: false };
       if (c && m.state === 'play') {
         if (c.hasPuck) {
-          const tx = c.side * GOAL_X * 0.8, ty = Math.sin(f / 50) * 90; // (a little weave)
+          const tx = c.side * GOAL_X * 0.8, ty = process.env.DEKE ? (Math.floor(f / 45) % 2 ? 110 : -110) : Math.sin(f / 50) * 90; // (a little weave, or hard cuts)
           const d = Math.hypot(tx - c.x, ty - c.y) || 1;
           inp.mx = (tx - c.x) / d; inp.my = (ty - c.y) / d;
           inp.sprint = c.stamina > 40;
@@ -39,6 +42,7 @@ export function probe(diff, n = N, simple = !!process.env.SIMPLE) {
           for (const mate of m.teamSkaters(0)) if (mate !== c) { let d = 1e9; for (const o of m.teamSkaters(1)) d = Math.min(d, Math.hypot(o.x - mate.x, o.y - mate.y)); tot.open += Math.min(d, 400); tot.openN++; }
           if (carryStart === null) carryStart = m.time;
           tot.crowd += Math.min(near, 400); tot.crowdN++;
+          tot.clear += m.teamSkaters(1).every((o) => (o.x - c.x) * c.side < 0 || Math.hypot(o.x - c.x, o.y - c.y) > 150) ? 1 : 0; tot.clearN++;
         } else {
           if (carryStart !== null) { tot.carries++; tot.carryT += m.time - carryStart; carryStart = null; }
           const d = Math.hypot(p.x - c.x, p.y - c.y) || 1;
@@ -60,7 +64,7 @@ export function probe(diff, n = N, simple = !!process.env.SIMPLE) {
   }
   return {
     diff,
-    steals: tot.steals / tot.min, hitLoss: tot.hitLoss / tot.min, hitsTaken: tot.hitsTaken / tot.min,
+    shots: tot.shots / tot.min, clear: tot.clear / Math.max(1, tot.clearN), steals: tot.steals / tot.min, hitLoss: tot.hitLoss / tot.min, hitsTaken: tot.hitsTaken / tot.min,
     carry: tot.carryT / Math.max(1, tot.carries), crowd: tot.crowd / Math.max(1, tot.crowdN),
     passes: tot.passes / tot.min, passOk: tot.done / Math.max(1, tot.done + tot.picked), open: tot.open / Math.max(1, tot.openN),
     score: `${(tot.gf / n).toFixed(1)}–${(tot.ga / n).toFixed(1)}`, wins: `${tot.wins}/${n}`, minutes: tot.min / n,
@@ -70,6 +74,6 @@ export function probe(diff, n = N, simple = !!process.env.SIMPLE) {
 if (import.meta.url === `file://${process.argv[1]}`) {
   for (const d of diffs.length ? diffs : [0.12, 0.35, 0.55]) {
     const r = probe(d);
-    console.log(`diff ${d.toFixed(2)}  steals/min ${r.steals.toFixed(2)}  lost to hits/min ${r.hitLoss.toFixed(2)}  hits taken/min ${r.hitsTaken.toFixed(2)}  passes ${r.passes.toFixed(1)}/min, ${Math.round(r.passOk * 100)}% reach  carrier space ${r.crowd.toFixed(0)}  mates' space ${r.open.toFixed(0)}  score ${r.score}  wins ${r.wins}`);
+    console.log(`diff ${d.toFixed(2)}  shots/min ${r.shots.toFixed(1)}  clear ${Math.round(r.clear * 100)}%  steals/min ${r.steals.toFixed(2)}  lost to hits/min ${r.hitLoss.toFixed(2)}  hits taken/min ${r.hitsTaken.toFixed(2)}  passes ${r.passes.toFixed(1)}/min, ${Math.round(r.passOk * 100)}% reach  carrier space ${r.crowd.toFixed(0)}  mates' space ${r.open.toFixed(0)}  score ${r.score}  wins ${r.wins}`);
   }
 }

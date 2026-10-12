@@ -2,6 +2,13 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-12e',
+    items: [
+      { icon: 'icons/simple_controls', text: 'Everything works with a controller now: pick your runner in the mascot race, aim and throw in Snowball fun, type names and codes on an on-screen keyboard, pick club colours from a grid, and read every tip under the highlighted button. B on the pause menu plays on.' },
+      { icon: 'icons/play_skaters', text: 'Fairer on the ice: rivals no longer mirror your every move. They react a beat late to a sharp cut, so a quick change of direction can get you past, and their sticks block fewer of your shots on the easier levels. Players with the newer hairstyles no longer skate about with heads too big for them.' },
+    ],
+  },
+  {
     id: '2026-10-12d',
     items: [
       { icon: 'icons/career', text: 'Design your own crest: in the club editor, pick a shield, a pattern and an emblem, with your short code on a ribbon, all in your club\'s colours. And the editor now shows who really wears the kit: your founders, or your club\'s own stars.' },

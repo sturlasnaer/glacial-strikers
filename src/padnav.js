@@ -6,11 +6,20 @@
 // a purchase) or closing a pop-up puts the highlight back where it was. Inside a scrolling
 // panel the highlight walks the whole list before it leaves for the buttons outside it.
 // A card marked data-pad-press="<selector>" is one stop: A presses the button inside it.
+//
+// A game overlay (the mascot race, snowball fun) is marked data-pad-layer and drives the pad
+// even mid-match; its padHooks ({ move(dir), confirm(), back(), x(), y(), start() }, each true
+// when it took the press) come before the usual moves. A on a text box opens a pad keyboard,
+// on a colour a swatch grid: neither needs a mouse or keys.
 
 import { audio } from './audio.js';
+import { t, getLang } from './i18n.js';
 
-const PICKABLE = 'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), [tabindex="0"]';
-const BACK = '[data-close], #s-close, #dlg-skip';
+const PICKABLE = 'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), summary, [tabindex="0"]';
+const BACK = '[data-close], #s-close, #dlg-skip, #p-resume'; // (B on the pause menu plays on)
+// kit colours for the pad's colour grid: reds, oranges, golds, greens, teals, blues, purples,
+// pinks, then the darks and lights
+const SWATCHES = ['#c8102e', '#e03a3e', '#8b1e2d', '#f26522', '#ff8c1a', '#b85c1e', '#ffcd00', '#f2c75c', '#c9a227', '#2e8b3e', '#5bb349', '#1f5132', '#1fa39b', '#36c5c0', '#0e6d73', '#1d4fa3', '#3d8bfd', '#0b2a5b', '#6a3fb5', '#9b6dd6', '#3b1f5c', '#e0457b', '#f48fb1', '#8e2453', '#1b1b1f', '#2b2b33', '#4a4f57', '#8a9099', '#c9ced6', '#f4efe1', '#ffffff', '#6b4a2f'];
 
 // A selector that finds the same button again after its screen is redrawn.
 function keyOf(el) {
@@ -41,19 +50,29 @@ export class PadNav {
     });
   }
 
-  // The layer the pad drives: the topmost pop-up, else the menu screen.
+  // The layer the pad drives: the topmost pop-up or game overlay, else the menu screen.
   layer() {
-    const modals = document.querySelectorAll('.modal-bg');
-    return modals.length ? modals[modals.length - 1] : document.getElementById('screen');
+    const tops = document.querySelectorAll('.modal-bg, [data-pad-layer]');
+    return tops.length ? tops[tops.length - 1] : document.getElementById('screen');
   }
 
   // buttons inside a one-stop card aren't stops of their own
   items(root) { return [...root.querySelectorAll(PICKABLE)].filter((el) => visible(el) && (!el.parentElement.closest('[data-pad-press]'))); }
 
-  // Should the pad drive the menus right now? Not while a match is being played.
+  // Should the pad drive the menus right now? Not while a match is being played (but yes for
+  // the race at its break), nor while Settings › Gamepad waits for a button.
   active() {
     const s = this.app.scene;
-    return s !== 'match' && s !== 'loading' && !this.app.padCapture; // (not while Settings › Gamepad waits for a button)
+    if (this.app.padCapture) return false;
+    return (s !== 'match' && s !== 'loading') || !!document.querySelector('[data-pad-layer]');
+  }
+
+  // the highlighted button's own hooks first (the cub in the locker room), then the layer's
+  hook(name, arg) {
+    const f = document.activeElement, own = f && f.padHooks && this.layer().contains(f) ? f.padHooks : null;
+    if (own && own[name] && own[name](arg)) return true;
+    const h = this.layer().padHooks;
+    return !!(h && h[name] && h[name](arg));
   }
 
   update(dt) {
@@ -71,6 +90,7 @@ export class PadNav {
     const any = [...down].some((i) => !before.has(i));
     this.prev = down;
     if (any) this.app.onPadPress?.(); // wakes the audio, like a click would
+    if (this.tipFor && (document.activeElement !== this.tipFor || !this.tipFor.isConnected)) this.tip(null);
     if (!this.active()) { this.held = null; return; }
     if (this.used) this.keepFocus();
 
@@ -93,6 +113,9 @@ export class PadNav {
     }
     if (pressed(0)) this.confirm();
     if (pressed(1)) this.back();
+    if (pressed(2)) this.hook('x');
+    if (pressed(3)) this.hook('y');
+    if (pressed(9)) this.hook('start');
     if (pressed(4) || pressed(5)) this.tab(pressed(5) ? 1 : -1);
   }
 
@@ -115,6 +138,23 @@ export class PadNav {
     el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     const key = keyOf(el);
     if (key) this.keys.set(this.layer(), key);
+    this.tip(el);
+  }
+
+  // What a mouse would read on hover (a title), under the highlighted button for the pad, or
+  // a pad's own word on it (el.padTip(): the cub's buttons).
+  tip(el) {
+    const text = el && ((el.padTip && el.padTip()) || el.title || (el.querySelector('[title]') || {}).title || (el.closest('[title]') || {}).title);
+    let box = document.getElementById('pad-tip');
+    if (!text) { if (box) box.hidden = true; this.tipFor = null; return; }
+    if (!box) { box = document.createElement('div'); box.id = 'pad-tip'; box.setAttribute('role', 'tooltip'); document.body.appendChild(box); }
+    box.textContent = text;
+    box.hidden = false;
+    box.style.maxWidth = Math.min(300, window.innerWidth - 24) + 'px';
+    const r = el.getBoundingClientRect(), below = r.bottom + 8 + box.offsetHeight < window.innerHeight;
+    box.style.left = Math.max(12, Math.min(window.innerWidth - 12 - box.offsetWidth, r.left + r.width / 2 - box.offsetWidth / 2)) + 'px';
+    box.style.top = (below ? r.bottom + 8 : Math.max(8, r.top - 8 - box.offsetHeight)) + 'px';
+    this.tipFor = el;
   }
 
   // Keep a highlight on screen: after a redraw, the button that had it; on a new screen or
@@ -128,7 +168,7 @@ export class PadNav {
     const key = this.keys.get(root);
     let el = key ? root.querySelector(key) : null;
     if (el && !visible(el)) el = null;
-    if (!el && fresh) el = this.main(root) || (root.classList.contains('modal-bg') ? this.items(root)[0] : null);
+    if (!el && fresh) el = this.main(root) || (root.classList.contains('modal-bg') || ('padLayer' in root.dataset && !root.padHooks) ? this.items(root)[0] : null); // (an overlay with hooks of its own aims, not a button)
     if (el) this.focus(el);
   }
 
@@ -144,6 +184,7 @@ export class PadNav {
   // Move to the nearest button in that direction (measured from the current one), staying
   // inside the current scrolling panel while it has one that way.
   move(dir) {
+    if (this.hook('move', dir)) { this.mark(); return; }
     const root = this.layer();
     const list = this.items(root);
     if (!list.length) return;
@@ -173,6 +214,8 @@ export class PadNav {
 
   // A on a button presses it; on a one-stop card, the card's button (or a no if it's off).
   press(el) {
+    if (el.matches('input[type="color"]')) { this.swatches(el); return; }
+    if (el.matches('input:not([type]), input[type="text"], input[type="search"], textarea')) { this.keyboard(el); return; }
     const sel = el.dataset && el.dataset.padPress;
     if (!sel) { el.click(); return; }
     const inner = el.querySelector(sel);
@@ -182,6 +225,7 @@ export class PadNav {
   confirm() {
     const app = this.app;
     if (app.scene === 'dialogue' && app.ui.dialogueAdvance && !document.querySelector('.modal-bg')) { app.ui.dialogueAdvance(); return; }
+    if (this.hook('confirm')) { this.mark(); return; }
     const root = this.layer();
     const cur = this.focused(root);
     if (cur) { this.press(cur); return; }
@@ -201,18 +245,18 @@ export class PadNav {
   }
 
   back() {
-    const top = document.querySelectorAll('.modal-bg');
-    const m = top[top.length - 1];
-    if (m) {
+    if (this.hook('back')) return;
+    const m = this.layer();
+    if ('padLayer' in m.dataset) return;
+    if (m.classList.contains('modal-bg')) {
       const close = [...m.querySelectorAll(BACK)].find(visible);
       if (close) close.click();
       else m.dispatchEvent(new MouseEvent('click', { bubbles: true })); // like tapping outside it
       return;
     }
-    const root = this.layer();
-    const skip = root.querySelector('#dlg-skip');
+    const skip = m.querySelector('#dlg-skip');
     if (skip && visible(skip)) { skip.click(); return; }
-    const room = root.querySelector('.room-tab');
+    const room = m.querySelector('.room-tab');
     if (room && visible(room)) room.click();
   }
 
@@ -225,5 +269,82 @@ export class PadNav {
     i = (i < 0 ? 0 : i + step + tabs.length) % tabs.length;
     tabs[i].click();
     setTimeout(() => this.focus(this.layer().querySelector(`.tab[data-tab="${tabs[i].dataset.tab}"]`)), 0);
+  }
+  // A pop-up of the pad's own over the current layer: B (or Done) closes it, and the highlight
+  // goes back to the box it came from.
+  popup(html, cls) {
+    const bg = document.createElement('div');
+    bg.className = 'modal-bg';
+    bg.innerHTML = `<div class="modal panel ${cls}" role="dialog" aria-modal="true">${html}</div>`;
+    document.getElementById('app').appendChild(bg);
+    return bg;
+  }
+
+  // A text box by pad: letters, numbers and the language's own letters on keys; X deletes,
+  // Y is a space, Start or Done closes. Each key types straight into the box (its input event
+  // fires, so a preview follows along); its maxlength holds, and a box for capitals types them.
+  keyboard(input) {
+    const caps = input.getAttribute('autocapitalize') === 'characters' || getComputedStyle(input).textTransform === 'uppercase';
+    const rows = ['1234567890', 'qwertyuiop', 'asdfghjkl', "zxcvbnm-'.", ...(getLang() === 'is' ? ['áðéíóúýþæö'] : [])];
+    let upper = caps || !input.value;
+    const max = input.maxLength > 0 ? input.maxLength : 40;
+    const bg = this.popup(`<div class="padkb-text"><span></span><i></i></div>
+      ${rows.map((r) => `<div class="padkb-row">${[...r].map((c) => `<button class="padkb-key" data-kb="${c === "'" ? '&#39;' : c}">${c}</button>`).join('')}</div>`).join('')}
+      <div class="padkb-row">${caps ? '' : `<button class="padkb-key wide" data-kb-shift>⇧</button>`}<button class="padkb-key space" data-kb-space>${t('Space')}</button><button class="padkb-key wide" data-kb-del>⌫</button><button class="btn gold small" data-kb-done>${t('Done')}</button></div>`, 'padkb');
+    const shown = bg.querySelector('.padkb-text span');
+    const draw = () => {
+      shown.textContent = input.value || '';
+      bg.querySelectorAll('[data-kb]').forEach((k) => { k.textContent = upper ? k.dataset.kb.toUpperCase() : k.dataset.kb; });
+    };
+    const set = (v) => {
+      input.value = v.slice(0, max);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      draw();
+    };
+    const type = (c) => {
+      if (input.value.length >= max) { audio.sfx('deny'); return; }
+      set(input.value + (upper ? c.toUpperCase() : c));
+      if (upper && !caps) upper = false; // (a capital for the first letter, then small ones)
+      draw();
+      audio.sfx('click');
+    };
+    const del = () => {
+      if (input.value) { set(input.value.slice(0, -1)); audio.sfx('click'); }
+      if (!input.value && !caps && !upper) { upper = true; draw(); } // (an empty box starts with a capital)
+      return true;
+    };
+    const close = () => { bg.remove(); input.dispatchEvent(new Event('change', { bubbles: true })); audio.sfx('back'); this.focus(input); return true; };
+    bg.addEventListener('click', (e) => {
+      const k = e.target.closest('button');
+      if (!k) { if (e.target === bg) close(); return; }
+      if (k.dataset.kb !== undefined) type(k.dataset.kb);
+      else if ('kbSpace' in k.dataset) type(' ');
+      else if ('kbDel' in k.dataset) del();
+      else if ('kbShift' in k.dataset) { upper = !upper; draw(); audio.sfx('click'); }
+      else if ('kbDone' in k.dataset) close();
+    });
+    bg.padHooks = { back: close, x: del, y: () => { type(' '); return true; }, start: close };
+    draw();
+    this.focus(bg.querySelector('[data-kb]'));
+  }
+
+  // A colour by pad: a grid of kit colours (the box's own first), A takes one.
+  swatches(input) {
+    const cur = input.value.toLowerCase();
+    const list = [cur, ...SWATCHES.filter((c) => c !== cur)];
+    const bg = this.popup(`<div class="label">${t('Pick a colour')}</div><div class="padsw">${list.map((c) => `<button class="padsw-c${c === cur ? ' on' : ''}" data-sw="${c}" style="background:${c}" aria-label="${c}"></button>`).join('')}</div>`, 'padsw-modal');
+    const close = () => { bg.remove(); this.focus(input); return true; };
+    bg.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-sw]');
+      if (b) {
+        input.value = b.dataset.sw;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        audio.sfx('click');
+        close();
+      } else if (e.target === bg) close();
+    });
+    bg.padHooks = { back: close };
+    this.focus(bg.querySelector('[data-sw]'));
   }
 }

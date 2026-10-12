@@ -56,6 +56,11 @@ export const bodySprite = (look) => (look && MODULAR.bodies.includes(look.body) 
 // Players from parts are drawn a little sturdier and with bigger heads than their art, to
 // sit with the cast's chibi proportions (their heads were drawn about 35% smaller).
 export const PARTS_SCALE = { head: 1.35, body: 1.05 };
+// The later heads (Batch CB on) were drawn about 1.6 times the size of the first sixteen
+// (a helmet 52 to 64 source pixels wide against 33 to 40): this brings each to a 38-pixel
+// helmet, so no style skates about with a head too big for it.
+export const HEAD_FIT = { afro_puffs: 0.7, sports_hijab: 0.65, buzz_cut: 0.63, side_part: 0.64, space_buns: 0.645, long_braids: 0.62, gap_tooth: 0.64, round_cheeks: 0.66 };
+export const headScale = (look) => PARTS_SCALE.head * ((look && HEAD_FIT[look.head]) || 1);
 export const GOALIE_PARTS = { masks: [], builds: ['std'] };
 export const PAINTS = ['#e7bf52', '#c9d6e3', '#7fd16b', '#ff6f7d', '#9b8cff', '#71dce8', '#f2a93b', '#e8eef5', '#2a2f3d'];
 export function useGoalieParts(atlas) {

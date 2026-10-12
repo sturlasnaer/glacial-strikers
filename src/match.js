@@ -1324,7 +1324,9 @@ export class Match {
       // (a stick reaching for the player's team's pass: a little shorter and less sure on the easier levels)
       const vsPlayersPass = !intended && p.pass && p.pass.from.team !== s.team && this.humans.includes(p.pass.from.team) && !this.humans.includes(s.team), pd = vsPlayersPass ? this.ai[s.team].diff ** 2 : 1;
       const fromPlayer = intended && p.pass.from.controlled && this.humans.includes(p.pass.from.team); // (a teammate taking the player's pass reaches a little further)
-      const reach = intended ? (s.controlled && this.assist === 'strong' ? 38 : fromPlayer ? 35 : 30) : vsPlayersPass ? 15 + 7 * pd : 22;
+      // (and a stick in the way of the player's team's shot: shorter and less sure on the easier levels too)
+      const vsPlayersShot = !!p.shot && p.shot.team !== s.team && this.humans.includes(p.shot.team) && !this.humans.includes(s.team), sd = vsPlayersShot ? this.ai[s.team].diff ** 2 : 1;
+      const reach = intended ? (s.controlled && this.assist === 'strong' ? 38 : fromPlayer ? 35 : 30) : vsPlayersPass ? 15 + 7 * pd : vsPlayersShot ? 16 + 6 * sd : 22;
       if (p.shot && p.shot.plow > 0 && p.shot.team !== s.team && db < s.r + PUCK_R + 10) {
         // Avalanche bulldozes through the blocker
         p.shot.plow--;
@@ -1351,6 +1353,7 @@ export class Match {
         // fumble roll on it felt like the game dropping one pass in nine)
         if (!(intended && p.pass.from.controlled && this.humans.includes(p.pass.from.team))) chance *= this.ai[s.team].catchMul(s);
         if (vsPlayersPass) chance *= 0.5 + 0.4 * pd;
+        if (vsPlayersShot) chance *= 0.55 + 0.35 * sd;
         if (this.rng() < chance) {
           this.takePossession(s, 'catch');
           return true;

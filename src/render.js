@@ -7,7 +7,7 @@ import { POWER_INFO, COMBOS, TEAMS, ARENAS, PALETTES, GEAR_LOOK, CLUB, CAREER, c
 import { ELEMENT_COLORS } from './fx.js';
 import { NetRenderer, SpriteNets } from './net.js';
 import { t } from './i18n.js';
-import { headPlacement, PARTS_SCALE } from './modular.js';
+import { headPlacement, headScale, PARTS_SCALE } from './modular.js';
 import { handMirror } from './hands.js';
 import { Linesman } from './linesman.js';
 import { cupBanners } from './hall.js';
@@ -1190,7 +1190,7 @@ export class Renderer {
     const hp = M && f && headPlacement(M, s.parts, fr.id, f, x, y, k, fr.flip);
     if (!hp) return;
     const hf = Assets.frame(hp.head), c = hf && Assets.partsCanvas(hp.head, s.parts);
-    if (c) this.drawFrameCanvas(ctx, c, hf, hp.x, hp.y, k * PARTS_SCALE.head, hp.flip, hp.rot); // (bigger than drawn: see PARTS_SCALE)
+    if (c) this.drawFrameCanvas(ctx, c, hf, hp.x, hp.y, k * headScale(s.parts), hp.flip, hp.rot); // (bigger than drawn: see PARTS_SCALE)
     if (hp.front) Assets.draw(ctx, hp.front, x, y, k, { flip: fr.flip, pages });
   }
 

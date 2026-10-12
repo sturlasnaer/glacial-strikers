@@ -7,7 +7,7 @@
 
 import { TEAMS, PALETTES, CAREER, CLUB, elemEffects } from './data.js';
 import { drawCrest } from './crestkit.js';
-import { recolorParts, recolorPaint, headPlacement, PARTS_SCALE } from './modular.js';
+import { recolorParts, recolorPaint, headPlacement, headScale } from './modular.js';
 
 const BASE = new URL('assets/', document.baseURI).href;
 const INLINE = typeof window !== 'undefined' && window.__INLINE; // single-file offline build
@@ -685,7 +685,7 @@ export const Assets = {
       return hp && hf ? { id: hp.head, f: hf, x: hp.x, y: hp.y } : null; // (at scale 1: source pixels)
     });
     let l = 0, r = 0, t = 0, b = 0; // extents around the pivot, in source pixels
-    const H = PARTS_SCALE.head; // (the head bigger than drawn, round its neck)
+    const H = headScale(look); // (the head bigger than drawn, round its neck; modular.js)
     fr.forEach(([, , , fw, fh, px, py, s], i) => {
       l = Math.max(l, px / s); r = Math.max(r, (fw - px) / s); t = Math.max(t, py / s); b = Math.max(b, (fh - py) / s);
       const h = heads[i];

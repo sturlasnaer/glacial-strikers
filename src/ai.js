@@ -475,7 +475,19 @@ export class TeamAI {
     // (still: the player isn't steering, whatever the bumps of the contact do to them)
     if (!b.still || b.still.c !== c || Math.hypot(c.in.mx, c.in.my) > 0.3) b.still = { c, t: m.time };
     const squeeze = human ? clamp((m.time - b.still.t - 1.5) / 1.5, 0, 1) : 0; // (round to the puck itself, not just goal-side)
-    let tx = c.x + c.vx * 0.22 + g.x * gap, ty = c.y + c.vy * 0.22 + g.y * gap;
+    // the player's carrier is read a beat late, as a person would: the presser follows where
+    // they were heading a moment ago, so a sharp cut leaves it a stride behind instead of
+    // mirroring every move (the top teams read it sooner); steady skating is still met
+    let cx = c.x, cy = c.y, cvx = c.vx, cvy = c.vy;
+    if (human) {
+      const lag = lerp(0.42, 0.16, hd);
+      const r = b.read && b.read.c === c ? b.read : (b.read = { c, x: c.x, y: c.y, vx: c.vx, vy: c.vy, t: m.time });
+      const a = 1 - Math.exp(-Math.max(0, m.time - r.t) / lag);
+      r.t = m.time;
+      r.x += (c.x - r.x) * a; r.y += (c.y - r.y) * a; r.vx += (c.vx - r.vx) * a; r.vy += (c.vy - r.vy) * a;
+      cx = r.x + r.vx * lag; cy = r.y + r.vy * lag; cvx = r.vx; cvy = r.vy;
+    } else b.read = null;
+    let tx = cx + cvx * 0.22 + g.x * gap, ty = cy + cvy * 0.22 + g.y * gap;
     if (squeeze > 0) { // (just past the puck on its open side, not through the carrier: no shoving them round the rink)
       const u = norm(m.puck.x - c.x, m.puck.y - c.y), px = m.puck.x + u.x * (s.r + 4), py = m.puck.y + u.y * (s.r + 4);
       tx = lerp(tx, px, squeeze); ty = lerp(ty, py, squeeze);

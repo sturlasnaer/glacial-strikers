@@ -958,6 +958,12 @@ export class UI {
       if (heart) { room.insertAdjacentHTML('beforeend', `<img class="pet-heart" src="${heart}" alt="" style="left:${this.pet.x}%;top:${this.pet.y - 9}%">`); const h = room.lastElementChild; setTimeout(() => h.remove(), 1200); }
     });
     tag.addEventListener('click', (e) => { e.stopPropagation(); audio.sfx('click'); this.petName(); });
+    // the pad: with the cub highlighted, X renames it and Y tosses a puck for it (padnav.js)
+    el.padHooks = {
+      x: () => { audio.sfx('click'); this.petName(); return true; },
+      y: () => { if (!fetches || !this.pet) return false; if (tossPuck(this.pet, 26 + Math.random() * 42, 54 + Math.random() * 24)) audio.sfx('click'); return true; },
+    };
+    el.padTip = () => { const ps = psPad(); return fetches ? t('{name}: {x} to rename, {y} to toss a puck', { name: name(), x: padName(2, ps), y: padName(3, ps) }) : t('{name}: {x} to rename', { name: name(), x: padName(2, ps) }); };
     if (fetches && firstTime(s, 'fetch')) setTimeout(() => { if (!tag.isConnected) return; tag.textContent = t('Tap the floor to toss a puck!'); tag.hidden = false; tagT = 6; writeSave(s); }, 1500); // (how fetch starts: the first time it's there)
     // a tap on the open floor (not a station, a skater or a board) tosses the puck there
     if (fetches && !room.dataset.fetch) {
@@ -1107,7 +1113,8 @@ export class UI {
     el.innerHTML = `<div class="race-track" style="background-image:url(${Assets.url('gfx/race/track.png')})">
         ${ids.map((id, i) => `<button class="race-lane" data-pick="${id}" style="top:${22 + i * 19}%"><span class="race-name">${i + 1}. ${esc(name(id))}</span></button><img class="race-runner" data-run="${id}" src="${sets[id].urls[0]}" alt="" style="top:${22 + i * 19}%;left:4%">`).join('')}
       </div>
-      <div class="race-head"><b>${t('MASCOT RACE!')}</b><span id="race-msg">${t('Pick a winner: tap a lane (or press 1 to {n}).', { n: ids.length })}</span></div>`;
+      <div class="race-head"><b>${t('MASCOT RACE!')}</b><span id="race-msg">${padList().length ? padGlyphs(esc(t('Pick a winner: choose a lane and press {a}.', { a: padName(0, psPad()) }))) : t('Pick a winner: tap a lane (or press 1 to {n}).', { n: ids.length })}</span></div>`;
+    el.dataset.padLayer = ''; // (the pad picks a lane mid-match: padnav.js)
     document.getElementById('app').appendChild(el);
     audio.sfx('whistle', { vol: 0.5 });
     let pick = null, race = null, last = 0, endT = 0, raf = 0;
@@ -1159,6 +1166,7 @@ export class UI {
       else if (endT) finish();
     };
     window.addEventListener('keydown', onKey, true);
+    if (padList().length) this.app.padnav.focus(el.querySelector('[data-pick]'));
     setTimeout(() => { if (el.isConnected) start(); }, 7000); // (nobody picked: they race anyway)
   }
 
@@ -1709,7 +1717,7 @@ export class UI {
     const head = cols.map(([k, ab, name, icon]) => `<th title="${esc(name)}">${icon && Assets.atlas.frames['icons/stat_' + icon] ? smallIcon('icons/stat_' + icon, 48, 'th-ico') : ''}${ab}</th>`).join('');
     const body = rows.map((r) => {
       const m = member(r.id);
-      return `<tr data-car="${r.id}"><td class="car-who"><img src="${portrait(r.id, 0, null, 64)}" alt=""><span><b>${esc(m.name)}</b><small>${t(ROLE_NAME[m.role])}</small></span></td>
+      return `<tr data-car="${r.id}" tabindex="0"><td class="car-who"><img src="${portrait(r.id, 0, null, 64)}" alt=""><span><b>${esc(m.name)}</b><small>${t(ROLE_NAME[m.role])}</small></span></td>
         ${cols.map(([k]) => `<td class="${r[k] && r[k] === best[k] && k !== 'gp' ? 'lead' : ''}">${r[k]}</td>`).join('')}</tr>`;
     }).join('');
     const tile = (icon, n, label) => `<div class="car-tile">${icon && Assets.atlas.frames[icon] ? smallIcon(icon, 64, 'h-ico') : ''}<b>${n}</b><small>${esc(label)}</small></div>`;
@@ -2246,7 +2254,7 @@ export class UI {
         </div>
         ${dressed ? `<div class="dress on">${t(ROLE_NAME[m.role])} · ${t('dressed')}</div>` : `<button class="btn small dress" data-dress="${id}">${t('Dress at {role} (for {name})', { role: t(ROLE_NAME[m.role]).toLowerCase(), name: esc(starter.name) })}</button>`}
         <div class="xpbar" title="${t('{n}/{max} EXP', { n: r.exp, max: nextExp(r) })}${r.level >= MAX_LEVEL ? ` · ${t('to the next veteran level')}` : ''}"><i style="width:${pct}%"></i></div>
-        ${r.pendingPerk !== null ? `<div class="pending" data-perk="${id}">${t('New perk unlocked: choose one')}</div>` : ''}
+        ${r.pendingPerk !== null ? `<div class="pending" data-perk="${id}" tabindex="0" role="button">${t('New perk unlocked: choose one')}</div>` : ''}
         <div class="stats">${stats}</div>
         <div class="gear-row">${['stick', 'skates', 'armor'].map((slot) => {
           const g = GEAR_BY_ID[r.gear[slot]];
@@ -3107,7 +3115,7 @@ export class UI {
       <p class="muted" style="margin:0 0 10px;font-size:13px">${t('Make the locker room yours: each piece goes up in its own spot. Swap things round or put them away any time.')}</p>
       <div class="shop">${items.map((d) => {
         const own = ownsDecor(s, d.id), on = decorOn(s, d.id), afford = s.coins >= d.price;
-        return `<div class="item" tabindex="0" data-card="${d.id}" aria-label="${esc(t(d.name))}">
+        return `<div class="item" tabindex="0" data-card="${d.id}" data-pad-press=".buy button" aria-label="${esc(t(d.name))}">
           <img src="${Assets.icon(d.frames[0], 128, null, d.slot === 'banner' ? { crop: 'middle' } : {})}" alt="">
           <div style="min-width:0">
             <div class="label" style="font-size:13px">${t(DECOR_SLOT_NAMES[d.slot])}</div>
@@ -3122,7 +3130,7 @@ export class UI {
         const bed = ['decor/cub_bed', 'pet/bed_sleep_1', 'icons/cub_bed'].every((f) => Assets.atlas.frames[f]) && Assets.atlas.decor_slots && Assets.atlas.decor_slots.cub_bed; // (its basket: Batch DL)
         const ball = ['decor/cub_ball', 'pet/pounce_1', 'icons/cub_ball'].every((f) => Assets.atlas.frames[f]); // (its ball: Batch DO)
         if (!outfits.length && !bed && !ball) return '';
-        const toy = (o, icon, blurb, owned, attr) => `<div class="item" tabindex="0" aria-label="${esc(t(o.name))}"><img src="${Assets.icon(icon, 128)}" alt="">
+        const toy = (o, icon, blurb, owned, attr) => `<div class="item" tabindex="0" data-pad-press=".buy button" aria-label="${esc(t(o.name))}"><img src="${Assets.icon(icon, 128)}" alt="">
             <div style="min-width:0"><div class="label" style="font-size:13px">${t('For the cub')}</div><h4>${esc(t(o.name))}</h4><div class="muted" style="font-size:12px">${blurb}</div>
               <div class="buy">${owned ? `<span class="tag good">${t('In the room')}</span>` : `<span class="price">${o.price}</span><button class="btn small ${s.coins >= o.price ? 'gold' : ''}" ${attr}="1" ${s.coins >= o.price ? '' : 'disabled'}>${t('Buy')}</button>`}</div></div>
           </div>`;
@@ -3130,7 +3138,7 @@ export class UI {
         const wear = (s.pet || {}).wear;
         return `<div class="label" style="margin:14px 0 6px">${t('For the cub')}</div><div class="shop">${outfits.map((o) => {
           const pic = Assets.spriteSet(['pet/sit_1', `pet_acc/${o.id}/sit_1`], 96), own = ownsOutfit(s, o.id), on = wear === o.id, afford = s.coins >= o.price;
-          return `<div class="item" tabindex="0" aria-label="${esc(t(o.name))}">
+          return `<div class="item" tabindex="0" data-pad-press=".buy button" aria-label="${esc(t(o.name))}">
             <span class="outfit-ico">${pic ? `<img src="${pic.urls[0]}" alt=""><img src="${pic.urls[1]}" alt="">` : ''}</span>
             <div style="min-width:0"><div class="label" style="font-size:13px">${t('For the cub')}</div><h4>${esc(t(o.name))}</h4>
               <div class="buy">${own ? (on ? `<span class="tag good">${t('Wearing it')}</span><button class="btn small ghost" data-unwear="1">${t('Take off')}</button>` : `<button class="btn small" data-wear="${o.id}">${t('Put on')}</button>`)
@@ -3338,7 +3346,8 @@ export class UI {
     const at = (x, y) => `left:${(x / 1536) * 100}%;top:${(y / 864) * 100}%`;
     const el = document.createElement('div');
     el.className = 'snowfun';
-    el.innerHTML = `<div class="snow-head"><b>${t('Snowball fun')}</b>${this.app.isTouch ? '' : `<span class="muted" style="font-size:13px">${t('Keys 1 to {n}', { n: spots.length })}</span>`}<span class="snow-hits">${t('Hits: {n}', { n: 0 })}</span><span class="snow-time"><i></i></span><button class="btn small ghost" id="snow-done">${t('Done')}</button></div>
+    const pad = padList().length > 0;
+    el.innerHTML = `<div class="snow-head"><b>${t('Snowball fun')}</b>${pad ? `<span class="muted" style="font-size:13px">${padGlyphs(esc(t('← → to aim, {a} to throw', { a: padName(0, psPad()) })))}</span>` : this.app.isTouch ? '' : `<span class="muted" style="font-size:13px">${t('Keys 1 to {n}', { n: spots.length })}</span>`}<span class="snow-hits">${t('Hits: {n}', { n: 0 })}</span><span class="snow-time"><i></i></span><button class="btn small ghost" id="snow-done">${t('Done')}</button></div>
       <div class="snow-yard"><img class="snow-bg" src="${Assets.sceneImage('snowball/yard', 960)}" alt="">
         <button class="snow-cub" aria-label="${esc(t('The cub'))}" hidden><img alt=""></button></div>`;
     document.getElementById('app').appendChild(el);
@@ -3393,11 +3402,32 @@ export class UI {
       const i = order[+e.key - 1];
       if (ended || i === undefined) return;
       e.preventDefault(); e.stopPropagation();
+      fling(i);
+    };
+    const fling = (i) => {
       const sp = spots[i], hit = throwAt(st, i);
       toss(sp.x, sp.y - 50, hit);
       if (hit) hits.textContent = t('Hits: {n}', { n: st.score });
     };
     window.addEventListener('keydown', onKey, true);
+    // the pad: ← → aim at a fort (left to right), A throws, B stops (padnav.js)
+    let aimAt = Math.floor(spots.length / 2);
+    const aim = document.createElement('div');
+    aim.className = 'snow-aim'; aim.hidden = true;
+    yard.appendChild(aim);
+    const showAim = () => { const sp = spots[order[aimAt]]; aim.hidden = false; aim.style.cssText = at(sp.x, sp.y - 50); };
+    el.dataset.padLayer = '';
+    el.padHooks = {
+      move: (dir) => {
+        if (ended) return false;
+        if (dir === 'left' || dir === 'right') aimAt = Math.max(0, Math.min(spots.length - 1, aimAt + (dir === 'right' ? 1 : -1)));
+        showAim();
+        return true;
+      },
+      confirm: () => { if (ended) return false; showAim(); fling(order[aimAt]); return true; },
+      back: () => { if (ended) el.querySelector('#snow-close')?.click(); else quit(); return true; },
+    };
+    if (pad) showAim();
     const tick = (now) => {
       if (!el.isConnected) return;
       const dt = Math.min(0.1, (now - last) / 1000); last = now;
