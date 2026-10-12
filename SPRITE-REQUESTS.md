@@ -1039,11 +1039,11 @@ Lossless and nothing redrawn: the frame ids, sizes, pivots and scales stay the s
 A new casual mode: three against three on a frozen pond, no goalies, small nets, no penalties, short games (and the youngest players' favourite, we hope). It's in the game now on the Pine Pond backdrop with the regular nets drawn smaller; these replace them:
 - `arena_pond`: **the neighbourhood pond**, exactly like the other rinks (1536×1024, the ice in the same place and shape so the game's rink fits unchanged), but no boards or glass: the ice ends in soft snowbanks along the rink's outline, with pine trees, a few houses with lit windows beyond, a wooden bench with boots and thermos flasks, a hot-cocoa stand, a sled and a dog watching from the bank, a couple of families cheering on the far bank. Natural pond ice (a little bumpy, a few frozen leaves, skate marks), no rink lines except two faint lines scratched for the goal areas. No lettering. Its own group `arena_pond`, loaded only for pond games.
 - `arena_pond_night`: the same at dusk, string lights between the trees, the houses' windows warm, a lantern on the bench.
-- Small **pond nets**, the shinny kind (a little steel frame with a white net, about 60% of the regular net's width and a little lower), in the same four views and sizes as `rink_props/nets/east`, `west`, `north`, `south` (the pivot at the centre of the goal mouth on the ice): `rink_props/pond_nets/east`, `west`, `north`, `south`. On the `arena_pond` group.
+- Small **pond nets**, the shinny kind (a little steel frame with a white net, about 60% of the regular net's width and a little lower), drawn like the game's side-on nets `net/back/<state>` and `net/front/<state>` (back and front layers; states `neutral`, `bulge_1`, `bulge_2`, `bulge_3` for the ripple when a goal goes in; the same pivot at the centre of the goal mouth on the ice and the same `source_scale`): `pond_net/back/<state>`, `pond_net/front/<state>`, listed as `atlas.arena.pond_nets` with the same shape as `atlas.arena.nets`. On the `arena_pond` group.
 - `icons/pond_hockey` (about 128 px, like the other `icons/…`): two kids' sticks crossed over a little net on a snowy pond.
 - `achievements/shinny` (128×128, like the other `achievements/…`): three friends in toques and scarves celebrating a goal on the pond, a dog jumping with them.
 
-2 backdrops, 4 nets, 2 icons.
+2 backdrops, 8 net frames, 2 icons.
 
 ## Batch EZ: the Nations Cup
 
