@@ -2433,7 +2433,10 @@ export class UI {
 
   // (opts.create: a new club of one's own being named, clubs.js: no going back, then onDone. In a
   // career as another club the editor starts from that club, and its crest stays a choice.)
-  clubEditor(opts = {}) {
+  async clubEditor(opts = {}) {
+    const home = Assets.atlas.skaters;
+    await Assets.ensureClubMasks([home.frost_captain.home.south.frames.idle,
+      home.thunder_winger.home.south.frames.celebrate, home.stone_defender.home.east.frames.idle]);
     const s = this.app.save, create = !!opts.create;
     // a crest of one's own design (crestkit.js): its options' names
     const KIT_NAMES = { classic: t('Classic'), round: t('Round'), hex: t('Hexagon'), banner: t('Banner'), diamond: t('Diamond'), square: t('Square'),
@@ -2534,11 +2537,11 @@ export class UI {
         $('#club-name').value = draft.name; $('#club-nick').value = draft.nick; $('#club-short').value = draft.short;
         audio.sfx('click'); paint();
       }, m);
-      this.click('#club-save', () => {
+      this.click('#club-save', async () => {
         const same = Object.keys(CLUB_DEFAULT).every((k) => draft[k] === CLUB_DEFAULT[k]);
         s.club = s.team ? { ...(s.club || {}), ...draft } : same ? null : { ...draft }; // (a career: its team and founders kept)
         if (draft.crest && draft.crest !== CLUB_DEFAULT.crest && !create) this.app.ach.unlock('new-colours');
-        this.app.applyClubLook();
+        await this.app.applyClubLook();
         writeSave(s);
         audio.jingle('achievement');
         close();

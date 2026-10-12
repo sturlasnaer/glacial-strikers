@@ -63,11 +63,30 @@ export const Assets = {
   async loadGroup(group) {
     await Promise.all([...this.atlas.pages.map((p, i) => (p.group !== group || this.pages[i] ? null
       : this.image(p.file).then((img) => { this.pages[i] = img; }))), COMPANION[group] && this.loadGroup(COMPANION[group])]);
+    if (PALETTES.club.recolor && Object.keys(this.atlas.club_art_masks || {}).some((id) => this.atlas.pages[this.atlas.frames[id]?.[0]]?.group === group)) {
+      await this.ensureClubMasks(); this.prepareClub(); this.clubArtChanged?.();
+    }
   },
   // Just the pages these frames are on (not their whole group), and their indices.
   framePages(ids) { return [...new Set(ids.map((id) => this.atlas.frames[id]).filter(Boolean).map((f) => f[0]))]; },
   async loadPages(ids) {
     await Promise.all(this.framePages(ids).map((i) => (this.pages[i] ? null : this.image(this.atlas.pages[i].file).then((img) => { this.pages[i] = img; }))));
+    if (PALETTES.club.recolor && ids.some((id) => this.atlas.club_art_masks?.[id])) {
+      await this.ensureClubMasks(); this.prepareClub(); this.clubArtChanged?.();
+    }
+  },
+  // Native home cloth masks: only the frames whose source pages are in this scene.
+  // Explicit ids also support the club editor's trial colours before a club is saved.
+  clubMaskFrames(ids = null) {
+    const wanted = ids && new Set(ids);
+    return Object.entries(this.atlas.club_art_masks || {}).filter(([id]) => {
+      const f = this.atlas.frames[id];
+      return f && (wanted ? wanted.has(id) : !!this.pages[f[0]]);
+    }).map(([, mid]) => mid);
+  },
+  async ensureClubMasks(ids = null) {
+    await Promise.all(this.framePages(this.clubMaskFrames(ids)).map((i) => this.pages[i] ? null
+      : this.image(this.atlas.pages[i].file).then((img) => { this.pages[i] = img; })));
   },
   // Every page of a group decoded (false for a group the atlas doesn't have).
   groupReady(group) {
@@ -176,6 +195,10 @@ export const Assets = {
     for (const [g, c] of Object.entries(COMPANION)) if (groups.has(g)) groups.add(c); // (their masks with them)
     const released = new Set();
     const pages = new Set([...(keep.pages || []), ...this.framePages(this.supporterMaskFrames(keep.teams || []))]); // (single pages kept out of a group: the coach cub's costume, say; the rival's supporters' masks)
+    if (PALETTES.club.recolor) for (const [id, mid] of Object.entries(a.club_art_masks || {})) {
+      const f = a.frames[id], m = a.frames[mid];
+      if (f && m && (groups.has(a.pages[f[0]].group) || pages.has(f[0]))) pages.add(m[0]);
+    }
     a.pages.forEach((p, i) => { if (this.pages[i] && !groups.has(p.group) && !pages.has(i) && p.group !== 'runtime') { released.add(this.pages[i]); this.pages[i] = null; this.forget(p.file); } }); // (a frame drawn at run time stays)
     // recoloured page sets keep references to the original pages they didn't change: drop those too
     for (const r of this.recolored.values()) { const kept = r.pages.map((pg) => (released.has(pg) ? null : pg)); if (r.pages.frames) kept.frames = r.pages.frames; r.pages = kept; } // (a club career's packed club colours keep their map)

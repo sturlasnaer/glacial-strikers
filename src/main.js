@@ -1,6 +1,7 @@
 // Puckbound — boot, game loop and scene flow.
 
 import { Assets } from './assets.js';
+import { PALETTES } from './data.js';
 import { Match, PENALTY_SECONDS } from './match.js';
 import { Renderer, cubSlides } from './render.js';
 import { FX } from './fx.js';
@@ -114,12 +115,14 @@ class App {
     document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
     document.querySelectorAll('[data-i18n-aria]').forEach((el) => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
     applyClub(this.save.club);
+    if (PALETTES.club.recolor) await Assets.ensureClubMasks();
     Assets.prepareClub();
     // signings wear home colours, recoloured from their old team's pages
     const kit = homeKitGroups(this.save);
     if (kit.length) await Promise.race([Assets.ensureKit(kit), new Promise((r) => setTimeout(r, 2500))]);
     this.ach = new AchievementTracker(this.save, (a) => this.toastAchievement(a));
     this.renderer = new Renderer(this.canvas);
+    Assets.clubArtChanged = () => this.renderer.clearCaches();
     this.quality = new Quality();
     this.fx = new FX();
     this.applyQuality(); // where this device settled last time
@@ -1767,8 +1770,9 @@ class App {
   }
 
   // New club colours or name: recolour our art and the signings, clear cached frames.
-  applyClubLook() {
+  async applyClubLook() {
     applyClub(this.save.club);
+    if (PALETTES.club.recolor) await Assets.ensureClubMasks();
     Assets.prepareClub();
     this.renderer.clearCaches();
     const kit = homeKitGroups(this.save);
