@@ -7,6 +7,10 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
+1. **FB: cloth masks for the Foxes' own art** (the club colours bleed into the players: the user's top priority)
+2. **FC: a crest kit** (shields, emblems and patterns for a crest generator)
+3. **FD: pond hockey's winter gear** (toques and scarves over every pose)
+4. **FE: the Nations Cup's regional jerseys** (a body set in a regional design)
 
 
 **Notes for the art team (from the programmer, 2026-10-10):**
@@ -1070,3 +1074,39 @@ Each career now has one rival captain whose story runs over several seasons: the
 - `saga_farewell`: an empty rink at night, a single spotlight on centre ice, a pair of skates and a stick left on the bench, a few balloons and a hand-painted banner in the stands (no letters on it: a big heart and a number).
 
 3 images.
+
+## Batch FB: cloth masks for the Foxes' own art (the club colours bleed into the players)
+
+A club's own colours (Team › Club colours, and the club editor when founding a club) repaint the Foxes' own art: Nix, Volta, Bram and Halla in every pose, their portraits and celebrations, the crowd in our colours. Today that's done by colour matching (teal becomes the trim, cream the jersey), and it can't tell the jersey from everything else of a similar colour: with a dark jersey (the Inferno preset, `#2b2b33` with orange trim) the jerseys break up into black, cream and orange speckles, and the helmet shine and stick tape turn orange. The banners and supporters already use your native cloth masks (`atlas.club_art_masks`, Batches BS/BY: red = the teal trim, green = the cream jersey, anything else left exactly as painted), and they recolour cleanly. Please make the same masks for everything on the `home` pages that wears the Foxes kit:
+- the cast's skaters: `frost_captain/…`, `thunder_winger/…`, `stone_defender/…` (64 frames each), `nix_…`, `volta_…`, `bram_…` (diagonals, skating, hit reactions) and the `ak_…` west-facing sets;
+- Halla in goal: every `halla_…` frame on the home pages;
+- the portraits: `expressions_core/…`, `expressions_halla_royals_comets/halla/…`, `character_portraits/home/…`;
+- `celebrations/…` and `signature_celebrations/…`;
+- the crowd in our colours: `crowd_fans/…`, `crowd_back/…`, `glass_fans/…`.
+
+Each mask exactly the frame's size, named `<frame>_mask` like `rafters/number_banner_a_mask`, on mask pages of their own (loaded only with a club's own colours) and listed in `atlas.club_art_masks` (`frame → mask`). Only the kit is coloured in: jersey and socks green, the teal trim, stripes, numbers' outline and stick tape red if it's part of the kit; skin, hair, eyes, helmet, gloves, skates and sticks left out. No code change is needed: the game already prefers a frame's mask whenever it has one.
+
+## Batch FC: a crest kit for the crest generator
+
+A club of one's own can now only pick one of seven finished crests. The game is getting a crest generator (in the club editor): a shield, a pattern, an emblem and the club's short code on a ribbon, each in the club's colours. Please draw the parts, all as recolourable art like the club crests (cream for the main colour, teal for the trim, so the club colours repaint them; the outline and shading as painted):
+- **Shields** (120×120, the shape filled cream with a teal rim, like `crests_club/wolf`'s shield without its animal): `crest_kit/shield/classic` (the pointed heater shield), `round`, `hex` (a hexagon, like a puck seen from above), `banner` (a hanging pennant with a swallowtail), `diamond`, `square` (rounded corners).
+- **Patterns** (120×120, transparent except the pattern in teal, drawn to sit inside every shield: the game clips them to the shield's shape): `crest_kit/pattern/stripes` (two vertical stripes), `chevron`, `halves` (left half), `quarters` (top-left and bottom-right), `sash` (a diagonal band), `hoops` (two horizontal bands).
+- **Emblems** (about 72×72, centred, each a single creature or symbol in cream with teal details and a dark outline, readable small): the seven of today's crests on their own (`crest_kit/emblem/fox`, `wolf`, `bear`, `owl`, `narwhal`, `mountain`, `bolt`) and ten more: `stick_puck` (two crossed sticks and a puck), `snowflake`, `star`, `crown`, `pine`, `flame`, `wave`, `anchor`, `moose`, `skate`.
+- **A ribbon** for the short code: `crest_kit/ribbon` (about 110×28, cream with a teal edge, room for three letters in the middle; the game writes them).
+
+6 shields, 6 patterns, 17 emblems, 1 ribbon.
+
+## Batch FD: pond hockey's winter gear
+
+On the pond (Batch EY) everyone still skates in their jerseys. The pond deserves toques, scarves and mittens. Please draw them as overlays the game lays over each frame, the way the gear masks (`gm:<frame>`) are made for every pose: for each skater frame, `pw:<frame>`, exactly the frame's size and position, transparent except a knitted toque (with a pom-pom) over the helmet and a scarf round the neck, its loose end where the pose would swing it. In two colours the game repaints: the toque and scarf's main colour in cream, the stripes in teal (as the club colours repaint the kit); outline and shading as painted.
+
+In this order, so the pond looks right sooner:
+1. the players we field: the cast (`frost_captain`, `thunder_winger`, `stone_defender` and their `nix_/volta_/bram_` and `ak_` sets), the newcomers (`newcomer_c/w/d`) and the bodies from parts (`modular/body_std`, `body_big`, `body_small`, their motion sets);
+2. the Frostline rivals' players;
+3. the rest.
+
+On the `arena_pond` group (or pages of their own), listed as `atlas.pond_wear = { '<frame>': 'pw:<frame>' }`.
+
+## Batch FE: the Nations Cup's regional jerseys
+
+In the Nations Cup (Batch EZ) the Coast, the Timberlands and the Far Wilds play in their clubs' jerseys recoloured into the region's colours, so they still look like club teams. Their players are all from the National and the Elite, and so all made from parts. Please draw a second set of the parts' bodies in a regional jersey, for every frame of `modular/body_std`, `body_big` and `body_small` (and their motion frames), same sizes, pivots and head anchors: a national-team look with a broad chest band and matching sleeve bands, drawn in the parts' coral and violet like the originals (coral the jersey, violet the band) so each region's kit repaints them. Named `modular_nations/<the same path>`, on a group of their own (`parts_nations`, loaded only for Nations Cup games), listed as `atlas.modular_nations = { '<body frame>': '<regional frame>' }`.
