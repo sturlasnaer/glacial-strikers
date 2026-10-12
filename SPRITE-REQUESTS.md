@@ -7,10 +7,8 @@ The game is now called **Puckbound**, and the home team is the **Snowcrest Foxes
 This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md` on the Mac, and at <https://github.com/sturlasnaer/glacial-strikers/blob/main/SPRITE-REQUESTS.md> online.
 
 **Next batches:**
-1. **EY: pond hockey** (a pond rink, small nets, two icons)
-2. **EZ: the Nations Cup** (four region crests, a venue, a trophy)
-3. **FA: a rival with a story** (three scene backdrops)
-
+1. **EZ: the Nations Cup** (four region crests, a venue, a trophy)
+2. **FA: a rival with a story** (three scene backdrops)
 
 **Notes for the art team (from the programmer, 2026-10-10):**
 - The git index is shared between us (same working folder). Please stage and commit in one go (`git add <your paths> && git commit …`) and don't leave files staged between steps: earlier today a commit of mine picked up your staged DS/DT files.
@@ -144,6 +142,8 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Delivered EW:** Lossless abilities_al packing into element-specific pages for Ember, Gale and Shadow. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EW-Testing-Update`.
 
 **Delivered EX:** Lossless race packing with a dedicated small page per mascot, including all custom-club runners. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EX-Testing-Update`.
+
+**Delivered EY:** Two neighbourhood pond backdrops, eight small steel-net animation layers and two pond-hockey icons. Delivery folder: `/Users/brafa/Documents/Codex/2026-10-07/ok-x20/outputs/Puckbound-EY-Testing-Update`.
 
 ## Format notes
 
@@ -1034,7 +1034,7 @@ Another repack for phone memory. The mascot race runs four mascots: ours, the ri
 
 Lossless and nothing redrawn: the frame ids, sizes, pivots and scales stay the same. No code change is needed (the game picks the two extra runners and loads just their pages): a race then decodes about 5.5 MB instead of 12 to 22.
 
-## Batch EY: pond hockey
+## Batch EY ✓: pond hockey
 
 A new casual mode: three against three on a frozen pond, no goalies, small nets, no penalties, short games (and the youngest players' favourite, we hope). It's in the game now on the Pine Pond backdrop with the regular nets drawn smaller; these replace them:
 - `arena_pond`: **the neighbourhood pond**, exactly like the other rinks (1536×1024, the ice in the same place and shape so the game's rink fits unchanged), but no boards or glass: the ice ends in soft snowbanks along the rink's outline, with pine trees, a few houses with lit windows beyond, a wooden bench with boots and thermos flasks, a hot-cocoa stand, a sled and a dog watching from the bank, a couple of families cheering on the far bank. Natural pond ice (a little bumpy, a few frozen leaves, skate marks), no rink lines except two faint lines scratched for the goal areas. No lettering. Its own group `arena_pond`, loaded only for pond games.
