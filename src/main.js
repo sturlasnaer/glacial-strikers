@@ -34,6 +34,7 @@ import { createDrill, medalFor, DRILL_REWARDS } from './drills.js';
 import { makeSkills, recordSkills, SKILLS_EVENTS } from './skills.js';
 import { recordRivalResult, rivalLines, rivalAfterLine, rivalRecord, rivalryOf } from './rivals.js';
 import { startSaga, sagaDue, playSaga, sagaName, SAGA } from './saga.js';
+import { newNations, regionTeam, recordNations, NATIONS_FROM, NATIONS_PRIZE } from './nations.js';
 import { recordRealGame, computeAwards, AWARD_BY_ID } from './awards.js';
 import { dailyFor, dailyGoal, completeDaily, noteAttempt, dayKey, dailyState } from './daily.js';
 import { standings } from './league.js';
@@ -44,7 +45,7 @@ import { moveTier, noteTierCup, tierOf, tierInfo } from './tiers.js';
 import { updateSeasonGoals, goalStates } from './goals.js';
 import { pickMoment, markSeen, buffEffects } from './lockerroom.js';
 import { GOAL_X } from './rink.js';
-import { member, goalieInfo, TEAMS, TOURNAMENT, DIALOGUE, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, CAREER, pairKey, clubT, clubOwn, applyClub, GEAR_LOOK, useGearArt, RECRUITS, ROOKIES, setRookies, ALLSTAR, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, expansionLines, TIER_LINES } from './data.js';
+import { member, goalieInfo, TEAMS, TOURNAMENT, DIALOGUE, POWER_INFO, COMBOS, CHARACTERS, GOALIE, GAME_PLANS, PLAYOFF_LINES, ROLE, recruitKey, ARENAS, CLUB, CAREER, pairKey, clubT, clubOwn, applyClub, GEAR_LOOK, useGearArt, RECRUITS, ROOKIES, setRookies, ALLSTAR, NATIONS, teamInfo, slotDef, LEGENDS, LEGEND_ART, LEGEND_FACES, useNewArt, setFreeGoalies, setGoalieLooks, useCaptainArt, setStyles, RIVAL_IDS, slotSprite, slotLook, expansionLines, TIER_LINES } from './data.js';
 import { rollLegend, legendState, STAY, joinLegend, LEGEND_LINES, twinsFirstTogether } from './legends.js';
 import { rivalSigning, rivalOffer } from './moves.js';
 import { refreshAgents } from './agents.js';
@@ -57,7 +58,7 @@ import { offerDraft } from './draft.js';
 import { recordCareer, addSeatTotals } from './career.js';
 import {
   loadSave, newSave, writeSave, setSaveOff, matchConfig, computeRewards, applyExp, applyGoalieExp, applyChem, drillRewards,
-  lineupIds, homeKitGroups, allStarVote, allStarVoteStands, allStarConfig, setLeagueEdge, rosterIds, goalieIds, teamPhoto, recruitStatus,
+  lineupIds, homeKitGroups, allStarVote, allStarVoteStands, allStarConfig, setLeagueEdge, rosterIds, goalieIds, teamPhoto, recruitStatus, nationsConfig,
 } from './progress.js';
 import { t, setLang, getLang, defaultLang } from './i18n.js';
 import { whatsNewFor } from './whatsnew.js';
@@ -460,6 +461,7 @@ class App {
     const f = this.fixture();
     if (!f) return;
     if (f.kind === 'allstar') return this.startAllStar(f);
+    if (f.kind === 'nations') return this.startNations(f);
     const stage = f.stage;
     const team = TEAMS[f.opponent];
     const powers = stage.powers.length ? t('Power pucks: {list}.', { list: stage.powers.map((p) => t(POWER_INFO[p].name)).join(', ') }) : t('No power pucks this match.');
@@ -484,6 +486,24 @@ class App {
     this.scene = 'dialogue';
     this.music('story');
     this.prepAllStar(vote).then(() => this.ui.allStarVote(vote, () => this.openSkills()));
+  }
+
+  // The Nations Cup (nations.js): the table and our next game, then the game (or skip the cup).
+  // (straight: Play on the table after a game, the game itself)
+  startNations(f, straight = false) {
+    const s = this.save, N = s.league.nations, team = regionTeam(s, f.opponent);
+    const play = () => this.prepNations(team).then(() => this.beginMatch(f.opponent, f.stage, false, [], { fixture: f, nations: team }));
+    if (straight) return play();
+    this.scene = 'results';
+    this.music('story');
+    this.ui.nationsCup(N, { next: f, team }, play, () => { N.over = true; N.skipped = true; writeSave(s); this.goHub('tournament'); }, () => this.goHub('tournament'));
+  }
+  // A region's team: its clubs' art recoloured into the region's kit, as the All-Stars'.
+  prepNations(team) {
+    const R = NATIONS[team.id];
+    R.groups = [...new Set([...team.teams.map((id) => 'rival_' + (TEAMS[id].art || TEAMS[id].mark)),
+      ...(team.teams.some(teamHasParts) ? ['parts'] : []), ...(TEAMS[team.goalie].goalieLook ? ['goalie_parts'] : [])])];
+    return Promise.all(R.groups.map((g) => Assets.loadGroup(g))).catch(() => {}).then(() => Assets.prepareTeam(R));
   }
 
   // Both rival teams' art, recoloured for both benches.
@@ -893,12 +913,12 @@ class App {
       s.lastPlan = plan;
       writeSave(s);
     }
-    this.cur = { teamId, stage, exhibition, stageIndex: exhibition ? -1 : s.stage, mods, plan, theirPlan, fixture: extra.fixture, daily: extra.daily || null, allstar: extra.allstar || null, mini: !!extra.mini, pond: !!extra.pond };
+    this.cur = { teamId, stage, exhibition, stageIndex: exhibition ? -1 : s.stage, mods, plan, theirPlan, fixture: extra.fixture, daily: extra.daily || null, allstar: extra.allstar || null, mini: !!extra.mini, pond: !!extra.pond, nations: extra.nations || null };
     // two players from the title or Play as (the daily challenge is for one): both skating, or player 2 in goal
     const as = extra.daily ? 'skaters' : extra.coop === 'keeper' ? 'coopGoalie' : extra.coop ? 'coop' : s.settings.playAs;
     const coop = as === 'coop', keeperCoop = as === 'coopGoalie';
     const goalieMode = as === 'goalie' || keeperCoop; // (daily goals are for skaters)
-    const cfg = extra.allstar ? allStarConfig(s, extra.allstar, { goalieMode }) : matchConfig(s, teamId, stage, { plans: [plan, theirPlan], buffs, goalieMode, league: !exhibition && !extra.daily }); // (league games feel the division)
+    const cfg = extra.nations ? nationsConfig(s, extra.nations, { goalieMode }) : extra.allstar ? allStarConfig(s, extra.allstar, { goalieMode }) : matchConfig(s, teamId, stage, { plans: [plan, theirPlan], buffs, goalieMode, league: !exhibition && !extra.daily }); // (league games feel the division)
     if (extra.mini) cfg.winScore = MINI_WIN; // (the Mini Cup: quick games)
     if (s.settings.little) cfg.comeback = true; // (Little player: the rivals ease off when they're well ahead)
     if (s.settings.little) for (const g of ['cub_coach', 'kid_stars']) if (Assets.atlas.pages.some((pg) => pg.group === g)) Assets.loadGroup(g).catch(() => {}); // (the cub coaches, and a gold star after: Batches DJ, DN)
@@ -916,6 +936,7 @@ class App {
     if (classic) Assets.loadGroup('winter').catch(() => {}); // Pine Pond dressed up
     if (m.goalieMode) Assets.loadGroup('goalie').catch(() => {}); // Wall of Ice
     if (extra.allstar) Assets.dropOriginals(ALLSTAR.groups.filter((g) => g !== 'parts' && g !== 'goalie_parts')); // only the recoloured copies are drawn (heads and masks recolour from the originals)
+    if (extra.nations) Assets.dropOriginals(NATIONS[extra.nations.id].groups.filter((g) => g !== 'parts' && g !== 'goalie_parts')); // (the region's kit, likewise)
     this.hookMatch(m);
     this.resetReplay();
     this.clips.clear();
@@ -929,7 +950,7 @@ class App {
     this.ui.clear();
     this.scene = 'match';
     m.allstar = !!extra.allstar; // the home rink is dressed for it
-    m.bigGame = classic || m.allstar || /\bFinal$/.test(stage.round || ''); // the gold scoreboard
+    m.bigGame = classic || m.allstar || !!extra.nations || /\bFinal$/.test(stage.round || ''); // the gold scoreboard
     this.hud.show(m, teamId, null, { coop: cfg.coop });
     if (m.keeperCoop && firstTime(s, 'keeperCoop')) setTimeout(() => { if (this.scene === 'match' && this.match === m) this.hud.hint(t('Two players! Player 1 skates, player 2 is in goal, and the AI skates the other two.'), 6); }, 2600);
     if (m.coop && firstTime(s, 'coop')) setTimeout(() => { if (this.scene === 'match' && this.match === m) this.hud.hint(t('Two players! Each of you swaps only with the skater the AI has. Pass to it and you take it over; your partner keeps theirs.'), 6); }, 2600);
@@ -937,6 +958,7 @@ class App {
     if (classic) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t('The Winter Classic! Outdoor hockey under the snow, and the whole league is watching.')); }, 500);
     if (extra.allstar) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t('The All-Star Game! The fans voted, and the league\'s best share the ice.')); }, 500);
     if (extra.pond) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(t('Pond hockey! Three on three, no goalies, little nets. First to five.')); }, 500);
+    if (extra.nations) setTimeout(() => { if (this.scene === 'match') this.hud.ticker(clubT('The Nations Cup! The Foxes play for the Frostline against {region}.', { region: NATIONS[extra.nations.id].name })); }, 500);
     if (this.cur.daily) setTimeout(() => { if (this.scene === 'match') this.hud.banner(`<div class="small">${t('Daily challenge')}</div><div class="sub" style="font-size:clamp(16px,3vw,24px)">${t(dailyGoal(this.cur.daily.goal).text)}</div>`, 3); }, 300);
     this.touch.reset(); this.touch2.reset();
     this.music(classic ? 'classic' : /\bFinal$/.test(stage.round || '') ? 'final' : ARENA_MUSIC[arena] || 'frostline');
@@ -1190,9 +1212,9 @@ class App {
     const legend = rollLegend(s, Math.random, (k) => LEGEND_ART.has(LEGENDS[k].art) || this.legendsPreview);
     if (legend) this.pendingLegend = legend; // Kip announces them on the way back to the hub
     const scorers = (team) => Object.fromEntries(summary.skaters.filter((k) => k.team === team && k.goals).map((k) => [k.id, k.goals]));
-    const allstar = !!(c.fixture && c.fixture.kind === 'allstar');
+    const allstar = !!(c.fixture && c.fixture.kind === 'allstar'), nations = !!c.nations;
     const firstWin = !c.pond && rewards.won && !((s.rivals && s.rivals[c.teamId] && s.rivals[c.teamId].wins) > 0);
-    if (!allstar && !c.pond) recordRivalResult(s, c.teamId, summary.score[0], summary.score[1], rewards.won, { ourScorers: scorers(0), theirScorers: scorers(1) });
+    if (!allstar && !c.pond && !nations) recordRivalResult(s, c.teamId, summary.score[0], summary.score[1], rewards.won, { ourScorers: scorers(0), theirScorers: scorers(1) });
     if (firstWin && TEAMS[c.teamId] && TEAMS[c.teamId].names) {
       setTimeout(() => this.toast(crest(c.teamId, 72), t('Scouting'), t('{team} will take your call', { team: TEAMS[c.teamId].name }), t('Sign their skaters in Team › Scouting')), 1600);
     }
@@ -1204,6 +1226,17 @@ class App {
       recordClassic(s.league, summary.score[0], summary.score[1], c.teamId);
       (s.classics ||= []).push({ season: s.season, opp: c.teamId, gf: summary.score[0], ga: summary.score[1] });
       if (rewards.won) this.ach.unlock('winter-classic');
+    } else if (!c.exhibition && s.league && nations) {
+      // the Nations Cup: its own table, and the cup if it's ours (nations.js)
+      this.nationsOut = recordNations(s, s.league.nations, summary.score[0], summary.score[1]);
+      if (this.nationsOut === 'champion') {
+        s.nationsCups = (s.nationsCups || 0) + 1;
+        (s.nationsWins ||= []).push({ season: s.season });
+        s.coins += NATIONS_PRIZE; rewards.coins += NATIONS_PRIZE;
+        rewards.lines.push([t('The Nations Cup'), NATIONS_PRIZE]);
+        this.ach.unlock('nations-cup');
+        addNews(s, { k: 'nations', team: 'home' });
+      }
     } else if (!c.exhibition && s.league && allstar) {
       // a showcase too; afterwards our signings' art is all the kit needs again
       const score = (k) => k.goals * 3 + k.assists * 2 + k.steals + k.hits * 0.5;
@@ -1239,7 +1272,7 @@ class App {
       s.stage = s.league.round;
     }
     // a win on the road sends a postcard home (Batch DK), Snowcrest's own with the Cup
-    if (!c.exhibition && s.league && rewards.won) {
+    if (!c.exhibition && s.league && rewards.won && !nations) {
       const town = postcardFor(c.fixture ? c.fixture.kind : 'regular', this.arena, c.teamId);
       if (town && sendPostcard(s, town) && Assets.frame('postcard/' + town)) setTimeout(() => this.toast(crest(town, 72), t('Postcard!'), t('A postcard from {town}', { town: town === 'home' ? CLUB.name : TEAMS[town].name }), t('See it in League, under the map')), 2200);
       if (frostlineCards(s)) this.ach.unlock('postcard-collector');
@@ -1247,7 +1280,7 @@ class App {
     // the Hall of Fame: anyone who's earned it goes in (the ceremony comes after the results)
     this.pendingHall = hallCandidates(s, rosterIds(s), goalieIds(s)).map((h) => induct(s, h, h.goalie ? goalieInfo(h.id).name : member(h.id).name));
     for (const h of this.pendingHall) addNews(s, { k: 'hall', name: h.name, n: h.number });
-    if (!c.exhibition && s.league) { // Coach Brekka's season goals: paid as they're met
+    if (!c.exhibition && s.league && !nations) { // Coach Brekka's season goals: paid as they're met
       const sg = updateSeasonGoals(s, { kind: c.fixture ? c.fixture.kind : 'regular', won: rewards.won, summary, opp: c.teamId });
       for (const g of sg.met) rewards.lines.push([t('Season goal: {goal}', { goal: t(g.text, { n: g.n }) }), g.coins]);
       if (sg.bonus) { rewards.lines.push([t('All three season goals!'), sg.bonus]); this.ach.unlock('coachs-orders'); }
@@ -1273,7 +1306,7 @@ class App {
     const packs = (rewards.won ? 2 : 1) + (dailyDone ? 1 : 0);
     addPacks(s, packs);
     rewards.lines.push([t('Sticker packs for the album'), `+${packs}`]);
-    this.ach.endMatch(summary, { league: !c.exhibition && !allstar, exhibition: c.exhibition, mods: c.mods, coop: !!c.coop });
+    this.ach.endMatch(summary, { league: !c.exhibition && !allstar && !nations, exhibition: c.exhibition, mods: c.mods, coop: !!c.coop });
     if (summary.seats) addSeatTotals(s, summary); // (two players: who's ahead, over every co-op match)
     if (summary.goalieMode) { s.goalieGames = (s.goalieGames || 0) + 1; if (rewards.won) this.ach.unlock('between-pipes'); }
     const kidStar = s.settings.little && !summary.goalieMode && Assets.frame('kid_stars/team') ? awardKidStar(s, summary) : null; // (Little player: a gold star, Batch DN)
@@ -1293,13 +1326,21 @@ class App {
       const finish = () => {
         // Play again: the same exhibition straight away
         if (c.mini) return this.miniNext(rewards.won); // (the Mini Cup: the bracket, or the cup)
+        if (c.nations) { // (the Nations Cup: the table, the next game or the cup; our kit back for the rest)
+          Assets.ensureKit(homeKitGroups(s));
+          const won = this.nationsOut === 'champion', f2 = this.fixture();
+          if (won) { audio.jingle('champion'); this.ui.fireworks?.(); }
+          this.scene = 'results';
+          const nf = f2 && f2.kind === 'nations' ? f2 : null;
+          return this.ui.nationsCup(s.league.nations, { result: this.nationsOut, next: nf, team: nf && regionTeam(s, nf.opponent) }, () => this.startNations(nf, true), null, () => this.goHub('tournament'));
+        }
         if (this.rematchNext) { this.rematchNext = false; const e = this.lastExhibition; return e.pond ? this.startPond(e.night) : this.startExhibition(e.teamId, e.mods, e.arena, e.coop, false, e.night); }
         if (becameChampion) { this.scene = 'results'; this.music('final'); audio.jingle('champion'); this.ui.champion(() => this.payoff(() => this.goHub('tournament'))); } else this.goHub(rewards.won ? 'tournament' : 'team');
       };
       const call = (next) => { const o = this.pendingOffer; this.pendingOffer = null; return o ? this.ui.rivalCall(o, next) : next(); };
       const hall = (next) => { const h = this.pendingHall || []; this.pendingHall = null; return h.length ? this.ui.hallCeremony(h, next) : next(); };
       const after = () => this.leagueUpdate(leagueOut, () => call(() => this.resolvePerks(() => this.ui.chemUnlocked(chemUps, () => hall(() => {
-        if (becameChampion || c.exhibition) return finish();
+        if (becameChampion || c.exhibition || c.nations) return finish();
         this.lockerRoom(summary, rewards, finish);
       })))));
       const kind = c.fixture ? c.fixture.kind : 'regular';
@@ -1681,6 +1722,9 @@ class App {
     if (this.awardsNight()) return;
     if (offerDraft(this.save)) writeSave(this.save); // Draft Day opens once the awards are handed out
     if (this.sagaHub()) return;
+    // the Nations Cup, once the season's awards are out, for a club in the National or up (nations.js)
+    const L0 = this.save.league;
+    if (L0 && L0.phase === 'done' && L0.awards && !L0.nations && (L0.tier || 0) >= NATIONS_FROM) { L0.nations = newNations(this.save); writeSave(this.save); }
     if (this.pendingLegend) { // a legend turns up: Kip calls it over the reveal painting
       const key = this.pendingLegend, L = LEGENDS[key];
       this.pendingLegend = null;

@@ -575,6 +575,7 @@ export const ARENAS = {
   taiga_rink: { name: 'Taiga Rink', lamps: '#ffb36b', national: true }, // (the Tigers': Batch EL)
   bamboo_grove: { name: 'Bamboo Grove', lamps: '#ffd8a0', national: true }, // (the Pandas': Batch EL)
   pond: { name: 'The Pond', lamps: null, exhibitionOnly: true, pond: true }, // (pond hockey only, once it's drawn: Batch EY)
+  nations: { name: 'The Nations Arena', lamps: '#fff1c2', finalOnly: true }, // (the Nations Cup's: Batch EZ; the Coliseum until it's drawn)
 };
 
 // ---------------------------------------------------------------- recruitment
@@ -801,8 +802,24 @@ export const ALLSTAR = {
   style: 'The league\'s best, all on one bench.',
 };
 PALETTES.allstar = ALLSTAR;
-// A team by id, the All-Stars included.
-export const teamInfo = (id) => TEAMS[id] || (id === 'allstar' ? ALLSTAR : null);
+
+// The Nations Cup's regions (nations.js): each fields the best players of its two strongest clubs
+// (two clubs' art at most, as the All-Stars, so a phone holds it) in a kit of its own; their
+// crests are Batch EZ's. Not league teams either. The player's club plays for the Frostline.
+const region = (key, name, nick, short, clubs, color, color2, recolor) => ({
+  id: 'region_' + key, key, plan: 'balanced', chem: 0, get name() { return name(); }, get nick() { return nick(); }, get short() { return short(); }, clubs,
+  crest: 'nations/crest/' + key, art: null, arena: 'nations', color, color2, recolor, diff: 0.4, bonus: {}, goalie: { rfx: 7, pos: 7 },
+  names: { goalie: 'Goalie' }, subs: {}, groups: [], style: 'The best of the region, on one bench.',
+});
+export const NATIONS = {
+  region_coast: region('coast', () => t('The Coast'), () => t('Coast'), () => t('CST'), ['puffins', 'seals', 'narwhals', 'penguins', 'flamingos'], '#2a7bbf', '#e8d6a8', { h1: 205, h2: 42, sat: 0.75, val: 0.75, sat2: 0.35, val2: 1.0 }),
+  region_timberlands: region('timberlands', () => t('The Timberlands'), () => t('Timberlands'), () => t('TMB'), ['grizzlies', 'beavers', 'bulls', 'capybaras'], '#2f6b3a', '#a8743f', { h1: 130, h2: 28, sat: 0.6, val: 0.5, sat2: 0.65, val2: 0.75 }),
+  region_wilds: region('wilds', () => t('The Far Wilds'), () => t('Wilds'), () => t('WLD'), ['tigers', 'pandas'], '#ff8c1a', '#f2f2ec', { h1: 30, h2: 0, sat: 1.0, val: 1.0, sat2: 0.0, val2: 1.1 }),
+};
+for (const r of Object.values(NATIONS)) PALETTES[r.id] = r;
+export const FROSTLINE_REGION = { get name() { return t('The Frostline'); }, crest: 'nations/crest/frostline' };
+// A team by id, the All-Stars and the Nations Cup's regions included.
+export const teamInfo = (id) => TEAMS[id] || (id === 'allstar' ? ALLSTAR : NATIONS[id] || null);
 
 // ---------------------------------------------------------------- your club
 // Name, nickname, short code and colours (trim, jersey). Defaults are the Snowcrest Foxes.

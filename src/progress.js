@@ -581,6 +581,38 @@ export function allStarConfig(save, vote, opts = {}) {
   };
 }
 
+// A Nations Cup game (nations.js): our line-up (the Frostline) against a region's best (regionTeam:
+// three stars of its strongest clubs and the better goalie). Cup rules: penalties as usual.
+export function nationsConfig(save, team, opts = {}) {
+  const ours = (who) => {
+    const m = member(who);
+    return { def: m.def, who, stats: effectiveStats(who, save.roster[who]), name: m.name, perks: perkNames(save.roster[who]),
+      sprite: m.sprite, look: m.look, parts: m.parts, gear: { ...save.roster[who].gear }, twin: m.legend ? m.legend.twin : null, hand: m.hand }; // (as matchConfig's)
+  };
+  const rival = (who) => {
+    const m = member(who), tm = TEAMS[m.recruit.team];
+    const stats = agedStats(save, m.recruit.team, m.recruit.kit, { ...m.base });
+    for (const [k, v] of Object.entries(tm.bonus || {})) stats[k] = Math.max(1, stats[k] + v);
+    return { def: m.def, who, stats: grown(save, stats, 1), name: m.name, perks: [], sprite: m.sprite || m.recruit.sprite, parts: m.parts || null };
+  };
+  const rg = rivalGoalie(save, team.goalie, 1), line = lineupIds(save);
+  const diff = Math.min(1, Math.max(0, team.diff + (DIFF_OFFSET[save.settings.difficulty] || 0) + TIER_SHARP)); // (a National club's sharpness; their stars grow with the seasons already: grown)
+  return {
+    assist: save.settings.assist || 'normal',
+    plans: ['balanced', 'balanced'],
+    buffs: {},
+    teams: [
+      { skaters: line.map(ours), goalie: homeGoalie(save), chem: lineChem(save, line) },
+      { skaters: team.skaters.map(rival), goalie: { stats: { ...rg.stats }, name: rg.name, art: rg.art, mask: rg.mask || null }, chem: {} },
+    ],
+    humanTeam: 0,
+    goalieMode: !!opts.goalieMode,
+    powers: ['fire', 'ice', 'lightning', 'gravity'],
+    diff: [opts.goalieMode ? 0.72 : 0.6, diff],
+    seed: (Math.random() * 1e9) >>> 0,
+  };
+}
+
 // Rewards from a finished match summary.
 export function computeRewards(save, summary, stage, exhibition) {
   const won = summary.winner === 0;

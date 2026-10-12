@@ -14,6 +14,7 @@ import { rosterShift, seasonBoost } from './slots.js';
 import { tierOf, tierAt, TIER_SHARP } from './tiers.js';
 import { RIVALRY_PRIZE } from './rivals.js';
 import { t } from './i18n.js';
+import { nationsNext, NATIONS_REWARD } from './nations.js';
 
 export const FOUNDING_TEAMS = ['home', ...FOUNDING_RIVALS];
 export const EXPANDED_TEAMS = ['home', ...RIVAL_IDS]; // (the rivals easiest first: the order we meet them)
@@ -116,6 +117,9 @@ function headToHead(L, a, b) {
 
 // What the player plays next: { kind: 'regular'|'semi'|'final', opponent, round label, stage cfg }.
 export function nextFixture(L) {
+  // the Nations Cup, once the season's over and its awards are out (nations.js)
+  const nc = L.phase === 'done' && nationsNext(L.nations);
+  if (nc) return { kind: 'nations', opponent: nc.opp, label: nc.final ? t('Nations Cup Final') : t('Nations Cup'), stage: { team: nc.opp, powers: ['fire', 'ice', 'lightning', 'gravity'], round: nc.final ? 'Nations Cup Final' : 'Nations Cup', reward: NATIONS_REWARD, arena: 'nations' } };
   if (L.phase === 'regular' && L.round === ALLSTAR_AFTER && !L.allstar) {
     return { kind: 'allstar', opponent: 'allstar', label: t('All-Star Game'), stage: { team: 'allstar', powers: ['fire', 'ice', 'lightning', 'gravity'], round: 'All-Star Game', reward: 260, arena: 'home' } };
   }

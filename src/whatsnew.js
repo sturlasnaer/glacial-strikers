@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-12c',
+    items: [
+      { big: true, icon: 'badges/nations_cup', alt: 'badges/national_cup', text: 'The Nations Cup: once your club is up in the National Cup, each season ends with the four regions\' best. Your club plays for the Frostline against the Coast, the Timberlands and the Far Wilds: three games and a final, for the Nations Cup.' },
+    ],
+  },
+  {
     id: '2026-10-12b',
     items: [
       { big: true, icon: 'icons/career', text: 'A rival with a story: the captain of your first rivalry club won\'t forget you. Their story runs over the seasons, from the first grudge to a farewell, and Trophies › Our story plays every chapter again.' },

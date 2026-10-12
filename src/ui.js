@@ -2,7 +2,7 @@
 
 import { Assets } from './assets.js';
 import {
-  CHARACTERS, GEAR, GEAR_BY_ID, gearOpen, clubOwn, TIER_LINES, clubT, TEAMS, STAT_KEYS, STAT_NAMES, STAT_HINT,
+  CHARACTERS, GEAR, GEAR_BY_ID, NATIONS, FROSTLINE_REGION, gearOpen, clubOwn, TIER_LINES, clubT, TEAMS, STAT_KEYS, STAT_NAMES, STAT_HINT,
   POWER_INFO, GOALIE, COMBOS, CHEM_LEVELS, CHALLENGES, GAME_PLANS, ROLE, ART_NAME, ARENAS,
   RECRUITS, ROOKIES, setRookies, setFreeGoalies, LEGENDS, LEGEND_ART, LEGEND_FACES, GOALIE_RECRUITS, FREE_GOALIES, GOALIE_STYLES, goalieInfo, ALL_RIVALS, CAREER, slotLook, CAST_PAIRS, ELEMENTS, ARCHETYPES, makeDef, member, comboFor, recruitKey, pairKey, GEAR_LOOK, CLUB, CLUB_DEFAULT, CLUB_PRESETS, CLUB_CRESTS, clubCrestId, MASK_NAMES, PALETTES, clubText, applyClub, hexToHsv, teamInfo,
 } from './data.js';
@@ -65,6 +65,7 @@ import { tripStops, POSTCARD_TOWNS, NATIONAL_POSTCARDS } from './trip.js';
 import { tierOf, tierInfo, tierAt, TIERS, safeSeason } from './tiers.js';
 import { CLUB_CHOICES, CLUB_STORIES, CLUB_PAYOFFS, clubStars, clubStart, START_NAMES, CUSTOM_CLUB, storyChapters } from './clubs.js';
 import { sagaChapters, sagaName } from './saga.js';
+import { nationsStandings, US as NATIONS_US } from './nations.js';
 import { newPet, stepPet, tapPet, tossPuck, PET_NAME_MAX, TRICK_TIME, FETCH_DROP, PET_OUTFITS, ownsOutfit, buyOutfit, wearOutfit, PET_BED, ownsBed, buyBed, PET_BALL, PLAY_TIME, ownsBall, buyBall,
   PET_KINDS, PET_KIND, PET_FRAMES, PET_WINS, PET_AREA, ROOM_MAX, petDir, petIcon, roomPets, ownedPets, petsDue, adoptPet, sendToHouse, bringToRoom, petNameOf, renamePet, winsAgainst, petFinds, takeFind } from './pet.js';
 import { albumPages, albumClubOpen, albumOf, startAlbum, openPack, progress as albumProgress, pageFull, STARTER_PACKS, PAGE_COINS, ALBUM_COINS } from './album.js';
@@ -192,6 +193,8 @@ export const crest = (teamId, size = 96) => {
   if (teamId === 'home' && CLUB.team && CLUB.crest === 'team') return crest(CLUB.team, size); // (a club career: its own crest, as the league knows it)
   if (teamId === 'home') return Assets.icon(Assets.frame(TEAMS.home.crest) ? TEAMS.home.crest : 'hud_elements/misc/home_crest', size, CLUB_PAGES());
   if (teamId === 'allstar') return Assets.icon((Assets.atlas.allstar && Assets.atlas.allstar.crest) || 'hud_elements/misc/level_star', size); // the League All-Stars' crest
+  if (NATIONS[teamId]) return Assets.frame(NATIONS[teamId].crest) ? Assets.icon(NATIONS[teamId].crest, size) : Assets.icon('hud_elements/misc/away_crest', size, teamId); // a Nations Cup region's (Batch EZ; in its colours until then)
+  if (teamId === NATIONS_US) return Assets.frame(FROSTLINE_REGION.crest) ? Assets.icon(FROSTLINE_REGION.crest, size) : crest('home', size); // (the Frostline: ours)
   const t = TEAMS[teamId];
   if (t && t.careerOnly) return Assets.icon(Assets.frame(t.crest) ? t.crest : 'hud_elements/misc/home_crest', size); // (the Foxes, as a club of the league: their own fox)
   const c = t && (t.art || t.mark) && Assets.atlas.crests && Assets.atlas.crests[t.art || t.mark];
@@ -213,7 +216,7 @@ const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 // The league news icon for each kind of story (Batch AV).
-const NEWS_ICON = { edge: 'edge', rivalSign: 'sign', weSign: 'sign', weGoalie: 'sign', weAgent: 'sign', weOwn: 'sign', weLegend: 'sign', rivalDraft: 'draft', weDraft: 'draft', trade: 'trade', retire: 'retire', champion: 'cup', expansion: 'new_club' };
+const NEWS_ICON = { edge: 'edge', rivalSign: 'sign', weSign: 'sign', weGoalie: 'sign', weAgent: 'sign', weOwn: 'sign', weLegend: 'sign', rivalDraft: 'draft', weDraft: 'draft', trade: 'trade', retire: 'retire', champion: 'cup', nations: 'cup', expansion: 'new_club' };
 const NEWS_ART = { hatTrick: 'achievements/hat_trick', streak: 'badges/streak_flame', press: 'icons/share', hall: 'icons/career', record: 'icons/stat_goals', facility: 'icons/friends', promoted: 'icons/promoted', relegated: 'icons/relegated', rivalryWon: 'icons/rivalry', rivalryLost: 'icons/rivalry' }; // (news without a news icon of its own)
 // The locker room hub: stations in the painting, in % of the 16:9 image.
 const STATIONS = [
@@ -1183,6 +1186,33 @@ export class UI {
     }, false);
   }
 
+  // The Nations Cup (nations.js): the table, where we stand and our next game. info: { next (the
+  // fixture), team (their regionTeam), result (what the last game led to) }.
+  nationsCup(N, info, play, skip, done) {
+    const name = (id) => (id === NATIONS_US ? FROSTLINE_REGION.name : NATIONS[id].name);
+    const cup = ['badges/nations_cup', 'badges/national_cup', 'badges/frostline_cup'].find((id) => Assets.frame(id));
+    const r = info.result, fin = N.final, starting = !N.games.length && !r;
+    const head = r === 'champion' ? `${cup ? `<img class="mini-cup-big" src="${Assets.icon(cup, 220)}" alt="">` : ''}<h2 class="gold-t" style="text-align:center">${esc(clubT('The Frostline win the Nations Cup!'))}</h2>`
+      : r === 'runner-up' ? `<h2 style="text-align:center">${t('Second in the Nations Cup')}</h2><p class="muted" style="text-align:center;margin:0">${t('{team} took the final. There\'s always next season.', { team: esc(name(fin.b)) })}</p>`
+      : r === 'out' ? `<h2 style="text-align:center">${t('Out of the Nations Cup')}</h2><p class="muted" style="text-align:center;margin:0">${t('{a} and {b} met in the final: {champion} won it.', { a: esc(name(fin.a)), b: esc(name(fin.b)), champion: esc(name(N.champion)) })}</p>`
+      : r === 'final' ? `<h2 style="text-align:center">${t('Into the final!')}</h2>`
+      : starting ? `<h2 style="text-align:center">${t('The Nations Cup')}</h2><p class="muted" style="margin:0">${esc(clubT('The best players of four regions, each in its own colours. The Foxes play for the Frostline: three games against the others, and the top two meet in the final.'))}</p>`
+      : `<h2 style="text-align:center">${t('The Nations Cup')}</h2>`;
+    const rows = nationsStandings(N).map((x, i) => `<tr class="${x.id === NATIONS_US ? 'us' : ''} ${i === 1 ? 'cut' : ''}"><td>${i + 1}</td><td class="tm"><img src="${crest(x.id, 40)}" alt="" width="22" height="22">${esc(name(x.id))}</td><td>${x.p}</td><td>${x.w}</td><td>${x.l}</td><td>${x.gf}</td><td>${x.ga}</td><td class="pts">${x.pts}</td></tr>`).join('');
+    const team = info.next && (info.team || null), opp = info.next && info.next.opponent;
+    const stars = team ? team.skaters.map((k) => esc(member(k).name)).join(', ') : '';
+    const nextLine = info.next ? `<p style="margin:6px 0 0"><b>${esc(info.next.stage.round === 'Nations Cup Final' ? t('The final: {team}', { team: name(opp) }) : t('Next: {team}', { team: name(opp) }))}</b>${stars ? ` <span class="muted">· ${t('their stars: {names}', { names: stars })}</span>` : ''}</p>` : '';
+    this.modal(`<div class="label" style="text-align:center">${t('Nations Cup')}</div>${head}
+      <table class="league-table"><thead><tr><th>#</th><th style="text-align:left">${t('Team')}</th><th>${t('GP')}</th><th>${t('W')}</th><th>${t('L')}</th><th>${t('GF')}</th><th>${t('GA')}</th><th>${t('PTS')}</th></tr></thead><tbody>${rows}</tbody></table>${nextLine}
+      <div class="row" style="justify-content:space-between;align-items:center;margin-top:8px">${starting && skip ? `<button class="btn small ghost" id="nc-skip">${t('Skip it this year')}</button>` : '<span></span>'}
+        <span class="row" style="gap:8px">${info.next ? `<button class="btn ghost" id="nc-later">${t('Later')}</button><button class="btn gold" id="nc-play">${t('Play')}</button>` : `<button class="btn gold" id="nc-done">${t('Done')}</button>`}</span></div>`, (m, close) => {
+      this.click('#nc-play', () => { close(); audio.sfx('confirm'); play(); }, m);
+      this.click('#nc-later', () => { close(); audio.sfx('back'); done(); }, m);
+      this.click('#nc-done', () => { close(); audio.sfx('back'); done(); }, m);
+      this.click('#nc-skip', () => { close(); audio.sfx('back'); skip(); }, m);
+    }, false);
+  }
+
   // Name the pet (12 characters at most).
   petName(kind = 'fox', back = 'room') {
     const s = this.app.save, mine = kind === 'fox' ? s.pet && s.pet.name : s.pets && s.pets.got[kind] && s.pets.got[kind].name;
@@ -1381,6 +1411,7 @@ export class UI {
         case 'trade': return t('Trade: {gave} to the {team} for {name}.', { gave: `<b>${esc(n.gave || '')}</b>`, team: tn(n.team), name });
         case 'champion': return n.team === 'home' ? t('The {club} win the {cup}!', { cup: cupName(n.tier), club: esc(CLUB.nick) }) : t('{team} win the {cup}.', { cup: cupName(n.tier), team: tn(n.team) });
         case 'expansion': return (n.teams || []).includes('foxes') ? t('The {a} and {b} join the Frostline.', { a: tn(n.teams[0]), b: tn(n.teams[1]) }) : t('The Glacier Owls and Thunder Moose join the Frostline.');
+        case 'nations': return t('The {club} win the Nations Cup for the Frostline!', { club: esc(CLUB.nick) });
         case 'rivalryWon': return t('Bragging rights! The {club} beat the {team} {a}–{b} in the rivalry game.', { club: esc(CLUB.nick), team: tn(n.team), a: n.gf, b: n.ga });
         case 'rivalryLost': return t('The {team} win the rivalry game {a}–{b}. The {club} will want that one back.', { club: esc(CLUB.nick), team: tn(n.team), a: n.ga, b: n.gf });
         case 'promoted': return t('The {club} go up to the {league}!', { club: esc(CLUB.nick), league: esc(t(tierAt(n.tier).name)) });

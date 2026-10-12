@@ -43,8 +43,8 @@ try {
 window.__errs = []; window.addEventListener('error', (e) => window.__errs.push(String(e.message))); window.addEventListener('unhandledrejection', (e) => window.__errs.push('rej: ' + String(e.reason && e.reason.message || e.reason)));
 const app = window.__app, sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const seen = new Set(), log = [];
-const note = () => { const d = document.querySelector('.dlg-text, .dlg-line'); const h = document.querySelector('.modal h2, .modal h1'); if (h) seen.add('modal: ' + h.innerText.slice(0, 60)); const txt = document.body.innerText; for (const k of ['Frostline champions', 'go national', 'National Cup! New rinks', 'new table', 'Draft Day', 'Frostline Awards', 'FROSTLINE AWARDS']) if (txt.includes(k)) seen.add(k); };
-const SEL = ['#club-save', '#dr-yes', '#name-now', '[data-pick="0"]', '#dr-later', '#aw-next', '#as-go', '#vs-go', '#plan-go', '#dlg-skip', '[data-lm="0"]', '#lm-go', '[data-pc="0"]', '#pc-go', '#hc-go', '#c-go', '#r-go', '#rv-go', '#ch-go', '#ns-skip', '[data-close]'];
+const note = () => { const d = document.querySelector('.dlg-text, .dlg-line'); const h = document.querySelector('.modal h2, .modal h1'); if (h) seen.add('modal: ' + h.innerText.slice(0, 60)); const txt = document.body.innerText; for (const k of ['Frostline champions', 'go national', 'National Cup! New rinks', 'new table', 'Draft Day', 'Frostline Awards', 'FROSTLINE AWARDS', 'Into the final!', 'win the Nations Cup']) if (txt.includes(k)) seen.add(k); };
+const SEL = ['#club-save', '#dr-yes', '#name-now', '[data-pick="0"]', '#dr-later', '#aw-next', '#as-go', '#vs-go', '#plan-go', '#dlg-skip', '#nc-play', '#nc-done', '[data-lm="0"]', '#lm-go', '[data-pc="0"]', '#pc-go', '#hc-go', '#c-go', '#r-go', '#rv-go', '#ch-go', '#ns-skip', '[data-close]'];
 const advance = async () => { note(); for (const q of SEL) { const b = [...document.querySelectorAll(q)].find(e => e.offsetParent !== null && !e.disabled); if (b) { b.click(); return q; } } return null; };
 app.save.settings.online = false;
 if (CLUB !== 'foxes') { app.chooseClub(CLUB); await sleep(2500); } else { app.save.clubPicked = true; app.save.seenIntro = true; }
@@ -64,9 +64,9 @@ for (let step = 0; step < 280 * SEASONS; step++) {
   }
   const q = await advance(); if (!q) await sleep(300); else await sleep(350);
 }
-return { games, season: s.season, tier: s.tier, payoffs: s.payoffs, seen: [...seen], log: log.slice(-8), errs: window.__errs };
+return { games, season: s.season, tier: s.tier, payoffs: s.payoffs, nations: s.nationsCups || 0, saga: s.saga && Object.keys(s.saga.seen), seen: [...seen], log: log.slice(-8), errs: window.__errs };
 `);
-  console.log(JSON.stringify({ club: CLUB, ...out, seen: undefined }, null, 1));
+  console.log(JSON.stringify({ club: CLUB, ...out, seen: undefined }));
   if (!out || out.exception || (out.errs && out.errs.length) || logs.length || !(out.games > 0)) fail = 1;
   await run('localStorage.clear(); return 1');
 } finally {
