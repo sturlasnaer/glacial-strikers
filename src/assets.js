@@ -98,6 +98,19 @@ export const Assets = {
     for (const name of new Set(sprites)) if (this.atlas.skaters[name]) walk(this.atlas.skaters[name]);
     await this.loadPages([...ids]);
   },
+  // Pond clothes go on a skater only once every pose of its kit has them: while the delivery is
+  // partial, a toque mustn't pop on and off as it turns.
+  pondWearReady(sprite, kit) {
+    const key = sprite + '|' + kit;
+    this.pondWearFull ||= new Map();
+    if (!this.pondWearFull.has(key)) {
+      const map = this.atlas.pond_wear || {}, ids = [];
+      const walk = (o) => { if (typeof o === 'string') { if (this.atlas.frames[o]) ids.push(o); } else if (o && typeof o === 'object') Object.values(o).forEach(walk); };
+      walk(this.atlas.skaters[sprite]?.[kit]);
+      this.pondWearFull.set(key, ids.length > 0 && ids.every((id) => map[id]));
+    }
+    return this.pondWearFull.get(key);
+  },
   pondWearCanvas(baseId, look = 'club') {
     const id = this.atlas.pond_wear?.[baseId], f = id && this.atlas.frames[id];
     if (!f || !this.pages[f[0]]) return null;

@@ -1197,9 +1197,17 @@ export class Renderer {
   }
 
   drawPondWear(ctx, skater, frame, x, y, scale, rot) {
+    if (!Assets.pondWearReady(this.spriteOf(skater), skater.team === 0 ? 'home' : 'away')) return;
     const look = skater.team === 0 ? skater.look || 'club' : this.awayLook;
     const wear = Assets.pondWearCanvas(frame.id, look);
     if (wear) this.drawFrameCanvas(ctx, wear, Assets.frame(frame.id), x, y, scale, frame.flip, rot);
+    // a player from parts: the toque on the head itself, at the head's place and size (one per
+    // view, once all five are drawn: see SPRITE-REQUESTS, Batch FD)
+    const PW = Assets.atlas.pond_wear || {}, M = Assets.atlas.modular, f = Assets.frame(frame.id);
+    if (!skater.parts || !M || !f || !['s', 'se', 'e', 'ne', 'n'].every((v) => PW['head/' + v])) return;
+    const hp = headPlacement(M, skater.parts, frame.id, f, x, y, scale, frame.flip), view = hp && hp.head.split('/')[1];
+    const toque = view && Assets.pondWearCanvas('head/' + view, look);
+    if (toque) this.drawFrameCanvas(ctx, toque, Assets.frame(PW['head/' + view]), hp.x, hp.y, scale * headScale(skater.parts), hp.flip, hp.rot);
   }
 
   // A looping effect's frame id at time t, or null while its art isn't in the atlas or its page
