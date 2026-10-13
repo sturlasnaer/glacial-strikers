@@ -1764,7 +1764,8 @@ class App {
     if (news) setTimeout(() => {
       if (this.scene !== 'hub' || document.querySelector('.modal-bg')) return; // (another time)
       this.save.seenWhatsNew = news.id; writeSave(this.save);
-      this.ui.whatsNew(news);
+      const show = () => { if (this.scene === 'hub' && !document.querySelector('.modal-bg')) this.ui.whatsNew(news); };
+      Assets.loadPages(news.items.flatMap((it) => [it.icon, it.alt]).filter((id) => id && Assets.frame(id))).then(show, show); // (its pictures, wherever their pages are)
     }, 900);
     else if (this.save.seenWhatsNew !== was) writeSave(this.save); // (a new player: nothing to read)
   }

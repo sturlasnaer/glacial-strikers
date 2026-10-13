@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-13b',
+    items: [
+      { icon: 'crest_kit/emblem/wolf', alt: 'icons/career', text: 'The crest kit is hand-drawn now: six shields, six patterns and nineteen emblems (a wolf, a bear, an owl, a narwhal, a crown, a flame and more), all in your club\'s colours in the club editor.' },
+    ],
+  },
+  {
     id: '2026-10-13a',
     items: [
       { icon: 'icons/play_skaters', text: 'Shots get through: defenders aren\'t walls in front of the net any more. Only one standing square to you is likely to block your shot; the rest let it slip through the legs, and a body in front hides the puck from the goalie. The stronger teams still get in the way more often.' },

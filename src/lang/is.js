@@ -3095,4 +3095,5 @@ export const IS = {
   "Right through the legs! {name} scores!": "Beint á milli fótanna! {name} skorar!",
   "{name} threads it past the defender and in!": "{name} þræðir pökkinn fram hjá varnarmanninum og inn!",
   "Shots get through: defenders aren't walls in front of the net any more. Only one standing square to you is likely to block your shot; the rest let it slip through the legs, and a body in front hides the puck from the goalie. The stronger teams still get in the way more often.": "Skotin komast í gegn: varnarmenn eru ekki lengur veggir fyrir framan markið. Aðeins þau sem standa beint á móti þér eru líkleg til að stöðva skotið; hin hleypa því á milli fótanna, og líkami fyrir framan felur pökkinn fyrir markverðinum. Sterkari liðin eru samt oftar fyrir.",
+  "The crest kit is hand-drawn now: six shields, six patterns and nineteen emblems (a wolf, a bear, an owl, a narwhal, a crown, a flame and more), all in your club's colours in the club editor.": "Merkjasmiðjan er nú handteiknuð: sex skildir, sex mynstur og nítján tákn (úlfur, björn, ugla, náhvalur, kóróna, logi og fleira), öll í litum félagsins í félagsritlinum.",
 };
