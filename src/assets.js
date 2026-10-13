@@ -88,6 +88,30 @@ export const Assets = {
     await Promise.all(this.framePages(this.clubMaskFrames(ids)).map((i) => this.pages[i] ? null
       : this.image(this.atlas.pages[i].file).then((img) => { this.pages[i] = img; })));
   },
+  // Pond clothes: only poses of the actual match roster, on selectively decoded pages.
+  async ensurePondWear(sprites) {
+    const ids = new Set(), mapping = this.atlas.pond_wear || {};
+    const walk = (o) => {
+      if (typeof o === 'string') { if (mapping[o]) ids.add(mapping[o]); }
+      else if (o && typeof o === 'object') for (const v of Object.values(o)) walk(v);
+    };
+    for (const name of new Set(sprites)) if (this.atlas.skaters[name]) walk(this.atlas.skaters[name]);
+    await this.loadPages([...ids]);
+  },
+  pondWearCanvas(baseId, look = 'club') {
+    const id = this.atlas.pond_wear?.[baseId], f = id && this.atlas.frames[id];
+    if (!f || !this.pages[f[0]]) return null;
+    const kit = (PALETTES[look] || TEAMS[look])?.recolor;
+    const rc = kit?.jersey ? kit : kit ? { jersey: { h: kit.h1, s: kit.sat, v: kit.val }, trim: { h: kit.h2, s: kit.sat2, v: kit.val2 } } : null;
+    this.pondWearCache ||= new Map();
+    const key = id + '|' + JSON.stringify(rc);
+    if (!this.pondWearCache.has(key)) {
+      if (this.pondWearCache.size >= 320) this.pondWearCache.delete(this.pondWearCache.keys().next().value);
+      this.pondWearCache.set(key, this.artCanvas(id, rc));
+    }
+    return this.pondWearCache.get(key);
+  },
+
   // Every page of a group decoded (false for a group the atlas doesn't have).
   groupReady(group) {
     const own = this.atlas.pages.map((p, i) => i).filter((i) => this.atlas.pages[i].group === group);

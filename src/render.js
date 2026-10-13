@@ -129,6 +129,7 @@ export class Renderer {
     if (ui.awayTeamId && TEAMS[ui.awayTeamId]) Assets.prepareTeam(TEAMS[ui.awayTeamId]); // picks up pages loaded mid-match
     Assets.prepareTeam(PALETTES.homekit); // our recruits in home colours
     this.awayPages = Assets.pagesFor(ui.awayTeamId);
+    this.awayLook = ui.awayTeamId;
     const arena = ARENAS[ui.arena] ? ui.arena : 'home';
     this.arena = ARENAS[arena];
 
@@ -1180,6 +1181,7 @@ export class Renderer {
     else if (s.bedrockT > 0) tint = ['#b8a58c', 0.22];
     if (tint) this.drawTinted(ctx, fr.id, pages, p.x, y, k, fr.flip, rot, tint[0], tint[1]);
     if (s.parts) this.drawHead(ctx, s, fr, p.x, y, k, pages); // a player from parts: the head on its anchor
+    if (match.pond) this.drawPondWear(ctx, s, fr, p.x, y, k, rot);
     if (s.gear) this.drawGearLook(ctx, s, fr, p, y, k, fx);
     ctx.restore();
   }
@@ -1192,6 +1194,12 @@ export class Renderer {
     const hf = Assets.frame(hp.head), c = hf && Assets.partsCanvas(hp.head, s.parts);
     if (c) this.drawFrameCanvas(ctx, c, hf, hp.x, hp.y, k * headScale(s.parts), hp.flip, hp.rot); // (bigger than drawn: see PARTS_SCALE)
     if (hp.front) Assets.draw(ctx, hp.front, x, y, k, { flip: fr.flip, pages });
+  }
+
+  drawPondWear(ctx, skater, frame, x, y, scale, rot) {
+    const look = skater.team === 0 ? skater.look || 'club' : this.awayLook;
+    const wear = Assets.pondWearCanvas(frame.id, look);
+    if (wear) this.drawFrameCanvas(ctx, wear, Assets.frame(frame.id), x, y, scale, frame.flip, rot);
   }
 
   // A looping effect's frame id at time t, or null while its art isn't in the atlas or its page

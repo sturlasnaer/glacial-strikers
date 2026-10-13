@@ -933,6 +933,7 @@ class App {
     const arena = extra.arena || this.venue(stage.arena) || this.arenaFor(teamId);
     this.attract = false;
     const m = this.makeMatch(cfg, teamId, arena);
+    if (m.pond) Assets.ensurePondWear(m.skaters.flatMap((sk) => [sk.sprite, sk.def.sprite])).catch(() => {});
     const classic = !!(extra.fixture && extra.fixture.kind === 'classic');
     this.fx.heavySnow = classic;
     m.classic = classic;

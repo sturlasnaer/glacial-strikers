@@ -9,7 +9,7 @@ This file lives at `/Users/brafa/hockeygame/glacial-strikers/SPRITE-REQUESTS.md`
 **Next batches:**
 1. **FB: cloth masks for the Foxes' own art** (the club colours bleed into the players: the user's top priority)
 2. **FC delivered:** all 30 native crest-kit parts are imported; the next actionable batch is FD. Source: `/Users/brafa/hockeygame/assets/Puckbound-Batches-FC/Puckbound-Batch-FC`.
-3. **FD: pond hockey's winter gear** (toques and scarves over every pose)
+3. **FD: pond hockey's winter gear** (toques and scarves over every pose) — first three home south-idle pilots imported; moving poses and other views are next. Source: `/Users/brafa/hockeygame/assets/Puckbound-Batches-FD/Puckbound-Batch-FD`.
 4. **FE: the Nations Cup's regional jerseys** (a body set in a regional design)
 
 
