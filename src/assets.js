@@ -6,7 +6,7 @@
 // (Everything is prefetched into the browser cache, but only decoded when used.)
 
 import { TEAMS, PALETTES, CAREER, CLUB, elemEffects } from './data.js';
-import { drawCrest } from './crestkit.js';
+import { drawCrest, KIT_DEFAULT } from './crestkit.js';
 import { recolorParts, recolorPaint, headPlacement, headScale } from './modular.js';
 
 const BASE = new URL('assets/', document.baseURI).href;
@@ -252,6 +252,19 @@ export const Assets = {
   // 'club_crest/generated' that clubCrestId names.
   buildClubCrest(club = CLUB, rc = PALETTES.club.recolor) {
     if (club.crest !== 'kit' || !this.atlas) return;
+    // Decode only the selected kit parts; a saved design also needs its native pages before
+    // the editor has ever opened. Rebuild from current colours when that load completes.
+    const kit = { ...KIT_DEFAULT, ...(club.crestKit || {}) };
+    const ids = [`crest_kit/shield/${kit.shield}`, `crest_kit/pattern/${kit.pattern}`, `crest_kit/emblem/${kit.emblem}`,
+      ...(kit.ribbon ? ['crest_kit/ribbon'] : [])];
+    const missing = ids.filter((id) => { const f = this.atlas.frames[id]; return f && !this.pages[f[0]]; });
+    if (missing.length && !this.crestKitLoading) {
+      this.crestKitLoading = this.loadPages(missing).then(() => {
+        this.crestKitLoading = null;
+        this.buildClubCrest();
+        this.clubArtChanged?.();
+      }, () => { this.crestKitLoading = null; });
+    }
     this.setRuntimeFrame('club_crest/generated', drawCrest(club.crestKit, { trim: club.trim, jersey: club.jersey }, { short: club.short, letter: club.nick || club.name, art: (id) => this.artCanvas(id, rc) }));
   },
 

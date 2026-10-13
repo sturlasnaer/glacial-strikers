@@ -2442,6 +2442,7 @@ export class UI {
   // (opts.create: a new club of one's own being named, clubs.js: no going back, then onDone. In a
   // career as another club the editor starts from that club, and its crest stays a choice.)
   async clubEditor(opts = {}) {
+    await Assets.loadPages(Object.keys(Assets.atlas.frames).filter((id) => id.startsWith('crest_kit/')));
     const home = Assets.atlas.skaters;
     await Assets.ensureClubMasks([home.frost_captain.home.south.frames.idle,
       home.thunder_winger.home.south.frames.celebrate, home.stone_defender.home.east.frames.idle]);

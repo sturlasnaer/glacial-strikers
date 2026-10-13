@@ -116,7 +116,21 @@ export function drawCrest(kit, col, opts = {}) {
   if (shieldArt) {
     o.drawImage(shieldArt, 0, 0, S, S);
     const pa = k.pattern !== 'plain' && (art('crest_kit/pattern/' + k.pattern) || patternLayer(k.pattern, T, null));
-    if (pa) { o.save(); o.globalCompositeOperation = 'source-atop'; o.drawImage(pa, S * 0.08, S * 0.08, S * 0.84, S * 0.84); o.restore(); }
+    if (pa) {
+      // Clip to the native shield's solid interior, leaving its painted rim visible. Native
+      // cutout margins can contain faint alpha, which must not admit pattern pixels.
+      const lo = canvas(N), lx = lo.getContext('2d');
+      lx.imageSmoothingEnabled = false; lx.drawImage(shieldArt, 0, 0, N, N);
+      const d = lx.getImageData(0, 0, N, N), m = new Uint8Array(N * N);
+      for (let i = 0; i < m.length; i++) m[i] = d.data[i * 4 + 3] >= 128 ? 1 : 0;
+      const inside = erode(m, 3);
+      for (let i = 0; i < inside.length; i++) { d.data[i * 4] = d.data[i * 4 + 1] = d.data[i * 4 + 2] = 255; d.data[i * 4 + 3] = inside[i] ? 255 : 0; }
+      lx.putImageData(d, 0, 0);
+      const layer = canvas(S), px = layer.getContext('2d'); px.imageSmoothingEnabled = false;
+      px.drawImage(lo, 0, 0, S, S); px.globalCompositeOperation = 'source-in';
+      px.drawImage(pa, S * 0.08, S * 0.08, S * 0.84, S * 0.84);
+      o.drawImage(layer, 0, 0);
+    }
   } else {
     const { m, inner, deep, rim } = shieldMasks(k.shield);
     const pat = PATTERNS[k.pattern] ? cached('p:' + k.pattern, () => mask(PATTERNS[k.pattern])) : null;
