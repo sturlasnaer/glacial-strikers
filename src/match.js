@@ -1,7 +1,7 @@
 // Match simulation: rules, puck physics, possession, shots, saves, goals, power pucks.
 // Runs headless (see tools/sim.mjs) or driven by the game loop in main.js.
 
-import { clamp, norm, dist, segDist, makeRng, Emitter, angDiff } from './util.js';
+import { clamp, lerp, norm, dist, segDist, makeRng, Emitter, angDiff } from './util.js';
 import {
   RINK, GOAL_X, MOUTH, NET_DEPTH, POST_R, CROSSBAR, DOTS, MOUTH_STD, MOUTH_POND, setMouth,
   constrainToRink, netBox, clampInside, insideDepth, collideNets,
@@ -1345,6 +1345,13 @@ export class Match {
       if (ds < reach || db < s.r + PUCK_R) {
         if (p.rolled.has(s)) continue;
         p.rolled.add(s);
+        // a body in the way of the player's team's shot: as in the 16-bit games, skaters aren't
+        // walls. One set square to the shot often gets a piece of it (more often on the stronger
+        // teams); one skating past or turned away mostly lets it through the legs.
+        if (vsPlayersShot && sp > 300 && db < s.r + PUCK_R + 2) {
+          const u = norm(p.vx, p.vy), square = Math.hypot(s.vx, s.vy) < 140 && -(Math.cos(s.face) * u.x + Math.sin(s.face) * u.y) > 0.5;
+          if (this.rng() >= (square ? lerp(0.45, 0.85, sd) : lerp(0.2, 0.6, sd))) { p.vx *= 0.94; p.vy *= 0.94; p.shot.through = s; continue; }
+        }
         let chance;
         if (intended) chance = sp < 1500 ? 1 : 0.6;
         else if (p.shot && p.shot.team === s.team) chance = sp < 300 ? 1 : 0; // let teammates' shots through
@@ -1457,7 +1464,7 @@ export class Match {
     }
     const info = {
       team, scorer, assists, kind: sh ? sh.kind : 'scramble', power: sh ? sh.power : null,
-      special: sh ? sh.special : null, time: this.time, y: yc, side, screened: !!(sh && sh.screened),
+      special: sh ? sh.special : null, time: this.time, y: yc, side, screened: !!(sh && sh.screened), through: !!(sh && sh.through && sh.through.team !== team),
     };
     this.lastGoal = info;
     this.goalLog.push(info);

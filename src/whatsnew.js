@@ -2,6 +2,12 @@
 // first; anyone who started after it has nothing new to read.
 export const WHATS_NEW = [
   {
+    id: '2026-10-13a',
+    items: [
+      { icon: 'icons/play_skaters', text: 'Shots get through: defenders aren\'t walls in front of the net any more. Only one standing square to you is likely to block your shot; the rest let it slip through the legs, and a body in front hides the puck from the goalie. The stronger teams still get in the way more often.' },
+    ],
+  },
+  {
     id: '2026-10-12e',
     items: [
       { icon: 'icons/simple_controls', text: 'Everything works with a controller now: pick your runner in the mascot race, aim and throw in Snowball fun, type names and codes on an on-screen keyboard, pick club colours from a grid, and read every tip under the highlighted button. B on the pause menu plays on.' },

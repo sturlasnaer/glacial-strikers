@@ -205,7 +205,10 @@ export class TeamAI {
       if (left.length && !(plan === 'forecheck' && inTheirEnd) && (!presser || gs(presser) < 20)) {
         const back = [...left].sort((a, b) => gs(b) - gs(a))[0];
         const hd = Math.max(90, (c.x - this.ownX) * out * 0.45);
-        const home = { kind: 'spot', x: this.ownX + out * hd, y: clamp(c.y * 0.45, -120, 120), sprint: true };
+        // (against the player it minds the back door, a little off the line from the puck to the
+        // net, rather than standing right in the shot: the stronger teams stay closer to it)
+        const door = vsHuman ? -(Math.sign(c.y) || 1) * lerp(45, 12, this.diff) : 0;
+        const home = { kind: 'spot', x: this.ownX + out * hd, y: clamp(c.y * 0.45 + door, -120, 120), sprint: true };
         roles.set(back, deep ? home : keepOff(home));
         left = left.filter((s) => s !== back);
       }
@@ -488,6 +491,12 @@ export class TeamAI {
       cx = r.x + r.vx * lag; cy = r.y + r.vy * lag; cvx = r.vx; cvy = r.vy;
     } else b.read = null;
     let tx = cx + cvx * 0.22 + g.x * gap, ty = cy + cvy * 0.22 + g.y * gap;
+    // near our net it plays the player's body, a shoulder to the boards side, not the shooting
+    // lane itself (the 16-bit way: the goalie stops shots, the defence takes the puck)
+    if (human && Math.abs(c.x - this.ownX) < 260) {
+      const side = Math.sign(c.y) || 1, perp = g.x * side >= 0 ? { x: -g.y, y: g.x } : { x: g.y, y: -g.x }, off = lerp(28, 8, this.diff);
+      tx += perp.x * off; ty += perp.y * off;
+    }
     if (squeeze > 0) { // (just past the puck on its open side, not through the carrier: no shoving them round the rink)
       const u = norm(m.puck.x - c.x, m.puck.y - c.y), px = m.puck.x + u.x * (s.r + 4), py = m.puck.y + u.y * (s.r + 4);
       tx = lerp(tx, px, squeeze); ty = lerp(ty, py, squeeze);
